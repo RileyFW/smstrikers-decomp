@@ -112,7 +112,7 @@ void glFontBegin(bool drop)
     {
         glSetDefaultState(0);
         glSetCurrentTexture((unsigned long)handle, eGLTextureType_0);
-        glSetRasterState(eGLState_3, 1);
+        glSetRasterState(GLS_AlphaTest, 1);
         glSetCurrentRasterState(glHandleizeRasterState());
         glSetTextureState(eGLTextureState_6, 1);
         glSetCurrentTextureState(glHandleizeTextureState());

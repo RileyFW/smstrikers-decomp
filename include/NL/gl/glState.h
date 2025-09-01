@@ -7,17 +7,17 @@
 
 enum eGLState
 {
-    eGLState_0 = 0,
-    eGLState_1,
-    eGLState_2,
-    eGLState_3,
-    eGLState_4,
-    eGLState_5,
-    eGLState_6,
-    eGLState_7,
-    eGLState_8,
-    eGLState_9,
-    eGLState_10,
+    GLS_DepthTest = 0,
+    GLS_DepthWrite = 1,
+    GLS_DepthFunc = 2,
+    GLS_AlphaTest = 3,
+    GLS_AlphaTestRef = 4,
+    GLS_AlphaBlend = 5,
+    GLS_Culling = 6,
+    GLS_ColourWrite = 7,
+    GLS_SolidOffset = 8,
+    GLS_FillMode = 9,
+    GLS_Num = 10,
 };
 
 class glStateBundle

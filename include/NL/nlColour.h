@@ -3,6 +3,11 @@
 
 #include "types.h"
 
+struct nlColour_
+{
+    u8 rgba[4];
+};
+
 struct nlColour
 {
     // union

@@ -30,9 +30,9 @@ void DrawTextRectangle(int view, float vx0, float vy0, float vx1, float vy1, flo
 
     if ((u8)colour.a != 0xFF)
     {
-        glSetRasterState(eGLState_5, 1U);
-        glSetRasterState(eGLState_3, 1U);
-        glSetRasterState(eGLState_4, 0U);
+        glSetRasterState(GLS_AlphaBlend, 1U);
+        glSetRasterState(GLS_AlphaTest, 1U);
+        glSetRasterState(GLS_AlphaTestRef, 0U);
         glSetCurrentRasterState(glHandleizeRasterState());
     }
 

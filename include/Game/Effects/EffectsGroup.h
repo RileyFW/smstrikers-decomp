@@ -24,6 +24,8 @@ enum eJointBinding
 class EffectsTerrainSpec
 {
 public:
+    bool HasTerrain(unsigned long) const;
+
     u32* m_pTerrainIDs;
     u32 m_uNumTerrains;
 };
@@ -31,6 +33,8 @@ public:
 class EffectsSpec
 {
 public:
+    EffectsSpec();
+
     /* 0x00 */ u32 m_uHashID;
     /* 0x04 */ EffectsTemplate* m_pTemplate;
     /* 0x08 */ eFXBinding m_eAttach;

@@ -1027,6 +1027,7 @@ config.libs = [
             Object(NonMatching, "Game/Effects/ParticleSystem.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Effects/EmissionController.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Effects/EmissionManager.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/Effects/PhotoFlashEffect.cpp", extra_cflags=["-inline deferred"]),
         ],
     ),
     GameLib(

@@ -2289,7 +2289,7 @@ Game/Blinker.cpp:
 	.data       start:0x802C0CF0 end:0x802C0D70
 	.sdata2     start:0x80376888 end:0x803768A0
 
-PhotoFlashEffect.o:
+Game/Effects/PhotoFlashEffect.cpp:
 	.text       start:0x8016AF60 end:0x8016B030
 	.sdata      start:0x80372698 end:0x803726A0
 	.sdata2     start:0x803768A0 end:0x803768B0
