@@ -1,6 +1,6 @@
 #include "Character.h"
 #include "CharacterTemplate.h"
-#include "Game/EmissionManager.h"
+#include "Game/Effects/EmissionManager.h"
 
 #include "NL/nlString.h"
 
@@ -536,7 +536,7 @@ cCharacter::~cCharacter()
  * Offset/Address/Size: 0x2238 | 0x80010184 | size: 0x468
  */
 cCharacter::cCharacter(eCharacterClass, const int*, cSHierarchy*, cAnimInventory*, const CharacterPhysicsData*, float, float,
-                       AnimRetargetList*, eClassTypes)
+    AnimRetargetList*, eClassTypes)
 {
 }
 

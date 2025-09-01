@@ -1,12 +1,12 @@
-#include "simpleparser.h"
+#include "Game/Sys/simpleparser.h"
 
 /**
  * Offset/Address/Size: 0x988 | 0x801D732C | size: 0x10
  */
 SimpleParser::SimpleParser()
 {
-    mLineEnd = nullptr;
-    mTokIndex = 0;
+    m_EndOfLine = nullptr;
+    m_CurrentBuffer = 0;
 }
 
 /**

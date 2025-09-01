@@ -2,7 +2,7 @@
 #define _EMISSIONMANAGER_H_
 
 #include "NL/gl/gl.h"
-#include "Game/EmissionController.h"
+#include "Game/Effects/EmissionController.h"
 
 // void fxSetTerrain(unsigned long);
 // void fxGetTerrain();
@@ -45,6 +45,8 @@ public:
     void Shutdown();
     void Startup(eGLView);
     void InstanceForReplayOnly();
+
+    /* 0x00 */ bool m_bRecording;
 };
 
 // class nlAVLTree<unsigned long, LingerMessage*, DefaultKeyCompare<unsigned long>>

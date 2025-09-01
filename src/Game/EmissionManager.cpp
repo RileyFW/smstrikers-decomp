@@ -1,4 +1,4 @@
-#include "Game/EmissionManager.h"
+#include "Game/Effects/EmissionManager.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x801F8920 | size: 0x10C

@@ -1,18 +1,78 @@
 #ifndef _EFFECTSGROUP_H_
 #define _EFFECTSGROUP_H_
 
-// #include "Game/Sys/SimpleParser.h"
+#include "types.h"
+#include "NL/nlMath.h"
 
-class EffectsGroup;
+#include "Game/Effects/EffectsTemplate.h"
+#include "Game/Sys/simpleparser.h"
+
+enum eFXBinding
+{
+    FXBind_Emitter = 0,
+    FXBind_Joint = 1,
+    FXBind_Object = 2,
+    FXBind_Num = 3,
+};
+enum eJointBinding
+{
+    JB_Normal = 0,
+    JB_Ascend = 1,
+    JB_Num = 2,
+};
+
+class EffectsTerrainSpec
+{
+public:
+    u32* m_pTerrainIDs;
+    u32 m_uNumTerrains;
+};
+
+class EffectsSpec
+{
+public:
+    /* 0x00 */ u32 m_uHashID;
+    /* 0x04 */ EffectsTemplate* m_pTemplate;
+    /* 0x08 */ eFXBinding m_eAttach;
+    /* 0x0C */ u32 m_uJointID;
+    /* 0x10 */ f32 m_fDelay;
+    /* 0x14 */ u32 m_uLayer;
+    /* 0x18 */ eJointBinding m_eJointBinding;
+    /* 0x1C */ f32 m_fJointVelocity;
+    /* 0x20 */ bool m_bInFront;
+    /* 0x21 */ bool m_bGround;
+    /* 0x22 */ bool m_bLight;
+    /* 0x24 */ f32 m_fOffset;
+    /* 0x28 */ nlVector3 m_vLocalOffset;
+    /* 0x34 */ EffectsTerrainSpec* m_pTerrainSpec;
+    /* 0x38 */ f32 m_fLingerStart;
+    /* 0x3C */ f32 m_fLingerEnd;
+};
+
+class UserEffectSpec
+{
+public:
+};
+
+class EffectsGroup
+{
+public:
+    /* 0x00 */ u32 m_hashID;
+    /* 0x04 */ EffectsSpec* m_specs;
+    /* 0x08 */ int m_numSpecs;
+    /* 0x0C */ bool m_isLingering;
+    /* 0x10 */ UserEffectSpec** m_userSpecsPtr;
+    /* 0x14 */ s32 m_userSpecs;
+}; // size 0x18
 
 EffectsGroup* fxGetGroup(const char*);
 void fxUnloadGroups();
 void fxLoadGroupBundle(void*, unsigned long);
 void fxLoadGroupBundle(const char*);
 
-// void parse_group(SimpleParser*);
-// void parse_terrain_spec(SimpleParser*);
-// void parse_spec(SimpleParser*, EffectsSpec&);
+static EffectsGroup* parse_group(SimpleParser*);
+static EffectsTerrainSpec* parse_terrain_spec(SimpleParser*);
+static bool parse_spec(SimpleParser*, EffectsSpec&);
 
 // void nlDLRingCountElements<DLListEntry<UserEffectSpec*>>(DLListEntry<UserEffectSpec*>*);
 // void nlDLRingIsEnd<DLListEntry<UserEffectSpec*>>(DLListEntry<UserEffectSpec*>*, DLListEntry<UserEffectSpec*>*);

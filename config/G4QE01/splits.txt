@@ -4282,7 +4282,7 @@ NL/utility.cpp:
 	.sbss       start:0x80374358 end:0x80374360
 	.sdata2     start:0x80377268 end:0x80377280
 
-EffectsTemplate.o:
+Game/Effects/EffectsTemplate.cpp:
 	.text       start:0x801F0BC4 end:0x801F1EC0
 	.text       start:0x801F1EC0 end:0x801F28B8
 	.text       start:0x801F28B8 end:0x801F28DC
@@ -4295,7 +4295,7 @@ EffectsTemplate.o:
 	.sbss       start:0x80374360 end:0x80374368
 	.sdata2     start:0x80377280 end:0x803772A0
 
-EffectsGroup.o:
+Game/Effects/EffectsGroup.cpp:
 	.text       start:0x801F2A48 end:0x801F3A48
 	.text       start:0x801F3A48 end:0x801F4F4C
 	.text       start:0x801F4F4C end:0x801F4F94
@@ -4310,7 +4310,7 @@ EffectsGroup.o:
 	.sbss       start:0x80374368 end:0x80374378
 	.sdata2     start:0x803772A0 end:0x803772B0
 
-ParticleSystem.o:
+Game/Effects/ParticleSystem.cpp:
 	.text       start:0x801F5158 end:0x801F78F0
 	.ctors      start:0x8028D560 end:0x8028D564
 	.rodata     start:0x802A05D0 end:0x802A05E0
@@ -4320,7 +4320,7 @@ ParticleSystem.o:
 	.sbss       start:0x80374378 end:0x803743A0
 	.sdata2     start:0x803772B0 end:0x80377338
 
-Game/EmissionController.cpp:
+Game/Effects/EmissionController.cpp:
 	.text       start:0x801F78F0 end:0x801F8920
 	.text       start:0x801F8920 end:0x801F8920
 	.text       start:0x801F8920 end:0x801F8920
@@ -4328,7 +4328,7 @@ Game/EmissionController.cpp:
 	.sbss       start:0x803743A0 end:0x803743A8
 	.sdata2     start:0x80377338 end:0x80377348
 
-Game/EmissionManager.cpp:
+Game/Effects/EmissionManager.cpp:
 	.text       start:0x801F8920 end:0x801F9778
 	.text       start:0x801F9778 end:0x801F9778
 	.text       start:0x801F9778 end:0x801FA170

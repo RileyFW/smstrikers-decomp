@@ -1,5 +1,5 @@
 #include "debug.h"
-#include "simpleparser.h"
+#include "Game/Sys/simpleparser.h"
 
 #include "extras.h"
 #include "NL/nlFileGC.h"
@@ -11,12 +11,30 @@ namespace tDebugPrintManager
 {
 
 const char* szChannelNames[DEBUG_CHANNEL_COUNT] = {
-    "STARTUP", "GL",      "GLPLAT", "RENDER", "AI",     "CAMERA", "EVENT", "FE",          "PHYSICS", "MEMORY",
-    "SOUND",   "TASKMAN", "LOADER", "MISC",   "REPLAY", "NIS",    "NET",   "MULTISTREAM", "WORLD",   "CONFIGSYS",
+    "STARTUP",
+    "GL",
+    "GLPLAT",
+    "RENDER",
+    "AI",
+    "CAMERA",
+    "EVENT",
+    "FE",
+    "PHYSICS",
+    "MEMORY",
+    "SOUND",
+    "TASKMAN",
+    "LOADER",
+    "MISC",
+    "REPLAY",
+    "NIS",
+    "NET",
+    "MULTISTREAM",
+    "WORLD",
+    "CONFIGSYS",
 };
 
-bool abChannels[DEBUG_CHANNEL_COUNT] = { true,  false, false, false, false, false, false, false, false, false,
-                                         false, false, false, false, false, false, false, false, false, false };
+bool abChannels[DEBUG_CHANNEL_COUNT] = { true, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false };
 
 /**
  * Offset/Address/Size: 0x0 | 0x801D6770 | size: 0x54

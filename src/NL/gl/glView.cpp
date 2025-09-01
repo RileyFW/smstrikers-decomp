@@ -6,8 +6,8 @@
 #include "NL/nlMemory.h"
 #include <string.h>
 
-bool gl_ViewEnable[34] = { true,  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                           false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
+bool gl_ViewEnable[34] = { true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
 glView* views[34];
 
 /**
@@ -215,7 +215,7 @@ void gl_ViewStartup()
         views[iVar8] = view;
 
         view->m_unk_0x00 = 0;
-        view->renderList->m_unk_0x04 = eGLViewSort_0;
+        view->renderList->m_unk_0x04 = GLVSort_Texture;
 
         view->m_unk_0x14 = identityMatrix;
         view->m_unk_0xE0 = 1;
@@ -227,15 +227,15 @@ void gl_ViewStartup()
 
         glGetMatrix(*(u32*)identityMatrix, view->m_projectionMatrix);
 
-        view->m_target = eGLTarget_0;
+        view->m_target = GLTG_None;
 
         view->m_unk_0x04 = 0;
         view->m_unk_0x08 = 0;
         view->m_screenWidth = screenWidth;
         view->m_screenHeight = screenHeight;
 
-        view->m_filter = eGLFilter_0;
-        view->m_filterSource = eGLTarget_0;
+        view->m_filter = GLFilter_None;
+        view->m_filterSource = GLTG_None;
         view->m_unk_0xEC = false;
         view->m_depthClear = false;
         view->renderList->m_unk_0x00 = iVar8;

@@ -1,8 +1,8 @@
 #include "Game/WorldTriggers.h"
 #include "NL/nlMath.h"
 
-#include "Game/EmissionManager.h"
-#include "Game/EffectsGroup.h"
+#include "Game/Effects/EmissionManager.h"
+#include "Game/Effects/EffectsGroup.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x801A3FF4 | size: 0x84

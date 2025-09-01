@@ -3,12 +3,17 @@
 
 #include "types.h"
 
-class efBaseNode
+struct efBaseNode
 {
 public:
-    /* 0x0, */ struct efBaseNode* m_nextNode;
-    /* 0x4, */ struct efBaseNode* m_prevNode;
+    /* 0x0, */ efBaseNode* m_nextNode;
+    /* 0x4, */ efBaseNode* m_prevNode;
 };
+
+class efNode : public efBaseNode
+{
+    // todo
+}; // size: 0x8
 
 class efBaseList
 {

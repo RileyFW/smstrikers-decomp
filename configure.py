@@ -722,9 +722,6 @@ config.libs = [
             Object(NonMatching, "Game/PoseAccumulator.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/SHierarchy.cpp"),
 
-            Object(NonMatching, "Game/EmissionController.cpp"),
-            Object(NonMatching, "Game/EmissionManager.cpp"),
-
             Object(NonMatching, "Game/SAnim.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/AnimInventory.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Blinker.cpp"),   
@@ -1025,6 +1022,11 @@ config.libs = [
 
             # Effects
             Object(Matching, "Game/Effects/efList.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Effects/EffectsTemplate.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Effects/EffectsGroup.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Effects/ParticleSystem.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Effects/EmissionController.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Effects/EmissionManager.cpp", extra_cflags=["-inline deferred"]),
         ],
     ),
     GameLib(
