@@ -29,6 +29,14 @@ struct nlVector2
         (v).f.z = (zval);                   \
     } while (0)
 
+#define NL_VECTOR4_SET(v, xval, yval, zval) \
+    do                                      \
+    {                                       \
+        (v).x = (xval);                     \
+        (v).y = (yval);                     \
+        (v).z = (zval);                     \
+    } while (0)
+
 struct nlVector3_
 {
     float f[3];

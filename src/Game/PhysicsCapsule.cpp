@@ -21,7 +21,7 @@ PhysicsCapsule::PhysicsCapsule(CollisionSpace* collisionSpace, PhysicsWorld* wor
     if (m_bodyID != NULL)
     {
         dGeomSetBody(m_geomID, m_bodyID);
-        dMassSetCappedCylinderTotal(&m, 3, 1.0f, radius, length);
+        dMassSetCappedCylinderTotal(&m, 1.0f, 3, radius, length);
         dBodySetMass(m_bodyID, &m);
     }
 

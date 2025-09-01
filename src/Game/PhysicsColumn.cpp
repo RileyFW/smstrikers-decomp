@@ -9,11 +9,10 @@
 static dxJoint* createJoint(dWorldID w, dJointGroupID group, dxJoint::Vtable* vtable);
 
 /**
- * Offset/Address/Size: 0x0 | 0x801FE888 | size: 0x24
+ * Offset/Address/Size: 0x14C | 0x801FE9D4 | size: 0x60
  */
-void PhysicsColumn::GetRadius(float* radius)
+PhysicsColumn::~PhysicsColumn()
 {
-    dGeomColumnGetParams(m_geomID, radius);
 }
 
 /**
@@ -46,8 +45,8 @@ PhysicsColumn::PhysicsColumn(CollisionSpace* collisionSpace, PhysicsWorld* world
     m_jointID = dJointCreateCharacter(world->m_worldID, NULL);
     dJointAttach(m_jointID, m_bodyID, NULL);
 
-    nlVector3 v;
-    NL_VECTOR3_SET(v, 0.f, 0.f, 1.f);
+    nlVector4 v;
+    NL_VECTOR4_SET(v, 0.f, 0.f, 1.f); // todo: remove this unnecessary setter
 
     dJointSetCharacterNoMotionDirection(m_jointID, (float*)&v);
 
@@ -55,16 +54,9 @@ PhysicsColumn::PhysicsColumn(CollisionSpace* collisionSpace, PhysicsWorld* world
 }
 
 /**
- * Offset/Address/Size: 0x14C | 0x801FE9D4 | size: 0x60
+ * Offset/Address/Size: 0x0 | 0x801FE888 | size: 0x24
  */
-PhysicsColumn::~PhysicsColumn()
+void PhysicsColumn::GetRadius(float* radius)
 {
-}
-
-/**
- * Offset/Address/Size: 0x0 | 0x801FEA34 | size: 0x8
- */
-int PhysicsColumn::GetObjectType() const
-{
-    return 0x4;
+    dGeomColumnGetParams(m_geomID, radius);
 }
