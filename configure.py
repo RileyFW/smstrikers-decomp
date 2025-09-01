@@ -741,6 +741,7 @@ config.libs = [
             Object(NonMatching, "Game/audio.cpp"),   
 
             # Physics
+            Object(NonMatching, "Game/Physics.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/RayCollider.cpp"),
             Object(NonMatching, "Game/PhysicsAIBall.cpp"),
             Object(Matching, "Game/PhysicsBox.cpp"),
@@ -753,6 +754,7 @@ config.libs = [
             Object(NonMatching, "Game/PhysicsFinitePlane.cpp"),
             Object(NonMatching, "Game/PhysicsGroundPlane.cpp"),
             Object(Matching, "Game/PhysicsPlane.cpp"),
+            Object(Matching, "Game/PhysicsRoundedCorner.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/PhysicsWall.cpp"),
             Object(NonMatching, "Game/PhysicsObject.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "Game/PhysicsCompositeObject.cpp"),

@@ -56,12 +56,12 @@ void ODEAlloc(unsigned long)
 {
 }
 
-/**
- * Offset/Address/Size: 0x0 | 0x801335B0 | size: 0x8
- */
-void PhysicsRoundedCorner::GetObjectType() const
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x801335B0 | size: 0x8
+//  */
+// void PhysicsRoundedCorner::GetObjectType() const
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x0 | 0x801335B8 | size: 0x68

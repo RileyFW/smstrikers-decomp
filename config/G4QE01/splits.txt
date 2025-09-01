@@ -1719,7 +1719,7 @@ Game/NetMeshModelLoader.cpp:
 	.sbss       start:0x80373AF0 end:0x80373AF8
 	.sdata2     start:0x80376180 end:0x80376188
 
-Physics.o:
+Game/Physics.cpp:
 	.text       start:0x80132B10 end:0x801335B0
 	.text       start:0x801335B0 end:0x801335B0
 	.text       start:0x801335B0 end:0x801335B8
@@ -4410,7 +4410,7 @@ Game/PhysicsColumn.cpp:
 	.data       start:0x80303048 end:0x80303070
 	.sdata2     start:0x80377428 end:0x80377430
 
-PhysicsRoundedCorner.o:
+Game/PhysicsRoundedCorner.cpp:
 	.text       start:0x801FEA3C end:0x801FEAFC
 	.text       start:0x801FEAFC end:0x801FEAFC
 	.text       start:0x801FEAFC end:0x801FEAFC
