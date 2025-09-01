@@ -14,11 +14,3 @@ void WorldUpdateTask::Run(float dt)
     }
     WorldManager::UpdateWorld(dt);
 }
-
-/**
- * Offset/Address/Size: 0x0 | 0x8016E68C | size: 0x8
- */
-const char* WorldUpdateTask::GetName()
-{
-    return "World";
-}

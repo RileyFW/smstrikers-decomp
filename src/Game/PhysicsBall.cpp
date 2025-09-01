@@ -5,7 +5,8 @@
 #include "NL/nlMath.h"
 #include "PhysicsObject.h"
 #include "PhysicsFakeBall.h"
-#include "FixedUpdateTask.h"
+
+#include "Game/FixedUpdateTask.h"
 
 #include "Ball.h"
 

@@ -9,15 +9,17 @@ class FixedUpdateTask : public nlTask
 {
 public:
     virtual void Run(float dt);
-    void DecrementFrameLock(float);
-    static float GetPhysicsUpdateTick(); // static / float needs to be confirmed
     virtual const char* GetName();
+
+    void DecrementFrameLock(float);
+    static float GetPhysicsUpdateTick();
 
     FixedUpdateTask();
 
     static float mAccumulatedDeltaT;
     static float mSimulationTime;
     static float mfFrameLockTime;
+    // static float mTimeScale;
 };
 
 #endif // _FIXEDUPDATETASK_H_

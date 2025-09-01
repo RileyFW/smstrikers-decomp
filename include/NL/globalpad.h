@@ -61,7 +61,7 @@ public:
 class cPadManager
 {
 public:
-    void Update(float);
+    static void Update(float);
 
     static cGlobalPad* GetPad(int idx);
     static s32* GetRemapArray(); // { return m_pRemapArray; };

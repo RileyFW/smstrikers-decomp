@@ -1,5 +1,5 @@
 #pragma pool_data off
-#include "RumbleActions.h"
+#include "Game/RumbleActions.h"
 
 static struct RumbleActionState rumbleActionState[4];
 

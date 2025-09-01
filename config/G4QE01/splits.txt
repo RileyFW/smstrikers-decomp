@@ -2393,11 +2393,11 @@ ParticleUpdateTask.o:
 	.data       start:0x802C10D8 end:0x802C1100
 	.sdata      start:0x80372728 end:0x80372730
 
-ProfileTask.o:
+Game/ProfileTask.cpp:
 	.text       start:0x80170B60 end:0x80170B80
 	.sbss       start:0x80373D80 end:0x80373D88
 
-PlatPadUpdateTask.o:
+Game/PlatPadUpdateTask.cpp:
 	.text       start:0x80170B80 end:0x80170BA0
 	.text       start:0x80170BA0 end:0x80170BAC
 	.text       start:0x80170BAC end:0x80170BAC
@@ -2419,7 +2419,7 @@ GameRenderTask.o:
 	.sdata2     start:0x803769A0 end:0x80376A08
 	.sbss2      start:0x80377F78 end:0x80377F80
 
-DispatchEventsTask.o:
+Game/DispatchEventsTask.cpp:
 	.text       start:0x801715A0 end:0x801715C4
 	.text       start:0x801715C4 end:0x801715D0
 	.text       start:0x801715D0 end:0x801715D0
