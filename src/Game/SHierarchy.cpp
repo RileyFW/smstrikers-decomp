@@ -1,4 +1,4 @@
-#include "SHierarchy.h"
+#include "Game/SHierarchy.h"
 #include "types.h"
 
 /**
@@ -210,7 +210,7 @@ void cSHierarchy::BuildPushPopFlags(int nodeIndex, int currentDepth, int& stackD
                                 if (greatGreatGrandchildLoopCounter < greatGreatGrandchildChildCount)
                                 {
                                     BuildPushPopFlags(GetChild(greatGrandchildNodeIndex, greatGreatGrandchildLoopCounter),
-                                                      greatGreatGrandchildStackDepth, stackDepth);
+                                        greatGreatGrandchildStackDepth, stackDepth);
                                     greatGreatGrandchildLoopCounter += 1;
                                     goto loop_17;
                                 }

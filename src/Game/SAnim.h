@@ -6,7 +6,7 @@
 #include "NL/nlMath.h"
 // #include "NL/nlList.h"
 
-#include "PoseAccumulator.h"
+#include "Game/PoseAccumulator.h"
 
 typedef struct cSAnimCallback
 {

@@ -3,8 +3,8 @@
 
 #include "NL/nlMath.h"
 
-#include "SHierarchy.h"
-#include "PoseNode.h"
+#include "Game/SHierarchy.h"
+#include "Game/PoseNode.h"
 
 class cPoseAccumulator;
 

@@ -12,7 +12,8 @@ public:
 
 class efNode : public efBaseNode
 {
-    // todo
+public:
+    // todo: ...
 }; // size: 0x8
 
 class efBaseList
@@ -27,5 +28,11 @@ public:
     /* 0x4, */ struct efBaseNode* m_tailNode;
     /* 0x8, */ int m_numNodes;
 };
+
+class efList : public efBaseList
+{
+public:
+    // todo: ...
+}; // size: 0xC
 
 #endif // _EFLIST_H_
