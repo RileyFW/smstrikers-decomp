@@ -1,6 +1,6 @@
 #include "PhysicsWorld.h"
 #include "CollisionSpace.h"
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 
 #include "ode/NLGAdditions.h"
 

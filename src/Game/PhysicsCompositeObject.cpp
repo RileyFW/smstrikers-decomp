@@ -1,7 +1,7 @@
 #include "PhysicsCompositeObject.h"
 
 #include "PhysicsWorld.h"
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x801FF6A8 | size: 0xA8

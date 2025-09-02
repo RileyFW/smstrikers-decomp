@@ -6,7 +6,7 @@
 #include "ode/objects.h"
 #include "ode/collision.h"
 
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 
 class PhysicsTransform : public PhysicsObject
 {
@@ -20,7 +20,7 @@ public:
     virtual ~PhysicsTransform();
     PhysicsTransform();
 
-    /* 0x2c */ PhysicsObject *m_unk_2c;
+    /* 0x2c */ PhysicsObject* m_unk_2c;
 };
 
 #endif // _PHYSICSTRANSFORM_H_

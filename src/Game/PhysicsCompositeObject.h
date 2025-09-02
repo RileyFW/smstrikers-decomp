@@ -2,7 +2,7 @@
 #define _PHYSICSCOMPOSITEOBJECT_H_
 
 #include "NL/nlMath.h"
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 
 // void nlDLRingIsEnd<DLListEntry<PhysicsTransform*>>(DLListEntry<PhysicsTransform*>*, DLListEntry<PhysicsTransform*>*);
 // void nlDLRingGetStart<DLListEntry<PhysicsTransform*>>(DLListEntry<PhysicsTransform*>*);
@@ -24,20 +24,17 @@ public:
     void AddObject(PhysicsObject*);
 };
 
-
 // class DLListContainerBase<PhysicsTransform*, NewAdapter<DLListEntry<PhysicsTransform*>>>
 // {
 // public:
 //     void DeleteEntry(DLListEntry<PhysicsTransform*>*);
 // };
 
-
 // class nlWalkDLRing<DLListEntry<PhysicsTransform*>, DLListContainerBase<PhysicsTransform*, NewAdapter<DLListEntry<PhysicsTransform*>>>>(DLListEntry<PhysicsTransform*>*, DLListContainerBase<PhysicsTransform*, NewAdapter<DLListEntry<PhysicsTransform*>>>*, void (DLListContainerBase<PhysicsTransform*, NewAdapter<DLListEntry<PhysicsTransform*>>>
 // {
 // public:
 //     void *)(DLListEntry<PhysicsTransform*>*));
 // };
-
 
 // class nlWalkRing<DLListEntry<PhysicsTransform*>, DLListContainerBase<PhysicsTransform*, NewAdapter<DLListEntry<PhysicsTransform*>>>>(DLListEntry<PhysicsTransform*>*, DLListContainerBase<PhysicsTransform*, NewAdapter<DLListEntry<PhysicsTransform*>>>*, void (DLListContainerBase<PhysicsTransform*, NewAdapter<DLListEntry<PhysicsTransform*>>>
 // {

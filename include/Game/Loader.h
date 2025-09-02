@@ -26,8 +26,6 @@ class Loader
 {
 public:
     virtual bool StartLoad(LoadingManager*) = 0;
-    // virtual bool Update() = 0;
-    // virtual char* GetName() = 0;
     virtual bool Update() { return true; };
     virtual const char* GetName() { return NULL; };
 };

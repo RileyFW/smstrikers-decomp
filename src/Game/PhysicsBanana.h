@@ -1,7 +1,7 @@
 #ifndef _PHYSICSBANANA_H_
 #define _PHYSICSBANANA_H_
 
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 
 class PhysicsBanana // : public PhysicsObject
 {
@@ -14,7 +14,6 @@ public:
     PhysicsBanana(float);
     virtual int GetObjectType() const;
 };
-
 
 class CollisionPowerupGroundData
 {

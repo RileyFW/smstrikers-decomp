@@ -1,8 +1,7 @@
 #ifndef _PHYSICSNPC_H_
 #define _PHYSICSNPC_H_
 
-
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 
 class PhysicsNPC : public PhysicsObject
 {

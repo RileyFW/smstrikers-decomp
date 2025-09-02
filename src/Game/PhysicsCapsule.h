@@ -1,7 +1,8 @@
 #ifndef _PHYSICSCAPSULE_H_
 #define _PHYSICSCAPSULE_H_
 
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
+
 #include "CollisionSpace.h"
 
 class PhysicsCapsule : public PhysicsObject

@@ -16,12 +16,13 @@ typedef struct cSAnimCallback
     /* 0x0C */ cSAnimCallback* next;
 } cSAnimCallback; // size: 0x10
 
-struct nlChunk
+class nlChunk
 {
-    u32 hdr;  // chunk ID + flags
-    u32 size; // payload size in bytes
-    u8* data;
-};
+public:
+    /* 0x00 */ u32 m_ID;
+    /* 0x04 */ u32 m_Size;
+}; // size: 0x8
+
 class cSAnim
 {
 public:
@@ -36,7 +37,7 @@ public:
     void CreateCallback(float, unsigned int, void (*)(unsigned int));
     float GetMorphWeight(int, float) const;
 
-    /* 0x00 */ u32 m_chunkHdr;
+    /* 0x00 */ u32 m_chunkID;
     /* 0x04 */ s32 m_chunkSize;
     /* 0x08 */ unsigned long m_numFrames;
     /* 0x0C */ unsigned long m_numBones;

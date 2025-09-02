@@ -1,7 +1,7 @@
 #ifndef _PHYSICSNET_H_
 #define _PHYSICSNET_H_
 
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 #include "CollisionSpace.h"
 
 class PhysicsNet : public PhysicsObject

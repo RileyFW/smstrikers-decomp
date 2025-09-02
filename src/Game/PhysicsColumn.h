@@ -1,7 +1,7 @@
 #ifndef _PHYSICSCOLUMN_H_
 #define _PHYSICSCOLUMN_H_
 
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 #include "CollisionSpace.h"
 #include "ode/NLGAdditions.h"
 #include "ode/common.h"

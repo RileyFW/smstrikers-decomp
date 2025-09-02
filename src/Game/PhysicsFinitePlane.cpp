@@ -57,6 +57,6 @@ PhysicsFinitePlane::PhysicsFinitePlane(CollisionSpace* collision_space, nlVector
     m_geomID = dCreateFinitePlane(space, m_vec4.y, m_vec4.z, m_vec4.w, m_param, arg5, m_param);
     dGeomSetData(m_geomID, this);
     SetRotation(mat);
-    SetPosition(pos, CoordinateType_0);
+    SetPosition(pos, WORLD_COORDINATES);
     SetDefaultCollideBits();
 }

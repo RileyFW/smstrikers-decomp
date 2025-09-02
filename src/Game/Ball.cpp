@@ -4,7 +4,7 @@
 #include "NL/nlMemory.h"
 
 #include "PhysicsAIBall.h"
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 #include "RayCollider.h"
 #include "PhysicsFakeBall.h"
 
@@ -113,7 +113,7 @@ void cBall::SetPassTarget(cPlayer* passTargetPlayer, const nlVector3& pos, bool)
 void cBall::WarpTo(const nlVector3& toPos)
 {
     m_rayPosition = toPos;
-    m_aiBall->SetPosition(m_rayPosition, PhysicsObject::CoordinateType_0);
+    m_aiBall->SetPosition(m_rayPosition, PhysicsObject::WORLD_COORDINATES);
     m_aiBall->SetRotation(m3Ident);
     FakeBallWorld::InvalidateBallCache();
     m_unk_0x00 = m_unk_0x00 + 1;
@@ -189,7 +189,7 @@ void cBall::SetPerfectPass(bool, bool)
 void cBall::SetPosition(const nlVector3& pos)
 {
     m_rayPosition = pos;
-    m_aiBall->SetPosition(pos, PhysicsObject::CoordinateType_0);
+    m_aiBall->SetPosition(pos, PhysicsObject::WORLD_COORDINATES);
     m_aiBall->SetRotation(m3Ident);
     FakeBallWorld::InvalidateBallCache();
     m_unk_0x00++;

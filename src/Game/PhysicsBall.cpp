@@ -3,7 +3,7 @@
 #include "CollisionSpace.h"
 #include "NL/nlFont.h"
 #include "NL/nlMath.h"
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 #include "PhysicsFakeBall.h"
 
 #include "Game/FixedUpdateTask.h"
@@ -329,7 +329,7 @@ int PhysicsBall::Contact(PhysicsObject* other, dContact* contact, int param)
                 temp_f1 = contact->geom.depth;     // unk4C
                 temp_f29 = temp_f2 * temp_f1;
                 _pos.f.z += temp_f29;
-                SetPosition(_pos, CoordinateType_0); // , temp_r6, temp_f1, temp_f2
+                SetPosition(_pos, WORLD_COORDINATES); // , temp_r6, temp_f1, temp_f2
 
                 if (contact->geom.depth > 0.95f)
                 {
@@ -413,7 +413,7 @@ void PhysicsBall::PostUpdate()
         m_unk_0x39 = 1;
         GetPosition(&pos);
         pos.f.z = GetRadius();
-        SetPosition(pos, CoordinateType_0);
+        SetPosition(pos, WORLD_COORDINATES);
 
         linVel.f.z = linVel.f.z * -g_BallBounceGround;
         SetLinearVelocity(linVel);

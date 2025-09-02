@@ -2,7 +2,7 @@
 #define _PHYSICS_H_
 
 #include "PhysicsWorld.h"
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 
 #include "PhysicsRoundedCorner.h"
 

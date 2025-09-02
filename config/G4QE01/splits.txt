@@ -1691,7 +1691,7 @@ Nis.o:
 	.sdata      start:0x80372310 end:0x80372330
 	.sdata2     start:0x80376120 end:0x80376140
 
-LoadablePhysicsMesh.o:
+Game/Physics/LoadablePhysicsMesh.cpp:
 	.text       start:0x8012EDE8 end:0x8012EE20
 	.text       start:0x8012EE20 end:0x8012EE20
 	.text       start:0x8012EE20 end:0x8012EE20

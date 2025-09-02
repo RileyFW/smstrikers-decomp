@@ -1,8 +1,9 @@
 #ifndef _PHYSICSBOX_H_
 #define _PHYSICSBOX_H_
 
-#include "PhysicsObject.h"
-#include "CollisionSpace.h" 
+#include "Game/Physics/PhysicsObject.h"
+
+#include "CollisionSpace.h"
 
 class PhysicsBox : PhysicsObject
 {

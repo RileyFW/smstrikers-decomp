@@ -1,6 +1,6 @@
 #include "PhysicsBox.h"
 #include "NL/nlMath.h"
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x801FE628 | size: 0x74

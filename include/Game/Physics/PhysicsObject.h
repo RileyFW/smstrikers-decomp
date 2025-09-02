@@ -15,25 +15,27 @@ class PhysicsObject
 public:
     static const float DefaultGravity;
 
-    enum CoordinateType {
-        CoordinateType_0 = 0,
+    enum CoordinateType
+    {
+        WORLD_COORDINATES = 0,
+        RELATIVE_TO_PARENT = 1,
     };
 
     virtual ~PhysicsObject();
     PhysicsObject(PhysicsWorld*);
 
     void CloneObject(const PhysicsObject&);
-    virtual int GetObjectType() const = 0; // 0x0C
-    virtual int SetContactInfo(dContact*, PhysicsObject*, bool); //0x10
-    virtual void PreUpdate();//0x14
-    virtual void PostUpdate();//0x18
-    virtual int PreCollide(); //0x1c
-    virtual int Contact(PhysicsObject*, dContact*, int); //0x20
-    virtual int Contact(PhysicsObject*, dContact*, int, PhysicsObject*); //0x24
-    void MakeStatic(); 
-    void SetMass(float); 
-    void Reconnect(dSpaceID); 
-    dSpaceID Disconnect(); 
+    virtual int GetObjectType() const = 0;                               // 0x0C
+    virtual int SetContactInfo(dContact*, PhysicsObject*, bool);         // 0x10
+    virtual void PreUpdate();                                            // 0x14
+    virtual void PostUpdate();                                           // 0x18
+    virtual int PreCollide();                                            // 0x1c
+    virtual int Contact(PhysicsObject*, dContact*, int);                 // 0x20
+    virtual int Contact(PhysicsObject*, dContact*, int, PhysicsObject*); // 0x24
+    void MakeStatic();
+    void SetMass(float);
+    void Reconnect(dSpaceID);
+    dSpaceID Disconnect();
     void EnableCollisions();
     void DisableCollisions();
     void SetWorldMatrix(const nlMatrix4&);
@@ -58,15 +60,13 @@ public:
 
     /* 0x04 */ dBodyID m_bodyID;
     /* 0x08 */ dGeomID m_geomID;
-    /* 0x0c */ PhysicsObject *m_parentObject;
+    /* 0x0c */ PhysicsObject* m_parentObject;
     /* 0x10 */ float m_gravity;
     /* 0x14 */ nlVector3 m_position;
     /* 0x20 */ nlVector3 m_linearVelocity;
 };
 
 #endif
-
-
 
 // .include "macros.inc"
 // .file "PhysicsObject.o"

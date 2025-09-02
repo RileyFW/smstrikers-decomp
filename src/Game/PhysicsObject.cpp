@@ -5,7 +5,7 @@
 #include "ode/objects.h"
 #include "ode/collision.h"
 
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 #include "PhysicsWorld.h"
 
 const float PhysicsObject::DefaultGravity = -9.8f;
@@ -51,7 +51,7 @@ void PhysicsObject::CloneObject(const PhysicsObject& obj)
     f32 mass;
 
     obj.GetPosition(&pos);
-    SetPosition(pos, CoordinateType_0);
+    SetPosition(pos, WORLD_COORDINATES);
 
     obj.GetRotation(&rot);
     _rot[0] = rot.m[0][0];
@@ -231,7 +231,7 @@ void PhysicsObject::SetWorldMatrix(const nlMatrix4& in)
     }
 
     nlVector3* pos = (nlVector3*)&(in.m[0][3]);
-    SetPosition(*pos, CoordinateType_0);
+    SetPosition(*pos, WORLD_COORDINATES);
 }
 
 /**
@@ -312,11 +312,11 @@ void PhysicsObject::AddForceAtCentreOfMass(const nlVector3& force)
 }
 
 #define GAV_REGSWAP(out, v) \
-    float z = (v)->f.z;       \
-    float y = (v)->f.y;       \
-    float x = (v)->f.x;       \
-    (out)->f.x = x;           \
-    (out)->f.y = y;           \
+    float z = (v)->f.z;     \
+    float y = (v)->f.y;     \
+    float x = (v)->f.x;     \
+    (out)->f.x = x;         \
+    (out)->f.y = y;         \
     (out)->f.z = z;
 
 /**
@@ -440,8 +440,8 @@ nlVector3* PhysicsObject::GetLinearVelocity()
     float z = (v)[2];       \
     float y = (v)[1];       \
     float x = (v)[0];       \
-    (out)->f.x = x;           \
-    (out)->f.y = y;           \
+    (out)->f.x = x;         \
+    (out)->f.y = y;         \
     (out)->f.z = z;
 
 /**

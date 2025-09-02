@@ -3,7 +3,7 @@
 
 #include "NL/nlMath.h"
 
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 #include "CollisionSpace.h"
 
 class PhysicsRoundedCorner : public PhysicsObject

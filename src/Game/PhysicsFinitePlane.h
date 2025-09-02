@@ -3,7 +3,7 @@
 
 #include "NL/nlMath.h"
 #include "CollisionSpace.h"
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 
 class PhysicsFinitePlane : public PhysicsObject
 {

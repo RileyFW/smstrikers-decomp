@@ -763,6 +763,7 @@ config.libs = [
             Object(NonMatching, "Game/CollisionSpace.cpp"),
             Object(NonMatching, "Game/PhysicsTransform.cpp"),
             Object(NonMatching, "Game/PhysicsWorld.cpp"),
+            Object(Matching, "Game/Physics/LoadablePhysicsMesh.cpp", extra_cflags=["-inline deferred"]),
 
             # World
             Object(NonMatching, "Game/World.cpp"),

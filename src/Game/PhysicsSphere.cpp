@@ -1,6 +1,6 @@
 #include "PhysicsSphere.h"
 #include "CollisionSpace.h"
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x80201240 | size: 0x24

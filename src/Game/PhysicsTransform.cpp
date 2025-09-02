@@ -1,6 +1,6 @@
 #include "PhysicsTransform.h"
 #include "NL/nlMath.h"
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x80201350 | size: 0x70
@@ -52,7 +52,7 @@ void PhysicsTransform::Release()
         v1.f.z = v1.f.z + v.f.z;
         v1.f.y = v1.f.y + v.f.y;
         v1.f.x = v1.f.x + v.f.x;
-        m_unk_2c->SetPosition(v1, CoordinateType_0);
+        m_unk_2c->SetPosition(v1, WORLD_COORDINATES);
         v1.f.x = 0.f;
         v1.f.y = 0.f;
         v1.f.z = 0.f;

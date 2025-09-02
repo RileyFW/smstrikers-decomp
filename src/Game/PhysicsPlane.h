@@ -1,7 +1,7 @@
 #ifndef _PHYSICSPLANE_H_
 #define _PHYSICSPLANE_H_
 
-#include "PhysicsObject.h"
+#include "Game/Physics/PhysicsObject.h"
 #include "CollisionSpace.h"
 
 class CollisionSpace;

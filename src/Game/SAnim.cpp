@@ -90,7 +90,7 @@ cSAnim* cSAnim::Initialize(nlChunk* arg0)
     temp_r6 = (s32*)arg0;
 
     // First: align to get the cSAnim object base ("var_r4" -> ret object)
-    temp_r5 = ((nlChunk*)temp_r6)->hdr & 0x7F000000;
+    temp_r5 = ((nlChunk*)temp_r6)->m_ID & 0x7F000000;
     cSAnim* var_r4_obj;
     if (((-temp_r5 | temp_r5) >> 0x1F) != 0)
     {
@@ -107,8 +107,8 @@ cSAnim* cSAnim::Initialize(nlChunk* arg0)
     var_r4_obj->m_cbHead = 0;
 
     // Walk siblings: set m_chunkHdr (kept structurally; stores aligned ptr value just like decomp’s unk0)
-    temp_r7 = (u8*)temp_r6 + (((nlChunk*)temp_r6)->size + 8);
-    temp_r4 = ((nlChunk*)temp_r7)->hdr & 0x7F000000;
+    temp_r7 = (u8*)temp_r6 + (((nlChunk*)temp_r6)->m_Size + 8);
+    temp_r4 = ((nlChunk*)temp_r7)->m_ID & 0x7F000000;
     if (((-temp_r4 | temp_r4) >> 0x1F) != 0)
     {
         temp_r5_3 = 1 << (temp_r4 >> 0x18);
@@ -118,11 +118,11 @@ cSAnim* cSAnim::Initialize(nlChunk* arg0)
     {
         var_r3 = (s32)temp_r7 + 8;
     }
-    var_r4_obj->m_chunkHdr = (u32)var_r3; // structurally matches "var_r4->unk0 = var_r3"
+    var_r4_obj->m_chunkID = (u32)var_r3; // structurally matches "var_r4->unk0 = var_r3"
 
     // Next: m_rotTracks (0x18)
-    temp_r6_2 = (u8*)temp_r7 + (((nlChunk*)temp_r7)->size + 8);
-    temp_r4_2 = ((nlChunk*)temp_r6_2)->hdr & 0x7F000000;
+    temp_r6_2 = (u8*)temp_r7 + (((nlChunk*)temp_r7)->m_Size + 8);
+    temp_r4_2 = ((nlChunk*)temp_r6_2)->m_ID & 0x7F000000;
     if (((-temp_r4_2 | temp_r4_2) >> 0x1F) != 0)
     {
         temp_r5_4 = 1 << (temp_r4_2 >> 0x18);
@@ -135,8 +135,8 @@ cSAnim* cSAnim::Initialize(nlChunk* arg0)
     var_r4_obj->m_rotTracks = (void**)var_r3_2;
 
     // Next: m_scaleTracks (0x1C)
-    temp_r7_2 = (u8*)temp_r6_2 + (((nlChunk*)temp_r6_2)->size + 8);
-    temp_r4_3 = ((nlChunk*)temp_r7_2)->hdr & 0x7F000000;
+    temp_r7_2 = (u8*)temp_r6_2 + (((nlChunk*)temp_r6_2)->m_Size + 8);
+    temp_r4_3 = ((nlChunk*)temp_r7_2)->m_ID & 0x7F000000;
     if (((-temp_r4_3 | temp_r4_3) >> 0x1F) != 0)
     {
         temp_r5_5 = 1 << (temp_r4_3 >> 0x18);
@@ -149,8 +149,8 @@ cSAnim* cSAnim::Initialize(nlChunk* arg0)
     var_r4_obj->m_scaleTracks = (void**)var_r3_3;
 
     // Next: m_transTracks (0x20)
-    temp_r6_3 = (u8*)temp_r7_2 + (((nlChunk*)temp_r7_2)->size + 8);
-    temp_r4_4 = ((nlChunk*)temp_r6_3)->hdr & 0x7F000000;
+    temp_r6_3 = (u8*)temp_r7_2 + (((nlChunk*)temp_r7_2)->m_Size + 8);
+    temp_r4_4 = ((nlChunk*)temp_r6_3)->m_ID & 0x7F000000;
     if (((-temp_r4_4 | temp_r4_4) >> 0x1F) != 0)
     {
         temp_r5_6 = 1 << (temp_r4_4 >> 0x18);
@@ -163,8 +163,8 @@ cSAnim* cSAnim::Initialize(nlChunk* arg0)
     var_r4_obj->m_transTracks = (void**)var_r3_4;
 
     // Next: m_rootRot (0x28)
-    temp_r7_3 = (u8*)temp_r6_3 + (((nlChunk*)temp_r6_3)->size + 8);
-    temp_r4_5 = ((nlChunk*)temp_r7_3)->hdr & 0x7F000000;
+    temp_r7_3 = (u8*)temp_r6_3 + (((nlChunk*)temp_r6_3)->m_Size + 8);
+    temp_r4_5 = ((nlChunk*)temp_r7_3)->m_ID & 0x7F000000;
     if (((-temp_r4_5 | temp_r4_5) >> 0x1F) != 0)
     {
         temp_r5_7 = 1 << (temp_r4_5 >> 0x18);
@@ -177,8 +177,8 @@ cSAnim* cSAnim::Initialize(nlChunk* arg0)
     var_r4_obj->m_rootRot = (unsigned short*)var_r3_5;
 
     // Next: m_rootTrans (0x2C)
-    temp_r6_4 = (u8*)temp_r7_3 + (((nlChunk*)temp_r7_3)->size + 8);
-    temp_r4_6 = ((nlChunk*)temp_r6_4)->hdr & 0x7F000000;
+    temp_r6_4 = (u8*)temp_r7_3 + (((nlChunk*)temp_r7_3)->m_Size + 8);
+    temp_r4_6 = ((nlChunk*)temp_r6_4)->m_ID & 0x7F000000;
     if (((-temp_r4_6 | temp_r4_6) >> 0x1F) != 0)
     {
         temp_r5_8 = 1 << (temp_r4_6 >> 0x18);
@@ -191,20 +191,20 @@ cSAnim* cSAnim::Initialize(nlChunk* arg0)
     var_r4_obj->m_rootTrans = (nlVector3*)var_r3_6;
 
     var_r5 = 0;
-    var_r30 = (u8*)temp_r6_4 + (((nlChunk*)temp_r6_4)->size + 8);
+    var_r30 = (u8*)temp_r6_4 + (((nlChunk*)temp_r6_4)->m_Size + 8);
 
     // Scan groups to fill per-bone track pointer tables
 loop_43:
-    if ((var_r30 != ((u8*)arg0 + (arg0->size + 8)))
-        && ((temp_r4_7 = ((nlChunk*)var_r30)->hdr & 0x80FFFFFF, (((temp_r4_7 + 0x7FFF0000) == 0x7100) != 0)) || (temp_r4_7 == 0x1001)))
+    if ((var_r30 != ((u8*)arg0 + (arg0->m_Size + 8)))
+        && ((temp_r4_7 = ((nlChunk*)var_r30)->m_ID & 0x80FFFFFF, (((temp_r4_7 + 0x7FFF0000) == 0x7100) != 0)) || (temp_r4_7 == 0x1001)))
     {
         if ((temp_r4_7 + 0x7FFF0000) == 0x7100)
         {
             var_r3_7 = (u8*)var_r30 + 8;
         loop_40:
-            if (var_r3_7 != ((u8*)var_r30 + (((nlChunk*)var_r30)->size + 8)))
+            if (var_r3_7 != ((u8*)var_r30 + (((nlChunk*)var_r30)->m_Size + 8)))
             {
-                temp_r7_4 = ((nlChunk*)var_r3_7)->hdr;
+                temp_r7_4 = ((nlChunk*)var_r3_7)->m_ID;
                 temp_r6_5 = (temp_r7_4 & 0x80FFFFFF) + 0xFFFF0000;
                 switch (temp_r6_5)
                 { /* irregular */
@@ -254,12 +254,12 @@ loop_43:
                     break;
                 }
                 }
-                var_r3_7 = (u8*)var_r3_7 + (((nlChunk*)var_r3_7)->size + 8);
+                var_r3_7 = (u8*)var_r3_7 + (((nlChunk*)var_r3_7)->m_Size + 8);
                 goto loop_40;
             }
             var_r5 += 4;
         }
-        var_r30 = (u8*)var_r30 + (((nlChunk*)var_r30)->size + 8);
+        var_r30 = (u8*)var_r30 + (((nlChunk*)var_r30)->m_Size + 8);
         goto loop_43;
     }
 
@@ -324,7 +324,7 @@ loop_43:
     }
 
     // Tail: set morph/mask pointers: 0x34, 0x30, 0x38, 0x14
-    temp_r3_3 = ((nlChunk*)var_r30)->hdr & 0x7F000000;
+    temp_r3_3 = ((nlChunk*)var_r30)->m_ID & 0x7F000000;
     if (((-temp_r3_3 | temp_r3_3) >> 0x1F) != 0)
     {
         temp_r4_9 = 1 << (temp_r3_3 >> 0x18);
@@ -336,8 +336,8 @@ loop_43:
     }
     var_r4_obj->m_morphIdx = (unsigned long*)var_r0;
 
-    temp_r5_11 = (u8*)var_r30 + (((nlChunk*)var_r30)->size + 8);
-    temp_r3_4 = ((nlChunk*)temp_r5_11)->hdr & 0x7F000000;
+    temp_r5_11 = (u8*)var_r30 + (((nlChunk*)var_r30)->m_Size + 8);
+    temp_r3_4 = ((nlChunk*)temp_r5_11)->m_ID & 0x7F000000;
     if (((-temp_r3_4 | temp_r3_4) >> 0x1F) != 0)
     {
         temp_r4_10 = 1 << (temp_r3_4 >> 0x18);
@@ -349,8 +349,8 @@ loop_43:
     }
     var_r4_obj->m_morphTable = (void*)var_r0_2;
 
-    temp_r6_7 = (u8*)temp_r5_11 + (((nlChunk*)temp_r5_11)->size + 8);
-    temp_r3_5 = ((nlChunk*)temp_r6_7)->hdr & 0x7F000000;
+    temp_r6_7 = (u8*)temp_r5_11 + (((nlChunk*)temp_r5_11)->m_Size + 8);
+    temp_r3_5 = ((nlChunk*)temp_r6_7)->m_ID & 0x7F000000;
     if (((-temp_r3_5 | temp_r3_5) >> 0x1F) != 0)
     {
         temp_r4_11 = 1 << (temp_r3_5 >> 0x18);
@@ -362,7 +362,7 @@ loop_43:
     }
     var_r4_obj->m_morphBytes = (unsigned char*)var_r0_3;
 
-    temp_r5_12 = (s32*)((u8*)temp_r6_7 + (((nlChunk*)temp_r6_7)->size + 8));
+    temp_r5_12 = (s32*)((u8*)temp_r6_7 + (((nlChunk*)temp_r6_7)->m_Size + 8));
     temp_r3_6 = (*temp_r5_12) & 0x7F000000;
     if (((-temp_r3_6 | temp_r3_6) >> 0x1F) != 0)
     {
