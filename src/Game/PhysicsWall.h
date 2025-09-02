@@ -9,8 +9,15 @@ class PhysicsWall : public PhysicsPlane
 {
 public:
     PhysicsWall(CollisionSpace*, float, float, float);
-    virtual ~PhysicsWall();
-    virtual int GetObjectType() const;
+
+    virtual ~PhysicsWall() {
+        // EMPTY
+    };
+
+    virtual int GetObjectType() const
+    {
+        return 0x19;
+    };
 };
 
 #endif // _PHYSICSWALL_H_

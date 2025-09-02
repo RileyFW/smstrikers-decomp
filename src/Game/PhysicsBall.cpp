@@ -386,27 +386,19 @@ void PhysicsBall::CloneBall(const PhysicsBall& other)
  */
 void PhysicsBall::PostUpdate()
 {
-    nlVector3 linVel; // sp14, sp18, sp1C
+    nlVector3 linVel;
     nlVector3 pos;
-
-    f32 temp_f1;
-    f32 temp_f1_2;
-    f32 temp_f2;
-    f32 temp_f31;
-    f32 temp_f3;
 
     PhysicsObject::PostUpdate();
     GetLinearVelocity(&linVel);
 
-    float l = (linVel.f.z * linVel.f.z) + (linVel.f.x * linVel.f.x) + (linVel.f.y * linVel.f.y);
+    float l = (linVel.f.x * linVel.f.x) + (linVel.f.y * linVel.f.y) + (linVel.f.z * linVel.f.z);
     if (l > 2500.f)
     {
-        temp_f3 = 50.f / nlSqrt(l, true);
-        temp_f2 = temp_f3 * linVel.f.z;
-        temp_f1 = temp_f3 * linVel.f.y;
-        linVel.f.z = temp_f2;
-        linVel.f.x *= temp_f3;
-        linVel.f.y = temp_f1;
+        const f32 f = 50.f / nlSqrt(l, true);
+        linVel.f.z = f * linVel.f.z;
+        linVel.f.y = f * linVel.f.y;
+        linVel.f.x = f * linVel.f.x;
         SetLinearVelocity(linVel);
     }
 
@@ -416,16 +408,14 @@ void PhysicsBall::PostUpdate()
         SetLinearVelocity(linVel);
     }
 
-    temp_f31 = GetRadius();
-    if (GetPosition()->f.z < temp_f31)
+    if (GetPosition()->f.z < GetRadius())
     {
         m_unk_0x39 = 1;
         GetPosition(&pos);
         pos.f.z = GetRadius();
         SetPosition(pos, CoordinateType_0);
 
-        temp_f1_2 = linVel.f.z;
-        linVel.f.z = temp_f1_2 * -g_BallBounceGround;
+        linVel.f.z = linVel.f.z * -g_BallBounceGround;
         SetLinearVelocity(linVel);
     }
 }

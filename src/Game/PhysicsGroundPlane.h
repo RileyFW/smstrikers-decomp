@@ -8,8 +8,12 @@ class PhysicsGroundPlane : public PhysicsPlane
 {
 public:
     PhysicsGroundPlane(CollisionSpace*);
-    virtual ~PhysicsGroundPlane();
-    virtual int GetObjectType() const;
+    virtual ~PhysicsGroundPlane() { };
+
+    virtual int GetObjectType() const
+    {
+        return 0x11;
+    }
 };
 
 #endif // _PHYSICSGROUNDPLANE_H_

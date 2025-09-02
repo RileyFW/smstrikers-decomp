@@ -66,8 +66,9 @@ void FrontEnd::Destroy()
 /**
  * Offset/Address/Size: 0x854 | 0x800954D8 | size: 0x48
  */
-void FrontEnd::Initialize()
+bool FrontEnd::Initialize()
 {
+    return true;
 }
 
 /**

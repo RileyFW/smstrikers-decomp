@@ -8,7 +8,10 @@ class FrontEnd
 public:
     enum MenuEnterType
     {
-        MenuEnterType_0 = 0
+        MET_INVALID = -1,
+        MET_PAUSE = 0,
+        MET_CHOOSESIDES = 1,
+        MET_END = 2,
     };
 
     void ReturnToFE();
@@ -20,7 +23,7 @@ public:
     void EnterStartScreen(bool);
     void SetControllerState();
     void Destroy();
-    void Initialize();
+    static bool Initialize();
     void FEEventHandler(Event*, void*);
 
     static int m_feStateCurrent;
