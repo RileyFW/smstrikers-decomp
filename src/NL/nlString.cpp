@@ -44,43 +44,27 @@ void nlZeroMemory(void* buffer, unsigned long size)
 /**
  * Offset/Address/Size: 0x188 | 0x801D27C0 | size: 0x64
  */
-int nlStringLowerHash(const char* str)
+u32 nlStringLowerHash(const char* str)
 {
-    u8 cVar1;
-    u8 uVar2;
-    int iVar3;
-
-    iVar3 = -1;
-    while (true)
+    u32 h = -1;
+    while (*str)
     {
-        if (*str == '\0')
-            break;
-        cVar1 = *str;
-        str++;
-        uVar2 = nlToLower<u8>(cVar1);
-        iVar3 = iVar3 * 0x21 + (uVar2 & 0xff);
+        h += (h << 5);
+        h += (u32)nlToLower<u8>(*str++);
     }
-    return iVar3;
+    return h;
 }
 
 /**
  * Offset/Address/Size: 0x1EC | 0x801D2824 | size: 0x30
  */
-int nlStringHash(const char* str)
+u32 nlStringHash(const char* str)
 {
-    // TODO: get rid of: 
-    // mr r6, r3
-
-    s32 hash = -1;
-    u32 var_r4;
-    u8 temp_r0;
-
-    for (s8* var_r3 = (s8*)str; *var_r3 != 0; var_r3++)
+    u32 h = -1;
+    while (*str)
     {
-        temp_r0 = *(u8*)str;
-        hash += hash << 5;
-        hash += (u32)temp_r0;
+        h += (h << 5);
+        h += (unsigned char)*str++;
     }
-
-    return hash;
+    return h;
 }

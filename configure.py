@@ -1060,7 +1060,7 @@ config.libs = [
             Object(Matching, "NL/nlTask.cpp"),
             Object(NonMatching, "NL/nlTextBox.cpp"),
             Object(NonMatching, "NL/nlTextEscape.cpp"),
-            Object(NonMatching, "NL/nlTicker.cpp"),
+            Object(Matching, "NL/nlTicker.cpp"),
             Object(Matching, "NL/nlTimer.cpp"),     
 
             # Ext/Platform

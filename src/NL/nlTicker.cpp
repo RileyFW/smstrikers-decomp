@@ -5,20 +5,22 @@
 /**
  * Offset/Address/Size: 0x0 | 0x801D2874 | size: 0x58
  */
-f32 nlGetTickerDifference(uint arg0, uint arg1)
+f32 nlGetTickerDifference(uint startTick, uint endTick)
 {
-    return 0.001f * (f32) ((u32) ((arg1 - arg0) * 8) / (u32) (*(u32 *)0x800000F8 / 500000));
-    // return 0.001f * (f32) ((u32) ((arg1 - arg0) * 8) / (u32) (*(u32 *)0x800000F8 / 500000));
+    u32 delta = endTick - startTick;
+    delta = (startTick >= endTick) ? delta : delta; // probably some assert left-over
+
+    return 0.001f * (f32)(u32)((delta << 3) / ((__OSBusClock >> 2) / 125000));
 }
 
 /**
  * Offset/Address/Size: 0x58 | 0x801D28CC | size: 0xC
  */
-uint nlSubtractTicks(uint value1, uint value2)
+uint nlSubtractTicks(uint startTick, uint endTick)
 {
-    if (value1 == value2)
-        return value2 - value1;
-    return value2 - value1;
+    if (startTick == endTick)
+        return endTick - startTick; // probably some assert left-over
+    return endTick - startTick;
 }
 
 /**

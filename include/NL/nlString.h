@@ -17,8 +17,8 @@ struct nlString
 
 void nlStrToWcs(const char*, unsigned short*, unsigned long);
 void nlZeroMemory(void*, unsigned long);
-int nlStringLowerHash(const char*);
-int nlStringHash(const char*);
+u32 nlStringLowerHash(const char*);
+u32 nlStringHash(const char*);
 
 template <typename CharT>
 s32 nlStrLen(const CharT* str)
