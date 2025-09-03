@@ -4,23 +4,23 @@
 /**
  * Offset/Address/Size: 0x0 | 0x80057550 | size: 0x20
  */
- s32 cPlayer::GetUniqueID(int arg0) const
- {
-     if (arg0 == -1) 
-     {
-         arg0 = *m_unk_0x1CC;
-     }
-     arg0 *= 5;
-     return arg0 + m_unk_0x12C;
- }
+s32 cPlayer::GetUniqueID(int arg0) const
+{
+    if (arg0 == -1)
+    {
+        arg0 = *(s32*)m_pTeam;
+    }
+    arg0 *= 5;
+    return arg0 + m_ID;
+}
 
 /**
  * Offset/Address/Size: 0x20 | 0x80057570 | size: 0x48
  */
 void cPlayer::SetNoPickUpTime(float arg0)
 {
-    // To add .. some bits get set (arg0 <= 0.f)... 
-    m_timer->SetSeconds(arg0);
+    // To add .. some bits get set (arg0 <= 0.f)...
+    m_tNoPickupTimer.SetSeconds(arg0);
 }
 
 /**
@@ -65,7 +65,7 @@ void cPlayer::PostPhysicsUpdate()
 void cPlayer::PreUpdate(float arg0)
 {
     cCharacter::PreUpdate(arg0);
-    m_unk_0x18C = true;
+    m_bCanTestController = true;
 }
 
 /**
@@ -108,10 +108,10 @@ void cPlayer::SetPowerupAnimState(int)
  */
 void cPlayer::ClearSwapControllerTimer()
 {
-    m_unk_0x17C = 0;
-    m_unk_0x180 = 0;
-    m_unk_0x184 = 0;
-    m_unk_0x188 = 0;
+    m_tSwapControllerTimer[0].m_uPackedTime = 0;
+    m_tSwapControllerTimer[1].m_uPackedTime = 0;
+    m_tSwapControllerTimer[2].m_uPackedTime = 0;
+    m_tSwapControllerTimer[3].m_uPackedTime = 0;
 }
 
 /**
@@ -286,7 +286,7 @@ cPlayer::~cPlayer()
  * Offset/Address/Size: 0x2FAC | 0x8005A4FC | size: 0x380
  */
 cPlayer::cPlayer(int arg0, eCharacterClass characterClass, const int* arg2, cSHierarchy* hierarchy, cAnimInventory* animInventory, const CharacterPhysicsData* physData, PlayerTweaks* playerTweaks, AnimRetargetList* animRetargetList, eClassTypes classType)
-: cCharacter(characterClass, arg2, hierarchy, animInventory, physData, playerTweaks->m_unk_0x44, playerTweaks->m_unk_0x48, animRetargetList, classType)
+    : cCharacter(characterClass, arg2, hierarchy, animInventory, physData, playerTweaks->m_unk_0x44, playerTweaks->m_unk_0x48, animRetargetList, classType)
 {
 }
 

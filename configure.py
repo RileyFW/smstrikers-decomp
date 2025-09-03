@@ -756,6 +756,7 @@ config.libs = [
             Object(Matching, "Game/PhysicsPlane.cpp"),
             Object(Matching, "Game/PhysicsRoundedCorner.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/PhysicsWall.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/PhysicsNPC.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/PhysicsObject.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "Game/PhysicsCompositeObject.cpp"),
             Object(NonMatching, "Game/PhysicsCharacterBase.cpp"),
@@ -1060,7 +1061,7 @@ config.libs = [
             Object(NonMatching, "NL/nlTextBox.cpp"),
             Object(NonMatching, "NL/nlTextEscape.cpp"),
             Object(NonMatching, "NL/nlTicker.cpp"),
-            Object(NonMatching, "NL/nlTimer.cpp"),     
+            Object(Matching, "NL/nlTimer.cpp"),     
 
             # Ext/Platform
             Object(Matching, "NL/plat/globalpad.cpp", extra_cflags=["-inline deferred"]),

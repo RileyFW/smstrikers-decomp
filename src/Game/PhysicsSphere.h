@@ -9,11 +9,11 @@ class PhysicsWorld;
 class PhysicsSphere : public PhysicsObject
 {
 public:
+    PhysicsSphere(CollisionSpace*, PhysicsWorld*, float);
+    virtual ~PhysicsSphere() { };
+    virtual int GetObjectType() const { return 0x0A; };
     void SetRadius(float);
     float GetRadius();
-    virtual int GetObjectType() const;
-    PhysicsSphere(CollisionSpace*, PhysicsWorld*, float);
-    virtual ~PhysicsSphere();
 };
 
 #endif // _PHYSICSSPHERE_H_

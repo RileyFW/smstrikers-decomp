@@ -264,7 +264,7 @@ void cBall::GetInNet(int&)
 cPlayer* cBall::GetPassTargetFielder() const
 {
     cPlayer* player = m_passTargetPlayer;
-    if ((player == NULL) || (player->m_playerType != 2))
+    if ((player == NULL) || (player->m_eClassType != FIELDER))
     {
         return NULL;
     }
@@ -277,7 +277,7 @@ cPlayer* cBall::GetPassTargetFielder() const
 cPlayer* cBall::GetOwnerGoalie()
 {
     cPlayer* player = m_playerOwner;
-    if ((player == NULL) || (player->m_playerType != 3))
+    if ((player == NULL) || (player->m_eClassType != GOALIE))
     {
         return NULL;
     }
@@ -290,7 +290,7 @@ cPlayer* cBall::GetOwnerGoalie()
 cPlayer* cBall::GetOwnerFielder() const
 {
     cPlayer* player = m_playerOwner;
-    if ((player == NULL) || (player->m_playerType != 2))
+    if ((player == NULL) || (player->m_eClassType != FIELDER))
     {
         return NULL;
     }
@@ -314,7 +314,7 @@ nlVector3* cBall::GetAIVelocity() const
     cPlayer* temp_r4 = m_playerOwner;
     if (temp_r4 != NULL)
     {
-        return &(temp_r4->m_velocity);
+        return &(temp_r4->m_v3Velocity);
     }
     return (nlVector3*)&(m_unk_0x58);
 }
@@ -458,20 +458,20 @@ cBall::cBall()
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x8000DE80 | size: 0x8
-//  */
-int PhysicsSphere::GetObjectType() const
-{
-    return 0x0A;
-}
+// // /**
+// //  * Offset/Address/Size: 0x0 | 0x8000DE80 | size: 0x8
+// //  */
+// int PhysicsSphere::GetObjectType() const
+// {
+//     return 0x0A;
+// }
 
-// /**
-//  * Offset/Address/Size: 0x8 | 0x8000DE88 | size: 0x60
-//  */
-PhysicsSphere::~PhysicsSphere()
-{
-}
+// // /**
+// //  * Offset/Address/Size: 0x8 | 0x8000DE88 | size: 0x60
+// //  */
+// PhysicsSphere::~PhysicsSphere()
+// {
+// }
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8000DEE8 | size: 0x4

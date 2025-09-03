@@ -10,6 +10,8 @@
 #include "PhysicsCharacter.h"
 #include "CharacterAudio.h"
 
+#include "Game/PoseNode.h"
+
 #include "ObjectBlur.h"
 
 class Event;
@@ -26,15 +28,56 @@ class EmissionController;
 class EffectsGroup;
 class cTeam;
 
-// Enums
 enum eCharacterClass
 {
-    eCharacterClass_0 = 0
+    CHARACTER_CLASS_INVALID = -1,
+    BIRDO = 0,
+    DAISY = 1,
+    DONKEYKONG = 2,
+    HAMMERBROS = 3,
+    KOOPA = 4,
+    LUIGI = 5,
+    MARIO = 6,
+    PEACH = 7,
+    TOAD = 8,
+    WALUIGI = 9,
+    WARIO = 10,
+    YOSHI = 11,
+    MYSTERY = 12,
+    NUM_FIELDER_CLASSES = 13,
+    DAISY_GOALIE = 13,
+    DONKEYKONG_GOALIE = 14,
+    LUIGI_GOALIE = 15,
+    MARIO_GOALIE = 16,
+    PEACH_GOALIE = 17,
+    WALUIGI_GOALIE = 18,
+    WARIO_GOALIE = 19,
+    YOSHI_GOALIE = 20,
+    SUPERTEAM_GOALIE = 21,
+    NUM_CHARACTER_CLASSES = 22,
+    NUM_GOALIE_CLASSES = 9,
+};
+
+enum eMovementState
+{
+    MOVEMENT_COAST = 0,
+    MOVEMENT_DECELERATE_EXPONENTIAL = 1,
+    MOVEMENT_FROM_ANIM = 2,
+    MOVEMENT_FROM_ANIM_SEEK = 3,
+    MOVEMENT_NONE = 4,
+    MOVEMENT_RUNNING = 5,
+    MOVEMENT_RUNNING_NO_TURN = 6,
+    MOVEMENT_STRAFING = 7,
+    MOVEMENT_UNUSED = 8,
 };
 
 enum eClassTypes
 {
-    eClassTypes_0 = 0
+    CHARACTER = 0,
+    PLAYER = 1,
+    FIELDER = 2,
+    GOALIE = 3,
+    NUM_CLASSES = 4,
 };
 
 enum PosUpdateMethod
@@ -42,14 +85,17 @@ enum PosUpdateMethod
     PosUpdateMethod_0 = 0
 };
 
+class cHeadTrack;
 class cPN_SAnimController;
+
+#include "Drawable/DrawableObj.h"
 
 class cCharacter //: public PhysicsCharacterBase
 {
 public:
     virtual ~cCharacter();
     cCharacter(eCharacterClass, const int*, cSHierarchy*, cAnimInventory*, const CharacterPhysicsData*, float, float, AnimRetargetList*,
-               eClassTypes);
+        eClassTypes);
 
     virtual void PostPhysicsUpdate();
     virtual void PrePhysicsUpdate(float);
@@ -104,55 +150,58 @@ public:
 
     virtual void Update(float);
 
-    /* 0x00 */ u8 m_padding_0x00[0x10];
-    /* 0x14 */ PhysicsCharacter* m_physicsCharacter;
-    /* 0x18 */ nlVector3 m_position;
-    /* 0x24 */ nlVector3 m_unk_0x24;
+    /* 0x04 */ eCharacterClass m_eCharacterClass;
+    /* 0x08 */ const CharacterPhysicsData* m_pPhysicsData;
+    /* 0x0C */ GLSkinMesh* m_pSkinMesh[2];
+    /* 0x14 */ PhysicsCharacter* m_pPhysicsCharacter;
+    /* 0x18 */ nlVector3 m_v3Position;
+    /* 0x24 */ nlVector3 m_v3PrevPosition;
+    /* 0x30 */ nlVector3 m_v3Velocity;
+    /* 0x3C */ eMovementState m_eMovementState;
+    /* 0x40 */ u16 m_aDesiredFacingDirection;
+    /* 0x42 */ u16 m_aActualFacingDirection;
+    /* 0x44 */ u16 m_aPrevFacingDirection;
+    /* 0x46 */ u16 m_aDesiredMovementDirection;
+    /* 0x48 */ u16 m_aActualMovementDirection;
+    /* 0x4A */ bool m_bFromAnimBlended;
+    /* 0x4C */ float m_fAnimAdjustBeginTime;
+    /* 0x50 */ float m_fAnimAdjustEndTime;
+    /* 0x54 */ float m_fDirectionSeekSpeed;
+    /* 0x58 */ float m_fDirectionSeekFalloff;
+    /* 0x5C */ float m_fAccel;
+    /* 0x60 */ float m_fDecel;
+    /* 0x64 */ float m_fDesiredSpee;
+    /* 0x68 */ float m_fActualSpeed;
+    /* 0x6C */ float m_fLeanAmount;
+    /* 0x70 */ s16 m_nAnimTurnAdjust;
+    /* 0x74 */ nlVector3 m_v3AnimMoveAdjust;
+    /* 0x80 */ cAnimInventory* m_pAnimInventory;
+    /* 0x84 */ cPoseAccumulator* m_pPoseAccumulator;
+    /* 0x88 */ cPoseNode* m_pPoseTree;
+    /* 0x8C */ cPoseNode** m_pAILayer;
+    /* 0x90 */ cPN_SAnimController* m_pCurrentAnimController;
+    /* 0x94 */ s32 m_eAnimID;
+    /* 0x98 */ AnimRetargetList* m_pAnimRetargetList;
+    /* 0x9C */ cHeadTrack* m_pHeadTrack;
+    /* 0xA0 */ s32 m_nHeadJointIndex;
+    /* 0xA4 */ s32 m_nBip01JointIndex;
+    /* 0xA8 */ s32 m_nPropJointIndex;
+    /* 0xAC */ s32 m_nSpine1JointIndex;
+    /* 0xB0 */ const char* m_szEffectsName;
+    /* 0xB4 */ eClassTypes m_eClassType;
+    /* 0xB8 */ bool m_bIsUsingElectrocutionTexture;
+    /* 0xBC */ Audio::cCharacterSFX* m_pCharacterSFX;
+    /* 0xC0 */ DrawableObject* m_pPropModel;
+    /* 0xC4 */ u32 m_uNormalTextureID;
+    /* 0xC8 */ u32 m_uSwapTextureID;
 
-    /* 0x30 */ nlVector3 m_velocity;
-
-    /* 0x3C */ u32 m_unk_0x3C;
-
-    /* 0x40 */ u8 m_pad_0x40[0x02];
-
-    /* 0x42 */ unsigned short m_unk_0x42;
-    /* 0x44 */ unsigned short m_unk_0x44;
-
-    /* 0x46 */ u8 m_padding_0x46[0xE];
-
-    /* 0x54 */ float m_unk_0x54;
-    /* 0x58 */ float m_unk_0x58;
-    /* 0x5C */ float m_unk_0x5C;
-    /* 0x60 */ float m_unk_0x60;
-
-    /* 0x64 */ u8 m_padding_0x64[0x0C];
-
-    /* 0x70 */ s16 m_unk_0x70;
-    /* 0x74 */ nlVector3 m_unk_0x74;
-
-    /* 0x80 */ u8 m_padding_0x80[0x14];
-
-    /* 0x94 */ u32 m_unk_0x94;
-
-    /* 0x98 */ u8 m_padding_0x98[0x1C];
-
-    /* 0xB4 */ u32 m_unk_0xB4;
-    /* 0xB8 */ bool m_unk_0xB8;
-    /* 0xBC */ Audio::cCharacterSFX* m_sfx;
-
-    /* 0xC0 */ u8 m_padding_0xC0[0xC];
-
-    /* 0xCC */ nlMatrix4 m_worldMatrix;
-    /* 0x10C */ float m_unk_0x10C;
-    /* 0x110 */ float m_unk_0x110;
-
-    /* 0x114 */ BlurHandler* m_unk_0x114;
-    /* 0x118 */ Blinker* m_unk_0x118;
-    /* 0x11C */ FxTexturingEntry* m_unk_0x11C;
-
-    /* 0x120 */ u8 m_padding_0x120[0xAC];
-
-    /* 0x1CC */ cTeam* m_unk_0x1CC;
+    /* 0xCC */ nlMatrix4 m_m4WorldMatrix;
+    /* 0x10C */ float m_Dirt;
+    /* 0x110 */ float m_MinDirt;
+    /* 0x114 */ BlurHandler* m_pBlurHandler;
+    /* 0x118 */ Blinker* m_pBlinker;
+    /* 0x11C */ EffectsTexturing* m_pEffectsTexturing;
+    /* 0x120 */ nlVector3 m_v3ScreenPosition;
 };
 
 class cPN_SAnimController

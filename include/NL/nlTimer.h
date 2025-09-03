@@ -6,14 +6,12 @@
 class Timer
 {
 public:
-    u32 Countup(float, float);
-    u32 Countdown(float, float);
+    bool Countup(float, float);
+    bool Countdown(float, float);
     f32 GetSeconds() const;
     void SetSeconds(float);
 
-    unsigned int _unk_0x0;
-    float _unk_0x4;
-    double _unk_0x8;
+    /* 0x00 */ u32 m_uPackedTime;
 };
 
 #endif // _NLTIMER_H_

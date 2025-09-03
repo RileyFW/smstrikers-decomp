@@ -9,6 +9,7 @@ class cBall;
 class cPoseAccumulator;
 class cPN_SingleAxisBlender;
 class cPN_SAnimController;
+class cPN_Feather;
 class CollisionPlayerWallData;
 class cAIPad;
 class CollisionPlayerPlayerData;
@@ -20,11 +21,67 @@ class AnimRetargetList;
 
 #include "CharacterTweaks.h"
 
+enum ePositionSeekState
+{
+    PSS_ARRIVED = 0,
+    PSS_NEAR_SEEKING = 1,
+    PSS_FAR_SEEKING = 2,
+};
+
+enum eBallRotationMode
+{
+    BRM_ANIMATED = 0,
+    BRM_MATCH_VELOCITY = 1,
+};
+
+enum ePadActions
+{
+    PAD_CAMERA_UP = 0,
+    PAD_CAMERA_DOWN = 1,
+    PAD_CAMERA_ZOOM_IN = 2,
+    PAD_CAMERA_ZOOM_OUT = 3,
+    PAD_ENTER_REPLAY = 4,
+    PAD_REPLAY_REVERSE = 5,
+    PAD_REPLAY_FORWARD = 6,
+    PAD_SKIP_PRESENTATION = 7,
+    PAD_TOGGLE_TWEAKER = 8,
+    PAD_TWEAKER_ACCEL = 9,
+    PAD_TWEAKER_BACK = 10,
+    PAD_DPAD_LEFT = 11,
+    PAD_DPAD_RIGHT = 12,
+    PAD_DPAD_UP = 13,
+    PAD_DPAD_DOWN = 14,
+    PAD_NEXT_ANIM = 15,
+    PAD_PREV_ANIM = 16,
+    PAD_NEXT_MODEL = 17,
+    PAD_PREV_MODEL = 18,
+    PAD_START_STOP_ANIM = 19,
+    PAD_TURBO = 20,
+    PAD_AIM = 21,
+    PAD_USE = 22,
+    PAD_TOGGLE_POWERUP = 23,
+    PAD_HIT = 24,
+    PAD_SLIDE_ATTACK = 25,
+    PAD_SWITCH = 26,
+    PAD_PASS = 27,
+    PAD_SHOOT = 28,
+    PAD_DEKE = 29,
+    PAD_DEKE_LEFT = 30,
+    PAD_DEKE_RIGHT = 31,
+    PAD_RESET_PLAYER_HOLD = 32,
+    PAD_RESET_PLAYER_PRESS = 33,
+    PAD_SWITCH_STADIUM = 34,
+    PAD_SWITCH_CAMERA = 35,
+    PAD_START = 36,
+    PAD_NONE = 37,
+    PAD_NUM_ACTIONS = 38,
+};
+
 class cPlayer : public cCharacter
 {
 public:
-    virtual ~cPlayer();
     cPlayer(int, eCharacterClass, const int*, cSHierarchy*, cAnimInventory*, const CharacterPhysicsData*, PlayerTweaks*, AnimRetargetList*, eClassTypes);
+    virtual ~cPlayer();
 
     s32 GetUniqueID(int) const;
     void SetNoPickUpTime(float);
@@ -65,36 +122,40 @@ public:
     void SetSpaceSearch(SpaceSearch*);
     virtual void InitActionPostWhistle();
 
-    /* 0x00 */ u8 m_padding_0x00[0x30];
-    /* 0x30 */ nlVector3 m_velocity;
-    /* 0x34 */ u8 m_padding_0x34[0x80];
-    /* 0xB4 */ s32 m_playerType; // m_unk_0xB4
-    /* 0xB8 */ u8 m_padding_0xB8[0x38];
-    /* 0x12C */ s32 m_unk_0x12C;
-    
-
-    /* 0x130 */ u8 m_padding_0x130[0x34];
-
-    /* 0x164 */ Timer *m_timer;
-
-    /* 0x168 */ u8 m_padding_0x168[0x14];
-
-    /* 0x17C */ u32 m_unk_0x17C;
-    /* 0x180 */ u32 m_unk_0x180;
-    /* 0x184 */ u32 m_unk_0x184;
-    /* 0x188 */ u32 m_unk_0x188;   
-    /* 0x18C */ bool m_unk_0x18C;
-
-    /* 0x190 */ u8 m_padding_0x190[0x3C];
-
-    /* 0x1CC */ s32 *m_unk_0x1CC;
+    /* 0x12C */ s32 m_ID;                                // offset 0x12C, size 0x4
+    /* 0x130 */ bool m_bIsContactingWall;                // offset 0x130, size 0x1
+    /* 0x134 */ ePositionSeekState m_ePositionSeekState; // offset 0x134, size 0x4
+    /* 0x138 */ nlVector3 m_v3AIPosition;                // offset 0x138, size 0xC
+    /* 0x144 */ eBallRotationMode m_eBallRotationMode;   // offset 0x144, size 0x4
+    /* 0x148 */ bool m_ResetBaseBallOrientation;         // offset 0x148, size 0x1
+    /* 0x14C */ nlQuaternion m_BaseBallOrientation;      // offset 0x14C, size 0x10
+    /* 0x15C */ Timer m_tBallPossessionTimer;            // offset 0x15C, size 0x4
+    /* 0x160 */ Timer m_tBallUnPossessionTimer;          // offset 0x160, size 0x4
+    /* 0x164 */ Timer m_tNoPickupTimer;                  // offset 0x164, size 0x4
+    /* 0x168 */ Timer m_tNoPickupPassInterceptTimer;     // offset 0x168, size 0x4
+    /* 0x16C */ f32 m_fShotStrengthTime;                 // offset 0x16C, size 0x4
+    /* 0x170 */ Timer m_tSlideAttackTimer;               // offset 0x170, size 0x4
+    /* 0x174 */ Timer m_tLooseBallPassTimer;             // offset 0x174, size 0x4
+    /* 0x178 */ Timer m_tInactivityTimer;                // offset 0x178, size 0x4
+    /* 0x17C */ Timer m_tSwapControllerTimer[4];         // offset 0x17C, size 0x10
+    /* 0x18C */ bool m_bCanTestController;               // offset 0x18C, size 0x1
+    /* 0x190 */ ePadActions m_eLastPadAction;            // offset 0x190, size 0x4
+    /* 0x194 */ u16 m_aSwapFacingDirection;              // offset 0x194, size 0x2
+    /* 0x198 */ Timer m_tSwapFacingTimer;                // offset 0x198, size 0x4
+    /* 0x19C */ f32 m_UserControlledTime;                // offset 0x19C, size 0x4
+    /* 0x1A0 */ cPN_Feather* m_pPowerupLayer;            // offset 0x1A0, size 0x4
+    /* 0x1A4 */ cPN_Feather* m_pReceivePassLayer;        // offset 0x1A4, size 0x4
+    /* 0x1A8 */ s32 m_nBip01JointIndex;                  // offset 0x1A8, size 0x4
+    /* 0x1AC */ s32 m_nBallJointIndex;                   // offset 0x1AC, size 0x4
+    /* 0x1B0 */ s32 m_nRightFootJointIndex;              // offset 0x1B0, size 0x4
+    /* 0x1B4 */ s32 m_nLeftFootJointIndex;               // offset 0x1B4, size 0x4
+    /* 0x1B8 */ s32 m_nLeftHandJointIndex;               // offset 0x1B8, size 0x4
+    /* 0x1BC */ s32 m_nRightHandJointIndex;              // offset 0x1BC, size 0x4
+    /* 0x1C0 */ cAIPad* m_pController;                   // offset 0x1C0, size 0x4
+    /* 0x1C4 */ PlayerTweaks* m_pTweaks;                 // offset 0x1C4, size 0x4
+    /* 0x1C8 */ cBall* m_pBall;                          // offset 0x1C8, size 0x4
+    /* 0x1CC */ cTeam* m_pTeam;                          // offset 0x1CC, size 0x4
+    /* 0x1D0 */ SpaceSearch* m_pSpaceSearch;             // offset 0x1D0, size 0x4
 };
-
-
-// class Timer
-// {
-// public:
-//     void __defctor();
-// };
 
 #endif // _PLAYER_H_

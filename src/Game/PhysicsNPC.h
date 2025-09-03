@@ -1,17 +1,27 @@
 #ifndef _PHYSICSNPC_H_
 #define _PHYSICSNPC_H_
 
-#include "Game/Physics/PhysicsObject.h"
+#include "PhysicsSphere.h"
+#include "CollisionSpace.h"
 
-class PhysicsNPC : public PhysicsObject
+class SkinAnimatedMovableNPC;
+
+class PhysicsNPC : public PhysicsSphere
 {
 public:
-    ~PhysicsNPC();
+    typedef void (*CallbackFn)(PhysicsObject*, PhysicsObject*, const nlVector3&);
+
+    PhysicsNPC(float);
+    virtual ~PhysicsNPC();
+    virtual int GetObjectType() const { return 0x1A; };
     virtual int SetContactInfo(dContact*, PhysicsObject*, bool);
     virtual int Contact(PhysicsObject*, dContact*, int);
-    void SetCallbackFunction(void (*)(PhysicsObject*, PhysicsObject*, const nlVector3&));
-    PhysicsNPC(float);
-    virtual int GetObjectType() const;
+
+    void SetCallbackFunction(CallbackFn cb);
+    // void SetCallbackFunction(void (*)(PhysicsObject*, PhysicsObject*, const nlVector3&));
+
+    /* 0x2C */ CallbackFn mpTriggerCallbackFunc;
+    /* 0x30 */ /*SkinAnimatedMovableNPC*/ PhysicsObject* mpAINPC;
 };
 
 #endif // _PHYSICSNPC_H_

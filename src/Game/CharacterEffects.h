@@ -19,8 +19,8 @@ typedef struct FxTexturingEntry
     u32 t0;
     u32 t1;
     u32 t2;
-} FxTexturingEntry;
+} EffectsTexturing;
 
-FxTexturingEntry* fxGetTexturing(eEffectsTextureType);
+EffectsTexturing* fxGetTexturing(eEffectsTextureType);
 
 #endif // _CHARACTEREFFECTS_H_

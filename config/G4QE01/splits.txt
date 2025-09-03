@@ -1821,7 +1821,7 @@ PhysicsNet.o:
 	.sbss       start:0x80373B30 end:0x80373B58
 	.sdata2     start:0x803762F8 end:0x80376320
 
-PhysicsNPC.o:
+Game/PhysicsNPC.cpp:
 	.text       start:0x8013B4B8 end:0x8013B960
 	.text       start:0x8013B960 end:0x8013B968
 	.text       start:0x8013B968 end:0x8013B968

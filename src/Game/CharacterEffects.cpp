@@ -1,6 +1,6 @@
 #include "CharacterEffects.h"
 
-FxTexturingEntry fxTexturing[] = {
+EffectsTexturing fxTexturing[] = {
     { 0xFFFFFFFF, 0x00000000, 0x00000000 },
     { glGetTexture("effects/fx_env_ice"), 0x00000003, 0x00000000 },
     { glGetTexture("effects/fx_env_fire"), 0x00000003, 0x01000000 },
@@ -11,7 +11,7 @@ FxTexturingEntry fxTexturing[] = {
 /**
  * Offset/Address/Size: 0x0 | 0x8012A7AC | size: 0x14
  */
-FxTexturingEntry* fxGetTexturing(eEffectsTextureType type)
+EffectsTexturing* fxGetTexturing(eEffectsTextureType type)
 {
     return &fxTexturing[type];
 }
