@@ -700,6 +700,10 @@ config.libs = [
             # Game Objects
             Object(NonMatching, "Game/GameInfo.cpp", extra_cflags=["-inline deferred"]),    
 
+            Object(Matching, "Game/CameraLoader.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/CameraMan.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Camera/FaceCam.cpp", extra_cflags=["-inline deferred"]),
+
             Object(NonMatching, "Game/Ball.cpp"),
             Object(Matching, "Game/Net.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Field.cpp", extra_cflags=["-inline deferred"]),

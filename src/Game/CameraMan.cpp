@@ -1,81 +1,81 @@
-#include "CameraMan.h"
+#include "Game/CameraMan.h"
 
-/**
- * Offset/Address/Size: 0x0 | 0x801A8634 | size: 0x88
- */
-void nlDeleteRing<cBaseCamera>(cBaseCamera**)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x801A8634 | size: 0x88
+//  */
+// void nlDeleteRing<cBaseCamera>(cBaseCamera**)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x1F8 | 0x801A85FC | size: 0x38
- */
-void nlDLRingAddStart<cBaseCamera>(cBaseCamera**, cBaseCamera*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x1F8 | 0x801A85FC | size: 0x38
+//  */
+// void nlDLRingAddStart<cBaseCamera>(cBaseCamera**, cBaseCamera*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x1BC | 0x801A85C0 | size: 0x3C
- */
-void nlDLRingAddEnd<cBaseCamera>(cBaseCamera**, cBaseCamera*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x1BC | 0x801A85C0 | size: 0x3C
+//  */
+// void nlDLRingAddEnd<cBaseCamera>(cBaseCamera**, cBaseCamera*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x178 | 0x801A857C | size: 0x44
- */
-void nlDLRingRemove<cBaseCamera>(cBaseCamera**, cBaseCamera*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x178 | 0x801A857C | size: 0x44
+//  */
+// void nlDLRingRemove<cBaseCamera>(cBaseCamera**, cBaseCamera*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x138 | 0x801A853C | size: 0x40
- */
-void nlDLRingValidateContainsElement<cBaseCamera>(cBaseCamera*, const cBaseCamera*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x138 | 0x801A853C | size: 0x40
+//  */
+// void nlDLRingValidateContainsElement<cBaseCamera>(cBaseCamera*, const cBaseCamera*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x9C | 0x801A84A0 | size: 0x9C
- */
-void nlDLRingRemoveSafely<cBaseCamera>(cBaseCamera**, const cBaseCamera*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x9C | 0x801A84A0 | size: 0x9C
+//  */
+// void nlDLRingRemoveSafely<cBaseCamera>(cBaseCamera**, const cBaseCamera*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x8C | 0x801A8490 | size: 0x10
- */
-void nlDLRingGetEnd<cBaseCamera>(cBaseCamera*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x8C | 0x801A8490 | size: 0x10
+//  */
+// void nlDLRingGetEnd<cBaseCamera>(cBaseCamera*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x54 | 0x801A8458 | size: 0x38
- */
-void nlDLRingRemoveStart<cBaseCamera>(cBaseCamera**)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x54 | 0x801A8458 | size: 0x38
+//  */
+// void nlDLRingRemoveStart<cBaseCamera>(cBaseCamera**)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x20 | 0x801A8424 | size: 0x34
- */
-void nlDLRingRemoveEnd<cBaseCamera>(cBaseCamera**)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x20 | 0x801A8424 | size: 0x34
+//  */
+// void nlDLRingRemoveEnd<cBaseCamera>(cBaseCamera**)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x801A8404 | size: 0x20
- */
-void nlDeleteDLRing<cBaseCamera>(cBaseCamera**)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x801A8404 | size: 0x20
+//  */
+// void nlDeleteDLRing<cBaseCamera>(cBaseCamera**)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x801A83F4 | size: 0x10
- */
-void 0x801A8404..0x801A8634 | size: 0x230
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x801A83F4 | size: 0x10
+//  */
+// void 0x801A8404..0x801A8634 | size : 0x230
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x1D04 | 0x801A838C | size: 0x68

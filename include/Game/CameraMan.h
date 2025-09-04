@@ -54,7 +54,7 @@ void FireCameraRumbleFilter(float, float);
 class cCameraManager
 {
 public:
-    void Startup();
+    static void Startup();
     void Shutdown();
     void Update(float);
     void UpdateGameCameraType();

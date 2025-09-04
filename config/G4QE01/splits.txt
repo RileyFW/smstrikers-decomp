@@ -2768,7 +2768,7 @@ rumblefilter.o:
 	.sbss       start:0x80373F10 end:0x80373F18
 	.sdata2     start:0x80376C00 end:0x80376C18
 
-CameraLoader.o:
+Game/CameraLoader.cpp:
 	.text       start:0x801A6654 end:0x801A6688
 	.text       start:0x801A6688 end:0x801A6688
 	.ctors      start:0x8028D35C end:0x8028D360
@@ -2800,7 +2800,7 @@ DebugCam.o:
 	.sdata      start:0x80372A10 end:0x80372A18
 	.sdata2     start:0x80376C40 end:0x80376C90
 
-FaceCam.o:
+Game/Camera/FaceCam.cpp:
 	.text       start:0x801A8D40 end:0x801A8EAC
 	.text       start:0x801A8EAC end:0x801A8F18
 	.text       start:0x801A8F18 end:0x801A8F18
