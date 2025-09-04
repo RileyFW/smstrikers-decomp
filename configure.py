@@ -780,6 +780,7 @@ config.libs = [
             Object(Matching, "Game/WorldTriggers.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/CharacterTriggers.cpp", extra_cflags=["-inline deferred"]),
 
+            Object(Matching, "Game/AIPad.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/PadMonkey.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/PadActions.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/RumbleActions.cpp", extra_cflags=["-inline deferred"]),

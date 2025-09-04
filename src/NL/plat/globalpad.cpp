@@ -15,19 +15,19 @@ void cGlobalPad::Update(float)
 
     x = this->AnalogLeftX();
     y = this->AnalogLeftY();
-    m_leftStickMagnitude = nlSqrt((x * x) + (y * y), 1);
+    m_polarAnalogLeft.r = nlSqrt((x * x) + (y * y), 1);
 
     if ((0.f != x) || (0.f != y))
     {
-        m_leftStickAngle = (s16)(10430.378f * nlATan2f(y, x));
+        m_polarAnalogLeft.a = (u16)(10430.378f * nlATan2f(y, x));
     }
 
     x = this->AnalogRightX();
     y = this->AnalogRightY();
-    m_rightStickMagnitude = nlSqrt((x * x) + (y * y), 1);
+    m_polarAnalogRight.r = nlSqrt((x * x) + (y * y), 1);
     if ((0.f != x) || (0.f != y))
     {
-        m_rightStickAngle = (s16)(10430.378f * nlATan2f(y, x));
+        m_polarAnalogRight.a = (u16)(10430.378f * nlATan2f(y, x));
     }
 }
 

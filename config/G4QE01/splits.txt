@@ -21,7 +21,7 @@ AILoader.o:
 	.sdata      start:0x80371040 end:0x80371048
 	.sbss       start:0x80373640 end:0x80373648
 
-AIPad.o:
+Game/AIPad.cpp:
 	.text       start:0x80005730 end:0x80005888
 	.text       start:0x80005888 end:0x80005894
 	.ctors      start:0x8028D268 end:0x8028D26C
@@ -2775,7 +2775,7 @@ CameraLoader.o:
 	.data       start:0x802C3B30 end:0x802C3B48
 	.sbss       start:0x80373F18 end:0x80373F20
 
-CameraMan.o:
+Game/CameraMan.cpp:
 	.text       start:0x801A6688 end:0x801A83F4
 	.text       start:0x801A83F4 end:0x801A83F4
 	.text       start:0x801A83F4 end:0x801A83F4

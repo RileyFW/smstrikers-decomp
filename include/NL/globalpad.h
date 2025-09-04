@@ -4,6 +4,12 @@
 #include "types.h"
 #include "Dolphin/pad.h"
 
+struct nlPolar
+{
+    /* 0x00 */ u16 a;
+    /* 0x04 */ float r;
+}; // size: 0x8
+
 class cGlobalPad
 {
 public:
@@ -37,11 +43,8 @@ public:
     void EnableLeftAnalogToDPadMap();
 
     /* 0x04 */ s32 m_padIndex;
-    /* 0x08 */ s16 m_leftStickAngle;
-    /* 0x0C */ f32 m_leftStickMagnitude;
-    /* 0x10 */ s16 m_rightStickAngle;
-    /* 0x14 */ f32 m_rightStickMagnitude;
-
+    /* 0x08 */ nlPolar m_polarAnalogLeft;
+    /* 0x10 */ nlPolar m_polarAnalogRight;
     /* 0x18 */ bool m_isLeftAnalogToDPadMapEnabled;
     /* 0x19 */ bool m_isRightAnalogToDPadMapEnabled;
     /* 0x1A */ bool m_unk_0x1A;
