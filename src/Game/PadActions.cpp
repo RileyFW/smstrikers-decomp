@@ -1,5 +1,23 @@
 #include "Game/PadActions.h"
 
+#include "NL/platpad.h"
+#include "NL/nlConfig.h"
+#include "NL/nlLexicalCast.h"
+#include "NL/nlMemory.h"
+
+#include "Game/PadMonkey.h"
+#include "NL/globalpad.h"
+
+extern bool g_bEnableGamecubePadMonkey;
+
+s32 g_pPadRemapArray[40] = {
+    0x00000020, 0x00000040, 0x00000008, 0x00000004, 0x00000004, 0x00000040, 0x00000020, 0x00000100,
+    0x00000010, 0x00000100, 0x00000200, 0x00000001, 0x00000002, 0x00000008, 0x00000004, 0x00000100,
+    0x00000200, 0x00000400, 0x00000800, 0x00001000, 0x00000020, 0x00000040, 0x00000400, 0x00000010,
+    0x00000800, 0x00000200, 0x00000100, 0x00000100, 0x00000200, 0x00000800, 0x00000800, 0x00000800,
+    0x00000020, 0x00001000, 0x00000010, 0x00000010, 0x00001000, 0x00001000
+};
+
 // /**
 //  * Offset/Address/Size: 0x128 | 0x80193720 | size: 0xD74
 //  */
@@ -26,6 +44,63 @@
  */
 void InitPads()
 {
+    Config* conf = Config::Global();
+    SetTagValuePair* tvp = conf->FindTvp("enable_pad_monkey");
+
+    bool enable_pad_monkey = false;
+    if (tvp->m_unk_0x00 == nullptr)
+    {
+        conf->Set("enable_pad_monkey", false);
+        enable_pad_monkey = false;
+    }
+    else
+    {
+        if (tvp->m_unk_0x04 == 0)
+        {
+            enable_pad_monkey = LexicalCast<bool, bool>(tvp->m_unk_0x08);
+        }
+        else if (tvp->m_unk_0x04 == 1)
+        {
+            enable_pad_monkey = LexicalCast<bool, int>(*(int*)tvp->m_unk_0x08);
+        }
+        else if (tvp->m_unk_0x04 == 2)
+        {
+            enable_pad_monkey = LexicalCast<bool, float>(*(float*)tvp->m_unk_0x08);
+        }
+        else if (tvp->m_unk_0x04 == 3)
+        {
+            enable_pad_monkey = LexicalCast<bool, const char*>(*(const char**)tvp->m_unk_0x08);
+        }
+        else
+        {
+            enable_pad_monkey = false;
+        }
+    }
+
+    g_bEnableGamecubePadMonkey = enable_pad_monkey;
+    InitPlatPad();
+
+    if (!g_bEnableGamecubePadMonkey)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            cPadManager::m_aPads[i] = new (nlMalloc(0x1C, 8, false)) cPlatPad();
+        }
+    }
+    else
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            cPadManager::m_aPads[i] = new (nlMalloc(0xD8, 8, false)) PadMonkey(i);
+        }
+    }
+
+    UpdateMonkeyState(0);
+    cPadManager::m_pRemapArray = g_pPadRemapArray;
+    if (g_bEnableGamecubePadMonkey)
+    {
+        cPlatPad::m_bDisableRumble = true;
+    }
 }
 
 /**
@@ -33,4 +108,5 @@ void InitPads()
  */
 void UpdateMonkeyState(int)
 {
+    FORCE_DONT_INLINE;
 }
