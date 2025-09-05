@@ -1,4 +1,4 @@
-#include "NisPlayer.h"
+#include "Game/NisPlayer.h"
 
 NisPlayer* NisPlayer::m_pInstance = NULL;
 

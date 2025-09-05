@@ -1,9 +1,15 @@
-#include "TerrainTypes.h"
+#include "Game/TerrainTypes.h"
 
 #include "NL/nlString.h"
 
 static const char* g_TerrainNames[7] = {
-    "grass", "bluegrass", "concrete", "blueconcrete", "wood", "metal", "rubber",
+    "grass",
+    "bluegrass",
+    "concrete",
+    "blueconcrete",
+    "wood",
+    "metal",
+    "rubber",
 };
 
 int g_TerrainTypeHashes[7];

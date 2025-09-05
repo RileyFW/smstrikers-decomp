@@ -1,5 +1,5 @@
-#include "Character.h"
-#include "CharacterTemplate.h"
+#include "Game/Character.h"
+#include "Game/CharacterTemplate.h"
 #include "Game/Effects/EmissionManager.h"
 
 #include "NL/nlString.h"
@@ -7,9 +7,10 @@
 #include "NL/gl/glState.h"
 #include "NL/gl/glTexture.h"
 
-#include "Team.h"
+#include "Game/Team.h"
 
-#include "audio.h"
+#include "Game/Sys/audio.h"
+#include "types.h"
 
 f32 CANT_COLLIDE = *(f32*)__float_max;
 
@@ -477,15 +478,42 @@ void cCharacter::GetCurrentAnimFuture(int, float, nlVector3&, nlVector3&, unsign
 /**
  * Offset/Address/Size: 0x1AA8 | 0x8000F9F4 | size: 0x324
  */
-void cCharacter::GetJointPositionFuture(nlVector3*, int, int, float, bool, bool, bool)
+nlVector3& cCharacter::GetJointPositionFuture(nlVector3*, int, int, float, bool, bool, bool)
 {
+    FORCE_DONT_INLINE;
+    return m_v3AnimMoveAdjust;
 }
 
 /**
  * Offset/Address/Size: 0x1DCC | 0x8000FD18 | size: 0x28
  */
-void cCharacter::GetJointPosition(int) const
+nlVector3& cCharacter::GetJointPosition(int jointIndex) const
 {
+    static nlVector3 tempJointPos;
+
+    if (m_pPoseAccumulator != nullptr)
+    {
+        const nlMatrix4* poseMatrix = m_pPoseAccumulator->GetNodeMatrix(jointIndex);
+        if (poseMatrix != nullptr)
+        {
+            // Extract position from the matrix (translation component)
+            tempJointPos.f.x = poseMatrix->m[3][0];
+            tempJointPos.f.y = poseMatrix->m[3][1];
+            tempJointPos.f.z = poseMatrix->m[3][2];
+        }
+        else
+        {
+            // Fallback to character position if matrix is null
+            tempJointPos = m_v3Position;
+        }
+    }
+    else
+    {
+        // Fallback to character position if pose accumulator is null
+        tempJointPos = m_v3Position;
+    }
+
+    return tempJointPos;
 }
 
 /**

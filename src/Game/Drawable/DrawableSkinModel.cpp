@@ -1,4 +1,4 @@
-#include "DrawableSkinModel.h"
+#include "Game/Drawable/DrawableSkinModel.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x80122D5C | size: 0x60

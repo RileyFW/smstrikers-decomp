@@ -1,28 +1,29 @@
-#include "CharacterTemplate.h"
+#include "Game/CharacterTemplate.h"
 
-cCharacter *g_pCharacters[10];
+cCharacter* g_pCharacters[10];
 tCharacterTemplateInfo g_aCharacterTemplateInfo[10];
 
 s32 skiptexture = 0xFFFFFFFF;
 
 // Structure for goalie texture information
-struct tGoalieTextureInfo {
-    /* 0x00 */ const char* characterName;    // Character name string
-    /* 0x04 */ const char* texturePath;      // Texture file path
-    /* 0x08 */ void* unk_0x08;                   // Unknown field (null pointer)
+struct tGoalieTextureInfo
+{
+    /* 0x00 */ const char* characterName; // Character name string
+    /* 0x04 */ const char* texturePath;   // Texture file path
+    /* 0x08 */ void* unk_0x08;            // Unknown field (null pointer)
 }; // size = 0x0C (12 bytes)
 
 // String constants for goalie texture information
 static const char* const s_GoalieCharacterNames[] = {
-    "daisygoalie",           // @1109
-    "donkeykonggoalie",      // @1111
-    "luigigoalie",           // @1113
-    "mariogoalie",           // @1100
-    "peachgoalie",           // @1115
-    "waluigigoalie",         // @1117
-    "wariogoalie",           // @1119
-    "yoshigoalie",           // @1121
-    "superteamgoalie"        // @1123
+    "daisygoalie",      // @1109
+    "donkeykonggoalie", // @1111
+    "luigigoalie",      // @1113
+    "mariogoalie",      // @1100
+    "peachgoalie",      // @1115
+    "waluigigoalie",    // @1117
+    "wariogoalie",      // @1119
+    "yoshigoalie",      // @1121
+    "superteamgoalie"   // @1123
 };
 
 static const char* const s_GoalieTexturePaths[] = {
@@ -50,14 +51,16 @@ tGoalieTextureInfo g_GoalieTextureInfo[9] = {
     { s_GoalieCharacterNames[8], s_GoalieTexturePaths[8], nullptr }
 };
 
-/** 
+/**
  * Offset/Address/Size: 0x0 | 0x800122E8 | size: 0x1C0
  */
- s32 GetGoalieIndex(int arg0)
+s32 GetGoalieIndex(int arg0)
 {
-    if (arg0 == 0) {
+    if (arg0 == 0)
+    {
         cCharacter** ptr = g_pCharacters;
-        for (s32 i = 0; i < 10; ++i, ptr++) {
+        for (s32 i = 0; i < 10; ++i, ptr++)
+        {
             if (*ptr == g_pCharacters[8])
                 return i;
         }
@@ -65,26 +68,27 @@ tGoalieTextureInfo g_GoalieTextureInfo[9] = {
     }
 
     cCharacter** ptr = g_pCharacters;
-    for (s32 i = 0; i < 10; ++i, ptr++) {
+    for (s32 i = 0; i < 10; ++i, ptr++)
+    {
         if (*ptr == g_pCharacters[9])
             return i;
     }
-    return -1;    
+    return -1;
 }
 
 /**
  * Offset/Address/Size: 0x1C0 | 0x800124A8 | size: 0xD4
  */
- s32 GetCharacterIndex(const cCharacter* character)
- {
-     cCharacter** ptr = g_pCharacters;
-     for (s32 i = 0; i < 10; ++i, ptr++) {
-         if (*ptr == character)
-             return i;
-     }
-     return -1;
- }
-
+s32 GetCharacterIndex(const cCharacter* character)
+{
+    cCharacter** ptr = g_pCharacters;
+    for (s32 i = 0; i < 10; ++i, ptr++)
+    {
+        if (*ptr == character)
+            return i;
+    }
+    return -1;
+}
 
 /**
  * Offset/Address/Size: 0x294 | 0x8001257C | size: 0x6C0
@@ -117,13 +121,14 @@ void CreateSidekick(int, int, eCharacterClass, eCharacterClass, bool)
 /**
  * Offset/Address/Size: 0x1AA0 | 0x80013D88 | size: 0x1C
  */
- s32 SidekickTexture_cb(unsigned long arg0)
+s32 SidekickTexture_cb(unsigned long arg0)
 {
     s32 var_r4 = -1;
-    if (arg0 != skiptexture) {
+    if (arg0 != skiptexture)
+    {
         var_r4 = arg0;
     }
-    return var_r4;    
+    return var_r4;
 }
 
 /**
@@ -152,10 +157,11 @@ void IsCaptain(eCharacterClass)
  */
 const char* GetCharacterName(eCharacterClass arg0)
 {
-    if (arg0 < 0xD) {
+    if (arg0 < 0xD)
+    {
         return (const char*)g_aCharacterTemplateInfo[arg0].m_unk_0x00;
     }
-    return g_GoalieTextureInfo[arg0].characterName;    
+    return g_GoalieTextureInfo[arg0].characterName;
 }
 
 // /**

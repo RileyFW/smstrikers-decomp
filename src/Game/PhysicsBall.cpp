@@ -1,14 +1,14 @@
-#include "PhysicsBall.h"
+#include "Game/Physics/PhysicsBall.h"
+#include "Game/Physics/CollisionSpace.h"
 
-#include "CollisionSpace.h"
 #include "NL/nlFont.h"
 #include "NL/nlMath.h"
 #include "Game/Physics/PhysicsObject.h"
-#include "PhysicsFakeBall.h"
+#include "Game/Physics/PhysicsFakeBall.h"
 
 #include "Game/FixedUpdateTask.h"
 
-#include "Ball.h"
+#include "Game/Ball.h"
 
 float g_BallFriction = 3.f;
 float g_BallFrictionWall = 4.f;

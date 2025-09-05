@@ -1,14 +1,14 @@
-#include "Ball.h"
+#include "Game/Ball.h"
 
 #include "NL/nlMath.h"
 #include "NL/nlMemory.h"
 
-#include "PhysicsAIBall.h"
+#include "Game/Physics/PhysicsAIBall.h"
 #include "Game/Physics/PhysicsObject.h"
-#include "RayCollider.h"
-#include "PhysicsFakeBall.h"
+#include "Game/Physics/RayCollider.h"
+#include "Game/Physics/PhysicsFakeBall.h"
 
-#include "AudioLoader.h"
+#include "Game/AudioLoader.h"
 
 cBall* g_pBall = NULL;
 

@@ -6,7 +6,7 @@
 #include "Game/SHierarchy.h"
 #include "Game/PoseNode.h"
 
-class cPoseAccumulator;
+// class cPoseAccumulator;
 
 typedef void (*BuildNodeMatrixFn)(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int);
 

@@ -1,4 +1,4 @@
-#include "PhysicsNet.h"
+#include "Game/Physics/PhysicsNet.h"
 #include "PhysicsFinitePlane.h"
 
 /**
@@ -19,7 +19,7 @@ void PhysicsNet::StaticInit(CollisionSpace*)
  * Offset/Address/Size: 0xD0 | 0x8013A4C0 | size: 0x62C
  */
 void PhysicsNet::SweepTestForBallContact(const nlVector3&, const nlVector3&, const nlVector3&, float, nlVector3&, nlVector3&,
-                                         PhysicsObject**) const
+    PhysicsObject**) const
 {
 }
 

@@ -6,7 +6,7 @@
 #include "ode/collision.h"
 
 #include "Game/Physics/PhysicsObject.h"
-#include "PhysicsWorld.h"
+#include "Game/Physics/PhysicsWorld.h"
 
 const float PhysicsObject::DefaultGravity = -9.8f;
 

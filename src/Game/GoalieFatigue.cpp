@@ -1,4 +1,4 @@
-#include "GoalieFatigue.h"
+#include "Game/GoalieFatigue.h"
 
 /**
  * Offset/Address/Size: 0xA0 | 0x80052CEC | size: 0x1C

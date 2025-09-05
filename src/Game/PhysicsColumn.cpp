@@ -1,5 +1,5 @@
-#include "PhysicsColumn.h"
-#include "PhysicsWorld.h"
+#include "Game/Physics/PhysicsColumn.h"
+#include "Game/Physics/PhysicsWorld.h"
 #include "NL/nlMath.h"
 #include "NL/platvmath.h"
 #include "ode/ext/dColumn.h"

@@ -1,4 +1,4 @@
-#include "Team.h"
+#include "Game/Team.h"
 
 cFielder* cTeam::GetDefense() const
 {

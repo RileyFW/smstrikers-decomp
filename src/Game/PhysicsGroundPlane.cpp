@@ -1,7 +1,7 @@
-#include "PhysicsGroundPlane.h"
+#include "Game/Physics/PhysicsGroundPlane.h"
 
 #include "NL/nlMath.h"
-#include "PhysicsPlane.h"
+#include "Game/Physics/PhysicsPlane.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x8013C390 | size: 0x4C

@@ -1,4 +1,4 @@
-#include "TweaksBase.h"
+#include "Game/TweaksBase.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x800661D4 | size: 0x48

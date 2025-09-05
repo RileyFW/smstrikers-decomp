@@ -1,6 +1,6 @@
 
-#include "audio.h"
-#include "GameAudio.h"
+#include "Game/Sys/audio.h"
+#include "Game/GameAudio.h"
 
 #include "NL/nlList.h"
 #include "NL/nlMemory.h"

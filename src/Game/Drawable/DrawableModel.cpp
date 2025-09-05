@@ -1,4 +1,4 @@
-#include "DrawableModel.h"
+#include "Game/Drawable/DrawableModel.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x8011FE0C | size: 0x3C

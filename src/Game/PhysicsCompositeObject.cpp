@@ -1,6 +1,6 @@
-#include "PhysicsCompositeObject.h"
+#include "Game/Physics/PhysicsCompositeObject.h"
 
-#include "PhysicsWorld.h"
+#include "Game/Physics/PhysicsWorld.h"
 #include "Game/Physics/PhysicsObject.h"
 
 /**

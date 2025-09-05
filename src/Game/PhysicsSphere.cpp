@@ -1,5 +1,5 @@
-#include "PhysicsSphere.h"
-#include "CollisionSpace.h"
+#include "Game/Physics/PhysicsSphere.h"
+#include "Game/Physics/CollisionSpace.h"
 #include "Game/Physics/PhysicsObject.h"
 
 /**

@@ -1,4 +1,4 @@
-#include "PhysicsCharacter.h"
+#include "Game/Physics/PhysicsCharacter.h"
 
 extern CollisionSpace* g_CollisionSpace;
 extern PhysicsWorld* g_PhysicsWorld;
@@ -80,7 +80,7 @@ void PhysicsCharacter::GetRadius(float*)
  * Offset/Address/Size: 0x10D0 | 0x801372E8 | size: 0xFC
  */
 PhysicsCharacter::PhysicsCharacter(float arg0, float arg1)
-: PhysicsCharacterBase(g_CollisionSpace, g_PhysicsWorld, arg0)
+    : PhysicsCharacterBase(g_CollisionSpace, g_PhysicsWorld, arg0)
 {
 }
 

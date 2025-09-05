@@ -1,4 +1,4 @@
-#include "DrawableObj.h"
+#include "Game/Drawable/DrawableObj.h"
 
 // nlMatrix4 m3Ident = { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f };
 
@@ -27,11 +27,12 @@ nlMatrix4* DrawableObject::GetWorldMatrix() const
     nlMatrix4 scale_mtx;
     f32 temp_f1;
 
-    if (m_unk_0x44 == 0) {
+    if (m_unk_0x44 == 0)
+    {
         nlQuatToMatrix(rot_mtx, m_quat_0x48);
         rot_mtx.m[3][0] = m_position.f.x;
         rot_mtx.m[3][1] = m_position.f.y;
-        rot_mtx.m[3][2] = m_position.f.z;  
+        rot_mtx.m[3][2] = m_position.f.z;
         rot_mtx.m[3][3] = 1.f;
         temp_f1 = m_scaling_0x64;
         nlMakeScaleMatrix(scale_mtx, temp_f1, temp_f1, temp_f1);
@@ -39,7 +40,6 @@ nlMatrix4* DrawableObject::GetWorldMatrix() const
         *(u8*)&m_unk_0x44 = 1U;
     }
     return (nlMatrix4*)&m_worldMatrix;
-
 }
 
 /**

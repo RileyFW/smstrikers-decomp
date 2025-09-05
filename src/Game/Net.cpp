@@ -1,5 +1,5 @@
-#include "Net.h"
-#include "Field.h"
+#include "Game/Net.h"
+#include "Game/Field.h"
 
 float cNet::m_fNetHeight = 1.0f;
 float cNet::m_fNetWidth = 1.0f;

@@ -1,10 +1,31 @@
-#include "CharacterTweaks.h"
+#include "Game/CharacterTweaks.h"
 #include "NL/nlConfig.h"
 #include "NL/nlLexicalCast.h"
 
 static f32 g_pTweaks[0x17] = {
-    4000.0f, 25.0f, 45.0f,   9.5f,  4000.0f, 17.5f, 17.5f, 2600.0f, 22.5f,    18.0f,   3200.0f, 25.0f,
-    18.0f,   10.0f, 2600.0f, 20.0f, 20.0f,   5.5f,  22.5f, 14.0f,   75000.0f, 4000.0f, 6.0f,
+    4000.0f,
+    25.0f,
+    45.0f,
+    9.5f,
+    4000.0f,
+    17.5f,
+    17.5f,
+    2600.0f,
+    22.5f,
+    18.0f,
+    3200.0f,
+    25.0f,
+    18.0f,
+    10.0f,
+    2600.0f,
+    20.0f,
+    20.0f,
+    5.5f,
+    22.5f,
+    14.0f,
+    75000.0f,
+    4000.0f,
+    6.0f,
 };
 
 inline float GetConfigFloat(Config& cfg, const char* key, float defaultValue)

@@ -1,4 +1,4 @@
-#include "ObjectBlur.h"
+#include "Game/ObjectBlur.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x801627D4 | size: 0x3C

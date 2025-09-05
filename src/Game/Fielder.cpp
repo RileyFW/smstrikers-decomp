@@ -1,4 +1,4 @@
-#include "Fielder.h"
+#include "Game/Fielder.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x8001933C | size: 0x3C
@@ -990,6 +990,6 @@ void PlayerAttackData::GetID()
 /**
  * Offset/Address/Size: 0x0 | 0x80026B28 | size: 0x10
  */
-void 0x8028D280..0x8028D284 | size: 0x4
+void 0x8028D280..0x8028D284 | size : 0x4
 {
 }

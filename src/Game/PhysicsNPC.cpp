@@ -1,4 +1,4 @@
-#include "PhysicsNPC.h"
+#include "Game/Physics/PhysicsNPC.h"
 
 extern CollisionSpace* g_CollisionSpace;
 

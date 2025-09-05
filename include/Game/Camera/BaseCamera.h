@@ -37,7 +37,7 @@ public:
     virtual ~cBaseCamera() { };
     virtual eCameraType GetType() = 0;
     virtual void Update(float) = 0;
-    virtual nlMatrix4& GetViewMatrix() const = 0;
+    virtual const nlMatrix4& GetViewMatrix() const = 0;
     virtual float GetFOV() const { return 0.0f; };
     virtual void Reactivate() { };
     virtual const nlVector3& GetTargetPosition() const = 0;

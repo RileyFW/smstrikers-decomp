@@ -1,4 +1,4 @@
-#include "GLTextureAnim.h"
+#include "Game/GL/GLTextureAnim.h"
 #include "NL/nlMemory.h"
 
 /**

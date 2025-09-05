@@ -1,4 +1,4 @@
-#include "Goalie.h"
+#include "Game/Goalie.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x80042AFC | size: 0x148
@@ -487,7 +487,7 @@ Goalie::~Goalie()
  * Offset/Address/Size: 0xB780 | 0x8004E27C | size: 0x2B8
  */
 Goalie::Goalie(eCharacterClass charClass, const int* arg_0, cSHierarchy* hierarchie, cAnimInventory* animInventory,
-               const CharacterPhysicsData* characterPhysicsData, GoalieTweaks* tweaks, AnimRetargetList* retargetList)
+    const CharacterPhysicsData* characterPhysicsData, GoalieTweaks* tweaks, AnimRetargetList* retargetList)
 // : cPlayer(0, charClass, arg_0, hierarchie, animInventory, characterPhysicsData, tweaks, retargetList, eClassTypes::eClassTypes_0)
 {
 }

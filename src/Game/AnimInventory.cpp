@@ -1,4 +1,4 @@
-#include "AnimInventory.h"
+#include "Game/AnimInventory.h"
 
 #include "NL/nlString.h"
 #include "NL/nlMemory.h"

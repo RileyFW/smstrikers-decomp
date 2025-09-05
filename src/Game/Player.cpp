@@ -1,5 +1,5 @@
-#include "Player.h"
-#include "Character.h"
+#include "Game/Player.h"
+#include "Game/Character.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x80057550 | size: 0x20

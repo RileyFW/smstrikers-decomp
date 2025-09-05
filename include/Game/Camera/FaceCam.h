@@ -3,8 +3,7 @@
 
 #include "NL/nlMath.h"
 #include "Game/Camera/BaseCamera.h"
-
-class cCharacter;
+#include "Game/Character.h"
 
 class FaceCam : public cBaseCamera
 {
@@ -23,11 +22,11 @@ public:
     virtual const nlVector3& GetCameraPosition() const;
     virtual const nlVector3& GetTargetPosition() const;
 
-    /* 0x1C */ class cCharacter* mpCharacter;
+    /* 0x1C */ cCharacter* mpCharacter;
     /* 0x20 */ float mDistance;
-    /* 0x24 */ class nlVector3 mTargetPosition;
-    /* 0x30 */ class nlVector3 mCameraPosition;
-    /* 0x3C */ class nlMatrix4 mViewMatrix;
+    /* 0x24 */ nlVector3 mTargetPosition;
+    /* 0x30 */ nlVector3 mCameraPosition;
+    /* 0x3C */ nlMatrix4 mViewMatrix;
     /* 0x7C */ float mfFOV;
 };
 

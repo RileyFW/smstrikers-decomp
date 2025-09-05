@@ -1,4 +1,4 @@
-#include "PhysicsCharacterBase.h"
+#include "Game/Physics/PhysicsCharacterBase.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x801FEAFC | size: 0x80
@@ -11,7 +11,7 @@ void PhysicsCharacterBase::GetBoneIDForSubObject(const PhysicsObject*) const
  * Offset/Address/Size: 0x80 | 0x801FEB7C | size: 0x280
  */
 void PhysicsCharacterBase::AddBoneVolumes(PhysicsWorld*, CollisionSpace*, cPoseAccumulator*, const CharacterPhysicsData*, unsigned long,
-                                          unsigned long)
+    unsigned long)
 {
 }
 

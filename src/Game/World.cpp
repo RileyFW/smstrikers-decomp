@@ -1,4 +1,4 @@
-#include "World.h"
+#include "Game/World.h"
 
 #include "string.h"
 
@@ -12,8 +12,8 @@ u32 World::m_uCurrentFrameCount = 0;
  */
 int World::CompareNameToGenericName(const char* str1, const char* str2)
 {
-  size_t sVar1 = strlen(str2);
-  return nlStrNCmp<char>(str1 + *(int *)((u8*)this + 0x120), str2, sVar1);
+    size_t sVar1 = strlen(str2);
+    return nlStrNCmp<char>(str1 + *(int*)((u8*)this + 0x120), str2, sVar1);
 }
 
 /**
@@ -21,8 +21,8 @@ int World::CompareNameToGenericName(const char* str1, const char* str2)
  */
 void World::GetHashIdForGenericName(const char* str) const
 {
-  nlStrNCpy<char>((char*)this + *(int *)((u8*)this + 0x120) + 0xe0 ,str, (unsigned long)0x40 - *(int *)((u8*)this + 0x120));
-  nlStringLowerHash((const char*)this + 0xe0);    
+    nlStrNCpy<char>((char*)this + *(int*)((u8*)this + 0x120) + 0xe0, str, (unsigned long)0x40 - *(int*)((u8*)this + 0x120));
+    nlStringLowerHash((const char*)this + 0xe0);
 }
 
 /**
@@ -51,43 +51,43 @@ void World::FindHelperObject(unsigned long)
  */
 void World::FindDrawableObject(u32 arg1)
 {
-//     s32 *sp8;
-//     s32 var_r0_2;
-//     s8 var_r0;
-//     u32 temp_r0;
-//     void *var_r3;
+    //     s32 *sp8;
+    //     s32 var_r0_2;
+    //     s8 var_r0;
+    //     u32 temp_r0;
+    //     void *var_r3;
 
-//     var_r3 = m_unk_0x4C;
-// loop_13:
-//     if (var_r3 == NULL) {
-//         var_r0 = 0;
-//     } else {
-//         temp_r0 = var_r3->unkC;
-//         if (arg1 == temp_r0) {
-//             var_r0_2 = 0;
-//         } else if (arg1 < temp_r0) {
-//             var_r0_2 = -1;
-//         } else {
-//             var_r0_2 = 1;
-//         }
-//         if (var_r0_2 == 0) {
-//             if (&sp8 != NULL) {
-//                 sp8 = var_r3 + 0x10;
-//             }
-//             var_r0 = 1;
-//         } else {
-//             if (var_r0_2 < 0) {
-//                 var_r3 = var_r3->unk0;
-//             } else {
-//                 var_r3 = var_r3->unk4;
-//             }
-//             goto loop_13;
-//         }
-//     }
-//     if (var_r0 != 0) {
-//         return *sp8;
-//     }
-    // return 0;    
+    //     var_r3 = m_unk_0x4C;
+    // loop_13:
+    //     if (var_r3 == NULL) {
+    //         var_r0 = 0;
+    //     } else {
+    //         temp_r0 = var_r3->unkC;
+    //         if (arg1 == temp_r0) {
+    //             var_r0_2 = 0;
+    //         } else if (arg1 < temp_r0) {
+    //             var_r0_2 = -1;
+    //         } else {
+    //             var_r0_2 = 1;
+    //         }
+    //         if (var_r0_2 == 0) {
+    //             if (&sp8 != NULL) {
+    //                 sp8 = var_r3 + 0x10;
+    //             }
+    //             var_r0 = 1;
+    //         } else {
+    //             if (var_r0_2 < 0) {
+    //                 var_r3 = var_r3->unk0;
+    //             } else {
+    //                 var_r3 = var_r3->unk4;
+    //             }
+    //             goto loop_13;
+    //         }
+    //     }
+    //     if (var_r0 != 0) {
+    //         return *sp8;
+    //     }
+    // return 0;
 }
 
 /**
@@ -146,9 +146,10 @@ void World::CreateHelperObjFromChunk(nlChunk* chunk)
 {
     const char* str = "hello world";
     char* found = nlStrChr<char>(str, 'w');
-    if (found) {
+    if (found)
+    {
         nlBreak();
-    }    
+    }
 }
 
 /**
@@ -206,10 +207,11 @@ void World::LoadGeometry(const char*, bool, bool, unsigned long*, int*)
 void World::Load(bool skip)
 {
     this->DoLoad();
-    if (skip == FALSE) {
+    if (skip == FALSE)
+    {
         this->DoInitialize();
     }
-    this->m_unk_0x1C = 1;    
+    this->m_unk_0x1C = 1;
 }
 
 /**

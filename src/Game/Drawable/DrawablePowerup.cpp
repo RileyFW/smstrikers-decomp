@@ -1,4 +1,4 @@
-#include "DrawablePowerup.h"
+#include "Game/Drawable/DrawablePowerup.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x8011EC74 | size: 0xF8

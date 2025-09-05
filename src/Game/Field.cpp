@@ -1,4 +1,4 @@
-#include "Field.h"
+#include "Game/Field.h"
 
 #include "math.h"
 
@@ -12,9 +12,9 @@ nlVector3_ cField::mSidelines[4] = { { 1.0f, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }
 extern "C" void CollideWithWallCallback__5cBallFv(); // forward decl
 
 Corner cField::mCorners = { 0.0f, 0.0f, 0.000000000000000000000000000000000000000022959f, 3.0f, 0.0f, 0.0f, 2.0078125f, 3.0f, 0.0f, 0.0f,
-                            // &g_pBall::CollideWithWallCallback,
-                            // &cBall::CollideWithWallCallback,
-                            &CollideWithWallCallback__5cBallFv, 3.0f, 0.0f, 0.0f, -2.0f, 3.0f };
+    // &g_pBall::CollideWithWallCallback,
+    // &cBall::CollideWithWallCallback,
+    &CollideWithWallCallback__5cBallFv, 3.0f, 0.0f, 0.0f, -2.0f, 3.0f };
 float cField::mfPenaltyBoxX = 13.5f;
 float cField::mfPenaltyBoxY = 4.5f;
 
@@ -135,7 +135,8 @@ void cField::FixOutOfBoundsPosition(nlVector3& position, float margin)
     float minX = -mv3FieldPosition.f[0] + margin;
     float maxX = mv3FieldPosition.f[0] - margin;
 
-    position.f.x = (position.f.x >= minX) ? minX : (position.f.x <= maxX) ? maxX : position.f.x;
+    position.f.x = (position.f.x >= minX) ? minX : (position.f.x <= maxX) ? maxX
+                                                                          : position.f.x;
     // position.f.x = fmax(maxX, fmin(minX, position.f.x));
 
     // Clamp Y coordinate

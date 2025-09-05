@@ -1,4 +1,4 @@
-#include "GLMaterial.h"
+#include "Game/GL/GLMaterial.h"
 #include "NL/nlMemory.h"
 
 /**

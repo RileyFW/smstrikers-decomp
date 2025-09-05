@@ -1,4 +1,4 @@
-#include "PhysicsCapsule.h"
+#include "Game/Physics/PhysicsCapsule.h"
 #include "Game/Physics/PhysicsObject.h"
 
 /**

@@ -1,8 +1,8 @@
 #include "NL/nlMemory.h"
 #include "NL/nlTask.h"
 
-#include "WorldManager.h"
-#include "BasicStadium.h"
+#include "Game/WorldManager.h"
+#include "Game/BasicStadium.h"
 
 World* WorldManager::s_World = NULL;
 

@@ -1,4 +1,4 @@
-#include "CharacterEffects.h"
+#include "Game/CharacterEffects.h"
 
 EffectsTexturing fxTexturing[] = {
     { 0xFFFFFFFF, 0x00000000, 0x00000000 },

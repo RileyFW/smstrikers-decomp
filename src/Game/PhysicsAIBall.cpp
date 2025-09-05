@@ -1,5 +1,5 @@
-#include "PhysicsAIBall.h"
-#include "Ball.h"
+#include "Game/Physics/PhysicsAIBall.h"
+#include "Game/Ball.h"
 
 extern CollisionSpace* g_CollisionSpace;
 extern PhysicsWorld* g_PhysicsWorld;

@@ -1,4 +1,4 @@
-#include "AudioLoader.h"
+#include "Game/AudioLoader.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x80143DCC | size: 0x68
@@ -305,15 +305,15 @@ void GCAudioStreaming::AudioStream::WarmReadDone(GCAudioStreaming::AudioStreamBu
 /**
  * Offset/Address/Size: 0x0 | 0x801482CC | size: 0x58
  */
-void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*>>, DefaultKeyCompare<int>>::Clear()
+void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*> >, DefaultKeyCompare<int> >::Clear()
 {
 }
 
 /**
  * Offset/Address/Size: 0x58 | 0x80148324 | size: 0x64
  */
-void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*>>, DefaultKeyCompare<int>>::DestroyTree(
-    void (AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*>>, DefaultKeyCompare<int>>::*)(
+void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*> >, DefaultKeyCompare<int> >::DestroyTree(
+    void (AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*> >, DefaultKeyCompare<int> >::*)(
         AVLTreeEntry<int, SoundStrToIDNode*>*))
 {
 }
@@ -321,9 +321,9 @@ void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundSt
 /**
  * Offset/Address/Size: 0xBC | 0x80148388 | size: 0x758
  */
-void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*>>, DefaultKeyCompare<int>>::PostorderTraversal(
+void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*> >, DefaultKeyCompare<int> >::PostorderTraversal(
     AVLTreeEntry<int, SoundStrToIDNode*>*,
-    void (AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*>>, DefaultKeyCompare<int>>::*)(
+    void (AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*> >, DefaultKeyCompare<int> >::*)(
         AVLTreeEntry<int, SoundStrToIDNode*>*))
 {
 }
@@ -331,7 +331,7 @@ void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundSt
 /**
  * Offset/Address/Size: 0x814 | 0x80148AE0 | size: 0x8
  */
-void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*>>, DefaultKeyCompare<int>>::CastUp(
+void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*> >, DefaultKeyCompare<int> >::CastUp(
     AVLTreeNode*) const
 {
 }
@@ -339,7 +339,7 @@ void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundSt
 /**
  * Offset/Address/Size: 0x81C | 0x80148AE8 | size: 0x10
  */
-void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*>>, DefaultKeyCompare<int>>::DeleteEntry(
+void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*> >, DefaultKeyCompare<int> >::DeleteEntry(
     AVLTreeEntry<int, SoundStrToIDNode*>*)
 {
 }
@@ -347,14 +347,14 @@ void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundSt
 /**
  * Offset/Address/Size: 0x82C | 0x80148AF8 | size: 0x7C
  */
-void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*>>, DefaultKeyCompare<int>>::~AVLTreeBase()
+void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*> >, DefaultKeyCompare<int> >::~AVLTreeBase()
 {
 }
 
 /**
  * Offset/Address/Size: 0x8A8 | 0x80148B74 | size: 0x2C
  */
-void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*>>, DefaultKeyCompare<int>>::CompareNodes(
+void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*> >, DefaultKeyCompare<int> >::CompareNodes(
     AVLTreeNode*, AVLTreeNode*)
 {
 }
@@ -362,7 +362,7 @@ void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundSt
 /**
  * Offset/Address/Size: 0x8D4 | 0x80148BA0 | size: 0x2C
  */
-void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*>>, DefaultKeyCompare<int>>::CompareKey(
+void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*> >, DefaultKeyCompare<int> >::CompareKey(
     void*, AVLTreeNode*)
 {
 }
@@ -370,8 +370,8 @@ void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundSt
 /**
  * Offset/Address/Size: 0x900 | 0x80148BCC | size: 0xA0
  */
-void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*>>, DefaultKeyCompare<int>>::AllocateEntry(void*,
-                                                                                                                                     void*)
+void AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*> >, DefaultKeyCompare<int> >::AllocateEntry(void*,
+    void*)
 {
 }
 
@@ -385,29 +385,29 @@ void 0x80149078..0x801490F4 | size : 0x7C
 /**
  * Offset/Address/Size: 0x0 | 0x80149078 | size: 0x20
  */
-void nlDLRingIsEnd<DLListEntry<GCAudioStreaming::StereoAudioStream*>>(DLListEntry<GCAudioStreaming::StereoAudioStream*>*,
-                                                                      DLListEntry<GCAudioStreaming::StereoAudioStream*>*)
+void nlDLRingIsEnd<DLListEntry<GCAudioStreaming::StereoAudioStream*> >(DLListEntry<GCAudioStreaming::StereoAudioStream*>*,
+    DLListEntry<GCAudioStreaming::StereoAudioStream*>*)
 {
 }
 
 /**
  * Offset/Address/Size: 0x20 | 0x80149098 | size: 0x18
  */
-void nlDLRingGetStart<DLListEntry<GCAudioStreaming::StereoAudioStream*>>(DLListEntry<GCAudioStreaming::StereoAudioStream*>*)
+void nlDLRingGetStart<DLListEntry<GCAudioStreaming::StereoAudioStream*> >(DLListEntry<GCAudioStreaming::StereoAudioStream*>*)
 {
 }
 
 /**
  * Offset/Address/Size: 0x38 | 0x801490B0 | size: 0x44
  */
-void nlDLRingRemove<DLListEntry<GCAudioStreaming::StereoAudioStream*>>(DLListEntry<GCAudioStreaming::StereoAudioStream*>**,
-                                                                       DLListEntry<GCAudioStreaming::StereoAudioStream*>*)
+void nlDLRingRemove<DLListEntry<GCAudioStreaming::StereoAudioStream*> >(DLListEntry<GCAudioStreaming::StereoAudioStream*>**,
+    DLListEntry<GCAudioStreaming::StereoAudioStream*>*)
 {
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x801490F4 | size: 0x60
  */
-void nlAVLTreeSlotPool<int, SoundStrToIDNode*, DefaultKeyCompare<int>>::~nlAVLTreeSlotPool()
+void nlAVLTreeSlotPool<int, SoundStrToIDNode*, DefaultKeyCompare<int> >::~nlAVLTreeSlotPool()
 {
 }

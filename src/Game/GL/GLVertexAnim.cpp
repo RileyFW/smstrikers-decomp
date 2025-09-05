@@ -1,4 +1,4 @@
-#include "GLVertexAnim.h"
+#include "Game/GL/GLVertexAnim.h"
 
 /**
  * Offset/Address/Size: 0x198 | 0x801E7E30 | size: 0x40

@@ -1,4 +1,4 @@
-#include "RayCollider.h"
+#include "Game/Physics/RayCollider.h"
 #include "ode/collision.h"
 
 // ? sp34;
@@ -58,7 +58,7 @@
 /**
  * Offset/Address/Size: 0x0 | 0x80201E90 | size: 0x12C
  */
-u8 RayCollider::DoCollide(CollisionSpace* space)
+bool RayCollider::DoCollide(CollisionSpace* space)
 {
     // ? sp34;
     // ? sp30;
