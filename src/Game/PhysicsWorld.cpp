@@ -24,9 +24,9 @@ void PhysicsWorld::SpaceCollideCallback(void*, dxGeom*, dxGeom*)
 void PhysicsWorld::Update(float quickStepSize, bool doClear)
 {
     int pp = (u32)(-doClear | doClear) >> 0x1FU; // a convoluted way to convert a boolean to an integer
-    dWorldSetClearAccumulators(m_worldID, pp);
-    dWorldQuickStep(m_worldID, quickStepSize);
-    dJointGroupEmpty(m_jointGroupID);
+    dWorldSetClearAccumulators(m_World, pp);
+    dWorldQuickStep(m_World, quickStepSize);
+    dJointGroupEmpty(m_ContactGroup);
 }
 
 /**
@@ -35,7 +35,7 @@ void PhysicsWorld::Update(float quickStepSize, bool doClear)
 void PhysicsWorld::PostUpdate()
 {
     void (PhysicsObject::*pmf)() = &PhysicsObject::PostUpdate;
-    for (dBodyID bodyID = dWorldGetFirstBody(m_worldID); bodyID != NULL; bodyID = dBodyGetNextBody(bodyID))
+    for (dBodyID bodyID = dWorldGetFirstBody(m_World); bodyID != NULL; bodyID = dBodyGetNextBody(bodyID))
     {
         PhysicsObject* obj = (PhysicsObject*)dBodyGetData(bodyID);
         (obj->*pmf)();
@@ -109,8 +109,8 @@ void PhysicsWorld::PreCollide(CollisionSpace* collisionSpace)
  */
 void PhysicsWorld::AddCollisionSpace(CollisionSpace* collisionSpace)
 {
-    collisionSpace->m_nextCollisionSpace = m_collisionSpace;
-    m_collisionSpace = collisionSpace;
+    collisionSpace->m_nextCollisionSpace = m_SpaceList;
+    m_SpaceList = collisionSpace;
 }
 
 /**
@@ -118,7 +118,7 @@ void PhysicsWorld::AddCollisionSpace(CollisionSpace* collisionSpace)
  */
 void PhysicsWorld::SetERP(float erp)
 {
-    dWorldSetERP(m_worldID, erp);
+    dWorldSetERP(m_World, erp);
 }
 
 /**
@@ -126,7 +126,7 @@ void PhysicsWorld::SetERP(float erp)
  */
 void PhysicsWorld::SetCFM(float cfm)
 {
-    dWorldSetCFM(m_worldID, cfm);
+    dWorldSetCFM(m_World, cfm);
 }
 
 /**
@@ -134,8 +134,8 @@ void PhysicsWorld::SetCFM(float cfm)
  */
 PhysicsWorld::~PhysicsWorld()
 {
-    dJointGroupDestroy(m_jointGroupID);
-    dWorldDestroy(m_worldID);
+    dJointGroupDestroy(m_ContactGroup);
+    dWorldDestroy(m_World);
 }
 
 /**
@@ -143,8 +143,8 @@ PhysicsWorld::~PhysicsWorld()
  */
 PhysicsWorld::PhysicsWorld()
 {
-    m_worldID = dWorldCreate();
-    m_jointGroupID = dJointGroupCreate(0);
-    m_collisionSpace = NULL;
-    m_UNK0x0C = NULL;
+    m_World = dWorldCreate();
+    m_ContactGroup = dJointGroupCreate(0);
+    m_SpaceList = NULL;
+    m_SyncLogFile = NULL;
 }

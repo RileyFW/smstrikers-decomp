@@ -42,7 +42,7 @@ PhysicsColumn::PhysicsColumn(CollisionSpace* collisionSpace, PhysicsWorld* world
     dGeomSetData(m_geomID, this);
     SetDefaultCollideBits();
 
-    m_jointID = dJointCreateCharacter(world->m_worldID, NULL);
+    m_jointID = dJointCreateCharacter(world->m_World, NULL);
     dJointAttach(m_jointID, m_bodyID, NULL);
 
     nlVector4 v;

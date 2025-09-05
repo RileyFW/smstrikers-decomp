@@ -1,6 +1,7 @@
 #ifndef _NLMATH_H_
 #define _NLMATH_H_
 
+#include "types.h"
 #include "Dolphin/mtx.h"
 
 struct nlVector2_
@@ -62,7 +63,17 @@ struct nlVector3
         f.y = _y;
         f.z = _z;
     }
-    void Set(float x, float y, float z);
+
+    void Set(float x, float y, float z)
+    {
+        FORCE_DONT_INLINE;
+        FORCE_DONT_INLINE;
+        FORCE_DONT_INLINE;
+        FORCE_DONT_INLINE;
+        f.x = x;
+        f.y = y;
+        f.z = z;
+    }
 };
 
 struct nlVector4
@@ -105,7 +116,13 @@ struct nlMatrix4
     Mtx44 m;
 
     void SetIdentity();
-    void SetColumn(int col, const nlVector3& v);
+    void SetColumn(int col, const nlVector3& v)
+    {
+        FORCE_DONT_INLINE;
+        m[0][col] = v.f.x;
+        m[1][col] = v.f.y;
+        m[2][col] = v.f.z;
+    }
 
     inline nlVector4 operator*(const nlVector4& v_in) const
     {

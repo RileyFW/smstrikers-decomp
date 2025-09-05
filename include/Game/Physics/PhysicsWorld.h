@@ -9,6 +9,7 @@
 
 class CollisionSpace;
 class PhysicsObject;
+class DebugWriteCache;
 
 class PhysicsWorld
 {
@@ -32,10 +33,10 @@ public:
     ~PhysicsWorld();
     PhysicsWorld();
 
-    /* 0x00 */ dWorldID m_worldID;
-    /* 0x04 */ dJointGroupID m_jointGroupID;
-    /* 0x08 */ CollisionSpace* m_collisionSpace; //* m_UNK0x08;
-    /* 0x08 */ void* m_UNK0x0C;
+    /* 0x00 */ dWorldID m_World;
+    /* 0x04 */ dJointGroupID m_ContactGroup;
+    /* 0x08 */ CollisionSpace* m_SpaceList;
+    /* 0x0C */ DebugWriteCache* m_SyncLogFile;
 };
 
 #endif // _PHYSICSWORLD_H_

@@ -69,7 +69,7 @@ bool RayCollider::DoCollide(CollisionSpace* space)
     // ? sp18;
     // ? sp10;
     // ? spC;
-    dContactGeom* contact; // sp8
+    dContactGeom* contact = nullptr; // sp8
 
     // dVector3 pos;    sp08 / sp0C / sp10 / sp14
     // dVector3 normal; sp18 / sp1C / sp20 / sp24
