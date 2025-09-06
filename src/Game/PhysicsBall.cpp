@@ -146,10 +146,10 @@ void PhysicsBall::AddResistanceForces()
         AddForceAtCentreOfMass(sp8C);
     }
 
-    if ((m_unk_0x38 != 0) && (g_pBall->m_passTargetPlayer == NULL))
+    if ((m_unk_0x38 != 0) && (g_pBall->m_pShooter == NULL))
     {
         var_r3 = 0;
-        if ((g_pBall->m_timer_0x08 != NULL) && (g_pBall->m_unk_0xA2 != 0))
+        if ((g_pBall->m_tShotTimer.m_uPackedTime != 0) && (g_pBall->mbCanDamage != 0))
         {
             var_r3 = 1;
         }
@@ -352,10 +352,10 @@ int PhysicsBall::Contact(PhysicsObject* other, dContact* contact, int param)
     {
         m_unk_0x3b = 0;
         FakeBallWorld::InvalidateBallCache();
-        g_pBall->m_unk_0x00 = (s32)(g_pBall->m_unk_0x00 + 1);
-        g_pBall->m_unk_0x04 = (s32)(g_pBall->m_unk_0x04 + 1);
-        g_pBall->m_unk_0xA6 = 0;
-        g_pBall->m_unk_0xA8 = 0;
+        g_pBall->m_bBallPathChangeCount = g_pBall->m_bBallPathChangeCount + 1;
+        g_pBall->m_bBallDeflectCount = g_pBall->m_bBallDeflectCount + 1;
+        // g_pBall->m_unk_0xA6 = 0;
+        // g_pBall->m_unk_0xA8 = 0;
     }
 
     return 3;

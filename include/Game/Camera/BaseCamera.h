@@ -34,14 +34,14 @@ public:
         mUpVector.f.y = 0.0f;
         mUpVector.f.z = 1.0f;
     };
-    virtual ~cBaseCamera() { };
-    virtual eCameraType GetType() = 0;
-    virtual void Update(float) = 0;
-    virtual const nlMatrix4& GetViewMatrix() const = 0;
-    virtual float GetFOV() const { return 0.0f; };
-    virtual void Reactivate() { };
-    virtual const nlVector3& GetTargetPosition() const = 0;
-    virtual const nlVector3& GetCameraPosition() const = 0;
+    /* 0x08 */ virtual ~cBaseCamera() { };
+    /* 0x0C */ virtual eCameraType GetType() = 0;
+    /* 0x10 */ virtual void Update(float) = 0;
+    /* 0x14 */ virtual const nlMatrix4& GetViewMatrix() const = 0;
+    /* 0x18 */ virtual float GetFOV() const { return 0.0f; };
+    /* 0x1C */ virtual void Reactivate() { };
+    /* 0x20 */ virtual const nlVector3& GetTargetPosition() const = 0;
+    /* 0x24 */ virtual const nlVector3& GetCameraPosition() const = 0;
 
     /* 0x04 */ cBaseCamera* next;
     /* 0x08 */ cBaseCamera* prev;

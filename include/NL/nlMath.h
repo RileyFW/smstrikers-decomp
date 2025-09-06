@@ -76,6 +76,13 @@ struct nlVector3
     }
 };
 
+inline void nlVec3Set(nlVector3& v0, float _x, float _y, float _z)
+{
+    v0.f.x = _x;
+    v0.f.y = _y;
+    v0.f.z = _z;
+}
+
 struct nlVector4
 {
     float x;
@@ -91,6 +98,14 @@ struct nlVector4
     {
     }
 };
+
+inline void nlVec4Set(nlVector4& v0, float _x, float _y, float _z, float _w)
+{
+    v0.x = _x;
+    v0.y = _y;
+    v0.z = _z;
+    v0.w = _w;
+}
 
 struct nlMatrix3
 {

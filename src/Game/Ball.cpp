@@ -34,9 +34,9 @@ float cBall::PredictLandingSpotAndTime(nlVector3& landingSpot)
     // m_unk_0x58.z = 0;
 
     dVar8 = 0.1f;
-    if (m_rayPosition.f.z > 1.0f)
+    if (m_v3Velocity.f.z > 1.0f)
     {
-        SolveQuadratic(dVar8, 0.5f * m_aiBall->m_gravity, m_unk_0x58.f.z, sp8, spC, sp10);
+        SolveQuadratic(dVar8, 0.5f * m_pPhysicsBall->m_gravity, m_v3Velocity.f.z, sp8, spC, sp10);
 
         pfVar7 = spC;         // pfVar7 = &local_14;
         dVar8 = 100000000.0f; // dVar8 = (double)Ball::@1409;
@@ -58,14 +58,14 @@ float cBall::PredictLandingSpotAndTime(nlVector3& landingSpot)
             } while (sp8 != 0);
         }
 
-        landingSpot.f.x = (dVar8 * m_unk_0x58.f.x) + m_rayPosition.f.x;
-        landingSpot.f.y = (dVar8 * m_unk_0x58.f.y) + m_rayPosition.f.y;
-        // landingSpot.z = (dVar8 * m_unk_0x58.z) + m_rayPosition.z;
+        landingSpot.f.x = (dVar8 * m_v3Velocity.f.x) + m_v3Position.f.x;
+        landingSpot.f.y = (dVar8 * m_v3Velocity.f.y) + m_v3Position.f.y;
+        // landingSpot.z = (dVar8 * m_unk_0x58.z) + m_v3Position.z;
         landingSpot.f.z = 0.f;
         return dVar8;
     }
 
-    landingSpot = m_rayPosition;
+    landingSpot = m_v3Position;
 
     return 0.f;
 }
@@ -75,10 +75,10 @@ float cBall::PredictLandingSpotAndTime(nlVector3& landingSpot)
  */
 void cBall::KillBlurHandler()
 {
-    if (m_blurHandler != NULL)
+    if (m_pBlurHandler != NULL)
     {
-        m_blurHandler->Die(0.f);
-        m_blurHandler = NULL;
+        m_pBlurHandler->Die(0.f);
+        m_pBlurHandler = NULL;
     }
 }
 
@@ -94,8 +94,8 @@ void cBall::ClearPassTarget()
  */
 void cBall::SetPassTargetTimer(float seconds)
 {
-    m_passTargetTimer->SetSeconds(seconds);
-    m_passTimeSeconds = seconds;
+    m_tPassTargetTimer.SetSeconds(seconds);
+    m_fTotalPassTime = seconds;
 }
 
 /**
@@ -103,8 +103,8 @@ void cBall::SetPassTargetTimer(float seconds)
  */
 void cBall::SetPassTarget(cPlayer* passTargetPlayer, const nlVector3& pos, bool)
 {
-    m_passTargetPlayer = passTargetPlayer;
-    m_unk_0x64 = pos;
+    m_pPassTarget = passTargetPlayer;
+    m_v3PassIntercept = pos;
 }
 
 /**
@@ -112,12 +112,12 @@ void cBall::SetPassTarget(cPlayer* passTargetPlayer, const nlVector3& pos, bool)
  */
 void cBall::WarpTo(const nlVector3& toPos)
 {
-    m_rayPosition = toPos;
-    m_aiBall->SetPosition(m_rayPosition, PhysicsObject::WORLD_COORDINATES);
-    m_aiBall->SetRotation(m3Ident);
-    FakeBallWorld::InvalidateBallCache();
-    m_unk_0x00 = m_unk_0x00 + 1;
-    m_unk_0x4C = toPos;
+    // m_v3Position = toPos;
+    // m_pPhysicsBall->SetPosition(m_v3Position, PhysicsObject::WORLD_COORDINATES);
+    // m_pPhysicsBall->SetRotation(m3Ident);
+    // FakeBallWorld::InvalidateBallCache();
+    // m_unk_0x00 = m_unk_0x00 + 1;
+    // m_unk_0x4C = toPos;
 }
 
 /**
@@ -160,7 +160,7 @@ void cBall::Shoot(const nlVector3&, const nlVector3&, eSpinType, bool, bool, boo
  */
 void cBall::SetVisible(bool visible)
 {
-    DrawableObject* temp_r3 = m_drawableObject;
+    DrawableObject* temp_r3 = m_pDrawableBall;
     if (visible != 0)
     {
         temp_r3->m_visibility = (temp_r3->m_visibility | 1);
@@ -188,11 +188,11 @@ void cBall::SetPerfectPass(bool, bool)
  */
 void cBall::SetPosition(const nlVector3& pos)
 {
-    m_rayPosition = pos;
-    m_aiBall->SetPosition(pos, PhysicsObject::WORLD_COORDINATES);
-    m_aiBall->SetRotation(m3Ident);
+    m_v3Position = pos;
+    m_pPhysicsBall->SetPosition(pos, PhysicsObject::WORLD_COORDINATES);
+    m_pPhysicsBall->SetRotation(m3Ident);
     FakeBallWorld::InvalidateBallCache();
-    m_unk_0x00++;
+    m_bBallPathChangeCount++;
 }
 
 /**
@@ -216,12 +216,12 @@ void cBall::HandleBuzzerBeater(float seconds)
 {
     if (seconds < 0.0f)
     {
-        m_timer_0x14 = NULL;
+        m_tPassTargetTimer.m_uPackedTime = 0;
         return;
     }
-    if (m_timer_0x14 == NULL)
+    if (m_tPassTargetTimer.m_uPackedTime == 0)
     {
-        m_timer_0x14->SetSeconds(seconds);
+        m_tPassTargetTimer.SetSeconds(seconds);
     }
 }
 
@@ -230,10 +230,10 @@ void cBall::HandleBuzzerBeater(float seconds)
  */
 void cBall::ClearBallBlur()
 {
-    if (m_blurHandler != NULL)
+    if (m_pBlurHandler != NULL)
     {
-        m_blurHandler->Die(0.5f);
-        m_blurHandler = NULL;
+        m_pBlurHandler->Die(0.5f);
+        m_pBlurHandler = NULL;
     }
 }
 
@@ -263,7 +263,7 @@ void cBall::GetInNet(int&)
  */
 cPlayer* cBall::GetPassTargetFielder() const
 {
-    cPlayer* player = m_passTargetPlayer;
+    cPlayer* player = m_pPassTarget;
     if ((player == NULL) || (player->m_eClassType != FIELDER))
     {
         return NULL;
@@ -276,7 +276,7 @@ cPlayer* cBall::GetPassTargetFielder() const
  */
 cPlayer* cBall::GetOwnerGoalie()
 {
-    cPlayer* player = m_playerOwner;
+    cPlayer* player = m_pOwner;
     if ((player == NULL) || (player->m_eClassType != GOALIE))
     {
         return NULL;
@@ -289,7 +289,7 @@ cPlayer* cBall::GetOwnerGoalie()
  */
 cPlayer* cBall::GetOwnerFielder() const
 {
-    cPlayer* player = m_playerOwner;
+    cPlayer* player = m_pOwner;
     if ((player == NULL) || (player->m_eClassType != FIELDER))
     {
         return NULL;
@@ -302,7 +302,7 @@ cPlayer* cBall::GetOwnerFielder() const
  */
 nlVector3* cBall::GetDrawablePosition() const
 {
-    nlMatrix4* mtx = m_drawableObject->GetWorldMatrix();
+    nlMatrix4* mtx = m_pDrawableBall->GetWorldMatrix();
     return (nlVector3*)&(mtx->m[3][0]);
 }
 
@@ -311,12 +311,12 @@ nlVector3* cBall::GetDrawablePosition() const
  */
 nlVector3* cBall::GetAIVelocity() const
 {
-    cPlayer* temp_r4 = m_playerOwner;
+    cPlayer* temp_r4 = m_pOwner;
     if (temp_r4 != NULL)
     {
         return &(temp_r4->m_v3Velocity);
     }
-    return (nlVector3*)&(m_unk_0x58);
+    return (nlVector3*)&(m_v3Velocity);
 }
 
 /**
@@ -359,13 +359,13 @@ void cBall::ClearBallEffects()
  */
 void cBall::ClearOwner()
 {
-    m_playerPrevOwner = m_playerOwner;
-    m_playerOwner = NULL;
-    m_aiBall->EnableCollisions();
-    m_unk_0x4C = m_rayPosition;
-    m_aiBall->GetPosition(&m_rayPosition);
-    m_aiBall->GetLinearVelocity(&m_unk_0x58);
-    m_unk_0x00++;
+    m_pPrevOwner = m_pOwner;
+    m_pOwner = NULL;
+    m_pPhysicsBall->EnableCollisions();
+    // m_unk_0x4C = m_v3Position;
+    m_pPhysicsBall->GetPosition(&m_v3Position);
+    // m_pPhysicsBall->GetLinearVelocity(&m_unk_0x58);
+    // m_unk_0x00++;
 }
 
 /**
@@ -373,8 +373,8 @@ void cBall::ClearOwner()
  */
 cBall::~cBall()
 {
-    delete m_aiBall;
-    delete m_rayCollider;
+    delete m_pPhysicsBall;
+    delete m_pBallPosCollider;
 }
 
 /**
@@ -389,33 +389,34 @@ PhysicsAIBall::~PhysicsAIBall()
  */
 cBall::cBall()
 {
-    m_unk_0x00 = 0;
-    m_unk_0x04 = 0;
+    // m_unk_0x00 = 0;
+    // m_unk_0x04 = 0;
 
-    m_timer_0x08->SetSeconds(0.f);
-    m_timer_0x0C->SetSeconds(0.f);
-    m_passTargetTimer->SetSeconds(0.f);
-    m_timer_0x14->SetSeconds(0.f);
+    m_tShotTimer.SetSeconds(0.f);
+    m_tNoPickupTimer.SetSeconds(0.f);
+    m_tPassTargetTimer.SetSeconds(0.f);
+    // m_timer_0x14->SetSeconds(0.f);
+    m_fTotalPassTime = 0.f;
 
     void* this_00 = nlMalloc(0x5c, 8, FALSE);
     if (this_00 != NULL)
     {
         this_00 = new (this_00) PhysicsAIBall(0.18f);
     }
-    m_aiBall = (PhysicsAIBall*)this_00;
+    m_pPhysicsBall = (PhysicsAIBall*)this_00;
 
-    m_timer_0x14->SetSeconds(0.f);
+    // m_timer_0x14->SetSeconds(0.f);
 
-    NL_VECTOR3_SET(m_rayPosition, 0.f, 0.f, 0.f);
+    NL_VECTOR3_SET(m_v3Position, 0.f, 0.f, 0.f);
     nlVector3 m_rayDir;
-    NL_VECTOR3_SET(m_rayPosition, 0.f, 0.f, 0.f);
+    NL_VECTOR3_SET(m_v3Position, 0.f, 0.f, 0.f);
 
     void* this_01 = nlMalloc(0x2C, 8, FALSE);
     if (this_01 != NULL)
     {
-        this_01 = new (this_01) RayCollider(1.f, m_rayPosition, m_rayDir);
+        this_01 = new (this_01) RayCollider(1.f, m_v3Position, m_rayDir);
     }
-    m_rayCollider = (RayCollider*)this_01;
+    m_pBallPosCollider = (RayCollider*)this_01;
 
     if (AudioLoader::IsInited() != false)
     {

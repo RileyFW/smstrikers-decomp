@@ -367,7 +367,7 @@ GoalieSave.o:
 	.sbss       start:0x80373738 end:0x80373778
 	.sdata2     start:0x80375608 end:0x80375658
 
-HeadTrack.o:
+Game/AI/HeadTrack.cpp:
 	.text       start:0x80056E04 end:0x80057424
 	.text       start:0x80057424 end:0x80057434
 	.ctors      start:0x8028D29C end:0x8028D2A0
@@ -2081,7 +2081,7 @@ Bowser.o:
 	.sbss       start:0x80373BE8 end:0x80373BF8
 	.sdata2     start:0x803764E0 end:0x803765C0
 
-CameraGuy.o:
+Game/Render/CameraGuy.cpp:
 	.text       start:0x8015D964 end:0x8015DCFC
 	.text       start:0x8015DCFC end:0x8015DD04
 	.text       start:0x8015DD04 end:0x8015DD04
@@ -2203,7 +2203,7 @@ CrowdManager.o:
 	.sdata      start:0x80372658 end:0x80372668
 	.sdata2     start:0x803767C8 end:0x803767E8
 
-SkinAnimatedNPC.o:
+Game/Render/SkinAnimatedNPC.cpp:
 	.text       start:0x801649A4 end:0x80165070
 	.text       start:0x80165070 end:0x80165070
 	.text       start:0x80165070 end:0x80165070
@@ -2745,7 +2745,7 @@ animcam.o:
 	.sbss       start:0x80373EF8 end:0x80373F08
 	.sdata2     start:0x80376BB0 end:0x80376BE0
 
-TopDownCamera.o:
+Game/Camera/TopDownCamera.cpp:
 	.text       start:0x801A5F00 end:0x801A60D4
 	.text       start:0x801A60D4 end:0x801A60F4
 	.text       start:0x801A60F4 end:0x801A60F4
@@ -2826,14 +2826,14 @@ GameplayCam.o:
 	.sbss       start:0x80373F50 end:0x80373F58
 	.sdata2     start:0x80376CB8 end:0x80376D40
 
-ShootToScoreCam.o:
+Game/Camera/ShootToScoreCam.cpp:
 	.text       start:0x801AA464 end:0x801AA57C
 	.text       start:0x801AA57C end:0x801AA59C
 	.text       start:0x801AA59C end:0x801AA59C
 	.data       start:0x802C3D20 end:0x802C3D48
 	.sdata2     start:0x80376D40 end:0x80376D48
 
-GoalCam.o:
+Game/Camera/GoalCam.cpp:
 	.text       start:0x801AA59C end:0x801AACE4
 	.text       start:0x801AACE4 end:0x801AAD04
 	.text       start:0x801AAD04 end:0x801AAD04

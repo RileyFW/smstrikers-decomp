@@ -26,7 +26,7 @@ void PhysicsAIBall::IsBallOutsideNet(const nlVector3&)
     // __psq_st0(auStack_18, (int)((ulonglong)in_f30 >> 0x20), 0);
     // __psq_st1(auStack_18, (int)in_f30, 0);
 
-    dVar2 = g_pBall->m_aiBall->GetRadius();
+    dVar2 = g_pBall->m_pPhysicsBall->GetRadius();
 
     // dVar2 = (double)PhysicsSphere::GetRadius(*(PhysicsSphere**)(Ball::g_pBall + 0x38));
     // dVar4 = ABS((double)*(float*)this);

@@ -1,4 +1,4 @@
-#include "GoalCam.h"
+#include "Game/Camera/GoalCam.h"
 
 /**
  * Offset/Address/Size: 0x18 | 0x801AACFC | size: 0x8
