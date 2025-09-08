@@ -1,38 +1,19 @@
-#include "kickoffcam.h"
+#pragma pool_data off
 
-/**
- * Offset/Address/Size: 0x18 | 0x801A6214 | size: 0x8
- */
-void cKickOffCamera::GetViewMatrix() const
-{
-}
+#include "Game/Camera/kickoffcam.h"
 
-/**
- * Offset/Address/Size: 0x10 | 0x801A620C | size: 0x8
- */
-void cKickOffCamera::GetCameraPosition() const
-{
-}
+#include "NL/gl/glMatrix.h"
 
-/**
- * Offset/Address/Size: 0x8 | 0x801A6204 | size: 0x8
- */
-void cKickOffCamera::GetTargetPosition() const
-{
-}
-
-/**
- * Offset/Address/Size: 0x0 | 0x801A61FC | size: 0x8
- */
-void cKickOffCamera::GetType()
-{
-}
+nlVector3_ vecCameraDefault = { 0.0f, -18.0f, 8.0f };
+nlVector3_ vecTargetDefault = { 0.0f, 0.0f, 0.0f };
 
 /**
  * Offset/Address/Size: 0x90 | 0x801A6184 | size: 0x78
  */
 cKickOffCamera::cKickOffCamera()
 {
+    m_v3Camera = *(nlVector3*)&vecCameraDefault;
+    m_v3Target = *(nlVector3*)&vecTargetDefault;
 }
 
 /**
@@ -47,4 +28,5 @@ cKickOffCamera::~cKickOffCamera()
  */
 void cKickOffCamera::Update(float)
 {
+    glMatrixLookAt(m_matView, m_v3Camera, m_v3Target, mUpVector);
 }

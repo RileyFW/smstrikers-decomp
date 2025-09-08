@@ -1,38 +1,25 @@
 #include "Game/Camera/GoalCam.h"
 
-/**
- * Offset/Address/Size: 0x18 | 0x801AACFC | size: 0x8
- */
-void GoalCamera::GetViewMatrix() const
-{
-}
+static bool gbCamFreeze;
+static s32 gnCamType;
 
-/**
- * Offset/Address/Size: 0x10 | 0x801AACF4 | size: 0x8
- */
-void GoalCamera::GetCameraPosition() const
-{
-}
-
-/**
- * Offset/Address/Size: 0x8 | 0x801AACEC | size: 0x8
- */
-void GoalCamera::GetTargetPosition() const
-{
-}
-
-/**
- * Offset/Address/Size: 0x0 | 0x801AACE4 | size: 0x8
- */
-void GoalCamera::GetType()
-{
-}
+f32 gfDistance = 10.0f;
+f32 gfHeight = 3.0f;
+f32 gfSideMult = 2.0f;
+f32 gfSideBias = 0.4f;
+f32 gfCamDir = 3.1415927f;
+f32 gfCamTilt = 0.1f;
+f32 gfCamDist = 14.0f;
 
 /**
  * Offset/Address/Size: 0x6CC | 0x801AAC68 | size: 0x7C
  */
 GoalCamera::GoalCamera()
 {
+    m_vecTarget.f.x = 0.0f;
+    m_vecTarget.f.y = 0.0f;
+    m_vecTarget.f.z = 0.0f;
+    Update(0.0f);
 }
 
 /**
@@ -47,4 +34,5 @@ GoalCamera::~GoalCamera()
  */
 void GoalCamera::Update(float)
 {
+    // TODO: decompile
 }

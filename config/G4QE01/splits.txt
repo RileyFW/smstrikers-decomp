@@ -2755,7 +2755,7 @@ Game/Camera/TopDownCamera.cpp:
 	.sbss       start:0x80373F08 end:0x80373F10
 	.sdata2     start:0x80376BE0 end:0x80376BF8
 
-kickoffcam.o:
+Game/Camera/kickoffcam.cpp:
 	.text       start:0x801A60F4 end:0x801A61FC
 	.text       start:0x801A61FC end:0x801A621C
 	.text       start:0x801A621C end:0x801A621C
