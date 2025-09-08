@@ -49,7 +49,7 @@ public:
     void SetPerfectPass(bool, bool);
     void SetPosition(const nlVector3&);
     void SetOwner(cPlayer*);
-    void IsBuzzerBeaterSet() const;
+    bool IsBuzzerBeaterSet() const;
     void HandleBuzzerBeater(float);
     void ClearBallBlur();
     void ClearShotInProgress();
@@ -75,7 +75,7 @@ public:
     /* 0x08 */ Timer m_tShotTimer;
     /* 0x0C */ Timer m_tNoPickupTimer;
     /* 0x10 */ Timer m_tPassTargetTimer;
-    /* 0x14 */ Timer m_unk_0x14;
+    /* 0x14 */ Timer m_tBuzzerBeaterTimer;
     /* 0x14 */ float m_fTotalPassTime;
 
     /* 0x18 */ BlurHandler* m_pBlurHandler;

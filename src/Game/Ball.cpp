@@ -3,6 +3,8 @@
 #include "NL/nlMath.h"
 #include "NL/nlMemory.h"
 
+#include "Game/Goalie.h"
+
 #include "Game/Physics/PhysicsAIBall.h"
 #include "Game/Physics/PhysicsObject.h"
 #include "Game/Physics/RayCollider.h"
@@ -205,8 +207,26 @@ void cBall::SetOwner(cPlayer*)
 /**
  * Offset/Address/Size: 0x1664 | 0x8000B038 | size: 0x50
  */
-void cBall::IsBuzzerBeaterSet() const
+bool cBall::IsBuzzerBeaterSet() const
 {
+
+    bool res = false;
+    if (m_tBuzzerBeaterTimer.m_uPackedTime != 0)
+    {
+        return true;
+    }
+
+    if (g_pBall->m_tShotTimer.m_uPackedTime != 0)
+    {
+        return true;
+    }
+
+    if ((Goalie::mbPosGoalieNetCheck != 0) || (Goalie::mbNegGoalieNetCheck != 0))
+    {
+        res = true;
+    }
+
+    return res;
 }
 
 /**
@@ -216,12 +236,12 @@ void cBall::HandleBuzzerBeater(float seconds)
 {
     if (seconds < 0.0f)
     {
-        m_tPassTargetTimer.m_uPackedTime = 0;
+        m_tBuzzerBeaterTimer.m_uPackedTime = 0;
         return;
     }
-    if (m_tPassTargetTimer.m_uPackedTime == 0)
+    if (m_tBuzzerBeaterTimer.m_uPackedTime == 0)
     {
-        m_tPassTargetTimer.SetSeconds(seconds);
+        m_tBuzzerBeaterTimer.SetSeconds(seconds);
     }
 }
 

@@ -705,7 +705,7 @@ config.libs = [
             Object(NonMatching, "Game/Camera/FaceCam.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Camera/GoalCam.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Camera/ShootToScoreCam.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/Camera/TopDownCamera.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/Camera/TopDownCamera.cpp", extra_cflags=["-inline deferred"]),
 
             Object(NonMatching, "Game/Ball.cpp"),
             Object(Matching, "Game/Net.cpp", extra_cflags=["-inline deferred"]),

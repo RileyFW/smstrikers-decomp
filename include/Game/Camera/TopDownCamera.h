@@ -11,21 +11,24 @@ public:
     virtual const nlMatrix4& GetViewMatrix() const;
     virtual void Update(float);
 
-    virtual float GetFOV() const
+    virtual eCameraType GetType()
     {
-        return m_Fov;
+        return eCameraType_TopDown;
     };
-    virtual const nlVector3& GetCameraPosition() const
-    {
-        return m_Position;
-    }
+
     virtual const nlVector3& GetTargetPosition() const
     {
         return m_Target;
     };
-    virtual eCameraType GetType()
+
+    virtual const nlVector3& GetCameraPosition() const
     {
-        return eCameraType_TopDown;
+        return m_Position;
+    }
+
+    virtual float GetFOV() const
+    {
+        return m_Fov;
     };
 
     /* 0x1C */ nlMatrix4 m_View;
