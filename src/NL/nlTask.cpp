@@ -17,7 +17,7 @@ float g_fTaskTimeLowerBound;
  */
 void nlTaskManager::SetTimeDilation(float timeDilation)
 {
-    m_pInstance->m_timeDilation = timeDilation;
+    m_pInstance->m_TimeDilation = timeDilation;
 }
 
 /**
@@ -25,7 +25,7 @@ void nlTaskManager::SetTimeDilation(float timeDilation)
  */
 void nlTaskManager::SetNextState(unsigned int nextState)
 {
-    m_pInstance->m_nextState = nextState;
+    m_pInstance->m_PendingState = nextState;
 }
 
 /**
@@ -40,28 +40,28 @@ void nlTaskManager::RunAllTasks()
     nlTask* taskIterator;
     s32 currentTicker;
 
-    currentTask = nlDLRingGetStart<nlTask>(m_pInstance->m_taskRingHead);
+    currentTask = nlDLRingGetStart<nlTask>(m_pInstance->m_lTaskList);
     if (currentTask != NULL)
     {
-        if ((u32)m_pInstance->m_unk_0x08 != (u32)m_pInstance->m_nextState)
+        if ((u32)m_pInstance->m_CurrState != (u32)m_pInstance->m_PendingState)
         {
         loop_2:
-            currentTask->StateTransition(m_pInstance->m_unk_0x08, m_pInstance->m_nextState);
-            if (nlDLRingIsEnd<nlTask>(m_pInstance->m_taskRingHead, currentTask) == 0)
+            currentTask->StateTransition(m_pInstance->m_CurrState, m_pInstance->m_PendingState);
+            if (nlDLRingIsEnd<nlTask>(m_pInstance->m_lTaskList, currentTask) == 0)
             {
                 currentTask = currentTask->m_next;
                 goto loop_2;
             }
-            m_pInstance->m_taskCount = (u32)m_pInstance->m_unk_0x08;
-            m_pInstance->m_unk_0x08 = (u32)m_pInstance->m_nextState;
+            m_pInstance->m_PrevState = (u32)m_pInstance->m_CurrState;
+            m_pInstance->m_CurrState = (u32)m_pInstance->m_PendingState;
         }
 
-        taskIterator = nlDLRingGetStart<nlTask>(m_pInstance->m_taskRingHead);
+        taskIterator = nlDLRingGetStart<nlTask>(m_pInstance->m_lTaskList);
     loop_6:
         currentTicker = nlGetTicker();
         tickerDifference = nlGetTickerDifference(taskIterator->m_unk_0x14, currentTicker);
         taskIterator->m_unk_0x14 = currentTicker;
-        if (taskIterator->m_unk_0x10 & m_pInstance->m_unk_0x08)
+        if (taskIterator->m_unk_0x10 & m_pInstance->m_CurrState)
         {
             clampedDeltaTime = tickerDifference / 1000.f;
             if (clampedDeltaTime < g_fTaskTimeLowerBound)
@@ -72,11 +72,11 @@ void nlTaskManager::RunAllTasks()
             {
                 clampedDeltaTime = g_fTaskTimeUpperBound;
             }
-            deltaTime = clampedDeltaTime * m_pInstance->m_timeDilation;
-            m_pInstance->m_unk_0x14 = deltaTime;
+            deltaTime = clampedDeltaTime * m_pInstance->m_TimeDilation;
+            m_pInstance->m_fCurrentTimeDelta = deltaTime;
             taskIterator->Run(deltaTime);
         }
-        if (taskIterator != m_pInstance->m_taskRingHead)
+        if (taskIterator != m_pInstance->m_lTaskList)
         {
             taskIterator = taskIterator->m_next;
             goto loop_6;
@@ -93,14 +93,14 @@ void nlTaskManager::AddTask(nlTask* arg0, unsigned int arg1, unsigned int arg2)
     arg0->m_unk_0x10 = arg2;
     arg0->m_unk_0x14 = nlGetTicker();
 
-    if (m_pInstance->m_taskRingHead == nullptr)
+    if (m_pInstance->m_lTaskList == nullptr)
     {
-        nlDLRingAddStart<nlTask>(&m_pInstance->m_taskRingHead, arg0);
+        nlDLRingAddStart<nlTask>(&m_pInstance->m_lTaskList, arg0);
         return;
     }
 
     // Find the appropriate position to insert the task based on priority
-    nlTask* currentTask = nlDLRingGetStart<nlTask>(m_pInstance->m_taskRingHead);
+    nlTask* currentTask = nlDLRingGetStart<nlTask>(m_pInstance->m_lTaskList);
     while (currentTask != nullptr)
     {
         if (currentTask->m_unk_0x0C >= arg1)
@@ -108,7 +108,7 @@ void nlTaskManager::AddTask(nlTask* arg0, unsigned int arg1, unsigned int arg2)
             currentTask = currentTask->m_prev;
             break;
         }
-        else if (!nlDLRingIsEnd<nlTask>(m_pInstance->m_taskRingHead, currentTask))
+        else if (!nlDLRingIsEnd<nlTask>(m_pInstance->m_lTaskList, currentTask))
         {
             currentTask = currentTask->m_next;
         }
@@ -118,7 +118,7 @@ void nlTaskManager::AddTask(nlTask* arg0, unsigned int arg1, unsigned int arg2)
         }
     }
 
-    nlDLRingInsert<nlTask>(&m_pInstance->m_taskRingHead, currentTask, arg0);
+    nlDLRingInsert<nlTask>(&m_pInstance->m_lTaskList, currentTask, arg0);
 }
 
 /**
@@ -129,10 +129,10 @@ void nlTaskManager::Startup(unsigned int arg0)
     void* pData = nlMalloc(0x1C, 8, 0);
     pData = (pData) ? pData : pData; // just to produce "cmplwi r3, 0x0"
     m_pInstance = (nlTaskManager*)pData;
-    m_pInstance->m_taskCount = arg0;
-    m_pInstance->m_unk_0x08 = arg0; // m_previousState ?
-    m_pInstance->m_nextState = arg0;
-    m_pInstance->m_taskRingHead = nullptr; // Initialize task ring head to null
-    m_pInstance->m_timeDilation = 1.0f;
-    m_pInstance->m_flags = 0;
+    m_pInstance->m_PrevState = arg0;
+    m_pInstance->m_CurrState = arg0; // m_previousState ?
+    m_pInstance->m_PendingState = arg0;
+    m_pInstance->m_lTaskList = nullptr; // Initialize task ring head to null
+    m_pInstance->m_TimeDilation = 1.0f;
+    m_pInstance->m_Locked = 0;
 }

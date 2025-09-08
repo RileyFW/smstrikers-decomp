@@ -23,13 +23,16 @@ public:
     PhysicsObject(PhysicsWorld*);
 
     void CloneObject(const PhysicsObject&);
-    virtual int GetObjectType() const = 0;                               // 0x0C
-    virtual int SetContactInfo(dContact*, PhysicsObject*, bool);         // 0x10
-    virtual void PreUpdate();                                            // 0x14
-    virtual void PostUpdate();                                           // 0x18
-    virtual int PreCollide();                                            // 0x1c
-    virtual int Contact(PhysicsObject*, dContact*, int);                 // 0x20
-    virtual int Contact(PhysicsObject*, dContact*, int, PhysicsObject*); // 0x24
+    /* 0x0C */ virtual int GetObjectType() const = 0;
+    /* 0x10 */ virtual int SetContactInfo(dContact*, PhysicsObject*, bool);
+    /* 0x14 */ virtual void PreUpdate();
+    /* 0x18 */ virtual void PostUpdate();
+    /* 0x1c */ virtual int PreCollide()
+    {
+        return 0;
+    }
+    /* 0x20 */ virtual int Contact(PhysicsObject*, dContact*, int);
+    /* 0x24 */ virtual int Contact(PhysicsObject*, dContact*, int, PhysicsObject*);
     void MakeStatic();
     void SetMass(float);
     void Reconnect(dSpaceID);

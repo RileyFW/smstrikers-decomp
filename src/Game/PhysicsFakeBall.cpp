@@ -6,10 +6,11 @@
  */
 int FakePhysicsBall::Contact(PhysicsObject* object, dContact* contact, int arg)
 {
-    if ((u8) * ((u8*)m_unk_0x40 + 0x18) != 0)
+    if (mWorld.mbHitSuccess)
     {
         return 0;
     }
+
     return PhysicsBall::Contact(object, contact, arg);
 }
 

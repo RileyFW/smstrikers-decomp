@@ -75,9 +75,9 @@ void MasterVolume::GetVolume(MasterVolume::VOLUME_GROUP)
 /**
  * Offset/Address/Size: 0x240 | 0x8013C754 | size: 0x1A0
  */
-// void FadeFilterFromCurrentToZero()
-// {
-// }
+void FadeFilterFromCurrentToZero()
+{
+}
 
 /**
  * Offset/Address/Size: 0x3E0 | 0x8013C8F4 | size: 0x94

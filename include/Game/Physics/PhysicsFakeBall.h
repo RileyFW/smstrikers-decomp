@@ -3,23 +3,11 @@
 
 #include "Game/Ball.h"
 #include "Game/Physics/PhysicsBall.h"
+#include "Game/Physics/PhysicsPlane.h"
+#include "Game/Physics/PhysicsWorld.h"
+#include "Game/Physics/CollisionSpace.h"
 
-// void nlDLRingRemoveStart<DLListEntry<BallCacheInfo*>>(DLListEntry<BallCacheInfo*>**);
-// void nlDLRingIsStart<DLListEntry<BallCacheInfo*>>(DLListEntry<BallCacheInfo*>*, DLListEntry<BallCacheInfo*>*);
-// void nlDLRingIsEnd<DLListEntry<BallCacheInfo*>>(DLListEntry<BallCacheInfo*>*, DLListEntry<BallCacheInfo*>*);
-// void nlDLRingGetEnd<DLListEntry<BallCacheInfo*>>(DLListEntry<BallCacheInfo*>*);
-// void nlDLRingGetStart<DLListEntry<BallCacheInfo*>>(DLListEntry<BallCacheInfo*>*);
-// void nlDLRingRemove<DLListEntry<BallCacheInfo*>>(DLListEntry<BallCacheInfo*>**, DLListEntry<BallCacheInfo*>*);
-// void nlDLRingAddEnd<DLListEntry<BallCacheInfo*>>(DLListEntry<BallCacheInfo*>**, DLListEntry<BallCacheInfo*>*);
-// void nlDLRingAddStart<DLListEntry<BallCacheInfo*>>(DLListEntry<BallCacheInfo*>**, DLListEntry<BallCacheInfo*>*);
-
-class FakePhysicsBall : public PhysicsBall
-{
-public:
-    virtual int Contact(PhysicsObject*, dContact*, int);
-    virtual ~FakePhysicsBall();
-    virtual int GetObjectType() const;
-};
+class FakePhysicsBall;
 
 class FakeBallWorld
 {
@@ -34,36 +22,25 @@ public:
     static void InvalidateBallCache();
     void Destroy();
     void Init(cBall*);
-};
 
-// class DLListContainerBase<BallCacheInfo*, BasicSlotPool<DLListEntry<BallCacheInfo*>>>
-// {
-// public:
-//     void DeleteEntry(DLListEntry<BallCacheInfo*>*);
-// };
+    /* 0x00 */ cBall* mpBall;                    // offset 0x0, size 0x4
+    /* 0x04 */ float mfElapsedTime;              // offset 0x4, size 0x4
+    /* 0x08 */ FakePhysicsBall* mpPhysicsBall;   // offset 0x8, size 0x4
+    /* 0x0C */ CollisionSpace* mpCollisionSpace; // offset 0xC, size 0x4
+    /* 0x10 */ PhysicsWorld* mpPhysicsWorld;     // offset 0x10, size 0x4
+    /* 0x14 */ PhysicsPlane* mpGroundPlane;      // offset 0x14, size 0x4
+    /* 0x18 */ bool mbHitSuccess;                // offset 0x18, size 0x1
+    /* 0x1C */ dContactGeom mContactInfo;        // offset 0x1C, size 0x2C
+}; // total size: 0x48
 
-// class nlWalkDLRing<DLListEntry<BallCacheInfo*>, DLListContainerBase<BallCacheInfo*, BasicSlotPool<DLListEntry<BallCacheInfo*>>>>(DLListEntry<BallCacheInfo*>*, DLListContainerBase<BallCacheInfo*, BasicSlotPool<DLListEntry<BallCacheInfo*>>>*, void (DLListContainerBase<BallCacheInfo*, BasicSlotPool<DLListEntry<BallCacheInfo*>>>
-// {
-// public:
-//     void *)(DLListEntry<BallCacheInfo*>*));
-// };
+class FakePhysicsBall : public PhysicsBall
+{
+public:
+    virtual int Contact(PhysicsObject*, dContact*, int);
+    virtual ~FakePhysicsBall();
+    virtual int GetObjectType() const;
 
-// class nlWalkRing<DLListEntry<BallCacheInfo*>, DLListContainerBase<BallCacheInfo*, BasicSlotPool<DLListEntry<BallCacheInfo*>>>>(DLListEntry<BallCacheInfo*>*, DLListContainerBase<BallCacheInfo*, BasicSlotPool<DLListEntry<BallCacheInfo*>>>*, void (DLListContainerBase<BallCacheInfo*, BasicSlotPool<DLListEntry<BallCacheInfo*>>>
-// {
-// public:
-//     void *)(DLListEntry<BallCacheInfo*>*));
-// };
-
-// class nlDLListSlotPool<BallCacheInfo*>
-// {
-// public:
-//     void ~nlDLListSlotPool();
-// };
-
-// class SlotPool<BallCacheInfo>
-// {
-// public:
-//     void ~SlotPool();
-// };
+    /* 0x40 */ FakeBallWorld& mWorld;
+}; // total size: 0x44
 
 #endif // _PHYSICSFAKEBALL_H_

@@ -19,7 +19,7 @@ public:
     static float mAccumulatedDeltaT;
     static float mSimulationTime;
     static float mfFrameLockTime;
-    // static float mTimeScale;
+    static float mTimeScale;
 };
 
 #endif // _FIXEDUPDATETASK_H_

@@ -87,25 +87,10 @@ int PhysicsAIBall::Contact(PhysicsObject*, dContact*, int)
 PhysicsAIBall::PhysicsAIBall(float radius)
     : PhysicsBall(g_CollisionSpace, g_PhysicsWorld, radius)
 {
-    m_unk_0x40 = 0;
+    m_pAIBall = NULL;
     m_unk_0x50 = 9999;
-    m_unk_0x58 = 0;
+    m_unk_0x58 = false;
     m_unk_0x44.f.x = 0.f;
     m_unk_0x44.f.y = 0.f;
     m_unk_0x44.f.z = 0.f;
-}
-
-/**
- * Offset/Address/Size: 0x1268 | 0x80134C9C | size: 0x70
- */
-PhysicsBall::~PhysicsBall()
-{
-}
-
-/**
- * Offset/Address/Size: 0x0 | 0x80134D0C | size: 0x8
- */
-int PhysicsAIBall::GetObjectType() const
-{
-    return 0xf;
 }

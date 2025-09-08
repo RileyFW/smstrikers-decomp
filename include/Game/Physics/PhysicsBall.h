@@ -7,6 +7,9 @@
 class PhysicsBall : public PhysicsSphere
 {
 public:
+    PhysicsBall(CollisionSpace*, PhysicsWorld*, float);
+    virtual ~PhysicsBall() { };
+
     void CalcAngularFromLinearVelocity(nlVector3&);
     void SetUseAngularVelocity(bool);
     void ScaleAngularVelocity(float);
@@ -19,19 +22,12 @@ public:
     virtual int SetContactInfo(dContact*, PhysicsObject*, bool);
     float GetBallMaxVelocity();
 
-    PhysicsBall(CollisionSpace*, PhysicsWorld*, float);
-    virtual ~PhysicsBall();
-
-    /* 0x2c */ nlVector3 m_unk_0x2c; // change this will break constructor
-
-    /* 0x38 */ u8 m_unk_0x38;
-    /* 0x39 */ u8 m_unk_0x39;
-    /* 0x3a */ u8 m_unk_0x3a;
-    /* 0x3b */ u8 m_unk_0x3b;
-    /* 0x3c */ float m_angularVelocity;
-    /* 0x40 */ u32* m_unk_0x40; // referenced by int FakePhysicsBall::Contact(PhysicsObject* object, dContact* contact, int arg)
-    /* 0x44 */ nlVector3 m_unk_0x44;
-    /* 0x50 */ int m_unk_0x50;
-};
+    /* 0x2c */ nlVector3 m_v3TiltForce;
+    /* 0x38 */ bool m_bUseTiltForce;
+    /* 0x39 */ bool m_bIsSupportedByGround;
+    /* 0x3a */ bool m_bUseAngularVel;
+    /* 0x3b */ bool m_bUseMagnusEffect;
+    /* 0x3c */ float m_fSpinTimer;
+}; // total size: 0x40
 
 #endif // _PHYSICSBALL_H_

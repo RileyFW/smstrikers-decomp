@@ -35,13 +35,13 @@ public:
 
     static nlTaskManager* m_pInstance;
 
-    /* 0x00 */ float m_timeDilation;
-    /* 0x04 */ nlTask* m_taskRingHead; // Head of the task DLRing
-    /* 0x08 */ u32 m_unk_0x08;
-    /* 0x0C */ u32 m_nextState;
-    /* 0x10 */ u32 m_taskCount;
-    /* 0x14 */ float m_unk_0x14;
-    /* 0x18 */ u8 m_flags;
-};
+    /* 0x00 */ f32 m_TimeDilation;
+    /* 0x04 */ nlTask* m_lTaskList; // Head of the task DLRing
+    /* 0x08 */ u32 m_CurrState;
+    /* 0x0C */ u32 m_PendingState;
+    /* 0x10 */ u32 m_PrevState;
+    /* 0x14 */ f32 m_fCurrentTimeDelta;
+    /* 0x18 */ bool m_Locked;
+}; // total size: 0x1C
 
 #endif // _NLTASK_H_

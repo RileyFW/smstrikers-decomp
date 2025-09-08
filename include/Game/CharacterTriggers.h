@@ -5,10 +5,14 @@
 
 enum eBallShotEffectType
 {
-    eBallShotEffectType_0,
-    eBallShotEffectType_1,
-    eBallShotEffectType_2,
-    eBallShotEffectType_3,
+    BALL_EFFECT_S2S_SUPER_SHOT = 0,
+    BALL_EFFECT_S2S_SHOT = 1,
+    BALL_EFFECT_PERFECT_SHOT = 2,
+    BALL_EFFECT_PERFECT_PASS = 3,
+    BALL_EFFECT_REGULAR_SHOT = 4,
+    BALL_EFFECT_ONETIMER_SHOT = 5,
+    BALL_EFFECT_CHIP_SHOT = 6,
+    NUM_BALL_EFFECTS = 7,
 };
 
 class cCharacter;

@@ -6,28 +6,41 @@
 #include "NL/nlTimer.h"
 
 #include "Game/Player.h"
-
-// Physics
 #include "Game/Physics/PhysicsAIBall.h"
 #include "Game/Physics/RayCollider.h"
-
-// GFX
 #include "Game/Drawable/DrawableObj.h"
-
-// FX
 #include "Game/ObjectBlur.h"
+#include "Game/Sys/eventman.h"
 
-// void nlStrNCpy<char>(char*, const char*, unsigned long);
-// void 0x8028D270..0x8028D274 | size: 0x4;
+#include "Game/CharacterAudio.h"
+#include "Game/CharacterTriggers.h"
 
 enum eSpinType
 {
-    eSpinType_0 = 0
+    SPINTYPE_NONE = 0,
+    SPINTYPE_BACK = 1,
+    SPINTYPE_FORWARD = 2,
+    SPINTYPE_ROLLING = 3,
+    SPINTYPE_PARAMETER = 4,
 };
 
-enum eBallShotEffectType
+// enum eBallShotEffectType
+// {
+//     BALL_EFFECT_S2S_SUPER_SHOT = 0,
+//     BALL_EFFECT_S2S_SHOT = 1,
+//     BALL_EFFECT_PERFECT_SHOT = 2,
+//     BALL_EFFECT_PERFECT_PASS = 3,
+//     BALL_EFFECT_REGULAR_SHOT = 4,
+//     BALL_EFFECT_ONETIMER_SHOT = 5,
+//     BALL_EFFECT_CHIP_SHOT = 6,
+//     NUM_BALL_EFFECTS = 7,
+// };
+
+struct PassBallData : public EventData
 {
-    eBallShotEffectType_0 = 0
+    /* 0x00 */ cPlayer* pPasser;
+    /* 0x04 */ cPlayer* pTarget;
+    /* 0x08 */ s32 mPasserControllerID;
 };
 
 class cBall
@@ -76,30 +89,37 @@ public:
     /* 0x0C */ Timer m_tNoPickupTimer;
     /* 0x10 */ Timer m_tPassTargetTimer;
     /* 0x14 */ Timer m_tBuzzerBeaterTimer;
-    /* 0x14 */ float m_fTotalPassTime;
+    /* 0x18 */ float m_fTotalPassTime;
 
-    /* 0x18 */ BlurHandler* m_pBlurHandler;
-    /* 0x1C */ DrawableObject* m_pDrawableBall;
-    /* 0x20 */ cPlayer* m_pOwner;
-    /* 0x24 */ cPlayer* m_pPrevOwner;
-    /* 0x28 */ cPlayer* m_pLastTouch;
-    /* 0x2C */ cPlayer* m_pPassTarget;
-    /* 0x30 */ cPlayer* m_pShooter;
-    /* 0x34 */ PhysicsAIBall* m_pPhysicsBall;
-    /* 0x38 */ RayCollider* m_pBallPosCollider;
-    /* 0x3C */ nlVector3 m_v3Position;
-    /* 0x48 */ nlVector3 m_v3PrevPosition;
-    /* 0x54 */ nlVector3 m_v3Velocity;
-    /* 0x60 */ nlVector3 m_v3PassIntercept;
-    /* 0x6C */ nlQuaternion m_qOrientation;
-    /* 0x7C */ nlVector3 m_v3ShotTarget;
-    /* 0x88 */ nlVector3 m_v3ShotOrigin;
-    /* 0x94 */ u32 m_uGoalType;
-    /* 0x98 */ u32 m_uVoiceID;
-    /* 0x9C */ bool mbIsVolleyPass;
-    /* 0x9D */ bool mbIsPerfectPass;
-    /* 0x9E */ bool mbIsShootToScoreShot;
-    /* 0x9F */ bool mbIsChipShot;
+    /* 0x1C */ BlurHandler* m_pBlurHandler;
+    /* 0x20 */ DrawableObject* m_pDrawableBall;
+    /* 0x24 */ cPlayer* m_pOwner;
+    /* 0x28 */ cPlayer* m_pPrevOwner;
+
+    /* 0x2C */ cPlayer* m_pLastTouch;
+    /* 0x30 */ cPlayer* m_pPassTarget;
+    /* 0x34 */ cPlayer* m_pShooter;
+
+    /* 0x38 */ PhysicsAIBall* m_pPhysicsBall;
+    /* 0x3C */ RayCollider* m_pBallPosCollider;
+
+    /* 0x40 */ nlVector3 m_v3Position;
+    /* 0x4C */ nlVector3 m_v3PrevPosition;
+    /* 0x58 */ nlVector3 m_v3Velocity;      // 0x58, 0x5C, 0x60
+    /* 0x64 */ nlVector3 m_v3PassIntercept; // 0x64, 0x68, 0x6C
+
+    /* 0x70 */ nlQuaternion m_qOrientation; // 0x70, 0x74, 0x78, 0x7C
+    /* 0x80 */ nlVector3 m_v3ShotTarget;    // 0x80, 0x84, 0x88
+    /* 0x8C */ nlVector3 m_v3ShotOrigin;    // 0x8C, 0x90, 0x94
+    /* 0x98 */ u32 m_uGoalType;
+    /* 0x9C */ u32 m_uVoiceID;
+
+    // <--- confirmed until here
+
+    // /* 0x9C */ bool mbIsVolleyPass;
+    // /* 0x9D */ bool mbIsPerfectPass;
+    // /* 0x9E */ bool mbIsShootToScoreShot;
+    // /* 0x9F */ bool mbIsChipShot;
     /* 0xA0 */ bool mbIsPerfectShot;
     /* 0xA1 */ bool mbHyperSTS;
     /* 0xA2 */ bool mbCanDamage;

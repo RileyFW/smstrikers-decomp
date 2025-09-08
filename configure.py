@@ -785,6 +785,8 @@ config.libs = [
             Object(NonMatching, "Game/World.cpp"),
             Object(Matching, "Game/WorldManager.cpp"),
             Object(Matching, "Game/WorldUpdateTask.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/ParticleUpdateTask.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/TestTask.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/ProfileTask.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/PlatPadUpdateTask.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/FixedUpdateTask.cpp", extra_cflags=["-inline deferred"]),

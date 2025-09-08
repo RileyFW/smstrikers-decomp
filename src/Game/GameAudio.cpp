@@ -119,8 +119,9 @@ void cGameSFX::GetSFXVolReverb(unsigned long) const
 /**
  * Offset/Address/Size: 0x22BC | 0x80153800 | size: 0x14
  */
-void cGameSFX::GetSFXVol(unsigned long) const
+float cGameSFX::GetSFXVol(unsigned long) const
 {
+    return 0.f;
 }
 
 /**

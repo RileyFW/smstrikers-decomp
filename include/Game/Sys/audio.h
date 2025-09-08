@@ -94,7 +94,7 @@ public:
 // void MasterVolume::SetVolume(Audio::MasterVolume::VOLUME_GROUP, float);
 // void MasterVolume::GetVolume(Audio::MasterVolume::VOLUME_GROUP);
 
-// void FadeFilterFromCurrentToZero();
+void FadeFilterFromCurrentToZero();
 // void FadeFilterToFullStrength();
 // void PitchBend(float, float, float, float);
 // void FadeFilter(float, float, float, float);
@@ -121,7 +121,7 @@ void SetOutputMode(MusyXOutputType);
 void Update(float);
 int GetSndIDError();
 // void IsSFXPlaying(unsigned long);
-// void StopSFX(unsigned long);
+void StopSFX(unsigned long);
 // void PlaySFXEventFromScript(const SoundEventData&, const char*, float, float);
 // void StopCharSFXbyStr(const char*, NisCharacterClass);
 // void StopWorldSFXbyStr(const char*);

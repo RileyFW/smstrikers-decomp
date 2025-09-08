@@ -110,7 +110,7 @@ void cCharacter::StopSFX(Audio::eCharSFX sfxType)
 {
     if (Audio::IsInited())
     {
-        m_pCharacterSFX->Stop(sfxType, cGameSFX::StopFlag_1);
+        m_pCharacterSFX->Stop(sfxType, cGameSFX::SFX_STOP_FIRST);
     }
 }
 

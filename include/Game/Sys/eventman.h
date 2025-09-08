@@ -6,10 +6,10 @@
 class EventHandler;
 class EventManager;
 
-class EventData
+struct EventData
 {
-public:
-    ~EventData() { }
+    // public:
+    //     virtual ~EventData() { }
     virtual u32 GetID() { return -1; }
 };
 
@@ -37,7 +37,6 @@ public:
     /* 0x1C */ Event* m_event;
     /* 0x20 */ EventManager* m_manager;
     /* 0x24 */ u32 unk24;
-    // /* 0x28 */ struct __vt__12EventManager* vtable28; /* inferred */
 };
 
 class EventManager
@@ -64,5 +63,7 @@ public:
 
     virtual ~EventManager();
 };
+
+extern EventManager* g_pEventManager;
 
 #endif // _EVENTMAN_H_

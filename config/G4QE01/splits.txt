@@ -2308,7 +2308,7 @@ ElectricFence.o:
 	.sbss       start:0x80373CF0 end:0x80373D30
 	.sdata2     start:0x803768B0 end:0x80376908
 
-TestTask.o:
+Game/TestTask.cpp:
 	.text       start:0x8016C8FC end:0x8016D48C
 	.text       start:0x8016D48C end:0x8016D494
 	.text       start:0x8016D494 end:0x8016D494
@@ -2386,7 +2386,7 @@ ComUpdateTask.o:
 	.text       start:0x80170AE8 end:0x80170AE8
 	.data       start:0x802C10B8 end:0x802C10D8
 
-ParticleUpdateTask.o:
+Game/ParticleUpdateTask.cpp:
 	.text       start:0x80170AE8 end:0x80170B54
 	.text       start:0x80170B54 end:0x80170B60
 	.text       start:0x80170B60 end:0x80170B60

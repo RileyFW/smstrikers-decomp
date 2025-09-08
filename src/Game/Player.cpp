@@ -145,8 +145,14 @@ void cPlayer::ReleaseBall()
 /**
  * Offset/Address/Size: 0x16E4 | 0x80058C34 | size: 0x1C
  */
-void cPlayer::GetGlobalPad()
+cGlobalPad* cPlayer::GetGlobalPad()
 {
+    // temp_r3 = this->unk1C0;
+    if (m_pController != NULL)
+    {
+        return m_pController->m_pPad;
+    }
+    return 0;
 }
 
 /**

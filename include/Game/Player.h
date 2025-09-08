@@ -4,6 +4,7 @@
 #include "Game/Character.h"
 
 #include "NL/nlTimer.h"
+#include "NL/globalpad.h"
 
 class cBall;
 class cPoseAccumulator;
@@ -11,7 +12,7 @@ class cPN_SingleAxisBlender;
 class cPN_SAnimController;
 class cPN_Feather;
 class CollisionPlayerWallData;
-class cAIPad;
+#include "Game/AIPad.h"
 class CollisionPlayerPlayerData;
 class SpaceSearch;
 class cSHierarchy;
@@ -101,7 +102,7 @@ public:
     void DoRegularPassing(cPlayer*, bool, bool, bool, bool);
     void ResetUnPossessionTimer();
     void ReleaseBall();
-    void GetGlobalPad();
+    cGlobalPad* GetGlobalPad();
     void DoFindBestPassTarget(bool, bool);
     void IsCaptain() const;
     void IsOnSameTeam(cPlayer*);

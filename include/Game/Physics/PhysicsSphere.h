@@ -11,9 +11,13 @@ class PhysicsSphere : public PhysicsObject
 public:
     PhysicsSphere(CollisionSpace*, PhysicsWorld*, float);
     virtual ~PhysicsSphere() { };
-    virtual int GetObjectType() const { return 0x0A; };
+    virtual int GetObjectType() const
+    {
+        return 0x0A;
+    };
+
     void SetRadius(float);
     float GetRadius();
-};
+}; // total size: 0x2C
 
 #endif // _PHYSICSSPHERE_H_

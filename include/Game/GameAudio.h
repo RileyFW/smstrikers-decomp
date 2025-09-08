@@ -25,6 +25,13 @@ struct SoundPropAccessor
 class cGameSFX
 {
 public:
+    enum StopFlag
+    {
+        SFX_STOP_ALL = 0,
+        SFX_STOP_FIRST = 1,
+        SFX_STOP_OLDEST = 2,
+    };
+
     cGameSFX();
     virtual ~cGameSFX();
 
@@ -34,14 +41,8 @@ public:
     virtual int Play(Audio::SoundAttributes&);
     virtual u32 GetClassType() const;
 
-    enum StopFlag
-    {
-        StopFlag_0 = 0,
-        StopFlag_1, // Immediate?
-    };
-
     void ShutdownPlaySet();
-    void GetSFXVol(unsigned long) const;
+    float GetSFXVol(unsigned long) const;
     void GetSFXVolReverb(unsigned long) const;
     void IsKeepingTrackOf(unsigned long, SFXPlaySet**);
     void ActivateFilterOnAllTrackedSFX(bool);

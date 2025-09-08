@@ -55,13 +55,13 @@ void PhysicsBall::CalcAngularFromLinearVelocity(nlVector3& v)
  */
 void PhysicsBall::SetUseAngularVelocity(bool param_1)
 {
-    m_unk_0x3a = 0;
+    m_bUseAngularVel = 0;
     if (param_1)
     {
-        m_angularVelocity = 0.08f;
+        m_fSpinTimer = 0.08f;
         return;
     }
-    m_angularVelocity = 0.f;
+    m_fSpinTimer = 0.f;
 }
 
 /**
@@ -70,7 +70,7 @@ void PhysicsBall::SetUseAngularVelocity(bool param_1)
 void PhysicsBall::ScaleAngularVelocity(float scale)
 {
     nlVector3 v;
-    if (m_unk_0x3a != 0)
+    if (m_bUseAngularVel != 0)
     {
         GetAngularVelocity(&v);
         v.f.z = scale * v.f.z;
@@ -122,7 +122,7 @@ void PhysicsBall::AddResistanceForces()
     sp98 = *GetLinearVelocity();
     if (m_parentObject == NULL)
     {
-        if ((m_unk_0x39 != 0) && (m_unk_0x3a == 0))
+        if ((m_bIsSupportedByGround != 0) && (m_bUseAngularVel == 0))
         {
             temp_f2 = sp98.f.z * sp98.f.z;
             temp_f1 = nlSqrt(temp_f2 + ((sp98.f.x * sp98.f.x) + (sp98.f.y * sp98.f.x)), 1);
@@ -146,7 +146,7 @@ void PhysicsBall::AddResistanceForces()
         AddForceAtCentreOfMass(sp8C);
     }
 
-    if ((m_unk_0x38 != 0) && (g_pBall->m_pShooter == NULL))
+    if ((m_bUseTiltForce != 0) && (g_pBall->m_pShooter == NULL))
     {
         var_r3 = 0;
         if ((g_pBall->m_tShotTimer.m_uPackedTime != 0) && (g_pBall->mbCanDamage != 0))
@@ -155,20 +155,20 @@ void PhysicsBall::AddResistanceForces()
         }
         if (var_r3 == 0)
         {
-            AddForceAtCentreOfMass(m_unk_0x2c);
+            AddForceAtCentreOfMass(m_v3TiltForce);
         }
     }
 
-    if (m_angularVelocity > 0.f)
+    if (m_fSpinTimer > 0.f)
     {
-        m_angularVelocity = m_angularVelocity - FixedUpdateTask::GetPhysicsUpdateTick();
-        if (m_angularVelocity <= 0.f)
+        m_fSpinTimer = m_fSpinTimer - FixedUpdateTask::GetPhysicsUpdateTick();
+        if (m_fSpinTimer <= 0.f)
         {
-            m_unk_0x3a = 1;
+            m_bUseAngularVel = 1;
         }
     }
 
-    if ((m_parentObject == NULL) && (m_unk_0x3a != 0))
+    if ((m_parentObject == NULL) && (m_bUseAngularVel != 0))
     {
         temp_f29 = 0.02 + GetRadius();
         if (GetPosition()->f.z < temp_f29)
@@ -224,13 +224,13 @@ void PhysicsBall::AddResistanceForces()
                 if (((dVar5 * dVar5) + (dVar7 * dVar7) + (dVar6 * dVar6) < 0.0001f)
                     && ((local_64.f.x * local_64.f.x) + (local_64.f.z * local_64.f.z) + (local_64.f.y * local_64.f.y) < 0.00003f))
                 {
-                    m_unk_0x3a = 0;
+                    m_bUseAngularVel = 0;
                 }
             }
         }
     }
 
-    if ((m_parentObject == NULL) && (m_unk_0x3b != 0))
+    if ((m_parentObject == NULL) && (m_bUseMagnusEffect != 0))
     {
         float dVar4 = GetRadius();
         dVar4 = 0.02f + dVar4;
@@ -297,7 +297,7 @@ int PhysicsBall::Contact(PhysicsObject* other, dContact* contact, int param)
             //     M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
             if ((((dContact*)var_r3)->geom.pos[2] == pos.f.z) && (((dContact*)var_r3)->geom.normal[2] > 0.9f))
             {
-                m_unk_0x39 = 1;
+                m_bIsSupportedByGround = 1;
             }
             else
             {
@@ -350,7 +350,7 @@ int PhysicsBall::Contact(PhysicsObject* other, dContact* contact, int param)
 
     if ((objType != 0x11) && (objType != 0xD) && (objType != 0xE) && (objType != 8))
     {
-        m_unk_0x3b = 0;
+        m_bUseMagnusEffect = 0;
         FakeBallWorld::InvalidateBallCache();
         g_pBall->m_bBallPathChangeCount = g_pBall->m_bBallPathChangeCount + 1;
         g_pBall->m_bBallDeflectCount = g_pBall->m_bBallDeflectCount + 1;
@@ -368,17 +368,17 @@ void PhysicsBall::CloneBall(const PhysicsBall& other)
 {
     CloneObject(other);
 
-    u32* src = (u32*)&other.m_unk_0x2c;
-    u32* dst = (u32*)&m_unk_0x2c;
+    u32* src = (u32*)&other.m_v3TiltForce;
+    u32* dst = (u32*)&m_v3TiltForce;
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
 
-    m_unk_0x38 = other.m_unk_0x38;
-    m_unk_0x39 = other.m_unk_0x39;
-    m_unk_0x3a = other.m_unk_0x3a;
-    m_unk_0x3b = other.m_unk_0x3b;
-    m_angularVelocity = other.m_angularVelocity;
+    m_bUseTiltForce = other.m_bUseTiltForce;
+    m_bIsSupportedByGround = other.m_bIsSupportedByGround;
+    m_bUseAngularVel = other.m_bUseAngularVel;
+    m_bUseMagnusEffect = other.m_bUseMagnusEffect;
+    m_fSpinTimer = other.m_fSpinTimer;
 }
 
 /**
@@ -410,7 +410,7 @@ void PhysicsBall::PostUpdate()
 
     if (GetPosition()->f.z < GetRadius())
     {
-        m_unk_0x39 = 1;
+        m_bIsSupportedByGround = 1;
         GetPosition(&pos);
         pos.f.z = GetRadius();
         SetPosition(pos, WORLD_COORDINATES);
@@ -450,7 +450,7 @@ void PhysicsBall::PreUpdate()
  */
 int PhysicsBall::PreCollide()
 {
-    m_unk_0x39 = 0;
+    m_bIsSupportedByGround = 0;
     return 0;
 }
 
@@ -512,11 +512,11 @@ float PhysicsBall::GetBallMaxVelocity()
 PhysicsBall::PhysicsBall(CollisionSpace* space, PhysicsWorld* world, float radius)
     : PhysicsSphere(space, world, radius)
 {
-    m_unk_0x38 = 0;
-    m_unk_0x39 = 0;
-    m_unk_0x3a = 0;
-    m_unk_0x3b = 0;
-    m_angularVelocity = 0.f;
+    m_bUseTiltForce = 0;
+    m_bIsSupportedByGround = 0;
+    m_bUseAngularVel = 0;
+    m_bUseMagnusEffect = 0;
+    m_fSpinTimer = 0.f;
 
     SetCategory(0x20);
     SetCollide(0xaf);
@@ -524,7 +524,7 @@ PhysicsBall::PhysicsBall(CollisionSpace* space, PhysicsWorld* world, float radiu
     m_gravity = -14.f;
 
     float temp = 0.f;
-    m_unk_0x2c.f.x = temp;
-    m_unk_0x2c.f.y = temp;
-    m_unk_0x2c.f.z = temp;
+    m_v3TiltForce.f.x = temp;
+    m_v3TiltForce.f.y = temp;
+    m_v3TiltForce.f.z = temp;
 }
