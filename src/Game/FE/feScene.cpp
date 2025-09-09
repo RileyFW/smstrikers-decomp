@@ -87,9 +87,11 @@ FEScene::FEScene()
     m_unk_0x08 = false;
     m_unk_0x4C = 0;
 
-    const nlVector3 FROM(0.0f, 0.0f, 600.0f);
-    const nlVector3 TO(0.0f, 0.0f, 0.0f);
-    const nlVector3 UP(0.0f, 1.0f, 0.0f);
-
+    nlVector3 FROM;
+    nlVec3Set(FROM, 0.0f, 0.0f, 600.0f);
+    nlVector3 TO;
+    nlVec3Set(TO, 0.0f, 0.0f, 0.0f);
+    nlVector3 UP;
+    nlVec3Set(UP, 0.0f, 1.0f, 0.0f);
     glMatrixLookAt(m_transf, FROM, TO, UP);
 }

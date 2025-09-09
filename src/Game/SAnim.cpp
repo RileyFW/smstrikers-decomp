@@ -534,7 +534,8 @@ void cSAnim::BlendScale(int arg0, int arg1, float arg2, float arg3, cPoseAccumul
             sp2C = 0.00024414062f * (float)((const short*)temp_r8)[0];
             sp30 = 0.00024414062f * (float)((const short*)temp_r8)[1];
             sp34 = 0.00024414062f * (float)((const short*)temp_r8)[2];
-            nlVector3 v0(sp2C, sp30, sp34);
+            nlVector3 v0;
+            nlVec3Set(v0, sp2C, sp30, sp34);
             arg4->BlendScale(arg0, &v0, arg3, arg5);
             return;
         }
@@ -544,7 +545,8 @@ void cSAnim::BlendScale(int arg0, int arg1, float arg2, float arg3, cPoseAccumul
             sp20 = 0.00024414062f * (float)((const short*)temp_r7)[0];
             sp24 = 0.00024414062f * (float)((const short*)temp_r7)[1];
             sp28 = 0.00024414062f * (float)((const short*)temp_r7)[2];
-            nlVector3 v1(sp20, sp24, sp28);
+            nlVector3 v1;
+            nlVec3Set(v1, sp20, sp24, sp28);
             arg4->BlendScale(arg0, &v1, arg3, arg5);
             return;
         }
@@ -555,13 +557,15 @@ void cSAnim::BlendScale(int arg0, int arg1, float arg2, float arg3, cPoseAccumul
         sp14 = 0.00024414062f * (float)((const short*)temp_r7_2)[0];
         sp18 = 0.00024414062f * (float)((const short*)temp_r7_2)[1];
         sp1C = 0.00024414062f * (float)((const short*)temp_r7_2)[2];
-        nlVector3 v2(sp14, sp18, sp1C);
+        nlVector3 v2;
+        nlVec3Set(v2, sp14, sp18, sp1C);
         arg4->BlendScale(arg0, &v2, arg3 - temp_f31, arg5);
         temp_r8_2 = (void*)((char*)m_scaleTracks[arg1] + ((temp_r26 + 1) * 6));
         sp8 = 0.00024414062f * (float)((const short*)temp_r8_2)[0];
         spC = 0.00024414062f * (float)((const short*)temp_r8_2)[1];
         sp10 = 0.00024414062f * (float)((const short*)temp_r8_2)[2];
-        nlVector3 v3(sp8, spC, sp10);
+        nlVector3 v3;
+        nlVec3Set(v3, sp8, spC, sp10);
         arg4->BlendScale(arg0, &v3, temp_f31, arg5);
         return;
     }
@@ -591,7 +595,8 @@ void cSAnim::BlendTrans(int bone, int track, float tNorm, float weight, cPoseAcc
         if ((flags & 0x4U) != 0U)
         {
             const float* v = (const float*)data;
-            nlVector3 T(v[0], v[1], v[2]);
+            nlVector3 T;
+            nlVec3Set(T, v[0], v[1], v[2]);
             acc->BlendTrans(bone, &T, weight, additive);
             return;
         }
@@ -600,7 +605,8 @@ void cSAnim::BlendTrans(int bone, int track, float tNorm, float weight, cPoseAcc
         if (tNorm == 1.0f)
         {
             const float* v = (const float*)((const char*)data + last * 12); // 3*4
-            nlVector3 T(v[0], v[1], v[2]);
+            nlVector3 T;
+            nlVec3Set(T, v[0], v[1], v[2]);
             acc->BlendTrans(bone, &T, weight, additive);
             return;
         }
@@ -614,8 +620,10 @@ void cSAnim::BlendTrans(int bone, int track, float tNorm, float weight, cPoseAcc
         const float* v0 = (const float*)((const char*)data + k * 12);
         const float* v1 = (const float*)((const char*)data + (k + 1) * 12);
 
-        nlVector3 P0(v0[0], v0[1], v0[2]);
-        nlVector3 P1(v1[0], v1[1], v1[2]);
+        nlVector3 P0;
+        nlVec3Set(P0, v0[0], v0[1], v0[2]);
+        nlVector3 P1;
+        nlVec3Set(P1, v1[0], v1[1], v1[2]);
 
         acc->BlendTrans(bone, &P0, a0w, additive);
         acc->BlendTrans(bone, &P1, a1w, additive);

@@ -2,7 +2,7 @@
 #include "NL/nlMath.h"
 #include "NL/nlDLRing.h"
 
-nlVector3 ZeroVector3(0.0f, 0.0f, 0.0f);
+nlVector3_ ZeroVector3 = { 0.0f, 0.0f, 0.0f };
 
 /**
  * Offset/Address/Size: 0x0 | 0x8020E580 | size: 0x19C
@@ -58,7 +58,7 @@ void FEAnimation::Update(float arg0)
                     temp_r9 = var_r31->m_prev;
                     temp_f0 = temp_r9->unkC;
                     // Initialize with zeros (equivalent to @185 constants)
-                    spC = ZeroVector3;
+                    spC = *(nlVector3*)&ZeroVector3;
                     // spC = 0.0f;
                     // sp10 = 0.0f;
                     // sp14 = 0.0f;

@@ -70,13 +70,13 @@ struct nlVector3
         u32 as_u32[3];
     };
 
-    nlVector3() { }
-    nlVector3(float _x, float _y, float _z)
-    {
-        f.x = _x;
-        f.y = _y;
-        f.z = _z;
-    }
+    // nlVector3() { }
+    // nlVector3(float x, float y, float z)
+    //     : x(x)
+    //     , y(y)
+    //     , z(z)
+    // {
+    // }
 
     void Set(float x, float y, float z)
     {
@@ -181,5 +181,22 @@ void nlInitRandom();
 #include "NL/platvmath.h"
 #include "NL/platqmath.h"
 #include "NL/utility.h"
+
+struct nlPolar
+{
+    /* 0x00 */ u16 a;
+    /* 0x04 */ float r;
+}; // size: 0x8
+
+void nlInvertRotTransMatrix(nlMatrix4&, const nlMatrix4&);
+void nlQuatNLerp(nlQuaternion&, const nlQuaternion&, const nlQuaternion&, float);
+void nlQuatInverse(nlQuaternion&, const nlQuaternion&);
+void nlQuatNormalize(nlQuaternion&, const nlQuaternion&);
+void nlMakeQuat(nlQuaternion&, const nlVector3&, float);
+void nlCartesianToPolar(nlPolar&, const nlVector3&);
+void nlAddPolarToCartesian(nlVector3&, const nlPolar&);
+void nlPolarToCartesian(nlVector3&, const nlPolar&);
+void nlPolarToCartesian(float&, float&, unsigned short, float);
+void nlCartesianToPolar(nlPolar&, float, float);
 
 #endif

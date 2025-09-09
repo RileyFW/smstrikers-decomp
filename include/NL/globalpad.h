@@ -3,12 +3,7 @@
 
 #include "types.h"
 #include "Dolphin/pad.h"
-
-struct nlPolar
-{
-    /* 0x00 */ u16 a;
-    /* 0x04 */ float r;
-}; // size: 0x8
+#include "NL/nlMath.h"
 
 class cGlobalPad
 {

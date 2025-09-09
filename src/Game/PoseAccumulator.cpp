@@ -4,8 +4,8 @@
 #include "math.h"
 
 static const nlQuaternion qRotIdentity = { 0, 0, 0, 1 };
-static const nlVector3 v3ScaleIdentity(1.0f, 1.0f, 1.0f);
-static const nlVector3 v3TransIdentity(0.0f, 0.0f, 0.0f);
+static const nlVector3_ v3ScaleIdentity = { 1.0f, 1.0f, 1.0f };
+static const nlVector3_ v3TransIdentity = { 0.0f, 0.0f, 0.0f };
 
 extern const nlMatrix4 kPose64Template;
 extern const RotAccum kRotAccumTemplate;
@@ -504,9 +504,9 @@ void cPoseAccumulator::BlendScaleIdentity(int idx, float w)
     const float t = w / a->weight;
     const float inv = 1.0f - t;
 
-    a->x = inv * a->x + t * v3ScaleIdentity.f.x;
-    a->y = inv * a->y + t * v3ScaleIdentity.f.y;
-    a->z = inv * a->z + t * v3ScaleIdentity.f.z;
+    a->x = inv * a->x + t * v3ScaleIdentity.f[0];
+    a->y = inv * a->y + t * v3ScaleIdentity.f[1];
+    a->z = inv * a->z + t * v3ScaleIdentity.f[2];
 }
 
 /**
@@ -526,9 +526,9 @@ void cPoseAccumulator::BlendTransIdentity(int idx, float w)
     const float f3 = w / e->weight;
     const float f2 = 1.0f - f3;
 
-    e->x = f2 * e->x + f3 * v3TransIdentity.f.x;
-    e->y = f2 * e->y + f3 * v3TransIdentity.f.y;
-    e->z = f2 * e->z + f3 * v3TransIdentity.f.z;
+    e->x = f2 * e->x + f3 * v3TransIdentity.f[0];
+    e->y = f2 * e->y + f3 * v3TransIdentity.f[1];
+    e->z = f2 * e->z + f3 * v3TransIdentity.f[2];
 }
 
 /**
