@@ -71,7 +71,7 @@ bool ParseDebugChannelFile(const char* path)
     SimpleParser parser;
 
     unsigned long size = 0;
-    char* buffer = (char*)nlLoadEntireFile(path, &size, 0x20u, eAllocType_0);
+    char* buffer = (char*)nlLoadEntireFile(path, &size, 0x20u, AllocateStart);
     if (!buffer)
     {
         nlPrintf("Failed to load file %s.  All print channels will be enabled.\n", path);

@@ -32,13 +32,13 @@ void nlFree(void* ptr)
 /**
  * Offset/Address/Size: 0x40 | 0x801D1F24 | size: 0x64
  */
-void* nlMalloc(unsigned long size, unsigned int alignment, bool bZero)
+void* nlMalloc(unsigned long size, unsigned int alignment, bool atEnd)
 {
     if (s_MemoryInitialized == 0)
     {
         nlInitMemory();
     }
-    return StandardAllocator.Allocate(size, alignment, bZero);
+    return StandardAllocator.Allocate(size, alignment, atEnd);
 }
 
 /**

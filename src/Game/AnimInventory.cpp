@@ -93,7 +93,7 @@ cAnimInventory::~cAnimInventory()
 void cAnimInventory::AddAnimBundle(const char* path)
 {
     int fileSize = 0;
-    void* base = nlLoadEntireFileToVirtualMemory(path, &fileSize, 1, 0, eAllocType_0);
+    void* base = nlLoadEntireFileToVirtualMemory(path, &fileSize, 1, 0, AllocateStart);
     char* p = (char*)base;
     char* end = p + fileSize;
 

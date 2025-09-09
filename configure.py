@@ -772,7 +772,6 @@ config.libs = [
             Object(Matching, "Game/PhysicsRoundedCorner.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/PhysicsWall.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/PhysicsNPC.cpp", extra_cflags=["-inline deferred"]),
-            # Object(NonMatching, "Game/PhysicsObject.cpp", extra_cflags=["-inline noauto, deferred"]),
             Object(NonMatching, "Game/PhysicsObject.cpp", extra_cflags=["-inline noauto, deferred"]),
             Object(NonMatching, "Game/PhysicsCompositeObject.cpp"),
             Object(NonMatching, "Game/PhysicsCharacterBase.cpp"),
@@ -781,6 +780,7 @@ config.libs = [
             Object(NonMatching, "Game/PhysicsTransform.cpp"),
             Object(NonMatching, "Game/PhysicsWorld.cpp"),
             Object(Matching, "Game/Physics/LoadablePhysicsMesh.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Physics/CharacterPhysicsElement.cpp", extra_cflags=["-inline deferred"]),
 
             # World
             Object(NonMatching, "Game/World.cpp"),
