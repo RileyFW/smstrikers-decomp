@@ -28,7 +28,7 @@ void DrawTextRectangle(int view, float vx0, float vy0, float vx1, float vy1, flo
 
     glSetDefaultState(false);
 
-    if ((u8)colour.a != 0xFF)
+    if ((u8)colour.c[3] != 0xFF)
     {
         glSetRasterState(GLS_AlphaBlend, 1U);
         glSetRasterState(GLS_AlphaTest, 1U);
@@ -40,19 +40,15 @@ void DrawTextRectangle(int view, float vx0, float vy0, float vx1, float vy1, flo
     xr = sx0 + w;
     yb = sy0 + h;
 
-    poly.x0 = sx0;
-    poly.y0 = sy0; // TL
-    poly.x1 = sx0;
-    poly.y1 = yb; // BL
-    poly.x2 = xr;
-    poly.y2 = yb; // BR
-    poly.x3 = xr;
-    poly.y3 = sy0; // TR
+    nlVec2Set(poly.m_pos[0], sx0, sy0); // TL
+    nlVec2Set(poly.m_pos[1], sx0, yb);  // BL
+    nlVec2Set(poly.m_pos[2], xr, yb);   // BR
+    nlVec2Set(poly.m_pos[3], xr, sy0);  // TR
 
-    poly.c3 = *((unsigned long*)&colour);
-    poly.c2 = *((unsigned long*)&colour);
-    poly.c1 = *((unsigned long*)&colour);
-    poly.c0 = *((unsigned long*)&colour);
+    poly.m_colour[3] = colour;
+    poly.m_colour[2] = colour;
+    poly.m_colour[1] = colour;
+    poly.m_colour[0] = colour;
 
     poly.depth = depth;
 

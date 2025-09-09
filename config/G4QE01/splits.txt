@@ -217,7 +217,7 @@ FilteredRandom.o:
 	.rodata     start:0x8028DA98 end:0x8028DAD0
 	.sdata2     start:0x80375210 end:0x80375218
 
-Formation.o:
+Game/Formation.cpp:
 	.text       start:0x80038250 end:0x8003ACA4
 	.text       start:0x8003ACA4 end:0x8003ACEC
 	.text       start:0x8003ACEC end:0x8003AD58
@@ -229,7 +229,7 @@ Formation.o:
 	.sdata2     start:0x80375218 end:0x80375260
 	.sbss2      start:0x80377F00 end:0x80377F08
 
-FormationDefines.o:
+Game/FormationDefines.cpp:
 	.text       start:0x8003AE10 end:0x8003BCD4
 	.text       start:0x8003BCD4 end:0x8003BE00
 	.text       start:0x8003BE00 end:0x8003BE00

@@ -10,30 +10,7 @@ struct nlColour_
 
 struct nlColour
 {
-    // union
-    // {
-    //     struct
-    //     {
-    u8 r;
-    u8 g;
-    u8 b;
-    u8 a;
-    //     } c;
-    //     u32 as_u32;
-    // };
-
-    // nlColour()
-    //     : r(0.0f)
-    //     , g(0.0f)
-    //     , b(0.0f)
-    // {
-    // }
-    // nlColour(float _x, float _y, float _z)
-    //     : r(_x)
-    //     , g(_y)
-    //     , b(_z)
-    // {
-    // }
+    unsigned char c[4];
 };
 
 #endif // _NLCOLOUR_H_

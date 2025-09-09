@@ -80,7 +80,7 @@ void FEAnimation::Update(float arg0)
                 {
                     const nlColour* color = this->m_instance->GetAssetColour();
                     nlColour newColor = *color;
-                    newColor.a = (u8)var_f31;
+                    newColor.c[3] = (u8)var_f31;
                     this->m_instance->SetAssetColour(newColor);
                 }
             }

@@ -96,47 +96,21 @@ bool glQuad3::Attach(eGLView view, int stream, bool useDefaultProgram)
  */
 void glQuad3::SetupRotatedRectangle(float w, float h, const nlMatrix4& mtx, bool flipU, bool flipV)
 {
-    // f32 sp10;
-    // f32 spC;
-    // f32 sp8;
-    // nlVector3 sp8;
     nlVector3 sp8;
 
-    // f32 v3[3];
-
-    f32 temp_f29;
-    f32 temp_f30;
-    f32 temp_f31;
-    f32 temp_f31_2;
-
-    temp_f29 = -w * 0.5f;
-    temp_f31 = -h * 0.5f;
-
-    sp8.f.x = temp_f29;
-    sp8.f.y = temp_f31;
-    sp8.f.z = 0.0f;
+    nlVec3Set(sp8, 0.5f * -w, 0.5f * -h, 0.0f);
     nlMultPosVectorMatrix(sp8, sp8, mtx);
     m_pos[0] = sp8;
 
-    temp_f30 = w * 0.5f;
-
-    sp8.f.x = temp_f30;
-    sp8.f.y = temp_f31;
-    sp8.f.z = 0.0f;
+    nlVec3Set(sp8, 0.5f * w, 0.5f * -h, 0.0f);
     nlMultPosVectorMatrix(sp8, sp8, mtx);
     m_pos[1] = sp8;
 
-    temp_f31_2 = h * 0.5f;
-
-    sp8.f.x = temp_f30;
-    sp8.f.y = temp_f31_2;
-    sp8.f.z = 0.0f;
+    nlVec3Set(sp8, 0.5f * w, 0.5f * h, 0.0f);
     nlMultPosVectorMatrix(sp8, sp8, mtx);
     m_pos[2] = sp8;
 
-    sp8.f.x = temp_f29;
-    sp8.f.y = temp_f31_2;
-    sp8.f.z = 0.0f;
+    nlVec3Set(sp8, 0.5f * -w, 0.5f * h, 0.0f);
     nlMultPosVectorMatrix(sp8, sp8, mtx);
     m_pos[3] = sp8;
 
@@ -181,14 +155,14 @@ void glQuad3::SetupRotatedRectangle(float w, float h, const nlMatrix4& mtx, bool
         var_f3 = 1.0f;
     }
 
-    m_uv[0].x = var_f0;
-    m_uv[0].y = var_f2;
-    m_uv[1].x = var_f1;
-    m_uv[1].y = var_f2;
-    m_uv[2].x = var_f1;
-    m_uv[2].y = var_f3;
-    m_uv[3].x = var_f0;
-    m_uv[3].y = var_f3;
+    m_uv[0].f.x = var_f0;
+    m_uv[0].f.y = var_f2;
+    m_uv[1].f.x = var_f1;
+    m_uv[1].f.y = var_f2;
+    m_uv[2].f.x = var_f1;
+    m_uv[2].f.y = var_f3;
+    m_uv[3].f.x = var_f0;
+    m_uv[3].f.y = var_f3;
 
     // this->unk30 = var_f0;
     // this->unk34 = var_f2;
@@ -199,22 +173,22 @@ void glQuad3::SetupRotatedRectangle(float w, float h, const nlMatrix4& mtx, bool
     // this->unk48 = var_f0;
     // this->unk4C = var_f3;
 
-    m_colour[0].r = 0xFF;
-    m_colour[0].g = 0xFF;
-    m_colour[0].b = 0xFF;
-    m_colour[0].a = 0xFF;
-    m_colour[1].r = 0xFF;
-    m_colour[1].g = 0xFF;
-    m_colour[1].b = 0xFF;
-    m_colour[1].a = 0xFF;
-    m_colour[2].r = 0xFF;
-    m_colour[2].g = 0xFF;
-    m_colour[2].b = 0xFF;
-    m_colour[2].a = 0xFF;
-    m_colour[3].r = 0xFF;
-    m_colour[3].g = 0xFF;
-    m_colour[3].b = 0xFF;
-    m_colour[3].a = 0xFF;
+    m_colour[0].c[0] = 0xFF;
+    m_colour[0].c[1] = 0xFF;
+    m_colour[0].c[2] = 0xFF;
+    m_colour[0].c[3] = 0xFF;
+    m_colour[1].c[0] = 0xFF;
+    m_colour[1].c[1] = 0xFF;
+    m_colour[1].c[2] = 0xFF;
+    m_colour[1].c[3] = 0xFF;
+    m_colour[2].c[0] = 0xFF;
+    m_colour[2].c[1] = 0xFF;
+    m_colour[2].c[2] = 0xFF;
+    m_colour[2].c[3] = 0xFF;
+    m_colour[3].c[0] = 0xFF;
+    m_colour[3].c[1] = 0xFF;
+    m_colour[3].c[2] = 0xFF;
+    m_colour[3].c[3] = 0xFF;
 
     // this->unk50 = 0xFF;
     // this->unk51 = 0xFF;

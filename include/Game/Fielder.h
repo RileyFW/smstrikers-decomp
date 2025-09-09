@@ -7,6 +7,7 @@
 #include "types.h"
 #include "NL/nlMath.h"
 
+#include "Game/Player.h"
 #include "Game/Powerups.h"
 
 enum eFielderDesireState
@@ -36,7 +37,7 @@ enum ePenaltyType
 
 class cBall;
 
-class cFielder
+class cFielder : public cPlayer
 {
 public:
     void DoSpeedBoost();

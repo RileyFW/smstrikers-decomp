@@ -53,10 +53,10 @@ bool glFontPrintf(eGLView view, int x, int y, const char* format, ...)
     va_end(args);
 
     nlColour col;
-    col.r = 255;
-    col.g = 255;
-    col.b = 255;
-    col.a = 255;
+    col.c[0] = 255;
+    col.c[1] = 255;
+    col.c[2] = 255;
+    col.c[3] = 255;
 
     return glFontPrint(view, x, y, col, string);
 }
@@ -135,9 +135,8 @@ void glFontVirtualPosToScreenCoordPos(float x, float y, float& outX, float& outY
  */
 void gl_FontStartup()
 {
-    void* temp_r3 = (void*)glGetTexture("font/fixed8x8");
-    handle = temp_r3;
-    glplatCreateFont(0x40, 0x80, _fontData, (unsigned long)temp_r3);
+    handle = (void*)glGetTexture("font/fixed8x8");
+    glplatCreateFont(0x40, 0x80, _fontData, (unsigned long)handle);
     bInsideBegin = 0;
     bEnabled = 1;
     bDrop = 0;

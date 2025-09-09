@@ -51,6 +51,6 @@ void NetMeshModelLoader::NetMeshVertex::GetTextureCoord(nlVector2& txtCoord) con
 
     float f = 0.0009765625f;
 
-    txtCoord.x = (float)texCoordX * f;
-    txtCoord.y = (float)texCoordY * f;
+    txtCoord.f.x = (float)texCoordX * f;
+    txtCoord.f.y = (float)texCoordY * f;
 }

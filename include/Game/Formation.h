@@ -1,0 +1,131 @@
+#ifndef _FORMATION_H_
+#define _FORMATION_H_
+
+#include "NL/nlMath.h"
+#include "Game/Fielder.h"
+// #include "Game/Team.h"
+
+class cTeam;
+class FormationManager;
+
+enum eFormationType
+{
+    FTYPE_DEFENSIVE = 0,
+    FTYPE_OFFENSIVE = 1,
+    FTYPE_BALLPOSITION = 2,
+    NUM_FORMATION_TYPES = 3,
+};
+
+enum eFormationSet
+{
+    FSET_NONE = -1,
+    FSET_OFFENSIVE_DEFENSIVE = 0,
+    FSET_BALL_PASSIVE = 1,
+    FSET_BALL_MODERATE = 2,
+    FSET_BALL_AGGRESIVE = 3,
+    NUM_FORMATION_SETS = 4,
+};
+enum eFormation
+{
+    FORMATION_NONE = -1,
+    FORMATION_OFF_DEF_KICKOFF_NEUTRAL = 0,
+    FORMATION_OFF_DEF_KICKOFF_ADVANTAGE = 1,
+    FORMATION_OFF_DEF_31 = 2,
+    FORMATION_OFF_DEF_121_DIAMOND = 3,
+    FORMATION_OFF_DEF_22_SQUARE = 4,
+    FORMATION_OFF_DEF_22_TRAPEZE = 5,
+    FORMATION_BAL_PAS_OFFENSIVE_RIGHT = 6,
+    FORMATION_BAL_PAS_OFFENSIVE_LEFT = 7,
+    FORMATION_BAL_PAS_OFFENSIVE_CENTER = 8,
+    FORMATION_BAL_PAS_DEFENSIVE_RIGHT = 9,
+    FORMATION_BAL_PAS_DEFENSIVE_CENTER = 10,
+    FORMATION_BAL_PAS_DEFENSIVE_LEFT = 11,
+    FORMATION_BAL_PAS_CENTER_RIGHT = 12,
+    FORMATION_BAL_PAS_CENTER_LEFT = 13,
+    FORMATION_BAL_PAS_MIDOFFENSIVE_RIGHT = 14,
+    FORMATION_BAL_PAS_MIDOFFENSIVE_LEFT = 15,
+    FORMATION_BAL_PAS_MIDOFFENSIVE_CENTRE = 16,
+    FORMATION_BAL_MOD_OFFENSIVE_RIGHT = 17,
+    FORMATION_BAL_MOD_OFFENSIVE_LEFT = 18,
+    FORMATION_BAL_MOD_OFFENSIVE_CENTER = 19,
+    FORMATION_BAL_MOD_DEFENSIVE_RIGHT = 20,
+    FORMATION_BAL_MOD_DEFENSIVE_CENTER = 21,
+    FORMATION_BAL_MOD_DEFENSIVE_LEFT = 22,
+    FORMATION_BAL_MOD_CENTER_LEFT = 23,
+    FORMATION_BAL_MOD_CENTER_RIGHT = 24,
+    FORMATION_BAL_MOD_MIDOFFENSIVE_RIGHT = 25,
+    FORMATION_BAL_MOD_MIDOFFENSIVE_LEFT = 26,
+    FORMATION_BAL_MOD_MIDOFFENSIVE_CENTRE = 27,
+    FORMATION_BAL_MOD_CENTER = 28,
+    FORMATION_BAL_AGG_OFFENSIVE_RIGHT = 29,
+    FORMATION_BAL_AGG_OFFENSIVE_LEFT = 30,
+    FORMATION_BAL_AGG_OFFENSIVE_CENTER = 31,
+    FORMATION_BAL_AGG_DEFENSIVE_RIGHT = 32,
+    FORMATION_BAL_AGG_DEFENSIVE_CENTER = 33,
+    FORMATION_BAL_AGG_DEFENSIVE_LEFT = 34,
+    FORMATION_BAL_AGG_CENTER_LEFT = 35,
+    FORMATION_BAL_AGG_CENTER_RIGHT = 36,
+    FORMATION_BAL_AGG_MIDOFFENSIVE_RIGHT = 37,
+    FORMATION_BAL_AGG_MIDOFFENSIVE_LEFT = 38,
+    FORMATION_BAL_AGG_MIDOFFENSIVE_CENTRE = 39,
+    FORMATION_BAL_AGG_MIDDEFENSIVE_CENTRE = 40,
+    NUM_FORMATIONS = 41,
+};
+
+class FormationBallPosition
+{
+public:
+    ~FormationBallPosition();
+    void Update(float);
+    void SelectClosestBallFormations(const nlVector2&);
+    void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
+    void GetWeight();
+};
+
+class FormationOffensive
+{
+public:
+    ~FormationOffensive();
+    void IsFielderInPosition(cFielder*, nlVector3, bool);
+    void GetWeight();
+};
+
+class FormationDefensive
+{
+public:
+    ~FormationDefensive();
+    void IsFielderInPosition(cFielder*, nlVector3, bool);
+    void GetWeight();
+};
+
+class FormationEval
+{
+public:
+    ~FormationEval();
+    void Create(FormationManager*, eFormationType, eFormationSet, eFormation);
+    void Update(float);
+    void GetWeight();
+    void AssignPositionsToFielders(unsigned int*, float (*)[4]);
+    void SortPlayers(const nlVector2*);
+    void GetKeyPlayer();
+    void GetKeyPositions(cFielder*, nlVector3&, nlVector3*, bool);
+    void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
+    void IsFielderInPosition(cFielder*, nlVector3, bool);
+};
+
+class FormationManager
+{
+public:
+    FormationManager(cTeam*);
+    ~FormationManager();
+    void LoadFormationSets();
+    void UnloadFormationSets();
+    void GetFormationSpec(eFormation);
+    void Update(float);
+    void ChooseNewFormations();
+    void SetNewFormationEval(eFormationType, eFormation);
+    void SetNewFormationEval(eFormationType, eFormationSet);
+    void CalculateFielderPosition(nlVector3&, cFielder*, bool, float);
+};
+
+#endif // _FORMATION_H_

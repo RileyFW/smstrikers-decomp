@@ -11,8 +11,16 @@ struct nlVector2_
 
 struct nlVector2
 {
-    float x;
-    float y;
+public:
+    union
+    {               // inferred
+        float e[2]; // offset 0x0, size 0x8
+        struct
+        {            // inferred
+            float x; // offset 0x0, size 0x4
+            float y; // offset 0x4, size 0x4
+        } f;
+    };
 
     // nlVector2() { }
     // nlVector2(float _x, float _y)
@@ -21,6 +29,12 @@ struct nlVector2
     // {
     // }
 };
+
+inline void nlVec2Set(nlVector2& v0, float _x, float _y)
+{
+    v0.f.x = _x;
+    v0.f.y = _y;
+}
 
 #define NL_VECTOR3_SET(v, xval, yval, zval) \
     do                                      \
@@ -114,8 +128,8 @@ struct nlMatrix3
     inline nlVector2 operator*(const nlVector2& v_in) const
     {
         nlVector2 tmp;
-        tmp.x = m[6] + ((m[0] * v_in.x) + (m[3] * v_in.y));
-        tmp.y = m[7] + ((m[1] * v_in.x) + (m[4] * v_in.y));
+        tmp.f.x = m[6] + ((m[0] * v_in.f.x) + (m[3] * v_in.f.y));
+        tmp.f.y = m[7] + ((m[1] * v_in.f.x) + (m[4] * v_in.f.y));
         return tmp;
     }
 };

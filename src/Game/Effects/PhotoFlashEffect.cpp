@@ -30,12 +30,12 @@ void PhotoFlash::Render(float dt)
         glSetCurrentRasterState(glHandleizeRasterState());
 
         value = 255 - ((0xFF / sNumFlashFadeFrames) * sNumFramesSinceFlash);
-        nlColour c = { 0, 0, 0, 0 };
 
-        c.r = value;
-        c.g = value;
-        c.b = value;
-        c.a = 255;
+        nlColour c = { 0, 0, 0, 0 };
+        c.c[0] = value;
+        c.c[1] = value;
+        c.c[2] = value;
+        c.c[3] = 255;
 
         poly.SetColour(c);
         poly.SetupRectangle(0.0f, 0.0f, 640.0f, 480.0f, 0.0f);

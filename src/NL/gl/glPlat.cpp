@@ -26,36 +26,37 @@
 
 // Performance metric string array
 static const char* str_perf0[]
-    = { "VERTICES",         "CLIP_VTX",         "CLIP_CLKS",           "XF_WAIT_IN",     "XF_WAIT_OUT",    "XF_XFRM_CLKS",
-        "XF_LIT_CLKS",      "XF_BOT_CLKS",      "XF_REGLD_CLKS",       "XF_REGRD_CLKS",  "CLIP_RATIO",     "TRIANGLES",
-        "TRIANGLES_CULLED", "TRIANGLES_PASSED", "TRIANGLES_SCISSORED", "TRIANGLES_0TEX", "TRIANGLES_1TEX", "TRIANGLES_2TEX",
-        "TRIANGLES_3TEX",   "TRIANGLES_4TEX",   "TRIANGLES_5TEX",      "TRIANGLES_6TEX", "TRIANGLES_7TEX", "TRIANGLES_8TEX",
-        "TRIANGLES_0CLR",   "TRIANGLES_1CLR",   "TRIANGLES_2CLR",      "QUAD_0CVG",      "QUAD_NON0CVG",   "QUAD_1CVG",
-        "QUAD_2CVG",        "QUAD_3CVG",        "QUAD_4CVG",           "AVG_QUAD_CNT",   "CLOCKS" };
+    = { "VERTICES", "CLIP_VTX", "CLIP_CLKS", "XF_WAIT_IN", "XF_WAIT_OUT", "XF_XFRM_CLKS",
+          "XF_LIT_CLKS", "XF_BOT_CLKS", "XF_REGLD_CLKS", "XF_REGRD_CLKS", "CLIP_RATIO", "TRIANGLES",
+          "TRIANGLES_CULLED", "TRIANGLES_PASSED", "TRIANGLES_SCISSORED", "TRIANGLES_0TEX", "TRIANGLES_1TEX", "TRIANGLES_2TEX",
+          "TRIANGLES_3TEX", "TRIANGLES_4TEX", "TRIANGLES_5TEX", "TRIANGLES_6TEX", "TRIANGLES_7TEX", "TRIANGLES_8TEX",
+          "TRIANGLES_0CLR", "TRIANGLES_1CLR", "TRIANGLES_2CLR", "QUAD_0CVG", "QUAD_NON0CVG", "QUAD_1CVG",
+          "QUAD_2CVG", "QUAD_3CVG", "QUAD_4CVG", "AVG_QUAD_CNT", "CLOCKS" };
 
 // Performance counter string array for GPU/texture metrics
-static const char* str_perf1[] = { "TEXELS",      "TX_IDLE",         "TX_REGS",          "TX_MEMSTALL",   "TC_CHECK1_2",   "TC_CHECK3_4",
-                                   "TC_CHECK5_6", "TC_CHECK7_8",     "TC_MISS",          "VC_ELEMQ_FULL", "VC_MISSQ_FULL", "VC_MEMREQ_FULL",
-                                   "VC_STATUS7",  "VC_MISSREP_FULL", "VC_STREAMBUF_LOW", "VC_ALL_STALLS", "VERTICES",      "FIFO_REQ",
-                                   "CALL_REQ",    "VC_MISS_REQ",     "CP_ALL_REQ",       "CLOCKS" };
+static const char* str_perf1[] = { "TEXELS", "TX_IDLE", "TX_REGS", "TX_MEMSTALL", "TC_CHECK1_2", "TC_CHECK3_4",
+    "TC_CHECK5_6", "TC_CHECK7_8", "TC_MISS", "VC_ELEMQ_FULL", "VC_MISSQ_FULL", "VC_MEMREQ_FULL",
+    "VC_STATUS7", "VC_MISSREP_FULL", "VC_STREAMBUF_LOW", "VC_ALL_STALLS", "VERTICES", "FIFO_REQ",
+    "CALL_REQ", "VC_MISS_REQ", "CP_ALL_REQ", "CLOCKS" };
 
 GXRenderModeObj glx_rmode;
 
 GXRenderModeObj glPal480IntDf = { VI_TVMODE_PAL_INT,
-                                  640,
-                                  480,
-                                  542,
-                                  40,
-                                  16,
-                                  640,
-                                  542,
-                                  VI_XFBMODE_SF,
-                                  1,
-                                  0,
-                                  { 0, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 },
-                                  { 6, 6, 8, 8, 10, 12, 10 } };
+    640,
+    480,
+    542,
+    40,
+    16,
+    640,
+    542,
+    VI_XFBMODE_SF,
+    1,
+    0,
+    { 0, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 },
+    { 6, 6, 8, 8, 10, 12, 10 } };
 
-struct GXFrameBuffer {
+struct GXFrameBuffer
+{
     void* unk0;
     void* unk4;
 };
@@ -194,10 +195,10 @@ void glplatSendFrame()
         glSetDefaultState(false);
         sp1C.SetupRectangle(0.f, sp10 - 2.f, 640.f, 4.f + (sp18 - sp10), 10000000000.f);
         // sp8 = @182;
-        sp8.r = 0x3A;
-        sp8.g = 0x6E;
-        sp8.b = 0xA5;
-        sp8.a = 0xFF;
+        sp8.c[0] = 0x3A;
+        sp8.c[1] = 0x6E;
+        sp8.c[2] = 0xA5;
+        sp8.c[3] = 0xFF;
         // SetColour(&sp1C, &sp8, 0xA5, 0x6E, 0x3A);
         sp1C.SetColour(sp8);
         sp1C.Attach((eGLView)0x21, 0, 0, -1);
@@ -240,7 +241,7 @@ void glplatSendFrame()
             temp_r30 = nlVirtualLargestBlock();
             glFontBegin(0);
             glFontPrintf((eGLView)0x21, 1, var_r31 + 0x24, "%uKB free : %u misses, %u us latency (frame %u)", temp_r30 >> 0xAU, print0,
-                         print1, print2);
+                print1, print2);
             glFontEnd();
         }
     }
@@ -580,7 +581,7 @@ bool glplatStartup(gl_ScreenInfo* arg0)
     arg0->m_unk_0x20 = 1.0f;
     arg0->m_unk_0x24 = 0;
     glx_CopyDispScaleFactor = 1.0f;
-    
+
     // temp_r3_2 = VIGetTvFormat(24, 6, 448, 1.0f);
     temp_r3_2 = VIGetTvFormat();
 
@@ -636,7 +637,7 @@ bool glplatStartup(gl_ScreenInfo* arg0)
         return false;
     }
     glx_FIFO = GXInit(glx_FIFOMem, glx_FIFOSize);
-    
+
     var_r28 = ((glx_rmode.fbWidth + 15) & 0xFFF0) * glx_rmode.xfbHeight * 2;
     if (var_r28 < 0x9F600)
     {
