@@ -83,10 +83,10 @@ void GoalCamera::Update(float /*dt*/)
         }
     }
 
-    nlVector3 prevEye;
-    nlVector3 prevCtr;
-    nlVector3 newTarget;
-    nlVector3 newEye;
+    nlVector3 prevEye = { 0.0f, 0.0f, 0.0f };
+    nlVector3 prevCtr = { 0.0f, 0.0f, 0.0f };
+    nlVector3 newTarget = { 0.0f, 0.0f, 0.0f };
+    nlVector3 newEye = { 0.0f, 0.0f, 0.0f };
 
     if (gnCamType == 0)
     {

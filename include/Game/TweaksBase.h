@@ -6,11 +6,11 @@
 class TweaksBase
 {
 public:
-    TweaksBase(const char*);  
+    TweaksBase(const char*);
     virtual ~TweaksBase();
     virtual void Init() = 0;
 
-    /* 0x04 */ char m_unk_0x04[0x20];
-};
+    /* 0x04 */ char mszFileName[32];
+}; // total size: 0x24
 
 #endif // _TWEAKSBASE_H_

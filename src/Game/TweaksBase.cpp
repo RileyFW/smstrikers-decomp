@@ -12,6 +12,6 @@ TweaksBase::~TweaksBase()
  */
 TweaksBase::TweaksBase(const char* param_1)
 {
-    m_unk_0x04[0] = 0;
-    nlStrNCpy<char>(m_unk_0x04, param_1, 0x1f);
+    mszFileName[0] = 0;
+    nlStrNCpy<char>(mszFileName, param_1, 0x1f);
 }
