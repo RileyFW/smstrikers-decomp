@@ -31,8 +31,8 @@ public:
     /* 0x40 */ virtual void StopRumble() = 0;
     /* 0x44 */ virtual void Update(float);
 
-    void JustReleased(int, bool);
-    void JustPressed(int, bool);
+    bool JustReleased(int, bool);
+    bool JustPressed(int, bool);
 
     void DisableLeftAnalogToDPadMap();
     void EnableLeftAnalogToDPadMap();

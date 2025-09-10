@@ -34,17 +34,17 @@ void cGlobalPad::Update(float)
 /**
  * Offset/Address/Size: 0xB0 | 0x801F0194 | size: 0x2C
  */
-void cGlobalPad::JustPressed(int button, bool remap)
+bool cGlobalPad::JustPressed(int button, bool remap)
 {
-    this->PlatJustPressed(button, remap);
+    return this->PlatJustPressed(button, remap);
 }
 
 /**
  * Offset/Address/Size: 0x84 | 0x801F0168 | size: 0x2C
  */
-void cGlobalPad::JustReleased(int button, bool remap)
+bool cGlobalPad::JustReleased(int button, bool remap)
 {
-    this->PlatJustReleased(button, remap);
+    return this->PlatJustReleased(button, remap);
 }
 
 /**

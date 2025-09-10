@@ -2372,7 +2372,7 @@ FrontEndTask.o:
 	.sbss       start:0x80373D78 end:0x80373D80
 	.sdata2     start:0x80376990 end:0x803769A0
 
-TweakerTask.o:
+Game/TweakerTask.cpp:
 	.text       start:0x801709D0 end:0x80170ACC
 	.text       start:0x80170ACC end:0x80170AD4
 	.text       start:0x80170AD4 end:0x80170AD4
