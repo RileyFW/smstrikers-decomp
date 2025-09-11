@@ -94,8 +94,9 @@ ReplayManager::~ReplayManager()
 /**
  * Offset/Address/Size: 0x89C | 0x8011260C | size: 0xC8
  */
-void ReplayManager::Instance()
+ReplayManager* ReplayManager::Instance()
 {
+    return nullptr;
 }
 
 /**

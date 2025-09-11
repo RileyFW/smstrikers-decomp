@@ -2,17 +2,49 @@
 #define _REPLAYMANAGER_H_
 
 #include "Game/Sys/eventman.h"
+#include "Game/Camera/FollowCam.h"
+#include "Game/RenderSnapshot.h"
+#include "Game/Replay.h"
 
 // void Blend<RenderSnapshot>(const float*, const RenderSnapshot&, const RenderSnapshot&, RenderSnapshot&);
 // void Replayable<0, SaveFrame, RenderSnapshot>(SaveFrame&, RenderSnapshot&);
 // void Replayable<0, LoadFrame, RenderSnapshot>(LoadFrame&, RenderSnapshot&);
-// void 0x8028D2B8..0x8028D2BC | size: 0x4;
+
+// class RenderSnapshot
+// {
+// public:
+//     RenderSnapshot() { };
+//     ~RenderSnapshot() { };
+
+//     int NumDrawableObjects() const;
+//     // /* 0x0000 */ char pad0[4];
+//     // /* 0x0004 */ u8 unk4;                           /* inferred */
+//     // /* 0x0005 */ char pad5[3];                      /* maybe part of unk4[4]? */
+//     // /* 0x0008 */ RenderSnapshot *unk8;              /* inferred */
+//     // /* 0x000C */ s8 unkC;                           /* inferred */
+//     // /* 0x000D */ char padD[0x3F];                   /* maybe part of unkC[0x40]? */
+//     // /* 0x004C */ ReplayManager unk4C;               /* inferred */
+//     // /* 0x004C */ char pad4C[0x19A0];
+//     // /* 0x19EC */ DrawableCharacter unk19EC;         /* inferred */
+//     // /* 0x19EC */ char pad19EC[0x58];
+//     // /* 0x1A44 */ DrawableCharacter unk1A44;         /* inferred */
+//     // /* 0x1A44 */ char pad1A44[0x58];
+//     // /* 0x1A9C */ s32 unk1A9C;                       /* inferred */
+//     // /* 0x1AA0 */ s32 unk1AA0;                       /* inferred */
+//     // /* 0x1AA4 */ char pad1AA4[0x18];                /* maybe part of unk1AA0[7]? */
+//     // /* 0x1ABC */ f32 unk1ABC;                       /* inferred */
+//     // /* 0x1AC0 */ ? unk1AC0;                         /* inferred */
+
+//     /* 0x00 */ char pad1AC0[0x1AC0];
+// }; // SIZE: 0x1AC0
+
+// class Replay;
 
 class ReplayManager
 {
 public:
     ~ReplayManager();
-    ReplayManager* Instance();
+    static ReplayManager* Instance();
     void Initialize();
     void InitializeSnapshots();
     void Uninitialize();
@@ -25,42 +57,20 @@ public:
     void EventHandler(Event*);
     void RenderSnapshotAt(float);
 
-    // total size: 0x5108
-    class RenderSnapshot mSnapshots[3]; // offset 0x0, size 0x5034
-    class RenderSnapshot* mCurrent;     // offset 0x5034, size 0x4
-    class RenderSnapshot* mPrevious;    // offset 0x5038, size 0x4
-    class RenderSnapshot* mRender;      // offset 0x503C, size 0x4
-    class cFollowCamera mDebugCamera;   // offset 0x5040, size 0xA0
-    unsigned int mEvents;               // offset 0x50E0, size 0x4
-    float mSpeed;                       // offset 0x50E4, size 0x4
-    float mSpeedUp;                     // offset 0x50E8, size 0x4
-    float mDeltaTime;                   // offset 0x50EC, size 0x4
-    float mTime;                        // offset 0x50F0, size 0x4
-    float mBlend[3];                    // offset 0x50F4, size 0xC
-    class Replay* mReplay;              // offset 0x5100, size 0x4
-    char* mMemory;                      // offset 0x5104, size 0x4
-};
-
-// class cFollowCamera
-// {
-// public:
-//     ~cFollowCamera();
-// };
-
-// class RenderSnapshot
-// {
-// public:
-//     RenderSnapshot();
-//     ~RenderSnapshot();
-// };
-
-// class cBaseCamera
-// {
-// public:
-//     void Reactivate();
-//     void GetFOV() const;
-//     ~cBaseCamera();
-// };
+    /* 0x0000 */ RenderSnapshot mSnapshots[3]; // size: 0x5040
+    /* 0x5040 */ RenderSnapshot* mCurrent;
+    /* 0x5044 */ RenderSnapshot* mPrevious;
+    /* 0x5048 */ RenderSnapshot* mRender;
+    /* 0x504C */ cFollowCamera mDebugCamera;
+    /* 0x50EC */ u32 mEvents;
+    /* 0x50F0 */ f32 mSpeed;
+    /* 0x50F4 */ f32 mSpeedUp;
+    /* 0x50F8 */ f32 mDeltaTime;
+    /* 0x50FC */ f32 mTime;
+    /* 0x5100 */ f32 mBlend[3];
+    /* 0x510C */ Replay* mReplay;
+    /* 0x5110 */ u8* mMemory;
+}; // total size: 0x5114
 
 // class Replay
 // {

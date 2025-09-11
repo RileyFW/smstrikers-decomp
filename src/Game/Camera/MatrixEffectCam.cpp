@@ -1,5 +1,13 @@
 #pragma pool_data off
+
+// #include "NL/math.h"
+
+#include "NL/nlDLRing.h"
+
 #include "Game/Camera/MatrixEffectCam.h"
+
+#include "Game/CameraMan.h"
+#include "Game/ReplayManager.h"
 
 // static nlVector3 cameraPosition = { 0.0f, 0.0f, 0.0f };
 static nlVector3 cameraPosition;
@@ -32,89 +40,39 @@ MatrixEffectCam::MatrixEffectCam()
 /**
  * Offset/Address/Size: 0x5C0 | 0x801A4988 | size: 0x1C8
  */
-void MatrixEffectCam::Reset(const nlVector3& v3InitialCameraPosition, const nlVector3& beginTarget, const nlVector3& endTarget)
+void MatrixEffectCam::Reset(const nlVector3& cameraStart, const nlVector3& beginTarget, const nlVector3& endTarget)
 {
-    f32 sp1C;
-    f32 sp18;
-    f32 sp14;
-    f32 sp10;
-    f32 spC;
-    f32 sp8;
-    f32* temp_r3_2;
-    f32 temp_r0;
-    f32 temp_r3;
-    f32 temp_r4;
-    f32 temp_r5;
-    void* temp_r6;
-
-    mTargetPosition = v3InitialCameraPosition; // nlVec3Set(mTargetPosition, arg1->unk0, arg1->unk4, arg2->unk4);
-
-    // this->unk4C = arg1->unk0;
-    // this->unk50 = arg1->unk4;
-    // temp_r3 = arg2->unk4;
-    // this->unk54 = arg1->unk8;
-
+    mTargetPosition = beginTarget;
     mBeginTarget = mTargetPosition;
-    // this->unk40 = this->unk4C;
-    // this->unk44 = this->unk50;
-    // this->unk48 = this->unk54;
-
     mFinalTarget = endTarget;
-    // this->unk34 = arg2->unk0;
-    // this->unk38 = temp_r3;
-    // this->unk3C = arg2->unk8;
 
-    // void* tmp = ReplayManager::Instance().GetCameraPosition(mTargetPosition);
+    ReplayManager* rm = ReplayManager::Instance();
+    // const nlVector3 p = rm->mTrack->pos;
+    const nlVector3 p = { 0.0f, 0.0f, 0.0f }; // TODO: Get the position from the replay manager
 
-    // temp_r6 = Instance__13ReplayManagerFv((bitwise ReplayManager*)temp_r3)->unk5048;
-    // temp_r5 = temp_r6->unk20;
-    // temp_r4 = temp_r6->unk24;
-    // temp_r0 = temp_r6->unk28;
-    // sp14 = temp_r5;
-    // this->unkB4 = temp_r5;
-    // this->unkB8 = temp_r4;
-    // this->unkBC = temp_r0;
-    // this->unkC0 = temp_r5;
-    // this->unkC4 = temp_r4;
-    // this->unkC8 = temp_r0;
-    // this->unkCC = temp_r5;
-    // this->unkD0 = temp_r4;
-    // this->unkD4 = temp_r0;
-    // this->unkD8 = temp_r5;
-    // this->unkDC = temp_r4;
-    // this->unkE0 = temp_r0;
-    // this->unkE4 = temp_r5;
-    // this->unkE8 = temp_r4;
-    // this->unkEC = temp_r0;
-    // this->unkF0 = temp_r5;
-    // this->unkF4 = temp_r4;
-    // this->unkF8 = temp_r0;
-    // this->unkFC = temp_r5;
-    // this->unk100 = temp_r4;
-    // this->unk104 = temp_r0;
-    // this->unk108 = temp_r5;
-    // this->unk10C = temp_r4;
-    // this->unk110 = temp_r0;
-    // this->unk114 = temp_r5;
-    // this->unk118 = temp_r4;
-    // this->unk11C = temp_r0;
-    // this->unk120 = temp_r5;
-    // this->unk124 = temp_r4;
-    // this->unk128 = temp_r0;
-    // this->unk130 = temp_r5;
-    // this->unk134 = temp_r4;
-    // this->unk138 = temp_r0;
-    // sp18 = temp_r4;
-    // sp1C = temp_r0;
-    // temp_r3_2 = this->vtable0->GetTargetPosition(this);
-    // sp10 = arg0->unk8 - temp_r3_2->unk8;
-    // spC = arg0->unk4 - temp_r3_2->unk4;
-    // sp8 = arg0->unk0 - temp_r3_2->unk0;
-    // nlCartesianToPolar__FR7nlPolarRC9nlVector3(&this->unk9C, &sp8);
-    // this->unkA4 = arg0->unk8 - temp_r3_2->unk8;
-    // this->unkA8 = 0.0f;
-    // this->unk98 = (*nlDLRingGetStart<11cBaseCamera> __FP11cBaseCamera(m_cameraStack__14cCameraManager.unk0))->unk18();
-    // this->unkB0 = this->unkA0 > this->unk28;
+    for (int i = 0; i < 10; ++i)
+        mTargetFilterData[i] = p;
+
+    mCurrentFilterDataIndex = 0;
+    mFilteredTargetPosition.f.x = 0.f;
+    mFilteredTargetPosition.f.y = 0.f;
+    mFilteredTargetPosition.f.z = 0.f;
+
+    nlVector3 dir;
+    const nlVector3& tgt = GetTargetPosition();
+    dir.f.x = cameraStart.f.x - tgt.f.x;
+    dir.f.y = cameraStart.f.y - tgt.f.y;
+    dir.f.z = cameraStart.f.z - tgt.f.z;
+
+    nlCartesianToPolar(mCurrentPolarFromTarget, dir);
+
+    mfCurrentCameraHeightAboveTarget = cameraStart.f.z - tgt.f.z;
+    mfElapsedTime = 0.0f;
+
+    cBaseCamera* top = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack);
+    mfFOV = top->GetFOV();
+
+    mbZoomingIn = (mCurrentPolarFromTarget.r > mfDesiredDistanceFromTarget) ? true : false;
 }
 
 /**
@@ -135,19 +93,19 @@ const nlVector3& MatrixEffectCam::GetTargetPosition() const
         return mFilteredTargetPosition;
     }
 
-    float var_f6 = mfElapsedTime / mfSpinDuration;
-    if (var_f6 > 1.0f)
+    float alpha = mfElapsedTime / mfSpinDuration;
+    if (alpha > 1.0f)
     {
-        var_f6 = 1.0f;
+        alpha = 1.0f;
     }
 
     f32 temp_f3 = mBeginTarget.f.z;
     f32 temp_f4 = mBeginTarget.f.y;
     f32 temp_f5 = mBeginTarget.f.x;
 
-    mTargetPosition.f.x = ((mFinalTarget.f.x - temp_f5) * var_f6) + temp_f5;
-    mTargetPosition.f.y = ((mFinalTarget.f.y - temp_f4) * var_f6) + temp_f4;
-    mTargetPosition.f.z = ((mFinalTarget.f.z - temp_f3) * var_f6) + temp_f3;
+    mTargetPosition.f.x = ((mFinalTarget.f.x - temp_f5) * alpha) + temp_f5;
+    mTargetPosition.f.y = ((mFinalTarget.f.y - temp_f4) * alpha) + temp_f4;
+    mTargetPosition.f.z = ((mFinalTarget.f.z - temp_f3) * alpha) + temp_f3;
 
     return mTargetPosition;
 }

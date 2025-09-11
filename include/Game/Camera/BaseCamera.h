@@ -43,8 +43,8 @@ public:
     /* 0x20 */ virtual const nlVector3& GetTargetPosition() const = 0;
     /* 0x24 */ virtual const nlVector3& GetCameraPosition() const = 0;
 
-    /* 0x04 */ cBaseCamera* next;
-    /* 0x08 */ cBaseCamera* prev;
+    /* 0x04 */ cBaseCamera* m_next;
+    /* 0x08 */ cBaseCamera* m_prev;
     /* 0x0C */ cRumbleFilter* m_pFilter;
     /* 0x10 */ nlVector3 mUpVector;
 }; // total size: 0x1C

@@ -1451,7 +1451,7 @@ Game/FE/feMusic.cpp:
 	.sdata      start:0x80372190 end:0x803721A0
 	.sbss       start:0x80373908 end:0x80373910
 
-ReplayManager.o:
+Game/ReplayManager.cpp:
 	.text       start:0x80111D70 end:0x80112760
 	.text       start:0x80112760 end:0x80112760
 	.text       start:0x80112760 end:0x80112760
@@ -1468,7 +1468,7 @@ ReplayManager.o:
 	.sbss       start:0x80373910 end:0x80373918
 	.sdata2     start:0x80375E58 end:0x80375E70
 
-RenderSnapshot.o:
+Game/RenderSnapshot.cpp:
 	.text       start:0x80112CD4 end:0x80113654
 	.text       start:0x80113654 end:0x80113A48
 	.text       start:0x80113A48 end:0x80113F5C
@@ -1634,7 +1634,7 @@ Wiper.o:
 	.sbss       start:0x80373AA0 end:0x80373AB0
 	.sdata2     start:0x803760A8 end:0x803760B8
 
-ReplayChoreo.o:
+Game/ReplayChoreo.cpp:
 	.text       start:0x8012766C end:0x80128730
 	.text       start:0x80128730 end:0x80128730
 	.text       start:0x80128730 end:0x80128730
@@ -2807,7 +2807,7 @@ Game/Camera/FaceCam.cpp:
 	.data       start:0x802C3CA8 end:0x802C3CD0
 	.sdata2     start:0x80376C90 end:0x80376C98
 
-FollowCam.o:
+Game/Camera/FollowCam.cpp:
 	.text       start:0x801A8F18 end:0x801A9610
 	.text       start:0x801A9610 end:0x801A9640
 	.text       start:0x801A9640 end:0x801A9640
@@ -2842,7 +2842,7 @@ Game/Camera/GoalCam.cpp:
 	.sbss       start:0x80373F58 end:0x80373F68
 	.sdata2     start:0x80376D48 end:0x80376D70
 
-ReplayCamera.o:
+Game/Camera/ReplayCamera.cpp:
 	.text       start:0x801AAD04 end:0x801AC980
 	.text       start:0x801AC980 end:0x801ACB64
 	.text       start:0x801ACB64 end:0x801ACB84
@@ -4754,7 +4754,7 @@ Game/InterpreterCore.cpp:
 	.text       start:0x80213820 end:0x802138AC
 	.data       start:0x80303A30 end:0x80303A70
 
-Replay.o:
+Game/Replay.cpp:
 	.text       start:0x802138AC end:0x802141FC
 	.text       start:0x802141FC end:0x80214210
 	.text       start:0x80214210 end:0x802142DC

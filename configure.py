@@ -708,7 +708,13 @@ config.libs = [
             Object(Matching, "Game/Camera/TopDownCamera.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Camera/kickoffcam.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Camera/MatrixEffectCam.cpp", extra_cflags=["-inline deferred"]),
-            
+            Object(NonMatching, "Game/Camera/FollowCam.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Camera/ReplayCamera.cpp", extra_cflags=["-inline deferred"]),
+
+            Object(NonMatching, "Game/Replay.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/ReplayChoreo.cpp", extra_cflags=["-inline deferred"]),    
+            Object(NonMatching, "Game/ReplayManager.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/RenderSnapshot.cpp", extra_cflags=["-inline deferred"]),
 
             Object(NonMatching, "Game/Ball.cpp"),
             Object(Matching, "Game/Net.cpp", extra_cflags=["-inline deferred"]),

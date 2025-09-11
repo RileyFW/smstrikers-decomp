@@ -62,7 +62,7 @@ public:
     void SetPlayer(cPlayer*, int);
     void SetGoalie(Goalie*);
     Goalie* GetGoalie();
-    void GetControlledPlayer(cGlobalPad*);
+    cPlayer* GetControlledPlayer(cGlobalPad*);
     void GetNumAssignedControllers();
     cFielder* GetFielder(int);
     cPlayer* GetPlayer(int);
@@ -113,5 +113,7 @@ public:
     /* 0x84 */ float mfBallInterceptTimes[4];
     /* 0x94 */ Timer mtBallInterceptTimer;
 }; // total size: 0x98
+
+extern cTeam* g_pTeams[2];
 
 #endif // _CTEAM_H_

@@ -1,30 +1,62 @@
 #ifndef _REPLAYCAMERA_H_
 #define _REPLAYCAMERA_H_
 
+#include "Game/Camera/BaseCamera.h"
 
-class ReplayCamera
+enum ReplayCameraPosition
+{
+    REPLAY_CAMERA_POSITION_INSIDE_NET = 0,
+    REPLAY_CAMERA_POSITION_SIDELINE = 1,
+    REPLAY_CAMERA_POSITION_BALL_TO_GOAL = 2,
+    REPLAY_CAMERA_POSITION_HIGH_UP = 3,
+    REPLAY_CAMERA_POSITION_GENERIC_0 = 4,
+    REPLAY_CAMERA_POSITION_GENERIC_1 = 5,
+    REPLAY_CAMERA_POSITION_GENERIC_2 = 6,
+    REPLAY_CAMERA_POSITION_GENERIC_3 = 7,
+    REPLAY_CAMERA_POSITION_GENERIC_4 = 8,
+    REPLAY_CAMERA_POSITION_GENERIC_5 = 9,
+    REPLAY_CAMERA_POSITION_GENERIC_6 = 10,
+    REPLAY_CAMERA_POSITION_GENERIC_7 = 11,
+    REPLAY_CAMERA_POSITION_GENERIC_8 = 12,
+    REPLAY_CAMERA_POSITION_GENERIC_9 = 13,
+    REPLAY_CAMERA_POSITION_GENERIC_10 = 14,
+    REPLAY_CAMERA_POSITION_GENERIC_11 = 15,
+    REPLAY_CAMERA_POSITION_GENERIC_12 = 16,
+    REPLAY_CAMERA_POSITION_GENERIC_13 = 17,
+    REPLAY_CAMERA_POSITION_GENERIC_14 = 18,
+    REPLAY_CAMERA_POSITION_GENERIC_15 = 19,
+    REPLAY_CAMERA_POSITION_GENERIC_LAST = 20,
+    REPLAY_CAMERA_POSITION_NUM_POSITIONS = 21,
+};
+
+class ReplayCamera : public cBaseCamera
 {
 public:
-    void GetFOV() const;
-    void GetCameraPosition() const;
-    void GetTargetPosition() const;
-    void GetType();
-    void UpdateTweakMode();
     ReplayCamera();
-    void GetViewMatrix() const;
-    void Update(float);
+    /* 0x0C */ virtual eCameraType GetType() { return eCameraType_Replay; };
+    /* 0x10 */ virtual void Update(float);
+    /* 0x14 */ virtual const nlMatrix4& GetViewMatrix() const { return mViewMatrix; };
+    /* 0x18 */ virtual float GetFOV() const { return mFov; };
+    /* 0x20 */ virtual const nlVector3& GetTargetPosition() const { return mLookAt; };
+    /* 0x24 */ virtual const nlVector3& GetCameraPosition() const { return mPosition; };
+
+    void UpdateTweakMode();
     void ManualUpdate(float);
     void SetSideOfInterest(int);
     void CutTo(ReplayCameraPosition);
     void GetFov(ReplayCameraPosition) const;
     void GetPosition(ReplayCameraPosition, float) const;
-};
 
-
-class BasicString<char, Detail
-{
-public:
-    void TempStringAllocator>::AppendInPlace<Detail::TempStringAllocator>(const BasicString<char, Detail::TempStringAllocator>&);
-};
+    /* 0x1C */ float mDeltaFov;
+    /* 0x20 */ float mFov;
+    /* 0x24 */ int mSideOfInterest;
+    /* 0x28 */ unsigned char mNoDampenForOneUpdate;
+    /* 0x29 */ unsigned char mFrozen;
+    /* 0x2C */ unsigned int mFocus;
+    /* 0x30 */ enum ReplayCameraPosition mCamPos;
+    /* 0x34 */ class nlVector3 mPosition;
+    /* 0x40 */ class nlVector3 mLookAt;
+    /* 0x4C */ class nlMatrix4 mViewMatrix;
+}; // total size: 0x8C
 
 #endif // _REPLAYCAMERA_H_

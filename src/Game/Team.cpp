@@ -129,8 +129,9 @@ Goalie* cTeam::GetGoalie()
 /**
  * Offset/Address/Size: 0x1734 | 0x80065AE0 | size: 0x6C
  */
-void cTeam::GetControlledPlayer(cGlobalPad*)
+cPlayer* cTeam::GetControlledPlayer(cGlobalPad*)
 {
+    return nullptr;
 }
 
 /**

@@ -4,23 +4,27 @@
 #include "types.h"
 #include "NL/nlMath.h"
 
-enum eCameraType
-{
-    eCameraType_Debug = 0,
-    eCameraType_FollowCharacter = 1,
-    eCameraType_FollowBall = 2,
-    eCameraType_Replay = 3,
-    eCameraType_Animated = 4,
-    eCameraType_KickOff = 5,
-    eCameraType_TopDown = 6,
-    eCameraType_Gameplay = 7,
-    eCameraType_MatrixEffect = 8,
-    eCameraType_Goal = 9,
-    eCameraType_ShootToScore = 10,
-    eCameraType_AnimViewer = 11,
-    eCameraType_FaceCloseup = 12,
-    NUM_CAMERA_TYPES = 13,
-};
+// #include "NL/nlDLRing.h"
+
+#include "Game/Camera/BaseCamera.h"
+
+// enum eCameraType
+// {
+//     eCameraType_Debug = 0,
+//     eCameraType_FollowCharacter = 1,
+//     eCameraType_FollowBall = 2,
+//     eCameraType_Replay = 3,
+//     eCameraType_Animated = 4,
+//     eCameraType_KickOff = 5,
+//     eCameraType_TopDown = 6,
+//     eCameraType_Gameplay = 7,
+//     eCameraType_MatrixEffect = 8,
+//     eCameraType_Goal = 9,
+//     eCameraType_ShootToScore = 10,
+//     eCameraType_AnimViewer = 11,
+//     eCameraType_FaceCloseup = 12,
+//     NUM_CAMERA_TYPES = 13,
+// };
 
 enum eCameraTransition
 {
@@ -35,7 +39,7 @@ enum eCameraMessage
     eCM_COMPLETE = 2,
 };
 
-class cBaseCamera;
+// class cBaseCamera;
 class DrawableObject;
 
 void FireCameraRumbleFilter(float, float);
@@ -73,6 +77,7 @@ public:
     void PopWorldUpVector();
 
     static u16 m_aJoystickRemap;
+    static cBaseCamera* m_cameraStack;
 };
 
 #endif // _CAMERAMAN_H_
