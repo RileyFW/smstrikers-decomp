@@ -4,6 +4,11 @@
 #include "types.h"
 #include "NL/nlMath.h"
 
+#include "Game/Drawable/DrawableBall.h"
+#include "Game/Drawable/DrawableCharacter.h"
+#include "Game/Drawable/DrawablePowerup.h"
+#include "Game/Drawable/DrawableExplosionFragment.h"
+
 // void Replayable<0, SaveFrame, DrawableCharacter>(SaveFrame&, DrawableCharacter&);
 // void Replayable<0, SaveFrame, DrawablePowerup>(SaveFrame&, DrawablePowerup&);
 // void Replayable<0, SaveFrame, DrawableExplosionFragment>(SaveFrame&, DrawableExplosionFragment&);
@@ -25,6 +30,8 @@
 // void Replayable<3, LoadFrame, EmissionManager>(LoadFrame&, EmissionManager&);
 // void Replayable<1, LoadFrame, DrawableNetMesh>(LoadFrame&, DrawableNetMesh&);
 
+class DrawableNetMesh;
+
 class RenderSnapshot
 {
 public:
@@ -41,7 +48,23 @@ public:
     void Blend(const float*, const RenderSnapshot&, const RenderSnapshot&);
     void GetMutable();
 
-    /* 0x00 */ char pad1AC0[0x1AC0];
+    /* 0x0000 */ u32 mEvents;
+    /* 0x0004 */ bool mValid;
+    /* 0x0005 */ bool mGoalLight;
+    /* 0x0008 */ DrawableBall mBall;
+    /* 0x004C */ DrawableCharacter mCharacters[10];
+    /* 0x03BC */ DrawablePowerup mPowerups[150];
+    /* 0x167C */ DrawableExplosionFragment mExplosionFragments[20];
+    /* 0x19EC */ DrawableCharacter mChainChomp;
+    /* 0x1A44 */ DrawableCharacter mBowser;
+    /* 0x1A9C */ DrawableNetMesh* mpNetMeshPositiveX;
+    /* 0x1AA0 */ DrawableNetMesh* mpNetMeshNegativeX;
+    /* 0x1AA4 */ bool mDoGoalieNetTestPosX;
+    /* 0x1AA5 */ bool mDoGoalieNetTestNegX;
+    /* 0x1AA8 */ u8* mpExplodableVisibilityRecords;
+    /* 0x1AAC */ class nlVector3 mCameraUp;
+    /* 0x1AB8 */ float mFrameBlendPercent;
+    /* 0x1ABC */ u8 pad1ABC0[0x4];
 }; // SIZE: 0x1AC0
 
 #endif // _RENDERSNAPSHOT_H_

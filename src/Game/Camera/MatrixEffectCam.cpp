@@ -3,13 +3,14 @@
 // #include "NL/math.h"
 
 #include "NL/nlDLRing.h"
+#include "NL/nlTask.h"
+#include "NL/gl/glMatrix.h"
 
 #include "Game/Camera/MatrixEffectCam.h"
 
 #include "Game/CameraMan.h"
 #include "Game/ReplayManager.h"
 
-// static nlVector3 cameraPosition = { 0.0f, 0.0f, 0.0f };
 static nlVector3 cameraPosition;
 f32 sfDuration = 3.0f;
 f32 sfSpinRate = 120.0f;
@@ -42,29 +43,25 @@ MatrixEffectCam::MatrixEffectCam()
  */
 void MatrixEffectCam::Reset(const nlVector3& cameraStart, const nlVector3& beginTarget, const nlVector3& endTarget)
 {
+    nlVector3 ballPos;
+    nlVector3 targetToCamera;
+
     mTargetPosition = beginTarget;
     mBeginTarget = mTargetPosition;
     mFinalTarget = endTarget;
 
-    ReplayManager* rm = ReplayManager::Instance();
-    // const nlVector3 p = rm->mTrack->pos;
-    const nlVector3 p = { 0.0f, 0.0f, 0.0f }; // TODO: Get the position from the replay manager
+    ballPos = ReplayManager::Instance()->mRender->mBall.mPosition;
 
     for (int i = 0; i < 10; ++i)
-        mTargetFilterData[i] = p;
+        mTargetFilterData[i] = ballPos;
 
-    mCurrentFilterDataIndex = 0;
-    mFilteredTargetPosition.f.x = 0.f;
-    mFilteredTargetPosition.f.y = 0.f;
-    mFilteredTargetPosition.f.z = 0.f;
+    mFilteredTargetPosition = ballPos;
 
-    nlVector3 dir;
     const nlVector3& tgt = GetTargetPosition();
-    dir.f.x = cameraStart.f.x - tgt.f.x;
-    dir.f.y = cameraStart.f.y - tgt.f.y;
-    dir.f.z = cameraStart.f.z - tgt.f.z;
 
-    nlCartesianToPolar(mCurrentPolarFromTarget, dir);
+    nlVec3Sub(targetToCamera, cameraStart, tgt);
+
+    nlCartesianToPolar(mCurrentPolarFromTarget, targetToCamera);
 
     mfCurrentCameraHeightAboveTarget = cameraStart.f.z - tgt.f.z;
     mfElapsedTime = 0.0f;
@@ -72,14 +69,104 @@ void MatrixEffectCam::Reset(const nlVector3& cameraStart, const nlVector3& begin
     cBaseCamera* top = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack);
     mfFOV = top->GetFOV();
 
-    mbZoomingIn = (mCurrentPolarFromTarget.r > mfDesiredDistanceFromTarget) ? true : false;
+    mbZoomingIn = mCurrentPolarFromTarget.r > mfDesiredDistanceFromTarget;
 }
 
 /**
  * Offset/Address/Size: 0x1D8 | 0x801A45A0 | size: 0x3E8
  */
-void MatrixEffectCam::Update(float)
+void MatrixEffectCam::Update(float dt)
 {
+    if (nlTaskManager::m_pInstance->m_CurrState != 1)
+    {
+        bool bIsSpinNotFinished = true;
+        mfElapsedTime += dt;
+        if (mfElapsedTime > (mfSpinDuration + mfPauseAfterSpin))
+        {
+            if (mFinishedCallback)
+            {
+                mFinishedCallback(this);
+            }
+        }
+
+        if (mfElapsedTime > mfSpinDuration)
+        {
+            bIsSpinNotFinished = false;
+        }
+
+        if (bIsSpinNotFinished)
+        {
+            s32 steps = (s32)(65536.0f * (dt * mfSpinRate));
+            steps = steps / 360;
+            mCurrentPolarFromTarget.a = (u16)((u16)mCurrentPolarFromTarget.a + (u16)steps);
+        }
+
+        bool var_r0 = (mbZoomingIn && (mCurrentPolarFromTarget.r > mfDesiredDistanceFromTarget)) || (!mbZoomingIn && (mCurrentPolarFromTarget.r < mfDesiredDistanceFromTarget));
+        if (var_r0)
+        {
+            if (mfElapsedTime >= mfZoomTime)
+            {
+                mCurrentPolarFromTarget.r = mfDesiredDistanceFromTarget;
+            }
+            else
+            {
+                const float remain = mfDesiredDistanceFromTarget - mCurrentPolarFromTarget.r;
+                const float step = remain / (mfZoomTime - mfElapsedTime);
+
+                if ((float)fabs(step * dt) < remain)
+                {
+                    mCurrentPolarFromTarget.r = mCurrentPolarFromTarget.r + step * dt;
+                }
+                else
+                {
+                    mCurrentPolarFromTarget.r = mCurrentPolarFromTarget.r + remain;
+                }
+            }
+        }
+
+        if ((float)fabs(mfCurrentCameraHeightAboveTarget - mfDesiredHeightAboveTarget) > 0.01f)
+        {
+            if (mfElapsedTime >= mfZoomTime)
+            {
+                mfCurrentCameraHeightAboveTarget = mfDesiredHeightAboveTarget;
+            }
+            else
+            {
+                const float temp_f2_3 = mfDesiredHeightAboveTarget - mfCurrentCameraHeightAboveTarget;
+                const float temp_f1_4 = (mfDesiredHeightAboveTarget - mfCurrentCameraHeightAboveTarget) / (mfZoomTime - mfElapsedTime);
+
+                if ((float)fabs(temp_f1_4 * dt) < temp_f2_3)
+                {
+                    mfCurrentCameraHeightAboveTarget = mfCurrentCameraHeightAboveTarget + temp_f1_4 * dt;
+                }
+                else
+                {
+                    mfCurrentCameraHeightAboveTarget = mfCurrentCameraHeightAboveTarget + temp_f2_3;
+                }
+            }
+        }
+
+        if (mbFollowBall)
+        {
+            const nlVector3& ballPos = ReplayManager::Instance()->mRender->mBall.mPosition;
+            mTargetFilterData[mCurrentFilterDataIndex] = ballPos;
+
+            int i = mCurrentFilterDataIndex + 1;
+            mCurrentFilterDataIndex = i - ((i / 10) * 10);
+
+            mFilteredTargetPosition.f.x = 0.0f;
+            mFilteredTargetPosition.f.y = 0.0f;
+            mFilteredTargetPosition.f.z = 0.0f;
+            for (i = 0; i < 10; ++i)
+            {
+                nlVec3Add(mFilteredTargetPosition, mFilteredTargetPosition, mTargetFilterData[i]);
+            }
+
+            nlVec3Scale(mFilteredTargetPosition, mFilteredTargetPosition, 0.1f);
+        }
+    }
+
+    glMatrixLookAt(mViewMatrix, this->GetCameraPosition(), this->GetTargetPosition(), mUpVector);
 }
 
 /**
@@ -102,10 +189,9 @@ const nlVector3& MatrixEffectCam::GetTargetPosition() const
     f32 temp_f3 = mBeginTarget.f.z;
     f32 temp_f4 = mBeginTarget.f.y;
     f32 temp_f5 = mBeginTarget.f.x;
-
-    mTargetPosition.f.x = ((mFinalTarget.f.x - temp_f5) * alpha) + temp_f5;
-    mTargetPosition.f.y = ((mFinalTarget.f.y - temp_f4) * alpha) + temp_f4;
-    mTargetPosition.f.z = ((mFinalTarget.f.z - temp_f3) * alpha) + temp_f3;
+    mTargetPosition.f.x = alpha * (mFinalTarget.f.x - temp_f5) + temp_f5;
+    mTargetPosition.f.y = alpha * (mFinalTarget.f.y - temp_f4) + temp_f4;
+    mTargetPosition.f.z = alpha * (mFinalTarget.f.z - temp_f3) + temp_f3;
 
     return mTargetPosition;
 }
@@ -115,11 +201,11 @@ const nlVector3& MatrixEffectCam::GetTargetPosition() const
  */
 const nlVector3& MatrixEffectCam::GetCameraPosition() const
 {
-    nlVector3 targetPosition;
     nlPolarToCartesian(cameraPosition, mCurrentPolarFromTarget);
+
     cameraPosition.f.z = mfCurrentCameraHeightAboveTarget;
-    targetPosition = GetTargetPosition();
-    nlVec3Set(cameraPosition, cameraPosition.f.x + targetPosition.f.x, cameraPosition.f.y + targetPosition.f.y, cameraPosition.f.z + targetPosition.f.z);
+
+    nlVec3Add(cameraPosition, cameraPosition, GetTargetPosition());
 
     return cameraPosition;
 }

@@ -97,6 +97,21 @@ inline void nlVec3Set(nlVector3& v0, float _x, float _y, float _z)
     v0.f.z = _z;
 }
 
+inline void nlVec3Sub(nlVector3& result, const nlVector3& a, const nlVector3& b)
+{
+    nlVec3Set(result, a.f.x - b.f.x, a.f.y - b.f.y, a.f.z - b.f.z);
+}
+
+inline void nlVec3Add(nlVector3& result, const nlVector3& a, const nlVector3& b)
+{
+    nlVec3Set(result, a.f.x + b.f.x, a.f.y + b.f.y, a.f.z + b.f.z);
+}
+
+inline void nlVec3Scale(nlVector3& result, const nlVector3& v, float scale)
+{
+    nlVec3Set(result, scale * v.f.x, scale * v.f.y, scale * v.f.z);
+}
+
 struct nlVector4
 {
     float x;

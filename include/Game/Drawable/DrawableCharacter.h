@@ -67,7 +67,23 @@ public:
     DrawableCharacter();
     // void Replay<LoadFrame>(LoadFrame&);
     // void Replay<SaveFrame>(SaveFrame&);
-};
+
+    unsigned char mVisible;                    // offset 0x0, size 0x1
+    class nlVector3 mPosition;                 // offset 0x4, size 0xC
+    class nlVector3 mBip01Position;            // offset 0x10, size 0xC
+    class nlVector3 mHeadPosition;             // offset 0x1C, size 0xC
+    float mHeight;                             // offset 0x28, size 0x4
+    class nlVector3 mVelocity;                 // offset 0x2C, size 0xC
+    unsigned short mFacingDirection;           // offset 0x38, size 0x2
+    unsigned short mHeadSpin;                  // offset 0x3A, size 0x2
+    unsigned short mHeadTilt;                  // offset 0x3C, size 0x2
+    class cPoseNode* mPoseTree;                // offset 0x40, size 0x4
+    class cPoseAccumulator* mPoseAccumulator;  // offset 0x44, size 0x4
+    class EffectsTexturing* mEffectsTexturing; // offset 0x48, size 0x4
+    class cCharacter* mCharacter;              // offset 0x4C, size 0x4
+    class Bowser* mBowser;                     // offset 0x50, size 0x4
+    unsigned char mDirt;                       // offset 0x54, size 0x1
+}; // total size: 0x58
 
 // class cPoseAccumulator
 // {
