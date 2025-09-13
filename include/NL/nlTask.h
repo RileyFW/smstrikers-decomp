@@ -42,7 +42,6 @@ public:
     /* 0x10 */ u32 m_PrevState;
     /* 0x14 */ f32 m_fCurrentTimeDelta;
     /* 0x18 */ bool m_Locked; 
-
 };
 
 #endif // _NLTASK_H_
