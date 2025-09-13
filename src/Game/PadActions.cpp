@@ -44,13 +44,13 @@ s32 g_pPadRemapArray[40] = {
  */
 void InitPads()
 {
-    Config* conf = Config::Global();
-    SetTagValuePair* tvp = conf->FindTvp("enable_pad_monkey");
+    Config& conf = Config::Global();
+    SetTagValuePair* tvp = conf.FindTvp("enable_pad_monkey");
 
     bool enable_pad_monkey = false;
     if (tvp->m_unk_0x00 == nullptr)
     {
-        conf->Set("enable_pad_monkey", false);
+        conf.Set("enable_pad_monkey", false);
         enable_pad_monkey = false;
     }
     else

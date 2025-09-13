@@ -1,45 +1,35 @@
+#pragma pool_data off
+
 #include "Game/Drawable/DrawableObj.h"
+#include "NL/nlMath.h"
 
 // nlMatrix4 m3Ident = { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f };
 
 /**
- * Offset/Address/Size: 0x0 | 0x8011FC70 | size: 0x2C
+ * Offset/Address/Size: 0x124 | 0x8011FD94 | size: 0x6C
  */
-void DrawableObject::GetAABBDimensions(AABBDimensions& dim, bool param) const
+DrawableObject::DrawableObject()
 {
-    dim.unk0 = 0.f;
-    dim.unk4 = 0.f;
-    dim.unk8 = 0.f;
-    dim.unkC = 0.f;
-    dim.unk10 = 0.f;
-    dim.unk14 = 0.f;
-    dim.unk18 = 0.f;
-    dim.unk1C = 0.f;
-    dim.unk20 = 0.f;
-}
+    m_worldMatrixUpToDate = true;
+    m_scale = 1.f;
 
-/**
- * Offset/Address/Size: 0x2C | 0x8011FC9C | size: 0x90
- */
-nlMatrix4* DrawableObject::GetWorldMatrix() const
-{
-    nlMatrix4 rot_mtx;
-    nlMatrix4 scale_mtx;
-    f32 temp_f1;
+    m_pCachedAABB = NULL;
 
-    if (m_unk_0x44 == 0)
-    {
-        nlQuatToMatrix(rot_mtx, m_quat_0x48);
-        rot_mtx.m[3][0] = m_position.f.x;
-        rot_mtx.m[3][1] = m_position.f.y;
-        rot_mtx.m[3][2] = m_position.f.z;
-        rot_mtx.m[3][3] = 1.f;
-        temp_f1 = m_scaling_0x64;
-        nlMakeScaleMatrix(scale_mtx, temp_f1, temp_f1, temp_f1);
-        nlMultMatrices(*(nlMatrix4*)&m_worldMatrix, scale_mtx, rot_mtx);
-        *(u8*)&m_unk_0x44 = 1U;
-    }
-    return (nlMatrix4*)&m_worldMatrix;
+    m_uObjectCreationFlags = 0;
+    m_pWorldContext = NULL;
+    m_uObjectFlags = 0;
+    m_bRenderPlanarShadow = false;
+
+    m_orientation.f.z = 0.f;
+    m_orientation.f.y = 0.f;
+    m_orientation.f.x = 0.f;
+    m_orientation.f.w = 1.f;
+
+    nlVec3Set(m_translation, 0.f, 0.f, 0.f);
+
+    m_translucency = 1.f;
+    m_CB = NULL;
+    m_uObjectFlags = (m_uObjectFlags | 1);
 }
 
 /**
@@ -47,52 +37,71 @@ nlMatrix4* DrawableObject::GetWorldMatrix() const
  */
 DrawableObject::~DrawableObject()
 {
-    if (m_objref_0x6C != 0)
+    if (m_pCachedAABB != NULL)
     {
-        delete m_objref_0x6C;
+        delete m_pCachedAABB;
     }
 }
 
 /**
- * Offset/Address/Size: 0x124 | 0x8011FD94 | size: 0x6C
+ * Offset/Address/Size: 0x2C | 0x8011FC9C | size: 0x90
  */
-DrawableObject::DrawableObject()
+nlMatrix4& DrawableObject::GetWorldMatrix() const
 {
-    m_unk_0x44 = 1;
-    m_scaling_0x64 = 1.f;
+    if (!m_worldMatrixUpToDate)
+    {
+        nlMatrix4 rot_mtx;
+        nlQuatToMatrix(rot_mtx, m_orientation);
 
-    m_objref_0x6C = NULL;
+        rot_mtx.m[3][0] = m_translation.f.x;
+        rot_mtx.m[3][1] = m_translation.f.y;
+        rot_mtx.m[3][2] = m_translation.f.z;
+        rot_mtx.m[3][3] = 1.f;
 
-    m_unk_0x78 = 0;
-    m_unk_0x88 = 0;
-    m_visibility = 0;
-    m_unk_0x94 = 0;
-
-    m_quat_0x48.z = 0.f;
-    m_quat_0x48.y = 0.f;
-    m_quat_0x48.x = 0.f;
-    m_quat_0x48.w = 1.f;
-
-    m_position.f.x = 0.f;
-    m_position.f.y = 0.f;
-    m_position.f.z = 0.f;
-
-    m_unk_0x68 = 1.f;
-    m_unk_0x98 = 0;
-    m_visibility = (m_visibility | 1);
+        nlMatrix4 scale_mtx;
+        nlMakeScaleMatrix(scale_mtx, m_scale, m_scale, m_scale);
+        // nlMultMatrices(*(nlMatrix4*)&m_worldMatrix, rot_mtx, scale_mtx);
+        nlMultMatrices(*(nlMatrix4*)&m_worldMatrix, scale_mtx, rot_mtx);
+        *(bool*)&m_worldMatrixUpToDate = true;
+    }
+    return *(nlMatrix4*)&m_worldMatrix;
 }
+
+// if (this->unk44 == 0)
+// {
+//     nlQuatToMatrix__FR9nlMatrix4RC12nlQuaternion(&sp48, &this->unk48);
+//     sp78 = this->unk58;
+//     sp7C = this->unk5C;
+//     sp80 = this->unk60;
+//     sp84 = 1.0f;
+//     temp_f1 = this->unk64;
+//     nlMakeScaleMatrix__FR9nlMatrix4fff(&sp8, temp_f1, temp_f1, temp_f1);
+//     nlMultMatrices__FR9nlMatrix4RC9nlMatrix4RC9nlMatrix4(&this->unk4, &sp8, &sp48);
+//     this->unk44 = 1;
+// }
+// return &this->unk4;
 
 /**
- * Offset/Address/Size: 0x0 | 0x8011FE00 | size: 0x4
+ * Offset/Address/Size: 0x0 | 0x8011FC70 | size: 0x2C
  */
-void DrawableObject::DrawPlanarShadow()
+void DrawableObject::GetAABBDimensions(AABBDimensions& dim, bool param) const
 {
+    nlVec3Set(dim.mMin, 0.f, 0.f, 0.f);
+    nlVec3Set(dim.mMax, 0.f, 0.f, 0.f);
+    nlVec3Set(dim.mDim, 0.f, 0.f, 0.f);
 }
 
-/**
- * Offset/Address/Size: 0x4 | 0x8011FE04 | size: 0x8
- */
-bool DrawableObject::IsDrawableModel()
-{
-    return false;
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8011FE00 | size: 0x4
+//  */
+// void DrawableObject::DrawPlanarShadow()
+// {
+// }
+
+// /**
+//  * Offset/Address/Size: 0x4 | 0x8011FE04 | size: 0x8
+//  */
+// bool DrawableObject::IsDrawableModel()
+// {
+//     return false;
+// }

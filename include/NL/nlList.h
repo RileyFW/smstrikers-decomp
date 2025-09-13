@@ -3,6 +3,9 @@
 
 #include "types.h"
 
+#include "NL/nlDLRing.h"
+#include "NL/nlSlotPool.h"
+
 template <typename T>
 class ListEntry
 {
@@ -28,6 +31,8 @@ template <typename T>
 class NewAdapter
 {
 public:
+    typedef ListEntry<T> EntryType; // Add this line
+
     static void DeleteEntry(ListEntry<T>* entry)
     {
         if (entry)
@@ -55,7 +60,18 @@ public:
     {
         // Implementation for removing entries
     }
+
+    /* 0x0 */ NewAdapter<T> m_Allocator; // offset 0x0, size 0x1
+    /* 0x4 */ ListEntry<T>* m_Head;      // offset 0x4, size 0x4
+    /* 0x8 */ ListEntry<T>* m_Tail;      // offset 0x8, size 0x4
 };
+
+template <typename T>
+class nlListContainer : public ListContainerBase<T, NewAdapter<T> >
+{
+public:
+    // todo: ...
+}; // total size: 0xC
 
 template <typename T>
 ListEntry<T>* nlListRemoveStart(ListEntry<T>** head, ListEntry<T>** tail)
@@ -78,22 +94,6 @@ ListEntry<T>* nlListRemoveStart(ListEntry<T>** head, ListEntry<T>** tail)
 
 template <typename T>
 void nlListAddStart(ListEntry<T>** head, ListEntry<T>* entry, ListEntry<T>** tail)
-{
-    if (tail != 0)
-    {
-        if (*head == 0)
-        {
-            *tail = entry;
-        }
-    }
-
-    // Insert at start
-    entry->next = *head;
-    *head = entry;
-}
-
-template <typename T>
-void nlListAddStart(T** head, T* entry, T** tail)
 {
     if (tail != 0)
     {

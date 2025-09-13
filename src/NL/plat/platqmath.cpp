@@ -26,20 +26,20 @@ f32 nlQuatDot(const nlQuaternion& q1, const nlQuaternion& q2)
 void nlMultQuat(nlQuaternion& out, const nlQuaternion& q1, const nlQuaternion& q2)
 {
     // Field offsets: unk0=x, unk4=y, unk8=z, unkC=w
-    float x2 = q1.x;
-    float x1 = q2.x;
-    float w2 = q2.w;
-    float w1 = q1.w;
-    float z2 = q2.z;
-    float y1 = q1.y;
-    float y2 = q2.y;
-    float z1 = q1.z;
+    float x2 = q1.f.x;
+    float x1 = q2.f.x;
+    float w2 = q2.f.w;
+    float w1 = q1.f.w;
+    float z2 = q2.f.z;
+    float y1 = q1.f.y;
+    float y2 = q2.f.y;
+    float z1 = q1.f.z;
 
     // Quaternion multiplication formula
-    out.w = -((z1 * z2) + ((y1 * y2) - ((w1 * w2) - (x1 * x2))));
-    out.x = -((z1 * y2) - ((y1 * z2) + ((w1 * x2) + (x1 * w2))));
-    out.y = (z1 * x2) + ((y1 * w2) + ((w1 * y2) - (x1 * z2)));
-    out.z = (z1 * w2) - ((y1 * x2) - ((w1 * z2) + (x1 * y2)));
+    out.f.w = -((z1 * z2) + ((y1 * y2) - ((w1 * w2) - (x1 * x2))));
+    out.f.x = -((z1 * y2) - ((y1 * z2) + ((w1 * x2) + (x1 * w2))));
+    out.f.y = (z1 * x2) + ((y1 * w2) + ((w1 * y2) - (x1 * z2)));
+    out.f.z = (z1 * w2) - ((y1 * x2) - ((w1 * z2) + (x1 * y2)));
 }
 
 /**
@@ -114,10 +114,10 @@ void nlMatrixToQuat(nlQuaternion& out, const nlMatrix4& matrix)
     {
         temp_f1 = nlSqrt(1.0f + temp_f29, 1);
         temp_f8 = 0.5f / temp_f1;
-        out.w = temp_f1 * 0.5f;
-        out.x = temp_f8 * (sp3C - sp48);
-        out.y = temp_f8 * (sp44 - sp2C);
-        out.z = temp_f8 * (temp_f31 - sp34);
+        out.f.w = temp_f1 * 0.5f;
+        out.f.x = temp_f8 * (sp3C - sp48);
+        out.f.y = temp_f8 * (sp44 - sp2C);
+        out.f.z = temp_f8 * (temp_f31 - sp34);
         return;
     }
     var_r5 = 0;
@@ -146,10 +146,10 @@ void nlMatrixToQuat(nlQuaternion& out, const nlMatrix4& matrix)
     sp20 = var_f1 * (*(temp_r26 + temp_r27) - *(temp_r28 + temp_r30));
     sp14[temp_r0] = var_f1 * (*(temp_r25 + temp_r30) + *(temp_r26 + temp_r29));
     sp14[temp_r4] = var_f1 * (*(temp_r25 + temp_r27) + *(temp_r28 + temp_r29));
-    out.x = sp14[0];
-    out.y = sp14[1];
-    out.z = sp14[2];
-    out.w = sp20;
+    out.f.x = sp14[0];
+    out.f.y = sp14[1];
+    out.f.z = sp14[2];
+    out.f.w = sp20;
 }
 
 /**

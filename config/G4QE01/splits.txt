@@ -257,7 +257,7 @@ FuzzyVariant.o:
 	.ctors      start:0x8028D28C end:0x8028D290
 	.bss        start:0x8030E530 end:0x8030E560
 
-Game.o:
+Game/Game.cpp:
 	.text       start:0x8003C574 end:0x8003EEC8
 	.text       start:0x8003EEC8 end:0x8003EEEC
 	.text       start:0x8003EEEC end:0x8003EEEC
@@ -288,7 +288,7 @@ Game.o:
 	.sbss       start:0x80373708 end:0x80373710
 	.sdata2     start:0x803752C8 end:0x80375300
 
-GameTweaks.o:
+Game/GameTweaks.cpp:
 	.text       start:0x800401EC end:0x80042874
 	.text       start:0x80042874 end:0x800429FC
 	.text       start:0x800429FC end:0x800429FC

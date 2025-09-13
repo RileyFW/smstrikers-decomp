@@ -698,7 +698,10 @@ config.libs = [
             Object(NonMatching, "Game/Sys/CallStackDumper.cpp", extra_cflags=["-inline deferred"]),    
 
             # Game Objects
+            Object(NonMatching, "Game/Game.cpp", extra_cflags=["-inline deferred"]),    
             Object(NonMatching, "Game/GameInfo.cpp", extra_cflags=["-inline deferred"]),    
+            Object(NonMatching, "Game/GameTweaks.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/CharacterTweaks.cpp", extra_cflags=["-inline deferred"]),
 
             Object(Matching, "Game/CameraLoader.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/CameraMan.cpp", extra_cflags=["-inline deferred"]),
@@ -721,10 +724,9 @@ config.libs = [
             Object(NonMatching, "Game/Field.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Character.cpp"),
             Object(NonMatching, "Game/CharacterTemplate.cpp"),
-            Object(Matching, "Game/CharacterTweaks.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/CharacterEffects.cpp"),
             Object(NonMatching, "Game/Player.cpp"),
-    
+
             Object(NonMatching, "Game/Goalie.cpp"),
             Object(Matching, "Game/GoalieFatigue.cpp", extra_cflags=["-inline deferred"]),
 
@@ -903,7 +905,7 @@ config.libs = [
             Object(NonMatching, "Game/SH/SHTournTeamSetup.cpp"),            
 
             # GFX
-            Object(NonMatching, "Game/Drawable/DrawableObj.cpp"),
+            Object(NonMatching, "Game/Drawable/DrawableObj.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableNetMesh.cpp"),
             Object(NonMatching, "Game/Drawable/DrawableCharacter.cpp"),
             Object(NonMatching, "Game/Drawable/DrawableBall.cpp"),

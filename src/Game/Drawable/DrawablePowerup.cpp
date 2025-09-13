@@ -42,12 +42,13 @@ void DrawShadow(float, float, float, float)
 // {
 // }
 
-/**
- * Offset/Address/Size: 0x0 | 0x8011F428 | size: 0x8
- */
-void DrawableObject::AsDrawableModel()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8011F428 | size: 0x8
+//  */
+// DrawableModel* DrawableObject::AsDrawableModel()
+// {
+//     return NULL;
+// }
 
 /**
  * Offset/Address/Size: 0x0 | 0x8011F430 | size: 0x64

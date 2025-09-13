@@ -236,10 +236,10 @@ void cBall::SetVisible(bool visible)
     DrawableObject* drawable = m_pDrawableBall;
     if (visible != 0)
     {
-        drawable->m_visibility = (drawable->m_visibility | 1);
+        drawable->m_uObjectFlags = (drawable->m_uObjectFlags | 1);
         return;
     }
-    drawable->m_visibility = (drawable->m_visibility & 0xFFFFFFFE);
+    drawable->m_uObjectFlags = (drawable->m_uObjectFlags & 0xFFFFFFFE);
 }
 
 /**
@@ -416,8 +416,8 @@ cPlayer* cBall::GetOwnerFielder() const
  */
 nlVector3* cBall::GetDrawablePosition() const
 {
-    nlMatrix4* mtx = m_pDrawableBall->GetWorldMatrix();
-    return (nlVector3*)&(mtx->m[3][0]);
+    nlMatrix4 mtx = m_pDrawableBall->GetWorldMatrix();
+    return (nlVector3*)&(mtx.m[3][0]);
 }
 
 /**

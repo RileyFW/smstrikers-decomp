@@ -428,10 +428,10 @@ void cSAnim::BlendRot(int arg0, int arg1, float arg2, float arg3, cPoseAccumulat
             sp40 = 0.000061035156f * (float)((const short*)temp_r8)[2];
             sp44 = 0.000061035156f * (float)((const short*)temp_r8)[3];
             nlQuaternion __q0;
-            __q0.x = sp38;
-            __q0.y = sp3C;
-            __q0.z = sp40;
-            __q0.w = sp44;
+            __q0.f.x = sp38;
+            __q0.f.y = sp3C;
+            __q0.f.z = sp40;
+            __q0.f.w = sp44;
             arg4->BlendRot(arg0, &__q0, arg3, arg5);
             return;
         }
@@ -449,10 +449,10 @@ void cSAnim::BlendRot(int arg0, int arg1, float arg2, float arg3, cPoseAccumulat
             sp30 = 0.000061035156f * (float)((const short*)temp_r7)[2];
             sp34 = 0.000061035156f * (float)((const short*)temp_r7)[3];
             nlQuaternion __q1;
-            __q1.x = sp28;
-            __q1.y = sp2C;
-            __q1.z = sp30;
-            __q1.w = sp34;
+            __q1.f.x = sp28;
+            __q1.f.y = sp2C;
+            __q1.f.z = sp30;
+            __q1.f.w = sp34;
             arg4->BlendRot(arg0, &__q1, arg3, arg5);
             return;
         }
@@ -472,10 +472,10 @@ void cSAnim::BlendRot(int arg0, int arg1, float arg2, float arg3, cPoseAccumulat
             sp20 = 0.000061035156f * (float)((const short*)temp_r8_2)[2];
             sp24 = 0.000061035156f * (float)((const short*)temp_r8_2)[3];
             nlQuaternion __q2;
-            __q2.x = sp18;
-            __q2.y = sp1C;
-            __q2.z = sp20;
-            __q2.w = sp24;
+            __q2.f.x = sp18;
+            __q2.f.y = sp1C;
+            __q2.f.z = sp20;
+            __q2.f.w = sp24;
             arg4->BlendRot(arg0, &__q2, temp_f1_2, arg5);
         }
         if ((m_flags[arg1] & 1U) != 0U)
@@ -489,10 +489,10 @@ void cSAnim::BlendRot(int arg0, int arg1, float arg2, float arg3, cPoseAccumulat
         sp10 = 0.000061035156f * (float)((const short*)temp_r7_2)[2];
         sp14 = 0.000061035156f * (float)((const short*)temp_r7_2)[3];
         nlQuaternion __q3;
-        __q3.x = sp8;
-        __q3.y = spC;
-        __q3.z = sp10;
-        __q3.w = sp14;
+        __q3.f.x = sp8;
+        __q3.f.y = spC;
+        __q3.f.z = sp10;
+        __q3.f.w = sp14;
         arg4->BlendRot(arg0, &__q3, temp_f31, arg5);
         return;
     }

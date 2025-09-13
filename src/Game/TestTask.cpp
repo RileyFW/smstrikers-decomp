@@ -25,14 +25,14 @@ TestTask::TestTask()
 void TestTask::Initialize()
 {
     // Get global config
-    Config* config = Config::Global();
+    Config& config = Config::Global();
 
     // Load test timeout value
-    SetTagValuePair* tvp = config->FindTvp("test/time_out_sec");
+    SetTagValuePair* tvp = config.FindTvp("test/time_out_sec");
     float timeoutValue = 0.0f;
     if (tvp->m_unk_0x00 == nullptr)
     {
-        config->Set("test/time_out_sec", 0.0f);
+        config.Set("test/time_out_sec", 0.0f);
         timeoutValue = 0.0f;
     }
     else
@@ -59,11 +59,11 @@ void TestTask::Initialize()
     mTestTimeOut = timeoutValue;
 
     // Load run unit tests flag
-    tvp = config->FindTvp("test/run_unit_tests");
+    tvp = config.FindTvp("test/run_unit_tests");
     bool runUnitTests = false;
     if (tvp->m_unk_0x00 == nullptr)
     {
-        config->Set("test/run_unit_tests", false);
+        config.Set("test/run_unit_tests", false);
         runUnitTests = false;
     }
     else
@@ -90,11 +90,11 @@ void TestTask::Initialize()
     mRunUnitTests = runUnitTests;
 
     // Load run smoke test flag
-    tvp = config->FindTvp("test/run_smoke_test");
+    tvp = config.FindTvp("test/run_smoke_test");
     bool runSmokeTest = false;
     if (tvp->m_unk_0x00 == nullptr)
     {
-        config->Set("test/run_smoke_test", false);
+        config.Set("test/run_smoke_test", false);
         runSmokeTest = false;
     }
     else
@@ -121,11 +121,11 @@ void TestTask::Initialize()
     mRunSmokeTest = runSmokeTest;
 
     // Load run frame rate test flag
-    tvp = config->FindTvp("test/run_frame_rate_test");
+    tvp = config.FindTvp("test/run_frame_rate_test");
     bool runFrameRateTest = false;
     if (tvp->m_unk_0x00 == nullptr)
     {
-        config->Set("test/run_frame_rate_test", false);
+        config.Set("test/run_frame_rate_test", false);
         runFrameRateTest = false;
     }
     else
@@ -152,11 +152,11 @@ void TestTask::Initialize()
     mRunFrameRateTest = runFrameRateTest;
 
     // Load minimum frame rate value
-    tvp = config->FindTvp("test/minimum_frame_rate");
+    tvp = config.FindTvp("test/minimum_frame_rate");
     float minimumFrameRate = 20.0f;
     if (tvp->m_unk_0x00 == nullptr)
     {
-        config->Set("test/minimum_frame_rate", 20.0f);
+        config.Set("test/minimum_frame_rate", 20.0f);
         minimumFrameRate = 20.0f;
     }
     else
@@ -268,15 +268,15 @@ void TestTask::RunSmokeTest(float)
     }
 
     // Get global config and look up a specific value
-    Config* config = Config::Global();
+    Config& config = Config::Global();
     const char* configKey = "test/time_out_sec ";
-    SetTagValuePair* tvp = config->FindTvp(configKey);
+    SetTagValuePair* tvp = config.FindTvp(configKey);
 
     float configValue = 0.0f;
     if (tvp->m_unk_0x00 == nullptr)
     {
         // Set default value if not found
-        config->Set(configKey, 1.0f);
+        config.Set(configKey, 1.0f);
         configValue = 1.0f;
     }
     else

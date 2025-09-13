@@ -4,7 +4,6 @@
 #include "types.h"
 
 #include "Game/World.h"
-#include "NL/nlConfig.h"
 
 class Event;
 

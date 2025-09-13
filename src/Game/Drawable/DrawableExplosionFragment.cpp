@@ -1,10 +1,33 @@
 #include "Game/Drawable/DrawableExplosionFragment.h"
 
+#include "Game/Game.h"
+#include "Game/World.h"
+#include "Game/WorldManager.h"
+#include "Game/Drawable/DrawableObj.h"
+
 /**
  * Offset/Address/Size: 0x0 | 0x8011F7A0 | size: 0xF8
  */
-void DrawableExplosionFragment::Blend(const float*, const DrawableExplosionFragment&, const DrawableExplosionFragment&)
+void DrawableExplosionFragment::Blend(const float* w, const DrawableExplosionFragment& a, const DrawableExplosionFragment& b)
 {
+    mVisible = a.mVisible && b.mVisible && (a.mFragmentModelHash == b.mFragmentModelHash);
+
+    if (!mVisible)
+        return;
+
+    const float t = w[2];
+    const float it = 1.0f - t;
+
+    mPosition.f.x = it * a.mPosition.f.x + t * b.mPosition.f.x;
+    mPosition.f.y = it * a.mPosition.f.y + t * b.mPosition.f.y;
+    mPosition.f.z = it * a.mPosition.f.z + t * b.mPosition.f.z;
+
+    nlQuatSlerp(mOrientation, a.mOrientation, b.mOrientation, t);
+
+    mFragmentModelHash = a.mFragmentModelHash;
+    float opacity = (a.mOpacity + b.mOpacity);
+    float factor = 0.5f;
+    mOpacity = opacity * factor; // otherwise it does not match the asm
 }
 
 /**
@@ -12,6 +35,32 @@ void DrawableExplosionFragment::Blend(const float*, const DrawableExplosionFragm
  */
 void DrawableExplosionFragment::Render() const
 {
+    if (g_pGame->mbCaptainShotToScoreOn == 0)
+    {
+        DrawableObject* obj = WorldManager::s_World->FindDrawableObject(mFragmentModelHash);
+        if (obj != NULL)
+        {
+            obj->m_translation = mPosition;
+            obj->m_worldMatrixUpToDate = false;
+            obj->m_orientation = mOrientation;
+            obj->m_worldMatrixUpToDate = false;
+
+            obj->m_translucency = mOpacity;
+            if (obj->m_translucency < 0.0f)
+            {
+                obj->m_translucency = 0.0f;
+            }
+            if (obj->m_translucency > 1.0f)
+            {
+                obj->m_translucency = 1.0f;
+            }
+
+            if (mVisible)
+            {
+                obj->Draw();
+            }
+        }
+    }
 }
 
 /**

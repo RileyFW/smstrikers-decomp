@@ -188,6 +188,7 @@ int RenderSnapshot::NumDrawableObjects() const
  */
 const nlVector3& RenderSnapshot::GetPositionForDrawableObject(int) const
 {
+    return mCameraUp;
 }
 
 /**

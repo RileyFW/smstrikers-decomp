@@ -195,13 +195,13 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList sceneType, ScreenMovement
     }
 
     // Get global config and find TVP setting
-    Config* config = Config::Global();
-    SetTagValuePair* tvp = config->FindTvp("fev2");
+    Config& config = Config::Global();
+    SetTagValuePair* tvp = config.FindTvp("fev2");
 
     // Handle TVP value based on type
     if (tvp->m_unk_0x04 == 0)
     {
-        config->Set("fev2", false);
+        config.Set("fev2", false);
     }
     else if (tvp->m_unk_0x04 == 1)
     {

@@ -1,5 +1,7 @@
 #include "NL/nlConfig.h"
 
+static Config* sGlobal = nullptr;
+
 /**
  * Offset/Address/Size: 0x0 | 0x801D2C64 | size: 0x13EC
  */
@@ -60,15 +62,19 @@ SetTagValuePair* Config::FindTvp(const char*)
 /**
  * Offset/Address/Size: 0x1FEC | 0x801D4C50 | size: 0x534
  */
-void Config::IsBool(const char*, bool&) const
+bool Config::IsBool(const char*, bool&) const
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x2520 | 0x801D5184 | size: 0xC8
  */
-void Config::Exists(const char*) const
+bool Config::Exists(const char*) const
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
@@ -81,9 +87,10 @@ void Config::LoadFromFile(const char*)
 /**
  * Offset/Address/Size: 0x2720 | 0x801D5384 | size: 0xAC
  */
-Config* Config::Global()
+Config& Config::Global()
 {
-    return NULL;
+    FORCE_DONT_INLINE;
+    return *sGlobal;
 }
 
 /**

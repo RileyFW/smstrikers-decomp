@@ -23,26 +23,26 @@ class World
 public:
     static u32 m_uCurrentFrameCount;
 
-    virtual ~World();
     World(const char*);
+    /* 0x04 */ virtual ~World();
 
-    virtual void GetTerrainType(const nlVector3&) const = 0;
-    virtual void HandleObjectCreation(WorldObjectData*);
-    virtual void Render(); // 0x14
-    virtual void Update(float); // 0x18
-    virtual void UpdateInReplay(float); // 0x1C
-    virtual void FixedUpdate(float); // 0x20
-    virtual void HandleEvent(Event*, void*); // 0x24 
-    virtual void CreateHelperObjFromChunk(nlChunk*); // 0x28
-    virtual void DoLoad() = 0; // 0x2C
-    virtual void DoInitialize() = 0; // 0x30
+    /* 0x08 */ virtual void GetTerrainType(const nlVector3&) const = 0;
+    /* 0x10 */ virtual void HandleObjectCreation(WorldObjectData*);
+    /* 0x14 */ virtual void Render();
+    /* 0x18 */ virtual void Update(float);
+    /* 0x1C */ virtual void UpdateInReplay(float);
+    /* 0x20 */ virtual void FixedUpdate(float);
+    /* 0x24 */ virtual void HandleEvent(Event*, void*);
+    /* 0x28 */ virtual void CreateHelperObjFromChunk(nlChunk*);
+    /* 0x2C */ virtual void DoLoad() = 0;
+    /* 0x30 */ virtual void DoInitialize() = 0;
 
     int CompareNameToGenericName(const char*, const char*);
     void GetHashIdForGenericName(const char*) const;
     void GetShadowLight(const nlVector3&, float);
     void AddDrawableObject(unsigned long, DrawableObject*);
     void FindHelperObject(unsigned long);
-    void FindDrawableObject(unsigned long);
+    DrawableObject* FindDrawableObject(unsigned long);
     void HandleCameraSwitch();
     void IsSphereInFrustum(const nlMatrix4&, float);
     void ExtractFrustumPlanes();
@@ -57,16 +57,14 @@ public:
     /* 0x04 */ u8 m_padding_0x04[0x18];
     /* 0x1C */ u8 m_unk_0x1C;
     /* 0x1D */ u8 m_padding_0x1D[0x30];
-    /* 0x4C */ void *m_unk_0x4C;
+    /* 0x4C */ void* m_unk_0x4C;
 };
-
 
 // class nlAVLTree<unsigned long, LightObject*, DefaultKeyCompare<unsigned long>>
 // {
 // public:
 //     void ~nlAVLTree();
 // };
-
 
 // class AVLTreeBase<unsigned long, DrawableObject*, NewAdapter<AVLTreeEntry<unsigned long, DrawableObject*>>, DefaultKeyCompare<unsigned long>>
 // {
@@ -82,7 +80,6 @@ public:
 //     void AllocateEntry(void*, void*);
 // };
 
-
 // class AVLTreeBase<unsigned long, LightObject*, NewAdapter<AVLTreeEntry<unsigned long, LightObject*>>, DefaultKeyCompare<unsigned long>>
 // {
 // public:
@@ -97,20 +94,17 @@ public:
 //     void DeleteEntry(AVLTreeEntry<unsigned long, LightObject*>*);
 // };
 
-
 // class nlAVLTree<unsigned long, DrawableObject*, DefaultKeyCompare<unsigned long>>
 // {
 // public:
 //     void ~nlAVLTree();
 // };
 
-
 // class nlAVLTree<unsigned long, HelperObject*, DefaultKeyCompare<unsigned long>>
 // {
 // public:
 //     void ~nlAVLTree();
 // };
-
 
 // class AVLTreeBase<unsigned long, HelperObject*, NewAdapter<AVLTreeEntry<unsigned long, HelperObject*>>, DefaultKeyCompare<unsigned long>>
 // {
@@ -126,13 +120,11 @@ public:
 //     void DeleteEntry(AVLTreeEntry<unsigned long, HelperObject*>*);
 // };
 
-
 // class ListContainerBase<LightObject*, NewAdapter<ListEntry<LightObject*>>>
 // {
 // public:
 //     void DeleteEntry(ListEntry<LightObject*>*);
 // };
-
 
 // class DLListContainerBase<WorldAnimController*, NewAdapter<DLListEntry<WorldAnimController*>>>
 // {
@@ -140,20 +132,17 @@ public:
 //     void DeleteEntry(DLListEntry<WorldAnimController*>*);
 // };
 
-
 // class nlWalkList<ListEntry<LightObject*>, ListContainerBase<LightObject*, NewAdapter<ListEntry<LightObject*>>>>(ListEntry<LightObject*>*, ListContainerBase<LightObject*, NewAdapter<ListEntry<LightObject*>>>*, void (ListContainerBase<LightObject*, NewAdapter<ListEntry<LightObject*>>>
 // {
 // public:
 //     void *)(ListEntry<LightObject*>*));
 // };
 
-
 // class nlWalkDLRing<DLListEntry<WorldAnimController*>, DLListContainerBase<WorldAnimController*, NewAdapter<DLListEntry<WorldAnimController*>>>>(DLListEntry<WorldAnimController*>*, DLListContainerBase<WorldAnimController*, NewAdapter<DLListEntry<WorldAnimController*>>>*, void (DLListContainerBase<WorldAnimController*, NewAdapter<DLListEntry<WorldAnimController*>>>
 // {
 // public:
 //     void *)(DLListEntry<WorldAnimController*>*));
 // };
-
 
 // class nlWalkRing<DLListEntry<WorldAnimController*>, DLListContainerBase<WorldAnimController*, NewAdapter<DLListEntry<WorldAnimController*>>>>(DLListEntry<WorldAnimController*>*, DLListContainerBase<WorldAnimController*, NewAdapter<DLListEntry<WorldAnimController*>>>*, void (DLListContainerBase<WorldAnimController*, NewAdapter<DLListEntry<WorldAnimController*>>>
 // {

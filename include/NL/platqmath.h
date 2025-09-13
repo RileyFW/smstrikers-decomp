@@ -6,13 +6,37 @@
 struct nlMatrix4;
 struct nlVector3;
 
-struct nlQuaternion
+// struct nlQuaternion
+// {
+//     float x;
+//     float y;
+//     float z;
+//     float w;
+// };
+
+class nlQuaternion
 {
-    float x;
-    float y;
-    float z;
-    float w;
-};
+public:
+    union
+    {
+        float e[4]; // offset 0x0, size 0x10
+        struct
+        {
+            float x; // offset 0x0, size 0x4
+            float y; // offset 0x4, size 0x4
+            float z; // offset 0x8, size 0x4
+            float w; // offset 0xC, size 0x4
+        } f;
+    };
+}; // total size: 0x10
+
+inline void nlQuatSet(nlQuaternion& q0, float _x, float _y, float _z, float _w)
+{
+    q0.f.w = _w;
+    q0.f.x = _x;
+    q0.f.y = _y;
+    q0.f.z = _z;
+}
 
 void nlQuatScale(nlQuaternion& result, const nlQuaternion& input, float scaleFactor);
 f32 nlQuatDot(const nlQuaternion& quat1, const nlQuaternion& quat2);

@@ -62,7 +62,7 @@ public:
     /* 0x1AA4 */ bool mDoGoalieNetTestPosX;
     /* 0x1AA5 */ bool mDoGoalieNetTestNegX;
     /* 0x1AA8 */ u8* mpExplodableVisibilityRecords;
-    /* 0x1AAC */ class nlVector3 mCameraUp;
+    /* 0x1AAC */ nlVector3 mCameraUp;
     /* 0x1AB8 */ float mFrameBlendPercent;
     /* 0x1ABC */ u8 pad1ABC0[0x4];
 }; // SIZE: 0x1AC0

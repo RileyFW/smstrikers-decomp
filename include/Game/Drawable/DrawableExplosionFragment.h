@@ -17,12 +17,12 @@ public:
     // void Replay<LoadFrame>(LoadFrame&);
     // void Replay<SaveFrame>(SaveFrame&);
 
-    /* 0x0, */ unsigned short mID;
-    /* 0x2, */ unsigned char mVisible;
+    /* 0x0, */ u16 mID;
+    /* 0x2, */ bool mVisible;
     /* 0x4, */ float mOpacity;
-    /* 0x8, */ class nlVector3 mPosition;
-    /* 0x14 */ class nlQuaternion mOrientation;
-    /* 0x24 */ unsigned long mFragmentModelHash;
+    /* 0x8, */ nlVector3 mPosition;
+    /* 0x14 */ nlQuaternion mOrientation;
+    /* 0x24 */ u32 mFragmentModelHash;
     /* 0x28 */ PhysicsObject* mpPhysicsObject;
 }; // total size: 0x2C
 

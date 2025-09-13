@@ -49,7 +49,7 @@ void World::FindHelperObject(unsigned long)
 /**
  * Offset/Address/Size: 0x3A8 | 0x8019506C | size: 0x8C
  */
-void World::FindDrawableObject(u32 arg1)
+DrawableObject* World::FindDrawableObject(u32 arg1)
 {
     //     s32 *sp8;
     //     s32 var_r0_2;
