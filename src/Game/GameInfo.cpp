@@ -2,7 +2,7 @@
 
 #include "NL/nlMemory.h"
 
-nlSingleton<GameInfoManager> GameInfoManager::s_pInstance;
+// nlSingleton<GameInfoManager> GameInfoManager::s_pInstance;
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8018151C | size: 0x44
@@ -270,19 +270,19 @@ int BaseCup::GetSaveDataSize() const
 void BaseCup::DeserializeData(void* src)
 {
     unsigned char* p = (unsigned char*)src;
-    memcpy(&m_unk_0x00, p, 4);
+    memcpy(&mUserSelectedTeam, p, 4);
     p += 4;
-    memcpy(&m_unk_0x04, p, 4);
+    memcpy(&mUserSelectedSidekick, p, 4);
     p += 4;
-    memcpy(&m_unk_0x08, p, 2);
+    memcpy(&mRoundNumber, p, 2);
     p += 2;
-    memcpy(&m_unk_0x0A, p, 2);
+    memcpy(&mGameNumber, p, 2);
     p += 2;
-    memcpy(&m_unk_0x0C, p, 2);
+    memcpy(&mHumanTeams, p, 2);
     p += 2;
-    memcpy(&m_unk_0x0D, p, 1);
+    memcpy(&mCupStarted, p, 1);
     p += 1;
-    memcpy(m_unk_0x0E, p, 0x0C);
+    memcpy(&mCupSettings, p, 0x0C);
 }
 
 /**
@@ -291,19 +291,19 @@ void BaseCup::DeserializeData(void* src)
 void BaseCup::SerializeData(void* dst) const
 {
     unsigned char* p = (unsigned char*)dst;
-    memcpy(p, &m_unk_0x00, 4);
+    memcpy(p, &mUserSelectedTeam, 4);
     p += 4;
-    memcpy(p, &m_unk_0x04, 4);
+    memcpy(p, &mUserSelectedSidekick, 4);
     p += 4;
-    memcpy(p, &m_unk_0x08, 2);
+    memcpy(p, &mRoundNumber, 2);
     p += 2;
-    memcpy(p, &m_unk_0x0A, 2);
+    memcpy(p, &mGameNumber, 2);
     p += 2;
-    memcpy(p, &m_unk_0x0C, 2);
+    memcpy(p, &mHumanTeams, 2);
     p += 2;
-    memcpy(p, &m_unk_0x0D, 1);
+    memcpy(p, &mCupStarted, 1);
     p += 1;
-    memcpy(p, m_unk_0x0E, 0x0C);
+    memcpy(p, &mCupSettings, 0x0C);
 }
 
 // /**
@@ -578,11 +578,11 @@ void GameInfoManager::GetMatchupInfo(short, unsigned short) const
 void GameInfoManager::SetUserSelectedCupTeam(eTeamID team)
 {
     s32* temp_r4;
-    m_unk_0x4960->m_unk_0x00 = team;
+    mCurrentCup->mUserSelectedTeam = team;
     if (team != eTeamID_None)
     {
-        m_unk_0x4960->m_unk_0x0C = 0;
-        m_unk_0x4960->m_unk_0x0C = m_unk_0x4960->m_unk_0x0C | (1 << team);
+        mCurrentCup->mRoundNumber = 0;
+        mCurrentCup->mRoundNumber = mCurrentCup->mRoundNumber | (1 << team);
     }
 }
 
@@ -591,7 +591,7 @@ void GameInfoManager::SetUserSelectedCupTeam(eTeamID team)
  */
 void GameInfoManager::SetUserSelectedCupSidekick(eSidekickID sidekick)
 {
-    m_unk_0x4960->m_unk_0x04 = sidekick;
+    mCurrentCup->mUserSelectedSidekick = sidekick;
 }
 
 /**
@@ -870,15 +870,19 @@ void GameInfoManager::GetAudioOptions()
 /**
  * Offset/Address/Size: 0x5DE0 | 0x8017B484 | size: 0x3C
  */
-void GameInfoManager::GetGameplayOptions() const
+const GameplaySettings& GameInfoManager::GetGameplayOptions() const
 {
+    FORCE_DONT_INLINE;
+    return mUserInfo.mGameplayOptions;
 }
 
 /**
  * Offset/Address/Size: 0x5DD8 | 0x8017B47C | size: 0x8
  */
-void GameInfoManager::GetPowerupOptions() const
+const PowerupSettings& GameInfoManager::GetPowerupOptions() const
 {
+    FORCE_DONT_INLINE;
+    return mUserInfo.mPowerupOptions;
 }
 
 /**

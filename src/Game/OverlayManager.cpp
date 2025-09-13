@@ -118,7 +118,7 @@ void OverlayManager::SetVisible(SceneList scene, bool visibility, bool overrideS
     BaseOverlayHandler* sceneHandler; // r3
     u32 state;                        // r4
 
-    if (nlSingleton<GameInfoManager>::s_pInstance->m_unk_0x4960->m_unk_0x04 != SK_MYSTERY || scene == OVERLAY_HUD)
+    if (nlSingleton<GameInfoManager>::s_pInstance->mCurrentCup->mUserSelectedSidekick != SK_MYSTERY || scene == OVERLAY_HUD)
     {
     }
 }
