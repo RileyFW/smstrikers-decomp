@@ -26,7 +26,8 @@ enum eTeamID
     eTeamID_Team1 = 1,
 };
 
-enum eSidekickID {
+enum eSidekickID
+{
     SK_MYSTERY = -2,
     SK_INVALID = -1,
     SK_TOAD = 0,

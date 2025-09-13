@@ -1,6 +1,5 @@
 #include "Game/OverlayHandlerHUD.h"
 
-
 /**
  * Offset/Address/Size: 0x124 | 0x800FA3BC | size: 0xCF0
  */
@@ -124,29 +123,30 @@
 /**
  * Offset/Address/Size: 0x36B8 | 0x800F9998 | size: 0xB4
  */
-HUDOverlay::HUDOverlay() : BaseOverlayHandler(2)
+HUDOverlay::HUDOverlay()
+    : BaseOverlayHandler(2)
 {
-   mSeconds = -1;
-   mTenths = 0;
-   mClockColourChanged = false;
-   mOvertimeSFXPlayed = false;
-   mStartScoreAnimation = false;
-   mNumFlareCycles[0][0] = -1;
-   mScore[0] = 0;
-   mNewScore[0] = 0;
-   mScoreUpdateDelay[0] = 0.0f;
-   mNumFlareCycles[0][1] = -1;
-   mScore[0] = 0;
-   mNewScore[0] = 0;
-   mScoreUpdateDelay[0] = 0.0f;
-   mNumFlareCycles[0][2] = -1;
-   mScore[1] = 0;
-   mNewScore[1] = 0;
-   mScoreUpdateDelay[1] = 0.0f;
-   mNumFlareCycles[0][3] = -1;
-   mScore[1] = 0;
-   mNewScore[1] = 0;
-   mScoreUpdateDelay[1] = 0.0f;
+    mSeconds = -1;
+    mTenths = 0;
+    mClockColourChanged = false;
+    mOvertimeSFXPlayed = false;
+    mStartScoreAnimation = false;
+    mNumFlareCycles[0][0] = -1;
+    mScore[0] = 0;
+    mNewScore[0] = 0;
+    mScoreUpdateDelay[0] = 0.0f;
+    mNumFlareCycles[0][1] = -1;
+    mScore[0] = 0;
+    mNewScore[0] = 0;
+    mScoreUpdateDelay[0] = 0.0f;
+    mNumFlareCycles[0][2] = -1;
+    mScore[1] = 0;
+    mNewScore[1] = 0;
+    mScoreUpdateDelay[1] = 0.0f;
+    mNumFlareCycles[0][3] = -1;
+    mScore[1] = 0;
+    mNewScore[1] = 0;
+    mScoreUpdateDelay[1] = 0.0f;
 }
 
 /**

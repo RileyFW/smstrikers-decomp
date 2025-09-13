@@ -15,7 +15,7 @@ public:
     static int mLessonIndex;
     bool mHUDWasVisible;
     class BaseSceneHandler* mHudScene;
-    class ButtonComponent  mButtons;
+    class ButtonComponent mButtons;
 };
 
 // class FEFinder<TLComponentInstance, 4>

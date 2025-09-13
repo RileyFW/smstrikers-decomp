@@ -5,7 +5,8 @@
 #include "types.h"
 #include "Game/BaseGameSceneManager.h"
 
-enum OverlaySlideName {
+enum OverlaySlideName
+{
     SLIDE_NAME_INVALID = -1,
     SLIDE_NAME_TEXT_GOAL = 0,
     SLIDE_NAME_TEXT_KICKOFF = 1,
@@ -36,15 +37,13 @@ public:
 
     static nlSingleton<OverlayManager> s_pInstance;
 
-    class InGameTextOverlay * mInGameTextOverlay; // offset 0x108, size 0x4
-    bool mIsHUDSlideIn; // offset 0x10C, size 0x1
-    bool mDoHUDSlideIn; // offset 0x10D, size 0x1
-    bool mIsInHighlights; // offset 0x10E, size 0x1
-    bool mIsDemoSlideVisible; // offset 0x10F, size 0x1
-    f32 mHUDDelay; // offset 0x110, size 0x4
-    class FEInGameMessengerManager * mIGMessengerManager; // offset 0x114, size 0x4
-
-
+    class InGameTextOverlay* mInGameTextOverlay;         // offset 0x108, size 0x4
+    bool mIsHUDSlideIn;                                  // offset 0x10C, size 0x1
+    bool mDoHUDSlideIn;                                  // offset 0x10D, size 0x1
+    bool mIsInHighlights;                                // offset 0x10E, size 0x1
+    bool mIsDemoSlideVisible;                            // offset 0x10F, size 0x1
+    f32 mHUDDelay;                                       // offset 0x110, size 0x4
+    class FEInGameMessengerManager* mIGMessengerManager; // offset 0x114, size 0x4
 };
 
 #endif // _OVERLAYMANAGER_H_

@@ -56,7 +56,8 @@ void OverlayManager::Pop()
  */
 void OverlayManager::SetCurrentTextOverlaySlide(OverlaySlideName slideName)
 {
-    if (this->mInGameTextOverlay != NULL) {
+    if (this->mInGameTextOverlay != NULL)
+    {
         mInGameTextOverlay->SetSlide(slideName);
     }
 }
@@ -112,13 +113,13 @@ void OverlayManager::FEEventHandler(Event*, void*)
  */
 void OverlayManager::SetVisible(SceneList scene, bool visibility, bool overrideStateSettings)
 {
-    BasicString fileName; // r1+0xC
-    u32 uHashID; // r4
+    BasicString fileName;             // r1+0xC
+    u32 uHashID;                      // r4
     BaseOverlayHandler* sceneHandler; // r3
-    u32 state; // r4
+    u32 state;                        // r4
 
-    if (nlSingleton<GameInfoManager>::s_pInstance->m_unk_0x4960->m_unk_0x04 != SK_MYSTERY || scene == OVERLAY_HUD) {
-        
+    if (nlSingleton<GameInfoManager>::s_pInstance->m_unk_0x4960->m_unk_0x04 != SK_MYSTERY || scene == OVERLAY_HUD)
+    {
     }
 }
 

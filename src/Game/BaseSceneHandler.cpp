@@ -13,7 +13,7 @@ void BaseSceneHandler::Update(float dt)
  */
 void BaseSceneHandler::AddScreenHandler(BaseScreenHandler* handler)
 {
-    handler->m_pFEScene = (FEScene*)m_pFEScene;
+    handler->m_pFEScene = m_pFEScene;
     nlDLRingAddEnd<BaseScreenHandler>(&m_pScreenHandlerList, handler);
 }
 

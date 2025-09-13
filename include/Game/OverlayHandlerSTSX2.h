@@ -1,7 +1,6 @@
 #ifndef _OVERLAYHANDLERSTSX2_H_
 #define _OVERLAYHANDLERSTSX2_H_
 
-
 #include "Game/FE/feNSNMessenger.h"
 #include "Game/Sys/eventman.h"
 
@@ -13,7 +12,7 @@ public:
     virtual void Update(float);
     virtual void SceneCreated();
     EventCallback EventHandlerFunc(Event*, void*);
-    
+
     EventHandler* m_EventHandler;
 };
 

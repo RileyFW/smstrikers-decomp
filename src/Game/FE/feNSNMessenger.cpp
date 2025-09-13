@@ -145,7 +145,6 @@ NSNMessengerScene::NSNMessengerScene()
 // {
 // }
 
-
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800A223C | size: 0x8
 //  */

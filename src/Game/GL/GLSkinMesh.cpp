@@ -14,7 +14,6 @@ void SkinMatrix::Set(const nlMatrix4&)
  */
 void SkinMatrix::Get(nlMatrix4& arg0) const
 {
-
 }
 
 /**
@@ -30,5 +29,5 @@ void SkinMatrix::Get4x3(float* arg0) const
  */
 void nlMultMatrices(SkinMatrix& arg0, const SkinMatrix& arg1, const SkinMatrix& arg2)
 {
-    //PSMTXConcat(arg0, arg2, arg1);
+    // PSMTXConcat(arg0, arg2, arg1);
 }

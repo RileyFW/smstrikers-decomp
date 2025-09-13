@@ -7,7 +7,6 @@
 #include "Game/FE/feRender.h"
 #include "Game/FE/tlTextInstance.h"
 
-
 class HUDOverlay : public BaseOverlayHandler
 {
 public:
@@ -57,7 +56,6 @@ public:
     /*0x1D0*/ AsyncImage* mAsyncImage[2];
     /*0x1D8*/ float mScoreUpdateDelay[2];
 };
-
 
 /*class FEFinder<TLImageInstance, 2>
 {

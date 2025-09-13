@@ -42,7 +42,8 @@ public:
 //     long);
 // };
 
-enum ScreenPosition {
+enum ScreenPosition
+{
     POSITION_INVALID = -1,
     POSITION_TOP_LEFT = 0,
     POSITION_TOP_MIDDLE = 1,
@@ -63,18 +64,20 @@ enum ScreenPosition {
 class BaseOverlayHandler : public BaseSceneHandler
 {
 public:
-    BaseOverlayHandler(u32 VisibilityMask) {
+    BaseOverlayHandler(u32 VisibilityMask)
+    {
         mPosition = POSITION_TOP;
         mVisibilityMask = VisibilityMask;
         mWasLastVisible = false;
     }
     virtual ~BaseOverlayHandler();
     ScreenPosition mPosition; // offset 0x1C, size 0x4
-    u32 mVisibilityMask; // offset 0x20, size 0x4
-    bool mWasLastVisible; // offset 0x24, size 0x1
+    u32 mVisibilityMask;      // offset 0x20, size 0x4
+    bool mWasLastVisible;     // offset 0x24, size 0x1
 };
 
-BaseOverlayHandler::~BaseOverlayHandler() {
+BaseOverlayHandler::~BaseOverlayHandler()
+{
 }
 
 #endif // _FENSNMESSENGER_H_

@@ -5,11 +5,11 @@
 #include "NL/nlBundleFile.h"
 #include "NL/nlTask.h"
 
-
 /**
  * Offset/Address/Size: 0x280 | 0x8010705C | size: 0xA8
  */
-STSX2Overlay::STSX2Overlay() : BaseOverlayHandler(2)
+STSX2Overlay::STSX2Overlay()
+    : BaseOverlayHandler(2)
 {
     this->m_EventHandler = 0;
     this->m_EventHandler = g_pEventManager->AddEventHandler(EventHandlerFunc(this->m_EventHandler->m_event, this), this, 1);
@@ -20,7 +20,8 @@ STSX2Overlay::STSX2Overlay() : BaseOverlayHandler(2)
  */
 STSX2Overlay::~STSX2Overlay()
 {
-    if (this->m_EventHandler) {
+    if (this->m_EventHandler)
+    {
         g_pEventManager->RemoveEventHandler(this->m_EventHandler);
         this->m_EventHandler = NULL;
     }
@@ -42,15 +43,20 @@ void STSX2Overlay::SceneCreated()
  */
 void STSX2Overlay::Update(float fDeltaT)
 {
-    if (this->mVisibilityMask & nlTaskManager::m_pInstance->m_unk_0x08) {
-        if (!m_bVisible) {
-            FEAudio::EnableSounds(false);            
+    if (this->mVisibilityMask & nlTaskManager::m_pInstance->m_unk_0x08)
+    {
+        if (!m_bVisible)
+        {
+            FEAudio::EnableSounds(false);
         }
         BaseSceneHandler::Update(fDeltaT);
-        if (m_bVisible) {
+        if (m_bVisible)
+        {
             TLSlide* CurrentSlide = this->m_pFEPresentation->m_currentSlide;
-            if (CurrentSlide != NULL) {
-                if (CurrentSlide->m_time >= (CurrentSlide->m_start + CurrentSlide->m_duration)) {
+            if (CurrentSlide != NULL)
+            {
+                if (CurrentSlide->m_time >= (CurrentSlide->m_start + CurrentSlide->m_duration))
+                {
                     SetVisible(false);
                 }
             }
@@ -64,9 +70,11 @@ void STSX2Overlay::Update(float fDeltaT)
  */
 EventCallback STSX2Overlay::EventHandlerFunc(Event* arg0, void* arg1)
 {
-    if (m_uHashID == 5) {
-        if (this->m_pActiveScreenHandler->fnc1() == -1) {
-            nlPrintf("Error: Trying to get event data on event with none!\n" );
+    if (m_uHashID == 5)
+    {
+        if (this->m_pActiveScreenHandler->fnc1() == -1)
+        {
+            nlPrintf("Error: Trying to get event data on event with none!\n");
         }
     }
 }

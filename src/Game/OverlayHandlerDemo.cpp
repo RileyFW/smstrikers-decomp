@@ -4,7 +4,8 @@
 /**
  * Offset/Address/Size: 0xBC | 0x80105614 | size: 0x58
  */
-DemoOverlay::DemoOverlay() : BaseOverlayHandler(-1)
+DemoOverlay::DemoOverlay()
+    : BaseOverlayHandler(-1)
 {
 }
 
@@ -20,7 +21,7 @@ DemoOverlay::~DemoOverlay()
  */
 void DemoOverlay::Update(float fDeltaT)
 {
-    BaseSceneHandler::Update(fDeltaT );
+    BaseSceneHandler::Update(fDeltaT);
 }
 
 /**

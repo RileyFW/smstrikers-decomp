@@ -6,7 +6,8 @@
 
 class BaseSceneHandler;
 
-enum eFEINPUT_PAD {
+enum eFEINPUT_PAD
+{
     FE_PAD1_ID = 0,
     FE_PAD2_ID = 1,
     FE_PAD3_ID = 2,
@@ -38,7 +39,6 @@ public:
     FEInput();
     void Initialize();
     virtual ~FEInput();
-    
 };
 
 static FEInput* g_pFEInput;

@@ -1,19 +1,17 @@
 #ifndef _OVERLAYHANDLERINGAMETEXT_H_
 #define _OVERLAYHANDLERINGAMETEXT_H_
 
-
 #include "Game/BaseSceneHandler.h"
 #include "Game/FE/feNSNMessenger.h"
 #include "Game/OverlayManager.h"
 #include "types.h"
 
-
-
-struct InGameTextEntry {
+struct InGameTextEntry
+{
     // total size: 0xC
     enum OverlaySlideName mOverlayEnum; // offset 0x0, size 0x4
-    const char * mSlideName; // offset 0x4, size 0x4
-    u32 mTaskVisibility; // offset 0x8, size 0x4
+    const char* mSlideName;             // offset 0x4, size 0x4
+    u32 mTaskVisibility;                // offset 0x8, size 0x4
 };
 
 static char* TEAM_SLIDE_NAMES[8] = {
@@ -30,33 +28,15 @@ static char* TEAM_SLIDE_NAMES[8] = {
 static const char* OVERLAY_HANDLER_LAYER_NAME = "Layer"; // size: 0x4, address: 0x80395EAC
 
 static const struct InGameTextEntry IGTTable[8] = {
-    {
-        SLIDE_NAME_TEXT_GOAL,  "GOAL!", 0
-    }, 
-    {
-        SLIDE_NAME_TEXT_KICKOFF, "KICKOFF!", 0
-    },
-    {SLIDE_NAME_TEXT_WINNER, "WINNER!", 1
-    },
-    { SLIDE_NAME_TEXT_PAUSE, "Pause", 1
-    },
-    {
-        SLIDE_NAME_TEXT_TIE, "TIE!", 1
-    },
-    {
-        SLIDE_NAME_TEXT_LOADING, "LOADING...", 1
-    },
-    {
-        SLIDE_NAME_TEXT_SHOOT, "Shoot!", 2
-    },
-    {
-        SLIDE_NAME_TEXT_REPLAY, "REPLAY", 16
-    }
+    { SLIDE_NAME_TEXT_GOAL, "GOAL!", 0 },
+    { SLIDE_NAME_TEXT_KICKOFF, "KICKOFF!", 0 },
+    { SLIDE_NAME_TEXT_WINNER, "WINNER!", 1 },
+    { SLIDE_NAME_TEXT_PAUSE, "Pause", 1 },
+    { SLIDE_NAME_TEXT_TIE, "TIE!", 1 },
+    { SLIDE_NAME_TEXT_LOADING, "LOADING...", 1 },
+    { SLIDE_NAME_TEXT_SHOOT, "Shoot!", 2 },
+    { SLIDE_NAME_TEXT_REPLAY, "REPLAY", 16 }
 }; // size: 0x60, address: 0x802AD8E0
-
-
-
-
 
 class InGameTextOverlay : public BaseOverlayHandler
 {
@@ -70,8 +50,8 @@ public:
 
     OverlaySlideName mCurrentSlideName; // offset 0x28, size 0x4
     OverlaySlideName mPendingSlideName; // offset 0x2C, size 0x4
-    u16 mScoresBuffer[32]; // offset 0x30, size 0x40
-    u16 mWinnerBuffer[32]; // offset 0x70, size 0x40
+    u16 mScoresBuffer[32];              // offset 0x30, size 0x40
+    u16 mWinnerBuffer[32];              // offset 0x70, size 0x40
 };
 
 /*
