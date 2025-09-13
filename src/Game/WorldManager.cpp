@@ -35,7 +35,7 @@ void WorldManager::UpdateWorld(float dt)
     World::m_uCurrentFrameCount += 1;
     if (0.f != dt)
     {
-        temp_r3 = nlTaskManager::m_pInstance->m_unk_0x08;
+        temp_r3 = nlTaskManager::m_pInstance->m_CurrState;
         if ((temp_r3 != 0x10U) && ((u32)(temp_r3 + 0xFFFE0000) != 0U))
         {
             s_World->Update(dt);

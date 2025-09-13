@@ -166,7 +166,7 @@ void InGameTextOverlay::Update(float fDeltaT)
         this->mCurrentSlideName = this->mPendingSlideName;
         this->m_pFEScene->m_package->GetPresentation()->SetActiveSlide(IGTTable[this->mCurrentSlideName].mSlideName);
         this->mVisibilityMask = IGTTable[this->mCurrentSlideName].mTaskVisibility;
-        if (this->mVisibilityMask & nlTaskManager::m_pInstance->m_unk_0x08)
+        if (this->mVisibilityMask & nlTaskManager::m_pInstance->m_CurrState)
         {
             if (mWasLastVisible)
             {

@@ -43,17 +43,17 @@ void nlTaskManager::RunAllTasks()
     currentTask = nlDLRingGetStart<nlTask>(m_pInstance->m_taskRingHead);
     if (currentTask != NULL)
     {
-        if ((u32)m_pInstance->m_unk_0x08 != (u32)m_pInstance->m_nextState)
+        if ((u32)m_pInstance->m_CurrState != (u32)m_pInstance->m_nextState)
         {
         loop_2:
-            currentTask->StateTransition(m_pInstance->m_unk_0x08, m_pInstance->m_nextState);
+            currentTask->StateTransition(m_pInstance->m_CurrState, m_pInstance->m_nextState);
             if (nlDLRingIsEnd<nlTask>(m_pInstance->m_taskRingHead, currentTask) == 0)
             {
                 currentTask = currentTask->m_next;
                 goto loop_2;
             }
-            m_pInstance->m_taskCount = (u32)m_pInstance->m_unk_0x08;
-            m_pInstance->m_unk_0x08 = (u32)m_pInstance->m_nextState;
+            m_pInstance->m_taskCount = (u32)m_pInstance->m_CurrState;
+            m_pInstance->m_CurrState = (u32)m_pInstance->m_nextState;
         }
 
         taskIterator = nlDLRingGetStart<nlTask>(m_pInstance->m_taskRingHead);
@@ -61,7 +61,7 @@ void nlTaskManager::RunAllTasks()
         currentTicker = nlGetTicker();
         tickerDifference = nlGetTickerDifference(taskIterator->m_unk_0x14, currentTicker);
         taskIterator->m_unk_0x14 = currentTicker;
-        if (taskIterator->m_unk_0x10 & m_pInstance->m_unk_0x08)
+        if (taskIterator->m_unk_0x10 & m_pInstance->m_CurrState)
         {
             clampedDeltaTime = tickerDifference / 1000.f;
             if (clampedDeltaTime < g_fTaskTimeLowerBound)
@@ -130,7 +130,7 @@ void nlTaskManager::Startup(unsigned int arg0)
     pData = (pData) ? pData : pData; // just to produce "cmplwi r3, 0x0"
     m_pInstance = (nlTaskManager*)pData;
     m_pInstance->m_taskCount = arg0;
-    m_pInstance->m_unk_0x08 = arg0; // m_previousState ?
+    m_pInstance->m_CurrState = arg0; // m_previousState ?
     m_pInstance->m_nextState = arg0;
     m_pInstance->m_taskRingHead = nullptr; // Initialize task ring head to null
     m_pInstance->m_timeDilation = 1.0f;

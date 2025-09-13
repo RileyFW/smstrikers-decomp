@@ -37,7 +37,7 @@ public:
 
     /* 0x00 */ float m_timeDilation;
     /* 0x04 */ nlTask* m_taskRingHead;  // Head of the task DLRing
-    /* 0x08 */ u32 m_unk_0x08; 
+    /* 0x08 */ u32 m_CurrState; 
     /* 0x0C */ u32 m_nextState;     
     /* 0x10 */ u32 m_taskCount;     
     /* 0x14 */ float m_unk_0x14; 

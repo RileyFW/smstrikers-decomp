@@ -7,7 +7,7 @@
  */
 void WorldUpdateTask::Run(float dt)
 {
-    if (nlTaskManager::m_pInstance->m_unk_0x08 == 1 && FrontEnd::m_feStateCurrent != 0)
+    if (nlTaskManager::m_pInstance->m_CurrState == 1 && FrontEnd::m_feStateCurrent != 0)
     {
         WorldManager::UpdateWorld(0.f);
         return;

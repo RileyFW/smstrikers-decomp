@@ -32,7 +32,7 @@ void ClockManager::Update(float arg8)
 
     loop_2:
         temp_r30 = var_r31->m_next;
-        if (((s32)var_r31->m_unk_0x18 == 3) || !(var_r31->m_unk_0x14 & nlTaskManager::m_pInstance->m_unk_0x08))
+        if (((s32)var_r31->m_unk_0x18 == 3) || !(var_r31->m_unk_0x14 & nlTaskManager::m_pInstance->m_CurrState))
         {
             if (var_r31 != m_activeList)
             {

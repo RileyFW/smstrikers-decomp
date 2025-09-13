@@ -43,7 +43,7 @@ void STSX2Overlay::SceneCreated()
  */
 void STSX2Overlay::Update(float fDeltaT)
 {
-    if (this->mVisibilityMask & nlTaskManager::m_pInstance->m_unk_0x08)
+    if (this->mVisibilityMask & nlTaskManager::m_pInstance->m_CurrState)
     {
         if (!m_bVisible)
         {

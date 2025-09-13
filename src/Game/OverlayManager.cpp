@@ -71,7 +71,7 @@ void OverlayManager::Update(float fDeltaT)
     {
         this->mIGMessengerManager->Update(fDeltaT);
     }
-    if (this->mHUDDelay > 0.0f && nlTaskManager::m_pInstance->m_unk_0x08 == 2)
+    if (this->mHUDDelay > 0.0f && nlTaskManager::m_pInstance->m_CurrState == 2)
     {
         this->mHUDDelay -= fDeltaT;
         if (this->mHUDDelay <= 0.0f)
