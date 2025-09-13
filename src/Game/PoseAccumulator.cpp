@@ -125,10 +125,10 @@ void cPoseAccumulator::Pose(const cPoseNode& node, const nlMatrix4& mat)
     for (i = 0; i < m_hierarchy->m_nodeCount; i++)
     {
         RotAccum& r = m_rot[i];
-        r.q.x = 0.0f;
-        r.q.y = 0.0f;
-        r.q.z = 0.0f;
-        r.q.w = 1.0f;
+        r.q.f.x = 0.0f;
+        r.q.f.y = 0.0f;
+        r.q.f.z = 0.0f;
+        r.q.f.w = 1.0f;
         r.weight = 0.0f;
         r.angleZ = 0;
         r.weightZ = 0.0f;
@@ -171,10 +171,10 @@ void cPoseAccumulator::InitAccumulators()
     {
         // --- rotation accum (stride 0x20) ---
         RotAccum& r = m_rot[i];
-        r.q.x = 0.0f;
-        r.q.y = 0.0f;
-        r.q.z = 0.0f;
-        r.q.w = 1.0f;
+        r.q.f.x = 0.0f;
+        r.q.f.y = 0.0f;
+        r.q.f.z = 0.0f;
+        r.q.f.w = 1.0f;
         r.weight = 0.0f;
         r.angleZ = 0;
         r.weightZ = 0.0f;
@@ -247,10 +247,10 @@ void cPoseAccumulator::BuildNodeMatrices(const nlMatrix4& world)
                     nlSinCos(&s, &c, r->angleZ);
 
                     nlQuaternion qz;
-                    qz.x = 0.0f;
-                    qz.y = 0.0f;
-                    qz.z = s;
-                    qz.w = c;
+                    qz.f.x = 0.0f;
+                    qz.f.y = 0.0f;
+                    qz.f.z = s;
+                    qz.f.w = c;
 
                     float t = r->weightZ / (r->weight + r->weightZ);
                     nlQuatNLerp(r->q, r->q, qz, t);
@@ -346,26 +346,26 @@ void cPoseAccumulator::BlendRot(int idx, const nlQuaternion* q, float w, bool fl
         if (idx == h->m_maxNode || idx == h->m_minNode)
         {
             // store: (-x, -w, y, z)
-            qtemp.x = -q->x;
-            qtemp.y = q->y;
-            qtemp.z = q->z;
-            qtemp.w = -q->w;
+            qtemp.f.x = -q->f.x;
+            qtemp.f.y = q->f.y;
+            qtemp.f.z = q->f.z;
+            qtemp.f.w = -q->f.w;
         }
         else if (idx < h->m_minNode)
         {
             // store: (-x, y, -z, w)
-            qtemp.x = -q->x;
-            qtemp.y = q->y;
-            qtemp.z = -q->z;
-            qtemp.w = q->w;
+            qtemp.f.x = -q->f.x;
+            qtemp.f.y = q->f.y;
+            qtemp.f.z = -q->f.z;
+            qtemp.f.w = q->f.w;
         }
         else
         {
             // store: (-x, -y, z, w)
-            qtemp.x = -q->x;
-            qtemp.y = -q->y;
-            qtemp.z = q->z;
-            qtemp.w = q->w;
+            qtemp.f.x = -q->f.x;
+            qtemp.f.y = -q->f.y;
+            qtemp.f.z = q->f.z;
+            qtemp.f.w = q->f.w;
         }
 
         q = &qtemp;
