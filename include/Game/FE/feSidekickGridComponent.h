@@ -1,5 +1,6 @@
 #ifndef _FESIDEKICKGRIDCOMPONENT_H_
 #define _FESIDEKICKGRIDCOMPONENT_H_
+#include "Game/FE/feInput.h"
 
 class TLComponentInstance;
 class TLInstance;
@@ -9,11 +10,6 @@ class InlineHasher;
 enum eSidekickID
 {
     SIDEKICK_ID_0 = 0,
-};
-
-enum eFEINPUT_PAD
-{
-    FEINPUT_PAD_0 = 0,
 };
 
 class ISidekickGridComponent

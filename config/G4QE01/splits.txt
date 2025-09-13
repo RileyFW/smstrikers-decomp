@@ -968,7 +968,7 @@ Game/SH/SHChooseSides.cpp:
 	.sdata      start:0x803717E0 end:0x80371840
 	.sdata2     start:0x80375C18 end:0x80375C20
 
-OverlayManager.o:
+Game/OverlayManager.cpp:
 	.text       start:0x800C7E2C end:0x800C89D4
 	.text       start:0x800C89D4 end:0x800C89D4
 	.text       start:0x800C89D4 end:0x800C89D4
@@ -1226,7 +1226,7 @@ Game/SH/SHSuperTeam.cpp:
 	.sdata      start:0x80371DB0 end:0x80371DC0
 	.sdata2     start:0x80375D38 end:0x80375D40
 
-OverlayHandlerHUD.o:
+Game/OverlayHandlerHUD.cpp:
 	.text       start:0x800F62E0 end:0x800F9A4C
 	.text       start:0x800F9A4C end:0x800F9A4C
 	.text       start:0x800F9A4C end:0x800F9A4C
@@ -1245,7 +1245,7 @@ OverlayHandlerHUD.o:
 	.sdata      start:0x80371DC0 end:0x80371E58
 	.sdata2     start:0x80375D40 end:0x80375D70
 
-OverlayHandlerInGameText.o:
+Game/OverlayHandlerInGameText.cpp:
 	.text       start:0x800FB0AC end:0x800FC098
 	.text       start:0x800FC098 end:0x800FC098
 	.text       start:0x800FC098 end:0x800FC108
@@ -1293,7 +1293,7 @@ Game/FE/feInGameMessengerManager.cpp:
 	.data       start:0x802AD8C0 end:0x802AD8D0
 	.sdata2     start:0x80375D78 end:0x80375D80
 
-OverlayHandlerGoal.o:
+Game/OverlayHandlerGoal.cpp:
 	.text       start:0x80100070 end:0x801032C0
 	.text       start:0x801032C0 end:0x801032C0
 	.text       start:0x801032C0 end:0x80103560
@@ -1311,7 +1311,7 @@ OverlayHandlerGoal.o:
 	.sdata2     start:0x80375D80 end:0x80375D98
 	.sbss2      start:0x80377F40 end:0x80377F48
 
-OverlayHandlerDemo.o:
+Game/OverlayHandlerDemo.cpp:
 	.text       start:0x80105558 end:0x8010566C
 	.text       start:0x8010566C end:0x8010566C
 	.text       start:0x8010566C end:0x8010566C
@@ -1331,7 +1331,7 @@ OverlayHandlerWinner.o:
 	.sdata      start:0x80371F98 end:0x80371FD0
 	.sdata2     start:0x80375D98 end:0x80375DA8
 
-OverlayHandlerSTSX2.o:
+Game/OverlayHandlerSTSX2.cpp:
 	.text       start:0x80106DDC end:0x80107104
 	.text       start:0x80107104 end:0x80107104
 	.text       start:0x80107104 end:0x80107104

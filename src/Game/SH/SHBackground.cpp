@@ -24,7 +24,7 @@ void BackgroundScene::SceneCreated()
 {
     if (m_unk_0x1C != 3)
     {
-        TLSlide* slide = m_presentation->m_currentSlide;
+        TLSlide* slide = m_pFEPresentation->m_currentSlide;
         switch (m_unk_0x1C)
         {
         case 1:
@@ -61,7 +61,7 @@ void BackgroundScene::Update(float dt)
 {
     if ((m_unk_0x20 != m_unk_0x1C) && (m_unk_0x1C != 3))
     {
-        TLSlide* slide = m_presentation->m_currentSlide;
+        TLSlide* slide = m_pFEPresentation->m_currentSlide;
         switch (m_unk_0x1C)
         {
         case 1:

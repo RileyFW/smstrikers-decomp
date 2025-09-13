@@ -1,14 +1,10 @@
 #ifndef _FECAPTAINGRIDCOMPONENT_H_
 #define _FECAPTAINGRIDCOMPONENT_H_
+#include "Game/FE/feInput.h"
 
 enum eTeamID
 {
     TEAM_ID_0 = 0,
-};
-
-enum eFEINPUT_PAD
-{
-    FEINPUT_PAD_0 = 0,
 };
 
 class TLComponentInstance;

@@ -6,24 +6,19 @@
 #include "Game/FE/FEPresentation.h"
 #include "Game/FE/FEScene.h"
 
-typedef struct BaseScreenHandler
+// Todo Figure this out? IDK Man.
+class BaseScreenHandler
 {
-    // /* 0x00 */ char pad0[4];
-    /* 0x00 */ FEScene* scene;
-    /* 0x04 */ BaseScreenHandler* m_next; /* inferred */
-    /* 0x08 */ BaseScreenHandler* m_prev; /* inferred */
-    /* 0x0C */ char padC[4];
-    /* 0x10 */ FEScene* m_scene; /* inferred */
-} BaseScreenHandler;
-
-class SomeClass // TODO: needs to be removed and references replaced with the thing it should be
-{
+    // total size: 0x14
 public:
-    SomeClass();
-    virtual ~SomeClass();
-    virtual void fnc1();
-    virtual void fnc2();
-    virtual void fnc3();
+    virtual ~BaseScreenHandler() = 0;
+    virtual u32 fnc1() = 0;          // offset 0x0, size 0x4
+    virtual void fnc2() = 0;         // offset 0x0, size 0x4
+    virtual void fnc3() = 0;         // offset 0x0, size 0x4
+    class BaseScreenHandler* m_next; // offset 0x4, size 0x4
+    class BaseScreenHandler* m_prev; // offset 0x8, size 0x4
+    class TLInstance* m_pTLInstance; // offset 0xC, size 0x4
+    class FEScene* m_pFEScene;       // offset 0x10, size 0x4
 };
 
 class BaseSceneHandler
@@ -31,28 +26,28 @@ class BaseSceneHandler
 public:
     BaseSceneHandler()
     {
-        m_visible = true;
-        m_screenHandler = NULL;
-        m_unk_0x10 = NULL;
-        m_presentation = NULL;
-        m_unk_0x18 = NULL;
+        m_bVisible = true;
+        m_pScreenHandlerList = NULL;
+        m_pActiveScreenHandler = NULL;
+        m_pFEPresentation = NULL;
+        m_pFEScene = NULL;
     };
     virtual ~BaseSceneHandler() { };
     virtual void Update(float);
     virtual void InitializeSubHandlers() { };
     virtual void AddScreenHandler(BaseScreenHandler*);
     virtual void RemoveScreenHandler(BaseScreenHandler*);
-    virtual void SetPresentation(FEPresentation* presentation) { m_presentation = presentation; };
+    virtual void SetPresentation(FEPresentation* presentation) { m_pFEPresentation = presentation; };
     virtual void OnActivate();
     virtual void SceneCreated();
-    virtual void SetVisible(bool visible) { m_visible = visible; };
+    virtual void SetVisible(bool visible) { m_bVisible = visible; };
 
-    /* 0x04 */ char pad04[0x4];
-    /* 0x08 */ bool m_visible;
-    /* 0x0C */ BaseScreenHandler* m_screenHandler;
-    /* 0x10 */ SomeClass* m_unk_0x10; // TODO: not sure what this is yet
-    /* 0x14 */ FEPresentation* m_presentation;
-    /* 0x18 */ FEScene* m_unk_0x18;
+    unsigned long m_uHashID;                         // offset 0x4, size 0x4
+    bool m_bVisible;                                 // offset 0x8, size 0x1
+    class BaseScreenHandler* m_pScreenHandlerList;   // offset 0xC, size 0x4
+    class BaseScreenHandler* m_pActiveScreenHandler; // offset 0x10, size 0x4
+    class FEPresentation* m_pFEPresentation;         // offset 0x14, size 0x4
+    class FEScene* m_pFEScene;                       // offset 0x18, size 0x4
     // /* 0x1C */ s32 m_unk_0x1C;
 };
 

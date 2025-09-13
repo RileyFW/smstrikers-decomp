@@ -4,6 +4,7 @@
 // void 0x800A1F08..0x800A1F0C | size: 0x4;
 // void 0x802A9938..0x802A99C0 | size: 0x88;
 
+#include "Game/BaseSceneHandler.h"
 class NSNMessengerScene
 {
 public:
@@ -41,10 +42,42 @@ public:
 //     long);
 // };
 
-// class BaseOverlayHandler
-// {
-// public:
-//     ~BaseOverlayHandler();
-// };
+enum ScreenPosition
+{
+    POSITION_INVALID = -1,
+    POSITION_TOP_LEFT = 0,
+    POSITION_TOP_MIDDLE = 1,
+    POSITION_TOP_RIGHT = 2,
+    POSITION_MIDDLE_LEFT = 3,
+    POSITION_MIDDLE_MIDDLE = 4,
+    POSITION_MIDDLE_RIGHT = 5,
+    POSITION_BOTTOM_LEFT = 6,
+    POSITION_BOTTOM_MIDDLE = 7,
+    POSITION_BOTTOM_RIGHT = 8,
+    POSITION_TOP = 9,
+    POSITION_MIDDLE = 10,
+    POSITION_BOTTOM = 11,
+    POSITION_ALL = 12,
+    NUM_POSITIONS = 13,
+};
+
+class BaseOverlayHandler : public BaseSceneHandler
+{
+public:
+    BaseOverlayHandler(u32 VisibilityMask)
+    {
+        mPosition = POSITION_TOP;
+        mVisibilityMask = VisibilityMask;
+        mWasLastVisible = false;
+    }
+    virtual ~BaseOverlayHandler();
+    ScreenPosition mPosition; // offset 0x1C, size 0x4
+    u32 mVisibilityMask;      // offset 0x20, size 0x4
+    bool mWasLastVisible;     // offset 0x24, size 0x1
+};
+
+BaseOverlayHandler::~BaseOverlayHandler()
+{
+}
 
 #endif // _FENSNMESSENGER_H_

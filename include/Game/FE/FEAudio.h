@@ -12,7 +12,7 @@
 class FEAudio
 {
 public:
-    void EnableSounds(bool);
+    static void EnableSounds(bool);
     void ResetRandomVoiceToggleSFX();
     void PlayRandomVoiceToggleSFX();
     void PlayAnimAudioEvent(unsigned long, bool);

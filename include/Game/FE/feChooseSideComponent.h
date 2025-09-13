@@ -1,10 +1,6 @@
 #ifndef _FECHOOSESIDECOMPONENT_H_
 #define _FECHOOSESIDECOMPONENT_H_
-
-enum eFEINPUT_PAD
-{
-    FEINPUT_PAD_0 = 0,
-};
+#include "Game/FE/feInput.h"
 
 class IChooseSide
 {

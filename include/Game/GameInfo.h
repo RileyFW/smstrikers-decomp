@@ -84,9 +84,13 @@ enum eTeamID
 
 enum eSidekickID
 {
-    eSidekickID_None = 0,
-    eSidekickID_Sidekick1 = 1,
-    eSidekickID_Sidekick2 = 2,
+    SK_MYSTERY = -2,
+    SK_INVALID = -1,
+    SK_TOAD = 0,
+    SK_KOOPA = 1,
+    SK_HAMMERBROS = 2,
+    SK_BIRDO = 3,
+    NUM_SIDEKICKS = 4,
 };
 
 enum eStadiumID

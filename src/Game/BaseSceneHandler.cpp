@@ -5,7 +5,7 @@
  */
 void BaseSceneHandler::Update(float dt)
 {
-    m_unk_0x18->Update(dt);
+    m_pFEScene->Update(dt);
 }
 
 /**
@@ -13,8 +13,8 @@ void BaseSceneHandler::Update(float dt)
  */
 void BaseSceneHandler::AddScreenHandler(BaseScreenHandler* handler)
 {
-    handler->m_scene = (FEScene*)m_unk_0x18;
-    nlDLRingAddEnd<BaseScreenHandler>(&m_screenHandler, handler);
+    handler->m_pFEScene = m_pFEScene;
+    nlDLRingAddEnd<BaseScreenHandler>(&m_pScreenHandlerList, handler);
 }
 
 /**
@@ -29,8 +29,8 @@ void BaseSceneHandler::RemoveScreenHandler(BaseScreenHandler*)
  */
 void BaseSceneHandler::OnActivate()
 {
-    if (m_unk_0x10 != nullptr)
+    if (m_pActiveScreenHandler != nullptr)
     {
-        m_unk_0x10->fnc3(); // TODO: not sure what this is yet
+        m_pActiveScreenHandler->fnc3();
     }
 }

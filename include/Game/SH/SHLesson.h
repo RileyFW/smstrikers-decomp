@@ -1,14 +1,21 @@
 #ifndef _SHLESSON_H_
 #define _SHLESSON_H_
 
-class LessonScene
+#include "Game/BaseSceneHandler.h"
+#include "Game/FE/feButtonComponent.h"
+#include "types.h"
+class LessonScene : public BaseSceneHandler
 {
 public:
     LessonScene();
     ~LessonScene();
-    void SceneCreated();
-    void Update(float);
-    void SetLesson(int);
+    virtual void SceneCreated();
+    virtual void Update(float);
+    static void SetLesson(int);
+    static int mLessonIndex;
+    bool mHUDWasVisible;
+    class BaseSceneHandler* mHudScene;
+    class ButtonComponent mButtons;
 };
 
 // class FEFinder<TLComponentInstance, 4>

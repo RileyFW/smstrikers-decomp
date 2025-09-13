@@ -1,16 +1,12 @@
 #ifndef _FECAPTAINCOMPONENT_H_
 #define _FECAPTAINCOMPONENT_H_
+#include "Game/FE/feInput.h"
 
 class TLComponentInstance;
 class TLInstance;
 class TLSlide;
 class InlineHasher;
 class FEPresentation;
-
-enum eFEINPUT_PAD
-{
-    FEINPUT_PAD_0 = 0,
-};
 
 enum eSidekickID
 {

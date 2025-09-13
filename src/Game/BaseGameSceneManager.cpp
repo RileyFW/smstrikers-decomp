@@ -161,7 +161,7 @@ BaseGameSceneManager::BaseGameSceneManager()
     m_count = 0;
     for (int i = 0; i < MAX_SCENE_COUNT; ++i)
     {
-        m_types[i] = SceneList_None;
+        m_types[i] = SCENE_INVALID;
         m_handlers[i] = 0;
     }
 }
@@ -185,13 +185,13 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList sceneType, ScreenMovement
     // Call virtual method if requested
     if (shouldCallVirtual)
     {
-        this->Push(SceneList_0, ScreenMovement_0, false);
+        this->Push(SCENE_FRIENDLY_BACKGROUND, SCREEN_NOTHING, false);
     }
 
-    // Special case: SceneList_30 (0x1E) becomes SceneList_1
-    if (sceneType == SceneList_30)
+    // Special case: SCENE_MAIN_BACKGROUND (0x1E) becomes SCENE_MARIO_BACKGROUND
+    if (sceneType == SCENE_MAIN_BACKGROUND)
     {
-        sceneType = SceneList_1;
+        sceneType = SCENE_MARIO_BACKGROUND;
     }
 
     // Get global config and find TVP setting
@@ -217,10 +217,10 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList sceneType, ScreenMovement
         // LexicalCast<b,PCc>
     }
 
-    // Special handling for SceneList_3
-    if (sceneType == SceneList_3)
+    // Special handling for SCENE_MAIN_MENU
+    if (sceneType == SCENE_MAIN_MENU)
     {
-        this->Push(SceneList_1, ScreenMovement_0, false);
+        this->Push(SCENE_MARIO_BACKGROUND, SCREEN_NOTHING, false);
     }
 
     // // Get scene entry from table
@@ -249,8 +249,8 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList sceneType, ScreenMovement
     //     // LexicalCast<b,PCc>
     // }
 
-    // // Special handling for SceneList_2 based on build flags
-    // if (sceneType == SceneList_2)
+    // // Special handling for SCENE_TITLE based on build flags
+    // if (sceneType == SCENE_TITLE)
     // {
     //     if (g_e3_Build || g_Europe)
     //     {
@@ -262,8 +262,8 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList sceneType, ScreenMovement
     //     }
     // }
 
-    // // Special handling for SceneList_8 based on build flags
-    // if (sceneType == SceneList_8 && g_e3_Build)
+    // // Special handling for SCENE_CHOOSE_CAPTAINS based on build flags
+    // if (sceneType == SCENE_CHOOSE_CAPTAINS && g_e3_Build)
     // {
     //     sceneName = "art/fe/choose_captains_vLeeptsig.fen";
     // }
@@ -273,89 +273,89 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList sceneType, ScreenMovement
 
     // switch (sceneType)
     // {
-    // case SceneList_0:
-    // case SceneList_1:
+    // case SCENE_FRIENDLY_BACKGROUND:
+    // case SCENE_MARIO_BACKGROUND:
     //     scene = new BackgroundScene();
     //     break;
 
-    // case SceneList_2:
+    // case SCENE_TITLE:
     //     scene = new TitleScene();
     //     break;
 
-    // case SceneList_3:
+    // case SCENE_MAIN_MENU:
     //     scene = new SHMainMenu();
     //     break;
 
-    // case SceneList_4:
-    // case SceneList_5:
-    // case SceneList_6:
-    // case SceneList_7:
-    //     scene = new SHChooseSides2(static_cast<SHChooseSides2::eCSContext>(sceneType - SceneList_4));
+    // case SCENE_CHOOSE_SIDES_FRIENDLY:
+    // case SCENE_CHOOSE_SIDES_CUP:
+    // case SCENE_CHOOSE_SIDES_SUPER_CUP:
+    // case SCENE_CHOOSE_SIDES_TOURNAMENT:
+    //     scene = new SHChooseSides2(static_cast<SHChooseSides2::eCSContext>(sceneType - SCENE_CHOOSE_SIDES_FRIENDLY));
     //     break;
 
-    // case SceneList_8:
+    // case SCENE_CHOOSE_CAPTAINS:
     //     scene = new ChooseCaptainsSceneV2(ChooseCaptainsSceneV2::SceneType_0);
     //     break;
 
-    // case SceneList_9:
+    // case SCENE_STADIUM_SELECT:
     //     scene = new StadiumSelectSceneV2();
     //     break;
 
-    // case SceneList_10:
+    // case SCENE_CUP_CHEATER:
     //     scene = new CupCheaterScene();
     //     break;
 
-    // case SceneList_11:
-    // case SceneList_12:
+    // case SCENE_CUP_BACKGROUND:
+    // case SCENE_SUPER_CUP_BACKGROUND:
     //     scene = new BackgroundScene();
     //     break;
 
-    // case SceneList_13:
-    // case SceneList_14:
-    //     scene = new ChooseCupSceneV2(sceneType == SceneList_14);
+    // case SCENE_CUP_CHOOSE_CUP:
+    // case SCENE_SUPER_CUP_CHOOSE_CUP:
+    //     scene = new ChooseCupSceneV2(sceneType == SCENE_SUPER_CUP_CHOOSE_CUP);
     //     break;
 
-    // case SceneList_15:
-    // case SceneList_16:
-    //     scene = new CupChooseCaptainSceneV2(sceneType == SceneList_16);
+    // case SCENE_CUP_CHOOSE_CAPTAIN:
+    // case SCENE_SUPER_CUP_CHOOSE_CAPTAIN:
+    //     scene = new CupChooseCaptainSceneV2(sceneType == SCENE_SUPER_CUP_CHOOSE_CAPTAIN);
     //     break;
 
-    // case SceneList_17:
-    // case SceneList_18:
-    // case SceneList_19:
-    // case SceneList_20:
-    // case SceneList_21:
-    // case SceneList_22:
-    // case SceneList_23:
-    // case SceneList_24:
-    //     scene = new CupHubScene(sceneType >= SceneList_19, sceneType >= SceneList_21);
+    // case SCENE_CUP_STANDINGS:
+    // case SCENE_CUP_STANDINGS_ANIM:
+    // case SCENE_CUP_STANDINGS_FINAL_ANIM:
+    // case SCENE_SUPER_CUP_STANDINGS:
+    // case SCENE_SUPER_CUP_STANDINGS_ANIM:
+    // case SCENE_SUPER_CUP_STANDINGS_FINAL_ANIM:
+    // case SCENE_TOURNAMENT_STANDINGS :
+    // case SCENE_TOURNAMENT_STANDINGS_ANIM:
+    //     scene = new CupHubScene(sceneType >= SCENE_CUP_STANDINGS_FINAL_ANIM, sceneType >= SCENE_SUPER_CUP_STANDINGS_ANIM);
     //     break;
 
-    // case SceneList_25:
+    // case SCENE_TOURNAMENT_STANDINGS_FINAL_ANIM:
     //     scene = new SuperTeamScene();
     //     break;
 
-    // case SceneList_26:
+    // case SCENE_CUP_SUPER_TEAM:
     //     scene = new FEPopupMenu();
     //     break;
 
-    // case SceneList_27:
+    // case SCENE_POPUP_MENU:
     //     scene = new SpoilsScene();
     //     break;
 
-    // case SceneList_28:
+    // case SCENE_TROPHY_ROOM:
     //     scene = new ScrollingTickerScene();
     //     break;
 
-    // case SceneList_29:
+    // case SCENE_SCROLLING_TICKER:
     //     scene = new BackgroundScene();
     //     break;
 
-    // case SceneList_30:
+    // case SCENE_MAIN_BACKGROUND:
     //     scene = new SaveLoadScene(SaveLoadScene::eSaveLoadMode_0);
     //     break;
 
-    // case SceneList_31:
+    // case SCENE_SAVE:
     //     scene = new SaveLoadScene(SaveLoadScene::eSaveLoadMode_3);
     //     break;
 
@@ -388,15 +388,15 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList sceneType, ScreenMovement
     //     break;
 
     // case SceneList_39:
-    //     scene = new CupOptionsScene(SceneList_15, SceneList_13);
+    //     scene = new CupOptionsScene(SCENE_CUP_CHOOSE_CAPTAIN, SCENE_CUP_CHOOSE_CUP);
     //     break;
 
     // case SceneList_40:
-    //     scene = new CupOptionsScene(SceneList_16, SceneList_14);
+    //     scene = new CupOptionsScene(SCENE_SUPER_CUP_CHOOSE_CAPTAIN, SCENE_SUPER_CUP_CHOOSE_CUP);
     //     break;
 
     // case SceneList_41:
-    //     scene = new CupOptionsScene(SceneList_25, SceneList_24);
+    //     scene = new CupOptionsScene(SCENE_TOURNAMENT_STANDINGS_FINAL_ANIM, SCENE_TOURNAMENT_STANDINGS_ANIM);
     //     break;
 
     // case SceneList_42:
@@ -565,11 +565,11 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList sceneType, ScreenMovement
     // m_count++;
 
     // // Play audio based on movement type
-    // if (movement == ScreenMovement_1)
+    // if (movement == SCREEN_FORWARD)
     // {
     //     FEAudio::PlayAnimAudioEvent("sfx_screen_forward", false);
     // }
-    // else if (movement == ScreenMovement_2)
+    // else if (movement == SCREEN_BACK)
     // {
     //     FEAudio::PlayAnimAudioEvent("sfx_screen_back", false);
     // }
@@ -668,6 +668,6 @@ void BaseGameSceneManager::PushLoadingScene(bool clearStack)
         this->Pop();
     }
 
-    BackgroundScene* handler = (BackgroundScene*)Push((SceneList)0x2B, ScreenMovement_1, false);
+    BackgroundScene* handler = (BackgroundScene*)Push((SceneList)0x2B, SCREEN_FORWARD, false);
     handler->m_unk_0x1C = 0; // ??
 }

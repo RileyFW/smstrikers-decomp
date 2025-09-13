@@ -61,7 +61,7 @@ void FEInput::JustReleased(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*)
 /**
  * Offset/Address/Size: 0x7AC | 0x8020F1B8 | size: 0xD0
  */
-void FEInput::JustPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*)
+bool FEInput::JustPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*)
 {
 }
 
