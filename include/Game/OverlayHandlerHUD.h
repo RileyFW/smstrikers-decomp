@@ -25,37 +25,37 @@ public:
     void ResetScores();
     void SwapPowerUps(int);
 
-    TLImageInstance* m_pImagePowerUps[2][2][2]; // offset 0x28, size 0x20
-    TLImageInstance* m_pImageFlares[2][2][2]; // offset 0x48, size 0x20
-    TLComponentInstance* m_pComponentFlares[2][2]; // offset 0x68, size 0x10
-    TLComponentInstance* mSuddenDeath[2]; // offset 0x78, size 0x8
-    TLComponentInstance* m_pPowerupTextComponents[2][2][2]; // offset 0x80, size 0x20
-    int mNumFlareCycles[2][2]; // offset 0xA0, size 0x10
-    FETextureResource* m_pStar; // offset 0xB0, size 0x4
-    FETextureResource* m_pShellGreen; // offset 0xB4, size 0x4
-    FETextureResource* m_pShellRed; // offset 0xB8, size 0x4
-    FETextureResource* m_pBanana; // offset 0xBC, size 0x4
-    FETextureResource* m_pMushroom; // offset 0xC0, size 0x4
-    FETextureResource* m_pShellBlue; // offset 0xC4, size 0x4
-    FETextureResource* m_pBobomb; // offset 0xC8, size 0x4
-    FETextureResource* m_pShellSpike; // offset 0xCC, size 0x4
-    FETextureResource* m_pChomp; // offset 0xD0, size 0x4
-    u32 mSeconds; // offset 0xD4, size 0x4
-    u32 mMinutes; // offset 0xD8, size 0x4
-    u32 mTenths; // offset 0xDC, size 0x4
-    TLTextInstance* m_pTextInstanceClock[2]; // offset 0xE0, size 0x8
-    u16 mClockBuffer[32]; // offset 0xE8, size 0x40
-    bool mClockColourChanged; // offset 0x128, size 0x1
-    bool mOvertimeSFXPlayed; // offset 0x129, size 0x1
-    bool mIsHUDSlideIn; // offset 0x12A, size 0x1
-    bool mStartScoreAnimation; // offset 0x12B, size 0x1
-    nlColour mOriginalClockColour; // offset 0x12C, size 0x4
-    int mScore[2]; // offset 0x130, size 0x8
-    int mNewScore[2]; // offset 0x138, size 0x8
-    u16 mScoreBuffer[2][32]; // offset 0x140, size 0x80
-    TLTextInstance* m_pTextInstanceScore[2][2]; // offset 0x1C0, size 0x10
-    AsyncImage* mAsyncImage[2]; // offset 0x1D0, size 0x8
-    float mScoreUpdateDelay[2]; // offset 0x1D8, size 0x8
+    /*0x28*/ TLImageInstance* m_pImagePowerUps[2][2][2];
+    /*0x48*/ TLImageInstance* m_pImageFlares[2][2][2];
+    /*0x68*/ TLComponentInstance* m_pComponentFlares[2][2];
+    /*0x78*/ TLComponentInstance* mSuddenDeath[2];
+    /*0x80*/ TLComponentInstance* m_pPowerupTextComponents[2][2][2];
+    /*0xA0*/ int mNumFlareCycles[2][2];
+    /*0xB0*/ FETextureResource* m_pStar;
+    /*0xB4*/ FETextureResource* m_pShellGreen;
+    /*0xB8*/ FETextureResource* m_pShellRed;
+    /*0xBC*/ FETextureResource* m_pBanana;
+    /*0xC0*/ FETextureResource* m_pMushroom;
+    /*0xC4*/ FETextureResource* m_pShellBlue;
+    /*0xC8*/ FETextureResource* m_pBobomb;
+    /*0xCC*/ FETextureResource* m_pShellSpike;
+    /*0xD0*/ FETextureResource* m_pChomp;
+    /*0xD4*/ u32 mSeconds;
+    /*0xD8*/ u32 mMinutes;
+    /*0xDC*/ u32 mTenths;
+    /*0xE0*/ TLTextInstance* m_pTextInstanceClock[2];
+    /*0xE8*/ u16 mClockBuffer[32];
+    /*0x128*/ bool mClockColourChanged;
+    /*0x129*/ bool mOvertimeSFXPlayed;
+    /*0x12A*/ bool mIsHUDSlideIn;
+    /*0x12B*/ bool mStartScoreAnimation;
+    /*0x12C*/ nlColour mOriginalClockColour;
+    /*0x130*/ int mScore[2];
+    /*0x138*/ int mNewScore[2];
+    /*0x140*/ u16 mScoreBuffer[2][32];
+    /*0x1C0*/ TLTextInstance* m_pTextInstanceScore[2][2];
+    /*0x1D0*/ AsyncImage* mAsyncImage[2];
+    /*0x1D8*/ float mScoreUpdateDelay[2];
 };
 
 
