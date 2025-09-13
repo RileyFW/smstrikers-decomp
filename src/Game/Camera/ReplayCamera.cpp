@@ -1,4 +1,5 @@
 #include "Game/Camera/ReplayCamera.h"
+#include "types.h"
 
 // /**
 //  * Offset/Address/Size: 0x18 | 0x801ACB7C | size: 0x8
@@ -40,6 +41,7 @@
  */
 void ReplayCamera::UpdateTweakMode()
 {
+    // EMPTY
 }
 
 /**
@@ -47,20 +49,33 @@ void ReplayCamera::UpdateTweakMode()
  */
 ReplayCamera::ReplayCamera()
 {
+    mDeltaFov = 0.0f;
+    mFov = 50.0f;
+    mSideOfInterest = 0;
+    mNoDampenForOneUpdate = false;
+    mFrozen = false;
+    mFocus = 1;
+    mCamPos = REPLAY_CAMERA_POSITION_SIDELINE;
+    mViewMatrix.SetIdentity();
+    nlVec3Set(mPosition, 0.0f, 0.0f, 2.0f);
+    nlVec3Set(mLookAt, 0.0f, 0.0f, 1.0f);
 }
 
 // /**
 //  * Offset/Address/Size: 0x1B88 | 0x801AC88C | size: 0x40
 //  */
-// void ReplayCamera::GetViewMatrix() const
-// {
-// }
+const nlMatrix4& ReplayCamera::GetViewMatrix() const
+{
+    glMatrixLookAt(*(nlMatrix4*)&mViewMatrix, mPosition, mLookAt, mUpVector);
+    return mViewMatrix;
+};
 
 /**
  * Offset/Address/Size: 0x1B84 | 0x801AC888 | size: 0x4
  */
 void ReplayCamera::Update(float)
 {
+    // EMPTY
 }
 
 /**
@@ -73,27 +88,38 @@ void ReplayCamera::ManualUpdate(float)
 /**
  * Offset/Address/Size: 0x16E0 | 0x801AC3E4 | size: 0x8
  */
-void ReplayCamera::SetSideOfInterest(int)
+void ReplayCamera::SetSideOfInterest(int sideOfInterest)
 {
+    mSideOfInterest = sideOfInterest;
 }
 
 /**
  * Offset/Address/Size: 0x1668 | 0x801AC36C | size: 0x78
  */
-void ReplayCamera::CutTo(ReplayCameraPosition)
+void ReplayCamera::CutTo(ReplayCameraPosition camPos)
 {
+    mFrozen = false;
+    mNoDampenForOneUpdate = true;
+    mCamPos = camPos;
+    mPosition = GetPosition(camPos, -1.0f);
+    // nlVec3Set(mPosition, position.f.x, position.f.y, position.f.z);
+    mFov = GetFov(camPos);
 }
 
 /**
  * Offset/Address/Size: 0x11AC | 0x801ABEB0 | size: 0x4BC
  */
-void ReplayCamera::GetFov(ReplayCameraPosition) const
+float ReplayCamera::GetFov(ReplayCameraPosition) const
 {
+    FORCE_DONT_INLINE;
+    return mFov;
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x801AAD04 | size: 0x11AC
  */
-void ReplayCamera::GetPosition(ReplayCameraPosition, float) const
+nlVector3 ReplayCamera::GetPosition(ReplayCameraPosition, float) const
 {
+    FORCE_DONT_INLINE;
+    return mPosition;
 }

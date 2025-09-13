@@ -1,3 +1,5 @@
+#pragma pool_data off
+
 #include "Game/Camera/FollowCam.h"
 #include "Game/Ball.h"
 #include "Game/Team.h"
@@ -26,63 +28,59 @@ inline float nlLerp(float a, float b, float t)
 }
 
 /**
- * Offset/Address/Size: 0x668 | 0x801A9580 | size: 0x90
- */
-cFollowCamera::cFollowCamera(cFollowCamera::FollowTarget followTarget)
-{
-    m_FollowTarget = followTarget;
-    m_bOOISet = false;
-    m_aFacingDirection = 0;
-    m_aPitch = 0x1000;
-    m_fOOIDistance = 5.0f;
-    m_bPitchLimits = true;
-    m_bControlsLocked = false;
-
-    m_matView.SetIdentity();
-}
-
-/**
  * Offset/Address/Size: 0x0 | 0x801A8F18 | size: 0x668
  */
 void cFollowCamera::Update(float dt)
 {
-    cGlobalPad* pad = cPadManager::GetPad(0);
-    if (!pad || !pad->IsConnected())
+    int i;                  // r31
+    cGlobalPad* pad;        // r29
+    cCharacter* pCharacter; // r0
+    int numAvailableObjs;   // r0
+    float xPressure;        // f0
+    float yPressure;        // f0
+    float fScalar;          // f0
+    nlMatrix4 m4Orient;     // r1+0x14
+
+    pad = cPadManager::GetPad(0);
+    if (!pad->IsConnected())
     {
         m_matView.SetIdentity();
         return;
     }
 
-    switch (m_FollowTarget)
+    if (m_FollowTarget == FOLLOW_CHARACTER)
     {
-    case FOLLOW_CHARACTER:
-    {
-        cPlayer* controlled = nullptr;
-        for (int t = 0; t < 2 && !controlled; ++t)
-            controlled = g_pTeams[t]->GetControlledPlayer(pad);
-
-        if (!controlled)
+        pCharacter = NULL;
+        for (i = 0; i < 2; i++)
+        {
+            pCharacter = g_pTeams[i]->GetControlledPlayer(pad);
+            if (pCharacter != NULL)
+            {
+                break;
+            }
+        }
+        if (!pCharacter)
         {
             m_matView.SetIdentity();
             return;
         }
 
-        m_v3OOI = controlled->m_v3Position;
-        break;
+        m_v3OOI = pCharacter->m_v3Position;
     }
-
-    case FOLLOW_BALL:
+    else if (m_FollowTarget == FOLLOW_BALL)
     {
         m_v3OOI = *g_pBall->GetDrawablePosition();
-        break;
     }
-
-    case FOLLOW_SELECTABLE:
+    else if (m_FollowTarget == FOLLOW_ANIM_VIEWER_CHARACTER)
+    {
+        // EMPTY
+    }
+    else if (m_FollowTarget == FOLLOW_SELECTABLE)
     {
         RenderSnapshot* snap = ReplayManager::Instance()->mRender;
         static s32 currentlySelectedTarget = 0;
 
-        const int count = snap->NumDrawableObjects();
+        const int count = ReplayManager::Instance()->mRender->NumDrawableObjects();
 
         if (!g_bTweaking && dt > 0.0f)
         {
@@ -99,35 +97,22 @@ void cFollowCamera::Update(float dt)
         }
 
         m_v3OOI = snap->GetPositionForDrawableObject(currentlySelectedTarget);
-        break;
     }
-
-    case FOLLOW_ANIM_VIEWER_CHARACTER:
-        // The assembly simply falls through without changing m_v3OOI in this mode.
-        // Keep whatever the tool/viewer has set externally.
-        break;
-
-    default:
+    else
+    {
         m_matView.SetIdentity();
         return;
     }
 
-    const float minD = g_fMinDistance;
-    const float maxD = g_fMaxDistance;
-    const float frac = (m_fOOIDistance - minD) / (maxD - minD);
+    const float frac = (m_fOOIDistance - g_fMinDistance) / (g_fMaxDistance - g_fMinDistance);
     const float zOff = nlLerp(g_fFollowCamMinZOffset, g_fFollowCamMaxZOffset, frac);
     m_v3OOI.f.z += zOff;
 
     m_v3OOIDampenedPrev = m_v3OOIDampened;
 
-    const float seekXY = g_fFollowCamOOISeek;
-    const float keepXY = 1.0f - seekXY;
-    m_v3OOIDampened.f.x = seekXY * m_v3OOI.f.x + keepXY * m_v3OOIDampened.f.x;
-    m_v3OOIDampened.f.y = seekXY * m_v3OOI.f.y + keepXY * m_v3OOIDampened.f.y;
-
-    const float seekZ = g_fFollowCamOOIZSeek;
-    const float keepZ = 1.0f - seekZ;
-    m_v3OOIDampened.f.z = seekZ * m_v3OOI.f.z + keepZ * m_v3OOIDampened.f.z;
+    m_v3OOIDampened.f.x = g_fFollowCamOOISeek * m_v3OOI.f.x + (1.0f - g_fFollowCamOOISeek) * m_v3OOIDampened.f.x;
+    m_v3OOIDampened.f.y = g_fFollowCamOOISeek * m_v3OOI.f.y + (1.0f - g_fFollowCamOOISeek) * m_v3OOIDampened.f.y;
+    m_v3OOIDampened.f.z = g_fFollowCamOOIZSeek * m_v3OOI.f.z + (1.0f - g_fFollowCamOOIZSeek) * m_v3OOIDampened.f.z;
 
     const float aL = cPadManager::GetPad(0)->GetPressure(0x400, false);
     const float aR = cPadManager::GetPad(0)->GetPressure(0x800, false);
@@ -143,64 +128,52 @@ void cFollowCamera::Update(float dt)
         m_fOOIDistance -= g_fDistanceSeek * scroll;
     }
 
-    // Clamp distance to [min,max]
-    if (m_fOOIDistance > maxD)
-        m_fOOIDistance = maxD;
-    else if (m_fOOIDistance < minD)
-        m_fOOIDistance = minD;
+    if (m_fOOIDistance > g_fMaxDistance)
+        m_fOOIDistance = g_fMaxDistance;
+    else if (m_fOOIDistance < g_fMinDistance)
+        m_fOOIDistance = g_fMinDistance;
 
+    m_aFacingDirection = m_aFacingDirection + (int)(g_fFollowCamMaxRotPerFrame * pad->AnalogRightX());
+    m_aPitch = m_aPitch + (int)(g_fFollowCamMaxRotPerFrame * pad->AnalogRightY());
+
+    if (m_bPitchLimits)
     {
-        const float yawDeltaUnits = pad->AnalogRightX();
-        const float pitchDeltaUnits = pad->AnalogRightY();
-        m_aFacingDirection = static_cast<u16>(m_aFacingDirection + static_cast<int>(g_fFollowCamMaxRotPerFrame * yawDeltaUnits));
-        m_aPitch = static_cast<u16>(m_aPitch + static_cast<int>(g_fFollowCamMaxRotPerFrame * pitchDeltaUnits));
-
-        if (m_bPitchLimits)
-        {
-            if (m_aPitch > g_aFollowCamMaxPitch)
-                m_aPitch = g_aFollowCamMaxPitch;
-            if (m_aPitch < g_aFollowCamMinPitch)
-                m_aPitch = g_aFollowCamMinPitch;
-        }
+        if (m_aPitch > g_aFollowCamMaxPitch)
+            m_aPitch = g_aFollowCamMaxPitch;
+        if (m_aPitch < g_aFollowCamMinPitch)
+            m_aPitch = g_aFollowCamMinPitch;
     }
 
-    {
-        const float vx = -m_matView.m[0][2];
-        const float vy = -m_matView.m[0][1];
+    const float vx = -m_matView.m[0][2];
+    const float vy = -m_matView.m[0][1];
 
-        const float dx = (m_v3OOIDampened.f.x - m_v3OOIDampenedPrev.f.x);
-        const float dy = (m_v3OOIDampened.f.y - m_v3OOIDampenedPrev.f.y);
+    const float dx = (m_v3OOIDampened.f.x - m_v3OOIDampenedPrev.f.x);
+    const float dy = (m_v3OOIDampened.f.y - m_v3OOIDampenedPrev.f.y);
 
-        const float denom = nlSqrt(1.0f + vx * vx + vy * vy, true);
-        const float t = (1.0f + (vx * dy + vy * dx)) / (denom * denom);
+    const float denom = nlSqrt(1.0f + vx * vx + vy * vy, true);
+    const float t = (1.0f + (vx * dy + vy * dx)) / (denom * denom);
 
-        float rx = dx - t * vx;
-        float ry = dy - t * vy;
-        const float len = nlSqrt(1.0f + rx * rx + ry * ry, true);
+    float rx = dx - t * vx;
+    float ry = dy - t * vy;
+    const float len = nlSqrt(1.0f + rx * rx + ry * ry, true);
 
-        const float invDist = len / m_fOOIDistance;
-        const float angleShortF = 65536.0f * invDist;
-        const u16 angleShort = static_cast<u16>(static_cast<int>(angleShortF));
+    const float invDist = len / m_fOOIDistance;
+    const float angleShortF = 65536.0f * invDist;
+    const u16 angleShort = (u16)(int)angleShortF;
 
-        const float signCheck = (ry * vy - rx * vx);
-        if (signCheck <= 0.0f)
-            m_aFacingDirection = static_cast<u16>(m_aFacingDirection - angleShort);
-        else
-            m_aFacingDirection = static_cast<u16>(m_aFacingDirection + angleShort);
-    }
+    const float signCheck = (ry * vy - rx * vx);
+    if (signCheck >= 0.0f)
+        m_aFacingDirection = m_aFacingDirection - angleShort;
+    else
+        m_aFacingDirection = m_aFacingDirection + angleShort;
 
     nlVec3Set(m_v3CameraPosition, m_fOOIDistance, 0.0f, 0.0f);
 
-    nlMatrix4 rot; // temp
-    {
-        const float kAngle = /* radPerShort */ (2.0f * 3.14159265358979323846f / 65536.0f);
+    nlMakeRotationMatrixY(m4Orient, -m_aPitch * 0.0000958738f);
+    nlMultPosVectorMatrix(m_v3CameraPosition, m_v3CameraPosition, m4Orient);
 
-        nlMakeRotationMatrixY(rot, -static_cast<float>(static_cast<s16>(m_aPitch)) * kAngle);
-        nlMultPosVectorMatrix(m_v3CameraPosition, m_v3CameraPosition, rot);
-
-        nlMakeRotationMatrixZ(rot, static_cast<float>(static_cast<u16>(m_aFacingDirection)) * kAngle);
-        nlMultPosVectorMatrix(m_v3CameraPosition, m_v3CameraPosition, rot);
-    }
+    nlMakeRotationMatrixZ(m4Orient, m_aFacingDirection * 0.0000958738f);
+    nlMultPosVectorMatrix(m_v3CameraPosition, m_v3CameraPosition, m4Orient);
 
     m_v3CameraPosition.f.x += m_v3OOIDampened.f.x;
     m_v3CameraPosition.f.y += m_v3OOIDampened.f.y;

@@ -1,6 +1,7 @@
 #ifndef _REPLAYCAMERA_H_
 #define _REPLAYCAMERA_H_
 
+#include "NL/gl/glMatrix.h"
 #include "Game/Camera/BaseCamera.h"
 
 enum ReplayCameraPosition
@@ -35,7 +36,7 @@ public:
     ReplayCamera();
     /* 0x0C */ virtual eCameraType GetType() { return eCameraType_Replay; };
     /* 0x10 */ virtual void Update(float);
-    /* 0x14 */ virtual const nlMatrix4& GetViewMatrix() const { return mViewMatrix; };
+    /* 0x14 */ virtual const nlMatrix4& GetViewMatrix() const;
     /* 0x18 */ virtual float GetFOV() const { return mFov; };
     /* 0x20 */ virtual const nlVector3& GetTargetPosition() const { return mLookAt; };
     /* 0x24 */ virtual const nlVector3& GetCameraPosition() const { return mPosition; };
@@ -44,19 +45,19 @@ public:
     void ManualUpdate(float);
     void SetSideOfInterest(int);
     void CutTo(ReplayCameraPosition);
-    void GetFov(ReplayCameraPosition) const;
-    void GetPosition(ReplayCameraPosition, float) const;
+    float GetFov(ReplayCameraPosition) const;
+    nlVector3 GetPosition(ReplayCameraPosition, float) const;
 
-    /* 0x1C */ float mDeltaFov;
-    /* 0x20 */ float mFov;
-    /* 0x24 */ int mSideOfInterest;
-    /* 0x28 */ unsigned char mNoDampenForOneUpdate;
-    /* 0x29 */ unsigned char mFrozen;
-    /* 0x2C */ unsigned int mFocus;
-    /* 0x30 */ enum ReplayCameraPosition mCamPos;
-    /* 0x34 */ class nlVector3 mPosition;
-    /* 0x40 */ class nlVector3 mLookAt;
-    /* 0x4C */ class nlMatrix4 mViewMatrix;
+    /* 0x1C */ f32 mDeltaFov;
+    /* 0x20 */ f32 mFov;
+    /* 0x24 */ s32 mSideOfInterest;
+    /* 0x28 */ bool mNoDampenForOneUpdate;
+    /* 0x29 */ bool mFrozen;
+    /* 0x2C */ u32 mFocus;
+    /* 0x30 */ ReplayCameraPosition mCamPos;
+    /* 0x34 */ nlVector3 mPosition;
+    /* 0x40 */ nlVector3 mLookAt;
+    /* 0x4C */ nlMatrix4 mViewMatrix;
 }; // total size: 0x8C
 
 #endif // _REPLAYCAMERA_H_

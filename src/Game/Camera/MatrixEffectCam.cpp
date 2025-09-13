@@ -186,12 +186,10 @@ const nlVector3& MatrixEffectCam::GetTargetPosition() const
         alpha = 1.0f;
     }
 
-    f32 temp_f3 = mBeginTarget.f.z;
-    f32 temp_f4 = mBeginTarget.f.y;
-    f32 temp_f5 = mBeginTarget.f.x;
-    mTargetPosition.f.x = alpha * (mFinalTarget.f.x - temp_f5) + temp_f5;
-    mTargetPosition.f.y = alpha * (mFinalTarget.f.y - temp_f4) + temp_f4;
-    mTargetPosition.f.z = alpha * (mFinalTarget.f.z - temp_f3) + temp_f3;
+    nlVec3Set(mTargetPosition,
+        (alpha * (mFinalTarget.f.x - mBeginTarget.f.x)) + mBeginTarget.f.x,
+        (alpha * (mFinalTarget.f.y - mBeginTarget.f.y)) + mBeginTarget.f.y,
+        (alpha * (mFinalTarget.f.z - mBeginTarget.f.z)) + mBeginTarget.f.z);
 
     return mTargetPosition;
 }
