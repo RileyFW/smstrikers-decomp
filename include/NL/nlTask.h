@@ -22,7 +22,7 @@ public:
     /* 0x0C */ u32 m_unk_0x0C;
     /* 0x10 */ u32 m_unk_0x10;
     /* 0x14 */ u32 m_unk_0x14; // current ticker value
-};
+}; // size 0x18
 
 class nlTaskManager
 {
