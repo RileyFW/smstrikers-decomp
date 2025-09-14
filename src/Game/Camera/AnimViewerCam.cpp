@@ -1,10 +1,13 @@
-#include "AnimViewerCam.h"
+#include "Game/Camera/AnimViewerCam.h"
+#include "Game/Camera/FollowCam.h"
+#include "types.h"
 
 /**
  * Offset/Address/Size: 0x74 | 0x801ACC8C | size: 0x8
  */
-void cAnimViewerCamera::GetType()
+eCameraType cAnimViewerCamera::GetType()
 {
+    return eCameraType_AnimViewer;
 }
 
 /**
@@ -12,18 +15,28 @@ void cAnimViewerCamera::GetType()
  */
 cAnimViewerCamera::~cAnimViewerCamera()
 {
+    m_pCurrentPlayer = nullptr;
 }
 
 /**
  * Offset/Address/Size: 0x44 | 0x801ACBC8 | size: 0x50
  */
 cAnimViewerCamera::cAnimViewerCamera()
+    : cFollowCamera(FOLLOW_ANIM_VIEWER_CHARACTER)
 {
+    m_pCurrentPlayer = nullptr;
+    m_bPitchLimits = false;
+    m_aPitch = false;
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x801ACB84 | size: 0x44
  */
-void cAnimViewerCamera::Update(float)
+void cAnimViewerCamera::Update(float fDeltaT)
 {
+    if (m_pCurrentPlayer)
+    {
+        m_v3OOI = m_pCurrentPlayer->m_v3Position;
+    }
+    cFollowCamera::Update(fDeltaT);
 }

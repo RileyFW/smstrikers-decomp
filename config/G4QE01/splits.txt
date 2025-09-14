@@ -2855,7 +2855,7 @@ Game/Camera/ReplayCamera.cpp:
 	.sdata      start:0x80372A60 end:0x80372A70
 	.sdata2     start:0x80376D70 end:0x80376DD8
 
-AnimViewerCam.o:
+Game/Camera/AnimViewerCam.cpp:
 	.text       start:0x801ACB84 end:0x801ACC18
 	.text       start:0x801ACC18 end:0x801ACC94
 	.text       start:0x801ACC94 end:0x801ACC94
