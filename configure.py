@@ -702,7 +702,7 @@ config.libs = [
             Object(NonMatching, "Game/GameInfo.cpp", extra_cflags=["-inline deferred"]),    
             Object(NonMatching, "Game/GameTweaks.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/CharacterTweaks.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/ScriptTuning.cpp", extra_cflags=["-inline auto,deferred"]),
+            Object(Matching, "Game/ScriptTuning.cpp", extra_cflags=["-inline auto,deferred"]),
 
 
             Object(Matching, "Game/CameraLoader.cpp", extra_cflags=["-inline deferred"]),
