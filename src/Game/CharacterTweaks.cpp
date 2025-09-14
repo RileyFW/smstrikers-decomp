@@ -1,10 +1,13 @@
 #pragma pool_data off
 
 #include "Game/CharacterTweaks.h"
+
+#define NL_LEXICALCAST_DEFINE
 #include "NL/nlLexicalCast_.h"
+
 #include "NL/nlConfig.h"
 
-extern int LexicalCast<int, float>(const float&);
+// extern int LexicalCast<int, float>(const float&);
 // extern int LexicalCast<int, bool>(const bool&);
 // extern int LexicalCast<int, int>(const int&);
 // extern int LexicalCast<int, const char*>(const char* const&);

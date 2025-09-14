@@ -4,148 +4,119 @@
 #include "types.h"
 #include "strtold.h"
 
+// Primary template declaration (not defined/omited yet)
 template <typename To, typename From>
-struct LexicalCastImpl;
+To LexicalCast(const From&);
 
-template <typename To, typename From>
-To LexicalCast(const From& value)
+template <>
+int LexicalCast<int, float>(const float& value);
+template <>
+int LexicalCast<int, int>(const int& value);
+template <>
+int LexicalCast<int, bool>(const bool& value);
+template <>
+int LexicalCast<int, const char*>(const char* const& value);
+
+template <>
+float LexicalCast<float, float>(const float& value);
+template <>
+float LexicalCast<float, int>(const int& value);
+template <>
+float LexicalCast<float, bool>(const bool& value);
+template <>
+float LexicalCast<float, const char*>(const char* const& value);
+
+template <>
+bool LexicalCast<bool, bool>(const bool& value);
+template <>
+bool LexicalCast<bool, int>(const int& value);
+template <>
+bool LexicalCast<bool, float>(const float& value);
+template <>
+bool LexicalCast<bool, const char*>(const char* const& value);
+
+#ifdef NL_LEXICALCAST_DEFINE
+
+// Definitions in correct order!
+
+template <>
+int LexicalCast<int, float>(const float& v)
 {
-    return LexicalCastImpl<To, From>::cast(value);
+    FORCE_DONT_INLINE;
+    return (int)v;
+}
+template <>
+int LexicalCast<int, int>(const int& v)
+{
+    FORCE_DONT_INLINE;
+    return v;
+}
+template <>
+int LexicalCast<int, bool>(const bool& v)
+{
+    FORCE_DONT_INLINE;
+    return (int)v;
+}
+template <>
+float LexicalCast<float, float>(const float& v)
+{
+    FORCE_DONT_INLINE;
+    return v;
+}
+template <>
+float LexicalCast<float, int>(const int& v)
+{
+    FORCE_DONT_INLINE;
+    return (float)v;
+}
+template <>
+float LexicalCast<float, bool>(const bool& v)
+{
+    FORCE_DONT_INLINE;
+    return (float)v;
+}
+template <>
+float LexicalCast<float, const char*>(const char* const& s)
+{
+    FORCE_DONT_INLINE;
+    return (float)atof(s);
+}
+template <>
+int LexicalCast<int, const char*>(const char* const& s)
+{
+    FORCE_DONT_INLINE;
+    return (int)atof(s);
+}
+#endif // NL_LEXICALCAST_DEFINE
+
+#ifdef NL_LEXICALCAST_DEFINE_BOOL
+
+template <>
+bool LexicalCast<bool, bool>(const bool& v)
+{
+    FORCE_DONT_INLINE;
+    return v;
+}
+template <>
+bool LexicalCast<bool, int>(const int& v)
+{
+    FORCE_DONT_INLINE;
+    return v != 0;
+}
+template <>
+bool LexicalCast<bool, float>(const float& v)
+{
+    FORCE_DONT_INLINE;
+    return v != 0.0f;
+}
+template <>
+bool LexicalCast<bool, const char*>(const char* const& s)
+{
+    FORCE_DONT_INLINE;
+    // TODO: implement parsing if needed
+    return true;
 }
 
-// ---------------------- Explicit specializations ----------------------
-
-// int <- float
-template <>
-struct LexicalCastImpl<int, float>
-{
-    static int cast(const float& value)
-    {
-        FORCE_DONT_INLINE;
-        return (int)value;
-    }
-};
-
-// int <- bool
-template <>
-struct LexicalCastImpl<int, bool>
-{
-    static int cast(const bool& value)
-    {
-        FORCE_DONT_INLINE;
-        return (int)value;
-    }
-};
-
-// float <- float
-template <>
-struct LexicalCastImpl<float, float>
-{
-    static float cast(const float& value)
-    {
-        FORCE_DONT_INLINE;
-        return value;
-    }
-};
-
-// float <- const char*
-template <>
-struct LexicalCastImpl<float, const char*>
-{
-    static float cast(const char* const& value)
-    {
-        FORCE_DONT_INLINE;
-        return (float)atof(value);
-    }
-};
-
-// float <- bool
-template <>
-struct LexicalCastImpl<float, bool>
-{
-    static float cast(const bool& value)
-    {
-        FORCE_DONT_INLINE;
-        return (float)value;
-    }
-};
-
-// int <- const char*
-template <>
-struct LexicalCastImpl<int, const char*>
-{
-    static int cast(const char* const& value)
-    {
-        FORCE_DONT_INLINE;
-        return (int)atof(value);
-    }
-};
-
-// bool <- bool
-template <>
-struct LexicalCastImpl<bool, bool>
-{
-    static bool cast(const bool& value)
-    {
-        FORCE_DONT_INLINE;
-        return value;
-    }
-};
-
-// bool <- int
-template <>
-struct LexicalCastImpl<bool, int>
-{
-    static bool cast(const int& value)
-    {
-        FORCE_DONT_INLINE;
-        return value != 0;
-    }
-};
-
-// bool <- float
-template <>
-struct LexicalCastImpl<bool, float>
-{
-    static bool cast(const float& value)
-    {
-        FORCE_DONT_INLINE;
-        return value != 0.0f;
-    }
-};
-
-// bool <- const char*
-template <>
-struct LexicalCastImpl<bool, const char*>
-{
-    static bool cast(const char* const& value)
-    {
-        FORCE_DONT_INLINE;
-        // TODO: Implement
-        return true;
-    }
-};
-
-// int <- int
-template <>
-struct LexicalCastImpl<int, int>
-{
-    static int cast(const int& value)
-    {
-        FORCE_DONT_INLINE;
-        return value;
-    }
-};
-
-// float <- int
-template <>
-struct LexicalCastImpl<float, int>
-{
-    static float cast(const int& value)
-    {
-        FORCE_DONT_INLINE;
-        return (float)value;
-    }
-};
+#endif // NL_LEXICALCAST_DEFINE_BOOL
 
 #endif // _NLLEXICALCAST_H_
