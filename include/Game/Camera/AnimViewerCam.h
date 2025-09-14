@@ -13,8 +13,8 @@ public:
     virtual eCameraType GetType();
     virtual ~cAnimViewerCamera();
     virtual void Update(float);
-    
-    cPlayer* m_pCurrentPlayer; 
+
+    cPlayer* m_pCurrentPlayer;
 };
 
 #endif // _ANIMVIEWERCAM_H_

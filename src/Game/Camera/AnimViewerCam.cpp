@@ -21,7 +21,8 @@ cAnimViewerCamera::~cAnimViewerCamera()
 /**
  * Offset/Address/Size: 0x44 | 0x801ACBC8 | size: 0x50
  */
-cAnimViewerCamera::cAnimViewerCamera() : cFollowCamera(FOLLOW_ANIM_VIEWER_CHARACTER)
+cAnimViewerCamera::cAnimViewerCamera()
+    : cFollowCamera(FOLLOW_ANIM_VIEWER_CHARACTER)
 {
     m_pCurrentPlayer = nullptr;
     m_bPitchLimits = false;
@@ -33,7 +34,8 @@ cAnimViewerCamera::cAnimViewerCamera() : cFollowCamera(FOLLOW_ANIM_VIEWER_CHARAC
  */
 void cAnimViewerCamera::Update(float fDeltaT)
 {
-    if (m_pCurrentPlayer) {
+    if (m_pCurrentPlayer)
+    {
         m_v3OOI = m_pCurrentPlayer->m_v3Position;
     }
     cFollowCamera::Update(fDeltaT);
