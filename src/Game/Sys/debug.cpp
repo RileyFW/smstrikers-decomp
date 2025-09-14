@@ -1,3 +1,5 @@
+#pragma pool_data off
+
 #include "debug.h"
 #include "Game/Sys/simpleparser.h"
 
@@ -69,39 +71,40 @@ void Initialize()
 bool ParseDebugChannelFile(const char* path)
 {
     SimpleParser parser;
+    u32 uFileSize;
+    char* token;
 
-    unsigned long size = 0;
-    char* buffer = (char*)nlLoadEntireFile(path, &size, 0x20u, AllocateStart);
-    if (!buffer)
+    char* pData = (char*)nlLoadEntireFile(path, &uFileSize, 0x20u, AllocateStart);
+    if (!pData)
     {
         nlPrintf("Failed to load file %s.  All print channels will be enabled.\n", path);
         return false;
     }
 
-    if (parser.StartParsing(buffer, (int)size, true))
+    if (parser.StartParsing(pData, uFileSize, true))
     {
         for (;;)
         {
-            char* tok = parser.NextToken(true);
-            if (!tok)
+            token = parser.NextToken(true);
+            if (!token)
                 break;
 
             // skip comment lines starting with '#'
-            if (tok[0] == '#')
+            if (token[0] == '#')
                 continue;
 
             // scan list of known channel names and mark enabled
-            for (int i = 0; i < DEBUG_CHANNEL_COUNT; ++i)
+            for (int chan = 0; chan < DEBUG_CHANNEL_COUNT; ++chan)
             {
-                if (strcmpi(szChannelNames[i], tok) == 0)
+                if (strcmpi(szChannelNames[chan], token) == 0)
                 {
-                    abChannels[i] = 1;
+                    abChannels[chan] = 1;
                 }
             }
         }
     }
 
-    delete[] buffer;
+    delete[] pData;
     return true;
 }
 

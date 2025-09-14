@@ -689,7 +689,7 @@ config.libs = [
         [
             Object(NonMatching, "Game/main.cpp"),
             Object(Matching, "Game/Sys/clock.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/Sys/debug.cpp"),
+            Object(Matching, "Game/Sys/debug.cpp"),
             Object(NonMatching, "Game/Sys/simpleparser.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Sys/eventman.cpp", extra_cflags=["-O4 -inline deferred"]),
             Object(Matching, "Game/Sys/geventdst.cpp", extra_cflags=["-inline deferred"]),
