@@ -3,7 +3,7 @@
 #include "Game/CharacterTweaks.h"
 
 #define NL_LEXICALCAST_DEFINE
-#include "NL/nlLexicalCast_.h"
+#include "NL/nlLexicalCast.h"
 
 #include "NL/nlConfig.h"
 

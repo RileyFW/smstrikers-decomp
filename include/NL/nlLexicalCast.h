@@ -37,7 +37,16 @@ bool LexicalCast<bool, const char*>(const char* const& value);
 
 #ifdef NL_LEXICALCAST_DEFINE
 
-// Definitions in correct order!
+/* ----------------------------------------------------------------------
+   Definitions (emitted in EXACT order below) — in ONE TU only.
+   Do this in exactly one .cpp:
+       #define NL_LEXICALCAST_DEFINE
+       #include "nlLexicalCast.h"
+
+   Implementation locations:
+   - int/float specializations: CharacterTweaks.cpp
+   - bool and BasicString specializations: To be determined
+   ---------------------------------------------------------------------- */
 
 template <>
 int LexicalCast<int, float>(const float& v)

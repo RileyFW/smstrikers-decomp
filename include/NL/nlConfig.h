@@ -2,7 +2,7 @@
 #define _NLCONFIG_H_
 
 #include "types.h"
-#include "NL/nlLexicalCast_.h"
+#include "NL/nlLexicalCast.h"
 
 enum Type
 {
