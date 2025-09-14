@@ -540,7 +540,7 @@ ScriptQuestions.o:
 	.sdata2     start:0x80375908 end:0x80375990
 	.sbss2      start:0x80377F20 end:0x80377F30
 
-ScriptTuning.o:
+Game/ScriptTuning.cpp:
 	.text       start:0x8008490C end:0x80085530
 	.text       start:0x80085530 end:0x800856B8
 	.text       start:0x800856B8 end:0x800856B8

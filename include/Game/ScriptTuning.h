@@ -2,7 +2,6 @@
 #define _SCRIPTTUNING_H_
 
 #include "NL/nlMath.h"
-#include "NL/nlConfig.h"
 
 #include "Game/TweaksBase.h"
 
