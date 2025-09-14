@@ -1,6 +1,6 @@
 #include "NL/nlConfig.h"
 
-static Config* sGlobal = nullptr;
+// static Config* sGlobal = nullptr;
 
 /**
  * Offset/Address/Size: 0x0 | 0x801D2C64 | size: 0x13EC
@@ -90,7 +90,10 @@ void Config::LoadFromFile(const char*)
 Config& Config::Global()
 {
     FORCE_DONT_INLINE;
-    return *sGlobal;
+    // return *sGlobal;
+
+    static Config sGlobal;
+    return sGlobal;
 }
 
 /**

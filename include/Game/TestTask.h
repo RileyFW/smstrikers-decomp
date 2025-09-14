@@ -3,7 +3,7 @@
 
 #include "NL/nlTask.h"
 #include "NL/nlMemory.h"
-#include "NL/nlLexicalCast.h"
+#include "NL/nlLexicalCast_.h"
 
 // Forward declarations
 namespace Detail

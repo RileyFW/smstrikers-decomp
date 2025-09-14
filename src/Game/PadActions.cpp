@@ -2,7 +2,7 @@
 
 #include "NL/platpad.h"
 #include "NL/nlConfig.h"
-#include "NL/nlLexicalCast.h"
+#include "NL/nlLexicalCast_.h"
 #include "NL/nlMemory.h"
 
 #include "Game/PadMonkey.h"

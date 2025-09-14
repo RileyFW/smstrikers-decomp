@@ -1,8 +1,17 @@
 #pragma pool_data off
 
 #include "Game/CharacterTweaks.h"
+#include "NL/nlLexicalCast_.h"
 #include "NL/nlConfig.h"
-#include "NL/nlLexicalCast.h"
+
+extern int LexicalCast<int, float>(const float&);
+// extern int LexicalCast<int, bool>(const bool&);
+// extern int LexicalCast<int, int>(const int&);
+// extern int LexicalCast<int, const char*>(const char* const&);
+// extern float LexicalCast<float, float>(const float&);
+// extern float LexicalCast<float, bool>(const bool&);
+// extern float LexicalCast<float, int>(const int&);
+// extern float LexicalCast<float, const char*>(const char* const&);
 
 f32 g_pTweaks[0x17] = {
     4000.0f,
