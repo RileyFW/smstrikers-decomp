@@ -25,7 +25,7 @@ public:
     void EnableAnalogToDPadMapping(eFEINPUT_PAD, bool);
     void SetAutoRepeatParams(eFEINPUT_PAD, int, float, float);
     void Update(float);
-    void HasInputLock(BaseSceneHandler*) const;
+    bool HasInputLock(BaseSceneHandler*) const;
     void PopExclusiveInputLock(BaseSceneHandler*);
     void PushExclusiveInputLock(BaseSceneHandler*, int);
     void EnableInputIfSceneHasFocus(BaseSceneHandler*);

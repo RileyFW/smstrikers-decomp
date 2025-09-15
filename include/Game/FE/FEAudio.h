@@ -15,9 +15,9 @@ public:
     static void EnableSounds(bool);
     void ResetRandomVoiceToggleSFX();
     void PlayRandomVoiceToggleSFX();
-    void PlayAnimAudioEvent(unsigned long, bool);
-    void StopAnimAudioEvent(const char*);
-    void PlayAnimAudioEvent(const char*, bool);
+    static void PlayAnimAudioEvent(unsigned long, bool);
+    static void StopAnimAudioEvent(const char*);
+    static void PlayAnimAudioEvent(const char*, bool);
     void BuildAnimAudioEventLookup();
 };
 

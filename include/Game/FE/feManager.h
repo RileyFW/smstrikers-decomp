@@ -17,7 +17,7 @@ public:
     void ReturnToFE();
     void UpdateForGame(float);
     void Update(float);
-    void ExitMenuState();
+    static void ExitMenuState();
     void EnterMenuState(FrontEnd::MenuEnterType);
     void ExitWinnerScreen();
     void EnterStartScreen(bool);
