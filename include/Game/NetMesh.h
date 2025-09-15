@@ -9,6 +9,8 @@ class PhysicsSphere;
 class NetMesh
 {
 public:
+    static bool s_bAnimatedNetMeshEnabled;
+
     NetMesh(bool);
     void Allocate(int, int, int);
     ~NetMesh();

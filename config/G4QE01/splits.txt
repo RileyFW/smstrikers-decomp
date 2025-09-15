@@ -396,7 +396,7 @@ Game/Player.cpp:
 	.sbss       start:0x80373788 end:0x803737A0
 	.sdata2     start:0x803756A0 end:0x80375720
 
-Powerups.o:
+Game/AI/Powerups.cpp:
 	.text       start:0x8005A8EC end:0x80060948
 	.text       start:0x80060948 end:0x80060948
 	.text       start:0x80060948 end:0x80060948
@@ -1593,7 +1593,7 @@ Game/Drawable/DrawableSkinModel.cpp:
 	.sbss       start:0x80373A10 end:0x80373A28
 	.sdata2     start:0x80376028 end:0x80376030
 
-RenderShadow.o:
+Game/Render/RenderShadow.cpp:
 	.text       start:0x80123034 end:0x801247E4
 	.ctors      start:0x8028D2CC end:0x8028D2D0
 	.rodata     start:0x8029B090 end:0x8029B0F8
@@ -1603,7 +1603,7 @@ RenderShadow.o:
 	.sdata2     start:0x80376030 end:0x80376070
 	.sbss2      start:0x80377F48 end:0x80377F50
 
-Presentation.o:
+Game/Render/Presentation.cpp:
 	.text       start:0x801247E4 end:0x80126750
 	.text       start:0x80126750 end:0x801267BC
 	.text       start:0x801267BC end:0x801267BC
@@ -2060,7 +2060,7 @@ PriorityStream.o:
 	.data       start:0x802BFD18 end:0x802BFD58
 	.sdata      start:0x803725D8 end:0x803725E0
 
-AnimatedModelExplodable.o:
+Game/Render/AnimatedModelExplodable.cpp:
 	.text       start:0x8015896C end:0x80158BDC
 	.text       start:0x80158BDC end:0x80158D74
 	.ctors      start:0x8028D2FC end:0x8028D300
@@ -2219,7 +2219,7 @@ SkinAnimatedMovableNPC.o:
 	.data       start:0x802C0590 end:0x802C05D0
 	.sdata2     start:0x803767F8 end:0x80376810
 
-StaticModelExplodable.o:
+Game/Render/StaticModelExplodable.cpp:
 	.text       start:0x801654C4 end:0x80165D2C
 	.text       start:0x80165D2C end:0x80165D2C
 	.text       start:0x80165D2C end:0x80165D2C

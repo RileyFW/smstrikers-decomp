@@ -169,8 +169,9 @@ void World::CreateLightUserData()
 /**
  * Offset/Address/Size: 0x264C | 0x80197310 | size: 0x9D4
  */
-void World::LoadObjectData(const char*)
+bool World::LoadObjectData(const char*)
 {
+    return false;
 }
 
 /**
@@ -190,15 +191,17 @@ void World::HandleObjectCreation(WorldObjectData*)
 /**
  * Offset/Address/Size: 0x3420 | 0x801980E4 | size: 0x274
  */
-void World::LoadGeometry(glModel*, unsigned long, bool, bool, unsigned long*, int*, bool)
+bool World::LoadGeometry(glModel*, unsigned long, bool, bool, unsigned long*, int*, bool)
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x3694 | 0x80198358 | size: 0xD8
  */
-void World::LoadGeometry(const char*, bool, bool, unsigned long*, int*)
+bool World::LoadGeometry(const char*, bool, bool, unsigned long*, int*)
 {
+    return false;
 }
 
 /**

@@ -825,8 +825,15 @@ config.libs = [
             Object(NonMatching, "Game/BasicStadium.cpp", extra_cflags=["-inline deferred"]),
 
             # Render
+            Object(NonMatching, "Game/Render/Presentation.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/CrowdManager.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/NPCLoader.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/RenderShadow.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/StaticModelExplodable.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/AnimatedModelExplodable.cpp", extra_cflags=["-inline deferred"]),
+
+            # AI
+            Object(NonMatching, "Game/AI/Powerups.cpp", extra_cflags=["-inline deferred"]),
 
             # Frontend / Scenes
             Object(Matching, "Game/GameSceneManager.cpp", extra_cflags=["-inline deferred"]),

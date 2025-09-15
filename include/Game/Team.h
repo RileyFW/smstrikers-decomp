@@ -8,7 +8,7 @@
 
 #include "Game/GameTweaks.h"
 #include "Game/Fielder.h"
-#include "Game/Powerups.h"
+#include "Game/AI/Powerups.h"
 #include "Game/Goalie.h"
 #include "Game/Player.h"
 #include "Game/Net.h"

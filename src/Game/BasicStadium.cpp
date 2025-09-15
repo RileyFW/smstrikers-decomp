@@ -1,12 +1,18 @@
 #pragma pool_data off
 
 #include "Game/BasicStadium.h"
-
+#include "Game/NetMesh.h"
+#include "Game/AI/Powerups.h"
 #include "Game/Render/CrowdManager.h"
+#include "Game/Render/Presentation.h"
+#include "Game/Render/StaticModelExplodable.h"
+#include "Game/Render/AnimatedModelExplodable.h"
 
 #include "NL/nlString.h"
 #include "NL/nlPrint.h"
 #include "NL/gl/glPlat.h"
+#include "NL/gl/glState.h"
+#include "NL/gl/glTexture.h"
 #include "string.h"
 
 // extern WorldLoader TheWorldLoader;
@@ -16,6 +22,9 @@ extern float g_fSkyboxRotationTime;
 extern EventManager* g_pEventManager;
 
 char szBasicStadiumName[0x40];
+
+const char szBallName[] = "gameplay/ball";
+const char szPowerupsName[] = "gameplay/powerups";
 
 u32 uSkyBoxHashID;
 u32 uCloudsHashID;
@@ -74,33 +83,23 @@ BasicStadium::BasicStadium(const char* name)
         glx_SetFog(2);
     }
 
-    CrowdManager::instance->SetStadium(m_szBaseName); // SetStadium__12CrowdManagerFPCc(&instance__12CrowdManager, &this->unk168);
+    CrowdManager::instance.SetStadium(m_szBaseName);
 
-    float fTime = 0.0f;
-    char* temp_ret = strstr(m_szBaseName, "super");
-    if (temp_ret != nullptr)
-    {
-        fTime = 800.0f;
-    }
-    else
-    {
-        fTime = 1420.0f;
-    }
-    // temp_r6 = &this->unk168;
-    g_fSkyboxRotationTime = fTime;
+    g_fSkyboxRotationTime = (strstr(m_szBaseName, "super") != nullptr) ? 800.0f : 1420.0f;
 
-    char sp8[0x100];
-    nlSNPrintf(szBasicStadiumName, 0x40, "Environment/%s/%s", m_szBaseName, temp_ret);
-    nlStrNCat<char>(sp8, m_szBaseName, "/skybox back", 0x100);
-    uSkyBoxHashID = nlStringLowerHash(sp8);
-    nlStrNCat<char>(sp8, m_szBaseName, "/skybox clouds", 0x100);
-    uCloudsHashID = nlStringLowerHash(sp8);
-    nlStrNCat<char>(sp8, m_szBaseName, "/NetCorner", 0x100);
-    uNetHelperHashID = nlStringLowerHash(sp8);
-    nlStrNCat<char>(sp8, m_szBaseName, "/FieldCorner", 0x100);
-    uFieldHelperHashID = nlStringLowerHash(sp8);
-    nlStrNCat<char>(sp8, m_szBaseName, "/PenaltyCorner", 0x100);
-    uPenaltyHelperHashID = nlStringLowerHash(sp8);
+    nlSNPrintf(szBasicStadiumName, 0x40, "Environment/%s/%s", m_szBaseName, m_szBaseName);
+
+    char szTemp[0x100];
+    nlStrNCat<char>(szTemp, m_szBaseName, "/skybox back", 0x100);
+    uSkyBoxHashID = nlStringLowerHash(szTemp);
+    nlStrNCat<char>(szTemp, m_szBaseName, "/skybox clouds", 0x100);
+    uCloudsHashID = nlStringLowerHash(szTemp);
+    nlStrNCat<char>(szTemp, m_szBaseName, "/NetCorner", 0x100);
+    uNetHelperHashID = nlStringLowerHash(szTemp);
+    nlStrNCat<char>(szTemp, m_szBaseName, "/FieldCorner", 0x100);
+    uFieldHelperHashID = nlStringLowerHash(szTemp);
+    nlStrNCat<char>(szTemp, m_szBaseName, "/PenaltyCorner", 0x100);
+    uPenaltyHelperHashID = nlStringLowerHash(szTemp);
 }
 
 /**
@@ -122,9 +121,56 @@ BasicStadium::~BasicStadium()
 /**
  * Offset/Address/Size: 0x28F0 | 0x8019E670 | size: 0x1CC
  */
-void BasicStadium::DoLoad()
+bool BasicStadium::DoLoad()
 {
-    // TODO:
+    if (!LoadGeometry(szBasicStadiumName, false, false, 0, 0))
+        return false;
+    if (!LoadGeometry(szBallName, true, false, 0, 0))
+        return false;
+    if (!LoadGeometry(szPowerupsName, true, false, 0, 0))
+        return false;
+
+    if (!LoadObjectData(szBasicStadiumName))
+        return false;
+
+    if (!StaticModelExplodable::LoadGeometry())
+        return false;
+
+    StaticModelExplodable::CreateExplodablesFromHelperObjects();
+
+    if (!AnimatedModelExplodable::LoadGeometry())
+        return false;
+
+    nlToLower<char>(m_szBaseName);
+
+    char szTemp[0x40];
+
+    nlSNPrintf(szTemp, 0x40, "%s/lightramp", m_szBaseName);
+    u32 lightRamp = glGetTexture(szTemp);
+
+    nlSNPrintf(szTemp, 0x40, "%s/playerlightramp", m_szBaseName);
+    u32 playerLightRamp = glGetTexture(szTemp);
+
+    if (glTextureLoad(lightRamp))
+    {
+        m_LightRampTexA = lightRamp; // at +0x124
+        m_LightRampTexB = lightRamp; // at +0x128
+    }
+
+    if (glTextureLoad(playerLightRamp))
+    {
+        m_PlayerLightRampTex = playerLightRamp; // at +0x12C
+    }
+
+    m_GlobalLightRampSTSTex = glGetTexture("global/lightramp_sts"); // as +0x130
+
+    Presentation::Instance().LoadTrophyModel();
+    InitializePowerups();
+
+    NetMesh::s_bAnimatedNetMeshEnabled = true;
+    g_GoalLightEnabled = false;
+
+    return true;
 }
 
 /**

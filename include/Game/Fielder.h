@@ -8,7 +8,7 @@
 #include "NL/nlMath.h"
 
 #include "Game/Player.h"
-#include "Game/Powerups.h"
+#include "Game/AI/Powerups.h"
 
 enum eFielderDesireState
 {

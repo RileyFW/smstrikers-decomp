@@ -27,7 +27,7 @@ public:
     /* 0x14 */ virtual void Render();
     /* 0x18 */ virtual void Update(float);
     /* 0x1C */ virtual void UpdateInReplay(float);
-    /* 0x2C */ virtual void DoLoad();
+    /* 0x2C */ virtual bool DoLoad();
     /* 0x30 */ virtual void DoInitialize();
 
     static void BasicStadiumEventHandler(Event*, void*);

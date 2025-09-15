@@ -23,7 +23,7 @@ void CrowdBundleLoad_cb(void*, unsigned long, void*);
 class CrowdManager
 {
 public:
-    static CrowdManager* instance;
+    static CrowdManager instance;
 
     void Initialize();
     void Uninitialize();

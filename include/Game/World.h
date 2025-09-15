@@ -50,7 +50,7 @@ public:
     /* 0x20 */ virtual void FixedUpdate(float);
     /* 0x24 */ virtual void HandleEvent(Event*, void*);
     /* 0x28 */ virtual void CreateHelperObjFromChunk(nlChunk*);
-    /* 0x2C */ virtual void DoLoad() = 0;
+    /* 0x2C */ virtual bool DoLoad() = 0;
     /* 0x30 */ virtual void DoInitialize() = 0;
 
     int CompareNameToGenericName(const char*, const char*);
@@ -64,10 +64,10 @@ public:
     void ExtractFrustumPlanes();
     void GetCustomSpecularData(glModelPacket*, bool);
     void CreateLightUserData();
-    void LoadObjectData(const char*);
+    bool LoadObjectData(const char*);
     void AddToHyperSTSDrawables(unsigned long, DrawableModel*);
-    void LoadGeometry(glModel*, unsigned long, bool, bool, unsigned long*, int*, bool);
-    void LoadGeometry(const char*, bool, bool, unsigned long*, int*);
+    bool LoadGeometry(glModel*, unsigned long, bool, bool, unsigned long*, int*, bool);
+    bool LoadGeometry(const char*, bool, bool, unsigned long*, int*);
     void Load(bool);
 
     /* 0x004 */ WorldAnimManager* m_pWorldAnimManager;
@@ -96,11 +96,19 @@ public:
     /* 0x114 */ int m_WorldNameLength;
     /* 0x118 */ unsigned long m_WorldLightRamp;
     /* 0x11C */ unsigned long m_ObjectLightRamp;
-    /* 0x120 */ unsigned long m_PlayerLightRamp;
-    /* 0x124 */ unsigned long m_STSLightRamp;
-    /* 0x128 */ unsigned long m_PlayerNISLightRamp;
-    /* 0x12C */ CharacterPhysicsData* m_pPhysicsData;
-    /* 0x130 */ const LightObject* m_pShadowLight;
+    /* 0x120 */ unsigned long m_PlayerLightRamp_;
+    // /* 0x124 */ unsigned long m_STSLightRamp;
+    // /* 0x128 */ unsigned long m_PlayerNISLightRamp;
+
+    /* 0x124 */ u32 m_LightRampTexA;
+    /* 0x128 */ u32 m_LightRampTexB;
+    /* 0x12C */ u32 m_PlayerLightRampTex;
+    /* 0x130 */ u32 m_GlobalLightRampSTSTex;
+
+    // DWARF seems wrong here
+
+    // /* 0x12C */ CharacterPhysicsData* m_pPhysicsData;
+    // /* 0x130 */ const LightObject* m_pShadowLight;
 }; // total size: 0x134
 
 // class nlAVLTree<unsigned long, LightObject*, DefaultKeyCompare<unsigned long>>
