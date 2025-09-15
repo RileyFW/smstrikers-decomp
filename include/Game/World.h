@@ -10,6 +10,19 @@
 // void nlStrChr<char>(const char*, char);
 // void 0x8028D34C..0x8028D350 | size: 0x4;
 
+enum eTerrain
+{
+    T_Grass = 0,
+    T_BlueGrass = 1,
+    T_Concrete = 2,
+    T_BlueConcrete = 3,
+    T_Wood = 4,
+    T_Metal = 5,
+    T_Rubber = 6,
+    T_Num = 7,
+};
+
+class WorldAnimManager;
 class DrawableObject;
 class DrawableModel;
 class nlChunk;
@@ -17,16 +30,19 @@ class glModelPacket;
 class glModel;
 class WorldObjectData;
 class Event;
+class CharacterPhysicsData;
+class LightObject;
 
 class World
 {
 public:
     static u32 m_uCurrentFrameCount;
+    static bool sbIsHyperShootToScoreRenderingEnabled;
 
     World(const char*);
     /* 0x04 */ virtual ~World();
 
-    /* 0x08 */ virtual void GetTerrainType(const nlVector3&) const = 0;
+    /* 0x08 */ virtual eTerrain GetTerrainType(const nlVector3&) const = 0;
     /* 0x10 */ virtual void HandleObjectCreation(WorldObjectData*);
     /* 0x14 */ virtual void Render();
     /* 0x18 */ virtual void Update(float);
@@ -54,11 +70,38 @@ public:
     void LoadGeometry(const char*, bool, bool, unsigned long*, int*);
     void Load(bool);
 
-    /* 0x04 */ u8 m_padding_0x04[0x18];
-    /* 0x1C */ u8 m_unk_0x1C;
-    /* 0x1D */ u8 m_padding_0x1D[0x30];
-    /* 0x4C */ void* m_unk_0x4C;
-};
+    /* 0x004 */ WorldAnimManager* m_pWorldAnimManager;
+    /* 0x008 */ s32 m_lightMap;
+    // /* 0x008 */ class nlAVLTree m_lightMap;
+    /* 0x00C */ u8 pad_0x08[0x10];
+    /* 0x01C */ bool m_Locked;
+    /* 0x020 */ struct glModel* m_pModels;
+    /* 0x024 */ unsigned long m_uNumModels;
+    // /* 0x028 */ nlDLListContainer m_animControllerList;
+    /* 0x028 */ u8 pad_0x28[0x8];
+    /* 0x030 */ void* m_pLightData;
+    /* 0x034 */ void* m_pPlayerNISLightData;
+    /* 0x038 */ void* m_pIntensityPerm;
+    /* 0x03C */ void* m_pIntensityData;
+    /* 0x040 */ void* m_pSTSIntensity;
+    /* 0x044 */ void* m_pSpecularData;
+    // /* 0x048 */ nlAVLTree m_drawableMap;
+    /* 0x048 */ u8 pad_0x48[0x14];
+    // /* 0x05C */ nlAVLTree m_hyperSTSDrawableMap;
+    /* 0x05C */ u8 pad_0x5C[0x14];
+    // /* 0x070 */ nlAVLTree m_helperMap;
+    /* 0x070 */ u8 pad_0x70[0x14];
+    /* 0x084 */ nlVector4 m_frustumPlane[5];
+    /* 0x0D4 */ char m_WorldNamePrefix[64];
+    /* 0x114 */ int m_WorldNameLength;
+    /* 0x118 */ unsigned long m_WorldLightRamp;
+    /* 0x11C */ unsigned long m_ObjectLightRamp;
+    /* 0x120 */ unsigned long m_PlayerLightRamp;
+    /* 0x124 */ unsigned long m_STSLightRamp;
+    /* 0x128 */ unsigned long m_PlayerNISLightRamp;
+    /* 0x12C */ CharacterPhysicsData* m_pPhysicsData;
+    /* 0x130 */ const LightObject* m_pShadowLight;
+}; // total size: 0x134
 
 // class nlAVLTree<unsigned long, LightObject*, DefaultKeyCompare<unsigned long>>
 // {

@@ -73,14 +73,27 @@ int nlStrNCmp(const CharT* str1, const CharT* str2, unsigned long len)
  * Offset/Address/Size: 0x0 | 0x801D2854 | size: 0x20
  * void nlToLower<unsigned char>(unsigned char)
  */
+
+// Single character version (current implementation)
 template <typename CharT>
 CharT nlToLower(CharT c)
 {
-    if ((c >= 0x41) && (c <= 0x5A))
+    if (((u8)c >= 0x41) && ((u8)c <= 0x5A))
     {
-        return (CharT)(c | 0x20);
+        c = (CharT)((u8)c | 0x20);
     }
     return c;
+}
+
+// String version (new addition)
+template <typename CharT>
+CharT nlToLower(CharT* str)
+{
+    while (*str)
+    {
+        *str = nlToLower<CharT>(*str);
+        str++;
+    }
 }
 
 /**

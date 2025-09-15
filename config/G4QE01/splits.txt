@@ -2186,7 +2186,7 @@ Jumbotron.o:
 	.sbss       start:0x80373CA0 end:0x80373CA8
 	.sdata2     start:0x803767C0 end:0x803767C8
 
-CrowdManager.o:
+Game/Render/CrowdManager.cpp:
 	.text       start:0x80163E7C end:0x80164900
 	.text       start:0x80164900 end:0x80164900
 	.text       start:0x80164900 end:0x80164900
@@ -2233,7 +2233,7 @@ StaticModelExplodable.o:
 	.sdata      start:0x80372668 end:0x80372678
 	.sbss       start:0x80373CB8 end:0x80373CD0
 
-NPCLoader.o:
+Game/Render/NPCLoader.cpp:
 	.text       start:0x80165E64 end:0x80165EC4
 	.text       start:0x80165EC4 end:0x80165EC4
 	.ctors      start:0x8028D324 end:0x8028D328

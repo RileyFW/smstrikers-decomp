@@ -824,6 +824,10 @@ config.libs = [
             # World Objects
             Object(NonMatching, "Game/BasicStadium.cpp", extra_cflags=["-inline deferred"]),
 
+            # Render
+            Object(NonMatching, "Game/Render/CrowdManager.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/NPCLoader.cpp", extra_cflags=["-inline deferred"]),
+
             # Frontend / Scenes
             Object(Matching, "Game/GameSceneManager.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/BaseSceneHandler.cpp", extra_cflags=["-inline deferred"]),

@@ -14,6 +14,10 @@ enum ePlayMode
     PM_HOLD = 1,
 };
 
+class cPN_SAnimController;
+class GLSkinMesh;
+class cPoseNode;
+
 class SkinAnimatedNPC
 {
 public:

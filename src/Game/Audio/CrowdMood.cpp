@@ -1,4 +1,4 @@
-#include "Game/CrowdMood.h"
+#include "Game/Audio/CrowdMood.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x8014D714 | size: 0xFC
@@ -115,9 +115,9 @@ void PlayMoodDef(MOOD_DEFINITION&)
 /**
  * Offset/Address/Size: 0x2EA0 | 0x801505B4 | size: 0x358
  */
-void PlayVocal(const CROWD_VOCAL_DEFINITION&, CROWD_STATE::VOCALIZATION_STATE&, GCAudioStreaming::AudioStream*)
-{
-}
+// void PlayVocal(const CROWD_VOCAL_DEFINITION&, CROWD_STATE::VOCALIZATION_STATE&, GCAudioStreaming::AudioStream*)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x31F8 | 0x8015090C | size: 0x588
@@ -147,72 +147,72 @@ void ___blank(const char*, ...)
 {
 }
 
-/**
- * Offset/Address/Size: 0x39A8 | 0x801510BC | size: 0x134
- */
-void WarmRandomStream<GCAudioStreaming::MonoAudioStream>(const RANDOM_STREAMS&, GCAudioStreaming::MonoAudioStream*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x39A8 | 0x801510BC | size: 0x134
+//  */
+// void WarmRandomStream<GCAudioStreaming::MonoAudioStream>(const RANDOM_STREAMS&, GCAudioStreaming::MonoAudioStream*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x3ADC | 0x801511F0 | size: 0x134
- */
-void WarmRandomStream<GCAudioStreaming::StereoAudioStream>(const RANDOM_STREAMS&, GCAudioStreaming::StereoAudioStream*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x3ADC | 0x801511F0 | size: 0x134
+//  */
+// void WarmRandomStream<GCAudioStreaming::StereoAudioStream>(const RANDOM_STREAMS&, GCAudioStreaming::StereoAudioStream*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x3C10 | 0x80151324 | size: 0x68
- */
-void NDimDistance<4>(float*, float*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x3C10 | 0x80151324 | size: 0x68
+//  */
+// void NDimDistance<4>(float*, float*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x3C78 | 0x8015138C | size: 0x10
- */
-void Increment<CrowdMood::CROWD_MOOD>(CrowdMood::CROWD_MOOD&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x3C78 | 0x8015138C | size: 0x10
+//  */
+// void Increment<CrowdMood::CROWD_MOOD>(CrowdMood::CROWD_MOOD&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x8015139C | size: 0x4C
- */
-void GCAudioStreaming::MonoAudioStream::SafeToPurge()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8015139C | size: 0x4C
+//  */
+// void GCAudioStreaming::MonoAudioStream::SafeToPurge()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x4C | 0x801513E8 | size: 0x4C
- */
-void GCAudioStreaming::StereoAudioStream::SafeToPurge()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x4C | 0x801513E8 | size: 0x4C
+//  */
+// void GCAudioStreaming::StereoAudioStream::SafeToPurge()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x98 | 0x80151434 | size: 0x70
- */
-void GCAudioStreaming::MonoAudioStream::~MonoAudioStream()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x98 | 0x80151434 | size: 0x70
+//  */
+// void GCAudioStreaming::MonoAudioStream::~MonoAudioStream()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x108 | 0x801514A4 | size: 0x2C
- */
-void GCAudioStreaming::StereoAudioStream::Purge()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x108 | 0x801514A4 | size: 0x2C
+//  */
+// void GCAudioStreaming::StereoAudioStream::Purge()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x134 | 0x801514D0 | size: 0x2C
- */
-void GCAudioStreaming::MonoAudioStream::Purge()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x134 | 0x801514D0 | size: 0x2C
+//  */
+// void GCAudioStreaming::MonoAudioStream::Purge()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x801514FC | size: 0x48
- */
-void nlStrNCmp<char>(const char*, const char*, unsigned long)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x801514FC | size: 0x48
+//  */
+// void nlStrNCmp<char>(const char*, const char*, unsigned long)
+// {
+// }

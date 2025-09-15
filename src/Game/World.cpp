@@ -204,14 +204,14 @@ void World::LoadGeometry(const char*, bool, bool, unsigned long*, int*)
 /**
  * Offset/Address/Size: 0x376C | 0x80198430 | size: 0x68
  */
-void World::Load(bool skip)
+void World::Load(bool forfe)
 {
-    this->DoLoad();
-    if (skip == FALSE)
+    DoLoad();
+    if (forfe == FALSE)
     {
-        this->DoInitialize();
+        DoInitialize();
     }
-    this->m_unk_0x1C = 1;
+    m_Locked = true;
 }
 
 /**

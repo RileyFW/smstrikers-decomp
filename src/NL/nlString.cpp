@@ -50,7 +50,7 @@ u32 nlStringLowerHash(const char* str)
     while (*str)
     {
         h += (h << 5);
-        h += (u32)nlToLower<u8>(*str++);
+        h += (u32)nlToLower<unsigned char>(*str++);
     }
     return h;
 }

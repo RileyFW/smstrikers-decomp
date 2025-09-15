@@ -36,5 +36,7 @@
   "files.watcherExclude": {
     // Optionally exclude from file watching to improve performance
     "build/**": true
-  }
+  },
+  "python-envs.defaultEnvManager": "ms-python.python:pyenv",
+  "python-envs.pythonProjects": []
 }
