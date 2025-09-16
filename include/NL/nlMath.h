@@ -138,7 +138,24 @@ inline void nlVec4Set(nlVector4& v0, float _x, float _y, float _z, float _w)
 
 struct nlMatrix3
 {
-    float m[3 * 3]; // Flat array access
+    // float m[3 * 3]; // Flat array access
+    union
+    {                  // inferred
+        float m[9];    // offset 0x0, size 0x24
+        float e[3][3]; // offset 0x0, size 0x24
+        struct
+        {              // inferred
+            float m11; // offset 0x0, size 0x4
+            float m12; // offset 0x4, size 0x4
+            float m13; // offset 0x8, size 0x4
+            float m21; // offset 0xC, size 0x4
+            float m22; // offset 0x10, size 0x4
+            float m23; // offset 0x14, size 0x4
+            float m31; // offset 0x18, size 0x4
+            float m32; // offset 0x1C, size 0x4
+            float m33; // offset 0x20, size 0x4
+        } f;
+    };
 
     inline nlVector2 operator*(const nlVector2& v_in) const
     {
@@ -157,7 +174,31 @@ m[3][0] m[3][1] m[3][2] m[3][3]  // Row 3: offset 0x30, 0x34, 0x38, 0x3C
 */
 struct nlMatrix4
 {
-    Mtx44 m;
+    // Mtx44 m;
+    union
+    {
+        float m[4][4]; // offset 0x0, size 0x40
+        float e[16];   // offset 0x0, size 0x40
+        struct
+        {              // inferred
+            float m11; // offset 0x0, size 0x4
+            float m12; // offset 0x4, size 0x4
+            float m13; // offset 0x8, size 0x4
+            float m14; // offset 0xC, size 0x4
+            float m21; // offset 0x10, size 0x4
+            float m22; // offset 0x14, size 0x4
+            float m23; // offset 0x18, size 0x4
+            float m24; // offset 0x1C, size 0x4
+            float m31; // offset 0x20, size 0x4
+            float m32; // offset 0x24, size 0x4
+            float m33; // offset 0x28, size 0x4
+            float m34; // offset 0x2C, size 0x4
+            float m41; // offset 0x30, size 0x4
+            float m42; // offset 0x34, size 0x4
+            float m43; // offset 0x38, size 0x4
+            float m44; // offset 0x3C, size 0x4
+        } f;
+    };
 
     void SetIdentity();
     void SetColumn(int col, const nlVector3& v)

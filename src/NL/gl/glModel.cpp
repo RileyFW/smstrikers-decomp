@@ -17,11 +17,11 @@ void* glModelDupArrayNoStreams(const glModel* models, unsigned long count, bool 
 
     if (arg3 != 0)
     {
-        new_models[0] = (glModel*)glResourceAlloc(count * 0x10, eGLMemory_0);
+        new_models[0] = (glModel*)glResourceAlloc(count * 0x10, GLM_Header);
     }
     else
     {
-        new_models[0] = (glModel*)glFrameAlloc(count * 0x10, eGLMemory_0);
+        new_models[0] = (glModel*)glFrameAlloc(count * 0x10, GLM_Header);
     }
 
     if (new_models == NULL)
@@ -38,11 +38,11 @@ void* glModelDupArrayNoStreams(const glModel* models, unsigned long count, bool 
     {
         if (arg3 != 0)
         {
-            new_packets = (glModelPacket*)glResourceAlloc(src_model->m_count * 0x4A, eGLMemory_0);
+            new_packets = (glModelPacket*)glResourceAlloc(src_model->numPackets * 0x4A, GLM_Header);
         }
         else
         {
-            new_packets = (glModelPacket*)glFrameAlloc(src_model->m_count * 0x4A, eGLMemory_0);
+            new_packets = (glModelPacket*)glFrameAlloc(src_model->numPackets * 0x4A, GLM_Header);
         }
 
         if (new_packets == NULL)
@@ -50,19 +50,19 @@ void* glModelDupArrayNoStreams(const glModel* models, unsigned long count, bool 
             return NULL;
         }
 
-        memcpy(new_packets, src_model->m_packets, src_model->m_count * 0x4A);
-        dst_model->m_packets = new_packets;
+        memcpy(new_packets, src_model->packets, src_model->numPackets * 0x4A);
+        dst_model->packets = new_packets;
         if (arg2 != 0)
         {
             dst_pack = new_packets;
-            src_pack = src_model->m_packets;
-            u8* last_pack = (u8*)src_pack + src_model->m_count * 0x4A;
+            src_pack = src_model->packets;
+            u8* last_pack = (u8*)src_pack + src_model->numPackets * 0x4A;
 
             while ((u8*)src_pack < last_pack)
             {
-                if (*(u32*)src_pack->m_unk_0x00 != 0)
+                if (src_pack->userData != 0)
                 {
-                    *(u32*)&dst_pack->m_unk_0x00 = 0;
+                    dst_pack->userData = 0;
                     glUserDup((glModelPacket*)dst_pack, (glModelPacket*)src_pack, false);
                 }
                 src_pack = (glModelPacket*)((u8*)src_pack + 0x4A);
@@ -93,35 +93,35 @@ glModel* glModelDup(const glModel* src, bool arg1)
     glModelPacket* src_packets;
     glModelPacket* dst_packets;
 
-    model = (glModel*)glFrameAlloc(0x10, eGLMemory_0);
+    model = (glModel*)glFrameAlloc(0x10, GLM_Header);
     if (model == NULL)
     {
         return NULL;
     }
 
-    packets = (glModelPacket*)glFrameAlloc(src->m_count * 0x4A, eGLMemory_0);
+    packets = (glModelPacket*)glFrameAlloc(src->numPackets * 0x4A, GLM_Header);
     if (packets == NULL)
     {
         return NULL;
     }
 
     memcpy(model, src, 0x10);
-    memcpy(packets, src->m_packets, src->m_count * 0x4A);
+    memcpy(packets, src->packets, src->numPackets * 0x4A);
 
     dst_packets = packets;
-    src_packets = src->m_packets;
-    model->m_packets = packets;
+    src_packets = src->packets;
+    model->packets = packets;
 
-    u8* last_pack = (u8*)src_packets + src->m_count * 0x4A;
+    u8* last_pack = (u8*)src_packets + src->numPackets * 0x4A;
 
     while ((u8*)src_packets < last_pack)
     {
-        dst_packets->m_vertexData = (VertexData*)glFrameAlloc(dst_packets->m_unk_0x0B * 6, eGLMemory_0);
-        memcpy(dst_packets->m_vertexData, src_packets->m_vertexData, dst_packets->m_unk_0x0B * 6);
+        dst_packets->m_vertexData = (VertexData*)glFrameAlloc(dst_packets->numStreams * 6, GLM_Header);
+        memcpy(dst_packets->m_vertexData, src_packets->m_vertexData, dst_packets->numStreams * 6);
 
-        if ((arg1 != 0) && (src_packets->m_unk_0x00 != NULL))
+        if ((arg1 != 0) && (src_packets->userData != 0))
         {
-            dst_packets->m_unk_0x00 = NULL;
+            dst_packets->userData = 0;
             glUserDup(dst_packets, src_packets, false);
         }
 

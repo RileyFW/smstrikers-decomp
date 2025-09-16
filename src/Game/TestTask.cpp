@@ -69,123 +69,82 @@ void TestTask::Run(float dt)
  */
 void TestTask::RunSmokeTest(float)
 {
-    if (!mRunSmokeTest)
+    if (mRunSmokeTest)
     {
-        return;
-    }
 
-    if (mTestTimeOut > 0.0f)
-    {
-        return;
-    }
-
-    // Open debug file for writing
-    void* debugFile = nlOpenFileDebug(smokeTestSuccessOutput, false, false);
-    if (debugFile)
-    {
-        nlWriteLineDebug(debugFile, smokeTestSuccessOutput, false);
-        nlFlushFileDebug(debugFile);
-        nlCloseFileDebug(debugFile);
-    }
-
-    // Create a BasicString for formatting
-    BasicString<char, Detail::TempStringAllocator>* formatString = (BasicString<char, Detail::TempStringAllocator>*)nlMalloc(0x10, 8, true);
-    if (formatString)
-    {
-        const char* formatTemplate = "SUCCESS: smoke test successful, didn't crash for {0} seconds";
-        formatString->m_data = nullptr;
-        formatString->m_size = 0;
-        formatString->m_capacity = 0;
-
-        const char* p = formatTemplate;
-        while (*p != '\0')
+        if (mTestTimeOut <= 0.0f)
         {
-            formatString->m_size++;
-            p++;
-        }
-        formatString->m_size++; // Include null terminator
-
-        formatString->m_data = (char*)nlMalloc(formatString->m_size, 8, true);
-        formatString->m_capacity = formatString->m_size;
-
-        // Copy the format template
-        for (int i = 0; i < formatString->m_size - 1; i++)
-        {
-            formatString->m_data[i] = formatTemplate[i];
-        }
-        formatString->m_data[formatString->m_size - 1] = '\0';
-        formatString->m_refCount = 1;
-    }
-
-    // Get global config and look up a specific value
-    Config& config = Config::Global();
-    const char* configKey = "test/time_out_sec ";
-    TagValuePair& tvp = config.FindTvp(configKey);
-
-    float configValue = 0.0f;
-    if (tvp.tag == nullptr)
-    {
-        // Set default value if not found
-        config.Set(configKey, 1.0f);
-        configValue = 1.0f;
-    }
-    else
-    {
-        // Convert the config value based on its type
-        switch (tvp.type)
-        {
-        case 0: // bool
-            configValue = LexicalCast<float, bool>(*(bool*)&tvp.value);
-            break;
-        case 1: // int
-            configValue = LexicalCast<float, int>(*(int*)&tvp.value);
-            break;
-        case 2: // float
-            configValue = LexicalCast<float, float>(*(float*)&tvp.value);
-            break;
-        case 3: // string
-            configValue = LexicalCast<float, const char*>(*(const char**)&tvp.value);
-            break;
-        default:
-            configValue = 0.0f;
-            break;
-        }
-    }
-
-    // Format the string with the config value
-    BasicString<char, Detail::TempStringAllocator> formattedString;
-    Format(formattedString, *formatString, configValue);
-
-    // Write the formatted string to debug output
-    if (mTestLog)
-    {
-        nlWriteLineDebug(mTestLog, formattedString.c_str(), false);
-        nlWriteLineDebug(mTestLog, "\n", false); // Additional debug message
-        nlFlushFileDebug(mTestLog);
-    }
-
-    // Clean up the format string
-    if (formatString)
-    {
-        formatString->m_refCount--;
-        if (formatString->m_refCount == 0)
-        {
-            if (formatString->m_data)
+            void* debugFile = nlOpenFileDebug(smokeTestSuccessOutput, false, false);
+            if (debugFile)
             {
-                nlFree(formatString->m_data);
+                nlWriteLineDebug(debugFile, smokeTestSuccessOutput, false);
+                nlFlushFileDebug(debugFile);
+                nlCloseFileDebug(debugFile);
             }
-            nlFree(formatString);
-        }
-    }
 
-    // Clean up the formatted string
-    if (formattedString.m_refCount == 0)
-    {
-        if (formattedString.m_data)
-        {
-            nlFree(formattedString.m_data);
+            // Create a BasicString for formatting
+            BasicString<char, Detail::TempStringAllocator>* formatString = (BasicString<char, Detail::TempStringAllocator>*)nlMalloc(0x10, 8, true);
+            if (formatString)
+            {
+                const char* formatTemplate = "SUCCESS: smoke test successful, didn't crash for {0} seconds";
+                formatString->m_data = nullptr;
+                formatString->m_size = 0;
+                formatString->m_capacity = 0;
+
+                const char* p = formatTemplate;
+                while (*p != '\0')
+                {
+                    formatString->m_size++;
+                    p++;
+                }
+                formatString->m_size++; // Include null terminator
+
+                formatString->m_data = (char*)nlMalloc(formatString->m_size, 8, true);
+                formatString->m_capacity = formatString->m_size;
+
+                // Copy the format template
+                for (int i = 0; i < formatString->m_size - 1; i++)
+                {
+                    formatString->m_data[i] = formatTemplate[i];
+                }
+                formatString->m_data[formatString->m_size - 1] = '\0';
+                formatString->m_refCount = 1;
+            }
+
+            float configValue = GetConfigFloat(Config::Global(), "test/time_out_sec ", 1.0f);
+
+            BasicString<char, Detail::TempStringAllocator> formattedString;
+            Format(formattedString, *formatString, configValue);
+
+            if (mTestLog)
+            {
+                nlWriteLineDebug(mTestLog, formattedString.c_str(), false);
+                nlWriteLineDebug(mTestLog, "\n", false); // Additional debug message
+                nlFlushFileDebug(mTestLog);
+            }
+
+            if (formatString)
+            {
+                formatString->m_refCount--;
+                if (formatString->m_refCount == 0)
+                {
+                    if (formatString->m_data)
+                    {
+                        nlFree(formatString->m_data);
+                    }
+                    nlFree(formatString);
+                }
+            }
+
+            if (formattedString.m_refCount == 0)
+            {
+                if (formattedString.m_data)
+                {
+                    nlFree(formattedString.m_data);
+                }
+                nlFree(&formattedString);
+            }
         }
-        nlFree(&formattedString);
     }
 }
 
@@ -319,11 +278,9 @@ void TestTask::RunFrameRateTest(float dt)
             formatString->m_refCount = 1;
         }
 
-        // Format the success message with minimum frame rate
         BasicString<char, Detail::TempStringAllocator> formattedString;
         Format(formattedString, *formatString, mMinimumFrameRate);
 
-        // Write to debug log if available
         if (mTestLog)
         {
             nlWriteLineDebug(mTestLog, formattedString.c_str(), false);
@@ -331,7 +288,6 @@ void TestTask::RunFrameRateTest(float dt)
             nlFlushFileDebug(mTestLog);
         }
 
-        // Clean up format string
         if (formatString)
         {
             formatString->m_refCount--;
@@ -345,7 +301,6 @@ void TestTask::RunFrameRateTest(float dt)
             }
         }
 
-        // Clean up formatted string
         if (formattedString.m_refCount == 0)
         {
             if (formattedString.m_data)

@@ -1,3 +1,4 @@
+#include "types.h"
 #pragma pool_data off
 
 #include "Game/GameTweaks.h"
@@ -10,7 +11,15 @@
 #include "Game/GameInfo.h"
 
 SkillTweaks g_sSkillTweaks[2];
-const char* g_sDifficultyFileNames[7];
+const char* g_sDifficultyFileNames[7] = {
+    "DifficultyBraindead.ini",
+    "Difficulty0.ini",
+    "Difficulty1.ini",
+    "Difficulty2.ini",
+    "Difficulty3.ini",
+    "DifficultySuperhuman.ini",
+    "DifficultyHuman.ini",
+};
 
 extern char* GetPowerupName(int powerup);
 
@@ -289,7 +298,7 @@ SkillTweaks::SkillTweaks()
     SkillTweak* node;
 
     node = (SkillTweak*)nlMalloc(0x88, 8, false);
-    if (node)
+    if (node != nullptr)
     {
         node->mpValue = &Off_Avoidance;
         nlSNPrintf(node->mNameInFile, 0x7F, "%s", "Avoidance Effectiveness");
@@ -688,11 +697,6 @@ SkillTweaks::SkillTweaks()
  */
 SkillTweaks::~SkillTweaks()
 {
-    while (mSkillTweaksList.m_pStart != NULL)
-    {
-        SkillTweak* skillTweak = nlListRemoveStart<SkillTweak>(&mSkillTweaksList.m_pStart, &mSkillTweaksList.m_pEnd);
-        delete skillTweak;
-    }
 }
 
 /**

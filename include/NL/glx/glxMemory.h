@@ -5,7 +5,13 @@
 
 enum eGLMemory
 {
-    eGLMemory_0,
+    GLM_Header = 0,
+    GLM_Matrix = 1,
+    GLM_IndexData = 2,
+    GLM_VertexData = 3,
+    GLM_TextureData = 4,
+    GLM_Target = 5,
+    GLM_Num = 6,
 };
 
 void glplatSetMatrix(unsigned long, const nlMatrix4&);

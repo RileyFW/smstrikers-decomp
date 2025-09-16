@@ -23,7 +23,7 @@ void Blinker::Blink(glModel* model)
         u32 count;     // +0x08
     };
 
-    const u32 choose_off = (m_unk_0x00 == model->m_unk_0x04) ? 0u : 4u;
+    const u32 choose_off = (m_unk_0x00 == model->id) ? 0u : 4u;
     const PacketSpan* span = *reinterpret_cast<const PacketSpan**>(reinterpret_cast<u8*>(this) + 0x0C + choose_off);
     if (span == nullptr)
     {
@@ -34,7 +34,7 @@ void Blinker::Blink(glModel* model)
     {
         const s32 idx = span->baseIndex + static_cast<s32>(i);
         const u32 selected = *reinterpret_cast<const u32*>(reinterpret_cast<u8*>(this) + 0x18 + (static_cast<u32>(m_unk_0x2C) << 2));
-        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(model->m_packets) + idx * 0x4A + 0x28) = selected;
+        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(model->packets) + idx * 0x4A + 0x28) = selected;
     }
 }
 

@@ -6,97 +6,104 @@
 /**
  * Offset/Address/Size: 0x0 | 0x801DEB78 | size: 0x2C
  */
-u32 glUserHasType(eGLUserData arg0, const glModelPacket* arg1)
+bool glUserHasType(eGLUserData type, const glModelPacket* pPacket)
 {
-    // s32 temp_r3;
-    u32 *temp_r4 = (u32*)arg1->m_unk_0x00;
-    if (temp_r4 == 0U) {
-        return 0U;
+    u32* userdata = (u32*)(pPacket->userData);
+    if (userdata == NULL)
+    {
+        return false;
     }
-    s32 temp_r3 = *(s32*)(temp_r4 + arg0);
-    return (u32) (-temp_r3 | temp_r3) >> 0x1FU;
+
+    u32 val = userdata[(int)type];
+    return (val != 0) ? true : false;
 }
 
 /**
  * Offset/Address/Size: 0x2C | 0x801DEBA4 | size: 0x14
  */
-void glUserDetach(eGLUserData arg0, glModelPacket* arg1)
+void glUserDetach(eGLUserData type, glModelPacket* pPacket)
 {
-    u32 *temp_r4 = (u32*)arg1->m_unk_0x00;
-    temp_r4[arg0] = 0;
+    u32* userdata = (u32*)(pPacket->userData);
+    userdata[(int)type] = 0;
 }
 
 /**
  * Offset/Address/Size: 0x40 | 0x801DEBB8 | size: 0x88
  */
-void glUserDup(glModelPacket* dst, const glModelPacket* src, bool arg2)
+void glUserDup(glModelPacket* pDest, const glModelPacket* pSrc, bool bPerm)
 {
-    void *var_r31;
-    u32 i = *(u32*)src;
-    if (i != 0) 
+    if (pSrc->userData != 0)
     {
-        if (arg2 != 0) 
+        void* copyBlock;
+        if (bPerm)
         {
-            var_r31 = glResourceAlloc(0x48, eGLMemory_0);
-        } else 
-        {
-            var_r31 = glFrameAlloc(0x48, eGLMemory_0);
+            copyBlock = glResourceAlloc(0x48, GLM_Header);
         }
-        
-        memcpy(var_r31, src, 0x48);
-        dst->m_unk_0x00 = (u32*)var_r31;
+        else
+        {
+            copyBlock = glFrameAlloc(0x48, GLM_Header);
+        }
+
+        memcpy(copyBlock, (u32*)pSrc->userData, 0x48);
+        pDest->userData = (u32)copyBlock;
     }
 }
 
 /**
  * Offset/Address/Size: 0xC8 | 0x801DEC40 | size: 0x94
  */
-void glUserAttach(const void* data, glModelPacket* dst, bool arg2)
+void glUserAttach(const void* pUserData, glModelPacket* pPacket, bool bPerm)
 {
-    u32 i = *(u32*)dst;
-    if (i == 0) 
+    if ((u32*)pPacket->userData == NULL)
     {
-        u32 *var_r31;
-        if (arg2 != 0) 
+        void* block;
+        if (bPerm)
         {
-            var_r31 = (u32*)glResourceAlloc(0x48, eGLMemory_0);
-        } else 
-        {
-            var_r31 = (u32*)glFrameAlloc(0x48, eGLMemory_0);
+            block = glResourceAlloc(0x48, GLM_Header);
         }
-        nlZeroMemory(var_r31, 0x48);
-        dst->m_unk_0x00 = var_r31;
+        else
+        {
+            block = glFrameAlloc(0x48, GLM_Header);
+        }
+
+        nlZeroMemory(block, 0x48);
+        pPacket->userData = (u32)block;
     }
-    dst->m_unk_0x00[*(u32*)data] = *(u32*)data;
+
+    eGLUserData type = *(eGLUserData*)pUserData;
+    ((u32*)(pPacket->userData))[(int)type] = (u32)pUserData;
 }
 
 /**
  * Offset/Address/Size: 0x15C | 0x801DECD4 | size: 0x8
  */
-void* glUserGetData(const void* arg0)
+void* glUserGetData(const void* pUserData)
 {
-    return (u8*)arg0 + 4;
+    return (u8*)pUserData + 4;
 }
 
 /**
  * Offset/Address/Size: 0x164 | 0x801DECDC | size: 0x58
  */
-void glUserAlloc(eGLUserData arg0, unsigned long size, bool resourceAlloc)
+void* glUserAlloc(eGLUserData type, unsigned long size, bool bPerm)
 {
-    s32** var_r3;
-    if (resourceAlloc != 0)
+    unsigned long actualSize = size + 4;
+    void* mem;
+
+    if (bPerm)
     {
-        var_r3 = (s32**)glResourceAlloc(size, eGLMemory_0);
+        mem = glResourceAlloc(actualSize, GLM_Header);
     }
     else
     {
-        var_r3 = (s32**)glFrameAlloc(size, eGLMemory_0);
-    }
-    
-    if (var_r3 == NULL)
-    {
-        return;
+        mem = glFrameAlloc(actualSize, GLM_Header);
     }
 
-    *(eGLUserData*)var_r3 = arg0;
+    if (mem == 0)
+    {
+        return mem;
+    }
+
+    *(u32*)mem = (u32)type;
+    return mem;
 }

@@ -8,16 +8,6 @@
 #include "Game/Sys/eventman.h"
 #include "Game/Render/NPCManager.h"
 
-class SomeClass2
-{
-public:
-    /* 0x00 */ s32 unk0;  /* inferred */
-    /* 0x04 */ s32 unk4;  /* inferred */
-    /* 0x08 */ s32 unk8;  /* inferred */
-    /* 0x0C */ s32 unkC;  /* inferred */
-    /* 0x10 */ s32 unk10; /* inferred */
-};
-
 class BasicStadium : public World
 {
 public:
@@ -33,10 +23,12 @@ public:
     static void BasicStadiumEventHandler(Event*, void*);
     static BasicStadium* GetCurrentStadium();
 
-    /* 0x134 */ nlVector3* m_CameraFlashPositions;
-    /* 0x138 */ s32 m_NumCameraFlashPositions;
-    /* 0x13C */ SomeClass2* m_unk13C; // ??
-    /* 0x140 */ u32 m_unk140;         // ??
+    // DWARF seems wrong here
+    /* 0x134 */ u32 m_unk134;
+    /* 0x138 */ u32 m_unk138;
+
+    /* 0x13C */ nlVector3* m_CameraFlashPositions;
+    /* 0x140 */ s32 m_NumCameraFlashPositions;
     /* 0x144 */ float m_fSkyboxRotationAng;
     /* 0x148 */ float m_fCloudRotationAng;
     /* 0x14C */ DrawableObject* m_pSkyboxObject;

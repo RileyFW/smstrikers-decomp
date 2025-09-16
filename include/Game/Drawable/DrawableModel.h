@@ -8,6 +8,7 @@
 
 class glModel;
 class glModelPacket;
+class GLShadowVolume;
 class BallShadowParams;
 
 void CleanBoundingBoxCache();
@@ -24,24 +25,32 @@ void GetAABBDimensions(const glModel*, AABBDimensions&, unsigned long);
 void Fresnelify(glModelPacket*, eGLView);
 void DrawBallShadow(const nlVector3&, const BallShadowParams&, bool);
 
-class DrawableModel
+class DrawableModel : public DrawableObject
 {
 public:
-    void DrawPlanarShadow();
-    void GetAABBDimensions(AABBDimensions&, bool) const;
-    void Clone() const;
-    void Draw();
+    /* 0x04 */ virtual ~DrawableModel();
+    /* 0x08 */ virtual void Clone() const;
+    /* 0x0C */ virtual void Draw();
+    /* 0x10 */ virtual void DrawPlanarShadow();
+    /* 0x14 */ virtual bool IsDrawableModel();
+    /* 0x18 */ virtual DrawableModel* AsDrawableModel();
+    /* 0x1C */ virtual void GetAABBDimensions(AABBDimensions&, bool) const;
+
     void DrawModel(const nlMatrix4&);
-    ~DrawableModel();
-    void IsDrawableModel();
-    void AsDrawableModel();
+
+    /* 0x9C */ glModel* m_pModel;
+    /* 0xA0 */ GLShadowVolume* m_pShadowVolume;
+    /* 0xA4 */ bool m_bVertexAnimated;
+    /* 0xA8 */ AABBDimensions* pAABBDimensions;
 };
 
-class DrawableShadow
+class DrawableShadow : public DrawableObject
 {
 public:
-    void Draw();
-    ~DrawableShadow();
+    /* 0x04 */ virtual ~DrawableShadow();
+    /* 0x0C */ virtual void Draw();
+
+    /* 0x9C */ glModel* m_pModel;
 };
 
 // class nlAVLTreeSlotPool<unsigned long, AABBDimensions, DefaultKeyCompare<unsigned long>>

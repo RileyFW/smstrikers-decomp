@@ -293,8 +293,8 @@ void glViewAttachPacket(eGLView view, const glModelPacket* packet)
 {
     glModel model;
     memset(&model, 0, 0x10);
-    model.m_count = 1;
-    model.m_packets = (glModelPacket*)packet;
+    model.numPackets = 1;
+    model.packets = (glModelPacket*)packet;
 
     glView* view_ptr = views[view];
     view_ptr->renderList->AttachModel(&model, 0);

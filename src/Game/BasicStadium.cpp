@@ -7,6 +7,10 @@
 #include "Game/Render/Presentation.h"
 #include "Game/Render/StaticModelExplodable.h"
 #include "Game/Render/AnimatedModelExplodable.h"
+#include "Game/WorldTriggers.h"
+
+#include "Game/Field.h"
+#include "Game/Drawable/DrawableModel.h"
 
 #include "NL/nlString.h"
 #include "NL/nlPrint.h"
@@ -17,9 +21,9 @@
 
 // extern WorldLoader TheWorldLoader;
 extern bool g_GoalLightEnabled;
-extern float g_fCloudRotationTime;
-extern float g_fSkyboxRotationTime;
-extern EventManager* g_pEventManager;
+float g_fSkyboxRotationTime = 1420.0f;
+float g_fCloudRotationTime = 720.0f;
+EventManager* g_pEventManager = nullptr;
 
 char szBasicStadiumName[0x40];
 
@@ -32,6 +36,11 @@ u32 uNetHelperHashID;
 u32 uFieldHelperHashID;
 u32 uPenaltyHelperHashID;
 BasicStadium* pBasicStadiumInstance;
+
+static nlMatrix4 mSkyBoxTM;
+static nlMatrix4 mCloudTM;
+
+extern unsigned int nlDefaultSeed;
 
 /**
  * Offset/Address/Size: 0x2D70 | 0x8019EAF0 | size: 0x44
@@ -58,8 +67,8 @@ void BasicStadium::BasicStadiumEventHandler(Event* pEvent, void*)
 BasicStadium::BasicStadium(const char* name)
     : World(name)
 {
-    m_unk13C = NULL;
-    m_unk140 = 0;
+    m_CameraFlashPositions = NULL;
+    m_NumCameraFlashPositions = 0;
     m_fSkyboxRotationAng = 0.0f;
     m_fCloudRotationAng = 0.0f;
     m_bCameraFlashesEnabled = false;
@@ -112,9 +121,9 @@ BasicStadium::~BasicStadium()
 
     delete mpNPCManager;
 
-    if (m_unk13C != NULL)
+    if (m_CameraFlashPositions != NULL)
     {
-        delete[] m_unk13C;
+        delete[] m_CameraFlashPositions;
     }
 }
 
@@ -178,17 +187,622 @@ bool BasicStadium::DoLoad()
  */
 void BasicStadium::DoInitialize()
 {
+    DrawableObject* pObject;
+    char szTemp1[256];
+    char szTemp2[256];
+
+    // int counter; // r28
+    // unsigned char keepLooking; // r29
+    // class DrawableModel * model; // r0
+    // struct glModel * pGlModel; // r30
+    // struct glModelPacket * pPacket; // r26
+    // class HelperObject * pFieldHelper; // r0
+    // class Config config; // r1+0x3C
+    // char szTemp[256]; // r1+0x248
+    // enum eStadiumID stadiumid; // r28
+    // class BasicString terrain; // r1+0x20
+    // class Config config; // r1+0x30
+    // char szTemp[256]; // r1+0x148
+    // class Config config; // r1+0x24
+    // char szTemp[256]; // r1+0x48
+    // class HelperObject * pPenBoxHelper; // r0
+    // const char * flashString; // r28
+    // class HelperObject * pHelper; // r26
+    // const class DrawableObject * ball; // r28
+    // int i; // r1+0x1C
+    // class DrawableObject * extraBall; // r27
+    // class BasicString name; // r1+0x18
+    // unsigned long hash; // r4
+
     FindDrawableObject(nlStringLowerHash("gameplay/ball"));
     m_pSkyboxObject = FindDrawableObject(uSkyBoxHashID);
     m_pCloudsObject = FindDrawableObject(uCloudsHashID);
-}
 
+    if (m_pSkyboxObject != NULL)
+    {
+        mSkyBoxTM = m_pSkyboxObject->GetWorldMatrix();
+    }
+
+    if (m_pCloudsObject != NULL)
+    {
+        mCloudTM = m_pCloudsObject->GetWorldMatrix();
+    }
+
+    pObject = FindDrawableObject(nlStringLowerHash("gameplay/greenshell"));
+    pObject->m_uObjectFlags &= 0xFFFFFFFE;
+    pObject = FindDrawableObject(nlStringLowerHash("gameplay/redshell"));
+    pObject->m_uObjectFlags &= 0xFFFFFFFE;
+    pObject = FindDrawableObject(nlStringLowerHash("gameplay/mushroom"));
+    pObject->m_uObjectFlags &= 0xFFFFFFFE;
+    pObject = FindDrawableObject(nlStringLowerHash("gameplay/banana"));
+    pObject->m_uObjectFlags &= 0xFFFFFFFE;
+    pObject = FindDrawableObject(nlStringLowerHash("gameplay/blueshell"));
+    pObject->m_uObjectFlags &= 0xFFFFFFFE;
+    pObject = FindDrawableObject(nlStringLowerHash("gameplay/spikeshell"));
+    pObject->m_uObjectFlags &= 0xFFFFFFFE;
+    pObject = FindDrawableObject(nlStringLowerHash("gameplay/bobomb"));
+    pObject->m_uObjectFlags &= 0xFFFFFFFE;
+    pObject = FindDrawableObject(nlStringLowerHash("gameplay/star"));
+    pObject->m_uObjectFlags &= 0xFFFFFFFE;
+
+    int var_r28 = 1;
+    int var_r29 = 1;
+loop_11:
+    if (var_r29 != 0)
+    {
+        char szTemp1[256];
+        char szTemp2[256];
+
+        nlSNPrintf(szTemp1, 0x100, "/InvisiblePoly0%d", var_r28);
+        nlStrNCat<char>(szTemp2, m_szBaseName, szTemp1, 0x100);
+        pObject = FindDrawableObject(nlStringLowerHash(szTemp2)); // temp_r3_13
+        if (pObject != NULL)
+        {
+            DrawableModel* model = pObject->AsDrawableModel(); // temp_ret_3
+            glModel* pGlModel = model->m_pModel;               // temp_r30
+            glModelPacket* pPacket = pGlModel->packets;        // var_r26
+            for (int i = 0; i < pGlModel->numPackets; i++)
+            {
+                glSetRasterState(pPacket->state.raster, GLS_DepthWrite, 1);
+                glSetRasterState(pPacket->state.raster, GLS_AlphaTest, 0);
+                glSetRasterState(pPacket->state.raster, GLS_AlphaBlend, 1);
+                pPacket++;
+            }
+            var_r28 += 1;
+        }
+        else
+        {
+            var_r29 = 0;
+        }
+        goto loop_11;
+    }
+
+    u32 hash = nlStringLowerHash("gameplay/ball");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("wario_stadium/WarioNet05");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("wario_stadium/WarioNet01");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("wario_stadium/Goal_Lights_01");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("wario_stadium/Goal_Lights_02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("wario_stadium/WarioNet_Reflect_01");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("wario_stadium/WarioNet_Reflect_02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("wario_stadium/WarioNet_Reflect_03");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("wario_stadium/WarioNet_Reflect_04");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("mario_stadium/MarioNet04");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("mario_stadium/MarioNet05");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("yoshi_stadium/Net04");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("yoshi_stadium/Net05");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("DK_Daisy/Goal_Front_01");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("DK_Daisy/Goal_Front_02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("DK_Daisy/GoldGoal_01");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("DK_Daisy/GoldGoal_02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("DK_Daisy/line01");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("DK_Daisy/line02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("DK_Daisy/line03");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("DK_Daisy/line04");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/goal01");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/goal05");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/posts_02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/posts_03");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/posts_shadow");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/posts_shadowed_02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_01");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_03");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_04");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_05");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_06");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_07");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_08");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_09");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_10");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_11");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_12");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_13");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_14");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_15");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_16");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_17");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_18");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_19");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("The_Palace/Rebar_20");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Forbidden_Dome/Goalpost_04");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Forbidden_Dome/Goalpost_05");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Forbidden_Dome/Net_Front_02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Forbidden_Dome/Net_Front_05");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Forbidden_Dome/Net_Front_06");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Forbidden_Dome/Net_Front_07");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/goal01");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/goal02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/Goalballs01");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/Goalballs02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/goal_glass01");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/goal_glass02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/object668");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/object669");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/object670");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/object671");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/object672");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/object673");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/Laser01");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    hash = nlStringLowerHash("Super_Stadium/Laser02");
+    pObject = FindDrawableObject(hash);
+    if (pObject != NULL)
+    {
+        AddToHyperSTSDrawables(hash, pObject->AsDrawableModel());
+    }
+
+    HelperObject* pFieldHelper = FindHelperObject(uFieldHelperHashID); // temp_r3_148
+    if (pFieldHelper != NULL)
+    {
+        cField::SetFieldDimensions(pFieldHelper->m_worldMatrix.f.m41, pFieldHelper->m_worldMatrix.f.m42, 0.0f);
+        // cField::SetFieldDimensions(pFieldHelper->m_worldMatrix.m[3][0], pFieldHelper->m_worldMatrix.m[3][1], 0.0f);
+    }
+}
 /**
  * Offset/Address/Size: 0x8C | 0x8019BE0C | size: 0x25C
  */
-void BasicStadium::Update(float)
+void BasicStadium::Update(float dt)
 {
-    // TODO:
+    nlMatrix4 mWorld;
+    nlMatrix4 mRot;
+
+    World::Update(dt);
+
+    m_fSkyboxRotationAng += dt * (6.2831855f / g_fSkyboxRotationTime);
+    m_fCloudRotationAng += dt * (6.2831855f / g_fCloudRotationTime);
+
+    if (m_fSkyboxRotationAng > 6.2831855f)
+    {
+        m_fSkyboxRotationAng -= 6.2831855f;
+    }
+
+    if (m_fCloudRotationAng > 6.2831855f)
+    {
+        m_fCloudRotationAng -= 6.2831855f;
+    }
+
+    if (m_pSkyboxObject != NULL)
+    {
+        nlMakeRotationMatrixZ(mRot, m_fSkyboxRotationAng);
+        nlMultMatrices(mWorld, mRot, mSkyBoxTM);
+        m_pSkyboxObject->m_worldMatrix = mWorld;
+    }
+
+    if (m_pCloudsObject != NULL)
+    {
+        nlMakeRotationMatrixZ(mRot, m_fCloudRotationAng);
+        nlMultMatrices(mWorld, mRot, mCloudTM);
+        m_pCloudsObject->m_worldMatrix = mWorld;
+    }
+
+    if (m_bCameraFlashesEnabled)
+    {
+        if (m_NumCameraFlashPositions != 0)
+        {
+            u32 randomValue = nlRandom(m_NumCameraFlashPositions, &nlDefaultSeed);
+            m_fTimeUntilNextCameraFlash -= dt;
+            if (m_fTimeUntilNextCameraFlash < 0.0f)
+            {
+                EmitCameraFlash(m_CameraFlashPositions[randomValue]);
+                m_fTimeUntilNextCameraFlash = 0.01f + nlRandomf(0.05f, &nlDefaultSeed);
+            }
+        }
+    }
 }
 
 /**
