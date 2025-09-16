@@ -54,9 +54,11 @@ void Config::Set(const char*, int)
 /**
  * Offset/Address/Size: 0x1F34 | 0x801D4B98 | size: 0xB8
  */
-SetTagValuePair* Config::FindTvp(const char*)
+TagValuePair& Config::FindTvp(const char*)
 {
-    return NULL;
+    FORCE_DONT_INLINE;
+    static TagValuePair defaultTvp = { nullptr, _BOOL, nullptr };
+    return defaultTvp;
 }
 
 /**

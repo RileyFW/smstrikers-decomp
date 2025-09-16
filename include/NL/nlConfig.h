@@ -12,12 +12,19 @@ enum Type
     _STRING = 3,
 };
 
-class SetTagValuePair
+union Value
 {
-public:
-    /* 0x00 */ char* m_unk_0x00; // tag
-    /* 0x04 */ Type m_unk_0x04;  // type
-    /* 0x08 */ char* m_unk_0x08; // value
+    /* 0x0 */ const char* s;
+    /* 0x0 */ int i;
+    /* 0x0 */ bool b;
+    /* 0x0 */ float f;
+};
+
+struct TagValuePair
+{
+    /* 0x00 */ const char* tag;
+    /* 0x04 */ Type type;
+    /* 0x08 */ Value value;
 };
 
 class Config
@@ -36,7 +43,7 @@ public:
     void Set(const char*, float);
     void Set(const char*, bool);
     void Set(const char*, int);
-    SetTagValuePair* FindTvp(const char*);
+    TagValuePair& FindTvp(const char*);
     bool IsBool(const char*, bool&) const;
     bool Exists(const char*) const;
     void LoadFromFile(const char*);
@@ -45,29 +52,29 @@ public:
     T Get(const char* key, T defaultValue)
     {
         FORCE_DONT_INLINE;
-        SetTagValuePair* tvp = FindTvp(key);
-        if (tvp->m_unk_0x00 == NULL)
+        TagValuePair& tvp = FindTvp(key);
+        if (tvp.tag == NULL)
         {
             Set(key, defaultValue);
             return defaultValue;
         }
 
         T val;
-        if (tvp->m_unk_0x04 == 0)
+        if (tvp.type == _BOOL)
         {
-            val = LexicalCast<T, bool>(*(const bool*)&tvp->m_unk_0x08);
+            val = LexicalCast<T, bool>(tvp.value.b);
         }
-        else if (tvp->m_unk_0x04 == 1)
+        else if (tvp.type == _INT)
         {
-            val = LexicalCast<T, int>(*(const int*)&tvp->m_unk_0x08);
+            val = LexicalCast<T, int>(tvp.value.i);
         }
-        else if (tvp->m_unk_0x04 == 2)
+        else if (tvp.type == _FLOAT)
         {
-            val = LexicalCast<T, float>(*(const float*)&tvp->m_unk_0x08);
+            val = LexicalCast<T, float>(tvp.value.f);
         }
-        else if (tvp->m_unk_0x04 == 3)
+        else if (tvp.type == _STRING)
         {
-            val = LexicalCast<T, const char*>(*(const char**)&tvp->m_unk_0x08);
+            val = LexicalCast<T, const char*>(tvp.value.s);
         }
         else
         {
@@ -90,58 +97,6 @@ public:
     // Set<BasicString<char, Detail::TempStringAllocator>>(const char*, BasicString<char, Detail::TempStringAllocator>);
 };
 
-/* Config::Get<float> (char const *, float) */
-// float Config::Get<float>(char const* key, float defaultValue)
-// {
-//     s32 temp_r0;
-//     void* temp_r3;
-
-//     // temp_r3 = FindTvp__6ConfigFPCc(this, arg0);
-//     SetTagValuePair* tvp = FindTvp(key);
-//     if (tvp->m_unk_0x00 == NULL)
-//     {
-//         Set(key, defaultValue);
-//         return defaultValue;
-//     }
-
-//     // temp_r0 = temp_r3->unk4;
-//     // switch (temp_r0)
-//     // { /* irregular */
-//     // case 0:
-//     //     return LexicalCast<float, bool>(temp_r3 + 8);
-//     // case 1:
-//     //     return LexicalCast<float, int>(temp_r3 + 8);
-//     // case 2:
-//     //     return LexicalCast<float, float>(temp_r3 + 8);
-//     // case 3:
-//     //     return LexicalCast<float, const char*>(temp_r3 + 8);
-//     // default:
-//     //     return 0.0f;
-//     // }
-//     float val;
-//     if (tvp->m_unk_0x04 == 0)
-//     {
-//         val = LexicalCast<float, bool>(*(const bool*)&tvp->m_unk_0x08);
-//     }
-//     else if (tvp->m_unk_0x04 == 1)
-//     {
-//         val = LexicalCast<float, int>(*(const int*)&tvp->m_unk_0x08);
-//     }
-//     else if (tvp->m_unk_0x04 == 2)
-//     {
-//         val = LexicalCast<float, float>(*(const float*)&tvp->m_unk_0x08);
-//     }
-//     else if (tvp->m_unk_0x04 == 3)
-//     {
-//         val = LexicalCast<float, const char*>(*(const char**)&tvp->m_unk_0x08);
-//     }
-//     else
-//     {
-//         val = 0.f;
-//     }
-//     return val;
-// }
-
 // class SetTagValuePair
 // {
 // public:
@@ -160,5 +115,104 @@ public:
 //     Detail::TempStringAllocator>&) const; BasicString<char,
 //     Detail::TempStringAllocator>::AppendInPlace<Detail::TempStringAllocator>(const BasicString<char, Detail::TempStringAllocator>&);
 // };
+
+inline float GetConfigFloat(Config& cfg, const char* key, float defaultValue)
+{
+    TagValuePair& tvp = cfg.FindTvp(key);
+    if (tvp.tag == NULL)
+    {
+        cfg.Set(key, defaultValue);
+        return defaultValue;
+    }
+
+    float val;
+    if (tvp.type == _BOOL)
+    {
+        val = LexicalCast<float, bool>(tvp.value.b);
+    }
+    else if (tvp.type == _INT)
+    {
+        val = LexicalCast<float, int>(tvp.value.i);
+    }
+    else if (tvp.type == _FLOAT)
+    {
+        val = LexicalCast<float, float>(tvp.value.f);
+    }
+    else if (tvp.type == _STRING)
+    {
+        val = LexicalCast<float, const char*>(tvp.value.s);
+    }
+    else
+    {
+        val = 0.f;
+    }
+    return val;
+}
+
+inline s32 GetConfigInt(Config& cfg, const char* key, s32 defaultValue)
+{
+    TagValuePair& tvp = cfg.FindTvp(key);
+    if (tvp.tag == NULL)
+    {
+        cfg.Set(key, (int)defaultValue);
+        return defaultValue;
+    }
+
+    int val;
+    if (tvp.type == _BOOL)
+    {
+        val = LexicalCast<int, bool>(tvp.value.b);
+    }
+    else if (tvp.type == _INT)
+    {
+        val = LexicalCast<int, int>(tvp.value.i);
+    }
+    else if (tvp.type == _FLOAT)
+    {
+        val = LexicalCast<int, float>(tvp.value.f);
+    }
+    else if (tvp.type == _STRING)
+    {
+        val = LexicalCast<int, const char*>(tvp.value.s);
+    }
+    else
+    {
+        val = 0;
+    }
+    return val;
+}
+
+inline bool GetConfigBool(Config& cfg, const char* key, bool defaultValue)
+{
+    TagValuePair& tvp = cfg.FindTvp(key);
+    bool val;
+    if (tvp.tag == NULL)
+    {
+        cfg.Set(key, defaultValue);
+        return defaultValue;
+    }
+
+    if (tvp.type == _BOOL)
+    {
+        val = LexicalCast<bool, bool>(tvp.value.b);
+    }
+    else if (tvp.type == _INT)
+    {
+        val = LexicalCast<bool, int>(tvp.value.i);
+    }
+    else if (tvp.type == _FLOAT)
+    {
+        val = LexicalCast<bool, float>(tvp.value.f);
+    }
+    else if (tvp.type == _STRING)
+    {
+        val = LexicalCast<bool, const char*>(tvp.value.s);
+    }
+    else
+    {
+        val = 0.f;
+    }
+    return val;
+}
 
 #endif // _NLCONFIG_H_

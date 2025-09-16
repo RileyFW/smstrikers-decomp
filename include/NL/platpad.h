@@ -16,8 +16,8 @@ class cPlatPad : public cGlobalPad
 public:
     static bool m_bDisableRumble;
 
-    cPlatPad()
-        : cGlobalPad(0) { };
+    cPlatPad(int padIndex)
+        : cGlobalPad(padIndex) { };
     virtual ~cPlatPad();
 
     /* 0x0C */ virtual bool IsConnected();

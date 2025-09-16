@@ -1,9 +1,15 @@
+#pragma pool_data off
+
 #include "Game/TestTask.h"
 
 #include "NL/nlDebugFile.h"
 #include "NL/nlMemory.h"
 #include "NL/nlConfig.h"
 #include "types.h"
+
+static const char* testLog;
+static const char* smokeTestSuccessOutput;     // size: 0x4, address: 0x80396644
+static const char* frameRateTestSuccessOutput; // size: 0x4, address: 0x80396648
 
 /**
  * Offset/Address/Size: 0xB4C | 0x8016D448 | size: 0x44
@@ -24,168 +30,15 @@ TestTask::TestTask()
  */
 void TestTask::Initialize()
 {
-    // Get global config
-    Config& config = Config::Global();
+    mTestTimeOut = GetConfigFloat(Config::Global(), "test/time_out_sec", 0.0f);
+    mRunUnitTests = GetConfigBool(Config::Global(), "test/run_unit_tests", false);
+    mRunSmokeTest = GetConfigBool(Config::Global(), "test/run_smoke_test", false);
+    mRunFrameRateTest = GetConfigBool(Config::Global(), "test/run_frame_rate_test", false);
+    mMinimumFrameRate = GetConfigFloat(Config::Global(), "test/minimum_frame_rate", 20.0f);
 
-    // Load test timeout value
-    SetTagValuePair* tvp = config.FindTvp("test/time_out_sec");
-    float timeoutValue = 0.0f;
-    if (tvp->m_unk_0x00 == nullptr)
+    if (GetConfigBool(Config::Global(), "test/enable", false))
     {
-        config.Set("test/time_out_sec", 0.0f);
-        timeoutValue = 0.0f;
-    }
-    else
-    {
-        switch (tvp->m_unk_0x04)
-        {
-        case 0: // bool
-            timeoutValue = LexicalCast<float, bool>(*(bool*)&tvp->m_unk_0x08);
-            break;
-        case 1: // int
-            timeoutValue = LexicalCast<float, int>(*(int*)&tvp->m_unk_0x08);
-            break;
-        case 2: // float
-            timeoutValue = LexicalCast<float, float>(*(float*)&tvp->m_unk_0x08);
-            break;
-        case 3: // string
-            timeoutValue = LexicalCast<float, const char*>(*(const char**)&tvp->m_unk_0x08);
-            break;
-        default:
-            timeoutValue = 0.0f;
-            break;
-        }
-    }
-    mTestTimeOut = timeoutValue;
-
-    // Load run unit tests flag
-    tvp = config.FindTvp("test/run_unit_tests");
-    bool runUnitTests = false;
-    if (tvp->m_unk_0x00 == nullptr)
-    {
-        config.Set("test/run_unit_tests", false);
-        runUnitTests = false;
-    }
-    else
-    {
-        switch (tvp->m_unk_0x04)
-        {
-        case 0: // bool
-            runUnitTests = LexicalCast<bool, bool>(*(bool*)&tvp->m_unk_0x08);
-            break;
-        case 1: // int
-            runUnitTests = LexicalCast<bool, int>(*(int*)&tvp->m_unk_0x08);
-            break;
-        case 2: // float
-            runUnitTests = LexicalCast<bool, float>(*(float*)&tvp->m_unk_0x08);
-            break;
-        case 3: // string
-            runUnitTests = LexicalCast<bool, const char*>(*(const char**)&tvp->m_unk_0x08);
-            break;
-        default:
-            runUnitTests = false;
-            break;
-        }
-    }
-    mRunUnitTests = runUnitTests;
-
-    // Load run smoke test flag
-    tvp = config.FindTvp("test/run_smoke_test");
-    bool runSmokeTest = false;
-    if (tvp->m_unk_0x00 == nullptr)
-    {
-        config.Set("test/run_smoke_test", false);
-        runSmokeTest = false;
-    }
-    else
-    {
-        switch (tvp->m_unk_0x04)
-        {
-        case 0: // bool
-            runSmokeTest = LexicalCast<bool, bool>(*(bool*)&tvp->m_unk_0x08);
-            break;
-        case 1: // int
-            runSmokeTest = LexicalCast<bool, int>(*(int*)&tvp->m_unk_0x08);
-            break;
-        case 2: // float
-            runSmokeTest = LexicalCast<bool, float>(*(float*)&tvp->m_unk_0x08);
-            break;
-        case 3: // string
-            runSmokeTest = LexicalCast<bool, const char*>(*(const char**)&tvp->m_unk_0x08);
-            break;
-        default:
-            runSmokeTest = false;
-            break;
-        }
-    }
-    mRunSmokeTest = runSmokeTest;
-
-    // Load run frame rate test flag
-    tvp = config.FindTvp("test/run_frame_rate_test");
-    bool runFrameRateTest = false;
-    if (tvp->m_unk_0x00 == nullptr)
-    {
-        config.Set("test/run_frame_rate_test", false);
-        runFrameRateTest = false;
-    }
-    else
-    {
-        switch (tvp->m_unk_0x04)
-        {
-        case 0: // bool
-            runFrameRateTest = LexicalCast<bool, bool>(*(bool*)&tvp->m_unk_0x08);
-            break;
-        case 1: // int
-            runFrameRateTest = LexicalCast<bool, int>(*(int*)&tvp->m_unk_0x08);
-            break;
-        case 2: // float
-            runFrameRateTest = LexicalCast<bool, float>(*(float*)&tvp->m_unk_0x08);
-            break;
-        case 3: // string
-            runFrameRateTest = LexicalCast<bool, const char*>(*(const char**)&tvp->m_unk_0x08);
-            break;
-        default:
-            runFrameRateTest = false;
-            break;
-        }
-    }
-    mRunFrameRateTest = runFrameRateTest;
-
-    // Load minimum frame rate value
-    tvp = config.FindTvp("test/minimum_frame_rate");
-    float minimumFrameRate = 20.0f;
-    if (tvp->m_unk_0x00 == nullptr)
-    {
-        config.Set("test/minimum_frame_rate", 20.0f);
-        minimumFrameRate = 20.0f;
-    }
-    else
-    {
-        switch (tvp->m_unk_0x04)
-        {
-        case 0: // bool
-            minimumFrameRate = LexicalCast<float, bool>(*(bool*)&tvp->m_unk_0x08);
-            break;
-        case 1: // int
-            minimumFrameRate = LexicalCast<float, int>(*(int*)&tvp->m_unk_0x08);
-            break;
-        case 2: // float
-            minimumFrameRate = LexicalCast<float, float>(*(float*)&tvp->m_unk_0x08);
-            break;
-        case 3: // string
-            minimumFrameRate = LexicalCast<float, const char*>(*(const char**)&tvp->m_unk_0x08);
-            break;
-        default:
-            minimumFrameRate = 0.0f;
-            break;
-        }
-    }
-    mMinimumFrameRate = minimumFrameRate;
-
-    // Open debug log file if enabled
-    if (mRunFrameRateTest)
-    {
-        mTestLog = nlOpenFileDebug("testLog__22@unnamed@TestTask_cpp@", false, false);
+        mTestLog = nlOpenFileDebug(testLog, false, false);
     }
 }
 
@@ -225,9 +78,6 @@ void TestTask::RunSmokeTest(float)
     {
         return;
     }
-
-    // Get the smoke test success output filename
-    const char* smokeTestSuccessOutput = "smokeTestSuccessOutput__22@unnamed@TestTask_cpp@";
 
     // Open debug file for writing
     void* debugFile = nlOpenFileDebug(smokeTestSuccessOutput, false, false);
@@ -270,10 +120,10 @@ void TestTask::RunSmokeTest(float)
     // Get global config and look up a specific value
     Config& config = Config::Global();
     const char* configKey = "test/time_out_sec ";
-    SetTagValuePair* tvp = config.FindTvp(configKey);
+    TagValuePair& tvp = config.FindTvp(configKey);
 
     float configValue = 0.0f;
-    if (tvp->m_unk_0x00 == nullptr)
+    if (tvp.tag == nullptr)
     {
         // Set default value if not found
         config.Set(configKey, 1.0f);
@@ -282,19 +132,19 @@ void TestTask::RunSmokeTest(float)
     else
     {
         // Convert the config value based on its type
-        switch (tvp->m_unk_0x04)
+        switch (tvp.type)
         {
         case 0: // bool
-            configValue = LexicalCast<float, bool>(*(bool*)&tvp->m_unk_0x08);
+            configValue = LexicalCast<float, bool>(*(bool*)&tvp.value);
             break;
         case 1: // int
-            configValue = LexicalCast<float, int>(*(int*)&tvp->m_unk_0x08);
+            configValue = LexicalCast<float, int>(*(int*)&tvp.value);
             break;
         case 2: // float
-            configValue = LexicalCast<float, float>(*(float*)&tvp->m_unk_0x08);
+            configValue = LexicalCast<float, float>(*(float*)&tvp.value);
             break;
         case 3: // string
-            configValue = LexicalCast<float, const char*>(*(const char**)&tvp->m_unk_0x08);
+            configValue = LexicalCast<float, const char*>(*(const char**)&tvp.value);
             break;
         default:
             configValue = 0.0f;
@@ -430,10 +280,6 @@ void TestTask::RunFrameRateTest(float dt)
     // Check if test timeout has expired and frame rate test hasn't failed yet
     if (mTestTimeOut <= 0.0f && !mFrameRateTestFailure)
     {
-        // Get the success output filename
-        const char* frameRateTestSuccessOutput = "frameRateTestSuccessOutput__22@unnamed@TestTask_cpp@";
-
-        // Open debug file for writing
         void* debugFile = nlOpenFileDebug(frameRateTestSuccessOutput, false, false);
         if (debugFile)
         {
