@@ -1,6 +1,7 @@
 #ifndef _GAMEINFO_H_
 #define _GAMEINFO_H_
 
+#include "Game/FE/feInput.h"
 #include "types.h"
 
 #include "NL/nlSingleton.h"
@@ -350,15 +351,16 @@ public:
     // struct Cup mSuperBowserCupSeries;             // offset 0x23FC, size 0x930
     // struct Knockout mSuperBowserCupKnockout;      // offset 0x2D2C, size 0x184
     // int mCheckpointTeamPoints[9];                 // offset 0x2EB0, size 0x24
-    u8 _pad0x04[0x2ED0];
+    int mCheckpointTeamPoints[9]; // offset 0x2EB0, size 0x24
+    u8 _pad0x04[0x2EAC];
     /* 0x2ED4*/ UserInfo mUserInfo; // offset 0x2ED4, size 0x113C
-                                    // class CustomTournament mCustomTournamentInfo; // offset 0x4010, size 0x944
-                                    // enum eGameModes mCurrentMode;                 // offset 0x4954, size 0x4
-                                    // unsigned char mDemoEnabled;                   // offset 0x4958, size 0x1
-                                    // unsigned char mIsInStrikers101Mode;           // offset 0x4959, size 0x1
-                                    // unsigned char mGoToChooseCaptains;            // offset 0x495A, size 0x1
-                                    // enum eFEINPUT_PAD mMainUserPadNumber;         // offset 0x495C, size 0x4
-    u8 _pad0x4010[0x950];
+    // class CustomTournament mCustomTournamentInfo; // offset 0x4010, size 0x944
+    u8 _padCustomTourtament[0x944];
+    eGameModes mCurrentMode;         // offset 0x4954, size 0x4
+    bool mDemoEnabled;               // offset 0x4958, size 0x1
+    bool mIsInStrikers101Mode;       // offset 0x4959, size 0x1
+    bool mGoToChooseCaptains;        // offset 0x495A, size 0x1
+    eFEINPUT_PAD mMainUserPadNumber; // offset 0x495C, size 0x4
     /* 0x4960 */ BaseCup* mCurrentCup;
     /* 0x4964 */ BaseCup* mPreviousCup;
     // struct PlayerStats mUserStats[4];             // offset 0x4968, size 0xD0

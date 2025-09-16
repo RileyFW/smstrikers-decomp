@@ -3,6 +3,8 @@
 
 // void nlStrLen<unsigned short>(const unsigned short*);
 
+#include "Game/FE/feRender.h"
+#include "Game/FE/tlComponentInstance.h"
 class ButtonComponent
 {
 public:
@@ -15,6 +17,12 @@ public:
     void SetState(ButtonComponent::ButtonState);
     ~ButtonComponent();
     ButtonComponent();
+
+    TLComponentInstance* mButtonInstance; // offset 0x0, size 0x4
+    TLImageInstance* mButtonImages[3];    // offset 0x4, size 0xC
+    TLTextInstance* mButtonLabels[3];     // offset 0x10, size 0xC
+    int mNumButtons;                      // offset 0x1C, size 0x4
+    bool mAlreadyCentred;                 // offset 0x20, size 0x1
 };
 
 // class FontCharString

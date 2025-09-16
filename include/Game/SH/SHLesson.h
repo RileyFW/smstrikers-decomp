@@ -8,7 +8,7 @@ class LessonScene : public BaseSceneHandler
 {
 public:
     LessonScene();
-    ~LessonScene();
+    virtual ~LessonScene();
     virtual void SceneCreated();
     virtual void Update(float);
     static void SetLesson(int);

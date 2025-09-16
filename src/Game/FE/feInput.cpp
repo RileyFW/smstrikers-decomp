@@ -26,7 +26,7 @@ void FEInput::Update(float)
 /**
  * Offset/Address/Size: 0x61C | 0x8020F028 | size: 0x30
  */
-void FEInput::HasInputLock(BaseSceneHandler*) const
+bool FEInput::HasInputLock(BaseSceneHandler*) const
 {
 }
 
