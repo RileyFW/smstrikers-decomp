@@ -18,14 +18,6 @@ enum eDifficultyID
 };
 
 template <typename T>
-class nlList
-{
-public:
-    T* m_pStart; // offset 0x0, size 0x4
-    T* m_pEnd;   // offset 0x4, size 0x4
-}; // total size: 0x8
-
-template <typename T>
 T* nlListRemoveStart(T** head, T** tail)
 {
     T* current_node = *head;
@@ -56,6 +48,24 @@ void nlListAddEnd(T** head, T** tail, T* node)
     *tail = node;
     *head = node;
 }
+
+template <typename T>
+class nlList
+{
+public:
+    ~nlList()
+    {
+        T* node;
+        do
+        {
+            node = nlListRemoveStart<T>(&m_pStart, &m_pEnd);
+            ::operator delete(node);
+        } while (m_pStart != 0);
+    }
+
+    T* m_pStart; // offset 0x0, size 0x4
+    T* m_pEnd;   // offset 0x4, size 0x4
+}; // total size: 0x8
 
 class SkillTweak
 {

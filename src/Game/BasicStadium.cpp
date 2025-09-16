@@ -7,6 +7,7 @@
 #include "Game/Render/Presentation.h"
 #include "Game/Render/StaticModelExplodable.h"
 #include "Game/Render/AnimatedModelExplodable.h"
+#include "Game/WorldTriggers.h"
 
 #include "NL/nlString.h"
 #include "NL/nlPrint.h"
@@ -17,9 +18,9 @@
 
 // extern WorldLoader TheWorldLoader;
 extern bool g_GoalLightEnabled;
-extern float g_fCloudRotationTime;
-extern float g_fSkyboxRotationTime;
-extern EventManager* g_pEventManager;
+float g_fSkyboxRotationTime = 1420.0f;
+float g_fCloudRotationTime = 720.0f;
+EventManager* g_pEventManager = nullptr;
 
 char szBasicStadiumName[0x40];
 
@@ -32,6 +33,11 @@ u32 uNetHelperHashID;
 u32 uFieldHelperHashID;
 u32 uPenaltyHelperHashID;
 BasicStadium* pBasicStadiumInstance;
+
+static nlMatrix4 mSkyBoxTM;
+static nlMatrix4 mCloudTM;
+
+extern unsigned int nlDefaultSeed;
 
 /**
  * Offset/Address/Size: 0x2D70 | 0x8019EAF0 | size: 0x44
@@ -58,8 +64,8 @@ void BasicStadium::BasicStadiumEventHandler(Event* pEvent, void*)
 BasicStadium::BasicStadium(const char* name)
     : World(name)
 {
-    m_unk13C = NULL;
-    m_unk140 = 0;
+    m_CameraFlashPositions = NULL;
+    m_NumCameraFlashPositions = 0;
     m_fSkyboxRotationAng = 0.0f;
     m_fCloudRotationAng = 0.0f;
     m_bCameraFlashesEnabled = false;
@@ -112,9 +118,9 @@ BasicStadium::~BasicStadium()
 
     delete mpNPCManager;
 
-    if (m_unk13C != NULL)
+    if (m_CameraFlashPositions != NULL)
     {
-        delete[] m_unk13C;
+        delete[] m_CameraFlashPositions;
     }
 }
 
@@ -186,9 +192,53 @@ void BasicStadium::DoInitialize()
 /**
  * Offset/Address/Size: 0x8C | 0x8019BE0C | size: 0x25C
  */
-void BasicStadium::Update(float)
+void BasicStadium::Update(float dt)
 {
-    // TODO:
+    nlMatrix4 mWorld;
+    nlMatrix4 mRot;
+
+    World::Update(dt);
+
+    m_fSkyboxRotationAng += dt * (6.2831855f / g_fSkyboxRotationTime);
+    m_fCloudRotationAng += dt * (6.2831855f / g_fCloudRotationTime);
+
+    if (m_fSkyboxRotationAng > 6.2831855f)
+    {
+        m_fSkyboxRotationAng -= 6.2831855f;
+    }
+
+    if (m_fCloudRotationAng > 6.2831855f)
+    {
+        m_fCloudRotationAng -= 6.2831855f;
+    }
+
+    if (m_pSkyboxObject != NULL)
+    {
+        nlMakeRotationMatrixZ(mRot, m_fSkyboxRotationAng);
+        nlMultMatrices(mWorld, mRot, mSkyBoxTM);
+        m_pSkyboxObject->m_worldMatrix = mWorld;
+    }
+
+    if (m_pCloudsObject != NULL)
+    {
+        nlMakeRotationMatrixZ(mRot, m_fCloudRotationAng);
+        nlMultMatrices(mWorld, mRot, mCloudTM);
+        m_pCloudsObject->m_worldMatrix = mWorld;
+    }
+
+    if (m_bCameraFlashesEnabled)
+    {
+        if (m_NumCameraFlashPositions != 0)
+        {
+            u32 randomValue = nlRandom(m_NumCameraFlashPositions, &nlDefaultSeed);
+            m_fTimeUntilNextCameraFlash -= dt;
+            if (m_fTimeUntilNextCameraFlash < 0.0f)
+            {
+                EmitCameraFlash(m_CameraFlashPositions[randomValue]);
+                m_fTimeUntilNextCameraFlash = 0.01f + nlRandomf(0.05f, &nlDefaultSeed);
+            }
+        }
+    }
 }
 
 /**
