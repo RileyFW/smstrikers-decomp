@@ -708,74 +708,110 @@ SkillTweaks* SkillTweaks::GetSkillTweaks(int idx)
  */
 void SkillTweaks::Init(eDifficultyID diff, bool blend)
 {
+    bool bNeedToLoadFile = true;
+
     nlStrNCpy<char>((char*)mszFileName, g_sDifficultyFileNames[(int)diff], 0x1F);
 
     if (blend && (int)diff > 1 && (int)diff < 3)
     {
-        SkillTweaks lo;
-        lo.Init((eDifficultyID)1, 0);
-        SkillTweaks hi;
-        hi.Init((eDifficultyID)3, 0);
+        SkillTweaks minmax[2];
+        minmax[0].Init((eDifficultyID)1, 0);
+        minmax[1].Init((eDifficultyID)3, 0);
 
-        float t = (float)(((int)diff) - 1) * 0.5f;
+        // float fPercent = (float)(diff - 1) * 0.5f;
+        float fPercent = (float)(diff - 1) / 2.f;
 
-        SkillTweak* dst = *(SkillTweak**)((char*)this + 0x144);
-        SkillTweak* a = *(SkillTweak**)((char*)&lo + 0x144);
-        SkillTweak* b = *(SkillTweak**)((char*)&hi + 0x144);
+        SkillTweak* dst = mSkillTweaksList.m_pStart;
+        SkillTweak* min = minmax[0].mSkillTweaksList.m_pStart;
+        SkillTweak* max = minmax[1].mSkillTweaksList.m_pStart;
 
-        while (dst && a && b)
+        while (dst)
         {
-            const float va = *a->mpValue;
-            const float vb = *b->mpValue;
-            *dst->mpValue = va + (vb - va) * t;
+            *(dst->mpValue) = *(min->mpValue) + (*(max->mpValue) - *(min->mpValue)) * fPercent;
 
             dst = dst->next;
-            a = a->next;
-            b = b->next;
+            min = min->next;
+            max = max->next;
         }
-        return;
+
+        bNeedToLoadFile = false;
     }
 
-    Config cfg(Config::AllocateWhere_1);
-    cfg.LoadFromFile((const char*)((char*)this + 0x124));
-
-    SkillTweak* it = *(SkillTweak**)((char*)this + 0x144);
-    while (it != 0)
+    if (bNeedToLoadFile)
     {
-        const char* key = (const char*)((char*)it + 0x04);
-        const SetTagValuePair* tvp = cfg.FindTvp(key);
+        Config cfg(Config::AllocateWhere_1);
+        cfg.LoadFromFile((const char*)mszFileName);
 
-        float v;
-        if (tvp == 0)
+        SkillTweak* it = mSkillTweaksList.m_pStart;
+        while (it != 0)
         {
-            v = 0.5f;
-        }
-        else
-        {
-            if (tvp->m_unk_0x04 == 0)
+            // TagValuePair& tvp = cfg.FindTvp(it->mNameInFile);
+
+            // float val;
+            // if (tvp.tag == nullptr)
+            // {
+            //     cfg.Set(it->mNameInFile, 0.5f);
+            //     val = 0.5f;
+            // }
+            // else
+            // {
+            //     if (tvp.type == _BOOL)
+            //     {
+            //         val = LexicalCast<float, bool>(tvp.value.b);
+            //     }
+            //     else if (tvp.type == _INT)
+            //     {
+            //         val = LexicalCast<float, int>(tvp.value.i);
+            //     }
+            //     else if (tvp.type == _FLOAT)
+            //     {
+            //         val = LexicalCast<float, float>(tvp.value.f);
+            //     }
+            //     else if (tvp.type == _STRING)
+            //     {
+            //         val = LexicalCast<float, const char*>(tvp.value.s);
+            //     }
+            //     else
+            //     {
+            //         val = 0.f;
+            //     }
+            // }
+
+            SetTagValuePair* tvp = cfg.FindTvp(it->mNameInFile);
+
+            float val;
+            if (tvp->m_unk_0x00 == nullptr)
             {
-                v = LexicalCast<float, bool>(*(const bool*)&tvp->m_unk_0x08);
-            }
-            else if (tvp->m_unk_0x04 == 1)
-            {
-                v = LexicalCast<float, int>(*(const int*)&tvp->m_unk_0x08);
-            }
-            else if (tvp->m_unk_0x04 == 2)
-            {
-                v = LexicalCast<float, float>(*(const float*)&tvp->m_unk_0x08);
-            }
-            else if (tvp->m_unk_0x04 == 3)
-            {
-                v = LexicalCast<float, const char*>(*(const char**)&tvp->m_unk_0x08);
+                cfg.Set(it->mNameInFile, 0.5f);
+                val = 0.5f;
             }
             else
             {
-                v = 0.0f;
+                if (tvp->m_unk_0x04 == _BOOL)
+                {
+                    val = LexicalCast<float, bool>(*(const bool*)&tvp->m_unk_0x08);
+                }
+                else if (tvp->m_unk_0x04 == _INT)
+                {
+                    val = LexicalCast<float, int>(*(const int*)&tvp->m_unk_0x08);
+                }
+                else if (tvp->m_unk_0x04 == _FLOAT)
+                {
+                    val = LexicalCast<float, float>(*(const float*)&tvp->m_unk_0x08);
+                }
+                else if (tvp->m_unk_0x04 == _STRING)
+                {
+                    val = LexicalCast<float, const char*>(*(const char**)&tvp->m_unk_0x08);
+                }
+                else
+                {
+                    val = 0.f;
+                }
             }
-        }
 
-        *it->mpValue = v;
-        it = it->next;
+            *it->mpValue = val;
+            it = it->next;
+        }
     }
 }
 
