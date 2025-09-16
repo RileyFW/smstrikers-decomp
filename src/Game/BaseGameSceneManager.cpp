@@ -196,23 +196,23 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList sceneType, ScreenMovement
 
     // Get global config and find TVP setting
     Config& config = Config::Global();
-    SetTagValuePair* tvp = config.FindTvp("fev2");
+    TagValuePair& tvp = config.FindTvp("fev2");
 
     // Handle TVP value based on type
-    if (tvp->m_unk_0x04 == 0)
+    if (tvp.type == 0)
     {
         config.Set("fev2", false);
     }
-    else if (tvp->m_unk_0x04 == 1)
+    else if (tvp.type == 1)
     {
         // LexicalCast<b,i>
-        // config->Set("fev2", LexicalCast<bool,int>(tvp->m_unk_0x08));
+        // config->Set("fev2", LexicalCast<bool,int>(tvp.m_unk_0x08));
     }
-    else if (tvp->m_unk_0x04 == 2)
+    else if (tvp.type == 2)
     {
         // LexicalCast<b,f>
     }
-    else if (tvp->m_unk_0x04 == 3)
+    else if (tvp.type == 3)
     {
         // LexicalCast<b,PCc>
     }

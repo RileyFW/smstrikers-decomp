@@ -2,7 +2,7 @@
 
 #include "NL/platpad.h"
 #include "NL/nlConfig.h"
-#include "NL/nlLexicalCast.h"
+
 #include "NL/nlMemory.h"
 
 #include "Game/PadMonkey.h"
@@ -44,47 +44,15 @@ s32 g_pPadRemapArray[40] = {
  */
 void InitPads()
 {
-    Config& conf = Config::Global();
-    SetTagValuePair* tvp = conf.FindTvp("enable_pad_monkey");
+    g_bEnableGamecubePadMonkey = GetConfigBool(Config::Global(), "enable_pad_monkey", false);
 
-    bool enable_pad_monkey = false;
-    if (tvp->m_unk_0x00 == nullptr)
-    {
-        conf.Set("enable_pad_monkey", false);
-        enable_pad_monkey = false;
-    }
-    else
-    {
-        if (tvp->m_unk_0x04 == 0)
-        {
-            enable_pad_monkey = LexicalCast<bool, bool>(tvp->m_unk_0x08);
-        }
-        else if (tvp->m_unk_0x04 == 1)
-        {
-            enable_pad_monkey = LexicalCast<bool, int>(*(int*)tvp->m_unk_0x08);
-        }
-        else if (tvp->m_unk_0x04 == 2)
-        {
-            enable_pad_monkey = LexicalCast<bool, float>(*(float*)tvp->m_unk_0x08);
-        }
-        else if (tvp->m_unk_0x04 == 3)
-        {
-            enable_pad_monkey = LexicalCast<bool, const char*>(*(const char**)tvp->m_unk_0x08);
-        }
-        else
-        {
-            enable_pad_monkey = false;
-        }
-    }
-
-    g_bEnableGamecubePadMonkey = enable_pad_monkey;
     InitPlatPad();
 
     if (!g_bEnableGamecubePadMonkey)
     {
         for (int i = 0; i < 4; i++)
         {
-            cPadManager::m_aPads[i] = new (nlMalloc(0x1C, 8, false)) cPlatPad();
+            cPadManager::m_aPads[i] = new (nlMalloc(0x1C, 8, false)) cPlatPad(i);
         }
     }
     else

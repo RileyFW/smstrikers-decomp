@@ -7,15 +7,6 @@
 
 #include "NL/nlConfig.h"
 
-// extern int LexicalCast<int, float>(const float&);
-// extern int LexicalCast<int, bool>(const bool&);
-// extern int LexicalCast<int, int>(const int&);
-// extern int LexicalCast<int, const char*>(const char* const&);
-// extern float LexicalCast<float, float>(const float&);
-// extern float LexicalCast<float, bool>(const bool&);
-// extern float LexicalCast<float, int>(const int&);
-// extern float LexicalCast<float, const char*>(const char* const&);
-
 f32 g_pTweaks[0x17] = {
     4000.0f,
     25.0f,
@@ -41,72 +32,6 @@ f32 g_pTweaks[0x17] = {
     4000.0f,
     6.0f,
 };
-
-inline float GetConfigFloat(Config& cfg, const char* key, float defaultValue)
-{
-    SetTagValuePair* tvp = cfg.FindTvp(key);
-    if (tvp->m_unk_0x00 == NULL)
-    {
-        cfg.Set(key, defaultValue);
-        return defaultValue;
-    }
-
-    float val;
-    if (tvp->m_unk_0x04 == 0)
-    {
-        val = LexicalCast<float, bool>(*(const bool*)&tvp->m_unk_0x08);
-    }
-    else if (tvp->m_unk_0x04 == 1)
-    {
-        val = LexicalCast<float, int>(*(const int*)&tvp->m_unk_0x08);
-    }
-    else if (tvp->m_unk_0x04 == 2)
-    {
-        val = LexicalCast<float, float>(*(const float*)&tvp->m_unk_0x08);
-    }
-    else if (tvp->m_unk_0x04 == 3)
-    {
-        val = LexicalCast<float, const char*>(*(const char**)&tvp->m_unk_0x08);
-    }
-    else
-    {
-        val = 0.f;
-    }
-    return val;
-}
-
-inline s32 GetConfigInt(Config& cfg, const char* key, s32 defaultValue)
-{
-    SetTagValuePair* tvp = cfg.FindTvp(key);
-    if (tvp->m_unk_0x00 == NULL)
-    {
-        cfg.Set(key, (int)defaultValue);
-        return defaultValue;
-    }
-
-    int val;
-    if (tvp->m_unk_0x04 == 0)
-    {
-        val = LexicalCast<int, bool>(*(const bool*)&tvp->m_unk_0x08);
-    }
-    else if (tvp->m_unk_0x04 == 1)
-    {
-        val = LexicalCast<int, int>(*(const int*)&tvp->m_unk_0x08);
-    }
-    else if (tvp->m_unk_0x04 == 2)
-    {
-        val = LexicalCast<int, float>(*(const float*)&tvp->m_unk_0x08);
-    }
-    else if (tvp->m_unk_0x04 == 3)
-    {
-        val = LexicalCast<int, const char*>(*(const char**)&tvp->m_unk_0x08);
-    }
-    else
-    {
-        val = 0;
-    }
-    return val;
-}
 
 /**
  * Offset/Address/Size: 0x342C | 0x80017E1C | size: 0x60

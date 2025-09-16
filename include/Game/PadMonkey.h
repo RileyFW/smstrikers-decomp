@@ -7,7 +7,7 @@
 class PadMonkey : public cGlobalPad
 {
 public:
-    PadMonkey(int);
+    PadMonkey(int padIndex);
     /* 0x08 */ virtual ~PadMonkey() { };
     /* 0x0C */ virtual bool IsConnected() { return m_isConnected; };
     /* 0x10 */ virtual bool IsPressed(int, bool);

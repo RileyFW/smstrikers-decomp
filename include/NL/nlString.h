@@ -87,7 +87,7 @@ CharT nlToLower(CharT c)
 
 // String version (new addition)
 template <typename CharT>
-CharT nlToLower(CharT* str)
+void nlToLower(CharT* str)
 {
     while (*str)
     {
