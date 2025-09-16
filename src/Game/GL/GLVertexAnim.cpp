@@ -27,10 +27,10 @@ void GLVertexAnim::GetModel(int frameIndex)
     glModel* model = glModelDup(m_unk_0x24, true);
     FrameVertexData* frameVertexData = m_frames + actualFrame * m_unk_0x08;
 
-    for (glModelPacket* packet = model->m_packets; packet < model->m_packets + model->m_count; packet++)
+    for (glModelPacket* packet = model->packets; packet < model->packets + model->numPackets; packet++)
     {
         VertexData* packetVertexData = packet->m_vertexData;
-        VertexData* endVertexData = packetVertexData + packet->m_unk_0x0B;
+        VertexData* endVertexData = packetVertexData + packet->numStreams;
         while (packetVertexData < endVertexData)
         {
             if (packetVertexData->m_unk_0x04 == 0)

@@ -3,13 +3,13 @@
 
 #include "NL/gl/glUserData.h"
 
-struct glModel // size: 0x10
+struct glModel
 {
-    /* 0x00 */ u32 m_count;
-    /* 0x04 */ u32 m_unk_0x04;
-    /* 0x08 */ u32 m_unk_0x08;
-    /* 0x0C */ glModelPacket* m_packets;
-};
+    /* 0x00 */ u32 numPackets;
+    /* 0x04 */ u32 id;
+    /* 0x08 */ u32 pad;
+    /* 0x0C */ glModelPacket* packets;
+}; // total size: 0x10
 
 void* glModelDupArrayNoStreams(const glModel*, unsigned long, bool, bool);
 glModel* glModelDupNoStreams(const glModel*, bool, bool);

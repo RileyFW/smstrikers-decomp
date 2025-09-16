@@ -42,8 +42,9 @@ void World::AddDrawableObject(unsigned long, DrawableObject*)
 /**
  * Offset/Address/Size: 0x31C | 0x80194FE0 | size: 0x8C
  */
-void World::FindHelperObject(unsigned long)
+HelperObject* World::FindHelperObject(unsigned long)
 {
+    return NULL;
 }
 
 /**

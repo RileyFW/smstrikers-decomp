@@ -2,10 +2,29 @@
 #define _GLUSERDATA_H_
 
 #include "types.h"
+#include "NL/gl/glStateBundle.h" // Include the new header
 
 enum eGLUserData
 {
-    eGLUserData_0,
+    GLUD_Skin = 0,
+    GLUD_Light = 1,
+    GLUD_ShadowVolume = 2,
+    GLUD_Specular = 3,
+    GLUD_ShadowBuffer = 4,
+    GLUD_Translucent = 5,
+    GLUD_EnvDiffuse = 6,
+    GLUD_ConstantColour = 7,
+    GLUD_Ambient = 8,
+    GLUD_Diffuse = 9,
+    GLUD_DirectionalLight = 10,
+    GLUD_Viewport = 11,
+    GLUD_Scissor = 12,
+    GLUD_NoRasterizedAlpha = 13,
+    GLUD_MobileDiffuse = 14,
+    GLUD_NoFog = 15,
+    GLUD_CoPlanar = 16,
+    GLUD_OnePassFresnel = 17,
+    GLUD_Num = 18,
 };
 
 #pragma push
@@ -24,41 +43,32 @@ struct VertexData // size: 0x6
     bool m_unk_0x05;
 };
 
+struct glModelStream
+{
+    /* 0x0 */ unsigned long address;
+    /* 0x4 */ u8 id;
+    /* 0x5 */ u8 stride;
+}; // total size: 0x6
+
 struct glModelPacket // size: 0x4A
 {
-    /* 0x00 */ u32* m_unk_0x00;
-    /* 0x04 */ u32 m_unk_0x04;
-    /* 0x08 */ u8 m_unk_0x08;
-    /* 0x09 */ u8 m_unk_0x09;
-    /* 0x0A */ u8 m_unk_0x0A;
-    /* 0x0B */ u8 m_unk_0x0B;
+    /* 0x00 */ u32 userData;
+    /* 0x04 */ u32 indexBuffer;
+    /* 0x08 */ u16 numVertices;
+    /* 0x0A */ u8 primType;
+    /* 0x0B */ u8 numStreams;
+    // /* 0x0C */ glModelStream* streams;
     /* 0x0C */ VertexData* m_vertexData;
-    /* 0x10 */ u8 m_padding_0x10[0x0C];
-    /* 0x1C */ u32 m_unk_0x1C;
-    /* 0x20 */ u32 m_unk_0x20;
-    /* 0x24 */ u32 m_unk_0x24;
-    /* 0x28 */ u32 m_unk_0x28;
-    /* 0x2C */ u32 m_unk_0x2C;
-    /* 0x30 */ u32 m_unk_0x30;
-    /* 0x34 */ u32 m_unk_0x34;
-    /* 0x38 */ u32 m_unk_0x38;
-    /* 0x3C */ u32 m_unk_0x3C;
-    /* 0x40 */ u8 m_unk_0x40;
-    /* 0x44 */ u32 m_unk_0x44;
-    /* 0x48 */ u32 m_unk_0x48;
-    /* 0x48 */ u8 m_unk_0x4A;
-
-    // /* 0x41 */ u8 m_unk_0x41; // used? or alignment?
-    // /* 0x42 */ u8 m_unk_0x42; // used? or alignment?
-    // /* 0x43 */ u8 m_unk_0x43; // used? or alignment?
-};
+    /* 0x10 */ glStateBundle state;
+    /* 0x46 */ u32 materialset;
+}; // total size: 0x4A
 #pragma pop
 
-u32 glUserHasType(eGLUserData, const glModelPacket*);
-void glUserDetach(eGLUserData, glModelPacket*);
-void glUserDup(glModelPacket*, const glModelPacket*, bool);
-void glUserAttach(const void*, glModelPacket*, bool);
-void* glUserGetData(const void*);
-void glUserAlloc(eGLUserData, unsigned long, bool);
+bool glUserHasType(eGLUserData type, const glModelPacket* pPacket);
+void glUserDetach(eGLUserData type, glModelPacket* pPacket);
+void glUserDup(glModelPacket* pDest, const glModelPacket* pSrc, bool bPerm);
+void glUserAttach(const void* pUserData, glModelPacket* pPacket, bool bPerm);
+void* glUserGetData(const void* pUserData);
+void* glUserAlloc(eGLUserData type, unsigned long size, bool bPerm);
 
 #endif // _GLUSERDATA_H_

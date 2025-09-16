@@ -33,6 +33,14 @@ class Event;
 class CharacterPhysicsData;
 class LightObject;
 
+class HelperObject
+{
+public:
+    /* 0x00 */ unsigned long m_uHashID; // size 0x4
+    /* 0x04 */ nlMatrix4 m_worldMatrix; // size 0x40
+    /* 0x44 */ char m_szName[64];       // size 0x40
+}; // total size: 0x84
+
 class World
 {
 public:
@@ -57,7 +65,7 @@ public:
     void GetHashIdForGenericName(const char*) const;
     void GetShadowLight(const nlVector3&, float);
     void AddDrawableObject(unsigned long, DrawableObject*);
-    void FindHelperObject(unsigned long);
+    HelperObject* FindHelperObject(unsigned long);
     DrawableObject* FindDrawableObject(unsigned long);
     void HandleCameraSwitch();
     void IsSphereInFrustum(const nlMatrix4&, float);

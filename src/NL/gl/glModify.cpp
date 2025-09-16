@@ -64,21 +64,21 @@ void gl_ModifyClearMappings()
  * Offset/Address/Size: 0x84 | 0x801D90C0 | size: 0x1F8
  */
 void gl_Modify(const glModelPacket* arg0)
-{    
+{
     glModelPacket* packet = NULL;
     for (u32 i = 0; i < glNumModifiers; i++)
     {
         switch (glModifier[i].m_modifier)
         { /* irregular */
         case eGLModifier_0:
-            if (arg0->m_unk_0x1C == glModifier[i].m_unk_0x04)
+            if (arg0->state.program == glModifier[i].m_unk_0x04)
             {
                 if (packet == NULL)
                 {
-                    packet = (glModelPacket*)glFrameAlloc(0x4A, eGLMemory_0);
-                    memcpy(packet, arg0->m_unk_0x00, 0x4A);
+                    packet = (glModelPacket*)glFrameAlloc(0x4A, GLM_Header);
+                    memcpy(packet, (u32*)arg0->userData, 0x4A);
                 }
-                packet->m_unk_0x1C = glModifier[i].m_unk_0x08;
+                packet->state.program = glModifier[i].m_unk_0x08;
             }
             break;
         case eGLModifier_1:
@@ -87,39 +87,39 @@ void gl_Modify(const glModelPacket* arg0)
             {
                 if (packet == NULL)
                 {
-                    packet = (glModelPacket*)glFrameAlloc(0x4A, eGLMemory_0);
-                    memcpy(packet, arg0->m_unk_0x00, 0x4A);
+                    packet = (glModelPacket*)glFrameAlloc(0x4A, GLM_Header);
+                    memcpy(packet, (u32*)arg0->userData, 0x4A);
                 }
-                packet->m_unk_0x28 = glModifier[i].m_unk_0x08;
-                packet->m_unk_0x40 = packet->m_unk_0x40 | GLTT_Diffuse_bit;
+                packet->state.texture[0] = glModifier[i].m_unk_0x08;
+                packet->state.texconfig = packet->state.texconfig | GLTT_Diffuse_bit;
             }
-            else if (arg0->m_unk_0x28 == glModifier[i].m_unk_0x04)
+            else if (arg0->state.texture[0] == glModifier[i].m_unk_0x04)
             {
                 if (packet == NULL)
                 {
-                    packet = (glModelPacket*)glFrameAlloc(0x4A, eGLMemory_0);
-                    memcpy(packet, arg0->m_unk_0x00, 0x4A);
+                    packet = (glModelPacket*)glFrameAlloc(0x4A, GLM_Header);
+                    memcpy(packet, (u32*)arg0->userData, 0x4A);
                 }
-                packet->m_unk_0x28 = glModifier[i].m_unk_0x08;
-                packet->m_unk_0x40 = (u8)(GLTT_Diffuse_bit | packet->m_unk_0x40);
+                packet->state.texture[0] = glModifier[i].m_unk_0x08;
+                packet->state.texconfig = (u8)(GLTT_Diffuse_bit | packet->state.texconfig);
             }
             break;
         case eGLModifier_2:
             if (packet == NULL)
             {
-                packet = (glModelPacket*)glFrameAlloc(0x4A, eGLMemory_0);
-                memcpy(packet, arg0->m_unk_0x00, 0x4A);
+                packet = (glModelPacket*)glFrameAlloc(0x4A, GLM_Header);
+                memcpy(packet, (u32*)arg0->userData, 0x4A);
             }
-            packet->m_unk_0x38 = glModifier[i].m_unk_0x08;
-            packet->m_unk_0x40 = (u8)(GLTT_Gloss_bit | packet->m_unk_0x40);
+            packet->state.texture[4] = glModifier[i].m_unk_0x08;
+            packet->state.texconfig = (u8)(GLTT_Gloss_bit | packet->state.texconfig);
             break;
         case eGLModifier_3:
             if (packet == NULL)
             {
-                packet = (glModelPacket*)glFrameAlloc(0x4A, eGLMemory_0);
-                memcpy(packet, arg0->m_unk_0x00, 0x4A);
+                packet = (glModelPacket*)glFrameAlloc(0x4A, GLM_Header);
+                memcpy(packet, (u32*)arg0->userData, 0x4A);
             }
-            packet->m_unk_0x40 = (u8)(packet->m_unk_0x40 & glModifier[i].m_unk_0x08);
+            packet->state.texconfig = (u8)(packet->state.texconfig & glModifier[i].m_unk_0x08);
             break;
         }
     }

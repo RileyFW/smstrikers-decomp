@@ -4,6 +4,7 @@
 #include "Dolphin/gx/GXEnum.h"
 #include "NL/gl/glView.h"
 #include "NL/glx/glxTexture.h"
+#include "NL/gl/glStateBundle.h" // Include the struct definition
 
 enum eGLState
 {
@@ -20,12 +21,12 @@ enum eGLState
     GLS_Num = 10,
 };
 
-class glStateBundle
-{
-public:
-    /* 0x00 */ u8 pad0[0x030];
-    /* 0x30 */ u8 m_nFlags;
-};
+// class glStateBundle
+// {
+// public:
+//     /* 0x00 */ u8 pad0[0x030];
+//     /* 0x30 */ u8 m_nFlags;
+// };
 
 void glSetDefaultState(bool);
 void glUnHandleizeTextureState(unsigned long long);

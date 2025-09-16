@@ -31,7 +31,7 @@ bool glPoly2::Attach(eGLView view, int layer, unsigned long* pMatrix, unsigned l
 
     GLMeshWriter writer;
 
-    const unsigned char stateFlag = gl_GetCurrentStateBundle()->m_nFlags;
+    const unsigned char stateFlag = gl_GetCurrentStateBundle()->texconfig;
 
     const unsigned long prevProg = glSetCurrentProgram(_defaultProgram);
     const unsigned long mat = pMatrix ? *pMatrix : glGetIdentityMatrix();

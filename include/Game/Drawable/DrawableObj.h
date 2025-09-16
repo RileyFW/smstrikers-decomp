@@ -20,17 +20,17 @@ class DrawableObject
 {
 public:
     DrawableObject();
-    /* 0x04 */ virtual ~DrawableObject();
-    /* 0x08 */ virtual void Clone() const { };
-    /* 0x0C */ virtual void Draw() = 0;
-    /* 0x10 */ virtual void DrawPlanarShadow() { };
-    /* 0x14 */ virtual bool IsDrawableModel() { return false; };
-    /* 0x18 */ virtual DrawableModel* AsDrawableModel() { return NULL; };
-    /* 0x1C */ virtual void GetAABBDimensions(AABBDimensions&, bool) const;
+    /* 0x08 */ virtual ~DrawableObject();
+    /* 0x0C */ virtual void Clone() const { };
+    /* 0x10 */ virtual void Draw() = 0;
+    /* 0x14 */ virtual void DrawPlanarShadow() { };
+    /* 0x18 */ virtual bool IsDrawableModel() { return false; };
+    /* 0x1C */ virtual DrawableModel* AsDrawableModel() { return NULL; };
+    /* 0x20 */ virtual void GetAABBDimensions(AABBDimensions&, bool) const;
 
     nlMatrix4& GetWorldMatrix() const;
 
-    /* 0x4, */ nlMatrix4 m_worldMatrix;
+    /* 0x04 */ nlMatrix4 m_worldMatrix;
     /* 0x44 */ bool m_worldMatrixUpToDate;
     /* 0x48 */ nlQuaternion m_orientation;
     /* 0x58 */ nlVector3 m_translation;
