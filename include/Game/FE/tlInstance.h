@@ -52,6 +52,6 @@ public:
     /* 0x7C */ u8 pad7C[0x2];
     /* 0x7E */ u8 m_enableSoundTriggers;
     /* 0x7F */ u8 pad7F;
-};
+}; // total size: 0x80
 
 #endif // _TLINSTANCE_H_

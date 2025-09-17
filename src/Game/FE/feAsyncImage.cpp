@@ -14,27 +14,27 @@ extern unsigned int nlDefaultSeed;
 /**
  * Offset/Address/Size: 0x3E4 | 0x80093E50 | size: 0xC0
  */
-AsyncImage::AsyncImage(const char* arg0, const char* arg1)
+AsyncImage::AsyncImage(const char* filename, const char* texturename)
 {
-    m_bundleFile = NULL;
-    m_unk_0x08 = NULL;
+    mBundleFile = NULL;
+    mImageInstance = NULL;
     m_loadBuffer = NULL;
-    m_bufferSize = 0;
-    m_unk_0x18 = 2;
+    mTextureSize = 0;
+    mLoadState = LS_IDLE;
 
-    m_bundleFile = new (nlMalloc(0x1C, 0x20, 1)) BundleFile();
-    m_bundleFile->Open(arg0);
+    mBundleFile = new (nlMalloc(0x1C, 0x20, 1)) BundleFile();
+    mBundleFile->Open(filename);
 
     int hash;
-    if (arg1 != NULL)
+    if (texturename != NULL)
     {
-        hash = nlStringHash(arg1);
+        hash = nlStringHash(texturename);
     }
     else
     {
         hash = nlRandom(0xFFFFFFFF, &nlDefaultSeed);
     }
-    m_unk_0x10 = hash;
+    mTextureHandle = hash;
 }
 
 /**
@@ -42,13 +42,13 @@ AsyncImage::AsyncImage(const char* arg0, const char* arg1)
  */
 AsyncImage::~AsyncImage()
 {
-    while (m_unk_0x18 == 0)
+    while (mLoadState == LS_ISSUED_LOAD)
     {
         nlServiceFileSystem();
     }
 
-    m_bundleFile->Close();
-    delete m_bundleFile;
+    mBundleFile->Close();
+    delete mBundleFile;
 
     if (m_loadBuffer != NULL)
     {
@@ -59,73 +59,74 @@ AsyncImage::~AsyncImage()
 /**
  * Offset/Address/Size: 0x284 | 0x80093CF0 | size: 0xD0
  */
-void AsyncImage::QueueLoad(const char* path, bool synchronous)
+void AsyncImage::QueueLoad(const char* path, bool isblocking)
 {
     BundleFileDirectoryEntry info;
 
-    if (m_unk_0x18 != 0)
+    if (mLoadState != LS_ISSUED_LOAD)
     {
-        m_bundleFile->GetFileInfo(path, &info, true);
+        mBundleFile->GetFileInfo(path, &info, true);
 
         if (m_loadBuffer == NULL)
         {
             m_loadBuffer = (u8*)nlMalloc(info.m_length, 0x20, true);
-            m_bufferSize = info.m_length;
+            mTextureSize = info.m_length;
         }
 
-        m_unk_0x18 = 0;
+        mLoadState = LS_ISSUED_LOAD;
 
-        if (synchronous)
+        if (isblocking)
         {
-            m_bundleFile->LoadFile(path, m_loadBuffer);
-            m_unk_0x18 = 1;
+            mBundleFile->LoadFile(path, m_loadBuffer);
+            mLoadState = LS_LOAD_COMPLETE;
             return;
         }
-        m_bundleFile->ReadFileAsync(path, m_loadBuffer, m_bufferSize, &AsyncImage::TextureLoadComplete, (unsigned long)this);
+        mBundleFile->ReadFileAsync(path, m_loadBuffer, mTextureSize, &AsyncImage::TextureLoadComplete, (unsigned long)this);
     }
 }
 
 /**
  * Offset/Address/Size: 0x150 | 0x80093BBC | size: 0x134
  */
-bool AsyncImage::Update(bool arg0)
+bool AsyncImage::Update(bool autoswap)
 {
-    if (m_unk_0x08 == NULL)
+    if (mImageInstance == NULL)
     {
         return false;
     }
 
     bool res = false;
-    if (m_unk_0x18 == 1)
+    if (mLoadState == LS_LOAD_COMPLETE)
     {
-        if (m_unk_0x10 != m_unk_0x08->m_unk_0x80->m_unk_0x14 && (glTextureLoad(m_unk_0x10) == 0))
+        if (mTextureHandle != mImageInstance->m_pTextureResource->m_glTextureHandle && (glTextureLoad(mTextureHandle) == 0))
         {
-            glTextureAdd(m_unk_0x10, m_loadBuffer, m_bufferSize);
-            m_unk_0x08->m_unk_0x80->m_unk_0x14 = m_unk_0x10;
+            glTextureAdd(mTextureHandle, m_loadBuffer, mTextureSize);
+            mImageInstance->m_pTextureResource->m_glTextureHandle = mTextureHandle;
         }
     }
-    if ((m_unk_0x18 == 1) && (arg0 != 0))
+    if ((mLoadState == LS_LOAD_COMPLETE) && autoswap)
     {
         bool var_r29;
-        if (m_unk_0x18 != 1)
+        if (mLoadState != LS_LOAD_COMPLETE)
         {
-            var_r29 = 0;
+            var_r29 = false;
         }
         else
         {
-            var_r29 = 0;
-            if ((m_unk_0x08 != NULL) && (m_unk_0x08->m_unk_0x80->m_unk_0x10) && (glTextureLoad(m_unk_0x10) != 0))
+            var_r29 = false;
+            if ((mImageInstance != NULL) && (mImageInstance->m_pTextureResource->m_bValid) && (glTextureLoad(mTextureHandle) != 0))
             {
-                var_r29 = 1;
+                var_r29 = true;
             }
         }
-        if (var_r29 != 0)
+
+        if (var_r29)
         {
             glFinish();
-            glTextureReplace(m_unk_0x08->m_unk_0x80->m_unk_0x14, m_loadBuffer, m_bufferSize);
+            glTextureReplace(mImageInstance->m_pTextureResource->m_glTextureHandle, m_loadBuffer, mTextureSize);
             glDiscardFrame(1);
             res = true;
-            m_unk_0x18 = 2;
+            mLoadState = LS_IDLE;
         }
     }
     return res;
@@ -138,14 +139,14 @@ bool AsyncImage::CanSwapTextures() const
 {
     bool res;
 
-    if (m_unk_0x18 != 1)
+    if (mLoadState != LS_LOAD_COMPLETE)
     {
         res = 0;
     }
     else
     {
         res = 0;
-        if ((m_unk_0x08 != NULL) && (m_unk_0x08->m_unk_0x80->m_unk_0x10 != 0) && (glTextureLoad(m_unk_0x10) != 0))
+        if ((mImageInstance != NULL) && (mImageInstance->m_pTextureResource->m_bValid) && (glTextureLoad(mTextureHandle) != 0))
         {
             res = 1;
         }
@@ -159,7 +160,7 @@ bool AsyncImage::CanSwapTextures() const
 void AsyncImage::SwapTextures()
 {
     glFinish();
-    glTextureReplace(m_unk_0x08->m_unk_0x80->m_unk_0x14, m_loadBuffer, m_bufferSize);
+    glTextureReplace(mImageInstance->m_pTextureResource->m_glTextureHandle, m_loadBuffer, mTextureSize);
     glDiscardFrame(1);
 }
 
@@ -168,7 +169,7 @@ void AsyncImage::SwapTextures()
  */
 void AsyncImage::CopyFrom(AsyncImage* image)
 {
-    memcpy(m_loadBuffer, image->m_loadBuffer, image->m_bufferSize);
+    memcpy(m_loadBuffer, image->m_loadBuffer, image->mTextureSize);
 }
 
 /**

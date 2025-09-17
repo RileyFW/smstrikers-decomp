@@ -5,9 +5,9 @@
  */
 FETextureResource::FETextureResource()
 {
-    m_unk_0x00 = 0;
-    m_unk_0x04 = 0;
-    m_unk_0x10 = 0;
-    m_unk_0x14 = 0;
-    m_unk_0x08 = 0;
+    m_next = 0;
+    m_prev = 0;
+    m_bValid = 0;
+    m_glTextureHandle = 0;
+    m_type = FERT_TEXTURE;
 }

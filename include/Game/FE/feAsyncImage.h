@@ -3,14 +3,20 @@
 
 #include "types.h"
 #include "NL/nlBundleFile.h"
+#include "Game/FE/tlInstance.h"
 #include "Game/FE/feTextureResource.h"
 
-class SomeOtherClass
+class TLImageInstance : public TLInstance
 {
 public:
-    /* 0x00 */ bool m_unk_0x00;
-    /* 0x01 */ u8 pad0[0x7F];
-    /* 0x80 */ FETextureResource* m_unk_0x80;
+    /* 0x80 */ FETextureResource* m_pTextureResource;
+}; // total size: 0x84
+
+enum LoadState
+{
+    LS_ISSUED_LOAD = 0,
+    LS_LOAD_COMPLETE = 1,
+    LS_IDLE = 2,
 };
 
 class AsyncImage
@@ -29,15 +35,15 @@ public:
     static inline void TextureLoadComplete(void* buffer, unsigned long size, unsigned long userData)
     {
         AsyncImage* self = (AsyncImage*)userData;
-        self->m_unk_0x18 = 1;
+        self->mLoadState = LS_LOAD_COMPLETE;
     }
 
-    /* 0x04 */ BundleFile* m_bundleFile;
-    /* 0x08 */ SomeOtherClass* m_unk_0x08; // TODO: !!!! needs to be replaced
-    /* 0x0C */ u8* m_loadBuffer;
-    /* 0x10 */ u32 m_unk_0x10;
-    /* 0x14 */ u32 m_bufferSize;
-    /* 0x18 */ s32 m_unk_0x18;
+    /* 0x04 */ BundleFile* mBundleFile;
+    /* 0x08 */ TLImageInstance* mImageInstance;
+    /* 0x0C */ void* m_loadBuffer;
+    /* 0x10 */ u32 mTextureHandle;
+    /* 0x14 */ u32 mTextureSize;
+    /* 0x18 */ LoadState mLoadState;
 };
 
 #endif // _FEASYNCIMAGE_H_

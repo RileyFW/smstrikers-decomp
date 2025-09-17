@@ -10,13 +10,26 @@
 // void nlDLRingAddEnd<DLListEntry<FEResourceHandle*>>(DLListEntry<FEResourceHandle*>**, DLListEntry<FEResourceHandle*>*);
 // void nlDLRingAddStart<DLListEntry<FEResourceHandle*>>(DLListEntry<FEResourceHandle*>**, DLListEntry<FEResourceHandle*>*);
 
+enum eFEResourceType
+{
+    FERT_UNKNOWN = -1,
+    FERT_TEXTURE = 0,
+    FERT_FONT = 1,
+    FERT_SCENE = 2,
+    FERT_RESOURCE_TYPE_COUNT = 3,
+};
+
 class FEResourceHandle
 {
 public:
-    FEResourceHandle();
-    ~FEResourceHandle();
+    FEResourceHandle() { };
+    ~FEResourceHandle() { };
 
     /* 0x00 */ FEResourceHandle* m_next;
+    /* 0x04 */ FEResourceHandle* m_prev;
+    /* 0x08 */ eFEResourceType m_type;
+    /* 0x0C */ u32 m_hashID;
+    /* 0x10 */ bool m_bValid;
 };
 
 class FEResourceManager
