@@ -8,7 +8,8 @@
 
 #include "NL/gl/glConstant.h"
 
-struct glx_DOFTexture {
+struct glx_DOFTexture
+{
     /* 0x00 */ u32 m_unk_0x00;
     /* 0x04 */ u32 m_unk_0x04;
     /* 0x08 */ u32 m_unk_0x08;
@@ -19,7 +20,7 @@ struct glx_DOFTexture {
 
 u32 GrabTextureName = 0;
 u32 DOFTextureName = 0;
-void *clearz_mem = 0;
+void* clearz_mem = 0;
 u32 glx_SharedMemory = 0;
 u32 glx_SharedSize = 0;
 bool glx_SharedLock = false;
@@ -62,7 +63,8 @@ void glx_DOFUpdate(float arg8)
     // f32 var_f31;
 
     float var_f31 = arg8;
-    if (fabs(var_f31) < 0.001f) {
+    if (fabs(var_f31) < 0.001f)
+    {
         var_f31 = 0.001f;
     }
     GXGetProjectionv(&sp3C[0][0]);
@@ -79,15 +81,16 @@ void glx_DOFUpdate(float arg8)
     // sp18 = temp_f0;
     // sp1C = temp_f0;
     // sp20 = temp_f0;
-    glConstantSet("dof/depth", nlVector4(temp_f0, temp_f0, temp_f0, temp_f0));    
-    // glConstantSet("dof/depth", nlVector4(0.f, 0.f, 0.f, temp_f0));    
+    nlVector4 v4 = { temp_f0, temp_f0, temp_f0, temp_f0 };
+    glConstantSet("dof/depth", v4);
+    // glConstantSet("dof/depth", nlVector4(0.f, 0.f, 0.f, temp_f0));
 
     // sp14.x = temp_f0;
     // sp14.y = temp_f0;
     // sp14.z = temp_f0;
     // sp14.w = temp_f0;
 
-    // glConstantSet("dof/depth", sp14);    
+    // glConstantSet("dof/depth", sp14);
 }
 
 /**
@@ -95,7 +98,7 @@ void glx_DOFUpdate(float arg8)
  */
 void glx_DOFGrab()
 {
-    if ((u8) glx_SharedLock == 0) 
+    if ((u8)glx_SharedLock == 0)
     {
         bool colorUpdate = gxSetColourUpdate(true);
         bool alphaUpdate = gxSetAlphaUpdate(true);
@@ -108,7 +111,7 @@ void glx_DOFGrab()
         gxSetColourUpdate(colorUpdate);
         gxSetAlphaUpdate(alphaUpdate);
         gxRestoreZMode();
-    }    
+    }
 }
 
 /**
@@ -126,7 +129,8 @@ void glx_ClearZBuffer()
     s32 temp_r30;
     s32 temp_r31;
 
-    if ((u8) glx_SharedLock == 0) {
+    if ((u8)glx_SharedLock == 0)
+    {
         bool colorUpdate = gxSetColourUpdate(false);
         bool alphaUpdate = gxSetAlphaUpdate(false);
         gxSaveZMode();
@@ -137,7 +141,8 @@ void glx_ClearZBuffer()
         gxSetColourUpdate(colorUpdate);
         gxSetAlphaUpdate(alphaUpdate);
         gxRestoreZMode();
-    }}
+    }
+}
 
 /**
  * Offset/Address/Size: 0x5C8 | 0x801C2CA4 | size: 0x20
@@ -216,7 +221,6 @@ u32 glx_GetSharedMemory()
 {
     return glx_SharedMemory;
 }
-
 
 /**
  * Offset/Address/Size: 0x898 | 0x801C2F74 | size: 0x3C

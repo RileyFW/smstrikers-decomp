@@ -47,9 +47,9 @@ inline void nlVec2Set(nlVector2& v0, float _x, float _y)
 #define NL_VECTOR4_SET(v, xval, yval, zval) \
     do                                      \
     {                                       \
-        (v).x = (xval);                     \
-        (v).y = (yval);                     \
-        (v).z = (zval);                     \
+        (v).f.x = (xval);                   \
+        (v).f.y = (yval);                   \
+        (v).f.z = (zval);                   \
     } while (0)
 
 struct nlVector3_
@@ -112,28 +112,37 @@ inline void nlVec3Scale(nlVector3& result, const nlVector3& v, float scale)
     nlVec3Set(result, scale * v.f.x, scale * v.f.y, scale * v.f.z);
 }
 
-struct nlVector4
+class nlVector4
 {
-    float x;
-    float y;
-    float z;
-    float w;
-    nlVector4() { }
-    nlVector4(float x, float y, float z, float w)
-        : x(x)
-        , y(y)
-        , z(z)
-        , w(w)
+public:
+    union
     {
-    }
-};
+        struct
+        {
+            float x; // offset 0x0, size 0x4
+            float y; // offset 0x4, size 0x4
+            float z; // offset 0x8, size 0x4
+            float w; // offset 0xC, size 0x4
+        } f;
+        float e[4]; // offset 0x0, size 0x10
+    };
+
+    // nlVector4() { }
+    // nlVector4(float x, float y, float z, float w)
+    //     : x(x)
+    //     , y(y)
+    //     , z(z)
+    //     , w(w)
+    // {
+    // }
+}; // total size: 0x10
 
 inline void nlVec4Set(nlVector4& v0, float _x, float _y, float _z, float _w)
 {
-    v0.x = _x;
-    v0.y = _y;
-    v0.z = _z;
-    v0.w = _w;
+    v0.f.x = _x;
+    v0.f.y = _y;
+    v0.f.z = _z;
+    v0.f.w = _w;
 }
 
 struct nlMatrix3
@@ -212,13 +221,61 @@ struct nlMatrix4
     inline nlVector4 operator*(const nlVector4& v_in) const
     {
         nlVector4 tmp;
-        tmp.x = m[0][0] * v_in.x + m[1][0] * v_in.y + m[2][0] * v_in.z + m[3][0] * v_in.w;
-        tmp.z = m[0][2] * v_in.x + m[1][2] * v_in.y + m[2][2] * v_in.z + m[3][2] * v_in.w;
-        tmp.y = m[0][1] * v_in.x + m[1][1] * v_in.y + m[2][1] * v_in.z + m[3][1] * v_in.w;
-        tmp.w = m[0][3] * v_in.x + m[1][3] * v_in.y + m[2][3] * v_in.z + m[3][3] * v_in.w;
+        tmp.f.x = m[0][0] * v_in.f.x + m[1][0] * v_in.f.y + m[2][0] * v_in.f.z + m[3][0] * v_in.f.w;
+        tmp.f.z = m[0][2] * v_in.f.x + m[1][2] * v_in.f.y + m[2][2] * v_in.f.z + m[3][2] * v_in.f.w;
+        tmp.f.y = m[0][1] * v_in.f.x + m[1][1] * v_in.f.y + m[2][1] * v_in.f.z + m[3][1] * v_in.f.w;
+        tmp.f.w = m[0][3] * v_in.f.x + m[1][3] * v_in.f.y + m[2][3] * v_in.f.z + m[3][3] * v_in.f.w;
         return tmp;
     }
 };
+
+/**
+ * Convert a nlMatrix3 [3x3] matrix to a [4x3] ODE matrix
+ */
+inline void ConvertNLMat3ToDMat3(const nlMatrix3& src, float* dest)
+{
+    nlVec3Set(*(nlVector3*)dest, src.m[0], src.m[3], src.m[6]);
+    nlVec3Set(*(nlVector3*)&dest[4], src.m[1], src.m[4], src.m[7]);
+    nlVec3Set(*(nlVector3*)&dest[8], src.m[2], src.m[5], src.m[8]);
+}
+
+/**
+ * Convert a nlMatrix4 [4x4] matrix to a [4x3] ODE matrix
+ * Mathematical Operation: Row-wise transpose of first 3 rows
+ *
+ * Input 4x4 Matrix:     Output 4x3 Matrix:
+ * [m00 m01 m02 m03]     [m00 m01 m02]
+ * [m10 m11 m12 m13]  →  [m10 m11 m12]
+ * [m20 m21 m22 m23]     [m20 m21 m22]
+ * [m30 m31 m32 m33]     [m30 m31 m32]
+ *
+ * Takes rows 0, 1, 2 from 4x4 matrix and stores them as columns 0, 1, 2 in 4x3 matrix
+ */
+inline void ConvertNLMat4ToDMat3(const nlMatrix4& src, float* dest)
+{
+    nlVec4Set(*(nlVector4*)&dest[0], src.e[0], src.e[3], src.e[6], src.e[9]);
+    nlVec4Set(*(nlVector4*)&dest[4], src.e[1], src.e[4], src.e[7], src.e[10]);
+    nlVec4Set(*(nlVector4*)&dest[8], src.e[2], src.e[5], src.e[8], src.e[11]);
+}
+
+/**
+ * Convert a nlMatrix4 [4x4] matrix to a [4x3] ODE matrix (Column Transpose)
+ * Mathematical Operation: Column-wise transpose of first 3 columns
+ *
+ * Input 4x4 Matrix:     Output 4x3 Matrix:
+ * [m00 m01 m02 m03]     [m00 m10 m20]
+ * [m10 m11 m12 m13]  →  [m01 m11 m21]
+ * [m20 m21 m22 m23]     [m02 m12 m22]
+ * [m30 m31 m32 m33]     [m03 m13 m23]
+ *
+ * Takes columns 0, 1, 2 from 4x4 matrix and stores them as rows 0, 1, 2 in 4x3 matrix
+ */
+inline void ConvertNLMat4ToDMat3_Transposed(const nlMatrix4& src, float* dest)
+{
+    nlVec4Set(*(nlVector4*)&dest[0], src.e[0], src.e[4], src.e[8], src.e[12]);
+    nlVec4Set(*(nlVector4*)&dest[4], src.e[1], src.e[5], src.e[9], src.e[13]);
+    nlVec4Set(*(nlVector4*)&dest[8], src.e[2], src.e[6], src.e[10], src.e[14]);
+}
 
 float nlBezier(float*, int, float);
 float nlATan2f(float, float);

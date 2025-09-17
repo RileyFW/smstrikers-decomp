@@ -8,22 +8,22 @@ PhysicsFinitePlane::PhysicsFinitePlane(CollisionSpace* collision_space, nlVector
     : PhysicsObject(NULL)
 {
     m_param = arg8;
-    m_vec4.x = 0.f; // unk2C
-    m_vec4.y = 0.f; // unk30
-    m_vec4.z = 0.f; // unk34
-    m_vec4.w = 0.f; // unk38
+    m_vec4.f.x = 0.f; // unk2C
+    m_vec4.f.y = 0.f; // unk30
+    m_vec4.f.z = 0.f; // unk34
+    m_vec4.f.w = 0.f; // unk38
 
-    m_vec4.y = nlSqrt(v1.f.x * v1.f.x + v1.f.y * v1.f.y + v1.f.z * v1.f.z, true);
-    m_vec4.w = nlSqrt(v2.f.x * v2.f.x + v2.f.y * v2.f.y + v2.f.z * v2.f.z, true);
-    m_vec4.x = -m_vec4.y;
-    m_vec4.z = -m_vec4.w;
+    m_vec4.f.y = nlSqrt(v1.f.x * v1.f.x + v1.f.y * v1.f.y + v1.f.z * v1.f.z, true);
+    m_vec4.f.w = nlSqrt(v2.f.x * v2.f.x + v2.f.y * v2.f.y + v2.f.z * v2.f.z, true);
+    m_vec4.f.x = -m_vec4.f.y;
+    m_vec4.f.z = -m_vec4.f.w;
 
-    float l = 1.f / m_vec4.y;
+    float l = 1.f / m_vec4.f.y;
     v1.f.x = l * v1.f.x;
     v1.f.y = l * v1.f.y;
     v1.f.z = l * v1.f.z;
 
-    float l2 = 1.f / m_vec4.w;
+    float l2 = 1.f / m_vec4.f.w;
     v2.f.x = l2 * v2.f.x;
     v2.f.y = l2 * v2.f.y;
     v2.f.z = l2 * v2.f.z;
@@ -53,7 +53,7 @@ PhysicsFinitePlane::PhysicsFinitePlane(CollisionSpace* collision_space, nlVector
     }
 
     // m_geomID = dCreateFinitePlane(space, m_vec4.x, m_vec4.y, m_vec4.z, m_vec4.w, arg5, m_param);
-    m_geomID = dCreateFinitePlane(space, m_vec4.y, m_vec4.z, m_vec4.w, m_param, arg5, m_param);
+    m_geomID = dCreateFinitePlane(space, m_vec4.f.y, m_vec4.f.z, m_vec4.f.w, m_param, arg5, m_param);
     dGeomSetData(m_geomID, this);
     SetRotation(mat);
     SetPosition(pos, WORLD_COORDINATES);

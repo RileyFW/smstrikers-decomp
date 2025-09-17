@@ -127,13 +127,12 @@ void glplatEndFrame()
  */
 void glplatBeginFrame()
 {
-    // u32 temp_r3;
     if (glx_VIWidth != prev_VIWidth)
     {
-        s32 temp_r3 = 0x2D0 - glx_VIWidth;
+        s32 diff = 720 - glx_VIWidth;
         prev_VIWidth = glx_VIWidth;
         glx_rmode.viWidth = (s16)glx_VIWidth;
-        glx_rmode.viXOrigin = (s16)((s32)((temp_r3 >> 0x1FU) + temp_r3) >> 1);
+        glx_rmode.viXOrigin = (s16)((diff + (s32)((u32)diff >> 31)) >> 1);
         VIConfigure(&glx_rmode);
         VIFlush();
     }
@@ -424,7 +423,7 @@ void glx_SendViews()
                 }
                 break;
             case 0x11:
-                glx_DOFUpdate((double)local.x);
+                glx_DOFUpdate((double)local.f.x);
                 glx_DOFGrab();
             switchD_801b4d2c_caseD_6:
 
