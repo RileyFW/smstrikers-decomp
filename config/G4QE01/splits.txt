@@ -2443,7 +2443,7 @@ TransitionTask.o:
 	.sbss       start:0x80373DA0 end:0x80373DB0
 	.sdata2     start:0x80376A08 end:0x80376A20
 
-ResetTask.o:
+Game/ResetTask.cpp:
 	.text       start:0x8017320C end:0x80173508
 	.text       start:0x80173508 end:0x80173510
 	.text       start:0x80173510 end:0x80173510
@@ -2513,7 +2513,7 @@ StatsTracker.o:
 	.sdata2     start:0x80376A30 end:0x80376A48
 	.sbss2      start:0x80377F88 end:0x80377F90
 
-SaveLoad.o:
+Game/DB/SaveLoad.cpp:
 	.text       start:0x8018995C end:0x8018D2D4
 	.text       start:0x8018D2D4 end:0x8018D2D4
 	.text       start:0x8018D2D4 end:0x8018D2D4

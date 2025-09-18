@@ -33,8 +33,9 @@ public:
     void SetupForAboutAutoSave();
     void UpdateForAboutToSaveSlide();
     void HandleSaveLoadFinishedResult();
-    void StartSaveNow();
-    void UpdateCardRemovedFlag();
+
+    static void StartSaveNow();
+    static void UpdateCardRemovedFlag();
 };
 
 // class FEFinder<TLComponentInstance, 4>

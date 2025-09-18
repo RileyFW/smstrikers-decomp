@@ -810,6 +810,7 @@ config.libs = [
             Object(Matching, "Game/PlatPadUpdateTask.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/FixedUpdateTask.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/DispatchEventsTask.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/ResetTask.cpp", extra_cflags=["-inline deferred"]),
 
             # Triggers
             Object(Matching, "Game/MarioTriggers.cpp", extra_cflags=["-inline deferred"]),
@@ -1089,6 +1090,9 @@ config.libs = [
             Object(NonMatching, "Game/Effects/EmissionController.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Effects/EmissionManager.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Effects/PhotoFlashEffect.cpp", extra_cflags=["-inline deferred"]),
+
+            # Game/DB
+            Object(NonMatching, "Game/DB/SaveLoad.cpp", extra_cflags=["-inline deferred"]),
         ],
     ),
     GameLib(
