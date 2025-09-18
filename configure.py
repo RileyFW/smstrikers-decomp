@@ -705,6 +705,7 @@ config.libs = [
             Object(Matching, "Game/ScriptTuning.cpp", extra_cflags=["-inline auto,deferred"]),
 
 
+            # Camera
             Object(Matching, "Game/CameraLoader.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/CameraMan.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Camera/FaceCam.cpp", extra_cflags=["-inline deferred"]),
@@ -716,6 +717,7 @@ config.libs = [
             Object(NonMatching, "Game/Camera/FollowCam.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Camera/ReplayCamera.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Camera/AnimViewerCam.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Camera/rumblefilter.cpp", extra_cflags=["-inline deferred"]),
 
             Object(NonMatching, "Game/Replay.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/ReplayChoreo.cpp", extra_cflags=["-inline deferred"]),    

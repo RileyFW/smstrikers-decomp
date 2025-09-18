@@ -113,11 +113,11 @@ void EventManager::AllocateDestArray(unsigned long count, unsigned long maskDefa
 /**
  * Offset/Address/Size: 0xF4 | 0x801FAA74 | size: 0xD0
  */
-Event* EventManager::CreateValidEvent(unsigned long type, unsigned long sizeCheck)
+Event* EventManager::CreateValidEvent(unsigned long eventID, unsigned long uSize)
 {
-    if (sizeCheck > m_size)
+    if (uSize > m_size)
     {
-        nlPrintf("Event Manager: Size mismatch on event creation (%d vs %d)!\n", sizeCheck, m_size); // @326
+        nlPrintf("Event Manager: Size mismatch on event creation (%d vs %d)!\n", uSize, m_size); // @326
         return NULL;
     }
 
@@ -145,7 +145,7 @@ Event* EventManager::CreateValidEvent(unsigned long type, unsigned long sizeChec
         return NULL;
     }
 
-    e->m_type = type; // stw at +0x08
+    e->m_type = eventID; // stw at +0x08
 
     return e;
 }

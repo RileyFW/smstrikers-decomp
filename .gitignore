@@ -28,6 +28,7 @@ ctx.*
 *.ctx
 
 #class_gen output
+include/_class_gen/
 src/_class_gen/
 
 # Generated configs

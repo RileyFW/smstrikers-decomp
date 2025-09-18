@@ -47,7 +47,7 @@ public:
     EventHandler* AddEventHandler(EventCallback, void*, unsigned long);
     void RemoveEventHandler(EventHandler*);
     void AllocateDestArray(unsigned long, unsigned long);
-    Event* CreateValidEvent(unsigned long, unsigned long);
+    Event* CreateValidEvent(unsigned long eventID, unsigned long uSize);
     void DispatchEvents();
 
     /* 0x00 */ bool m_dispatching;

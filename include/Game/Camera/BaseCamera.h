@@ -2,9 +2,7 @@
 #define _BASECAMERA_H_
 
 #include "NL/nlMath.h"
-// #include "Game/RumbleFilter.h"
-
-class cRumbleFilter;
+#include "Game/Camera/rumblefilter.h"
 
 enum eCameraType
 {
