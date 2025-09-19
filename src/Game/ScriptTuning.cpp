@@ -24,7 +24,7 @@ FuzzyTweaks::~FuzzyTweaks()
  */
 void FuzzyTweaks::Init()
 {
-    Config cfg(Config::AllocateWhere_1);
+    Config cfg(Config::ALLOCATE_HIGH);
     cfg.LoadFromFile(mszFileName);
 
     vCloseTeammateConfidenceDistance.f.x = cfg.Get<float>("Close 2 Teammate Min Dist", -9999.9f);

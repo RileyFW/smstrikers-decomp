@@ -2,6 +2,7 @@
 #define _AUDIOLOADER_H_
 
 #include "types.h"
+#include "Game/GameInfo.h"
 
 // void GetSoundPropTableFromPlayerStadium(eStadiumID, eCharacterClass);
 // void 0x80149078..0x801490F4 | size: 0x7C;
@@ -9,11 +10,6 @@
 class LoadingManager;
 class SoundStrToIDNode;
 class Bowser;
-
-enum eStadiumID
-{
-    eStadiumID_0 = 0
-};
 
 class AudioLoader
 {
@@ -55,8 +51,9 @@ public:
     void SetupWorldSoundTypesAVLTree();
     void SetupCharSoundTypesAVLTree();
     void SetupSoundDefinesAVLTree();
-};
 
+    static bool gbDisableAudio;
+};
 
 // class GCAudioStreaming
 // {
@@ -67,7 +64,6 @@ public:
 //     void AudioStream::~AudioStream();
 //     void AudioStream::WarmReadDone(GCAudioStreaming::AudioStreamBuffer*);
 // };
-
 
 // class AVLTreeBase<int, SoundStrToIDNode*, BasicSlotPool<AVLTreeEntry<int, SoundStrToIDNode*>>, DefaultKeyCompare<int>>
 // {
@@ -83,13 +79,11 @@ public:
 //     void AllocateEntry(void*, void*);
 // };
 
-
 // class nlDLRingIsEnd<DLListEntry<GCAudioStreaming
 // {
 // public:
 //     void StereoAudioStream*>>(DLListEntry<GCAudioStreaming::StereoAudioStream*>*, DLListEntry<GCAudioStreaming::StereoAudioStream*>*);
 // };
-
 
 // class nlDLRingGetStart<DLListEntry<GCAudioStreaming
 // {
@@ -97,13 +91,11 @@ public:
 //     void StereoAudioStream*>>(DLListEntry<GCAudioStreaming::StereoAudioStream*>*);
 // };
 
-
 // class nlDLRingRemove<DLListEntry<GCAudioStreaming
 // {
 // public:
 //     void StereoAudioStream*>>(DLListEntry<GCAudioStreaming::StereoAudioStream*>**, DLListEntry<GCAudioStreaming::StereoAudioStream*>*);
 // };
-
 
 // class nlAVLTreeSlotPool<int, SoundStrToIDNode*, DefaultKeyCompare<int>>
 // {

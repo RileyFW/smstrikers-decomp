@@ -9,36 +9,38 @@
 
 #include "Game/GameTweaks.h"
 
-enum eSkillLevel
-{
-    TRAINING = 0,
-    ROOKIE = 1,
-    PROFESSIONAL = 2,
-    SUPERSTAR = 3,
-    LEGEND = 4,
-};
+#include "Game/DB/UserOptions.h"
 
-struct GameplaySettings
-{
-    /* 0x0 */ eSkillLevel SkillLevel;
-    /* 0x4 */ s32 GameTime;
-    /* 0x8 */ bool PowerUps;
-    /* 0x9 */ bool Shoot2Score;
-    /* 0xA */ bool BowserAttackEnabled;
-    /* 0xB */ bool RumbleEnabled;
-}; // total size: 0xC
+// enum eSkillLevel
+// {
+//     TRAINING = 0,
+//     ROOKIE = 1,
+//     PROFESSIONAL = 2,
+//     SUPERSTAR = 3,
+//     LEGEND = 4,
+// };
 
-struct PowerupSettings
-{
-    /* 0x0 */ bool RedShells;
-    /* 0x1 */ bool GreenShells;
-    /* 0x2 */ bool BlueShells;
-    /* 0x3 */ bool SpinyShells;
-    /* 0x4 */ bool Starman;
-    /* 0x5 */ bool Twister;
-    /* 0x6 */ bool Bobombs;
-    /* 0x7 */ bool Bananas;
-}; // total size: 0x8
+// struct GameplaySettings
+// {
+//     /* 0x0 */ eSkillLevel SkillLevel;
+//     /* 0x4 */ s32 GameTime;
+//     /* 0x8 */ bool PowerUps;
+//     /* 0x9 */ bool Shoot2Score;
+//     /* 0xA */ bool BowserAttackEnabled;
+//     /* 0xB */ bool RumbleEnabled;
+// }; // total size: 0xC
+
+// struct PowerupSettings
+// {
+//     /* 0x0 */ bool RedShells;
+//     /* 0x1 */ bool GreenShells;
+//     /* 0x2 */ bool BlueShells;
+//     /* 0x3 */ bool SpinyShells;
+//     /* 0x4 */ bool Starman;
+//     /* 0x5 */ bool Twister;
+//     /* 0x6 */ bool Bobombs;
+//     /* 0x7 */ bool Bananas;
+// }; // total size: 0x8
 
 struct UserInfo
 {
@@ -371,7 +373,10 @@ public:
     // unsigned int mPreGameUnlockedState;           // offset 0x4C54, size 0x4
     // unsigned int mUnlockedTriggers;               // offset 0x4C58, size 0x4
     // enum eStadiumID mLastHumanStadium;            // offset 0x4C5C, size 0x4
-    // struct AudioSettings mCurGameAudioSettings;   // offset 0x4C60, size 0x20
+
+    u8 _pad0x4968[0x2F8];
+
+    /* 0x4C60 */ AudioSettings mCurGameAudioSettings; // offset 0x4C60, size 0x20
 }; // total size: 0x4C80
 
 // class Cup<8, 14>

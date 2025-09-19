@@ -45,7 +45,7 @@ PlayerTweaks::~PlayerTweaks()
  */
 void PlayerTweaks::Init()
 {
-    Config cfg(Config::AllocateWhere_1);
+    Config cfg(Config::ALLOCATE_HIGH);
     cfg.LoadFromFile(mszFileName);
 
     fJoggingSpeed = GetConfigFloat(cfg, "Jog Speed", 1.6f);
@@ -83,7 +83,7 @@ void FielderTweaks::Init()
 {
     PlayerTweaks::Init();
 
-    Config cfg(Config::AllocateWhere_1);
+    Config cfg(Config::ALLOCATE_HIGH);
     cfg.LoadFromFile(mszFileName);
 
     fRunningAccel = g_pTweaks[1];
@@ -178,7 +178,7 @@ void GoalieTweaks::Init()
 {
     PlayerTweaks::Init();
 
-    Config cfg(Config::AllocateWhere_1);
+    Config cfg(Config::ALLOCATE_HIGH);
     cfg.LoadFromFile(mszFileName);
 
     fThrowingDirectionSeekSpeed = GetConfigFloat(cfg, "Throwing Turn Speed", 50000.0f);

@@ -86,7 +86,7 @@ def determine_output_directories(source_path):
     
     return src_dir, include_dir
 
-def run_class_gen_on_obj_file(obj_file, output_src_dir, output_include_dir, search_dir, class_gen_script):
+def run_class_gen_on_obj_file(obj_file, output_src_dir, output_include_dir, search_dir, class_gen_script, inline_deferred=False):
     """Run the existing class_gen.py script on a single object file"""
     
     # Create output directories
@@ -105,6 +105,10 @@ def run_class_gen_on_obj_file(obj_file, output_src_dir, output_include_dir, sear
             '--output-dir', temp_output_dir,
             '--search-dir', search_dir
         ]
+        
+        # Add --inline-deferred if requested
+        if inline_deferred:
+            cmd.append('--inline-deferred')
         
         result = subprocess.run(cmd, capture_output=True, text=True)
         
@@ -150,6 +154,7 @@ def main():
     dwarf_file = 'dwarf_ouput2.txt'
     search_dir = 'build/G4QE01/asm'
     class_gen_script = 'tools/scripts/class_gen.py'
+    inline_deferred = True  # Set to True to enable inline-deferred mode
     
     print("Auto Class Generator")
     print("===================")
@@ -189,7 +194,7 @@ def main():
             print(f"  Output include: {output_include_dir}")
             
             # Run class_gen
-            if run_class_gen_on_obj_file(obj_file, output_src_dir, output_include_dir, search_dir, class_gen_script):
+            if run_class_gen_on_obj_file(obj_file, output_src_dir, output_include_dir, search_dir, class_gen_script, inline_deferred):
                 success_count += 1
                 print(f"  ✓ Successfully processed {obj_file}")
             else:

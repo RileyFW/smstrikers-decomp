@@ -37,7 +37,7 @@ GameTweaks::GameTweaks(const char* name)
  */
 void GameTweaks::Init()
 {
-    Config cfg(Config::AllocateWhere_1);
+    Config cfg(Config::ALLOCATE_HIGH);
     cfg.LoadFromFile(mszFileName);
 
     const GameplaySettings& gameSettings = GameInfoManager::s_pInstance->GetGameplayOptions();
@@ -743,7 +743,7 @@ void SkillTweaks::Init(eDifficultyID diff, bool blend)
 
     if (bNeedToLoadFile)
     {
-        Config cfg(Config::AllocateWhere_1);
+        Config cfg(Config::ALLOCATE_HIGH);
         cfg.LoadFromFile((const char*)mszFileName);
 
         SkillTweak* it = mSkillTweaksList.m_pStart;

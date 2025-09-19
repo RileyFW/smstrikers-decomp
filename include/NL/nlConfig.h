@@ -32,8 +32,8 @@ class Config
 public:
     enum AllocateWhere
     {
-        AllocateWhere_0 = 0,
-        AllocateWhere_1 = 1,
+        ALLOCATE_LOW = 0,
+        ALLOCATE_HIGH = 1,
     };
 
     // void Parse(const char*, Config::Parser&);

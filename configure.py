@@ -1095,6 +1095,7 @@ config.libs = [
 
             # Game/DB
             Object(NonMatching, "Game/DB/SaveLoad.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/DB/UserOptions.cpp", extra_cflags=["-inline deferred"]),
         ],
     ),
     GameLib(
