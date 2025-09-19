@@ -4,47 +4,63 @@
 /**
  * Offset/Address/Size: 0x0 | 0x801FFAE4 | size: 0x218
  */
-PhysicsFinitePlane::PhysicsFinitePlane(CollisionSpace* collision_space, nlVector3& pos, nlVector3& v1, nlVector3& v2, bool arg5, float arg8)
+//  void * PhysicsFinitePlane::PhysicsFinitePlane(class CollisionSpace * space /* r27 */, class nlVector3 & centre /* r28 */, class nlVector3 & v1 /* r29 */, class nlVector3 & v2 /* r30 */, unsigned char isOneSided /* r31 */, float errorCorrectionDepth /* f31 */) {
+
+inline void nlVec3Cross(nlVector3& result, const nlVector3& a, const nlVector3& b)
+{
+    nlVec3Set(result,
+        (a.f.y * b.f.z) - (a.f.z * b.f.y),
+        (a.f.z * b.f.x) - (a.f.x * b.f.z),
+        (a.f.x * b.f.y) - (a.f.y * b.f.x));
+}
+
+PhysicsFinitePlane::PhysicsFinitePlane(CollisionSpace* collision_space, nlVector3& centre, nlVector3& v1, nlVector3& v2, bool isOneSided, float errorCorrectionDepth)
     : PhysicsObject(NULL)
 {
-    m_param = arg8;
-    m_vec4.f.x = 0.f; // unk2C
-    m_vec4.f.y = 0.f; // unk30
-    m_vec4.f.z = 0.f; // unk34
-    m_vec4.f.w = 0.f; // unk38
+    mErrorCorrectionDepth = errorCorrectionDepth;
 
-    m_vec4.f.y = nlSqrt(v1.f.x * v1.f.x + v1.f.y * v1.f.y + v1.f.z * v1.f.z, true);
-    m_vec4.f.w = nlSqrt(v2.f.x * v2.f.x + v2.f.y * v2.f.y + v2.f.z * v2.f.z, true);
-    m_vec4.f.x = -m_vec4.f.y;
-    m_vec4.f.z = -m_vec4.f.w;
+    xMin = 0.f;
+    xMax = 0.f;
+    yMin = 0.f;
+    yMax = 0.f;
 
-    float l = 1.f / m_vec4.f.y;
-    v1.f.x = l * v1.f.x;
-    v1.f.y = l * v1.f.y;
-    v1.f.z = l * v1.f.z;
+    xMax = nlSqrt(v1.f.x * v1.f.x + v1.f.y * v1.f.y + v1.f.z * v1.f.z, true);
+    yMax = nlSqrt(v2.f.x * v2.f.x + v2.f.y * v2.f.y + v2.f.z * v2.f.z, true);
 
-    float l2 = 1.f / m_vec4.f.w;
-    v2.f.x = l2 * v2.f.x;
-    v2.f.y = l2 * v2.f.y;
-    v2.f.z = l2 * v2.f.z;
+    xMin = -xMax;
+    yMin = -yMax;
 
-    float temp_f7 = v1.f.x;
-    float temp_f5 = v1.f.y;
-    float temp_f3_2 = v1.f.z;
-    float temp_f1_3 = v2.f.x;
-    float temp_f6 = v2.f.y;
-    float temp_f4_2 = v2.f.z;
+    const float l = 1.f / xMax;
+    nlVec3Set(v1, l * v1.f.x, l * v1.f.y, l * v1.f.z);
+
+    const float l2 = 1.f / yMax;
+    nlVec3Set(v2, l2 * v2.f.x, l2 * v2.f.y, l2 * v2.f.z);
+
+    // float temp_f7 = v1.f.x;
+    // float temp_f5 = v1.f.y;
+    // float temp_f3_2 = v1.f.z;
+    // float temp_f1_3 = v2.f.x;
+    // float temp_f6 = v2.f.y;
+    // float temp_f4_2 = v2.f.z;
 
     nlMatrix3 mat;
+
+    // Col2 = cross(axisU, axisV) but with Cz negated to match fmsubs/fmsubs pattern
+    float Cx = v1.f.y * v2.f.z - v1.f.z * v2.f.y;
+    float Cy = v1.f.z * v2.f.x - v1.f.x * v2.f.z;
+    float Cz = v1.f.y * v2.f.x - v1.f.x * v2.f.y;
+
     mat.m[0] = v1.f.x;
     mat.m[1] = v1.f.y;
     mat.m[2] = v1.f.z;
+    // Col1
     mat.m[3] = v2.f.x;
     mat.m[4] = v2.f.y;
     mat.m[5] = v2.f.z;
-    mat.m[6] = (temp_f5 * temp_f4_2) - (temp_f3_2 * temp_f6);
-    mat.m[7] = (-temp_f7 * temp_f4_2) + (temp_f3_2 * temp_f1_3);
-    mat.m[8] = (temp_f7 * temp_f6) - (temp_f5 * temp_f1_3);
+    // Col2
+    mat.m[6] = Cx;
+    mat.m[7] = Cy;
+    mat.m[8] = Cz; // note the negation
 
     dSpaceID space = NULL;
     if (collision_space != NULL)
@@ -52,10 +68,9 @@ PhysicsFinitePlane::PhysicsFinitePlane(CollisionSpace* collision_space, nlVector
         space = collision_space->m_spaceID;
     }
 
-    // m_geomID = dCreateFinitePlane(space, m_vec4.x, m_vec4.y, m_vec4.z, m_vec4.w, arg5, m_param);
-    m_geomID = dCreateFinitePlane(space, m_vec4.f.y, m_vec4.f.z, m_vec4.f.w, m_param, arg5, m_param);
+    m_geomID = dCreateFinitePlane(space, xMin, xMax, yMin, yMax, isOneSided, errorCorrectionDepth);
     dGeomSetData(m_geomID, this);
     SetRotation(mat);
-    SetPosition(pos, WORLD_COORDINATES);
+    SetPosition(centre, WORLD_COORDINATES);
     SetDefaultCollideBits();
 }

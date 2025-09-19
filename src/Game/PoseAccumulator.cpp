@@ -442,12 +442,12 @@ void cPoseAccumulator::BlendTrans(int idx, const nlVector3* v, float w, bool fli
         if (idx <= h->m_minNode || idx == h->m_maxNode)
         {
             // store: (x, -y, z)
-            NL_VECTOR3_SET(vtemp, v->f.x, -v->f.y, v->f.z);
+            nlVec3Set(vtemp, v->f.x, -v->f.y, v->f.z);
         }
         else
         {
             // store: (x, y, -z)
-            NL_VECTOR3_SET(vtemp, v->f.x, v->f.y, -v->f.z);
+            nlVec3Set(vtemp, v->f.x, v->f.y, -v->f.z);
         }
 
         v = &vtemp;

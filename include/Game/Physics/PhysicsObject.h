@@ -19,17 +19,16 @@ public:
         RELATIVE_TO_PARENT = 1,
     };
 
-    virtual ~PhysicsObject();
     PhysicsObject(PhysicsWorld*);
+    virtual ~PhysicsObject();
 
     void CloneObject(const PhysicsObject&);
     /* 0x0C */ virtual int GetObjectType() const = 0;
     /* 0x10 */ virtual int SetContactInfo(dContact*, PhysicsObject*, bool);
     /* 0x14 */ virtual void PreUpdate();
     /* 0x18 */ virtual void PostUpdate();
-    /* 0x1c */ virtual int PreCollide()
+    /* 0x1c */ virtual void PreCollide()
     {
-        return 0;
     }
     /* 0x20 */ virtual int Contact(PhysicsObject*, dContact*, int);
     /* 0x24 */ virtual int Contact(PhysicsObject*, dContact*, int, PhysicsObject*);
@@ -65,6 +64,6 @@ public:
     /* 0x10 */ float m_gravity;
     /* 0x14 */ nlVector3 m_position;
     /* 0x20 */ nlVector3 m_linearVelocity;
-};
+}; // total size: 0x2C
 
 #endif // _PHYSICSOBJECT_H_

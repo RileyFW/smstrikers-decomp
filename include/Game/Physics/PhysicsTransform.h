@@ -11,16 +11,16 @@
 class PhysicsTransform : public PhysicsObject
 {
 public:
+    PhysicsTransform();
+    virtual ~PhysicsTransform();
+    virtual int GetObjectType() const { return m_SubObject->GetObjectType(); };
+
     void SetSubObjectTransform(const nlMatrix4&, PhysicsObject::CoordinateType);
     void SetSubObjectPosition(const nlVector3&, PhysicsObject::CoordinateType);
     void Release();
     void Attach(PhysicsObject*, PhysicsObject*);
-    virtual int GetObjectType() const;
 
-    virtual ~PhysicsTransform();
-    PhysicsTransform();
-
-    /* 0x2c */ PhysicsObject* m_unk_2c;
+    /* 0x2c */ PhysicsObject* m_SubObject;
 };
 
 #endif // _PHYSICSTRANSFORM_H_

@@ -556,8 +556,8 @@ void SoundAttributes::Init()
     m_vecPtr_0x44 = NULL;
     m_vecPtr_0x50 = NULL;
 
-    NL_VECTOR3_SET(m_vec_0x44, 256.0f, 256.0f, 256.0f);
-    NL_VECTOR3_SET(m_vec_0x50, 256.0f, 256.0f, 256.0f);
+    nlVec3Set(m_vec_0x44, 256.0f, 256.0f, 256.0f);
+    nlVec3Set(m_vec_0x50, 256.0f, 256.0f, 256.0f);
 
     m_unk_0x5C = 0;
     m_unk_0x60 = 0;

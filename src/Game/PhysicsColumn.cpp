@@ -46,7 +46,7 @@ PhysicsColumn::PhysicsColumn(CollisionSpace* collisionSpace, PhysicsWorld* world
     dJointAttach(m_jointID, m_bodyID, NULL);
 
     nlVector4 v;
-    NL_VECTOR4_SET(v, 0.f, 0.f, 1.f); // todo: remove this unnecessary setter
+    nlVec3Set(*(nlVector3*)&v, 0.f, 0.f, 1.f);
 
     dJointSetCharacterNoMotionDirection(m_jointID, (float*)&v);
 

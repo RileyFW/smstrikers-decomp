@@ -36,21 +36,21 @@ inline void nlVec2Set(nlVector2& v0, float _x, float _y)
     v0.f.y = _y;
 }
 
-#define NL_VECTOR3_SET(v, xval, yval, zval) \
-    do                                      \
-    {                                       \
-        (v).f.x = (xval);                   \
-        (v).f.y = (yval);                   \
-        (v).f.z = (zval);                   \
-    } while (0)
+// #define NL_VECTOR3_SET(v, xval, yval, zval) \
+//     do                                      \
+//     {                                       \
+//         (v).f.x = (xval);                   \
+//         (v).f.y = (yval);                   \
+//         (v).f.z = (zval);                   \
+//     } while (0)
 
-#define NL_VECTOR4_SET(v, xval, yval, zval) \
-    do                                      \
-    {                                       \
-        (v).f.x = (xval);                   \
-        (v).f.y = (yval);                   \
-        (v).f.z = (zval);                   \
-    } while (0)
+// #define NL_VECTOR4_SET(v, xval, yval, zval) \
+//     do                                      \
+//     {                                       \
+//         (v).f.x = (xval);                   \
+//         (v).f.y = (yval);                   \
+//         (v).f.z = (zval);                   \
+//     } while (0)
 
 struct nlVector3_
 {

@@ -7,6 +7,8 @@
 #include "NL/nlConfig.h"
 #include "types.h"
 
+#include "NL/nlBasicString.h"
+
 static const char* testLog;
 static const char* smokeTestSuccessOutput;     // size: 0x4, address: 0x80396644
 static const char* frameRateTestSuccessOutput; // size: 0x4, address: 0x80396648

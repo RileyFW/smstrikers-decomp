@@ -21,29 +21,14 @@ float g_BallAirResistance = 0.1f;
 /**
  * Offset/Address/Size: 0x0 | 0x80134D14 | size: 0xD4
  */
-
-const int z[3] = { 0, 0, 0 };
-
 void PhysicsBall::CalcAngularFromLinearVelocity(nlVector3& v)
 {
-    nlVector3 t2, t1;
     nlVector3 velocity;
     GetLinearVelocity(&velocity);
 
-    // u32* src = (u32*)&other.m_unk_0x2c;
-    u32* dst_t1 = (u32*)&t1;
-    dst_t1[0] = z[0];
-    dst_t1[1] = z[1];
-    dst_t1[2] = z[2];
-    // t1 = nlVector3(0.f, 0.f, 0.f);
-
+    nlVector3 t1 = { 0.f, 0.f, 0.f };
     float dVar1 = 1.f / GetRadius();
-
-    // t2 = nlVector3(0.f, 0.f, 0.f);
-    u32* dst_t2 = (u32*)&t2;
-    dst_t2[0] = z[0];
-    dst_t2[1] = z[1];
-    dst_t2[2] = z[2];
+    nlVector3 t2 = { 0.f, 0.f, 0.f };
 
     v.f.x = (t1.f.y * t2.f.z) - (dVar1 * velocity.f.y);
     v.f.y = (-t1.f.x * t2.f.z) + (dVar1 * velocity.f.x);
@@ -448,10 +433,10 @@ void PhysicsBall::PreUpdate()
 /**
  * Offset/Address/Size: 0xB70 | 0x80135884 | size: 0xC
  */
-int PhysicsBall::PreCollide()
+void PhysicsBall::PreCollide()
 {
-    m_bIsSupportedByGround = 0;
-    return 0;
+    m_bIsSupportedByGround = false;
+    // return (int)m_bIsSupportedByGround;
 }
 
 /**

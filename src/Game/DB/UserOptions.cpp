@@ -5,6 +5,7 @@
 
 #include "Dolphin/os.h"
 #include "NL/nlMemory.h"
+#include "NL/nlBasicString.h"
 
 #include "Game/AudioLoader.h"
 #include "Game/GameInfo.h"

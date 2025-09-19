@@ -113,10 +113,10 @@ void OverlayManager::FEEventHandler(Event*, void*)
  */
 void OverlayManager::SetVisible(SceneList scene, bool visibility, bool overrideStateSettings)
 {
-    BasicString fileName;             // r1+0xC
-    u32 uHashID;                      // r4
-    BaseOverlayHandler* sceneHandler; // r3
-    u32 state;                        // r4
+    BasicString<char, Detail::TempStringAllocator> fileName; // r1+0xC
+    u32 uHashID;                                             // r4
+    BaseOverlayHandler* sceneHandler;                        // r3
+    u32 state;                                               // r4
 
     if (nlSingleton<GameInfoManager>::s_pInstance->mCurrentCup->mUserSelectedSidekick != SK_MYSTERY || scene == OVERLAY_HUD)
     {

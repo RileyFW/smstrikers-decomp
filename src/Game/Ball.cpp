@@ -1,3 +1,4 @@
+#include "Game/WorldManager.h"
 #pragma pool_data off
 
 #include "Game/Ball.h"
@@ -502,11 +503,30 @@ cBall::cBall()
     // m_unk_0x00 = 0;
     // m_unk_0x04 = 0;
 
+    m_bBallPathChangeCount = 0;
+    m_bBallDeflectCount = 0;
+
     m_tShotTimer.SetSeconds(0.f);
     m_tNoPickupTimer.SetSeconds(0.f);
     m_tPassTargetTimer.SetSeconds(0.f);
     // m_timer_0x14->SetSeconds(0.f);
     m_fTotalPassTime = 0.f;
+
+    m_pOwner = NULL;
+    m_pPrevOwner = NULL;
+    m_pLastTouch = NULL;
+    m_pPassTarget = NULL;
+    m_pShooter = NULL;
+
+    m_uGoalType = 0x4;
+    m_uVoiceID = 0;
+
+    mbIsPerfectShot = false;
+    mbHyperSTS = false;
+    mbCanDamage = false;
+    // m_mpDamageTarget = NULL;
+
+    m_pDrawableBall = WorldManager::s_World->FindDrawableObject(nlStringHash("gameplay/ball"));
 
     void* this_00 = nlMalloc(0x5c, 8, FALSE);
     if (this_00 != NULL)
@@ -517,9 +537,9 @@ cBall::cBall()
 
     // m_timer_0x14->SetSeconds(0.f);
 
-    NL_VECTOR3_SET(m_v3Position, 0.f, 0.f, 0.f);
+    nlVec3Set(m_v3Position, 0.f, 0.f, 0.f);
     nlVector3 m_rayDir;
-    NL_VECTOR3_SET(m_v3Position, 0.f, 0.f, 0.f);
+    nlVec3Set(m_v3Position, 0.f, 0.f, 0.f);
 
     void* this_01 = nlMalloc(0x2C, 8, FALSE);
     if (this_01 != NULL)

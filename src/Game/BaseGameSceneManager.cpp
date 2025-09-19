@@ -654,8 +654,36 @@ bool BaseGameSceneManager::IsOnStack(SceneList scene)
 /**
  * Offset/Address/Size: 0x68 | 0x80095624 | size: 0x158
  */
-void BaseGameSceneManager::GetFileName(SceneList)
+BasicString<char, Detail::TempStringAllocator> BaseGameSceneManager::GetFileName(SceneList scene)
 {
+    const char* src = SceneEntryTable[(u32)scene].sceneName;
+
+    // Create BasicString using the template
+    BasicString<char, Detail::TempStringAllocator> result;
+
+    // Calculate string length
+    u32 length = 0;
+    const char* p = src;
+    while (*p != '\0')
+    {
+        ++p;
+        ++length;
+    }
+
+    // Allocate memory for the string (including null terminator)
+    result.m_capacity = length + 1;
+    result.m_data = (char*)Detail::TempStringAllocator::allocate(result.m_capacity);
+    result.m_size = length;
+    result.m_refCount = 1;
+
+    // Copy the string data
+    for (u32 i = 0; i < length; i++)
+    {
+        result.m_data[i] = src[i];
+    }
+    result.m_data[length] = '\0';
+
+    return result;
 }
 
 /**

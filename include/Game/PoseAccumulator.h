@@ -10,6 +10,13 @@
 
 typedef void (*BuildNodeMatrixFn)(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int);
 
+class Vector
+{
+    /* 0x0 */ nlMatrix4* mData;
+    /* 0x4 */ int mSize;
+    /* 0x8 */ int mCapacity;
+}; // total size: 0xC
+
 class cBuildNodeMatrixCallbackInfo
 {
 public:

@@ -11,9 +11,16 @@ public:
     PhysicsFinitePlane(CollisionSpace*, nlVector3&, nlVector3&, nlVector3&, bool, float);
     virtual int GetObjectType() const;
 
-    u8 m_padding[18];
-    nlVector4 m_vec4;
-    float m_param;
+    /* 0x2C */ float xMin;
+    /* 0x30 */ float xMax;
+    /* 0x34 */ float yMin;
+    /* 0x38 */ float yMax;
+    /* 0x3C */ float mErrorCorrectionDepth;
+    /* 0x40 */ struct dxJoint* m_CharMoveJoint;
+
+    // u8 m_padding[18];
+    // nlVector4 m_vec4;
+    // float m_param;
 };
 
 #endif // _PHYSICSFINITEPLANE_H_

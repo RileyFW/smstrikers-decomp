@@ -4,6 +4,7 @@
 #include "types.h"
 
 #include "Game/BaseSceneHandler.h"
+#include "NL/nlBasicString.h"
 
 #define MAX_SCENE_COUNT 32
 
@@ -110,7 +111,7 @@ public:
     void PopEntireStack();
     int GetSceneType(BaseSceneHandler*);
     bool IsOnStack(SceneList);
-    void GetFileName(SceneList);
+    BasicString<char, Detail::TempStringAllocator> GetFileName(SceneList);
     void PushLoadingScene(bool);
 
 public:

@@ -18,7 +18,7 @@ public:
     void CloneBall(const PhysicsBall&);
     virtual void PostUpdate();
     virtual void PreUpdate();
-    virtual int PreCollide();
+    virtual void PreCollide();
     virtual int SetContactInfo(dContact*, PhysicsObject*, bool);
     float GetBallMaxVelocity();
 
