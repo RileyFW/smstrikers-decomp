@@ -9,17 +9,17 @@ class PhysicsBall : public PhysicsSphere
 public:
     PhysicsBall(CollisionSpace*, PhysicsWorld*, float);
     virtual ~PhysicsBall() { };
+    virtual bool SetContactInfo(dContact* contact, PhysicsObject* other, bool first);
+    virtual void PreUpdate();
+    virtual void PreCollide();
+    virtual void PostUpdate();
+    virtual int Contact(PhysicsObject*, dContact*, int);
 
     void CalcAngularFromLinearVelocity(nlVector3&);
     void SetUseAngularVelocity(bool);
     void ScaleAngularVelocity(float);
     void AddResistanceForces();
-    virtual int Contact(PhysicsObject*, dContact*, int);
     void CloneBall(const PhysicsBall&);
-    virtual void PostUpdate();
-    virtual void PreUpdate();
-    virtual void PreCollide();
-    virtual int SetContactInfo(dContact*, PhysicsObject*, bool);
     float GetBallMaxVelocity();
 
     /* 0x2c */ nlVector3 m_v3TiltForce;

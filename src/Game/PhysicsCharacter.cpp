@@ -48,9 +48,8 @@ void PhysicsCharacter::ResolvePhysicsBoneIDFromName(const char*)
 /**
  * Offset/Address/Size: 0xA8C | 0x80136CA4 | size: 0x98
  */
-int PhysicsCharacter::PreCollide()
+void PhysicsCharacter::PreCollide()
 {
-    return 0;
 }
 
 /**
@@ -64,9 +63,9 @@ int PhysicsCharacter::Contact(PhysicsObject*, dContact*, int, PhysicsObject*)
 /**
  * Offset/Address/Size: 0x103C | 0x80137254 | size: 0x70
  */
-int PhysicsCharacter::SetContactInfo(dContact*, PhysicsObject*, bool)
+bool PhysicsCharacter::SetContactInfo(dContact* contact, PhysicsObject* other, bool first)
 {
-    return 0;
+    return false;
 }
 
 /**

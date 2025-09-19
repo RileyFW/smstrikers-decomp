@@ -148,11 +148,11 @@ public:
     void CalcRegularShot(nlVector3&, nlVector3&);
     void CleanUpPowerupEffect();
     void CleanUpAction();
-    void IsPreparingForOneTimer() const;
-    void IsReceivingVolleyPass() const;
-    void IsBallAwayFromCarrier() const;
-    void IsInvincible() const;
-    void IsRunning() const;
+    bool IsPreparingForOneTimer() const;
+    bool IsReceivingVolleyPass() const;
+    bool IsBallAwayFromCarrier() const;
+    bool IsInvincible() const;
+    bool IsRunning() const;
     void IsTurboing();
     void IsCharacterInAir(bool) const;
     void IsPlayingPowerupAnim();

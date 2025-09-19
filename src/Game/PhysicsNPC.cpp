@@ -79,16 +79,18 @@ int PhysicsNPC::Contact(PhysicsObject* other, dContact* contact, int what)
 /**
  * Offset/Address/Size: 0x70 | 0x8013B528 | size: 0x50
  */
-int PhysicsNPC::SetContactInfo(dContact* contact, PhysicsObject* /*other*/, bool setDefault)
+bool PhysicsNPC::SetContactInfo(dContact* contact, PhysicsObject* /*other*/, bool first)
 {
-    if (setDefault)
+    if (first)
+    {
         SetDefaultContactInfo(contact);
+    }
 
     contact->surface.bounce = 0.01f;
     contact->surface.bounce_vel = 0.0f;
     contact->surface.mu = 5.0f;
 
-    return 1;
+    return true;
 }
 
 // /**

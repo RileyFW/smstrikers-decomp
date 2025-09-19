@@ -1756,7 +1756,7 @@ Game/PhysicsBall.cpp:
 	.sdata      start:0x80372378 end:0x80372398
 	.sdata2     start:0x803761E8 end:0x80376230
 
-PhysicsBanana.o:
+Game/Physics/PhysicsBanana.cpp:
 	.text       start:0x80135A34 end:0x80136208
 	.text       start:0x80136208 end:0x80136210
 	.text       start:0x80136210 end:0x80136210
@@ -1798,7 +1798,7 @@ Game/PhysicsFakeBall.cpp:
 	.sbss       start:0x80373B10 end:0x80373B28
 	.sdata2     start:0x80376290 end:0x803762D0
 
-PhysicsGoalie.o:
+Game/Physics/PhysicsGoalie.cpp:
 	.text       start:0x80139A80 end:0x8013A3F0
 	.text       start:0x8013A3F0 end:0x8013A3F0
 	.ctors      start:0x8028D2E4 end:0x8028D2E8
@@ -1807,7 +1807,7 @@ PhysicsGoalie.o:
 	.sbss       start:0x80373B28 end:0x80373B30
 	.sdata2     start:0x803762D0 end:0x803762F8
 
-PhysicsNet.o:
+Game/Physics/PhysicsNet.cpp:
 	.text       start:0x8013A3F0 end:0x8013B490
 	.text       start:0x8013B490 end:0x8013B498
 	.text       start:0x8013B498 end:0x8013B4A0

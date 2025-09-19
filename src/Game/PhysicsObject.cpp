@@ -482,10 +482,10 @@ void PhysicsObject::GetLinearVelocity(nlVector3* out) const
 /**
  * Offset/Address/Size: 0x820 | 0x8020051C | size: 0x34
  */
-nlVector3* PhysicsObject::GetLinearVelocity()
+nlVector3& PhysicsObject::GetLinearVelocity()
 {
     GetLinearVelocity(&m_linearVelocity);
-    return &m_linearVelocity;
+    return m_linearVelocity;
 }
 
 /**
@@ -600,7 +600,7 @@ void PhysicsObject::SetDefaultContactInfo(dContact* contact)
 /**
  * Offset/Address/Size: 0x518 | 0x80200214 | size: 0x78
  */
-int PhysicsObject::SetContactInfo(dContact* contact, PhysicsObject* otherObject, bool first)
+bool PhysicsObject::SetContactInfo(dContact* contact, PhysicsObject* otherObject, bool first)
 {
     if (m_parentObject != NULL)
     {
@@ -617,7 +617,7 @@ int PhysicsObject::SetContactInfo(dContact* contact, PhysicsObject* otherObject,
         (contact->surface).bounce_vel = 0.1f;
     }
 
-    return 1;
+    return true;
 }
 
 /**

@@ -24,12 +24,10 @@ public:
 
     void CloneObject(const PhysicsObject&);
     /* 0x0C */ virtual int GetObjectType() const = 0;
-    /* 0x10 */ virtual int SetContactInfo(dContact*, PhysicsObject*, bool);
+    /* 0x10 */ virtual bool SetContactInfo(dContact* contact, PhysicsObject* other, bool first);
     /* 0x14 */ virtual void PreUpdate();
     /* 0x18 */ virtual void PostUpdate();
-    /* 0x1c */ virtual void PreCollide()
-    {
-    }
+    /* 0x1c */ virtual void PreCollide() { }
     /* 0x20 */ virtual int Contact(PhysicsObject*, dContact*, int);
     /* 0x24 */ virtual int Contact(PhysicsObject*, dContact*, int, PhysicsObject*);
     void MakeStatic();
@@ -44,7 +42,7 @@ public:
     void AddForceAtCentreOfMass(const nlVector3&);
     void GetAngularVelocity(nlVector3*) const;
     void SetAngularVelocity(const nlVector3&);
-    nlVector3* GetLinearVelocity();
+    nlVector3& GetLinearVelocity();
     void GetLinearVelocity(nlVector3*) const;
     void SetLinearVelocity(const nlVector3&);
     void GetRotation(nlMatrix4*) const;

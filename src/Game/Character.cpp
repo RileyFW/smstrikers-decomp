@@ -731,13 +731,13 @@ u32 CollisionPlayerWallData::GetID()
     return 0x6E;
 }
 
-/**
- * Offset/Address/Size: 0x80 | 0x80012220 | size: 0x8
- */
-u32 CollisionPowerupWallData::GetID()
-{
-    return 0x9B;
-}
+// /**
+//  * Offset/Address/Size: 0x80 | 0x80012220 | size: 0x8
+//  */
+// u32 CollisionPowerupWallData::GetID()
+// {
+//     return 0x9B;
+// }
 
 /**
  * Offset/Address/Size: 0x88 | 0x80012228 | size: 0x8

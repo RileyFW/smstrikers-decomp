@@ -104,7 +104,7 @@ void PhysicsBall::AddResistanceForces()
     // sp98.f.x = temp_r3->f.x;
     // sp98.f.y = temp_r3->f.y;
     // sp98.f.z = temp_r3->f.z;
-    sp98 = *GetLinearVelocity();
+    sp98 = GetLinearVelocity();
     if (m_parentObject == NULL)
     {
         if ((m_bIsSupportedByGround != 0) && (m_bUseAngularVel == 0))
@@ -442,7 +442,7 @@ void PhysicsBall::PreCollide()
 /**
  * Offset/Address/Size: 0xB7C | 0x80135890 | size: 0x114
  */
-int PhysicsBall::SetContactInfo(dContact* contact, PhysicsObject* other, bool param)
+bool PhysicsBall::SetContactInfo(dContact* contact, PhysicsObject* other, bool param)
 {
     if (m_parentObject != NULL)
     {
@@ -480,7 +480,7 @@ int PhysicsBall::SetContactInfo(dContact* contact, PhysicsObject* other, bool pa
         }
     }
 
-    return 1;
+    return true;
 }
 
 /**

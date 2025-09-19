@@ -6,9 +6,18 @@ extern PhysicsWorld* g_PhysicsWorld;
 /**
  * Offset/Address/Size: 0x0 | 0x8013B968 | size: 0x94
  */
-BOOL PhysicsShell::SetContactInfo(dContact*, PhysicsObject*, bool)
+bool PhysicsShell::SetContactInfo(dContact* contact, PhysicsObject* other, bool first)
 {
-    return FALSE;
+    if (first)
+    {
+        SetDefaultContactInfo(contact);
+    }
+
+    contact->surface.bounce = 0.01f;
+    contact->surface.bounce_vel = 0.0f;
+    contact->surface.mu = 5.0f;
+
+    return true;
 }
 
 /**
@@ -41,12 +50,4 @@ PhysicsShell::PhysicsShell(float radius)
     SetCollide(0xef);
     SetCategory(0x20);
     m_gravity = -32.f;
-}
-
-/**
- * Offset/Address/Size: 0x0 | 0x8013C388 | size: 0x8
- */
-int PhysicsShell::GetObjectType() const
-{
-    return 0x13;
 }

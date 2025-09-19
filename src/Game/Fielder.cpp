@@ -766,36 +766,46 @@ void cFielder::CleanUpAction()
 /**
  * Offset/Address/Size: 0xA444 | 0x80023780 | size: 0x24
  */
-void cFielder::IsPreparingForOneTimer() const
+bool cFielder::IsPreparingForOneTimer() const
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0xA468 | 0x800237A4 | size: 0x34
  */
-void cFielder::IsReceivingVolleyPass() const
+bool cFielder::IsReceivingVolleyPass() const
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0xA49C | 0x800237D8 | size: 0x3C
  */
-void cFielder::IsBallAwayFromCarrier() const
+bool cFielder::IsBallAwayFromCarrier() const
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0xA4D8 | 0x80023814 | size: 0x34
  */
-void cFielder::IsInvincible() const
+bool cFielder::IsInvincible() const
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0xA50C | 0x80023848 | size: 0x3C
  */
-void cFielder::IsRunning() const
+bool cFielder::IsRunning() const
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**

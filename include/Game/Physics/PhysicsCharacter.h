@@ -10,10 +10,10 @@ public:
     PhysicsCharacter(float, float);
 
     virtual int GetObjectType() const;
-    virtual int SetContactInfo(dContact*, PhysicsObject*, bool);
+    virtual bool SetContactInfo(dContact* contact, PhysicsObject* other, bool first);
 
     virtual void PostUpdate();
-    virtual int PreCollide();
+    virtual void PreCollide();
     virtual int Contact(PhysicsObject*, dContact*, int, PhysicsObject*);
 
     void SetCharacterVelocityXY(const nlVector3&);

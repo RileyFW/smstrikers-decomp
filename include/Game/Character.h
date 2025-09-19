@@ -325,11 +325,11 @@ public:
     virtual u32 GetID();
 };
 
-class CollisionPowerupWallData
-{
-public:
-    virtual u32 GetID();
-};
+// class CollisionPowerupWallData
+// {
+// public:
+//     virtual u32 GetID();
+// };
 
 class CollisionBallGoalpostData
 {
