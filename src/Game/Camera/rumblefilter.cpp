@@ -47,71 +47,81 @@ void cRumbleFilter::Reset()
  */
 void cRumbleFilter::Update(float dt)
 {
-    float fHTerm; // f27
-    float fDTerm; // f26
+    float fHTerm;
+    float fDTerm;
 
-    if (nlTaskManager::m_pInstance->m_CurrState != 1)
+    if (nlTaskManager::m_pInstance->m_CurrState == 1)
+        return;
+
+    dt = (dt <= 0.02f) ? dt : 0.02f;
+
+    nlVector2 _p;
+    _p.f.y = v2Pos0.f.y - v2Pos1.f.y;
+    _p.f.x = v2Pos0.f.x - v2Pos1.f.x;
+    // nlVec2Set(_p, v2Pos0.f.x - v2Pos1.f.x, v2Pos0.f.y - v2Pos1.f.y);
+    const float temp = (_p.f.x * _p.f.x) + (_p.f.y * _p.f.y);
+    const float len = nlSqrt(temp, true);
+    fHTerm = Ks * len;
+
+    nlVector2 _dv;
+    _dv.f.y = v2Vel0.f.y - v2Vel1.f.y;
+    _dv.f.x = v2Vel0.f.x - v2Vel1.f.x;
+    // nlVec2Set(_dv, v2Vel0.f.x - v2Vel1.f.x, v2Vel0.f.y - v2Vel1.f.y);
+    const float proj = (_dv.f.x * _p.f.x) + (_dv.f.y * _p.f.y);
+    // const float proj = (v2Vel0.f.x - v2Vel1.f.x) * _p.f.x + (v2Vel0.f.y - v2Vel1.f.y) * _p.f.y;
+    fDTerm = (len == 0.f) ? 0.0f : (proj * Kd) / len;
+
+    float ux, uy;
+    ux = 0.0f;
+    if (len == 0.f)
     {
-        float t = 0.02f;
-        if (dt <= 0.02f)
+        uy = 0.0f;
+    }
+    else
+    {
+        static bool bIsBouncing = false;
+
+        if (len < 0.01f)
         {
-            t = dt;
-        }
-
-        nlVector2 _p;
-        // _p.f.x = v2Pos0.f.x - v2Pos1.f.x;
-        // _p.f.y = v2Pos0.f.y - v2Pos1.f.y;
-        nlVec2Set(_p, v2Pos0.f.x - v2Pos1.f.x, v2Pos0.f.y - v2Pos1.f.y);
-        const float len = nlSqrt(_p.f.x * _p.f.x + _p.f.y * _p.f.y, true);
-        fHTerm = Ks * len;
-
-        nlVector2 _dv;
-        // _dv.f.x = v2Vel0.f.x - v2Vel1.f.x;
-        // _dv.f.y = v2Vel0.f.y - v2Vel1.f.y;
-        nlVec2Set(_dv, v2Vel0.f.x - v2Vel1.f.x, v2Vel0.f.y - v2Vel1.f.y);
-        const float proj = _dv.f.x * _p.f.x + _dv.f.y * _p.f.y;
-        fDTerm = (len == 0.f) ? 0.0f : (proj * Kd) / len;
-
-        float ux, uy;
-        ux = 0.0f;
-        if (len == 0.f)
-        {
-            uy = 0.0f;
+            if (bIsBouncing)
+            {
+                g_pEventManager->CreateValidEvent(0x58, 0x14);
+                bIsBouncing = false;
+            }
         }
         else
         {
-            static bool bIsBouncing = false;
-
-            if (len < 0.01f)
-            {
-                if (bIsBouncing)
-                {
-                    g_pEventManager->CreateValidEvent(0x58, 0x14);
-                    bIsBouncing = false;
-                }
-            }
-            else
-            {
-                bIsBouncing = true;
-            }
-
-            const float invLen = 1.0f / len;
-            ux = invLen * _p.f.x; // f1 path in asm
-            uy = invLen * _p.f.y; // f5 path in asm
+            bIsBouncing = true;
         }
 
-        nlVec2Set(v2Force0, 0.f, 0.f);
-        nlVec2Set(v2Force1, 0.f, 0.f);
-
-        nlVec2Set(v2Force0, v2Force0.f.x + ux * -(fHTerm + fDTerm), v2Force0.f.y + uy * -(fHTerm + fDTerm));
-        nlVec2Set(v2Force1, v2Force1.f.x - ux * -(fHTerm + fDTerm), v2Force1.f.y - uy * -(fHTerm + fDTerm));
-
-        float factor0 = 0.f;
-        nlVec2Set(v2Vel0, v2Vel0.f.x + (t * (factor0 * v2Force0.f.x)), v2Vel0.f.y + (t * (factor0 * v2Force0.f.y)));
-        nlVec2Set(v2Pos0, v2Pos0.f.x + (t * v2Vel0.f.x), v2Pos0.f.y + (t * v2Vel0.f.y));
-
-        float factor1 = 1.f;
-        nlVec2Set(v2Vel1, v2Vel1.f.x + (t * (factor1 * v2Force1.f.x)), v2Vel1.f.y + (t * (factor1 * v2Force1.f.y)));
-        nlVec2Set(v2Pos1, v2Pos1.f.x + (t * v2Vel1.f.x), v2Pos1.f.y + (t * v2Vel1.f.y));
+        const float invLen = 1.0f / len;
+        ux = invLen * _p.f.x; // f1 path in asm
+        uy = invLen * _p.f.y; // f5 path in asm
     }
+
+    nlVec2Set(v2Force0, 0.f, 0.f);
+    nlVec2Set(v2Force1, 0.f, 0.f);
+
+    nlVec2Set(v2Force0,
+        v2Force0.f.x + -(fHTerm + fDTerm) * ux,
+        v2Force0.f.y + -(fHTerm + fDTerm) * uy);
+    nlVec2Set(v2Force1,
+        v2Force1.f.x - -(fHTerm + fDTerm) * ux,
+        v2Force1.f.y - -(fHTerm + fDTerm) * uy);
+
+    float factor0 = 0.f;
+    nlVec2Set(v2Vel0,
+        v2Vel0.f.x + (dt * (factor0 * v2Force0.f.x)),
+        v2Vel0.f.y + (dt * (factor0 * v2Force0.f.y)));
+    nlVec2Set(v2Pos0,
+        v2Pos0.f.x + (dt * v2Vel0.f.x),
+        v2Pos0.f.y + (dt * v2Vel0.f.y));
+
+    float factor1 = 1.f;
+    nlVec2Set(v2Vel1,
+        v2Vel1.f.x + (dt * (factor1 * v2Force1.f.x)),
+        v2Vel1.f.y + (dt * (factor1 * v2Force1.f.y)));
+    nlVec2Set(v2Pos1,
+        v2Pos1.f.x + (dt * v2Vel1.f.x),
+        v2Pos1.f.y + (dt * v2Vel1.f.y));
 }
