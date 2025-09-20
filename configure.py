@@ -758,7 +758,7 @@ config.libs = [
 
             Object(NonMatching, "Game/SAnim.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/AnimInventory.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/Blinker.cpp"),   
+            Object(Matching, "Game/Blinker.cpp"),   
 
             # Net 
             Object(NonMatching, "Game/NetMesh.cpp", extra_cflags=["-inline deferred"]),
