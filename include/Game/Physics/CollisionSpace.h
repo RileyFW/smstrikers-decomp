@@ -30,4 +30,6 @@ public:
     ~SimpleCollisionSpace();
 };
 
+extern CollisionSpace* g_CollisionSpace;
+
 #endif // _COLLISIONSPACE_H_

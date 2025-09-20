@@ -10,7 +10,7 @@ class PowerupBase;
 // Forward declarations for collision data structures
 struct CollisionPowerupGroundData : public EventData
 {
-    virtual u32 GetID() { return 0x8F; }
+    virtual u32 GetID() { return 0x85; }
 
     /* 0x04 */ nlVector3 m_position;
     /* 0x10 */ float m_velocityY;

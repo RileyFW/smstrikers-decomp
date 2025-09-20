@@ -99,7 +99,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
                 {
                     // Create collision event for banana hitting ground
                     Event* event = g_pEventManager->CreateValidEvent(0x22, 0x2C);
-                    if (event != nullptr)
+                    // if (event != nullptr)
                     {
                         CollisionPowerupGroundData* eventData = (CollisionPowerupGroundData*)(event->m_data);
 
@@ -302,25 +302,25 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
             {
                 // Create collision event for banana hitting wall
                 Event* event = g_pEventManager->CreateValidEvent(0x21, 0x3C);
-                if (event != nullptr)
-                {
-                    CollisionPowerupWallData* eventData = (CollisionPowerupWallData*)(event->m_data);
-                    eventData = new (eventData) CollisionPowerupWallData();
+                // if (event != nullptr)
+                // {
+                CollisionPowerupWallData* eventData = (CollisionPowerupWallData*)(event->m_data);
+                eventData = new (eventData) CollisionPowerupWallData();
 
-                    // Set powerup object references
-                    eventData->m_pPowerupObject = m_pPowerupObject;
-                    eventData->m_pThrower = m_pPowerupObject->m_pThrower;
+                // Set powerup object references
+                eventData->m_pPowerupObject = m_pPowerupObject;
+                eventData->m_pThrower = m_pPowerupObject->m_pThrower;
 
-                    // Set contact position
-                    eventData->m_contactPos.f.x = contact[0].geom.pos[0];
-                    eventData->m_contactPos.f.y = contact[0].geom.pos[1];
-                    eventData->m_contactPos.f.z = contact[0].geom.pos[2];
+                // Set contact position
+                eventData->m_contactPos.f.x = contact[0].geom.pos[0];
+                eventData->m_contactPos.f.y = contact[0].geom.pos[1];
+                eventData->m_contactPos.f.z = contact[0].geom.pos[2];
 
-                    // Set contact normal
-                    eventData->m_contactNormal.f.x = contact[0].geom.normal[0];
-                    eventData->m_contactNormal.f.y = contact[0].geom.normal[1];
-                    eventData->m_contactNormal.f.z = contact[0].geom.normal[2];
-                }
+                // Set contact normal
+                eventData->m_contactNormal.f.x = contact[0].geom.normal[0];
+                eventData->m_contactNormal.f.y = contact[0].geom.normal[1];
+                eventData->m_contactNormal.f.z = contact[0].geom.normal[2];
+                // }
             }
         }
     }

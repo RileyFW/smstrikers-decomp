@@ -57,3 +57,8 @@ InsertNewlineAtEOF: true
 AllowAllParametersOfDeclarationOnNextLine: true
 AlwaysBreakAfterReturnType: None
 AlwaysBreakAfterDefinitionReturnType: None
+
+
+BinPackArguments: false
+# BinPackTemplateParameters: false
+BreakBeforeBinaryOperators: All
