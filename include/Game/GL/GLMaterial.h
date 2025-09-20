@@ -5,10 +5,10 @@
 
 struct GLMaterialEntry // size = 0xC
 {
-    /* 0x00 */ u32 m_id;
-    /* 0x04 */ u32 m_unk_0x04;
-    /* 0x08 */ u32 m_unk_0x08;
-};
+    /* 0x00 */ u32 materialID;
+    /* 0x04 */ u32 packetIndex;
+    /* 0x08 */ u32 numPackets;
+}; // total size: 0xC
 
 class GLMaterialList
 {
@@ -19,9 +19,9 @@ public:
     void SetMaterials(int, const GLMaterialEntry*);
     GLMaterialEntry* FindMaterial(unsigned long) const;
 
-    /* 0x00 */ s32 m_unk_0x00;
-    /* 0x04 */ s32 m_count;
-    /* 0x08 */ GLMaterialEntry* m_entries;
+    /* 0x00 */ u32 m_uHashID;
+    /* 0x04 */ s32 m_nNumMaterials;
+    /* 0x08 */ GLMaterialEntry* m_pMaterials;
 };
 
 #endif // _GLMATERIAL_H_

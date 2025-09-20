@@ -471,6 +471,7 @@ def NLLib(lib_name: str, objects: Objects) -> Library:
         # mw_version="GC/1.2.5n",
         cflags=[
             *cflags_base,
+            "-pool off",
             "-DdNODEBUG=ON",
             "-DdIDESINGLE",
             "-DdSINGLE=1",
@@ -498,6 +499,7 @@ def GameLib(lib_name: str, objects: Objects) -> Library:
         # mw_version="GC/1.2.5n",
         cflags=[
             *cflags_base,
+            "-pool off",
             "-DdNODEBUG=ON",
             "-DdIDESINGLE",
             "-DdSINGLE=1",

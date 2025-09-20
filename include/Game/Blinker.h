@@ -6,30 +6,33 @@
 
 #include "Game/NisPlayer.h"
 
+enum eBlinkState
+{
+    Blink_Open = 0,
+    Blink_HalfClosed = 1,
+    Blink_Closed = 2,
+    Blink_HalfOpen = 3,
+    Blink_Num = 4,
+};
+
 class Blinker
 {
 public:
     void Blink(glModel*);
+
     void Update(float);
     Blinker(const char*, unsigned long, GLMaterialList*, GLMaterialList*, unsigned long);
 
-    // /* 0x00 */ u32 m_unk_0x00;
-
-    /* 0x00 */ u32 m_unk_0x00;
-    /* 0x04 */ GLMaterialList* m_unk_0x04;
-    /* 0x08 */ GLMaterialList* m_unk_0x08;
-    /* 0x0C */ GLMaterialEntry* m_unk_0x0C;
-    /* 0x10 */ GLMaterialEntry* m_unk_0x10;
-    /* 0x14 */ u32 m_unk_0x14;
-    /* 0x18 */ u32 m_unk_0x18;
-    /* 0x1C */ u32 m_unk_0x1C;
-    /* 0x20 */ u32 m_unk_0x20;
-    /* 0x24 */ u32 m_unk_0x24;
-    /* 0x28 */ f32 m_unk_0x28;
-    /* 0x2C */ s32 m_unk_0x2C;
-    /* 0x30 */ f32 m_unk_0x30[4];
-    /* 0x40 */ u8 m_unk_0x40;
-    /* 0x41 */ s8 m_unk_0x41;
-}; /* size >= 0x42 */
+    /* 0x00 */ u32 m_uModel0Hash;
+    /* 0x04 */ GLMaterialList* m_pMats[2];
+    /* 0x0C */ GLMaterialEntry* m_pEyes[2];
+    /* 0x14 */ u32 m_uEyesHash;
+    /* 0x18 */ unsigned long m_Textures[4];
+    /* 0x28 */ f32 m_fTime;
+    /* 0x2C */ eBlinkState m_State;
+    /* 0x30 */ f32 m_fBlinkTimes[4];
+    /* 0x40 */ bool m_bJustDoubleBlinked;
+    /* 0x41 */ bool m_bValid;
+}; // total size: 0x44
 
 #endif // _BLINKER_H_

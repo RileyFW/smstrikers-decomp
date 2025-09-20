@@ -6,9 +6,9 @@
  */
 GLMaterialList::GLMaterialList()
 {
-    m_unk_0x00 = -1;
-    m_count = 0;
-    m_entries = NULL;
+    m_uHashID = -1;
+    m_nNumMaterials = 0;
+    m_pMaterials = NULL;
 }
 
 /**
@@ -16,9 +16,9 @@ GLMaterialList::GLMaterialList()
  */
 GLMaterialList::~GLMaterialList()
 {
-    if (m_entries)
+    if (m_pMaterials)
     {
-        delete[] m_entries;
+        delete[] m_pMaterials;
     }
 }
 
@@ -29,15 +29,15 @@ void GLMaterialList::SetMaterials(int arg0, const GLMaterialEntry* arg1)
 {
     u32 size;
 
-    if (m_entries)
+    if (m_pMaterials)
     {
-        delete[] m_entries;
+        delete[] m_pMaterials;
     }
 
     size = arg0 * 0xC;
-    m_count = arg0;
-    m_entries = (GLMaterialEntry*)nlMalloc(size, 8, 0);
-    memcpy(m_entries, arg1, size);
+    m_nNumMaterials = arg0;
+    m_pMaterials = (GLMaterialEntry*)nlMalloc(size, 8, 0);
+    memcpy(m_pMaterials, arg1, size);
 }
 
 /**
@@ -45,11 +45,11 @@ void GLMaterialList::SetMaterials(int arg0, const GLMaterialEntry* arg1)
  */
 GLMaterialEntry* GLMaterialList::FindMaterial(unsigned long searchId) const
 {
-    GLMaterialEntry* current = m_entries;
-    GLMaterialEntry* end = current + m_count;
+    GLMaterialEntry* current = m_pMaterials;
+    GLMaterialEntry* end = current + m_nNumMaterials;
     while (current < end)
     {
-        if (current->m_id == searchId)
+        if (current->materialID == searchId)
         {
             return current;
         }
