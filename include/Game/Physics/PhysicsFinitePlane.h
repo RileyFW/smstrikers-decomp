@@ -17,10 +17,6 @@ public:
     /* 0x38 */ float yMax;
     /* 0x3C */ float mErrorCorrectionDepth;
     /* 0x40 */ struct dxJoint* m_CharMoveJoint;
-
-    // u8 m_padding[18];
-    // nlVector4 m_vec4;
-    // float m_param;
-};
+}; // total size: 0x44
 
 #endif // _PHYSICSFINITEPLANE_H_

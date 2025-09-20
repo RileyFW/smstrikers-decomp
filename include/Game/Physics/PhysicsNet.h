@@ -13,6 +13,11 @@ class PhysicsNet
 public:
     static PhysicsNet* spPhysNetPositiveX;
     static PhysicsNet* spPhysNetNegativeX;
+    static float sfPhysicsNetWidth;
+    static float sfPhysicsNetHeight;
+    static float sfPhysicsNetDepth;
+    static bool sbSweepTestEnabled;
+    static bool sbTestLowerHorizontalGoalpost;
 
     PhysicsNet(CollisionSpace*, bool);
     virtual ~PhysicsNet();

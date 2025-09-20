@@ -20,7 +20,8 @@ public:
     void ScaleAngularVelocity(float);
     void AddResistanceForces();
     void CloneBall(const PhysicsBall&);
-    float GetBallMaxVelocity();
+
+    static float GetBallMaxVelocity();
 
     /* 0x2c */ nlVector3 m_v3TiltForce;
     /* 0x38 */ bool m_bUseTiltForce;

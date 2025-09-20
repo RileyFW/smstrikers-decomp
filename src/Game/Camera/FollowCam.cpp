@@ -7,6 +7,8 @@
 
 #include "NL/gl/glMatrix.h"
 
+cTeam* g_pTeams[2] __attribute__((section(".data"))) = { NULL, NULL };
+
 // extern s32 currentlySelectedTarget$647;
 extern u8 g_bProfiling;
 extern u8 g_bTweaking;
