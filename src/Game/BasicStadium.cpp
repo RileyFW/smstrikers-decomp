@@ -1,8 +1,8 @@
 #pragma pool_data off
 
 #include "Game/BasicStadium.h"
-#include "Game/NetMesh.h"
 #include "Game/AI/Powerups.h"
+#include "Game/Render/NetMesh.h"
 #include "Game/Render/CrowdManager.h"
 #include "Game/Render/Presentation.h"
 #include "Game/Render/StaticModelExplodable.h"

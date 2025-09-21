@@ -5,7 +5,7 @@
 #include "Game/Physics/CollisionSpace.h"
 #include "Game/Physics/PhysicsFinitePlane.h"
 #include "Game/Physics/PhysicsCapsule.h"
-#include "Game/NetMesh.h"
+#include "Game/Render/NetMesh.h"
 #include "Game/Net.h"
 
 class PhysicsNet

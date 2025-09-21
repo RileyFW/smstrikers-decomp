@@ -1,4 +1,5 @@
 #include "NL/glx/glxTexture.h"
+#include "types.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x801B72BC | size: 0x230
@@ -139,8 +140,9 @@ void glx_AddTex(unsigned long, PlatTexture*)
 /**
  * Offset/Address/Size: 0xF94 | 0x801B8250 | size: 0x194
  */
-void* glx_GetTex(unsigned long, bool, bool)
+PlatTexture* glx_GetTex(unsigned long handle, bool bMissingFatal, bool bAllowGrids)
 {
+    FORCE_DONT_INLINE;
     return nullptr;
 }
 

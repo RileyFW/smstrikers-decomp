@@ -111,10 +111,10 @@ void glFontBegin(bool drop)
     if (bEnabled != false)
     {
         glSetDefaultState(0);
-        glSetCurrentTexture((unsigned long)handle, eGLTextureType_0);
+        glSetCurrentTexture((unsigned long)handle, GLTT_Diffuse);
         glSetRasterState(GLS_AlphaTest, 1);
         glSetCurrentRasterState(glHandleizeRasterState());
-        glSetTextureState(eGLTextureState_6, 1);
+        glSetTextureState(GLTS_DiffuseFilter, 1);
         glSetCurrentTextureState(glHandleizeTextureState());
         bDrop = drop;
         bInsideBegin = true;

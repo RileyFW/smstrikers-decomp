@@ -9,7 +9,8 @@ class PhysicsCapsule : public PhysicsObject
 {
 public:
     PhysicsCapsule(CollisionSpace*, PhysicsWorld*, float, float);
-    virtual int GetObjectType() const;
+    virtual ~PhysicsCapsule() { };
+    virtual int GetObjectType() const { return 0x2; };
 };
 
 #endif // _PHYSICSCAPSULE_H_

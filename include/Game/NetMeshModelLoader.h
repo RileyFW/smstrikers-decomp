@@ -1,7 +1,7 @@
 #ifndef _NETMESHMODELLOADER_H_
 #define _NETMESHMODELLOADER_H_
 
-#include "Game/NetMesh.h"
+#include "Game/Render/NetMesh.h"
 
 class glModelPacket
 {

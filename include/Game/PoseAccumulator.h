@@ -44,13 +44,16 @@ struct RotAccum
 
 struct ScaleAccum
 {
-    /* 0x00 */ float x;
-    /* 0x04 */ float y;
-    /* 0x08 */ float z;
-    /* 0x0C */ float weight;
-    /* 0x10 */ bool locked;
-    /* 0x11 */ u8 _pad[3];
-}; // size: 0x14
+    /* 0x00 */ nlVector3 s;
+    /* 0x0C */ float fAccumulatedWeight;
+    /* 0x10 */ bool bIdentity;
+    // /* 0x00 */ float x;
+    // /* 0x04 */ float y;
+    // /* 0x08 */ float z;
+    // /* 0x0C */ float weight;
+    // /* 0x10 */ bool locked;
+    // /* 0x11 */ u8 _pad[3];
+}; // total size: 0x14
 
 struct TransAccum
 {

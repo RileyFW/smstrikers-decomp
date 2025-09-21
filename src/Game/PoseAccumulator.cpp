@@ -4,7 +4,7 @@
 #include "math.h"
 
 static const nlQuaternion qRotIdentity = { 0, 0, 0, 1 };
-static const nlVector3_ v3ScaleIdentity = { 1.0f, 1.0f, 1.0f };
+static const nlVector3 v3ScaleIdentity = { 1.0f, 1.0f, 1.0f };
 static const nlVector3_ v3TransIdentity = { 0.0f, 0.0f, 0.0f };
 
 extern const nlMatrix4 kPose64Template;
@@ -135,11 +135,11 @@ void cPoseAccumulator::Pose(const cPoseNode& node, const nlMatrix4& mat)
         r.locked = true;
 
         ScaleAccum& s = m_scale[i];
-        s.x = 1.0f;
-        s.y = 1.0f;
-        s.z = 1.0f;
-        s.weight = 0.0f;
-        s.locked = true;
+        s.s.f.x = 1.0f;
+        s.s.f.y = 1.0f;
+        s.s.f.z = 1.0f;
+        s.fAccumulatedWeight = 0.0f;
+        s.bIdentity = true;
 
         if (!m_hierarchy->PreserveBoneLength(i))
         {
@@ -182,11 +182,11 @@ void cPoseAccumulator::InitAccumulators()
 
         // --- scale accum (stride 0x14) ---
         ScaleAccum& s = m_scale[i];
-        s.x = 1.0f;
-        s.y = 1.0f;
-        s.z = 1.0f;
-        s.weight = 0.0f;
-        s.locked = true;
+        s.s.f.x = 1.0f;
+        s.s.f.y = 1.0f;
+        s.s.f.z = 1.0f;
+        s.fAccumulatedWeight = 0.0f;
+        s.fAccumulatedWeight = true;
 
         if (!m_hierarchy->PreserveBoneLength(i))
         {
@@ -278,9 +278,9 @@ void cPoseAccumulator::BuildNodeMatrices(const nlMatrix4& world)
             parentIdx = parentStack[parentTop];
             const ScaleAccum* ps = &m_scale[parentIdx];
 
-            local->m[3][0] *= ps->x;
-            local->m[3][1] *= ps->y;
-            local->m[3][2] *= ps->z;
+            local->m[3][0] *= ps->s.f.x;
+            local->m[3][1] *= ps->s.f.y;
+            local->m[3][2] *= ps->s.f.z;
         }
 
         nlMatrix4* out = &m_matsA[idx];
@@ -312,18 +312,18 @@ void cPoseAccumulator::BuildNodeMatrices(const nlMatrix4& world)
     for (int idx = 0; idx < m_hierarchy->m_nodeCount; ++idx)
     {
         const ScaleAccum* s = &m_scale[idx];
-        if (!s->locked)
+        if (!s->bIdentity)
         {
             nlMatrix4* mtx = &m_matsA[idx];
-            mtx->m[0][0] *= s->x;
-            mtx->m[0][1] *= s->x;
-            mtx->m[0][2] *= s->x;
-            mtx->m[1][0] *= s->y;
-            mtx->m[1][1] *= s->y;
-            mtx->m[1][2] *= s->y;
-            mtx->m[2][0] *= s->z;
-            mtx->m[2][1] *= s->z;
-            mtx->m[2][2] *= s->z;
+            mtx->m[0][0] *= s->s.f.x;
+            mtx->m[0][1] *= s->s.f.x;
+            mtx->m[0][2] *= s->s.f.x;
+            mtx->m[1][0] *= s->s.f.y;
+            mtx->m[1][1] *= s->s.f.y;
+            mtx->m[1][2] *= s->s.f.y;
+            mtx->m[2][0] *= s->s.f.z;
+            mtx->m[2][1] *= s->s.f.z;
+            mtx->m[2][2] *= s->s.f.z;
         }
     }
 }
@@ -413,17 +413,18 @@ void cPoseAccumulator::BlendScale(int idx, const nlVector3* v, float w, bool /*u
         return;
 
     ScaleAccum* e = m_scale + idx;
-    e->weight += w;
+    e->fAccumulatedWeight += w;
 
-    float t = w / e->weight;
+    float t = w / e->fAccumulatedWeight;
     float inv = 1.0f - t;
 
-    e->x = inv * e->x + t * v->f.x;
-    e->y = inv * e->y + t * v->f.y;
-    e->z = inv * e->z + t * v->f.z;
+    nlVec3Set(e->s,
+        inv * e->s.f.x + t * v->f.x,
+        inv * e->s.f.y + t * v->f.y,
+        inv * e->s.f.z + t * v->f.z);
 
     e = m_scale + idx;
-    e->locked = false;
+    e->bIdentity = false;
 }
 
 /**
@@ -496,17 +497,27 @@ void cPoseAccumulator::BlendScaleIdentity(int idx, float w)
         return;
 
     ScaleAccum* a = &m_scale[idx];
-    a->weight += w;
+    a->fAccumulatedWeight += w;
 
-    if (a->locked)
+    if (a->bIdentity)
         return;
 
-    const float t = w / a->weight;
-    const float inv = 1.0f - t;
+    float fRelativeWeight = w / a->fAccumulatedWeight;
+    // float inv = 1.0f - fRelativeWeight;
 
-    a->x = inv * a->x + t * v3ScaleIdentity.f[0];
-    a->y = inv * a->y + t * v3ScaleIdentity.f[1];
-    a->z = inv * a->z + t * v3ScaleIdentity.f[2];
+    // nlVec3Set(a->s,
+    //     inv * a->s.f.x + t * v3ScaleIdentity.f.x,
+    //     inv * a->s.f.y + t * v3ScaleIdentity.f.y,
+    //     inv * a->s.f.z + t * v3ScaleIdentity.f.z);
+
+    a->s.f.x = (1.f - fRelativeWeight) * a->s.f.x + fRelativeWeight * v3ScaleIdentity.f.x;
+    a->s.f.y = (1.f - fRelativeWeight) * a->s.f.y + fRelativeWeight * v3ScaleIdentity.f.y;
+    a->s.f.z = (1.f - fRelativeWeight) * a->s.f.z + fRelativeWeight * v3ScaleIdentity.f.z;
+
+    // nlVec3Set(a->s,
+    //     (1.f - fRelativeWeight) * a->s.f.x + fRelativeWeight * v3ScaleIdentity.f.x,
+    //     (1.f - fRelativeWeight) * a->s.f.y + fRelativeWeight * v3ScaleIdentity.f.y,
+    //     (1.f - fRelativeWeight) * a->s.f.z + fRelativeWeight * v3ScaleIdentity.f.z);
 }
 
 /**

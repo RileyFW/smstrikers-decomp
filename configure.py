@@ -761,7 +761,7 @@ config.libs = [
             Object(Matching, "Game/Blinker.cpp"),   
 
             # Net 
-            Object(NonMatching, "Game/NetMesh.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/NetMesh.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/NetMeshEdge.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/NetMeshModelLoader.cpp", extra_cflags=["-inline deferred"]),
 

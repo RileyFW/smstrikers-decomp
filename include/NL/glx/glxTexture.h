@@ -2,35 +2,54 @@
 #define _GLXTEXTURE_H_
 
 #include "Dolphin/gx/GXEnum.h"
+#include "Dolphin/gx/GXStruct.h"
 
 enum eGXTextureFormat
 {
-    eGXTextureFormat_0,
-    eGXTextureFormat_1,
-    eGXTextureFormat_2,
-    eGXTextureFormat_3,
-    eGXTextureFormat_4,
-    eGXTextureFormat_5,
-    eGXTextureFormat_6,
-    eGXTextureFormat_7,
-    eGXTextureFormat_8
+    GXTex_RGB565 = 0,
+    GXTex_RGB5A3 = 1,
+    GXTex_CMPR = 2,
+    GXTex_RGBA8 = 3,
+    GXTex_I8 = 4,
+    GXTex_I4 = 5,
+    GXTex_A8 = 6,
+    GXTex_IA8 = 7,
+    GXTex_CI8 = 8,
+    GXTex_Num = 9,
 };
 
 enum eGLTextureType
 {
-    eGLTextureType_0,
+    GLTT_Diffuse = 0,
+    GLTT_Detail = 1,
+    GLTT_Shadow = 2,
+    GLTT_SelfIllum = 3,
+    GLTT_Gloss = 4,
+    GLTT_BumpLocal = 5,
+    GLTT_Num = 6,
 };
 
 enum eGLTextureState
 {
-    eGLTextureState_0 = 0,
-    eGLTextureState_1,
-    eGLTextureState_2,
-    eGLTextureState_3,
-    eGLTextureState_4,
-    eGLTextureState_5,
-    eGLTextureState_6,
-    eGLTextureState_7,
+    GLTS_DiffuseWrap = 0,
+    GLTS_DetailWrap = 1,
+    GLTS_ShadowWrap = 2,
+    GLTS_SelfIllumWrap = 3,
+    GLTS_GlossWrap = 4,
+    GLTS_BumpLocalWrap = 5,
+    GLTS_DiffuseFilter = 6,
+    GLTS_DetailFilter = 7,
+    GLTS_ShadowFilter = 8,
+    GLTS_SelfIllumFilter = 9,
+    GLTS_GlossFilter = 10,
+    GLTS_BumpLocalFilter = 11,
+    GLTS_DiffuseLevel = 12,
+    GLTS_DetailLevel = 13,
+    GLTS_ShadowLevel = 14,
+    GLTS_SelfIllumLevel = 15,
+    GLTS_GlossLevel = 16,
+    GLTS_BumpLocalLevel = 17,
+    GLTS_Num = 18,
 };
 
 enum eGLTextureFormatType
@@ -56,7 +75,7 @@ void glplatLoadTextureBundle(const char*);
 void BundleSortProc(const glTexBundleDict*, const glTexBundleDict*);
 void glx_MakeTexture(GXTextureHeader*, unsigned long);
 void glx_AddTex(unsigned long, PlatTexture*);
-void* glx_GetTex(unsigned long, bool, bool);
+PlatTexture* glx_GetTex(unsigned long, bool, bool);
 void glx_GetGridTexture(int, int);
 void glx_MakeGridTexture(int, int);
 void glx_SetGridMode(bool);
@@ -71,12 +90,32 @@ void glx_SetLoadCallback(unsigned long (*)(unsigned long));
 class PlatTexture
 {
 public:
+    ~PlatTexture();
+
     void Prepare();
     void Swizzle(bool);
     void Create(int, int, eGXTextureFormat, int, bool, bool);
     void CreateWithMemory(int, int, eGXTextureFormat, int, const void*);
-    ~PlatTexture();
-};
+
+    /* 0x00 */ u16 m_Width;    // offset 0x0, size 0x2
+    /* 0x02 */ u16 m_Height;   // offset 0x2, size 0x2
+    /* 0x04 */ u16 m_Levels;   // offset 0x4, size 0x2
+    /* 0x06 */ u16 m_MaxLevel; // offset 0x6, size 0x2
+
+    /* --- DWARF seens to be different here --- */
+    /* 0x8 */ u8 m_unk8;
+    /* 0x9 */ s8 m_unk9;
+
+    /* 0x08 */ eGXTextureFormat m_Format; // offset 0x8, size 0x4
+    /* 0x0C */ int m_nPaletteEntries;     // offset 0xC, size 0x4
+    /* 0x10 */ bool m_bMissingTexture;    // offset 0x10, size 0x1
+    /* 0x14 */ char* m_SwizzledData;      // offset 0x14, size 0x4
+    /* 0x18 */ char* m_LinearData;        // offset 0x18, size 0x4
+    /* 0x1C */ u16* m_PaletteData;        // offset 0x1C, size 0x4
+    /* 0x20 */ u8 m_Bits[4];              // offset 0x20, size 0x4
+    /* 0x24 */ _GXTexObj m_TexObj;        // offset 0x24, size 0x20
+    /* 0x44 */ _GXTlutObj m_TlutObj;      // offset 0x44, size 0xC
+}; // total size: 0x50
 
 class TexDestructor
 {

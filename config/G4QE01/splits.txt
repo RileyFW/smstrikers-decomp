@@ -1696,7 +1696,7 @@ Game/Physics/LoadablePhysicsMesh.cpp:
 	.text       start:0x8012EE20 end:0x8012EE20
 	.text       start:0x8012EE20 end:0x8012EE20
 
-Game/NetMesh.cpp:
+Game/Render/NetMesh.cpp:
 	.text       start:0x8012EE20 end:0x8013001C
 	.text       start:0x8013001C end:0x80130024
 	.text       start:0x80130024 end:0x80130024
