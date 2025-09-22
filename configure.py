@@ -698,6 +698,7 @@ config.libs = [
             Object(Matching, "Game/Sys/tweak.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Sys/FloatingPointExceptions.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Sys/CallStackDumper.cpp", extra_cflags=["-inline deferred"]),    
+            Object(NonMatching, "Game/Core/mtRandom.cpp", extra_cflags=["-inline deferred"]),
 
             # Game Objects
             Object(NonMatching, "Game/Game.cpp", extra_cflags=["-inline deferred"]),    
@@ -720,6 +721,7 @@ config.libs = [
             Object(NonMatching, "Game/Camera/ReplayCamera.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Camera/AnimViewerCam.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Camera/rumblefilter.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Camera/DebugCam.cpp", extra_cflags=["-inline deferred"]),
 
             Object(NonMatching, "Game/Replay.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/ReplayChoreo.cpp", extra_cflags=["-inline deferred"]),    

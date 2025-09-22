@@ -2792,7 +2792,7 @@ Game/CameraMan.cpp:
 	.sbss       start:0x80373F20 end:0x80373F48
 	.sdata2     start:0x80376C18 end:0x80376C40
 
-DebugCam.o:
+Game/Camera/DebugCam.cpp:
 	.text       start:0x801A86BC end:0x801A8D18
 	.text       start:0x801A8D18 end:0x801A8D40
 	.text       start:0x801A8D40 end:0x801A8D40
@@ -3938,7 +3938,7 @@ NL/MemAlloc.cpp:
 	.text       start:0x801CDEF8 end:0x801CDFB8
 	.data       start:0x802FD610 end:0x802FD658
 
-mtRandom.o:
+Game/Core/mtRandom.cpp:
 	.text       start:0x801CDFB8 end:0x801CE120
 	.bss        start:0x8032F700 end:0x803300C0
 	.sdata      start:0x80373058 end:0x80373060

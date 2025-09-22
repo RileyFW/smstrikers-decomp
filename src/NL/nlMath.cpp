@@ -236,8 +236,8 @@ float nlACos(float arg0)
     }
     temp_f2
         = ((temp_f8
-            * ((temp_f8 * ((temp_f8 * ((temp_f8 * ((0.015098966f * temp_f8) + 0.005516444f)) + 0.047654245f)) + 0.16391061f)) + 2.0002916f))
-           + -0.000007239284f)
+               * ((temp_f8 * ((temp_f8 * ((temp_f8 * ((0.015098966f * temp_f8) + 0.005516444f)) + 0.047654245f)) + 0.16391061f)) + 2.0002916f))
+              + -0.000007239284f)
         * var_f0;
     // if ((M2C_ERROR(/* unknown instruction: mfcr $r0 */) >> 0x1F) != 0)
     {
@@ -249,7 +249,7 @@ float nlACos(float arg0)
 /**
  * Offset/Address/Size: 0x58C | 0x801D1A00 | size: 0x164
  */
-void nlSinCos(float* arg0, float* arg1, unsigned short arg2)
+void nlSinCos(float* presult_sin, float* presult_cos, unsigned short angle)
 {
 }
 
