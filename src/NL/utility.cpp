@@ -10,8 +10,9 @@ void SolveQuadratic(float, float, float, int&, float&, float&)
 /**
  * Offset/Address/Size: 0x1A8 | 0x801F0A6C | size: 0x148
  */
-void SweepSpheres(float, const nlVector3&, const nlVector3&, float, const nlVector3&, const nlVector3&)
+float SweepSpheres(float f0, const nlVector3& p1, const nlVector3& p2, float rq, const nlVector3& q1, const nlVector3& q2)
 {
+    return 0.0f;
 }
 
 // /**

@@ -112,6 +112,11 @@ inline void nlVec3Scale(nlVector3& result, const nlVector3& v, float scale)
     nlVec3Set(result, scale * v.f.x, scale * v.f.y, scale * v.f.z);
 }
 
+inline void _nlVec3Scale(nlVector3& result, float scale)
+{
+    nlVec3Set(result, scale * result.f.x, scale * result.f.y, scale * result.f.z);
+}
+
 class nlVector4
 {
 public:

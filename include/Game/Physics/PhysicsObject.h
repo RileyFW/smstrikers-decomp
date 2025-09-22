@@ -40,11 +40,11 @@ public:
     void SetDefaultContactInfo(dContact*);
     void ZeroForceAccumulators();
     void AddForceAtCentreOfMass(const nlVector3&);
-    void GetAngularVelocity(nlVector3*) const;
-    void SetAngularVelocity(const nlVector3&);
+    void GetAngularVelocity(nlVector3* vel) const;
+    void SetAngularVelocity(const nlVector3& vel);
     nlVector3& GetLinearVelocity();
-    void GetLinearVelocity(nlVector3*) const;
-    void SetLinearVelocity(const nlVector3&);
+    void GetLinearVelocity(nlVector3* vel) const;
+    void SetLinearVelocity(const nlVector3& vel);
     void GetRotation(nlMatrix4*) const;
     void SetRotation(const nlMatrix4&);
     void SetRotation(const nlMatrix3&);

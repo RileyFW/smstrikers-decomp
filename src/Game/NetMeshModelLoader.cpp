@@ -1,4 +1,4 @@
-#include "Game/NetMeshModelLoader.h"
+#include "Game/Physics/NetMeshModelLoader.h"
 
 // /**
 //  * Offset/Address/Size: 0x1554 | 0x80132B00 | size: 0x10
@@ -152,6 +152,7 @@
  */
 NetMeshModelLoader::~NetMeshModelLoader()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

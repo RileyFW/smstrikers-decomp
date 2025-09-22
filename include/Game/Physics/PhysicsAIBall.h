@@ -18,13 +18,13 @@ public:
     };
     /* 0x14 */ virtual void PreUpdate();
     /* 0x18 */ virtual void PostUpdate();
-    /* 0x1c */ virtual int PreCollide();
+    /* 0x1c */ virtual void PreCollide();
     /* 0x20 */ virtual int Contact(PhysicsObject*, dContact*, int);
 
-    void IsBallOutsideNet(const nlVector3&);
-    void DidBallJustEnterNet(const nlVector3&, nlVector3);
-    void CheckIfBallWentThroughGoalPost();
-    void CheckIfBallWentThroughGoalie();
+    static bool IsBallOutsideNet(const nlVector3&);
+    static bool DidBallJustEnterNet(const nlVector3&, nlVector3);
+    static bool CheckIfBallWentThroughGoalPost();
+    static bool CheckIfBallWentThroughGoalie();
 
     /* 0x40 */ cBall* m_pAIBall;
     /* 0x44 */ nlVector3 m_unk_0x44;

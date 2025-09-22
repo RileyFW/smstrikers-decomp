@@ -331,11 +331,11 @@ public:
 //     virtual u32 GetID();
 // };
 
-class CollisionBallGoalpostData
-{
-public:
-    virtual u32 GetID();
-};
+// class CollisionBallGoalpostData
+// {
+// public:
+//     virtual u32 GetID();
+// };
 
 class CollisionBallWallData
 {

@@ -4,9 +4,25 @@
 #include "NL/glx/glxTexture.h"
 #include "NL/nlMemory.h"
 
+#include "Game/Drawable/DrawableObj.h"
+
+#include "Game/WorldManager.h"
+#include "Game/Ball.h"
+
+#include "Game/Physics/NetMeshModelLoader.h"
+#include "Game/Physics/PhysicsAIBall.h"
+
+#include "Game/Sys/eventman.h"
+
 unsigned long NetMesh::sNetTextureHandle = 0;
 bool NetMesh::sbDontUseLowestNetTextureLOD = false;
+
+bool NetMesh::s_bAlwaysActive = false;
 bool NetMesh::s_bAnimatedNetMeshEnabled = false;
+float NetMesh::s_fInactivityThreshold = 0.0f;
+float NetMesh::s_fIsBallMovingThreshold = 0.0f;
+float NetMesh::s_fNetGravityMagnitude = 1.0f;
+
 NetMesh* NetMesh::spPositiveXNetMesh = nullptr;
 NetMesh* NetMesh::spNegativeXNetMesh = nullptr;
 
@@ -56,9 +72,6 @@ NetMesh::NetMesh(bool positiveEnd)
 /**
  * Offset/Address/Size: 0xFE8 | 0x8012FE08 | size: 0x190
  */
-#pragma push
-// #pragma optimization_level 1
-// #pragma optimize_for_size on
 void NetMesh::Allocate(int numParticles, int numDistanceConstraints, int numPositionConstraints)
 {
     m_v3Position = (nlVector3*)nlMalloc(numParticles * sizeof(nlVector3), 8, false);
@@ -70,38 +83,11 @@ void NetMesh::Allocate(int numParticles, int numDistanceConstraints, int numPosi
     m_aDistanceConstraints = (cDistanceConstraint*)nlMalloc(numDistanceConstraints * sizeof(cDistanceConstraint), 8, false);
     m_aPositionConstraints = (cPositionConstraint*)nlMalloc(numPositionConstraints * sizeof(cPositionConstraint), 8, false);
 
-    if (numParticles > 0)
+    for (int i = 0; i < numParticles; i++)
     {
-        int i = 0;
-        int numParticlesMinus8 = numParticles - 8;
-        if (numParticles > 8)
-        {
-            if (numParticlesMinus8 > 0)
-            {
-                for (; i < numParticlesMinus8; i += 8)
-                {
-                    m_bIsParticleFixed[i] = false;
-                    m_bIsParticleFixed[i + 1] = false;
-                    m_bIsParticleFixed[i + 2] = false;
-                    m_bIsParticleFixed[i + 3] = false;
-                    m_bIsParticleFixed[i + 4] = false;
-                    m_bIsParticleFixed[i + 5] = false;
-                    m_bIsParticleFixed[i + 6] = false;
-                    m_bIsParticleFixed[i + 7] = false;
-                }
-            }
-        }
-
-        if (i < numParticles)
-        {
-            for (; i < numParticles; i++)
-            {
-                m_bIsParticleFixed[i] = false;
-            }
-        }
+        m_bIsParticleFixed[i] = false;
     }
 }
-#pragma pop
 
 /**
  * Offset/Address/Size: 0xF54 | 0x8012FD74 | size: 0x94
@@ -152,20 +138,145 @@ void NetMesh::UpdateUntilRelaxed()
     {
         Update(g_fFixedUpdateTick, v3Zero, v3Zero, false, nullptr);
     }
-    // loop_2:
-    //     if (this->unk70 != 0)
-    //     {
-    //         Update__7NetMeshFfRC9nlVector3RC9nlVector3bP13PhysicsSphere(this, g_fFixedUpdateTick, &v3Zero, &v3Zero, 0, NULL);
-    //         goto loop_2;
-    //     }
 }
 
 /**
  * Offset/Address/Size: 0xAA8 | 0x8012F8C8 | size: 0x398
  */
-void NetMesh::Update(float, const nlVector3&, const nlVector3&, bool, PhysicsSphere*)
+void NetMesh::Update(float dt, const nlVector3& ballPosition, const nlVector3& ballPrevPosition, bool bExaggerateBallSize, PhysicsSphere* sphere)
 {
     FORCE_DONT_INLINE;
+    // nlVector3 sp8;  // velocity
+    // nlVector3 sp14; // position
+
+    // nlVector3 temp_r28;
+
+    // nlVector3 sp2C;
+
+    // if (mbIsActive || s_bAlwaysActive)
+    // {
+    //     AddForcesToBall(temp_r28, sphere);
+    //     float temp_f3 = -NetMesh::s_fNetGravityMagnitude;
+
+    //     nlVector3 temp_r3 = cCameraManager::m_UpVectorStack[cCameraManager::m_UpVectorStackSize];
+    //     nlVec3Set(sp2C, temp_f3 * temp_r3.f.x, temp_f3 * temp_r3.f.y, temp_f3 * temp_r3.f.z);
+    //     // sp2C = temp_f3 * temp_r3.f.x;
+    //     // sp30 = temp_f3 * temp_r3->unk4;
+    //     // sp34 = temp_f3 * temp_r3->unk8;
+
+    //     for (int i = 0; i < m_NumParticles; i++)
+    //     {
+    //         m_v3Accel[i] = sp2C;
+    //     }
+
+    //     //         var_r7 = 0;
+    //     //     var_r8 = 0;
+
+    //     // loop_4:
+    //     //     if (var_r7 < this->unk40)
+    //     //     {
+    //     //         var_r7 += 1;
+    //     //         temp_r6 = this->unk14 + var_r8;
+    //     //         var_r8 += 0xC;
+    //     //         temp_r6->unk0 = sp2C;
+    //     //         temp_r6->unk4 = sp30;
+    //     //         temp_r6->unk8 = sp34;
+    //     //         goto loop_4;
+    //     //     }
+
+    //     for (int i = 0; i < m_NumParticles; i++)
+    //     {
+    //         m_v3Accel[i];
+    //         m_v3Position[i];
+    //         m_v3PrevPosition[i];
+    //     }
+
+    //     var_r8_2 = 0;
+    //     var_r9 = 0;
+    //     this->unk74 = 0.0f;
+    // loop_7:
+    //     if (var_r8_2 < this->unk40)
+    //     {
+    //         var_r8_2 += 1;
+    //         temp_r5 = this->unk14 + var_r9;
+    //         temp_r7 = this->unkC + var_r9;
+    //         temp_r6_2 = this->unk10 + var_r9;
+
+    //         temp_r4 = temp_r7->unk0;
+    //         temp_f0 = temp_r5->unk0 * arg0;
+    //         temp_r3_2 = temp_r7->unk4;
+    //         temp_f3_2 = temp_r7->unk0;
+    //         var_r9 += 0xC;
+
+    //         temp_r0 = temp_r7->unk8;
+    //         sp20 = temp_r4;
+    //         sp24 = temp_r3_2;
+    //         sp28 = temp_r0;
+    //         temp_r7->unk0 = temp_f3_2 + ((s_fDampening__7NetMesh * (temp_f3_2 - temp_r6_2->unk0)) + (arg0 * temp_f0));
+    //         temp_f3_3 = temp_r7->unk4;
+    //         temp_r7->unk4 = temp_f3_3 + ((s_fDampening__7NetMesh * (temp_f3_3 - temp_r6_2->unk4)) + (arg0 * (temp_r5->unk4 * arg0)));
+    //         temp_f3_4 = temp_r7->unk8;
+    //         temp_r7->unk8 = temp_f3_4 + ((s_fDampening__7NetMesh * (temp_f3_4 - temp_r6_2->unk8)) + (arg0 * (temp_r5->unk8 * arg0)));
+    //         temp_r6_2->unk0 = temp_r4;
+    //         temp_r6_2->unk4 = temp_r3_2;
+    //         temp_r6_2->unk8 = temp_r0;
+    //         goto loop_7;
+    //     }
+
+    //     var_r4 = SatisfyConstraints__7NetMeshFRC9nlVector3b(this, temp_r28, arg3);
+    //     var_r5 = 0;
+    //     var_r6 = 0;
+    // loop_12:
+    //     if (var_r5 < this->unk40)
+    //     {
+    //         var_r4 = this->unkC + var_r6;
+    //         temp_r3_3 = this->unk10 + var_r6;
+    //         temp_f1 = fabs(temp_r3_3->unk8 - var_r4->unk8) + (fabs(temp_r3_3->unk0 - var_r4->unk0) + fabs(temp_r3_3->unk4 - var_r4->unk4));
+    //         if (temp_f1 > this->unk74)
+    //         {
+    //             this->unk74 = temp_f1;
+    //         }
+    //         var_r6 += 0xC;
+    //         var_r5 += 1;
+    //         goto loop_12;
+    //     }
+    // }
+    // else
+    // {
+    //     this->unk0 = 0;
+    // }
+
+    // if (!mbFirstUpdate)
+    // {
+    //     if (PhysicsAIBall::IsBallOutsideNet(temp_r28) != 0)
+    //     {
+    //         mbBallIsInsideNet = false;
+    //     }
+    //     else
+    //     {
+    //         sp14 = temp_r28;
+    //         // temp_r5_2 = temp_r28->unk4;
+    //         // sp14 = temp_r28->unk0;
+    //         // sp18 = temp_r28->unk4;
+    //         // sp1C = temp_r28->unk8;
+    //         // if ((PhysicsAIBall::DidBallJustEnterNet(ballPrevPosition, sp14, sp14.f.y) != 0) && (((temp_f1_2 = temp_r28->unk0, ((temp_f1_2 > 0.0f) != 0)) && mbPositiveEnd) || ((temp_f1_2 < 0.0f) && !mbPositiveEnd)))
+    //         {
+    //             mbBallIsInsideNet = true;
+    //         }
+    //     }
+
+    //     // if ((mfMotion > s_fInactivityThreshold) || (mbBallIsInsideNet && ((sphere == NULL) || (sphere->GetLinearVelocity(sp8), temp_f1_3 = (bitwise f32)sp8, ((((sp10 * sp10) + ((temp_f1_3 * temp_f1_3) + (spC * spC))) > s_fIsBallMovingThreshold__7NetMesh) != 0)) || ((this->unk0 == 0) && (this->unk70 != 0)))))
+    //     if (mfMotion > s_fInactivityThreshold)
+    //     {
+    //         mbIsActive = true;
+    //     }
+    //     else
+    //     {
+    //         mbIsActive = false;
+    //         m_fBallPenetrationDepth = 0.0f;
+    //     }
+    // }
+    // mbFirstUpdate = false;
 }
 
 /**
@@ -193,15 +304,136 @@ void NetMesh::SatisfyConstraints(const nlVector3&, bool)
 /**
  * Offset/Address/Size: 0x220 | 0x8012F040 | size: 0x330
  */
-void NetMesh::AddForcesToBall(const nlVector3&, PhysicsSphere*)
+void NetMesh::AddForcesToBall(const nlVector3& position, PhysicsSphere* sphere)
 {
+    class nlVector3 vel;                    // r1+0x2C
+    float forceMagnitude;                   // f1
+    class nlVector3 force;                  // r1+0x20
+    class nlVector3 velocity;               // r1+0x14
+    class nlVector3 currentAngularVelocity; // r1+0x8
+
+    if (m_fBallPenetrationDepth > 0.0f)
+    {
+        if (s_bUseStretchLimit && sphere && (m_fBallPenetrationDepth > s_fNetStretchLimit))
+        {
+            nlVector3& temp_r3 = sphere->GetLinearVelocity();
+
+            forceMagnitude = (m_v3BallPenetrationNormal.f.x * temp_r3.f.x)
+                           + (m_v3BallPenetrationNormal.f.y * temp_r3.f.y)
+                           + (m_v3BallPenetrationNormal.f.z * temp_r3.f.z);
+
+            nlVec3Set(vel,
+                forceMagnitude * m_v3BallPenetrationNormal.f.x,
+                forceMagnitude * m_v3BallPenetrationNormal.f.y,
+                forceMagnitude * m_v3BallPenetrationNormal.f.z);
+
+            nlVector3& temp_r3_2 = sphere->GetLinearVelocity();
+            nlVec3Set(vel,
+                temp_r3_2.f.x - vel.f.x,
+                temp_r3_2.f.y - vel.f.y,
+                temp_r3_2.f.z - vel.f.z);
+
+            sphere->SetLinearVelocity(vel);
+        }
+
+        force = m_v3BallPenetrationNormal;
+
+        float forceMagnitude = -(s_fReboundForceCoefficient * m_fBallPenetrationDepth);
+        nlVec3Scale(force, force, forceMagnitude);
+
+        if (sphere)
+        {
+            if (m_bPenetratingFixedParticle)
+            {
+                sphere->SetLinearVelocity(v3Zero);
+                sphere->SetAngularVelocity(v3Zero);
+            }
+            sphere->AddForceAtCentreOfMass(force);
+
+            velocity = sphere->GetLinearVelocity();
+
+            if (((velocity.f.x * m_v3BallPenetrationNormal.f.x)
+                    + (velocity.f.y * m_v3BallPenetrationNormal.f.y)
+                    + (velocity.f.z * m_v3BallPenetrationNormal.f.z))
+                > 0.0f)
+            {
+                nlVec3Set(velocity,
+                    s_fVelocityDampingCoefficient * velocity.f.x,
+                    s_fVelocityDampingCoefficient * velocity.f.y,
+                    s_fVelocityDampingCoefficient * velocity.f.z);
+                sphere->SetLinearVelocity(velocity);
+            }
+
+            sphere->GetAngularVelocity(&currentAngularVelocity);
+
+            float fx = (velocity.f.y * m_v3BallPenetrationNormal.f.z - velocity.f.z * m_v3BallPenetrationNormal.f.y);
+            float fy = (-velocity.f.x * m_v3BallPenetrationNormal.f.z + velocity.f.z * m_v3BallPenetrationNormal.f.x);
+            float fz = (velocity.f.x * m_v3BallPenetrationNormal.f.y - velocity.f.y * m_v3BallPenetrationNormal.f.x);
+
+            float invR = 1.0f / g_pBall->m_pPhysicsBall->GetRadius();
+
+            dBodyAddTorque(sphere->m_bodyID,
+                0.1f * ((invR * fx) - currentAngularVelocity.f.x),
+                0.1f * ((invR * fy) - currentAngularVelocity.f.y),
+                0.1f * ((invR * fz) - currentAngularVelocity.f.z));
+        }
+
+        BallNetmeshEventData* eventData = (BallNetmeshEventData*)(g_pEventManager->CreateValidEvent(0x32, 0x28)->m_data);
+        if (eventData != NULL)
+        {
+            new (eventData) BallNetmeshEventData();
+        }
+
+        eventData->netMesh = this;
+        eventData->v3CollisionVelocity = g_pBall->m_v3Velocity;
+    }
 }
 
 /**
  * Offset/Address/Size: 0xBC | 0x8012EEDC | size: 0x164
  */
-void NetMesh::Initialize(unsigned long)
+void NetMesh::Initialize(unsigned long netMeshDrawableObjectID)
 {
+    mJolt = 0.0f;
+    mNetMeshDrawableObjectID = netMeshDrawableObjectID;
+
+    DrawableObject* dobj = WorldManager::s_World->FindDrawableObject(netMeshDrawableObjectID);
+    dobj->m_uObjectFlags &= ~1UL;
+
+    for (int i = 0; i < m_NumParticles; ++i)
+    {
+        m_bIsParticleFixed[i] = false;
+    }
+
+    {
+        NetMeshModelLoader loader(*this, netMeshDrawableObjectID);
+    }
+
+    const float BIG_POS = 10000.0f;
+    const float BIG_NEG = -10000.0f;
+    mfMinX = BIG_POS;
+    mfMinY = BIG_POS;
+    mfMaxX = BIG_NEG;
+    mfMaxY = BIG_NEG;
+
+    for (int i = 0; i < m_NumParticles; i++)
+    {
+        nlVector3& p = m_v3Position[i];
+        m_v3PrevPosition[i] = p;
+
+        if (p.f.x > mfMaxX)
+            mfMaxX = p.f.x;
+        if (p.f.y > mfMaxY)
+            mfMaxY = p.f.y;
+        if (p.f.x < mfMinX)
+            mfMinX = p.f.x;
+        if (p.f.y < mfMinY)
+            mfMinY = p.f.y;
+
+        nlVec3Set(m_v3Accel[i], 0.0f, 0.0f, 0.0f);
+    }
+
+    mbInitialized = true;
 }
 
 /**

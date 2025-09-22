@@ -739,13 +739,13 @@ u32 CollisionPlayerWallData::GetID()
 //     return 0x9B;
 // }
 
-/**
- * Offset/Address/Size: 0x88 | 0x80012228 | size: 0x8
- */
-u32 CollisionBallGoalpostData::GetID()
-{
-    return 0x10E;
-}
+// /**
+//  * Offset/Address/Size: 0x88 | 0x80012228 | size: 0x8
+//  */
+// u32 CollisionBallGoalpostData::GetID()
+// {
+//     return 0x10E;
+// }
 
 /**
  * Offset/Address/Size: 0x90 | 0x80012230 | size: 0x8

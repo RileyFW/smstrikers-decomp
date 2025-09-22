@@ -9,7 +9,8 @@ class EventManager;
 struct EventData
 {
     // public:
-    //     virtual ~EventData() { }
+    // EventData() { }
+    // virtual ~EventData() { }
     virtual u32 GetID() { return -1; }
 };
 

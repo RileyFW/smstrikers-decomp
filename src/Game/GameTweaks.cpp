@@ -297,7 +297,8 @@ SkillTweaks::SkillTweaks()
     mSkillTweaksList.m_pStart = NULL;
     SkillTweak* node;
 
-    node = (SkillTweak*)nlMalloc(0x88, 8, false);
+    // node = (SkillTweak*)nlMalloc(0x88, 8, false);
+    node = new (nlMalloc(0x88, 8, false)) SkillTweak();
     if (node != nullptr)
     {
         node->mpValue = &Off_Avoidance;

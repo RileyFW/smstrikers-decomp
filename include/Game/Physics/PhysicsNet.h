@@ -8,6 +8,18 @@
 #include "Game/Render/NetMesh.h"
 #include "Game/Net.h"
 
+#include "Game/Sys/eventman.h"
+
+struct CollisionBallGoalpostData : public EventData
+{
+    // CollisionBallGoalpostData() { }
+    // virtual ~CollisionBallGoalpostData() { }
+    virtual u32 GetID() { return 0x10E; }
+    class nlVector3 v3CollisionVelocity; // offset 0x4, size 0xC
+    class nlVector3 v3CollisionPosition; // offset 0x10, size 0xC
+    unsigned long uTeamIndex;            // offset 0x1C, size 0x4
+}; // total size: 0x20
+
 class PhysicsNet
 {
 public:
@@ -17,7 +29,8 @@ public:
     static float sfPhysicsNetHeight;
     static float sfPhysicsNetDepth;
     static bool sbSweepTestEnabled;
-    static bool sbTestLowerHorizontalGoalpost;
+    static float sfWallSoftness;
+    // static bool sbTestLowerHorizontalGoalpost;
 
     PhysicsNet(CollisionSpace*, bool);
     virtual ~PhysicsNet();

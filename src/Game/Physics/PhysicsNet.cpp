@@ -11,16 +11,19 @@
 #include "Game/Field.h"
 #include "Game/Team.h"
 
-cTeam* g_pTeams[2] __attribute__((section(".data"))) = { NULL, NULL };
+extern cTeam* g_pTeams[2] __attribute__((section(".data"))) = { NULL, NULL };
 
-PhysicsNet* PhysicsNet::spPhysNetPositiveX = nullptr;
+f32 CANT_COLLIDE = *(f32*)__float_max;
+
 PhysicsNet* PhysicsNet::spPhysNetNegativeX = nullptr;
+PhysicsNet* PhysicsNet::spPhysNetPositiveX = nullptr;
 float PhysicsNet::sfPhysicsNetWidth = 0.0f;
 float PhysicsNet::sfPhysicsNetHeight = 0.0f;
 float PhysicsNet::sfPhysicsNetDepth = 0.0f;
-bool sbTestLowerHorizontalGoalpost = false;
+static bool sbTestLowerHorizontalGoalpost = false;
 
 bool PhysicsNet::sbSweepTestEnabled = true;
+float PhysicsNet::sfWallSoftness = 0.03f;
 
 /**
  * Offset/Address/Size: 0x9A8 | 0x8013AD98 | size: 0x6F8
@@ -282,8 +285,185 @@ bool PhysicsNet::IsAGoalWall(PhysicsObject* obj)
 /**
  * Offset/Address/Size: 0xD0 | 0x8013A4C0 | size: 0x62C
  */
-bool PhysicsNet::SweepTestForBallContact(const nlVector3&, const nlVector3&, const nlVector3&, float, nlVector3&, nlVector3&, PhysicsObject**) const
+bool PhysicsNet::SweepTestForBallContact(const nlVector3& startPos, const nlVector3& endPos, const nlVector3& ballVelocity, float ballRadius, nlVector3& contactPos, nlVector3& contactNormal, PhysicsObject** hitObject) const
 {
+    nlVector3 leftPostPos, rightPostPos;
+    nlVector3 goalPost0Location;  // r1+0x68
+    nlVector3 goalPost1Location;  // r1+0x5C
+    nlVector3 goalPostSpherePos0; // r1+0x50
+    nlVector3 goalPostSpherePos1; // r1+0x44
+    float height;
+    nlVector3 ballLinVelocity; // r1+0x38
+    CollisionBallGoalpostData* pEventData;
+
+    cField::GetGoalLineX((unsigned int)1);
+    float netPostRadius = cNet::m_fNetPostRadius;
+
+    bool hitHorizontalGoalpost = false;
+    bool hitLeftVerticalGoalpost = false;
+    bool hitRightVerticalGoalpost = false;
+
+    mpNet->GetPostLocation(leftPostPos, 0, 0.0f);
+    mpNet->GetPostLocation(rightPostPos, 1, 0.0f);
+
+    if ((float)fabs(endPos.f.x) < ((float)fabs(leftPostPos.f.x) - (netPostRadius + ballRadius)))
+    {
+        return false;
+    }
+
+    goalPost0Location = leftPostPos;
+    goalPost0Location.f.z = startPos.f.z;
+    goalPost1Location = leftPostPos;
+    goalPost1Location.f.z = endPos.f.z;
+
+    float sweepResult = SweepSpheres(ballRadius, startPos, endPos, netPostRadius, goalPost0Location, goalPost1Location);
+    if (sweepResult >= 0.0f && sweepResult <= 1.0f)
+    {
+        hitLeftVerticalGoalpost = true;
+    }
+
+    if ((sweepResult < 0.0f) || (sweepResult > 1.0f))
+    {
+        goalPost0Location = rightPostPos;
+        goalPost0Location.f.z = startPos.f.z;
+        goalPost1Location = rightPostPos;
+        goalPost1Location.f.z = endPos.f.z;
+
+        sweepResult = SweepSpheres(ballRadius, startPos, endPos, netPostRadius, goalPost0Location, goalPost1Location);
+        if (sweepResult >= 0.0f && sweepResult <= 1.0f)
+        {
+            hitRightVerticalGoalpost = true;
+        }
+    }
+
+    float horizontalPostHeight = cNet::m_fNetHeight;
+    if (sbTestLowerHorizontalGoalpost)
+    {
+        horizontalPostHeight = 0.5f * cNet::m_fNetHeight;
+    }
+
+    goalPost0Location = rightPostPos;
+    goalPost0Location.f.y = startPos.f.y;
+    goalPost0Location.f.z = horizontalPostHeight;
+    goalPost1Location = rightPostPos;
+    goalPost1Location.f.y = endPos.f.y;
+    goalPost1Location.f.z = horizontalPostHeight;
+
+    float sweepResult3 = SweepSpheres(ballRadius, startPos, endPos, netPostRadius, goalPost0Location, goalPost1Location);
+    if (sweepResult3 >= 0.0f && sweepResult3 <= 1.0f)
+    {
+        hitHorizontalGoalpost = true;
+    }
+
+    float finalSweepResult = -1.0f;
+
+    if ((hitHorizontalGoalpost != 0) && ((hitLeftVerticalGoalpost != 0) || (hitRightVerticalGoalpost != 0)))
+    {
+        if (sweepResult3 < sweepResult)
+        {
+            finalSweepResult = sweepResult3;
+            hitLeftVerticalGoalpost = 0;
+            hitRightVerticalGoalpost = 0;
+        }
+        else
+        {
+            finalSweepResult = sweepResult;
+            hitHorizontalGoalpost = 0;
+        }
+    }
+    else if (hitHorizontalGoalpost != 0)
+    {
+        finalSweepResult = sweepResult3;
+    }
+    else if ((hitLeftVerticalGoalpost != 0) || (hitRightVerticalGoalpost != 0))
+    {
+        finalSweepResult = sweepResult;
+    }
+
+    if ((hitLeftVerticalGoalpost) || (hitRightVerticalGoalpost) || (hitHorizontalGoalpost))
+    {
+
+        if (hitLeftVerticalGoalpost != 0)
+        {
+            goalPost0Location = leftPostPos;
+            goalPost0Location.f.z = startPos.f.z;
+
+            goalPost1Location = leftPostPos;
+            goalPost1Location.f.z = endPos.f.z;
+        }
+        else if (hitRightVerticalGoalpost != 0)
+        {
+            goalPost0Location = rightPostPos;
+            goalPost0Location.f.z = startPos.f.z;
+
+            goalPost1Location = rightPostPos;
+            goalPost1Location.f.z = endPos.f.z;
+        }
+        else if (hitHorizontalGoalpost != 0)
+        {
+            goalPost0Location = rightPostPos;
+            goalPost0Location.f.y = startPos.f.y;
+            goalPost0Location.f.z = cNet::m_fNetHeight;
+
+            goalPost1Location = rightPostPos;
+            goalPost1Location.f.y = endPos.f.y;
+            goalPost1Location.f.z = cNet::m_fNetHeight;
+        }
+
+        nlVec3Set(contactPos,
+            (finalSweepResult * (endPos.f.x - startPos.f.x)) + startPos.f.x,
+            (finalSweepResult * (endPos.f.y - startPos.f.y)) + startPos.f.y,
+            (finalSweepResult * (endPos.f.z - startPos.f.z)) + startPos.f.z);
+
+        if (hitHorizontalGoalpost != 0)
+        {
+            goalPost0Location.f.y = contactPos.f.y;
+        }
+        else
+        {
+            goalPost0Location.f.z = contactPos.f.z;
+        }
+
+        nlVec3Set(contactNormal, contactPos.f.x - goalPost0Location.f.x, contactPos.f.y - goalPost0Location.f.y, contactPos.f.z - goalPost0Location.f.z);
+
+        float normalLength = nlRecipSqrt(contactNormal.f.x * contactNormal.f.x + contactNormal.f.y * contactNormal.f.y + contactNormal.f.z * contactNormal.f.z, true);
+
+        height = ballRadius + netPostRadius;
+
+        // nlVec3Set(contactNormal, normalLength * contactNormal.f.x, normalLength * contactNormal.f.y, normalLength * contactNormal.f.z);
+        _nlVec3Scale(contactNormal, normalLength);
+
+        const float tx = contactPos.f.x - goalPost0Location.f.x;
+        const float ty = contactPos.f.y - goalPost0Location.f.y;
+        const float tz = contactPos.f.z - goalPost0Location.f.z;
+
+        if ((tx * tx + ty * ty + tz * tz) < (height * height))
+        {
+            nlVec3Set(contactPos,
+                (height * contactNormal.f.x) + goalPost0Location.f.x,
+                (height * contactNormal.f.y) + goalPost0Location.f.y,
+                (height * contactNormal.f.z) + goalPost0Location.f.z);
+        }
+
+        cBall* ball = g_pBall;
+        ball->mbCanDamage = false;
+        ball->m_unk_0xA8 = 0;
+
+        nlVector3 ballLinearVelocity = g_pBall->m_pPhysicsBall->GetLinearVelocity();
+
+        float velocitySquared = ballLinearVelocity.f.x * ballLinearVelocity.f.x + ballLinearVelocity.f.y * ballLinearVelocity.f.y + ballLinearVelocity.f.z * ballLinearVelocity.f.z;
+
+        if (velocitySquared > 25.0f)
+        {
+            Event* event = g_pEventManager->CreateValidEvent(0x2E, 0x34);
+            pEventData = new (event->m_data) CollisionBallGoalpostData();
+            // pEventData = new CollisionBallGoalpostData();
+            pEventData->v3CollisionVelocity = ballLinearVelocity;
+            pEventData->v3CollisionPosition = contactPos;
+            pEventData->uTeamIndex = (g_pBall->m_v3Position.f.x < 0.0f) ? 0 : 1;
+        }
+        return true;
+    }
     return false;
 }
 
