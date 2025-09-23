@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "NL/nlLexicalCast.h"
+#include "NL/nlBasicString.h"
 
 enum Type
 {
@@ -83,11 +84,47 @@ public:
         return val;
     };
 
+    // BasicString<char, Detail::TempStringAllocator> TagValuePair::Get<BasicString<char, Detail::TempStringAllocator> >() const
+    // {
+    //     BasicString<char, Detail::TempStringAllocator> result;
+
+    //     if (type == _BOOL)
+    //     {
+    //         result = LexicalCast<BasicString<char, Detail::TempStringAllocator>, bool>(value.b);
+    //     }
+    //     else if (type == _INT)
+    //     {
+    //         result = LexicalCast<BasicString<char, Detail::TempStringAllocator>, int>(value.i);
+    //     }
+    //     else if (type == _FLOAT)
+    //     {
+    //         result = LexicalCast<BasicString<char, Detail::TempStringAllocator>, float>(value.f);
+    //     }
+    //     else if (type == _STRING)
+    //     {
+    //         result = LexicalCast<BasicString<char, Detail::TempStringAllocator>, const char*>(value.s);
+    //     }
+    //     else
+    //     {
+    //         // Default to empty string for unknown types
+    //         result.m_data = nullptr;
+    //         result.m_size = 0;
+    //         result.m_capacity = 0;
+    //         result.m_refCount = 1;
+    //     }
+
+    //     return result;
+    // }
+
     static Config& Global();
 
     ~Config();
     Config() { };
     Config(AllocateWhere);
+
+    /* 0x0 */ TagValuePair* mTvpHash;
+    /* 0x4 */ char* mStringMemory;
+    /* 0x8 */ char* mStringEnd;
 
     // Parser::TagValuePair(const BasicString<char, Detail::TempStringAllocator>&, const BasicString<char, Detail::TempStringAllocator>&);
     // Parser::Section(const BasicString<char, Detail::TempStringAllocator>&);
@@ -95,7 +132,7 @@ public:
     // Parser::EmptyLine();
     // TagValuePair::TagValuePair();
     // Set<BasicString<char, Detail::TempStringAllocator>>(const char*, BasicString<char, Detail::TempStringAllocator>);
-};
+}; // total size: 0xC
 
 // class SetTagValuePair
 // {

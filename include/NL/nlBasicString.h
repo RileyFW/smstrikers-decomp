@@ -3,6 +3,8 @@
 
 #include "types.h"
 #include "NL/nlMemory.h"
+#include "PowerPC_EABI_Support/MSL_C/MSL_Common/string.h"
+#include "NL/nlString.h"
 
 // class Vector
 // {
@@ -152,5 +154,33 @@ void Format(StringType& result, const StringType& format, float value1, float va
     result.m_data[formatLen] = '\0';
     result.m_refCount = 1;
 }
+
+// Forward declaration for the operator== function
+template <typename CharT, typename Allocator>
+bool operator==(const BasicString<CharT, Allocator>& lhs, const char* rhs);
+
+#ifdef NL_BASICSTRING_DEFINE
+// Specialization for char with TempStringAllocator
+template <>
+bool operator== <char, Detail::TempStringAllocator>(const BasicString<char, Detail::TempStringAllocator>& lhs, const char* rhs)
+{
+    // Handle null pointer cases
+    if (!rhs)
+    {
+        return lhs.m_data == nullptr || lhs.m_size == 0;
+    }
+
+    if (!lhs.m_data)
+    {
+        return *rhs == '\0';
+    }
+
+    // Get the string data from BasicString
+    const char* lhsStr = lhs.c_str();
+
+    // Use the existing strcmp function for comparison
+    return strcmp(lhsStr, rhs) == 0;
+}
+#endif
 
 #endif
