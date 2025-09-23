@@ -59,20 +59,30 @@ void cDebugCamera::UpdateCameraControls(float dt)
         m_fTheta = -89.0f;
     }
 
+    float temp_f27, temp_f28;
     float t = 0.f;
-    float temp_f27 = (0.2f * m_matView.f.m21);
-    float temp_f28 = (0.2f * m_matView.f.m11);
-    const float temp_f5 = dt * (sfControlSpeedScale * cPadManager::GetPad(0)->AnalogLeftX());
+    float temp_f5;
+    temp_f27 = (0.2f * m_matView.f.m21);
+    temp_f28 = (0.2f * m_matView.f.m11);
+    temp_f5 = dt * (sfControlSpeedScale * cPadManager::GetPad(0)->AnalogLeftX());
+    float x0 = temp_f5 * temp_f28;
+    float y0 = temp_f5 * temp_f27;
+    float z0 = m_vecTarget.f.z + t;
     nlVec3Set(m_vecTarget,
-        m_vecTarget.f.x + temp_f5 * temp_f28,
-        m_vecTarget.f.y + temp_f5 * temp_f27,
-        m_vecTarget.f.z + t);
-    // nlVec3Add(m_vecTarget, temp_f5 * temp_f28, temp_f5 * temp_f27, 0.0f);
+        m_vecTarget.f.x + x0,
+        m_vecTarget.f.y + y0,
+        z0);
 
-    const float temp_f28_2 = (0.2f * m_matView.f.m23);
-    const float temp_f27_2 = (0.2f * m_matView.f.m13);
-    const float temp_f4 = dt * (sfControlSpeedScale * -cPadManager::GetPad(0)->AnalogLeftY());
-    nlVec3Add(m_vecTarget, temp_f4 * temp_f27_2, temp_f4 * temp_f28_2, 0.0f);
+    temp_f27 = (0.2f * m_matView.f.m23);
+    temp_f28 = (0.2f * m_matView.f.m13);
+    temp_f5 = dt * (sfControlSpeedScale * -cPadManager::GetPad(0)->AnalogLeftY());
+    float x1 = temp_f5 * temp_f28;
+    float y1 = temp_f5 * temp_f27;
+    float z1 = m_vecTarget.f.z + t;
+    nlVec3Set(m_vecTarget,
+        m_vecTarget.f.x + x1,
+        m_vecTarget.f.y + y1,
+        z1);
 
     if (nlTaskManager::m_pInstance->m_CurrState == 0x100)
     {
@@ -99,6 +109,7 @@ void cDebugCamera::UpdateCameraControls(float dt)
     // Set FOV from global variable
     m_Fov = sfDebugCamFOV;
 }
+
 /**
  * Offset/Address/Size: 0x0 | 0x801A86BC | size: 0x14C
  */
