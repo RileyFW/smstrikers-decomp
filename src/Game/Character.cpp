@@ -589,12 +589,12 @@ cHeadTrack::~cHeadTrack()
 {
 }
 
-/**
- * Offset/Address/Size: 0x48 | 0x800120F8 | size: 0x60
- */
-PhysicsCharacter::~PhysicsCharacter()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x48 | 0x800120F8 | size: 0x60
+//  */
+// PhysicsCharacter::~PhysicsCharacter()
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x0 | 0x80012158 | size: 0x48

@@ -14,14 +14,15 @@ struct EventData
     virtual u32 GetID() { return -1; }
 };
 
-typedef struct Event /* size >= 0x14 */
+class Event
 {
+public:
     /* 0x00 */ Event* m_next;
     /* 0x04 */ Event* m_prev;
-    /* 0x08 */ u32 m_type;
-    /* 0x0C */ s32 m_flags;
+    /* 0x08 */ u32 m_uEventID;
+    /* 0x0C */ s32 m_nReferenceCount;
     /* 0x10 */ EventData* m_data;
-} Event;
+};
 
 typedef void (*EventCallback)(Event*, void*);
 

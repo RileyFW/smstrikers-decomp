@@ -27,10 +27,3 @@ void PhysicsGoalie::SweepTestEveryBone(float, const nlVector3&, const nlVector3&
 void PhysicsGoalie::CollideGoalieWithPost()
 {
 }
-
-/**
- * Offset/Address/Size: 0x0 | 0x80139A80 | size: 0x70
- */
-PhysicsGoalie::~PhysicsGoalie()
-{
-}

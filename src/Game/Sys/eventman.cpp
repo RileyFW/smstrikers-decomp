@@ -59,7 +59,7 @@ void EventManager::Create(unsigned long count, unsigned long size)
             Event* e = (Event*)base;
             e->m_next = 0;
             e->m_prev = 0;
-            e->m_flags = 0;
+            e->m_nReferenceCount = 0;
             // EventData vptr is set by constructing the subobject; we only need it to be a valid base
             // The original TU writes the vptr slot; letting the compiler emit that via default ctor:
             new (&e->m_data) EventData();
@@ -145,7 +145,7 @@ Event* EventManager::CreateValidEvent(unsigned long eventID, unsigned long uSize
         return NULL;
     }
 
-    e->m_type = eventID; // stw at +0x08
+    e->m_uEventID = eventID; // stw at +0x08
 
     return e;
 }
@@ -165,7 +165,7 @@ void EventManager::DispatchEvents()
             EventHandler* end = m_handlers;
             do
             {
-                u32 mask = m_dest[e->m_type]; // dest[type]
+                u32 mask = m_dest[e->m_uEventID]; // dest[type]
                 if ((it->mask & mask) != 0)
                 {
                     void (*fn)(Event*, void*) = it->callback;
@@ -179,7 +179,7 @@ void EventManager::DispatchEvents()
                 it = it->m_next;
             } while (1);
         }
-        if (e->m_flags != 0)
+        if (e->m_nReferenceCount != 0)
         {
             nlDLRingAddEnd(&m_keep, e);
         }

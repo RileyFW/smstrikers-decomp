@@ -2,14 +2,15 @@
 #define _GLUMESHWRITER_H_
 
 #include "NL/nlMath.h"
+#include "Game/GL/GLMeshWriter.h"
 
-class GLMeshWriter
+class GLMeshWriter : public GLMeshWriterCore
 {
 public:
-    void Texcoord(short, short);
-    void Texcoord(const nlVector2&);
-    void Normal(const nlVector3&);
-    void End();
+    virtual void Texcoord(short, short);
+    virtual void Texcoord(const nlVector2&);
+    virtual void Normal(const nlVector3&);
+    virtual bool End();
 };
 
 #endif // _GLUMESHWRITER_H_

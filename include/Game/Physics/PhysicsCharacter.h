@@ -6,7 +6,7 @@
 class PhysicsCharacter : public PhysicsCharacterBase
 {
 public:
-    virtual ~PhysicsCharacter();
+    virtual ~PhysicsCharacter() { };
     PhysicsCharacter(float, float);
 
     virtual int GetObjectType() const;

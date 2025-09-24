@@ -2163,7 +2163,7 @@ Game/ObjectBlur.cpp:
 	.sbss       start:0x80373C90 end:0x80373C98
 	.sdata2     start:0x80376778 end:0x803767A8
 
-depthoffield.o:
+Game/Render/depthoffield.cpp:
 	.text       start:0x8016358C end:0x801637E8
 	.ctors      start:0x8028D31C end:0x8028D320
 	.rodata     start:0x8029FCD0 end:0x8029FCE0
@@ -2271,7 +2271,7 @@ SidelineExplodable.o:
 	.sdata2     start:0x80376818 end:0x80376878
 	.sbss2      start:0x80377F68 end:0x80377F70
 
-FlareHandler.o:
+Game/Render/FlareHandler.cpp:
 	.text       start:0x8016A124 end:0x8016A968
 	.ctors      start:0x8028D32C end:0x8028D330
 	.rodata     start:0x8029FDC8 end:0x8029FDD8
@@ -2733,7 +2733,7 @@ Game/Camera/MatrixEffectCam.cpp:
 	.sdata      start:0x803729D0 end:0x803729E8
 	.sdata2     start:0x80376B90 end:0x80376BB0
 
-animcam.o:
+Game/Camera/animcam.cpp:
 	.text       start:0x801A4BF4 end:0x801A5D5C
 	.text       start:0x801A5D5C end:0x801A5D84
 	.text       start:0x801A5D84 end:0x801A5D84
@@ -2816,7 +2816,7 @@ Game/Camera/FollowCam.cpp:
 	.sbss       start:0x80373F48 end:0x80373F50
 	.sdata2     start:0x80376C98 end:0x80376CB8
 
-GameplayCam.o:
+Game/Camera/GameplayCam.cpp:
 	.text       start:0x801A9640 end:0x801AA418
 	.text       start:0x801AA418 end:0x801AA454
 	.text       start:0x801AA454 end:0x801AA464

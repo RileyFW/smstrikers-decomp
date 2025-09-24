@@ -722,6 +722,8 @@ config.libs = [
             Object(Matching, "Game/Camera/AnimViewerCam.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Camera/rumblefilter.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Camera/DebugCam.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Camera/GameplayCam.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Camera/animcam.cpp", extra_cflags=["-inline deferred"]),
 
             Object(NonMatching, "Game/Replay.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/ReplayChoreo.cpp", extra_cflags=["-inline deferred"]),    
@@ -748,10 +750,12 @@ config.libs = [
 
             # AI
             Object(NonMatching, "Game/AI/HeadTrack.cpp", extra_cflags=["-inline deferred"]),
-    
+   
             # Game Render
+            Object(NonMatching, "Game/Render/FlareHandler.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/CameraGuy.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/SkinAnimatedNPC.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/depthoffield.cpp", extra_cflags=["-inline deferred"]),
 
             # related to character (should probably be in Game/Render)
             Object(Matching, "Game/PoseNode.cpp", extra_cflags=["-inline deferred"]),

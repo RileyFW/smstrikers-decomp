@@ -119,12 +119,12 @@ void glGetRasterState(eGLState)
 /**
  * Offset/Address/Size: 0x76C | 0x801DC3B0 | size: 0x30
  */
-u32 glGetTexture(const char* name)
+u32 glGetTexture(const char* textureName)
 {
-    if (name == 0)
+    if (textureName == 0)
         return 0xFFFFFFFF;
 
-    return glHash(name);
+    return glHash(textureName);
 }
 
 /**

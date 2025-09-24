@@ -47,7 +47,7 @@ extern unsigned int nlDefaultSeed;
  */
 void BasicStadium::BasicStadiumEventHandler(Event* pEvent, void*)
 {
-    switch (pEvent->m_type)
+    switch (pEvent->m_uEventID)
     {
     case 5:
         g_GoalLightEnabled = true;

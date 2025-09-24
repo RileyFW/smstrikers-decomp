@@ -1,51 +1,9 @@
-#include "GameplayCam.h"
-
-/**
- * Offset/Address/Size: 0x0 | 0x801AA454 | size: 0x10
- */
-void 0x8028D364..0x8028D368 | size: 0x4
-{
-}
+#include "Game/Camera/GameplayCam.h"
 
 /**
  * Offset/Address/Size: 0x28 | 0x801AA440 | size: 0x14
  */
 KnotTableBlendEntry::KnotTableBlendEntry()
-{
-}
-
-/**
- * Offset/Address/Size: 0x20 | 0x801AA438 | size: 0x8
- */
-void GameplayCamera::GetFOV() const
-{
-}
-
-/**
- * Offset/Address/Size: 0x18 | 0x801AA430 | size: 0x8
- */
-void GameplayCamera::GetViewMatrix() const
-{
-}
-
-/**
- * Offset/Address/Size: 0x10 | 0x801AA428 | size: 0x8
- */
-void GameplayCamera::GetCameraPosition() const
-{
-}
-
-/**
- * Offset/Address/Size: 0x8 | 0x801AA420 | size: 0x8
- */
-void GameplayCamera::GetTargetPosition() const
-{
-}
-
-/**
- * Offset/Address/Size: 0x0 | 0x801AA418 | size: 0x8
- */
-void GameplayCamera::GetType()
 {
 }
 

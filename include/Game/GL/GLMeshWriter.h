@@ -38,6 +38,12 @@ public:
     virtual void Vertex(const nlVector4&);
     void Position(const nlVector3&);
     glModel* GetModel();
+
+    /* 0x04 */ glModel* pModel;
+    /* 0x08 */ glModelStream stream[15];
+    /* 0x64 */ int currentIndex;
+    /* 0x68 */ int maximumVerts;
+    /* 0x6C */ int elementCount;
 };
 
 #endif // _GLMESHWRITER_H_

@@ -7,7 +7,7 @@
 class PhysicsGoalie : public PhysicsCharacter
 {
 public:
-    virtual ~PhysicsGoalie();
+    virtual ~PhysicsGoalie() { };
     virtual void PostUpdate();
 
     virtual void SweepTestForBallContact(const nlVector3&, const nlVector3&, const nlVector3&, float, nlVector3&, nlVector3&) const;

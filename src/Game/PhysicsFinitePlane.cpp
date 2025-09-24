@@ -36,31 +36,24 @@ PhysicsFinitePlane::PhysicsFinitePlane(CollisionSpace* collision_space, nlVector
     const float l2 = 1.f / yMax;
     nlVec3Set(v2, l2 * v2.f.x, l2 * v2.f.y, l2 * v2.f.z);
 
-    // float temp_f7 = v1.f.x;
-    // float temp_f5 = v1.f.y;
-    // float temp_f3_2 = v1.f.z;
-    // float temp_f1_3 = v2.f.x;
-    // float temp_f6 = v2.f.y;
-    // float temp_f4_2 = v2.f.z;
-
     nlMatrix3 mat;
 
-    // Col2 = cross(axisU, axisV) but with Cz negated to match fmsubs/fmsubs pattern
-    float Cx = v1.f.y * v2.f.z - v1.f.z * v2.f.y;
-    float Cy = v1.f.z * v2.f.x - v1.f.x * v2.f.z;
-    float Cz = v1.f.y * v2.f.x - v1.f.x * v2.f.y;
+    float temp_f7 = v1.f.x;
+    float temp_f5 = v1.f.y;
+    float temp_f1_3 = v2.f.x;
+    float temp_f3_2 = v1.f.z;
+    float temp_f6 = v2.f.y;
+    float temp_f4_2 = v2.f.z;
 
-    mat.m[0] = v1.f.x;
+    mat.m[0] = temp_f7;
     mat.m[1] = v1.f.y;
     mat.m[2] = v1.f.z;
-    // Col1
     mat.m[3] = v2.f.x;
     mat.m[4] = v2.f.y;
     mat.m[5] = v2.f.z;
-    // Col2
-    mat.m[6] = Cx;
-    mat.m[7] = Cy;
-    mat.m[8] = Cz; // note the negation
+    mat.m[6] = (temp_f5 * temp_f4_2) - (temp_f3_2 * temp_f6);
+    mat.m[7] = (-temp_f7 * temp_f4_2) + (temp_f3_2 * temp_f1_3);
+    mat.m[8] = (temp_f7 * temp_f6) - (temp_f5 * temp_f1_3);
 
     dSpaceID space = NULL;
     if (collision_space != NULL)
