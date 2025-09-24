@@ -1,9 +1,13 @@
 #include "Game/Render/depthoffield.h"
 
+#include "NL/nlColour.h"
 #include "NL/gl/glState.h"
+#include "NL/gl/glConstant.h"
+#include "NL/gl/glDraw2.h"
+#include "NL/gl/glDraw3.h"
 
 DepthOfFieldManager DepthOfFieldManager::instance;
-u32 DOFTexture = glGetTexture("target/dof");
+static const u32 DOFTexture = glGetTexture("target/dof");
 
 /**
  * Offset/Address/Size: 0x208 | 0x80163794 | size: 0x4
@@ -34,4 +38,61 @@ void DepthOfFieldManager::TurnOff()
  */
 void DepthOfFieldManager::Update()
 {
+    nlVector4 vRange = { 0, 0, 0, 0 };
+    vRange.f.x = m_fDistanceFromCamera;
+    vRange.f.y = (m_bOn != 0) ? 1.0f : 0.0f;
+    glConstantSet("dof/range", vRange);
+
+    if (m_bOn == 0)
+        return;
+
+    nlVector4 v4Depth = glConstantGet("dof/depth");
+
+    int alpha = (int)255.5f * (int)0;
+    {
+        float f = 255.5f * m_fIntensity;
+        int a = (int)f;
+        if (a < 0)
+            a = 0;
+        if (a > 255)
+            a = 255;
+        alpha = a;
+    }
+
+    glSetDefaultState(0);
+    glSetTextureState(GLTS_DiffuseWrap, 3);
+
+    nlColour c;
+    if (m_bDebugView)
+    {
+        unsigned long tex = glGetTexture("global/white");
+        glSetCurrentTexture(tex, GLTT_Diffuse);
+        glSetRasterState(GLS_AlphaBlend, 1);
+        c.c[0] = 0xFF;
+        c.c[1] = 0xC8;
+        c.c[2] = 0xC8;
+        c.c[3] = 0x80;
+    }
+    else
+    {
+        unsigned long tex = glGetTexture("target/dof");
+        glSetCurrentTexture(tex, GLTT_Diffuse);
+        c.c[0] = 0xFF;
+        c.c[1] = 0xFF;
+        c.c[2] = 0xFF;
+        c.c[3] = (unsigned char)alpha;
+        if (alpha != 0xFF)
+        {
+            glSetRasterState(GLS_AlphaBlend, 1);
+        }
+    }
+
+    glSetRasterState(GLS_DepthTest, 1);
+    glSetCurrentRasterState(glHandleizeRasterState());
+    glSetCurrentTextureState(glHandleizeTextureState());
+
+    glPoly2 p;
+    p.SetupRectangle(0.0f, 0.0f, 640.0f, 480.0f, v4Depth.f.x);
+    p.SetColour(c);
+    p.Attach(GLV_DepthOfField, 0, 0, (unsigned long)-1);
 }
