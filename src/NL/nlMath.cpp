@@ -251,6 +251,7 @@ float nlACos(float arg0)
  */
 void nlSinCos(float* presult_sin, float* presult_cos, unsigned short angle)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

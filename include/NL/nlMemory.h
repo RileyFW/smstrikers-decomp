@@ -1,10 +1,12 @@
 #ifndef _NLMEMORY_H_
 #define _NLMEMORY_H_
 
+#include "Dolphin/os.h"
 #include <stddef.h>
 
 inline void* operator new(unsigned long, void* p)
 {
+    // ASSERT(p != NULL);
     return p;
 }
 
