@@ -12,8 +12,8 @@ void* glModelDupArrayNoStreams(const glModel* models, unsigned long count, bool 
     glModelPacket* new_packets;
     glModelPacket* dst_pack;
     glModelPacket* src_pack;
-    glModel* src_model;
     glModel* dst_model;
+    glModel* src_model;
 
     if (arg3 != 0)
     {
@@ -90,8 +90,8 @@ glModel* glModelDup(const glModel* src, bool arg1)
 {
     glModel* model;
     glModelPacket* packets;
-    glModelPacket* src_packets;
     glModelPacket* dst_packets;
+    glModelPacket* src_packets;
 
     model = (glModel*)glFrameAlloc(0x10, GLM_Header);
     if (model == NULL)
@@ -99,25 +99,25 @@ glModel* glModelDup(const glModel* src, bool arg1)
         return NULL;
     }
 
-    packets = (glModelPacket*)glFrameAlloc(src->numPackets * 0x4A, GLM_Header);
+    packets = (glModelPacket*)glFrameAlloc(src->numPackets * sizeof(glModelPacket), GLM_Header);
     if (packets == NULL)
     {
         return NULL;
     }
 
     memcpy(model, src, 0x10);
-    memcpy(packets, src->packets, src->numPackets * 0x4A);
+    memcpy(packets, src->packets, src->numPackets * sizeof(glModelPacket));
 
     dst_packets = packets;
     src_packets = src->packets;
     model->packets = packets;
 
-    u8* last_pack = (u8*)src_packets + src->numPackets * 0x4A;
+    u8* last_pack = (u8*)&src_packets[src->numPackets];
 
     while ((u8*)src_packets < last_pack)
     {
-        dst_packets->m_vertexData = (VertexData*)glFrameAlloc(dst_packets->numStreams * 6, GLM_Header);
-        memcpy(dst_packets->m_vertexData, src_packets->m_vertexData, dst_packets->numStreams * 6);
+        dst_packets->streams = (glModelStream*)glFrameAlloc(dst_packets->numStreams * sizeof(glModelStream), GLM_Header);
+        memcpy(dst_packets->streams, src_packets->streams, dst_packets->numStreams * sizeof(glModelStream));
 
         if ((arg1 != 0) && (src_packets->userData != 0))
         {
@@ -125,8 +125,8 @@ glModel* glModelDup(const glModel* src, bool arg1)
             glUserDup(dst_packets, src_packets, false);
         }
 
-        src_packets = (glModelPacket*)((u8*)src_packets + 0x4A);
-        dst_packets = (glModelPacket*)((u8*)dst_packets + 0x4A);
+        src_packets++;
+        dst_packets++;
     }
 
     return model;

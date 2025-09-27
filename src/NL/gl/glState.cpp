@@ -189,14 +189,14 @@ void glSetCurrentTexture(unsigned long, eGLTextureType)
 /**
  * Offset/Address/Size: 0x8A8 | 0x801DC4EC | size: 0x30
  */
-void glStateRestore(const glStateBundle&)
+void glStateRestore(const glStateBundle& state)
 {
 }
 
 /**
  * Offset/Address/Size: 0x8D8 | 0x801DC51C | size: 0x2C
  */
-void glStateSave(glStateBundle&)
+void glStateSave(glStateBundle& state)
 {
 }
 

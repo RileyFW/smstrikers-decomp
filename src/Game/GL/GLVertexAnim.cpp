@@ -20,25 +20,25 @@ GLVertexAnim::GLVertexAnim()
 /**
  * Offset/Address/Size: 0xBC | 0x801E7D54 | size: 0xDC
  */
-void GLVertexAnim::GetModel(int frameIndex)
+void GLVertexAnim::GetModel(int frame)
 {
-    int actualFrame = (frameIndex < 0) ? (int)m_unk_0x1C : frameIndex;
+    int actualFrame = (frame < 0) ? (int)m_unk_0x1C : frame;
 
     glModel* model = glModelDup(m_unk_0x24, true);
     FrameVertexData* frameVertexData = m_frames + actualFrame * m_unk_0x08;
 
     for (glModelPacket* packet = model->packets; packet < model->packets + model->numPackets; packet++)
     {
-        VertexData* packetVertexData = packet->m_vertexData;
-        VertexData* endVertexData = packetVertexData + packet->numStreams;
-        while (packetVertexData < endVertexData)
+        glModelStream* streams = packet->streams;
+        glModelStream* endVertexData = streams + packet->numStreams;
+        while (streams < endVertexData)
         {
-            if (packetVertexData->m_unk_0x04 == 0)
+            if (streams->id == 0)
             {
-                packetVertexData->m_unk_0x00 = frameVertexData;
+                streams->address = (unsigned long)frameVertexData;
                 break;
             }
-            packetVertexData++;
+            streams++;
         }
     }
 }

@@ -39,8 +39,8 @@ enum eGLStream
 class GLMeshWriterCore
 {
 public:
-    GLMeshWriterCore() { };
-    /* 0x08*/ ~GLMeshWriterCore() { };
+    GLMeshWriterCore();
+    /* 0x08*/ ~GLMeshWriterCore();
     /* 0x0C*/ virtual bool Begin(int, eGLPrimitive, int, const eGLStream*, bool);
     /* 0x10*/ virtual bool End();
     /* 0x14*/ virtual void Colour(const nlColour&);

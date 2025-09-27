@@ -10,8 +10,6 @@
 
 FlareHandler FlareHandler::instance;
 
-nlVector3 v191 = { 0x00000000, 0x00000002, 0x00000003 };
-
 /**
  * Offset/Address/Size: 0x818 | 0x8016A93C | size: 0x4
  */
@@ -166,7 +164,8 @@ void FlareHandler::AddFace(const FlareStruct* pFlare, GLMeshWriter* pMeshWriter)
  */
 void FlareHandler::Render()
 {
-    eGLStream sp8 = GLStream_Position;
+    FlareStruct* data;
+    eGLStream stream_decl[3] = { GLStream_Position, GLStream_Colour, GLStream_Diffuse }; // sp8
 
     if ((g_pGame->mbCaptainShotToScoreOn == false) && ((halos.m_headNode != NULL) || (glows.m_headNode != NULL)))
     {
@@ -184,41 +183,41 @@ void FlareHandler::Render()
 
         if (halos.m_headNode != NULL)
         {
-            GLMeshWriter writer; // sp84
+            GLMeshWriter halo_writer; // sp84
             glSetCurrentTexture(glGetTexture("global/flare_halo"), (eGLTextureType)0);
-            if (writer.Begin(halos.m_numNodes * 4, (eGLPrimitive)3, 3, (eGLStream*)&sp8, 0) != 0)
+            if (halo_writer.Begin(halos.m_numNodes * 4, (eGLPrimitive)3, 3, stream_decl, 0) != 0)
             {
-                FlareStruct* flare = (FlareStruct*)halos.m_headNode;
-                while (flare != NULL)
+                data = (FlareStruct*)halos.m_headNode;
+                while (data != NULL)
                 {
-                    AddFace(flare, &writer);
-                    flare = (FlareStruct*)flare->m_nextNode;
+                    AddFace(data, &halo_writer);
+                    data = (FlareStruct*)data->m_nextNode;
                 }
 
-                if (writer.End())
+                if (halo_writer.End())
                 {
-                    glViewAttachModel((eGLView)0x13, writer.GetModel());
+                    glViewAttachModel((eGLView)0x13, halo_writer.GetModel());
                 }
             }
         }
 
         if (glows.m_headNode != NULL)
         {
-            GLMeshWriter writer;
+            GLMeshWriter glow_writer; // sp14
             glSetCurrentTexture(glGetTexture("global/flare_glow"), (eGLTextureType)0);
-            if (writer.Begin(glows.m_numNodes * 4, (eGLPrimitive)3, 3, (eGLStream*)&sp8, 0) != 0)
+            if (glow_writer.Begin(glows.m_numNodes * 4, (eGLPrimitive)3, 3, stream_decl, 0) != 0)
             {
 
-                FlareStruct* glow = (FlareStruct*)glows.m_headNode;
-                while (glow != NULL)
+                data = (FlareStruct*)glows.m_headNode;
+                while (data != NULL)
                 {
-                    AddFace(glow, &writer);
-                    glow = (FlareStruct*)glow->m_nextNode;
+                    AddFace(data, &glow_writer);
+                    data = (FlareStruct*)data->m_nextNode;
                 }
 
-                if (writer.End())
+                if (glow_writer.End())
                 {
-                    glViewAttachModel((eGLView)0x13, writer.GetModel());
+                    glViewAttachModel((eGLView)0x13, glow_writer.GetModel());
                 }
             }
         }

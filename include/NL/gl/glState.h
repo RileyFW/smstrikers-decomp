@@ -53,7 +53,7 @@ void glGetCurrentRasterState();
 u32 glSetCurrentProgram(unsigned long);
 void glSetCurrentTexture(unsigned long, eGLTextureType);
 void glStateRestore(const glStateBundle&);
-void glStateSave(glStateBundle&);
+void glStateSave(glStateBundle& state);
 glStateBundle* gl_GetCurrentStateBundle();
 void gl_StateStartup();
 

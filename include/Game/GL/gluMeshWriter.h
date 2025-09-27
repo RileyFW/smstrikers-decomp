@@ -17,11 +17,11 @@ public:
     virtual void Texcoord(const nlVector2&);
     void Texcoord(short, short);
 
-    struct glModel* pModel;          // offset 0x4, size 0x4
-    struct glModelStream stream[15]; // offset 0x8, size 0x5A
-    int currentIndex;                // offset 0x64, size 0x4
-    int maximumVerts;                // offset 0x68, size 0x4
-    int elementCount;                // offset 0x6C, size 0x4
+    /* 0x04 */ glModel* pModel;
+    /* 0x08 */ glModelStream stream[15];
+    /* 0x64 */ int currentIndex;
+    /* 0x68 */ int maximumVerts;
+    /* 0x6C */ int elementCount;
 };
 
 #endif // _GLUMESHWRITER_H_
