@@ -164,7 +164,6 @@ void FlareHandler::AddFace(const FlareStruct* pFlare, GLMeshWriter* pMeshWriter)
  */
 void FlareHandler::Render()
 {
-    FlareStruct* data;
     eGLStream stream_decl[3] = { GLStream_Position, GLStream_Colour, GLStream_Diffuse }; // sp8
 
     if ((g_pGame->mbCaptainShotToScoreOn == false) && ((halos.m_headNode != NULL) || (glows.m_headNode != NULL)))
@@ -183,41 +182,41 @@ void FlareHandler::Render()
 
         if (halos.m_headNode != NULL)
         {
-            GLMeshWriter halo_writer; // sp84
+            GLMeshWriter writer;
             glSetCurrentTexture(glGetTexture("global/flare_halo"), (eGLTextureType)0);
-            if (halo_writer.Begin(halos.m_numNodes * 4, (eGLPrimitive)3, 3, stream_decl, 0) != 0)
+            if (writer.Begin(halos.m_numNodes * 4, (eGLPrimitive)3, 3, stream_decl, 0) != 0)
             {
-                data = (FlareStruct*)halos.m_headNode;
-                while (data != NULL)
+                FlareStruct* halo = (FlareStruct*)halos.m_headNode;
+                while (halo != NULL)
                 {
-                    AddFace(data, &halo_writer);
-                    data = (FlareStruct*)data->m_nextNode;
+                    AddFace(halo, &writer);
+                    halo = (FlareStruct*)halo->m_nextNode;
                 }
 
-                if (halo_writer.End())
+                if (writer.End())
                 {
-                    glViewAttachModel((eGLView)0x13, halo_writer.GetModel());
+                    glViewAttachModel((eGLView)0x13, writer.GetModel());
                 }
             }
         }
 
         if (glows.m_headNode != NULL)
         {
-            GLMeshWriter glow_writer; // sp14
+            GLMeshWriter writer;
             glSetCurrentTexture(glGetTexture("global/flare_glow"), (eGLTextureType)0);
-            if (glow_writer.Begin(glows.m_numNodes * 4, (eGLPrimitive)3, 3, stream_decl, 0) != 0)
+            if (writer.Begin(glows.m_numNodes * 4, (eGLPrimitive)3, 3, stream_decl, 0) != 0)
             {
 
-                data = (FlareStruct*)glows.m_headNode;
-                while (data != NULL)
+                FlareStruct* glow = (FlareStruct*)glows.m_headNode;
+                while (glow != NULL)
                 {
-                    AddFace(data, &glow_writer);
-                    data = (FlareStruct*)data->m_nextNode;
+                    AddFace(glow, &writer);
+                    glow = (FlareStruct*)glow->m_nextNode;
                 }
 
-                if (glow_writer.End())
+                if (writer.End())
                 {
-                    glViewAttachModel((eGLView)0x13, glow_writer.GetModel());
+                    glViewAttachModel((eGLView)0x13, writer.GetModel());
                 }
             }
         }

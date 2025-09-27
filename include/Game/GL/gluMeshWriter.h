@@ -17,11 +17,6 @@ public:
     virtual void Texcoord(const nlVector2&);
     void Texcoord(short, short);
 
-    /* 0x04 */ glModel* pModel;
-    /* 0x08 */ glModelStream stream[15];
-    /* 0x64 */ int currentIndex;
-    /* 0x68 */ int maximumVerts;
-    /* 0x6C */ int elementCount;
-};
+}; // total size: 0x70
 
 #endif // _GLUMESHWRITER_H_
