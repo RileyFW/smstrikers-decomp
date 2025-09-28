@@ -53,7 +53,7 @@ public:
     glModel* GetModel();
 
     /* 0x04 */ glModel* pModel;
-    /* 0x08 */ glModelStream stream[15];
+    /* 0x08 */ glModelStream stream[15]; // relative offset => pos: 08, normal: 0E, color: 14, Diffuse: 1A
     /* 0x64 */ int currentIndex;
     /* 0x68 */ int maximumVerts;
     /* 0x6C */ int elementCount;
