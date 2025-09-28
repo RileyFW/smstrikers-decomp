@@ -17,6 +17,31 @@ struct glStateBundle
     /* 0x31 */ unsigned char pad;               // size 0x1
     /* 0x32 */ unsigned long userStateKey;      // size 0x4
 }; // total size: 0x36
+
+struct gl_StateBitfield
+{
+    /* 0x00 */ s32 startBit;
+    /* 0x08 */ s32 numBits;
+}; // total size: 0x8
+
+class glRasterState
+{
+public:
+    /* 0x00 */ unsigned long m_State;
+}; // total size: 0x4
+
+class glTextureState
+{
+public:
+    /* 0x00 */ unsigned long long m_State;
+}; // total size: 0x8
+
+class glMaterialState
+{
+public:
+    /* 0x00 */ unsigned long m_State;
+}; // total size: 0x4
+
 #pragma pop
 
 #endif // _GLSTATEBUNDLE_H_

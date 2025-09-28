@@ -21,13 +21,6 @@ enum eGLState
     GLS_Num = 10,
 };
 
-// class glStateBundle
-// {
-// public:
-//     /* 0x00 */ u8 pad0[0x030];
-//     /* 0x30 */ u8 m_nFlags;
-// };
-
 void glSetDefaultState(bool);
 void glUnHandleizeTextureState(unsigned long long);
 unsigned long long glHandleizeTextureState();
@@ -41,17 +34,17 @@ void glGetTextureState(unsigned long long, eGLTextureState);
 void glGetTextureState(eGLTextureState);
 void glSetRasterState(unsigned long&, eGLState, unsigned long);
 void glSetRasterState(eGLState, unsigned long);
-void glGetRasterState(unsigned long, eGLState);
-void glGetRasterState(eGLState);
+u32 glGetRasterState(unsigned long, eGLState);
+u32 glGetRasterState(eGLState);
 u32 glGetTexture(const char* textureName);
 u32 glGetProgram(const char*);
 u32 glSetCurrentMatrix(unsigned long);
-void glSetCurrentTextureState(unsigned long long state);
-void glGetCurrentTextureState();
-void glSetCurrentRasterState(unsigned long state = 0);
-void glGetCurrentRasterState();
+u64 glSetCurrentTextureState(unsigned long long state);
+u64 glGetCurrentTextureState();
+u32 glSetCurrentRasterState(unsigned long state = 0);
+u32 glGetCurrentRasterState();
 u32 glSetCurrentProgram(unsigned long);
-void glSetCurrentTexture(unsigned long, eGLTextureType);
+u32 glSetCurrentTexture(unsigned long, eGLTextureType);
 void glStateRestore(const glStateBundle&);
 void glStateSave(glStateBundle& state);
 glStateBundle* gl_GetCurrentStateBundle();
