@@ -29,20 +29,6 @@ enum eGLUserData
 
 #pragma push
 #pragma pack(1)
-struct FrameVertexData // size: 0x0C
-{
-    u32 m_unk_0x00;
-    u32 m_unk_0x04;
-    u32 m_unk_0x08;
-};
-
-struct VertexData // size: 0x6
-{
-    FrameVertexData* m_unk_0x00;
-    bool m_unk_0x04;
-    bool m_unk_0x05;
-};
-
 struct glModelStream
 {
     /* 0x0 */ unsigned long address;

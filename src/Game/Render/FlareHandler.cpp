@@ -97,24 +97,24 @@ void FlareHandler::AddGlow(const nlMatrix4& mat)
  */
 void FlareHandler::AddFace(const FlareStruct* pFlare, GLMeshWriter* pMeshWriter)
 {
-    class nlVector3 position;     // r1+0x3C
-    class nlVector3 viewPosition; // r1+0x30
     class nlVector3 v[4];         // r1+0x48
+    class nlVector3 viewPosition; // r1+0x30 , 34, 28
+    class nlVector3 position;     // r1+0x3C , 40, 44
     float sn;                     // r1+0xC
     float cs;                     // r1+0x8
 
-    nlMultPosVectorMatrix(position, pFlare->worldPosition, viewMatrix);
-    if (position.f.y == 0.0f)
+    position = pFlare->worldPosition;
+    nlMultPosVectorMatrix(viewPosition, position, viewMatrix);
+    if (viewPosition.f.z == 0.0f)
     {
         sn = 0.0f;
         cs = 0.5f * pFlare->size;
     }
     else
     {
-        nlSinCos(&sn, &cs, (u16)(8192.0f * (position.f.x / position.f.y) + 128.f));
-        float temp_f2 = 0.5f * pFlare->size;
-        sn *= temp_f2;
-        cs *= temp_f2;
+        nlSinCos(&sn, &cs, (s16)(8192.0f * (viewPosition.f.x / viewPosition.f.y) + 128.f));
+        sn *= (pFlare->size * 0.5f);
+        cs *= (pFlare->size * 0.5f);
     }
 
     nlVector3 a; // +R*cs + U*sn
@@ -133,28 +133,31 @@ void FlareHandler::AddFace(const FlareStruct* pFlare, GLMeshWriter* pMeshWriter)
     nlVec3Set(v[2], C.f.x - a.f.x - b.f.x, C.f.y - a.f.y - b.f.y, C.f.z - a.f.z - b.f.z);
     nlVec3Set(v[3], C.f.x + a.f.x - b.f.x, C.f.y + a.f.y - b.f.y, C.f.z + a.f.z - b.f.z);
 
-    nlVector2 uv;
-    uv.f.x = 1.0f;
-    uv.f.y = 0.0f;
-    pMeshWriter->Texcoord(uv);
+    nlVector2 uv0;
+    uv0.f.x = 0.0f;
+    uv0.f.y = 0.0f;
+    pMeshWriter->Texcoord(uv0);
     pMeshWriter->Colour(pFlare->colour);
     pMeshWriter->Vertex(v[0]);
 
-    uv.f.x = 1.0f;
-    uv.f.y = 1.0f;
-    pMeshWriter->Texcoord(uv);
+    nlVector2 uv1;
+    uv1.f.x = 1.0f;
+    uv1.f.y = 0.0f;
+    pMeshWriter->Texcoord(uv1);
     pMeshWriter->Colour(pFlare->colour);
     pMeshWriter->Vertex(v[1]);
 
-    uv.f.x = 0.0f;
-    uv.f.y = 1.0f;
-    pMeshWriter->Texcoord(uv);
+    nlVector2 uv2;
+    uv2.f.x = 1.0f;
+    uv2.f.y = 1.0f;
+    pMeshWriter->Texcoord(uv2);
     pMeshWriter->Colour(pFlare->colour);
     pMeshWriter->Vertex(v[2]);
 
-    uv.f.x = 0.0f;
-    uv.f.y = 0.0f;
-    pMeshWriter->Texcoord(uv);
+    nlVector2 uv3;
+    uv3.f.x = 0.0f;
+    uv3.f.y = 1.0f;
+    pMeshWriter->Texcoord(uv3);
     pMeshWriter->Colour(pFlare->colour);
     pMeshWriter->Vertex(v[3]);
 }

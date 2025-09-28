@@ -3,8 +3,16 @@
 
 #include "types.h"
 
+#include "NL/nlMath.h"
 #include "NL/gl/glModel.h"
 #include "NL/gl/glUserData.h"
+
+enum eGLVertAnimMode
+{
+    GLVAnimMode_Loop = 0,
+    GLVAnimMode_Hold = 1,
+    GLVAnimMode_Num = 2,
+};
 
 class GLVertexAnim
 {
@@ -15,16 +23,16 @@ public:
     void Update(float);
     void Reset();
 
-    /* 0x00 */ s32 m_unk_0x00;
-    /* 0x04 */ s32 m_unk_0x04;
-    /* 0x08 */ u32 m_unk_0x08;
-    /* 0x0C */ f32 m_unk_0x0C;
-    /* 0x10 */ s32 m_unk_0x10;
-    /* 0x14 */ bool m_unk_0x14;
-    /* 0x18 */ f32 m_unk_0x18;
-    /* 0x1C */ f32 m_unk_0x1C;
-    /* 0x20 */ FrameVertexData* m_frames;
-    /* 0x24 */ glModel* m_unk_0x24;
-};
+    /* 0x00 */ u32 m_uHashID;
+    /* 0x04 */ s32 m_nNumFrames;
+    /* 0x08 */ s32 m_nNumVertices;
+    /* 0x0C */ f32 m_fFrameRate;
+    /* 0x10 */ eGLVertAnimMode m_eMode;
+    /* 0x14 */ bool m_bDone;
+    /* 0x18 */ f32 m_fTimeScale;
+    /* 0x1C */ f32 m_fFrame;
+    /* 0x20 */ nlVector3* m_pVertices;
+    /* 0x24 */ glModel* m_pModel;
+}; // total size: 0x28
 
 #endif // _GLVERTEXANIM_H_
