@@ -1,5 +1,7 @@
 #include "NL/gl/gl.h"
+
 #include "NL/gl/glState.h"
+#include "NL/nlMemory.h"
 
 typedef struct PackedTextureInfo
 {
@@ -8,6 +10,16 @@ typedef struct PackedTextureInfo
 } PackedTextureInfo;
 
 extern PackedTextureInfo packed_texture[]; // 8 bytes per entry
+
+static glStateBundle _bundle;
+
+static unsigned long defaultRasterState = 0;
+static glRasterState _state;
+
+static unsigned long long defaultTextureState = 0;
+static glTextureState _textureState;
+
+static gl_StateBitfield packed_raster[GLS_Num];
 
 /**
  * Offset/Address/Size: 0x0 | 0x801DBC44 | size: 0x184
@@ -19,8 +31,9 @@ void glSetDefaultState(bool)
 /**
  * Offset/Address/Size: 0x184 | 0x801DBDC8 | size: 0xC
  */
-void glUnHandleizeTextureState(unsigned long long)
+void glUnHandleizeTextureState(unsigned long long state)
 {
+    _textureState.m_State = state;
 }
 
 /**
@@ -28,14 +41,15 @@ void glUnHandleizeTextureState(unsigned long long)
  */
 unsigned long long glHandleizeTextureState()
 {
-    return 0;
+    return _textureState.m_State;
 }
 
 /**
  * Offset/Address/Size: 0x19C | 0x801DBDE0 | size: 0x8
  */
-void glUnHandleizeRasterState(unsigned long)
+void glUnHandleizeRasterState(unsigned long state)
 {
+    _state.m_State = state;
 }
 
 /**
@@ -43,7 +57,7 @@ void glUnHandleizeRasterState(unsigned long)
  */
 unsigned long glHandleizeRasterState()
 {
-    return 0;
+    return _state.m_State;
 }
 
 /**
@@ -51,6 +65,7 @@ unsigned long glHandleizeRasterState()
  */
 void glSetTextureStateDefaults()
 {
+    _textureState.m_State = defaultTextureState;
 }
 
 /**
@@ -58,6 +73,7 @@ void glSetTextureStateDefaults()
  */
 void glSetRasterStateDefaults()
 {
+    _state.m_State = defaultRasterState;
 }
 
 /**
@@ -105,15 +121,33 @@ void glSetRasterState(eGLState, unsigned long)
 /**
  * Offset/Address/Size: 0x6B8 | 0x801DC2FC | size: 0x58
  */
-void glGetRasterState(unsigned long, eGLState)
+u32 glGetRasterState(unsigned long raster, eGLState state)
 {
+    unsigned long out = 0;
+    for (s32 cnt = 0; cnt < packed_raster[state].numBits; cnt++)
+    {
+        if (raster & (1u << (unsigned int)(packed_raster[state].startBit + cnt)))
+        {
+            out |= (1u << (unsigned int)cnt);
+        }
+    }
+    return out;
 }
 
 /**
  * Offset/Address/Size: 0x710 | 0x801DC354 | size: 0x5C
  */
-void glGetRasterState(eGLState)
+u32 glGetRasterState(eGLState state)
 {
+    u32 out = 0;
+    for (s32 cnt = 0; cnt < packed_raster[state].numBits; cnt++)
+    {
+        if (_state.m_State & (1u << (unsigned int)(packed_raster[state].startBit + cnt)))
+        {
+            out |= (1u << (unsigned int)cnt);
+        }
+    }
+    return out;
 }
 
 /**
@@ -122,7 +156,7 @@ void glGetRasterState(eGLState)
 u32 glGetTexture(const char* textureName)
 {
     if (textureName == 0)
-        return 0xFFFFFFFF;
+        return -1;
 
     return glHash(textureName);
 }
@@ -130,74 +164,106 @@ u32 glGetTexture(const char* textureName)
 /**
  * Offset/Address/Size: 0x79C | 0x801DC3E0 | size: 0x30
  */
-u32 glGetProgram(const char*)
+u32 glGetProgram(const char* programName)
 {
-    return 0;
+    if (programName == NULL)
+    {
+        return -1;
+    }
+    return glHash(programName);
 }
 
 /**
  * Offset/Address/Size: 0x7CC | 0x801DC410 | size: 0x18
  */
-u32 glSetCurrentMatrix(unsigned long)
+u32 glSetCurrentMatrix(unsigned long matrix)
 {
-    return 0;
+    u32 temp_r0 = _bundle.matrix;
+    _bundle.matrix = matrix;
+    return temp_r0;
 }
 
 /**
  * Offset/Address/Size: 0x7E4 | 0x801DC428 | size: 0x20
  */
-void glSetCurrentTextureState(unsigned long long state)
+u64 glSetCurrentTextureState(unsigned long long state)
 {
+    unsigned long long temp_r0 = _bundle.texturestate;
+    _bundle.texturestate = state;
+    return temp_r0;
 }
 
 /**
  * Offset/Address/Size: 0x804 | 0x801DC448 | size: 0x14
  */
-void glGetCurrentTextureState()
+u64 glGetCurrentTextureState()
 {
+    return _bundle.texturestate;
 }
 
 /**
  * Offset/Address/Size: 0x818 | 0x801DC45C | size: 0x18
  */
-void glSetCurrentRasterState(unsigned long)
+u32 glSetCurrentRasterState(unsigned long raster)
 {
+    u32 temp_r0 = _bundle.raster;
+    _bundle.raster = raster;
+    return temp_r0;
 }
 
 /**
  * Offset/Address/Size: 0x830 | 0x801DC474 | size: 0x10
  */
-void glGetCurrentRasterState()
+u32 glGetCurrentRasterState()
 {
+    return _bundle.raster;
 }
 
 /**
  * Offset/Address/Size: 0x840 | 0x801DC484 | size: 0x18
  */
-u32 glSetCurrentProgram(unsigned long)
+u32 glSetCurrentProgram(unsigned long program)
 {
-    return 0;
+    u32 temp_r0 = _bundle.program;
+    _bundle.program = program;
+    return temp_r0;
 }
 
 /**
  * Offset/Address/Size: 0x858 | 0x801DC49C | size: 0x50
  */
-void glSetCurrentTexture(unsigned long, eGLTextureType)
+u32 glSetCurrentTexture(unsigned long texture, eGLTextureType type)
 {
+    u32 prev = _bundle.texture[(unsigned int)type];
+
+    unsigned int bit = 1u << (unsigned int)type;
+    if (texture == 0xFFFFFFFFu)
+    {
+        _bundle.texconfig = _bundle.texconfig & ~bit;
+    }
+    else
+    {
+        _bundle.texconfig = _bundle.texconfig | bit;
+    }
+
+    _bundle.texture[(unsigned int)type] = texture;
+    return prev;
 }
 
 /**
  * Offset/Address/Size: 0x8A8 | 0x801DC4EC | size: 0x30
  */
-void glStateRestore(const glStateBundle&)
+void glStateRestore(const glStateBundle& state)
 {
+    memcpy(&_bundle, &state, sizeof(glStateBundle));
 }
 
 /**
  * Offset/Address/Size: 0x8D8 | 0x801DC51C | size: 0x2C
  */
-void glStateSave(glStateBundle&)
+void glStateSave(glStateBundle& state)
 {
+    memcpy(&state, &_bundle, sizeof(glStateBundle));
 }
 
 /**
@@ -205,7 +271,7 @@ void glStateSave(glStateBundle&)
  */
 glStateBundle* gl_GetCurrentStateBundle()
 {
-    return nullptr;
+    return &_bundle;
 }
 
 /**

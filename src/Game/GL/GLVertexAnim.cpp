@@ -5,40 +5,40 @@
  */
 GLVertexAnim::GLVertexAnim()
 {
-    m_unk_0x00 = -1;
-    m_unk_0x04 = 0;
-    m_unk_0x08 = 0;
-    m_unk_0x0C = 30.0f;
-    m_unk_0x10 = 0;
-    m_unk_0x14 = false;
-    m_unk_0x1C = 0.0f;
-    m_unk_0x18 = 1.0f;
-    m_frames = NULL;
-    m_unk_0x24 = NULL;
+    m_uHashID = -1;
+    m_nNumFrames = 0;
+    m_nNumVertices = 0;
+    m_fFrameRate = 30.0f;
+    m_eMode = GLVAnimMode_Loop;
+    m_bDone = false;
+    m_fFrame = 0.0f;
+    m_fTimeScale = 1.0f;
+    m_pVertices = NULL;
+    m_pModel = NULL;
 }
 
 /**
  * Offset/Address/Size: 0xBC | 0x801E7D54 | size: 0xDC
  */
-void GLVertexAnim::GetModel(int frameIndex)
+void GLVertexAnim::GetModel(int frame)
 {
-    int actualFrame = (frameIndex < 0) ? (int)m_unk_0x1C : frameIndex;
+    int actualFrame = (frame < 0) ? (int)m_fFrame : frame;
 
-    glModel* model = glModelDup(m_unk_0x24, true);
-    FrameVertexData* frameVertexData = m_frames + actualFrame * m_unk_0x08;
+    glModel* model = glModelDup(m_pModel, true);
+    nlVector3* vertices = m_pVertices + actualFrame * m_nNumVertices;
 
     for (glModelPacket* packet = model->packets; packet < model->packets + model->numPackets; packet++)
     {
-        VertexData* packetVertexData = packet->m_vertexData;
-        VertexData* endVertexData = packetVertexData + packet->numStreams;
-        while (packetVertexData < endVertexData)
+        glModelStream* streams = packet->streams;
+        glModelStream* endVertexData = streams + packet->numStreams;
+        while (streams < endVertexData)
         {
-            if (packetVertexData->m_unk_0x04 == 0)
+            if (streams->id == 0)
             {
-                packetVertexData->m_unk_0x00 = frameVertexData;
+                streams->address = (u32)vertices;
                 break;
             }
-            packetVertexData++;
+            streams++;
         }
     }
 }
@@ -46,29 +46,29 @@ void GLVertexAnim::GetModel(int frameIndex)
 /**
  * Offset/Address/Size: 0x1C | 0x801E7CB4 | size: 0xA0
  */
-void GLVertexAnim::Update(float arg0)
+void GLVertexAnim::Update(float dt)
 {
-    if (m_unk_0x14)
+    if (m_bDone)
     {
         return; // Early return if animation is stopped
     }
 
     // Update animation progress
-    m_unk_0x1C += m_unk_0x0C * (m_unk_0x18 * arg0);
+    m_fFrame += m_fFrameRate * (m_fTimeScale * dt);
 
     // Check if animation has completed
-    if (m_unk_0x1C >= m_unk_0x04)
+    if (m_fFrame >= m_nNumFrames)
     {
-        if (m_unk_0x10 == 1)
+        if (m_eMode == 1)
         {
             // Stop animation at the end
-            m_unk_0x14 = true;
-            m_unk_0x1C = m_unk_0x04 - 1;
+            m_bDone = true;
+            m_fFrame = m_nNumFrames - 1;
         }
         else
         {
             // Loop animation
-            m_unk_0x1C = 0.0f;
+            m_fFrame = 0.0f;
         }
     }
 }
@@ -78,7 +78,7 @@ void GLVertexAnim::Update(float arg0)
  */
 void GLVertexAnim::Reset()
 {
-    m_unk_0x18 = 1.0f;
-    m_unk_0x1C = 0.0f;
-    m_unk_0x14 = false;
+    m_fTimeScale = 1.0f;
+    m_fFrame = 0.0f;
+    m_bDone = false;
 }

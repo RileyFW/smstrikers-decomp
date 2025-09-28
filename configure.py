@@ -755,7 +755,7 @@ config.libs = [
             Object(NonMatching, "Game/Render/FlareHandler.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/CameraGuy.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/SkinAnimatedNPC.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/Render/depthoffield.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/Render/depthoffield.cpp", extra_cflags=["-inline deferred"]),
 
             # related to character (should probably be in Game/Render)
             Object(Matching, "Game/PoseNode.cpp", extra_cflags=["-inline deferred"]),
@@ -960,7 +960,7 @@ config.libs = [
             Object(NonMatching, "Game/GL/GLInventory.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/GL/GLRenderBuffer.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/GL/GLSkinMesh.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/GL/gluMeshWriter.cpp", extra_cflags=["-inline off"]),
+            Object(NonMatching, "Game/GL/gluMeshWriter.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/GL/gluSkinMesh.cpp", extra_cflags=["-inline off"]),
 
             # FX

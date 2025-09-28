@@ -25,9 +25,9 @@ static unsigned long _defaultProgram = glGetProgram("2d unlit");
 bool glPoly2::Attach(eGLView view, int layer, unsigned long* pMatrix, unsigned long /*user*/)
 {
     eGLStream streamsDesc[3];
-    streamsDesc[0] = eGLStream_0;
-    streamsDesc[1] = eGLStream_2;
-    streamsDesc[2] = eGLStream_3;
+    streamsDesc[0] = GLStream_Position;
+    streamsDesc[1] = GLStream_Colour;
+    streamsDesc[2] = GLStream_Diffuse;
 
     GLMeshWriter writer;
 
@@ -90,7 +90,7 @@ bool glPoly2::Attach(eGLView view, int layer, unsigned long* pMatrix, unsigned l
  */
 bool glAttachPoly2(eGLView view, unsigned long count, glPoly2* polys, unsigned long* pMatrix, const void* user)
 {
-    const eGLStream streamsDesc[3] = { eGLStream_0, eGLStream_2, eGLStream_3 };
+    const eGLStream streamsDesc[3] = { GLStream_Position, GLStream_Colour, GLStream_Diffuse };
 
     if (*(unsigned char*)((char*)gl_GetCurrentStateBundle() + 0x30) != 1)
     {

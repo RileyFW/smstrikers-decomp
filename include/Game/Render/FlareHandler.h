@@ -15,6 +15,12 @@ enum eFlareType
 class FlareStruct : public efNode
 {
 public:
+    FlareStruct()
+    {
+        m_nextNode = NULL;
+        m_prevNode = NULL;
+    }
+
     /* 0x08 */ eFlareType type;
     /* 0x0C */ float size;
     /* 0x10 */ nlColour colour;
@@ -24,6 +30,18 @@ public:
 class FlareHandler
 {
 public:
+    static FlareHandler instance;
+
+    FlareHandler()
+    {
+        halos.m_headNode = NULL;
+        halos.m_tailNode = NULL;
+        halos.m_numNodes = 0;
+        glows.m_headNode = NULL;
+        glows.m_tailNode = NULL;
+        glows.m_numNodes = 0;
+    };
+
     void Initialize();
     void Cleanup();
     void AddHalo(const nlMatrix4&);

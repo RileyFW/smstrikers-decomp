@@ -8,14 +8,15 @@
 class GLMeshWriter : public GLMeshWriterCore
 {
 public:
-    // GLMeshWriter()
-    //     : GLMeshWriterCore() { };
+    GLMeshWriter()
+        : GLMeshWriterCore() { };
     // virtual ~GLMeshWriter() { };
 
     virtual bool End();
     virtual void Normal(const nlVector3&);
     virtual void Texcoord(const nlVector2&);
-    virtual void Texcoord(short, short);
-};
+    void Texcoord(short, short);
+
+}; // total size: 0x70
 
 #endif // _GLUMESHWRITER_H_
