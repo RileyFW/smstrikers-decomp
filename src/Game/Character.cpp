@@ -489,31 +489,8 @@ nlVector3& cCharacter::GetJointPositionFuture(nlVector3*, int, int, float, bool,
  */
 nlVector3& cCharacter::GetJointPosition(int jointIndex) const
 {
-    static nlVector3 tempJointPos;
-
-    if (m_pPoseAccumulator != nullptr)
-    {
-        const nlMatrix4* poseMatrix = m_pPoseAccumulator->GetNodeMatrix(jointIndex);
-        if (poseMatrix != nullptr)
-        {
-            // Extract position from the matrix (translation component)
-            tempJointPos.f.x = poseMatrix->m[3][0];
-            tempJointPos.f.y = poseMatrix->m[3][1];
-            tempJointPos.f.z = poseMatrix->m[3][2];
-        }
-        else
-        {
-            // Fallback to character position if matrix is null
-            tempJointPos = m_v3Position;
-        }
-    }
-    else
-    {
-        // Fallback to character position if pose accumulator is null
-        tempJointPos = m_v3Position;
-    }
-
-    return tempJointPos;
+    const nlMatrix4& poseMatrix = m_pPoseAccumulator->GetNodeMatrix(jointIndex);
+    return *(nlVector3*)&poseMatrix.m[3];
 }
 
 /**

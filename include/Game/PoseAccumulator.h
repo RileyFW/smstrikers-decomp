@@ -12,6 +12,7 @@ typedef void (*BuildNodeMatrixFn)(unsigned int, unsigned int, cPoseAccumulator*,
 
 class Vector
 {
+public:
     /* 0x0 */ nlMatrix4* mData;
     /* 0x4 */ int mSize;
     /* 0x8 */ int mCapacity;
@@ -79,16 +80,17 @@ public:
     void BlendRotIdentity(int, float);
     void BlendScaleIdentity(int, float);
     void BlendTransIdentity(int, float);
-    nlMatrix4* GetNodeMatrix(int) const;
-    nlMatrix4* GetNodeMatrixByHashID(unsigned int) const;
+    nlMatrix4& GetNodeMatrix(int) const;
+    nlMatrix4& GetNodeMatrixByHashID(unsigned int) const;
     s32 GetNumNodes() const;
     void MultNodeMatrices(const nlMatrix4*);
     void SetBuildNodeMatrixCallback(int, BuildNodeMatrixFn, unsigned int, unsigned int);
 
-    /* 0x00 */ cSHierarchy* m_hierarchy;
-    /* 0x04 */ nlMatrix4* m_matsA;
-    /* 0x08 */ s32 m_unk_0x08;
-    /* 0x0C */ s32 m_unk_0x0C;
+    /* 0x00 */ cSHierarchy* m_BaseSHierarchy;
+    /* 0x04 */ Vector m_NodeMatrices;
+    // /* 0x04 */ nlMatrix4* m_NodeMatrices;
+    // /* 0x08 */ s32 m_unk_0x08;
+    // /* 0x0C */ s32 m_unk_0x0C;
     /* 0x10 */ nlMatrix4* m_matsB;
     /* 0x14 */ s32 m_unk_0x14;
     /* 0x18 */ s32 m_unk_0x18;
@@ -106,6 +108,6 @@ public:
     /* 0x48 */ s32 m_unk_0x48;
     /* 0x4C */ float* m_floatArray;
     /* 0x50 */ s32 m_floatCount;
-};
+}; // total size: 0x58
 
 #endif // _POSEACCUMULATOR_H_

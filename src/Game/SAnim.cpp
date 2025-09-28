@@ -583,7 +583,7 @@ void cSAnim::BlendTrans(int bone, int track, float tNorm, float weight, cPoseAcc
         return;
     }
 
-    if (acc->m_hierarchy->PreserveBoneLength(bone))
+    if (acc->m_BaseSHierarchy->PreserveBoneLength(bone))
         return;
 
     void* data = m_transTracks[track];

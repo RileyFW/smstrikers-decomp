@@ -1,4 +1,4 @@
-#include "Game/SkinAnimatedNPC.h"
+#include "Game/Render/SkinAnimatedNPC.h"
 
 /**
  * Offset/Address/Size: 0x60C | 0x80164FB0 | size: 0xC0

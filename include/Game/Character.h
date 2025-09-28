@@ -149,6 +149,11 @@ public:
     void AdjustPoseMatrices();
     void GetSkinMesh() const;
 
+    int GetHeadJointIndex() const // does not omit code?
+    {
+        return m_nHeadJointIndex;
+    }
+
     virtual void Update(float);
 
     /* 0x04 */ eCharacterClass m_eCharacterClass;

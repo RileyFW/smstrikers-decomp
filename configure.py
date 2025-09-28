@@ -711,7 +711,7 @@ config.libs = [
             # Camera
             Object(Matching, "Game/CameraLoader.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/CameraMan.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/Camera/FaceCam.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/Camera/FaceCam.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Camera/GoalCam.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Camera/ShootToScoreCam.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Camera/TopDownCamera.cpp", extra_cflags=["-inline deferred"]),
@@ -753,7 +753,7 @@ config.libs = [
    
             # Game Render
             Object(NonMatching, "Game/Render/FlareHandler.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/Render/CameraGuy.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/Render/CameraGuy.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/SkinAnimatedNPC.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Render/depthoffield.cpp", extra_cflags=["-inline deferred"]),
 

@@ -16,29 +16,23 @@ FaceCam::FaceCam(float distance)
  */
 void FaceCam::Update(float dt)
 {
-    mTargetPosition = mpCharacter->GetJointPosition(mpCharacter->m_nHeadJointIndex);
+    mTargetPosition = mpCharacter->GetJointPosition(mpCharacter->GetHeadJointIndex());
+    const nlMatrix4& headMatrix = mpCharacter->m_pPoseAccumulator->GetNodeMatrix(mpCharacter->GetHeadJointIndex());
 
-    const nlMatrix4* mtx = mpCharacter->m_pPoseAccumulator->GetNodeMatrix(mpCharacter->m_nHeadJointIndex);
+    float forwardX = headMatrix.m[1][0];
+    float forwardY = 0.f;
+    float forwardZ = headMatrix.m[1][1];
 
-    float forwardX = mtx->m[1][0]; // f31 = matrix[0x10]
-    float forwardZ = mtx->m[1][1]; // f30 = matrix[0x14]
+    float len = nlRecipSqrt(forwardY + (forwardX * forwardX + (forwardZ * forwardZ)), 1);
 
-    float invLen = nlRecipSqrt(1.0f + (forwardX * forwardX + forwardZ * forwardZ), 1);
+    nlVec3Set(mCameraPosition,
+        mDistance * (len * forwardX) + mTargetPosition.f.x,
+        mDistance * (len * forwardZ) + mTargetPosition.f.y,
+        mDistance * (len * forwardY) + mTargetPosition.f.z);
 
-    const float kZero = 0.f;
-    const float d = mDistance;
-    const float tx = mTargetPosition.f.x;
-    const float ty = mTargetPosition.f.y;
-    const float tz = mTargetPosition.f.z;
-
-    mCameraPosition.f.x = d * (invLen * forwardX) + tx;
-    mCameraPosition.f.y = d * (invLen * forwardZ) + ty;
-    mCameraPosition.f.z = d * (invLen * 0.001f) + tz;
-
-    const nlVector3& at = GetTargetPosition();
-    const nlVector3& eye = GetCameraPosition();
-    glMatrixLookAt(mViewMatrix, eye, at, mUpVector);
+    glMatrixLookAt(mViewMatrix, GetCameraPosition(), GetTargetPosition(), mUpVector);
 }
+
 /**
  * Offset/Address/Size: 0x8 | 0x801A8D48 | size: 0x8
  */

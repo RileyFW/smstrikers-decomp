@@ -17,20 +17,20 @@ extern const TransAccum kTransAccumTemplate;
  */
 cPoseAccumulator::cPoseAccumulator(cSHierarchy* h, bool withSecondary)
 {
-    m_hierarchy = h;
+    m_BaseSHierarchy = h;
 
     const int n = h->m_nodeCount; // boneCount
     int i;
 
     {
         const int count = n + 1;
-        m_matsA = (nlMatrix4*)nlMalloc((unsigned long)(count * sizeof(nlMatrix4)), 8, 0);
-        m_unk_0x08 = count;
-        m_unk_0x0C = count;
+        m_NodeMatrices.mData = (nlMatrix4*)nlMalloc(count * sizeof(nlMatrix4), 8, 0);
+        m_NodeMatrices.mSize = count;
+        m_NodeMatrices.mCapacity = count;
 
         for (i = 0; i < count; ++i)
         {
-            m_matsA[i] = kPose64Template; // copy 0x40 bytes template
+            m_NodeMatrices.mData[i] = kPose64Template; // copy 0x40 bytes template
         }
     }
 
@@ -104,9 +104,9 @@ cPoseAccumulator::cPoseAccumulator(cSHierarchy* h, bool withSecondary)
 
     for (i = 0; i < n; ++i)
     {
-        if (m_hierarchy->PreserveBoneLength(i))
+        if (m_BaseSHierarchy->PreserveBoneLength(i))
         {
-            const nlVector3* t = m_hierarchy->GetTranslationOffset(i);
+            const nlVector3* t = m_BaseSHierarchy->GetTranslationOffset(i);
             m_trans[i].x = t->f.x;
             m_trans[i].y = t->f.y;
             m_trans[i].z = t->f.z;
@@ -122,7 +122,7 @@ cPoseAccumulator::cPoseAccumulator(cSHierarchy* h, bool withSecondary)
 void cPoseAccumulator::Pose(const cPoseNode& node, const nlMatrix4& mat)
 {
     int i;
-    for (i = 0; i < m_hierarchy->m_nodeCount; i++)
+    for (i = 0; i < m_BaseSHierarchy->m_nodeCount; i++)
     {
         RotAccum& r = m_rot[i];
         r.q.f.x = 0.0f;
@@ -141,7 +141,7 @@ void cPoseAccumulator::Pose(const cPoseNode& node, const nlMatrix4& mat)
         s.fAccumulatedWeight = 0.0f;
         s.bIdentity = true;
 
-        if (!m_hierarchy->PreserveBoneLength(i))
+        if (!m_BaseSHierarchy->PreserveBoneLength(i))
         {
             TransAccum& t = m_trans[i];
             t.x = 0.0f;
@@ -167,7 +167,7 @@ void cPoseAccumulator::Pose(const cPoseNode& node, const nlMatrix4& mat)
  */
 void cPoseAccumulator::InitAccumulators()
 {
-    for (int i = 0; i < m_hierarchy->m_nodeCount; ++i)
+    for (int i = 0; i < m_BaseSHierarchy->m_nodeCount; ++i)
     {
         // --- rotation accum (stride 0x20) ---
         RotAccum& r = m_rot[i];
@@ -188,7 +188,7 @@ void cPoseAccumulator::InitAccumulators()
         s.fAccumulatedWeight = 0.0f;
         s.fAccumulatedWeight = true;
 
-        if (!m_hierarchy->PreserveBoneLength(i))
+        if (!m_BaseSHierarchy->PreserveBoneLength(i))
         {
             TransAccum& t = m_trans[i];
             t.x = 0.0f;
@@ -210,27 +210,27 @@ void cPoseAccumulator::InitAccumulators()
  */
 void cPoseAccumulator::BuildNodeMatrices(const nlMatrix4& world)
 {
-    if (m_unk_0x14 == m_unk_0x08)
+    if (m_unk_0x14 == m_NodeMatrices.mSize)
     {
         s32 tmp = m_unk_0x14;
-        m_unk_0x14 = m_unk_0x08;
-        m_unk_0x08 = tmp;
+        m_unk_0x14 = m_NodeMatrices.mSize;
+        m_NodeMatrices.mSize = tmp;
 
         tmp = m_unk_0x18;
-        m_unk_0x18 = m_unk_0x0C;
-        m_unk_0x0C = tmp;
+        m_unk_0x18 = m_NodeMatrices.mCapacity;
+        m_NodeMatrices.mCapacity = tmp;
 
         nlMatrix4* tmp_mat = m_matsB;
-        m_matsB = m_matsA;
-        m_matsA = tmp_mat;
+        m_matsB = m_NodeMatrices.mData;
+        m_NodeMatrices.mData = tmp_mat;
     }
 
     int parentStack[32];
     int parentTop = -1;
 
-    for (int idx = 0; idx < m_hierarchy->m_nodeCount; ++idx)
+    for (int idx = 0; idx < m_BaseSHierarchy->m_nodeCount; ++idx)
     {
-        nlMatrix4* local = &m_matsA[idx + 1];
+        nlMatrix4* local = &m_NodeMatrices.mData[idx + 1];
 
         RotAccum* r = &m_rot[idx];
         if (!r->locked)
@@ -283,10 +283,10 @@ void cPoseAccumulator::BuildNodeMatrices(const nlMatrix4& world)
             local->m[3][2] *= ps->s.f.z;
         }
 
-        nlMatrix4* out = &m_matsA[idx];
+        nlMatrix4* out = &m_NodeMatrices.mData[idx];
         if (parentIdx >= 0)
         {
-            const nlMatrix4* parentWorld = &m_matsA[parentIdx];
+            const nlMatrix4* parentWorld = &m_NodeMatrices.mData[parentIdx];
             nlMultMatrices(*out, *local, *parentWorld);
         }
         else
@@ -294,7 +294,7 @@ void cPoseAccumulator::BuildNodeMatrices(const nlMatrix4& world)
             nlMultMatrices(*out, *local, world);
         }
 
-        int delta = m_hierarchy->GetPushPop(idx);
+        int delta = m_BaseSHierarchy->GetPushPop(idx);
         parentTop += delta;
         if (delta > 0)
         {
@@ -309,12 +309,12 @@ void cPoseAccumulator::BuildNodeMatrices(const nlMatrix4& world)
         }
     }
 
-    for (int idx = 0; idx < m_hierarchy->m_nodeCount; ++idx)
+    for (int idx = 0; idx < m_BaseSHierarchy->m_nodeCount; ++idx)
     {
         const ScaleAccum* s = &m_scale[idx];
         if (!s->bIdentity)
         {
-            nlMatrix4* mtx = &m_matsA[idx];
+            nlMatrix4* mtx = &m_NodeMatrices.mData[idx];
             mtx->m[0][0] *= s->s.f.x;
             mtx->m[0][1] *= s->s.f.x;
             mtx->m[0][2] *= s->s.f.x;
@@ -341,7 +341,7 @@ void cPoseAccumulator::BlendRot(int idx, const nlQuaternion* q, float w, bool fl
 
     if (flip)
     {
-        cSHierarchy* h = m_hierarchy;
+        cSHierarchy* h = m_BaseSHierarchy;
 
         if (idx == h->m_maxNode || idx == h->m_minNode)
         {
@@ -437,7 +437,7 @@ void cPoseAccumulator::BlendTrans(int idx, const nlVector3* v, float w, bool fli
 
     if (flip)
     {
-        cSHierarchy* h = m_hierarchy;
+        cSHierarchy* h = m_BaseSHierarchy;
 
         nlVector3 vtemp;
         if (idx <= h->m_minNode || idx == h->m_maxNode)
@@ -545,22 +545,21 @@ void cPoseAccumulator::BlendTransIdentity(int idx, float w)
 /**
  * Offset/Address/Size: 0x130 | 0x801EB6D0 | size: 0x10
  */
-nlMatrix4* cPoseAccumulator::GetNodeMatrix(int i) const
+nlMatrix4& cPoseAccumulator::GetNodeMatrix(int i) const
 {
-    return &m_matsA[i];
+    return m_NodeMatrices.mData[i];
 }
 
 /**
  * Offset/Address/Size: 0xB0 | 0x801EB650 | size: 0x80
  */
-nlMatrix4* cPoseAccumulator::GetNodeMatrixByHashID(unsigned int hash) const
+nlMatrix4& cPoseAccumulator::GetNodeMatrixByHashID(unsigned int hash) const
 {
-    cSHierarchy* hierarchy = m_hierarchy; // r3->0x00
-    int index = 0;                        // r30 = 0
+    cSHierarchy* hierarchy = m_BaseSHierarchy; // r3->0x00
+    int index = 0;                             // r30 = 0
 
-    // Loop through all nodes in the hierarchy
     while (index < hierarchy->m_nodeCount)
-    { // r31->0x08
+    {
         unsigned int nodeID = hierarchy->GetNodeID(index);
         if (hash == nodeID)
         {
@@ -569,7 +568,7 @@ nlMatrix4* cPoseAccumulator::GetNodeMatrixByHashID(unsigned int hash) const
         index++;
     }
 
-    return (nlMatrix4*)((char*)m_matsA + (index << 6));
+    return m_NodeMatrices.mData[index];
 }
 
 /**
@@ -577,7 +576,7 @@ nlMatrix4* cPoseAccumulator::GetNodeMatrixByHashID(unsigned int hash) const
  */
 s32 cPoseAccumulator::GetNumNodes() const
 {
-    return m_hierarchy->m_nodeCount;
+    return m_BaseSHierarchy->m_nodeCount;
 }
 
 /**
@@ -585,9 +584,9 @@ s32 cPoseAccumulator::GetNumNodes() const
  */
 void cPoseAccumulator::MultNodeMatrices(const nlMatrix4* arg0)
 {
-    for (int i = 0; i < m_hierarchy->m_nodeCount; i++)
+    for (int i = 0; i < m_BaseSHierarchy->m_nodeCount; i++)
     {
-        nlMatrix4* temp_r3 = m_matsA + i;
+        nlMatrix4* temp_r3 = &m_NodeMatrices.mData[i];
         nlMultMatrices(*temp_r3, *temp_r3, *arg0);
     }
 }

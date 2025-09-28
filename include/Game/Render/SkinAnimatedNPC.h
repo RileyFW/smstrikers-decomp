@@ -18,18 +18,30 @@ class cPN_SAnimController;
 class GLSkinMesh;
 class cPoseNode;
 
+enum SkinAnimatedNPC_Type
+{
+    SkinAnimatedNPC_BASE = 0,
+    SkinAnimatedNPC_MOVABLE = 1,
+    SkinAnimatedNPC_CAMERA_GUY = 2,
+    SkinAnimatedNPC_CHAIN_CHOMP = 3,
+    SkinAnimatedNPC_BOWSER = 4,
+    NUM_SkinAnimatedNPC_TYPES = 5,
+};
+
 class SkinAnimatedNPC
 {
 public:
-    SkinAnimatedNPC(cSHierarchy&, int);
-    ~SkinAnimatedNPC();
-    void Update(float);
-    void Render();
-    void RenderFromReplay(const cPoseAccumulator&, const nlMatrix4*);
+    SkinAnimatedNPC(cSHierarchy& pHierarchy, int nModelID);
+    /* 0x08 */ virtual ~SkinAnimatedNPC();
+    /* 0x0C */ virtual SkinAnimatedNPC_Type GetSkinAnimatedNPC_Type() const { return SkinAnimatedNPC_BASE; };
+    /* 0x10 */ virtual void Render();
+    /* 0x14 */ virtual void RenderFromReplay(const cPoseAccumulator&, const nlMatrix4*);
+    /* 0x18 */ virtual void Update(float);
+    /* 0x1C */ virtual void DrawShadow(const glModel*, const nlMatrix4&);
+    /* 0x20 */ virtual void DrawShadow(const cPoseAccumulator&, const nlMatrix4&);
+
     void SendToGL() const;
-    void DrawShadow(const cPoseAccumulator&, const nlMatrix4&);
     void SetAnimState(cSAnim&, float, ePlayMode);
-    void DrawShadow(const glModel*, const nlMatrix4&);
 
     /* 0x04 */ nlMatrix4 mWorldMatrix;                // offset 0x4, size 0x40
     /* 0x44 */ cPN_SAnimController* mpAnimController; // offset 0x44, size 0x4

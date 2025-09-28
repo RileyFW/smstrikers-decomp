@@ -11,7 +11,9 @@ class cHeadTrack
 {
 public:
     cHeadTrack();
-    void Update(const nlMatrix4&, const nlMatrix4&, float, unsigned short, int, int, float);
+    virtual ~cHeadTrack();
+
+    void Update(const nlMatrix4& m4HeadMatrix, const nlMatrix4& m4ConstraintMatrix, float fDeltaT, unsigned short aOOIConstraint, int nHeadSpinMax, int nHeadTiltMax, float fSmoothTime);
 
     class nlMatrix4 m_m4HeadMatrix; // offset 0x4, size 0x40
     class nlVector3 m_v3OOI;        // offset 0x44, size 0xC

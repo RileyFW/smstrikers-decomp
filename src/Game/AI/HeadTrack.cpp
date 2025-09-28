@@ -17,7 +17,7 @@ cHeadTrack::cHeadTrack()
 /**
  * Offset/Address/Size: 0x160 | 0x80056F64 | size: 0x450
  */
-void cHeadTrack::Update(const nlMatrix4&, const nlMatrix4&, float, unsigned short, int, int, float)
+void cHeadTrack::Update(const nlMatrix4& m4HeadMatrix, const nlMatrix4& m4ConstraintMatrix, float fDeltaT, unsigned short aOOIConstraint, int nHeadSpinMax, int nHeadTiltMax, float fSmoothTime)
 {
 }
 
