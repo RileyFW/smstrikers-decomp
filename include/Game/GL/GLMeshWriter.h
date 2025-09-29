@@ -7,12 +7,23 @@
 #include "NL/nlMath.h"
 #include "NL/gl/glModel.h"
 
+// enum eGLPrimitive
+// {
+//     eGLPrimitive_0 = 0,
+//     eGLPrimitive_1,
+//     eGLPrimitive_2,
+//     eGLPrimitive_3,
+// };
+
 enum eGLPrimitive
 {
-    eGLPrimitive_0 = 0,
-    eGLPrimitive_1,
-    eGLPrimitive_2,
-    eGLPrimitive_3,
+    GLP_TriList = 0,
+    GLP_TriStrip = 1,
+    GLP_TriFan = 2,
+    GLP_QuadList = 3,
+    GLP_LineList = 4,
+    GLP_LineStrip = 5,
+    GLP_Num = 6,
 };
 
 enum eGLStream

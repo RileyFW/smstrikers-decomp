@@ -13,76 +13,78 @@
 
 #include "Game/GL/gluMeshWriter.h"
 
-unsigned long StripMap[4] = { 3, 0, 2, 1 };
-unsigned long QuadMap[4] = { 0, 1, 2, 3 };
-unsigned long TriListMap[6] = { 3, 0, 2, 0, 2, 1 };
+static int StripMap[4] = { 3, 0, 2, 1 };
+static int QuadMap[4] = { 0, 1, 2, 3 };
+static int TriListMap[6] = { 3, 0, 2, 0, 2, 1 };
 
 static unsigned long _defaultProgram = glGetProgram("2d unlit");
 
 /**
  * Offset/Address/Size: 0x610 | 0x801D7C10 | size: 0x210
  */
-bool glPoly2::Attach(eGLView view, int layer, unsigned long* pMatrix, unsigned long /*user*/)
+bool glPoly2::Attach(eGLView view, int layer, unsigned long* pMatrixHandle, unsigned long programHandle)
 {
-    eGLStream streamsDesc[3];
-    streamsDesc[0] = GLStream_Position;
-    streamsDesc[1] = GLStream_Colour;
-    streamsDesc[2] = GLStream_Diffuse;
+    // eGLStream stream_decl[3]; // r1+0x14
+    // GLMeshWriter mesh;        // r1+0x20
+
+    unsigned long program; // r31
+    unsigned long matrix;  // r30
+    eGLPrimitive prim;     // r5
+    int* pMap;             // r25
+    // int i;                   // r24
+    unsigned long texconfig; // r29
+    // int index;               // r23
+
+    program = programHandle;
+    eGLStream streamsDesc[3] = { GLStream_Position, GLStream_Colour, GLStream_Diffuse };
 
     GLMeshWriter writer;
 
-    const unsigned char stateFlag = gl_GetCurrentStateBundle()->texconfig;
-
-    const unsigned long prevProg = glSetCurrentProgram(_defaultProgram);
-    const unsigned long mat = pMatrix ? *pMatrix : glGetIdentityMatrix();
-    const unsigned long prevMat = glSetCurrentMatrix(mat);
-
-    const bool hasQuads = (glHasQuads() & 0xFF) != 0;
-    const eGLPrimitive prim = hasQuads ? eGLPrimitive_3 : eGLPrimitive_1;
-    const unsigned long* map = hasQuads ? QuadMap : StripMap;
-
-    const int streamCount = static_cast<int>(stateFlag) + 2;
-
-    if (!writer.Begin(4, prim, streamCount, streamsDesc, false))
+    if ((program + 0x10000) == -1)
     {
-        glSetCurrentProgram(prevProg);
-        glSetCurrentMatrix(prevMat);
-        return false;
+        program = _defaultProgram;
     }
 
-    for (int i = 0; i < 4; ++i)
+    texconfig = gl_GetCurrentStateBundle()->texconfig;                                             // r29
+    program = glSetCurrentProgram(program);                                                        // r31
+    matrix = glSetCurrentMatrix((pMatrixHandle != NULL) ? *pMatrixHandle : glGetIdentityMatrix()); // r30
+
+    if (glHasQuads() != 0)
     {
-        const unsigned idx = static_cast<unsigned>(map[i]);
+        prim = GLP_QuadList;
+        pMap = QuadMap;
+    }
+    else
+    {
+        prim = GLP_TriStrip;
+        pMap = StripMap;
+    }
 
-        writer.Colour(*reinterpret_cast<const nlColour*>(reinterpret_cast<const char*>(this) + 0x40
-                                                         + (idx << 2)));
-
-        if (stateFlag)
+    if (writer.Begin(4, prim, texconfig + 2, streamsDesc, false) != 0)
+    {
+        for (int i = 0; i < 4; ++i)
         {
-            writer.Texcoord(*reinterpret_cast<const nlVector2*>(reinterpret_cast<const char*>(this) + 0x20
-                                                                + (idx << 3)));
+            writer.Colour(m_colour[i]);
+            if (texconfig != 0)
+            {
+                writer.Texcoord(m_uv[i]);
+            }
+            nlVector3 pos = { m_pos[i].f.x, m_pos[i].f.y, depth };
+            writer.Vertex(pos);
+        }
+        if (!writer.End())
+        {
+            return false;
         }
 
-        const float* xy = reinterpret_cast<const float*>(reinterpret_cast<const char*>(this) + (idx << 3));
-        nlVector3 p;
-        p.f.x = xy[0];
-        p.f.y = xy[1];
-        p.f.z = depth;
-        writer.Position(p);
+        glViewAttachModel(view, layer, writer.GetModel());
+        glSetCurrentProgram(program);
+        glSetCurrentMatrix(matrix);
+
+        return true;
     }
 
-    if (!writer.End())
-    {
-        glSetCurrentProgram(prevProg);
-        glSetCurrentMatrix(prevMat);
-        return false;
-    }
-
-    glViewAttachModel(view, static_cast<unsigned long>(layer), writer.GetModel());
-
-    glSetCurrentProgram(prevProg);
-    glSetCurrentMatrix(prevMat);
-    return true;
+    return false;
 }
 
 /**
@@ -104,20 +106,20 @@ bool glAttachPoly2(eGLView view, unsigned long count, glPoly2* polys, unsigned l
 
     GLMeshWriter writer;
 
-    const unsigned long* map;
+    int* map;
     int vertsPerPoly;
     eGLPrimitive prim;
     if (glHasQuads())
     {
         map = QuadMap;
         vertsPerPoly = 4;
-        prim = (eGLPrimitive)3;
+        prim = GLP_QuadList;
     }
     else
     {
         map = TriListMap;
         vertsPerPoly = 6;
-        prim = (eGLPrimitive)0;
+        prim = GLP_TriList;
     }
 
     unsigned long oldProg = glSetCurrentProgram(_defaultProgram);
