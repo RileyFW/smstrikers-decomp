@@ -2002,11 +2002,11 @@ Game/GameAudio.cpp:
 	.bss        start:0x803234A8 end:0x803234D0
 	.sdata2     start:0x80376490 end:0x803764B0
 
-SebringSoundDefines.o:
+Game/Audio/SebringSoundDefines.cpp:
 	.text       start:0x80153E30 end:0x80153E38
 	.data       start:0x802B3830 end:0x802BE2F0
 
-SoundEventScript.o:
+Game/Audio/SoundEventScript.cpp:
 	.text       start:0x80153E38 end:0x80153FD8
 	.text       start:0x80153FD8 end:0x80154944
 	.text       start:0x80154944 end:0x80154944
@@ -4765,7 +4765,7 @@ Game/Replay.cpp:
 	.sbss       start:0x80374478 end:0x80374480
 	.sdata2     start:0x803775F0 end:0x80377608
 
-BinaryTriggerFile.o:
+Game/Triggers/BinaryTriggerFile.cpp:
 	.text       start:0x802142DC end:0x80214354
 	.text       start:0x80214354 end:0x80214354
 

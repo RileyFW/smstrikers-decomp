@@ -779,6 +779,8 @@ config.libs = [
             Object(NonMatching, "Game/CharacterAudio.cpp"),   
             Object(NonMatching, "Game/GameAudio.cpp"),   
             Object(NonMatching, "Game/audio.cpp"),   
+            Object(Matching, "Game/Audio/SebringSoundDefines.cpp" , extra_cflags=["-inline deferred"]),   
+            Object(NonMatching, "Game/Audio/SoundEventScript.cpp" , extra_cflags=["-inline deferred"]),   
 
             # Physics
             Object(NonMatching, "Game/Physics.cpp", extra_cflags=["-inline deferred"]),
@@ -826,6 +828,7 @@ config.libs = [
             Object(Matching, "Game/ResetTask.cpp", extra_cflags=["-inline deferred"]),
 
             # Triggers
+            Object(NonMatching, "Game/Triggers/BinaryTriggerFile.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/MarioTriggers.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/WorldTriggers.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/CharacterTriggers.cpp", extra_cflags=["-inline deferred"]),

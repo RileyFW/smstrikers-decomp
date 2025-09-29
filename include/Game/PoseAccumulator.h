@@ -91,9 +91,10 @@ public:
     // /* 0x04 */ nlMatrix4* m_NodeMatrices;
     // /* 0x08 */ s32 m_unk_0x08;
     // /* 0x0C */ s32 m_unk_0x0C;
-    /* 0x10 */ nlMatrix4* m_matsB;
-    /* 0x14 */ s32 m_unk_0x14;
-    /* 0x18 */ s32 m_unk_0x18;
+    /* 0x10 */ Vector m_PrevNodeMatrices;
+    // /* 0x10 */ nlMatrix4* m_matsB;
+    // /* 0x14 */ s32 m_unk_0x14;
+    // /* 0x18 */ s32 m_unk_0x18;
     /* 0x1C */ RotAccum* m_rot;
     /* 0x20 */ s32 m_unk_0x20;
     /* 0x24 */ s32 m_unk_0x24;

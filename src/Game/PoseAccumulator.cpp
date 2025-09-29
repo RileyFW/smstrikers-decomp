@@ -36,13 +36,13 @@ cPoseAccumulator::cPoseAccumulator(cSHierarchy* h, bool withSecondary)
 
     {
         const int countB = withSecondary ? (n + 1) : 0;
-        m_matsB = (nlMatrix4*)nlMalloc((unsigned long)(countB * sizeof(nlMatrix4)), 8, 0);
-        m_unk_0x14 = countB;
-        m_unk_0x18 = countB;
+        m_PrevNodeMatrices.mData = (nlMatrix4*)nlMalloc((unsigned long)(countB * sizeof(nlMatrix4)), 8, 0);
+        m_PrevNodeMatrices.mSize = countB;
+        m_PrevNodeMatrices.mCapacity = countB;
 
         for (i = 0; i < countB; ++i)
         {
-            m_matsB[i] = kPose64Template;
+            m_PrevNodeMatrices.mData[i] = kPose64Template;
         }
     }
 
@@ -210,18 +210,18 @@ void cPoseAccumulator::InitAccumulators()
  */
 void cPoseAccumulator::BuildNodeMatrices(const nlMatrix4& world)
 {
-    if (m_unk_0x14 == m_NodeMatrices.mSize)
+    if (m_PrevNodeMatrices.mSize == m_NodeMatrices.mSize)
     {
-        s32 tmp = m_unk_0x14;
-        m_unk_0x14 = m_NodeMatrices.mSize;
+        s32 tmp = m_PrevNodeMatrices.mSize;
+        m_PrevNodeMatrices.mSize = m_NodeMatrices.mSize;
         m_NodeMatrices.mSize = tmp;
 
-        tmp = m_unk_0x18;
-        m_unk_0x18 = m_NodeMatrices.mCapacity;
+        tmp = m_PrevNodeMatrices.mCapacity;
+        m_PrevNodeMatrices.mCapacity = m_NodeMatrices.mCapacity;
         m_NodeMatrices.mCapacity = tmp;
 
-        nlMatrix4* tmp_mat = m_matsB;
-        m_matsB = m_NodeMatrices.mData;
+        nlMatrix4* tmp_mat = m_PrevNodeMatrices.mData;
+        m_PrevNodeMatrices.mData = m_NodeMatrices.mData;
         m_NodeMatrices.mData = tmp_mat;
     }
 

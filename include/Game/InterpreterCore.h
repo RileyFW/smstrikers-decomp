@@ -4,49 +4,51 @@
 #include "types.h"
 #include "NL/nlBSearch.h"
 
-struct FunctionEntryPoint // size 24
+struct FunctionEntryPoint
 {
-    /* 0x00 */ u32 key;
-    /* 0x04 */ u32 size;
-    /* 0x08 */ u32 unk_0x08;
-    /* 0x0C */ u32 unk_0x0C;   
-    /* 0x10 */ u32 instr;
-    /* 0x14 */ FunctionEntryPoint *current;
-    /* 0x18 */ FunctionEntryPoint *next;
-    /* 0x1C */ FunctionEntryPoint *unk_0x1C; // or an instruction?
-    /* 0x20 */ FunctionEntryPoint *unk_0x20;
-};
+    /* 0x0 */ u32 hash;
+    /* 0x4 */ u32 offset;
+}; // total size: 0x8
 
-struct Instruction // size 8
+struct ByteCodeHeader
 {
-    /* 0x00 */ u16 m_unk_0x00;
-    /* 0x02 */ u16 m_pad_0x02;
-    /* 0x04 */ u32 m_data;
-};
+    /* 0x00 */ u32 signature;
+    /* 0x04 */ u32 numFunctions;
+    /* 0x08 */ u32 dataSegmentSize;
+    /* 0x0C */ u32 codeSegmentSize;
+    /* 0x10 */ u32 stringSegmentSize;
+    /* 0x14 */ FunctionEntryPoint* m_FunctionTable;
+    /* 0x18 */ u32* m_DataSegment;
+    /* 0x1C */ u16* m_CodeSegment;
+    /* 0x20 */ u8* m_StringSegment;
+}; // total size: 0x24
 
 class InterpreterCore
 {
 public:
     InterpreterCore(unsigned int stackSize);
-    virtual ~InterpreterCore();
+
+    /* 0x08 */ virtual ~InterpreterCore();
+    /* 0x0C */ virtual void DoFunctionCall(unsigned int) = 0;
 
     void LoadByteCode(void* byteCode);
     void CallFunction(unsigned long id);
     void CallFunctionAt(unsigned long address);
     bool FunctionExists(unsigned long id);
-    virtual void Run();
+    void Run();
     void StopWithUndo();
     void Step();
     bool IsFinished() const;
 
-    /* 0x04 */ char      m_pad_0x04[4];
-    /* 0x08 */ FunctionEntryPoint* m_unk_0x08;
-    /* 0x0C */ s32*      m_unk_0x0C;
-    /* 0x10 */ u32*      m_unk_0x10; // is this an instruction?
-    /* 0x14 */ s32*      m_unk_0x14;
-    /* 0x18 */ s32*      m_unk_0x18;
-    /* 0x1C */ s32*      m_unk_0x1C;
-    /* 0x20 */ u8        m_unk_0x20;
-};
+    /* 0x04 */ u32 m_Return;
+    /* 0x08 */ ByteCodeHeader* m_Header;
+    /* 0x0C */ u32* m_StackSegment;
+    /* 0x10 */ u16* m_IP;
+    /* 0x14 */ u32* m_SP;
+    /* 0x18 */ u32* m_BP;
+    /* 0x1C */ u32* m_SavedSP;
+    /* 0x20 */ u32 m_Stop : 1;
+    /* 0x24 */ u32 m_RunState : 2;
+}; // total size: 0x24
 
 #endif // _INTERPRETERCORE_H_

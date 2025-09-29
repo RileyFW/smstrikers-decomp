@@ -43,7 +43,7 @@ bool nlLoadEntireFileAsync(const char* filename, LoadAsyncCallback callback, voi
             alloc_data = user_data;
             user_data = NULL;
         }
-        
+
         _asyncData = (AsyncFileLoadData*)nlMalloc(0x14, 8, 1);
         if (_asyncData != NULL)
         {
@@ -80,7 +80,7 @@ void nlLoadEntireFileAsyncCallback(nlFile* file, void* arg2, unsigned int arg3, 
 /**
  * Offset/Address/Size: 0x160 | 0x801CEB90 | size: 0xDC
  */
-void* nlLoadEntireFile(const char* filename, unsigned long* arg1, unsigned int alignment, eAllocType type)
+void* nlLoadEntireFile(const char* filename, unsigned long* fileSize, unsigned int alignment, eAllocType type)
 {
     void* data = NULL;
     unsigned int filesize;
@@ -104,9 +104,9 @@ void* nlLoadEntireFile(const char* filename, unsigned long* arg1, unsigned int a
 
         delete file;
 
-        if (arg1 != NULL)
+        if (fileSize != NULL)
         {
-            *arg1 = datasize;
+            *fileSize = datasize;
         }
     }
     return data;
