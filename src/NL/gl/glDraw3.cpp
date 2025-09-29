@@ -99,19 +99,32 @@ void glQuad3::SetupRotatedRectangle(float w, float h, const nlMatrix4& mtx, bool
 {
     nlVector3 sp8;
 
-    nlVec3Set(sp8, 0.5f * -w, 0.5f * -h, 0.0f);
+    float f3 = 0.5f;
+    float temp_f31;
+    float temp_f30;
+    float temp_f29;
+    float temp_f31_2;
+
+    temp_f29 = -w * f3;
+    temp_f31 = -h * f3;
+    nlVec3Set(sp8, temp_f29, temp_f31, 0.0f);
+
     nlMultPosVectorMatrix(sp8, sp8, mtx);
     m_pos[0] = sp8;
 
-    nlVec3Set(sp8, 0.5f * w, 0.5f * -h, 0.0f);
+    temp_f30 = w * f3;
+    nlVec3Set(sp8, temp_f30, temp_f31, 0.0f);
+
     nlMultPosVectorMatrix(sp8, sp8, mtx);
     m_pos[1] = sp8;
 
-    nlVec3Set(sp8, 0.5f * w, 0.5f * h, 0.0f);
+    temp_f31_2 = h * f3;
+    nlVec3Set(sp8, temp_f30, temp_f31_2, 0.0f);
+
     nlMultPosVectorMatrix(sp8, sp8, mtx);
     m_pos[2] = sp8;
 
-    nlVec3Set(sp8, 0.5f * -w, 0.5f * h, 0.0f);
+    nlVec3Set(sp8, temp_f29, temp_f31_2, 0.0f);
     nlMultPosVectorMatrix(sp8, sp8, mtx);
     m_pos[3] = sp8;
 
@@ -165,15 +178,6 @@ void glQuad3::SetupRotatedRectangle(float w, float h, const nlMatrix4& mtx, bool
     m_uv[3].f.x = var_f0;
     m_uv[3].f.y = var_f3;
 
-    // this->unk30 = var_f0;
-    // this->unk34 = var_f2;
-    // this->unk38 = var_f1;
-    // this->unk3C = var_f2;
-    // this->unk40 = var_f1;
-    // this->unk44 = var_f3;
-    // this->unk48 = var_f0;
-    // this->unk4C = var_f3;
-
     m_colour[0].c[0] = 0xFF;
     m_colour[0].c[1] = 0xFF;
     m_colour[0].c[2] = 0xFF;
@@ -190,23 +194,6 @@ void glQuad3::SetupRotatedRectangle(float w, float h, const nlMatrix4& mtx, bool
     m_colour[3].c[1] = 0xFF;
     m_colour[3].c[2] = 0xFF;
     m_colour[3].c[3] = 0xFF;
-
-    // this->unk50 = 0xFF;
-    // this->unk51 = 0xFF;
-    // this->unk52 = 0xFF;
-    // this->unk53 = 0xFF;
-    // this->unk54 = 0xFF;
-    // this->unk55 = 0xFF;
-    // this->unk56 = 0xFF;
-    // this->unk57 = 0xFF;
-    // this->unk58 = 0xFF;
-    // this->unk59 = 0xFF;
-    // this->unk5A = 0xFF;
-    // this->unk5B = 0xFF;
-    // this->unk5C = 0xFF;
-    // this->unk5D = 0xFF;
-    // this->unk5E = 0xFF;
-    // this->unk5F = 0xFF;
 }
 
 /**
