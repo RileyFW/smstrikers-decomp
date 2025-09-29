@@ -33,17 +33,18 @@ bool glAttachQuad3(eGLView view, unsigned long count, glQuad3* quads, bool useDe
  */
 const glModel* glQuad3::GetModel(bool useDefaultProgram) const
 {
-    unsigned long prevProgram = 0;
+    glModel* newModel;
+    unsigned long prevProgram;
     eGLStream sStreams[3] = { (eGLStream)0, (eGLStream)2, (eGLStream)3 };
-    static const unsigned int stripmap[4] = { 3, 0, 2, 1 };
+    static int stripmap[4] = { 3, 0, 2, 1 };
+
+    newModel = 0;
 
     GLMeshWriter writer;
     gl_GetCurrentStateBundle();
 
     if (useDefaultProgram)
         prevProgram = glSetCurrentProgram(_defaultProgram);
-
-    const glModel* outModel = 0;
 
     if (glHasQuads())
     {
@@ -55,31 +56,31 @@ const glModel* glQuad3::GetModel(bool useDefaultProgram) const
                 writer.Texcoord(m_uv[i]);
                 writer.Vertex(m_pos[i]);
             }
+            goto block_export;
         }
     }
     else
     {
-        // static const unsigned int stripmap[4] = { 3, 0, 2, 1 };
-
         if (writer.Begin(4, (eGLPrimitive)1, 3, sStreams, false))
         {
+            int srcIndex;
             for (int i = 0; i < 4; ++i)
             {
-                const unsigned int idx = stripmap[i];
-                writer.Colour(m_colour[idx]);
-                writer.Texcoord(m_uv[idx]);
-                writer.Vertex(m_pos[idx]);
+                srcIndex = stripmap[i];
+                writer.Colour(m_colour[srcIndex]);
+                writer.Texcoord(m_uv[srcIndex]);
+                writer.Vertex(m_pos[srcIndex]);
             }
+
+        block_export:
+            if (writer.End())
+                newModel = writer.GetModel();
         }
     }
-
-    if (writer.End())
-        outModel = writer.GetModel();
-
     if (useDefaultProgram)
         glSetCurrentProgram(prevProgram);
 
-    return outModel;
+    return newModel;
 }
 
 /**

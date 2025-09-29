@@ -5,4 +5,5 @@
  */
 void gl_StatStartup()
 {
+    // Empty
 }

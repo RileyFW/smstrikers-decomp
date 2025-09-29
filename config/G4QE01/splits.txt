@@ -1768,7 +1768,7 @@ Game/Physics/PhysicsBanana.cpp:
 	.data       start:0x802AF9A8 end:0x802AFA18
 	.sdata2     start:0x80376230 end:0x80376258
 
-Game/PhysicsCharacter.cpp:
+Game/Physics/PhysicsCharacter.cpp:
 	.text       start:0x80136218 end:0x801373E4
 	.text       start:0x801373E4 end:0x801373EC
 	.text       start:0x801373EC end:0x801373EC
@@ -4416,7 +4416,7 @@ Game/PhysicsRoundedCorner.cpp:
 	.text       start:0x801FEAFC end:0x801FEAFC
 	.sdata2     start:0x80377430 end:0x80377438
 
-Game/PhysicsCharacterBase.cpp:
+Game/Physics/PhysicsCharacterBase.cpp:
 	.text       start:0x801FEAFC end:0x801FF4FC
 	.text       start:0x801FF4FC end:0x801FF584
 	.text       start:0x801FF584 end:0x801FF584
