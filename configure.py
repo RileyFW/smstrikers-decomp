@@ -828,7 +828,7 @@ config.libs = [
             Object(Matching, "Game/ResetTask.cpp", extra_cflags=["-inline deferred"]),
 
             # Triggers
-            Object(NonMatching, "Game/Triggers/BinaryTriggerFile.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/Triggers/BinaryTriggerFile.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/MarioTriggers.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/WorldTriggers.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/CharacterTriggers.cpp", extra_cflags=["-inline deferred"]),
