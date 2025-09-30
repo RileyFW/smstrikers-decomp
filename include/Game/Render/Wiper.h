@@ -1,19 +1,12 @@
 #ifndef _WIPER_H_
 #define _WIPER_H_
 
-class ScreenTransitionCallback
-{
-public:
-    void TransitionProgressed(float);
-    void TransitionFinished();
-    void SequenceSwitch();
-    void Cut();
-};
+#include "Game/Transitions/ScreenTransitionManager.h"
 
 struct WiperCallback : public ScreenTransitionCallback
 {
-    void TransitionProgressed(float);
-    void TransitionFinished();
+    void TransitionProgressed(float) { };
+    void TransitionFinished() { };
 };
 
 class Wiper

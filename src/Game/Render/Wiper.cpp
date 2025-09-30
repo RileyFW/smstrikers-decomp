@@ -1,46 +1,18 @@
 #include "Game/Render/Wiper.h"
 
-/**
- * Offset/Address/Size: 0xC | 0x80127640 | size: 0x4
- */
-void ScreenTransitionCallback::TransitionProgressed(float)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x320 | 0x80127630 | size: 0x4
+//  */
+// void WiperCallback::TransitionProgressed(float)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x8 | 0x8012763C | size: 0x4
- */
-void ScreenTransitionCallback::TransitionFinished()
-{
-}
-
-/**
- * Offset/Address/Size: 0x4 | 0x80127638 | size: 0x4
- */
-void ScreenTransitionCallback::SequenceSwitch()
-{
-}
-
-/**
- * Offset/Address/Size: 0x0 | 0x80127634 | size: 0x4
- */
-void ScreenTransitionCallback::Cut()
-{
-}
-
-/**
- * Offset/Address/Size: 0x320 | 0x80127630 | size: 0x4
- */
-void WiperCallback::TransitionProgressed(float)
-{
-}
-
-/**
- * Offset/Address/Size: 0x314 | 0x80127624 | size: 0xC
- */
-void WiperCallback::TransitionFinished()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x314 | 0x80127624 | size: 0xC
+//  */
+// void WiperCallback::TransitionFinished()
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x2FC | 0x8012760C | size: 0x18

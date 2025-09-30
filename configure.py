@@ -707,6 +707,8 @@ config.libs = [
             Object(Matching, "Game/CharacterTweaks.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/ScriptTuning.cpp", extra_cflags=["-inline auto,deferred"]),
 
+            # Game/Transitions
+            Object(NonMatching, "Game/Transitions/ColourBlendScreenTransition.cpp", extra_cflags=["-inline deferred"]),
 
             # Camera
             Object(Matching, "Game/CameraLoader.cpp", extra_cflags=["-inline deferred"]),

@@ -4492,7 +4492,7 @@ ModelTransition.o:
 	.sdata      start:0x80373320 end:0x80373358
 	.sdata2     start:0x80377490 end:0x803774B8
 
-ColourBlendScreenTransition.o:
+Game/Transitions/ColourBlendScreenTransition.cpp:
 	.text       start:0x80204CC4 end:0x80205054
 	.text       start:0x80205054 end:0x802050F0
 	.text       start:0x802050F0 end:0x802050F0
