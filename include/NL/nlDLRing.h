@@ -189,23 +189,23 @@ bool nlDLRingRemoveSafely(T** head, const T* node)
 template <typename T>
 void nlDLRingAppendRing(T** head, T* current)
 {
-    T* temp_r5;
-    T* temp_r6;
+    T* currentHead;
+    T* nextAfterHead;
 
     if (current != NULL)
     {
-        temp_r5 = *head;
-        if (temp_r5 == NULL)
+        currentHead = *head;
+        if (currentHead == NULL)
         {
             *head = current;
             return;
         }
 
-        temp_r6 = temp_r5->m_next;
-        temp_r5->m_next = current->m_next;
+        nextAfterHead = currentHead->m_next;
+        currentHead->m_next = current->m_next;
         current->m_next->m_prev = *head;
-        current->m_next = temp_r6;
-        temp_r6->m_prev = current;
+        current->m_next = nextAfterHead;
+        nextAfterHead->m_prev = current;
         *head = current;
     }
 }
@@ -213,21 +213,25 @@ void nlDLRingAppendRing(T** head, T* current)
 template <typename T>
 void nlDeleteRing(T** head)
 {
-    T* temp_r30;
-    T* var_r31;
-    T* temp_r3;
+    T* current;
+    T* next;
 
-    temp_r3 = *head;
-    if (temp_r3 != NULL)
+    T* headPtr = *head;
+    if (headPtr != NULL)
     {
-        var_r31 = temp_r3;
-    loop_2:
-        temp_r30 = var_r31;
-        delete var_r31;
-        if (var_r31 != *head)
+        current = headPtr->m_next;
+        for (;;)
         {
-            var_r31 = temp_r30;
-            goto loop_2;
+            next = current->m_next;
+            delete current;
+            if (current != *head)
+            {
+                current = next;
+            }
+            else
+            {
+                break;
+            }
         }
         *head = NULL;
     }

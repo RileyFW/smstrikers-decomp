@@ -1,5 +1,5 @@
 #include "Game/AIPad.h"
-#include "Game/CameraMan.h"
+#include "Game/Camera/CameraMan.h"
 
 static f32 g_fMovementDeadZone = 0.3f;
 static f32 g_fCStickDeadZone = 0.5f;

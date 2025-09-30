@@ -1,5 +1,9 @@
 #include "Game/Camera/GameplayCam.h"
 
+#include "math.h"
+
+f32 CANT_COLLIDE = *(f32*)__float_max;
+
 /**
  * Offset/Address/Size: 0x28 | 0x801AA440 | size: 0x14
  */

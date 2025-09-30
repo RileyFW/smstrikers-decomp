@@ -35,7 +35,7 @@ public:
 
     void LoadCameraAnimation(nlChunk*, nlChunk*, const char*, bool);
     void LoadCameraAnimation(const char*, const char*, bool);
-    void FreeCameraAnimations();
+    static void FreeCameraAnimations();
 
     void BuildAnimViewMatrix(nlMatrix4&);
     void UnselectCameraAnimation();

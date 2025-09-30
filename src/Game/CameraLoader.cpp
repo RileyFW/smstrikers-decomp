@@ -1,5 +1,5 @@
 #include "Game/CameraLoader.h"
-#include "Game/CameraMan.h"
+#include "Game/Camera/CameraMan.h"
 
 CameraLoader TheCameraLoader;
 

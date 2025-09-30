@@ -8,7 +8,7 @@
 
 #include "Game/Camera/MatrixEffectCam.h"
 
-#include "Game/CameraMan.h"
+#include "Game/Camera/CameraMan.h"
 #include "Game/ReplayManager.h"
 
 static nlVector3 cameraPosition;

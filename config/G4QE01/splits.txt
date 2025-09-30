@@ -1623,7 +1623,7 @@ Game/Render/Presentation.cpp:
 	.sbss       start:0x80373A90 end:0x80373AA0
 	.sdata2     start:0x80376070 end:0x803760A8
 
-Wiper.o:
+Game/Render/Wiper.cpp:
 	.text       start:0x80127310 end:0x80127634
 	.text       start:0x80127634 end:0x80127644
 	.text       start:0x80127644 end:0x80127644
@@ -2775,7 +2775,7 @@ Game/CameraLoader.cpp:
 	.data       start:0x802C3B30 end:0x802C3B48
 	.sbss       start:0x80373F18 end:0x80373F20
 
-Game/CameraMan.cpp:
+Game/Camera/CameraMan.cpp:
 	.text       start:0x801A6688 end:0x801A83F4
 	.text       start:0x801A83F4 end:0x801A83F4
 	.text       start:0x801A83F4 end:0x801A83F4
