@@ -192,6 +192,6 @@ void ScreenTransitionManager::EnableSelectedTransition()
 /**
  * Offset/Address/Size: 0x0 | 0x802050F0 | size: 0x260
  */
-void ScreenTransitionManager::AddTransitions(char*, unsigned long)
+void ScreenTransitionManager::AddTransitions(char* loadedData, unsigned long fileSize)
 {
 }

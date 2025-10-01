@@ -112,8 +112,9 @@ void glxParseTextureBundle(const char*)
 /**
  * Offset/Address/Size: 0x9F4 | 0x801B7CB0 | size: 0x1D0
  */
-void glplatLoadTextureBundle(const char*)
+bool glplatLoadTextureBundle(const char* filename)
 {
+    return false;
 }
 
 /**

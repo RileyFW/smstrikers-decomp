@@ -758,7 +758,7 @@ config.libs = [
             Object(Matching, "Game/Render/CameraGuy.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/SkinAnimatedNPC.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Render/depthoffield.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/Render/Wiper.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/Render/Wiper.cpp", extra_cflags=["-inline deferred"]),
 
             # related to character (should probably be in Game/Render)
             Object(Matching, "Game/PoseNode.cpp", extra_cflags=["-inline deferred"]),

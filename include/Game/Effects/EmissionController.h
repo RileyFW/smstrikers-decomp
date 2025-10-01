@@ -31,7 +31,7 @@ class Function1
     };
 };
 
-void fxLoadEntireFileHigh(const char*, unsigned long*);
+void* fxLoadEntireFileHigh(const char* filename, unsigned long* fileSize);
 
 class EmissionController : public efNode
 {

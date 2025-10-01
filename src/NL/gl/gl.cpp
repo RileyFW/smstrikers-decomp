@@ -39,7 +39,7 @@ void glBeginLoadTextureBundle(const char* arg0, void (*arg1)(void*, unsigned lon
  */
 void glEndLoadModel(void* arg0, unsigned long arg1, unsigned long* arg2)
 {
-    glplatEndLoadModel(arg0, arg1, arg2);    
+    glplatEndLoadModel(arg0, arg1, arg2);
 }
 
 /**
@@ -53,7 +53,7 @@ void glBeginLoadModel(const char* arg0, void (*arg1)(void*, unsigned long, void*
 /**
  * Offset/Address/Size: 0x80 | 0x801D73BC | size: 0x8
  */
- u32* glGetClearColour()
+u32* glGetClearColour()
 {
     return &gl_clearColour;
 }
@@ -77,9 +77,9 @@ float glGetOrthographicWidth()
 /**
  * Offset/Address/Size: 0x98 | 0x801D73D4 | size: 0x20
  */
-void glLoadTextureBundle(const char* arg0)
+bool glLoadTextureBundle(const char* filename)
 {
-    glplatLoadTextureBundle(arg0);
+    return glplatLoadTextureBundle(filename);
 }
 
 /**
@@ -103,7 +103,7 @@ void glFinish()
  */
 void glDiscardFrame(int arg0)
 {
-    if (arg0 > (s32)gl_nDiscard) 
+    if (arg0 > (s32)gl_nDiscard)
     {
         gl_nDiscard = arg0;
     }
@@ -114,19 +114,19 @@ void glDiscardFrame(int arg0)
  */
 void glSendFrame()
 {
-    if ((s32) gl_nDiscard > 0) 
+    if ((s32)gl_nDiscard > 0)
     {
         glplatAbortFrame();
         gl_nDiscard -= 1;
-    } 
-    else 
+    }
+    else
     {
         glplatSendFrame();
     }
 
     gl_ViewReset();
     gl_state = 0;
-    gl_frameCounter += 1;    
+    gl_frameCounter += 1;
 }
 
 /**
@@ -148,11 +148,12 @@ void glBeginFrame()
     glplatBeginFrame();
     var_r31 = 0;
     gl_state = 1;
-    do {
+    do
+    {
         glViewSetProjectionMatrix((eGLView)var_r31, glGetIdentityMatrix());
         glViewSetViewMatrix((eGLView)var_r31, glGetIdentityMatrix());
         var_r31 += 1;
-    } while (var_r31 < 0x22);    
+    } while (var_r31 < 0x22);
 }
 
 /**
@@ -189,8 +190,8 @@ bool glStartup()
     gl_frameCounter = 0;
     gl_nDiscard = 0;
     gl_state = 0;
-    
-    if (glplatStartup(glGetScreenInfo()) == 0) 
+
+    if (glplatStartup(glGetScreenInfo()) == 0)
     {
         return false;
     }
@@ -198,11 +199,12 @@ bool glStartup()
     gl_StatStartup();
     gl_StateStartup();
     var_r31 = 0;
-    do {
+    do
+    {
         glSetCurrentTexture(-1, (eGLTextureType)var_r31);
         var_r31 += 1;
     } while (var_r31 < 6);
-    
+
     glSetCurrentProgram(-1);
     glSetRasterStateDefaults();
     glSetCurrentRasterState(glHandleizeRasterState());
@@ -214,5 +216,5 @@ bool glStartup()
     gl_FontStartup();
     gl_ConstantStartup();
 
-    return glplatPostStartup();    
+    return glplatPostStartup();
 }

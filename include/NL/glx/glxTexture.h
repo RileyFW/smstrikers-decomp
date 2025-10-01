@@ -71,7 +71,7 @@ bool glplatTextureLoad(unsigned long);
 void glplatEndLoadTextureBundle(void*, unsigned long);
 void glplatBeginLoadTextureBundle(const char*, void (*)(void*, unsigned long, void*), void*);
 void glxParseTextureBundle(const char*);
-void glplatLoadTextureBundle(const char*);
+bool glplatLoadTextureBundle(const char* filename);
 void BundleSortProc(const glTexBundleDict*, const glTexBundleDict*);
 void glx_MakeTexture(GXTextureHeader*, unsigned long);
 void glx_AddTex(unsigned long, PlatTexture*);

@@ -24,10 +24,10 @@ public:
 class ScreenTransitionCallback
 {
 public:
-    virtual void TransitionProgressed(float) { };
-    virtual void TransitionFinished() { };
-    virtual void SequenceSwitch() { };
-    virtual void Cut() { };
+    virtual inline void TransitionFinished();
+    virtual inline void TransitionProgressed(float);
+    virtual inline void Cut();
+    virtual inline void SequenceSwitch();
 };
 
 class ScreenTransitionManager : public nlSingleton<ScreenTransitionManager>
@@ -43,7 +43,7 @@ public:
     void SelectRandomTransition(const char*);
     void GetSelectedTransitionCutTime() const;
     void EnableSelectedTransition();
-    void AddTransitions(char*, unsigned long);
+    void AddTransitions(char* loadedData, unsigned long fileSize);
 
     /* 0x04 */ ScreenTransition* m_pActiveTransition;
     /* 0x08 */ nlAVLTree<unsigned long, ScreenTransition*, DefaultKeyCompare<unsigned long> > m_TransitionMap;
@@ -54,8 +54,8 @@ public:
     /* 0x28 */ float m_fCurrentTime;
     /* 0x2C */ float m_fCurrentLength;
     /* 0x30 */ Vector m_Transitions;
-    /* 0x3C */ unsigned char m_Cut;
-};
+    /* 0x3C */ bool m_Cut;
+}; // total size: 0x40
 
 // class nlAVLTree<unsigned long, ScreenTransition*, DefaultKeyCompare<unsigned long> >
 // {

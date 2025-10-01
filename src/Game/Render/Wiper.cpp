@@ -9,28 +9,22 @@ extern bool g_ForceDoubleBallTransition;
 
 namespace
 {
-static struct WiperCallback wiperCallback;
+static WiperCallback wiperCallback;
 }
 
-// /**
-//  * Offset/Address/Size: 0x320 | 0x80127630 | size: 0x4
-//  */
-// void WiperCallback::TransitionProgressed(float)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x314 | 0x80127624 | size: 0xC
-//  */
-// void WiperCallback::TransitionFinished()
-// {
-// }
+void WiperCallback::TransitionFinished()
+{
+    mTransitionActive = false;
+};
+void WiperCallback::TransitionProgressed(float) { };
 
 /**
  * Offset/Address/Size: 0x2FC | 0x8012760C | size: 0x18
  */
 void Wiper::Reset()
 {
+    wiperCallback.mTransitionActive = false;
+    ScreenTransitionManager::s_pInstance->m_SelectedTransition = NULL;
 }
 
 /**
@@ -43,22 +37,26 @@ void Wiper::Initialize()
 /**
  * Offset/Address/Size: 0x2EC | 0x801275FC | size: 0xC
  */
-void Wiper::WipeInProgress() const
+bool Wiper::WipeInProgress() const
 {
+    return wiperCallback.mTransitionActive;
 }
 
 /**
  * Offset/Address/Size: 0x2E0 | 0x801275F0 | size: 0xC
  */
-void Wiper::CutHasOccured() const
+bool Wiper::CutHasOccured() const
 {
+    return ScreenTransitionManager::s_pInstance->m_Cut;
 }
 
 /**
  * Offset/Address/Size: 0x234 | 0x80127544 | size: 0xAC
  */
-void Wiper::Instance()
+Wiper& Wiper::Instance()
 {
+    static Wiper instance;
+    return instance;
 }
 
 /**
@@ -112,3 +110,8 @@ void Wiper::Render(float dt)
     dt = dt * GetConfigFloat(Config::Global(), "transitions/speed", 1.0f);
     ScreenTransitionManager::s_pInstance->Render(dt);
 }
+
+void ScreenTransitionCallback::TransitionFinished() { };
+void ScreenTransitionCallback::TransitionProgressed(float) { };
+void ScreenTransitionCallback::Cut() { };
+void ScreenTransitionCallback::SequenceSwitch() { };

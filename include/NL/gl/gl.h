@@ -83,7 +83,7 @@ void glBeginLoadModel(const char*, void (*)(void*, unsigned long, void*), void*)
 u32* glGetClearColour();
 float glGetOrthographicHeight();
 float glGetOrthographicWidth();
-void glLoadTextureBundle(const char*);
+bool glLoadTextureBundle(const char* filename);
 void glLoadModel(const char*, unsigned long*);
 void glFinish();
 void glDiscardFrame(int);

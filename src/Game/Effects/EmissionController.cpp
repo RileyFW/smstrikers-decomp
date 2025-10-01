@@ -94,8 +94,9 @@ void EmissionController::Update(float)
 /**
  * Offset/Address/Size: 0x288 | 0x801F7B78 | size: 0xA4
  */
-void fxLoadEntireFileHigh(const char*, unsigned long*)
+void* fxLoadEntireFileHigh(const char* filename, unsigned long* fileSize)
 {
+    return nullptr;
 }
 
 /**

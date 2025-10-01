@@ -1,12 +1,17 @@
 #ifndef _WIPER_H_
 #define _WIPER_H_
 
+#include "Game/Effects/EmissionController.h"
 #include "Game/Transitions/ScreenTransitionManager.h"
 
 struct WiperCallback : public ScreenTransitionCallback
 {
-    virtual void TransitionProgressed(float) { };
-    virtual void TransitionFinished() { };
+    WiperCallback()
+    {
+        mTransitionActive = false;
+    }
+    virtual inline void TransitionFinished();
+    virtual inline void TransitionProgressed(float);
 
     /* 0x04 */ bool mTransitionActive;
 }; // total size: 0x8
@@ -14,11 +19,27 @@ struct WiperCallback : public ScreenTransitionCallback
 class Wiper
 {
 public:
+    Wiper()
+    {
+        u32 fileSize;
+        char* loadedData;
+
+        if (ScreenTransitionManager::s_pInstance == NULL)
+        {
+            ScreenTransitionManager::s_pInstance = new (nlMalloc(0x40, 8, 0)) ScreenTransitionManager();
+        }
+        glLoadTextureBundle("transitions/transitions.glt");
+        fileSize = 0;
+        loadedData = (char*)fxLoadEntireFileHigh("art/transitions/transitions.fx", &fileSize);
+        ScreenTransitionManager::s_pInstance->AddTransitions(loadedData, fileSize);
+        nlFree(loadedData);
+    }
+
     void Reset();
     void Initialize();
-    void WipeInProgress() const;
-    void CutHasOccured() const;
-    void Instance();
+    bool WipeInProgress() const;
+    bool CutHasOccured() const;
+    static Wiper& Instance();
     void DoWipe(const char*);
     void Render(float);
 };
