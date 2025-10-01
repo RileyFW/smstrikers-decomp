@@ -69,6 +69,45 @@ int nlStrNCmp(const CharT* str1, const CharT* str2, unsigned long len)
     return (int)cVar1 - (int)cVar2;
 }
 
+template <typename CharT>
+CharT nlToUpper(CharT c)
+{
+    if ((c >= 0x61) && (c <= 0x7A))
+    {
+        return c & 0x5F;
+    }
+    return c;
+}
+
+template <typename CharT>
+int nlStrICmp(const CharT* str1, const CharT* str2)
+{
+    s8 temp_r31;
+    s8 temp_r3;
+    CharT* var_r29;
+    CharT* var_r30;
+    u8 temp_r3_2;
+    u8 temp_r3_3;
+
+    var_r30 = (CharT*)str1;
+    var_r29 = (CharT*)str2;
+loop_1:
+    temp_r3_2 = *var_r29;
+    var_r29 += 1;
+    temp_r31 = nlToUpper<CharT>(temp_r3_2);
+    temp_r3_3 = *var_r30;
+    var_r30 += 1;
+    temp_r3 = nlToUpper<CharT>(temp_r3_3);
+    if ((temp_r31 != 0) && (temp_r3 != 0))
+    {
+        if (temp_r31 == temp_r3)
+        {
+            goto loop_1;
+        }
+    }
+    return temp_r31 - temp_r3;
+}
+
 /**
  * Offset/Address/Size: 0x0 | 0x801D2854 | size: 0x20
  * void nlToLower<unsigned char>(unsigned char)

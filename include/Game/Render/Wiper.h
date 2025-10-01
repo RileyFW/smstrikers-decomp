@@ -5,9 +5,11 @@
 
 struct WiperCallback : public ScreenTransitionCallback
 {
-    void TransitionProgressed(float) { };
-    void TransitionFinished() { };
-};
+    virtual void TransitionProgressed(float) { };
+    virtual void TransitionFinished() { };
+
+    /* 0x04 */ bool mTransitionActive;
+}; // total size: 0x8
 
 class Wiper
 {

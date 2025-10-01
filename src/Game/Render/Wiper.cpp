@@ -1,5 +1,17 @@
 #include "Game/Render/Wiper.h"
 
+#include "string.h"
+
+#include "NL/nlConfig.h"
+#include "Game/WorldAudio.h"
+
+extern bool g_ForceDoubleBallTransition;
+
+namespace
+{
+static struct WiperCallback wiperCallback;
+}
+
 // /**
 //  * Offset/Address/Size: 0x320 | 0x80127630 | size: 0x4
 //  */
@@ -52,13 +64,51 @@ void Wiper::Instance()
 /**
  * Offset/Address/Size: 0xDC | 0x801273EC | size: 0x158
  */
-void Wiper::DoWipe(const char*)
+void Wiper::DoWipe(const char* wipe)
 {
+    // const char* var_r31;
+    // var_r31 = wipe;
+    if (!wiperCallback.mTransitionActive)
+    {
+        if (g_ForceDoubleBallTransition != 0)
+        {
+            wipe = "double_ball";
+        }
+
+        wiperCallback.mTransitionActive = true;
+
+        if ((nlStrICmp<char>(wipe, "break_glass") != 0)
+            && (nlStrICmp<char>(wipe, "cut") != 0)
+            && (nlStrICmp<char>(wipe, "fade_to_white_and_back") != 0)
+            && (nlStrICmp<char>(wipe, "crossfade") != 0)
+            && (nlStrICmp<char>(wipe, "cross_fade") != 0))
+        {
+            Audio::gWorldSFX.Play(Audio::WORLDSFX_HUD_TOGGLE_UP, 100.0f, -1.0f, 1, 100.0f);
+        }
+
+        if (strcmp(wipe, "cut") == 0)
+        {
+            wiperCallback.mTransitionActive = false;
+            return;
+        }
+
+        ScreenTransitionManager::s_pInstance->m_pCallback = &wiperCallback;
+        if ((g_ForceDoubleBallTransition == 0) && (ScreenTransitionManager::s_pInstance->m_SelectedTransition != 0))
+        {
+            ScreenTransitionManager::s_pInstance->EnableSelectedTransition();
+            return;
+        }
+
+        ScreenTransitionManager::s_pInstance->EnableRandomTransition(wipe);
+        g_ForceDoubleBallTransition = 0;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x80127310 | size: 0xDC
  */
-void Wiper::Render(float)
+void Wiper::Render(float dt)
 {
+    dt = dt * GetConfigFloat(Config::Global(), "transitions/speed", 1.0f);
+    ScreenTransitionManager::s_pInstance->Render(dt);
 }

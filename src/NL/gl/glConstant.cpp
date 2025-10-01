@@ -1,5 +1,5 @@
 #include "NL/gl/glConstant.h"
-#include "NL/nlAVLTreeBase.h"
+#include "NL/nlAVLTree.h"
 #include "NL/nlString.h"
 
 int level = 0;
@@ -29,7 +29,7 @@ nlVector4 glConstantGet(const char* arg1)
 
     for (int i = level; i >= 0; i--)
     {
-        var_r4 = (*var_r5)->m_root_entry_0x08;
+        var_r4 = (*var_r5)->m_Root;
     loop_14:
         if (var_r4 == NULL)
         {
@@ -110,7 +110,7 @@ bool glConstantGet(const char* arg0, nlVector4& arg1)
     if ((s32)level >= 0)
     {
     loop_1:
-        var_r4 = (*var_r5)->m_root_entry_0x08;
+        var_r4 = (*var_r5)->m_Root;
     loop_14:
         if (var_r4 == NULL)
         {
@@ -201,7 +201,7 @@ void glConstantSet(const char* arg0, const nlVector4& arg1)
     if ((s32)level >= 0)
     {
     loop_1:
-        var_r4 = (*var_r5)->m_root_entry_0x08;
+        var_r4 = (*var_r5)->m_Root;
     loop_14:
         if (var_r4 == NULL)
         {

@@ -1,5 +1,7 @@
 #include "Game/FE/FEAudio.h"
 
+#include "NL/nlString.h"
+
 class Event;
 
 static bool mIsEnabled = true;

@@ -2,6 +2,9 @@
 #define _SCREENTRANSITIONMANAGER_H_
 
 #include "NL/gl/glView.h"
+#include "NL/nlSingleton.h"
+#include "NL/nlVector.h"
+#include "NL/nlAVLTree.h"
 
 class ScreenTransition
 {
@@ -21,17 +24,17 @@ public:
 class ScreenTransitionCallback
 {
 public:
-    void TransitionProgressed(float) { };
-    void TransitionFinished() { };
-    void SequenceSwitch() { };
-    void Cut() { };
+    virtual void TransitionProgressed(float) { };
+    virtual void TransitionFinished() { };
+    virtual void SequenceSwitch() { };
+    virtual void Cut() { };
 };
 
-class ScreenTransitionManager
+class ScreenTransitionManager : public nlSingleton<ScreenTransitionManager>
 {
 public:
     ScreenTransitionManager();
-    ~ScreenTransitionManager();
+    virtual ~ScreenTransitionManager();
     void Render(float);
     void CancelAllTransitions();
     void DeleteAllTransitions();
@@ -41,6 +44,17 @@ public:
     void GetSelectedTransitionCutTime() const;
     void EnableSelectedTransition();
     void AddTransitions(char*, unsigned long);
+
+    /* 0x04 */ ScreenTransition* m_pActiveTransition;
+    /* 0x08 */ nlAVLTree<unsigned long, ScreenTransition*, DefaultKeyCompare<unsigned long> > m_TransitionMap;
+
+    /* 0x1C */ eGLView m_eView;
+    /* 0x20 */ ScreenTransitionCallback* m_pCallback;
+    /* 0x24 */ ScreenTransition* m_SelectedTransition;
+    /* 0x28 */ float m_fCurrentTime;
+    /* 0x2C */ float m_fCurrentLength;
+    /* 0x30 */ Vector m_Transitions;
+    /* 0x3C */ unsigned char m_Cut;
 };
 
 // class nlAVLTree<unsigned long, ScreenTransition*, DefaultKeyCompare<unsigned long> >

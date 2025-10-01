@@ -92,7 +92,7 @@ void GLInventory::AddVertexAnim(unsigned long key, GLVertexAnim* vertexAnim)
     m_vertexAnimTree.AddAVLNode(&m_materialListTree.m_root_node_0x10, &vertexAnim, &key, &node, 0);
     if (node == nullptr)
     {
-        m_vertexAnimTree.m_root_node_0x10 += 1;
+        m_vertexAnimTree.m_Root += 1;
     }
 }
 
