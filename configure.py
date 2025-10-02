@@ -750,9 +750,6 @@ config.libs = [
 
             Object(NonMatching, "Game/NisPlayer.cpp"),
 
-            # AI
-            Object(NonMatching, "Game/AI/HeadTrack.cpp", extra_cflags=["-inline deferred"]),
-   
             # Game Render
             Object(NonMatching, "Game/Render/FlareHandler.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Render/CameraGuy.cpp", extra_cflags=["-inline deferred"]),
@@ -836,7 +833,6 @@ config.libs = [
             Object(Matching, "Game/WorldTriggers.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/CharacterTriggers.cpp", extra_cflags=["-inline deferred"]),
 
-            Object(Matching, "Game/AIPad.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/PadMonkey.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/PadActions.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/RumbleActions.cpp", extra_cflags=["-inline deferred"]),
@@ -856,6 +852,10 @@ config.libs = [
             Object(Matching, "Game/AI/AILoader.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/AI/AIPlay.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/AI/Powerups.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/AISandbox.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/HeadTrack.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/AIPad.cpp", extra_cflags=["-inline deferred"]),
+
 
             # Frontend / Scenes
             Object(Matching, "Game/GameSceneManager.cpp", extra_cflags=["-inline deferred"]),

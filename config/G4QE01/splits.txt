@@ -41,7 +41,7 @@ AiUtil.o:
 	.sbss       start:0x80373648 end:0x80373650
 	.sdata2     start:0x80374BF8 end:0x80374C58
 
-AISandbox.o:
+Game/AI/AISandbox.cpp:
 	.text       start:0x80006F6C end:0x80006F6C
 	.text       start:0x80006F6C end:0x80006F7C
 	.text       start:0x80006F7C end:0x80006F7C

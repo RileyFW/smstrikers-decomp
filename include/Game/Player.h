@@ -12,7 +12,7 @@ class cPN_SingleAxisBlender;
 class cPN_SAnimController;
 class cPN_Feather;
 class CollisionPlayerWallData;
-#include "Game/AIPad.h"
+#include "Game/AI/AIPad.h"
 class CollisionPlayerPlayerData;
 class SpaceSearch;
 class cSHierarchy;
