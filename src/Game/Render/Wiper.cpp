@@ -64,8 +64,6 @@ Wiper& Wiper::Instance()
  */
 void Wiper::DoWipe(const char* wipe)
 {
-    // const char* var_r31;
-    // var_r31 = wipe;
     if (!wiperCallback.mTransitionActive)
     {
         if (g_ForceDoubleBallTransition != 0)

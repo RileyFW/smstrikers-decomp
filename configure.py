@@ -854,7 +854,7 @@ config.libs = [
 
             # AI
             Object(Matching, "Game/AI/AILoader.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/AI/AIPlay.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/AI/AIPlay.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/AI/Powerups.cpp", extra_cflags=["-inline deferred"]),
 
             # Frontend / Scenes

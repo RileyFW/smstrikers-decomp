@@ -63,8 +63,9 @@ void AIPlay::Update(float fDeltaT)
         decision_entity = GetDecisionEntity(DECISION_ENTITY_STRATEGY, 0U);
         if ((decision_entity != NULL) && (decision_entity->CallDTF(mpFielder) > 0.0f))
         {
-            meCurrentPlay = (eAIPlay)decision_entity->GetLastPlayParams().ePlayType;
-            mpPlayDE = GetDecisionEntity(DECISION_ENTITY_PLAY, (u32)meCurrentPlay);
+            int id = decision_entity->GetLastPlayParams().ePlayType;
+            meCurrentPlay = (eAIPlay)id;
+            mpPlayDE = GetDecisionEntity(DECISION_ENTITY_PLAY, id);
 
             fDuration = decision_entity->GetLastPlayParams().fDuration;
             if (fDuration <= 0.0f)
@@ -91,10 +92,9 @@ void AIPlay::CalculateNewDesire()
     float fResult;
 
     // temp_r3 = this->unkC;
-    if ((mpPlayDE != NULL)
-        && (mpPlayDE->CallDTF(mpFielder) > 0.0f))
+    if ((mpPlayDE != NULL) && (mpPlayDE->CallDTF(mpFielder) > 0.0f))
     {
-        fResult = mpPlayDE->m_pLastQueuedAction->m_fConfidence;
+        fResult = mpPlayDE->m_LastSelectedAction.m_fConfidence;
         if (fResult > 0.0f)
         {
             mpFielder->InitDesire(&mpPlayDE->GetLastDesireParams(), fResult);
