@@ -13,7 +13,7 @@ Sections:
 	.sdata2     type:rodata align:16
 	.sbss2      type:bss align:32
 
-AILoader.o:
+Game/AI/AILoader.cpp:
 	.text       start:0x800056C0 end:0x80005720
 	.text       start:0x80005720 end:0x80005730
 	.ctors      start:0x8028D264 end:0x8028D268
@@ -29,7 +29,7 @@ Game/AIPad.cpp:
 	.sdata      start:0x80371048 end:0x80371050
 	.sdata2     start:0x80374BE0 end:0x80374BE8
 
-AIPlay.o:
+Game/AI/AIPlay.cpp:
 	.text       start:0x80005894 end:0x80005AAC
 	.sdata2     start:0x80374BE8 end:0x80374BF8
 

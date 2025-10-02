@@ -262,9 +262,9 @@ void cFielder::SetRunningAnimState(float)
 /**
  * Offset/Address/Size: 0x4CA8 | 0x8001DFE4 | size: 0x54
  */
-void cFielder::RunningSABcallback(unsigned int, cPN_SingleAxisBlender*)
-{
-}
+// void cFielder::RunningSABcallback(unsigned int, cPN_SingleAxisBlender*)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x4CFC | 0x8001E038 | size: 0x5C

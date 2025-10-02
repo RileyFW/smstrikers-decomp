@@ -1,5 +1,7 @@
 #include "Game/Team.h"
 
+#include "Game/Fielder.h"
+
 cTeam* g_pTeams[2] = { NULL, NULL };
 
 /**
@@ -154,7 +156,7 @@ cFielder* cTeam::GetFielder(int index)
  */
 cPlayer* cTeam::GetPlayer(int index)
 {
-    return m_pPlayers[index];
+    return (cPlayer*)m_pPlayers[index];
 }
 
 /**

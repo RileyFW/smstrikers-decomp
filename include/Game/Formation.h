@@ -2,10 +2,11 @@
 #define _FORMATION_H_
 
 #include "NL/nlMath.h"
-#include "Game/Fielder.h"
+// #include "Game/Fielder.h"
 // #include "Game/Team.h"
 
 class cTeam;
+class cFielder;
 class FormationManager;
 
 enum eFormationType

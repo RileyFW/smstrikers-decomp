@@ -7,7 +7,10 @@
 #include "NL/globalpad.h"
 
 #include "Game/GameTweaks.h"
-#include "Game/Fielder.h"
+// #include "Game/Fielder.h"
+
+class cFielder;
+
 #include "Game/AI/Powerups.h"
 #include "Game/Goalie.h"
 #include "Game/Player.h"

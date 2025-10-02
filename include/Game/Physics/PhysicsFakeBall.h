@@ -21,7 +21,7 @@ public:
     void GetPredictedBallPosition(float, nlVector3&, nlVector3&);
     static void InvalidateBallCache();
     void Destroy();
-    void Init(cBall*);
+    static void Init(cBall*);
 
     /* 0x00 */ cBall* mpBall;                    // offset 0x0, size 0x4
     /* 0x04 */ float mfElapsedTime;              // offset 0x4, size 0x4

@@ -4,16 +4,13 @@
 // void GetOneTimerLeadGroundContactAnims();
 // void 0x8028D280..0x8028D284 | size: 0x4;
 
+#include "Game/AI/DecisionEntity.h"
+
 #include "types.h"
 #include "NL/nlMath.h"
 
 #include "Game/Player.h"
 #include "Game/AI/Powerups.h"
-
-enum eFielderDesireState
-{
-    eFielderDesireState_0 = 0
-};
 
 enum eTurboRequest
 {
@@ -173,6 +170,30 @@ public:
     void CalculateNewDesire();
     void AbortPendingThoughts();
     void AbortPlay();
+
+    // void QueueDesire(eFielderDesireState, float, FuzzyVariant, FuzzyVariant);
+    // void ClearQueuedDesire();
+    void InitDesire(const sDesireParams*, float);
+    // void InitDesire(eFielderDesireState, float, float, FuzzyVariant, FuzzyVariant);
+    // void UpdateDesireState(float);
+    // void EndDesire(bool);
+    // void CleanUpDesire(eFielderDesireState);
+    // void DesireInterceptBall(float);
+    // void DesireMark(float);
+    // void DesireSupportBall(float, bool);
+    // void InitDesireGetOpen();
+    // void InitDesireOneTimerFromRun(unsigned short, const nlVector3&, const nlVector3&, bool, bool);
+    // void DesireOneTimer(float);
+    // void InitDesireReceivePassFromIdle(const LooseBallContactAnimInfo*, unsigned short, bool);
+    // void DesireReceivePassFromIdle(float);
+    // void InitDesireReceivePassFromRun(const LooseBallContactAnimInfo*, const nlVector3&, bool, const nlVector3&);
+    // void DesireReceivePassFromRun(float);
+    // void InitDesireRunToNet();
+    // void DesireSlideAttack(float);
+    // void DesireUserControlled(float);
+    // void DesireUsePowerup(float);
+    // void DesireWindupShot(float);
+
     ~cFielder();
     // cFielder(int, int, eCharacterClass, const int*, cSHierarchy*, cAnimInventory*, const CharacterPhysicsData*, FielderTweaks*,
     //          AnimRetargetList*);

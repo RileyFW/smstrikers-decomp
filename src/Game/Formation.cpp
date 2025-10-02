@@ -1,5 +1,8 @@
 #include "Game/Formation.h"
 
+#include "Game/Fielder.h"
+#include "Game/Team.h"
+
 /**
  * Offset/Address/Size: 0x5C | 0x8003ADB4 | size: 0x5C
  */
