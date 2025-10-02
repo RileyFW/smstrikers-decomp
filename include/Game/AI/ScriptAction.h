@@ -1,8 +1,20 @@
 #ifndef _SCRIPTACTION_H_
 #define _SCRIPTACTION_H_
 
-#include "Game/AI/DecisionEntity.h"
 #include "Game/AI/FuzzyVariant.h"
+
+// Forward declarations
+class cDecisionEntity;
+
+enum eScriptActionSelection
+{
+    SAS_BEST_CONFIDENCE = 0,
+    SAS_BEST_CHANCE = 1,
+    SAS_BEST_CONFIDENCE_TIMES_CHANCE = 2,
+    SAS_BEST_CONFIDENCE_MIN_CHANCE_THRESHOLD = 3,
+    SAS_WORST_CONFIDENCE = 4,
+    NUM_SCRIPT_ACTION_SELECTION = 5,
+};
 
 enum eScriptActionType
 {

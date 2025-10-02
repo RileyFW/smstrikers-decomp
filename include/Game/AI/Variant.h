@@ -24,13 +24,15 @@ enum eVariantType
 class Variant
 {
 public:
+    virtual ~Variant();
+
     void ToString() const;
     void GetHash() const;
 
     /* 0x4 */ enum eVariantType mType;
     /* 0x8 */ union
     {
-        unsigned char b;
+        bool b;
         char c;
         signed short s;
         float f;

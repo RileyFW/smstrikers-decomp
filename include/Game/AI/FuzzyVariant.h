@@ -7,11 +7,12 @@
 
 class FuzzyVariant : public Variant
 {
-    // total size: 0x30
 public:
-    float Confidence;        // offset 0x14, size 0x4
-    float SelectionChance;   // offset 0x18, size 0x4
-    class Variant ExtraData; // offset 0x1C, size 0x14
-};
+    virtual ~FuzzyVariant(); // Add this line
+
+    float Confidence;      // offset 0x14, size 0x4
+    float SelectionChance; // offset 0x18, size 0x4
+    Variant ExtraData;     // offset 0x1C, size 0x14
+}; // total size: 0x30
 
 #endif // _FUZZYVARIANT_H_

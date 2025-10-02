@@ -128,7 +128,7 @@ Game/CharacterTweaks.cpp:
 	.sdata      start:0x803710F8 end:0x80371108
 	.sdata2     start:0x80374DC8 end:0x80374E80
 
-DecisionEntity.o:
+Game/AI/DecisionEntity.cpp:
 	.text       start:0x80017F5C end:0x80018FB0
 	.text       start:0x80018FB0 end:0x80018FB0
 	.text       start:0x80018FB0 end:0x80018FB0
@@ -494,7 +494,7 @@ CommonScript.o:
 	.sdata      start:0x80371278 end:0x80371310
 	.sdata2     start:0x80375890 end:0x803758E8
 
-RootScript.o:
+Game/AI/Scripts/RootScript.cpp:
 	.text       start:0x8007A5EC end:0x8007C480
 	.text       start:0x8007C480 end:0x8007C480
 	.text       start:0x8007C480 end:0x8007C538

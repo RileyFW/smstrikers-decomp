@@ -1,16 +1,12 @@
 #ifndef _FIELDER_H_
 #define _FIELDER_H_
 
-// void GetOneTimerLeadGroundContactAnims();
-// void 0x8028D280..0x8028D284 | size: 0x4;
-
-#include "Game/AI/DecisionEntity.h"
-
 #include "types.h"
 #include "NL/nlMath.h"
 
 #include "Game/Player.h"
 #include "Game/AI/Powerups.h"
+#include "Game/AI/ScriptAction.h"
 
 enum eTurboRequest
 {
@@ -108,20 +104,20 @@ public:
     void CanPickupBall(cBall*);
     void DoFindBestSlideAttackTarget(nlVector3&, nlVector3&);
     void SetFrozen(float);
-    void IsFrozen() const;
-    void IsDefense() const;
-    void IsMidField() const;
-    void IsWinger() const;
-    void IsStriker() const;
-    void IsSlideTackling() const;
-    void IsHitting() const;
-    void IsFallenDown(float) const;
+    bool IsFrozen() const;
+    bool IsDefense() const;
+    bool IsMidField() const;
+    bool IsWinger() const;
+    bool IsStriker() const;
+    bool IsSlideTackling() const;
+    bool IsHitting() const;
+    bool IsFallenDown(float) const;
     // void GetReceivePassBallContactOffset(nlVector3&, unsigned short, const LooseBallContactAnimInfo*);
     // void GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsigned short, bool, bool);
     void GetOneTimerBallContactAnimInfo(unsigned short, const nlVector3&, const nlVector3&, bool, bool);
     void GetFormationPosition(nlVector3&, float);
     void SetAction(eFielderActionState);
-    void IsActionDone() const;
+    bool IsActionDone() const;
     void DoResetShotMeter(float);
     void DoRegularShooting();
     void DoFindBestShotTarget(nlVector3&, float&, bool);
@@ -151,7 +147,7 @@ public:
     bool IsInvincible() const;
     bool IsRunning() const;
     void IsTurboing();
-    void IsCharacterInAir(bool) const;
+    bool IsCharacterInAir(bool) const;
     void IsPlayingPowerupAnim();
     void UsePerfectPass();
     void ClearPassTargetIfAmThePassTarget();

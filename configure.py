@@ -855,7 +855,10 @@ config.libs = [
             Object(NonMatching, "Game/AI/AISandbox.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/AI/HeadTrack.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/AIPad.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/DecisionEntity.cpp", extra_cflags=["-inline deferred"]),
 
+            # AI Scripts
+            Object(NonMatching, "Game/AI/Scripts/RootScript.cpp", extra_cflags=["-inline deferred"]),
 
             # Frontend / Scenes
             Object(Matching, "Game/GameSceneManager.cpp", extra_cflags=["-inline deferred"]),

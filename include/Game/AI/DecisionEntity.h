@@ -2,18 +2,12 @@
 #define _DECISIONENTITY_H_
 
 #include "Game/Fielder.h"
-#include "Game/AI/ScriptAction.h"
 #include "Game/AI/FuzzyVariant.h"
 
-enum eScriptActionSelection
-{
-    SAS_BEST_CONFIDENCE = 0,
-    SAS_BEST_CHANCE = 1,
-    SAS_BEST_CONFIDENCE_TIMES_CHANCE = 2,
-    SAS_BEST_CONFIDENCE_MIN_CHANCE_THRESHOLD = 3,
-    SAS_WORST_CONFIDENCE = 4,
-    NUM_SCRIPT_ACTION_SELECTION = 5,
-};
+// Forward declarations
+class ScriptAction;
+struct sDesireParams;
+struct sPlayParams;
 
 enum eDecisionEntity
 {
@@ -27,17 +21,10 @@ enum eDecisionEntity
 // void nlListAddEnd<ScriptAction>(ScriptAction**, ScriptAction**, ScriptAction*);
 // void nlListAddStart<ScriptAction>(ScriptAction**, ScriptAction*, ScriptAction**);
 
-// struct sDesireParams
-// {
-//     float fDuration;                 // offset 0x0, size 0x4
-//     eFielderDesireState eDesireType; // offset 0x4, size 0x4
-//     class FuzzyVariant opt1;         // offset 0x8, size 0x30
-//     class FuzzyVariant opt2;         // offset 0x38, size 0x30
-// }; // total size: 0x68
-
 class cDecisionEntity
 {
 public:
+    cDecisionEntity() { };
     cDecisionEntity(eDecisionEntity, unsigned long, FuzzyVariant (*)(cDecisionEntity*), FuzzyVariant (*)(cDecisionEntity*));
     float CallDTF(cFielder*);
     bool DoAbort(cFielder*);
