@@ -1,46 +1,50 @@
-#include "CommonScript.h"
+#include "Game/AI/Scripts/CommonScript.h"
 
-/**
- * Offset/Address/Size: 0x654 | 0x8007A56C | size: 0x80
- */
-void std::__red_black_tree<1>::rotate_left(std::__red_black_tree<1>::node_base*, std::__red_black_tree<1>::node_base*&)
-{
-}
+#include "Game/Team.h"
+#include "Game/Player.h"
+#include "Game/Fielder.h"
 
-/**
- * Offset/Address/Size: 0x5D4 | 0x8007A4EC | size: 0x80
- */
-void std::__red_black_tree<1>::rotate_right(std::__red_black_tree<1>::node_base*, std::__red_black_tree<1>::node_base*&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x654 | 0x8007A56C | size: 0x80
+//  */
+// void std::__red_black_tree<1>::rotate_left(std::__red_black_tree<1>::node_base*, std::__red_black_tree<1>::node_base*&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x3E4 | 0x8007A2FC | size: 0x1F0
- */
-void std::__red_black_tree<1>::balance_insert(std::__red_black_tree<1>::node_base*, std::__red_black_tree<1>::node_base*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x5D4 | 0x8007A4EC | size: 0x80
+//  */
+// void std::__red_black_tree<1>::rotate_right(std::__red_black_tree<1>::node_base*, std::__red_black_tree<1>::node_base*&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x234 | 0x8007A14C | size: 0x1B0
- */
-void std::__tree<std::pair<const unsigned long, FuzzyVariant>, std::map<unsigned long, FuzzyVariant, std::less<unsigned long>, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::value_compare, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::insert_node_at(std::__tree<std::pair<const unsigned long, FuzzyVariant>, std::map<unsigned long, FuzzyVariant, std::less<unsigned long>, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::value_compare, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::node*, bool, bool, const std::pair<const unsigned long, FuzzyVariant>&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x3E4 | 0x8007A2FC | size: 0x1F0
+//  */
+// void std::__red_black_tree<1>::balance_insert(std::__red_black_tree<1>::node_base*, std::__red_black_tree<1>::node_base*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x1D0 | 0x8007A0E8 | size: 0x64
- */
-void std::__tree<std::pair<const unsigned long, FuzzyVariant>, std::map<unsigned long, FuzzyVariant, std::less<unsigned long>, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::value_compare, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::find<unsigned long>(const unsigned long&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x234 | 0x8007A14C | size: 0x1B0
+//  */
+// void std::__tree<std::pair<const unsigned long, FuzzyVariant>, std::map<unsigned long, FuzzyVariant, std::less<unsigned long>, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::value_compare, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::insert_node_at(std::__tree<std::pair<const unsigned long, FuzzyVariant>, std::map<unsigned long, FuzzyVariant, std::less<unsigned long>, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::value_compare, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::node*, bool, bool, const std::pair<const unsigned long, FuzzyVariant>&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80079F18 | size: 0x1D0
- */
-void std::__tree<std::pair<const unsigned long, FuzzyVariant>, std::map<unsigned long, FuzzyVariant, std::less<unsigned long>, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::value_compare, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::find_or_insert<unsigned long, FuzzyVariant>(const unsigned long&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x1D0 | 0x8007A0E8 | size: 0x64
+//  */
+// void std::__tree<std::pair<const unsigned long, FuzzyVariant>, std::map<unsigned long, FuzzyVariant, std::less<unsigned long>, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::value_compare, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::find<unsigned long>(const unsigned long&)
+// {
+// }
+
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80079F18 | size: 0x1D0
+//  */
+// void std::__tree<std::pair<const unsigned long, FuzzyVariant>, std::map<unsigned long, FuzzyVariant, std::less<unsigned long>, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::value_compare, std::allocator<std::pair<const unsigned long, FuzzyVariant>>>::find_or_insert<unsigned long, FuzzyVariant>(const unsigned long&)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0xE4 | 0x80079D64 | size: 0x1B4

@@ -402,14 +402,14 @@ cPlayer* cBall::GetOwnerGoalie()
 /**
  * Offset/Address/Size: 0x1DF0 | 0x8000B7C4 | size: 0x20
  */
-cPlayer* cBall::GetOwnerFielder() const
+cFielder* cBall::GetOwnerFielder()
 {
     cPlayer* player = m_pOwner;
     if ((player == NULL) || (player->m_eClassType != FIELDER))
     {
         return NULL;
     }
-    return player;
+    return (cFielder*)player;
 }
 
 /**

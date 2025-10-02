@@ -196,6 +196,10 @@ public:
 
     u8 m_unk_0x00[0xB0];
     const char* m_unk_0xB0;
+
+    u8 m_padding_0xB8[0x110];
+
+    /* 0x398 */ cFielder* m_pMark;
 };
 
 // class FilteredRandomChance

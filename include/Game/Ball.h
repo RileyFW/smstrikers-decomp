@@ -70,7 +70,7 @@ public:
     void GetInNet(int&);
     cPlayer* GetPassTargetFielder() const;
     cPlayer* GetOwnerGoalie();
-    cPlayer* GetOwnerFielder() const;
+    cFielder* GetOwnerFielder();
     nlVector3* GetDrawablePosition() const;
     nlVector3* GetAIVelocity() const;
     void PostPhysicsUpdate(float);

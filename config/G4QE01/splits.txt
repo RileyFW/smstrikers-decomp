@@ -524,7 +524,7 @@ ScriptCaching.o:
 	.sdata      start:0x80371340 end:0x80371348
 	.sbss       start:0x803737D8 end:0x803737E0
 
-ScriptDefines.o:
+Game/AI/Scripts/ScriptDefines.cpp:
 	.text       start:0x8007E960 end:0x8007EA88
 	.text       start:0x8007EA88 end:0x8007EA88
 	.text       start:0x8007EA88 end:0x8007EA88

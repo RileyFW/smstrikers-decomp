@@ -5,7 +5,7 @@ class cFielder;
 class cTeam;
 
 void FuzzyScriptClearGlobals();
-void FuzzyScriptSetCurrentTeam(cTeam*);
-void FuzzyScriptSetCurrentFielder(cFielder*);
+void FuzzyScriptSetCurrentTeam(cTeam* pCurrentTeam);
+void FuzzyScriptSetCurrentFielder(cFielder* pCurrentFielder);
 
 #endif // _SCRIPTDEFINES_H_
