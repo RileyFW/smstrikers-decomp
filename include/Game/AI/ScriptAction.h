@@ -1,6 +1,7 @@
 #ifndef _SCRIPTACTION_H_
 #define _SCRIPTACTION_H_
 
+#include "NL/nlSlotPool.h"
 #include "Game/AI/FuzzyVariant.h"
 
 // Forward declarations
@@ -67,27 +68,29 @@ struct sPlayParams
 
 struct sDesireParams
 {
-    float fDuration;                 // offset 0x0, size 0x4
-    eFielderDesireState eDesireType; // offset 0x4, size 0x4
-    FuzzyVariant opt1;               // offset 0x8, size 0x30
-    FuzzyVariant opt2;               // offset 0x38, size 0x30
+    /* 0x00 */ float fDuration;                 // size 0x4
+    /* 0x04 */ eFielderDesireState eDesireType; // size 0x4
+    /* 0x08 */ FuzzyVariant opt1;               // size 0x30
+    /* 0x38 */ FuzzyVariant opt2;               // size 0x30
 }; // total size: 0x68
 
 class ScriptAction
 {
 public:
+    static SlotPool<ScriptAction> m_ScriptActionSlotPool;
+
     ScriptAction();
     ScriptAction(eScriptActionType, float);
-    void CalcSelectionChance();
-    void RollChanceDice();
+    float CalcSelectionChance();
+    bool RollChanceDice();
 
 public:
-    /* 0x00 */ ScriptAction* next;            // offset 0x0, size 0x4
-    /* 0x04 */ eScriptActionType m_eType;     // offset 0x4, size 0x4
-    /* 0x08 */ float m_fConfidence;           // offset 0x8, size 0x4
-    /* 0x0C */ float m_fSelectionChance;      // offset 0xC, size 0x4
-    /* 0x10 */ sDesireParams m_sDesireParams; // offset 0x10, size 0x68
-    /* 0x78 */ sPlayParams m_sPlayParams;     // offset 0x78, size 0x8
+    /* 0x00 */ ScriptAction* next;            // size 0x4
+    /* 0x04 */ eScriptActionType m_eType;     // size 0x4
+    /* 0x08 */ float m_fConfidence;           // size 0x4
+    /* 0x0C */ float m_fSelectionChance;      // size 0x4
+    /* 0x10 */ sDesireParams m_sDesireParams; // size 0x68
+    /* 0x78 */ sPlayParams m_sPlayParams;     // size 0x8
 }; // total size: 0x80
 
 // class SlotPool<ScriptAction>

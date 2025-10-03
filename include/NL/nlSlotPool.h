@@ -24,18 +24,19 @@ void nlListAddStart(T** head, T* newNode, T** prev)
 class SlotPoolBase
 {
 public:
-    static void BaseAddNewBlock(SlotPoolBase*, unsigned int);
-    static void BaseFreeBlocks(SlotPoolBase*, unsigned int);
     ~SlotPoolBase();
     SlotPoolBase();
 
-    /* 0x00 */ u32 m_unk_0x00;            // Secondary slot count
-    /* 0x04 */ u32 m_unk_0x04;            // Primary slot count
-    /* 0x08 */ SlotPoolBlock* m_unk_0x08; // Head of block list
-    /* 0x0C */ SlotPoolEntry* m_unk_0x0C; // Head of entry list
-    /* 0x10 */ SlotPoolAllocatorFunc m_slotPoolAllocator;
-    /* 0x14 */ SlotPoolFreeFunc m_slotPoolFree;
-};
+    static void BaseAddNewBlock(SlotPoolBase* pool, unsigned int entrySize);
+    static void BaseFreeBlocks(SlotPoolBase* pool, unsigned int entrySize);
+
+    /* 0x00 */ u32 m_Initial;              // Secondary slot count
+    /* 0x04 */ u32 m_Delta;                // Primary slot count
+    /* 0x08 */ SlotPoolBlock* m_BlockList; // Head of block list
+    /* 0x0C */ SlotPoolEntry* m_FreeList;  // Head of entry list
+    /* 0x10 */ SlotPoolAllocatorFunc m_AllocFn;
+    /* 0x14 */ SlotPoolFreeFunc m_FreeFn;
+}; // total size: 0x18
 
 struct SlotPoolBlock
 {
@@ -53,7 +54,22 @@ static void* DefaultSlotPoolAllocator(unsigned long);
 template <typename T>
 class BasicSlotPool : public SlotPoolBase
 {
-    // total size: 0x18
-};
+public:
+}; // total size: 0x18
+
+template <typename T>
+class SlotPool : public BasicSlotPool<T>
+{
+public:
+    // SlotPool();
+    ~SlotPool()
+    {
+        BaseFreeBlocks(this, sizeof(T));
+    };
+    // T* Allocate();
+    // void Free(T*);
+    // void Clear();
+    // void Initialize(unsigned int, unsigned int);
+}; // total size: 0x18
 
 #endif // _NLSLOTPOOL_H_

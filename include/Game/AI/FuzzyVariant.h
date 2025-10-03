@@ -8,6 +8,7 @@
 class FuzzyVariant : public Variant
 {
 public:
+    FuzzyVariant();
     FuzzyVariant(const FuzzyVariant&);
     virtual ~FuzzyVariant();
 

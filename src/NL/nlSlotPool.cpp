@@ -11,22 +11,22 @@ void SlotPoolBase::BaseAddNewBlock(SlotPoolBase* slotPool, unsigned int slotSize
     u32 numSlots;
     void* memoryBlock;
 
-    primarySlotCount = slotPool->m_unk_0x04;
-    if ((primarySlotCount != 0) || ((u32)slotPool->m_unk_0x08 == 0U))
+    primarySlotCount = slotPool->m_Delta;
+    if ((primarySlotCount != 0) || ((u32)slotPool->m_BlockList == 0U))
     {
         numSlots = primarySlotCount;
-        if ((u32)slotPool->m_unk_0x08 == 0U)
+        if ((u32)slotPool->m_BlockList == 0U)
         {
-            numSlots = slotPool->m_unk_0x00;
+            numSlots = slotPool->m_Initial;
         }
 
         totalSlotMemory = slotSize * numSlots;
-        memoryBlock = slotPool->m_slotPoolAllocator(totalSlotMemory + 4);
-        nlListAddStart<SlotPoolBlock>(&slotPool->m_unk_0x08, (SlotPoolBlock*)((u8*)memoryBlock + totalSlotMemory), 0);
-        
+        memoryBlock = slotPool->m_AllocFn(totalSlotMemory + 4);
+        nlListAddStart<SlotPoolBlock>(&slotPool->m_BlockList, (SlotPoolBlock*)((u8*)memoryBlock + totalSlotMemory), 0);
+
         for (u32 i = 0; i < numSlots; i++)
         {
-            nlListAddStart<SlotPoolEntry>(&slotPool->m_unk_0x0C, (SlotPoolEntry*)memoryBlock, 0);
+            nlListAddStart<SlotPoolEntry>(&slotPool->m_FreeList, (SlotPoolEntry*)memoryBlock, 0);
             memoryBlock = (u8*)memoryBlock + slotSize;
         }
     }
@@ -41,19 +41,20 @@ void SlotPoolBase::BaseFreeBlocks(SlotPoolBase* slotPool, unsigned int slotSize)
     SlotPoolBlock* currentBlock;
     s32 blockOffset;
 
-    currentBlock = slotPool->m_unk_0x08;
-    blockOffset = slotSize * slotPool->m_unk_0x04;
-    while(currentBlock != NULL)
+    currentBlock = slotPool->m_BlockList;
+    blockOffset = slotSize * slotPool->m_Delta;
+    while (currentBlock != NULL)
     {
         nextBlock = currentBlock->m_next;
-        if (nextBlock == NULL) {
-            blockOffset = slotSize * slotPool->m_unk_0x00;
+        if (nextBlock == NULL)
+        {
+            blockOffset = slotSize * slotPool->m_Initial;
         }
-        slotPool->m_slotPoolFree((u8*)currentBlock - blockOffset);
+        slotPool->m_FreeFn((u8*)currentBlock - blockOffset);
         currentBlock = nextBlock;
     }
-    slotPool->m_unk_0x08 = NULL;
-    slotPool->m_unk_0x0C = NULL;
+    slotPool->m_BlockList = NULL;
+    slotPool->m_FreeList = NULL;
 }
 
 /**
@@ -69,12 +70,12 @@ SlotPoolBase::~SlotPoolBase()
  */
 SlotPoolBase::SlotPoolBase()
 {
-    m_unk_0x08 = 0;
-    m_unk_0x0C = 0;
-    m_slotPoolAllocator = DefaultSlotPoolAllocator;
-    m_slotPoolFree = DefaultSlotPoolFree;
-    m_unk_0x00 = 0;
-    m_unk_0x04 = 0;
+    m_BlockList = 0;
+    m_FreeList = 0;
+    m_AllocFn = DefaultSlotPoolAllocator;
+    m_FreeFn = DefaultSlotPoolFree;
+    m_Initial = 0;
+    m_Delta = 0;
 }
 
 /**
