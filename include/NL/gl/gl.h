@@ -92,7 +92,7 @@ void glEndFrame();
 void glBeginFrame();
 bool glHasQuads();
 s32 glGetCurrentFrame();
-int glHash(const char*);
+u32 glHash(const char*);
 bool glStartup();
 
 #endif // _GL_H_

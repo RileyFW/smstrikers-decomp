@@ -175,7 +175,7 @@ s32 glGetCurrentFrame()
 /**
  * Offset/Address/Size: 0x1FC | 0x801D7538 | size: 0x20
  */
-int glHash(const char* string)
+u32 glHash(const char* string)
 {
     return nlStringHash(string);
 }
