@@ -2425,7 +2425,7 @@ Game/DispatchEventsTask.cpp:
 	.text       start:0x801715D0 end:0x801715D0
 	.data       start:0x802C1280 end:0x802C12A8
 
-TransitionTask.o:
+Game/TransitionTask.cpp:
 	.text       start:0x801715D0 end:0x801731EC
 	.text       start:0x801731EC end:0x801731FC
 	.text       start:0x801731FC end:0x801731FC
@@ -4477,7 +4477,7 @@ Game/RayCollider.cpp:
 	.text       start:0x80201E90 end:0x802020C4
 	.data       start:0x803031D0 end:0x803031E0
 
-ModelTransition.o:
+Game/Transitions/ModelTransition.cpp:
 	.text       start:0x802020C4 end:0x80204240
 	.text       start:0x80204240 end:0x80204294
 	.text       start:0x80204294 end:0x80204294
@@ -4501,7 +4501,7 @@ Game/Transitions/ColourBlendScreenTransition.cpp:
 	.sbss       start:0x803743F8 end:0x80374400
 	.sdata2     start:0x803774B8 end:0x803774C8
 
-ScreenTransitionManager.o:
+Game/Transitions/ScreenTransitionManager.cpp:
 	.text       start:0x802050F0 end:0x80205B70
 	.text       start:0x80205B70 end:0x80205B70
 	.text       start:0x80205B70 end:0x80205B7C
@@ -4516,7 +4516,7 @@ ScreenTransitionManager.o:
 	.sbss       start:0x80374400 end:0x80374408
 	.sdata2     start:0x803774C8 end:0x803774D0
 
-ScriptedTransition.o:
+Game/Transitions/ScriptedTransition.cpp:
 	.text       start:0x8020692C end:0x80208340
 	.text       start:0x80208340 end:0x802083C8
 	.text       start:0x802083C8 end:0x802083C8
@@ -4525,7 +4525,7 @@ ScriptedTransition.o:
 	.sdata      start:0x80373360 end:0x80373390
 	.sdata2     start:0x803774D0 end:0x80377500
 
-TransitionSequence.o:
+Game/Transitions/TransitionSequence.cpp:
 	.text       start:0x802083C8 end:0x80208F0C
 	.text       start:0x80208F0C end:0x80208F14
 	.text       start:0x80208F14 end:0x80208F14
@@ -4536,7 +4536,7 @@ TransitionSequence.o:
 	.sdata      start:0x80373390 end:0x803733B8
 	.sdata2     start:0x80377500 end:0x80377510
 
-TransLight.o:
+Game/Transitions/TransLight.cpp:
 	.text       start:0x80208F14 end:0x80209694
 	.text       start:0x80209694 end:0x80209694
 	.data       start:0x803035E0 end:0x803035F0

@@ -49,7 +49,7 @@ void nlInvertRotTransMatrix(nlMatrix4&, const nlMatrix4&);
 void nlQuatNLerp(nlQuaternion&, const nlQuaternion&, const nlQuaternion&, float);
 void nlQuatInverse(nlQuaternion&, const nlQuaternion&);
 void nlQuatNormalize(nlQuaternion&, const nlQuaternion&);
-void nlMakeQuat(nlQuaternion&, const nlVector3&, float);
+void nlMakeQuat(nlQuaternion& out, const nlVector3& v3RotationAxis, float ang_rad);
 // void nlCartesianToPolar(nlPolar&, const nlVector3&);
 // void nlAddPolarToCartesian(nlVector3&, const nlPolar&);
 // void nlPolarToCartesian(nlVector3&, const nlPolar&);

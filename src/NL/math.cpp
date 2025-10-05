@@ -31,7 +31,7 @@ void nlQuatNormalize(nlQuaternion&, const nlQuaternion&)
 /**
  * Offset/Address/Size: 0x2B8 | 0x801F05B4 | size: 0xAC
  */
-void nlMakeQuat(nlQuaternion&, const nlVector3&, float)
+void nlMakeQuat(nlQuaternion& out, const nlVector3& v3RotationAxis, float ang_rad)
 {
 }
 

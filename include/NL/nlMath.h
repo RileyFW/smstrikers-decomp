@@ -228,6 +228,14 @@ struct nlMatrix4
         m[2][col] = v.f.z;
     }
 
+    /**
+     * Offset/Address/Size: 0x0 | 0x80204294 | size: 0x8
+     */
+    nlVector3& GetTranslation() const
+    {
+        return *(nlVector3*)&f.m41;
+    }
+
     inline nlVector4 operator*(const nlVector4& v_in) const
     {
         nlVector4 tmp;

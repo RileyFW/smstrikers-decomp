@@ -46,6 +46,20 @@ extern "C"
     int memcmp(const void* ptr1, const void* ptr2, size_t num);
 #endif
 
+    class DefaultAllocator
+    {
+    public:
+        static void* allocate(size_t size)
+        {
+            return nlMalloc(size, 8, false); // 8-byte alignment, not at end
+        }
+
+        static void deallocate(void* ptr)
+        {
+            nlFree(ptr);
+        }
+    };
+
 #ifdef __cplusplus
 }
 #endif

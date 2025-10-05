@@ -1,6 +1,26 @@
 #ifndef _TRANSLIGHT_H_
 #define _TRANSLIGHT_H_
 
+#include "NL/nlMath.h"
+#include "NL/gl/glDraw2.h"
+
+#include "Game/Sys/simpleparser.h"
+#include "Game/Transitions/ScreenTransitionManager.h"
+
+struct GLDirectionalLightUserData
+{
+    /* 0x0 */ nlVector3 direction;
+    /* 0xC */ nlFloatColour colour;
+}; // total size: 0x1C
+
+struct GLLightUserData
+{
+    /* 0x00 */ nlVector3 worldPosition;
+    /* 0x0C */ nlFloatColour colour;
+    /* 0x1C */ float intensity;
+    /* 0x20 */ float innerRadius;
+    /* 0x24 */ float outerRadius;
+}; // total size: 0x28
 
 class TransitionLight
 {
@@ -10,6 +30,19 @@ public:
     void LoadFromParser(SimpleParser*);
     void AttachToModel(glModel*);
     void DetachFromModel(glModel*);
-};
+
+    // total size: 0x108
+    /* 0x0, */ float m_fStartScale;                          // size 0x4
+    /* 0x4, */ float m_fEndScale;                            // size 0x4
+    /* 0x8, */ unsigned long m_nDirType;                     // size 0x4
+    /* 0xC, */ unsigned long m_nDirLights;                   // size 0x4
+    /* 0x10 */ GLDirectionalLightUserData m_Directionals[3]; // size 0x54
+    /* 0x64 */ unsigned long m_nPointType;                   // size 0x4
+    /* 0x68 */ unsigned long m_nPointLights;                 // size 0x4
+    /* 0x6C */ GLLightUserData m_PointLights[3];             // size 0x78
+    /* 0xE4 */ unsigned long m_nAmbientType;                 // size 0x4
+    /* 0xE8 */ nlFloatColour m_ScaledAmbient;                // size 0x10
+    /* 0xF8 */ nlFloatColour m_Ambient;                      // size 0x10
+}; // total size: 0x108
 
 #endif // _TRANSLIGHT_H_

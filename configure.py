@@ -708,7 +708,12 @@ config.libs = [
             Object(Matching, "Game/ScriptTuning.cpp", extra_cflags=["-inline auto,deferred"]),
 
             # Game/Transitions
+            Object(NonMatching, "Game/Transitions/ScreenTransitionManager.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Transitions/ColourBlendScreenTransition.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Transitions/ScriptedTransition.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Transitions/TransLight.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Transitions/TransitionSequence.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Transitions/ModelTransition.cpp", extra_cflags=["-inline deferred"]),
 
             # Camera
             Object(Matching, "Game/CameraLoader.cpp", extra_cflags=["-inline deferred"]),
@@ -826,6 +831,7 @@ config.libs = [
             Object(NonMatching, "Game/FixedUpdateTask.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/DispatchEventsTask.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/ResetTask.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/TransitionTask.cpp", extra_cflags=["-inline deferred"]),
 
             # Triggers
             Object(Matching, "Game/Triggers/BinaryTriggerFile.cpp", extra_cflags=["-inline deferred"]),

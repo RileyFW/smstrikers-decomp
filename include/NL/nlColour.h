@@ -21,4 +21,9 @@ inline void nlColourSet(nlColour& c0, u8 _r, u8 _g, u8 _b, u8 _a)
     c0.c[3] = _a;
 }
 
+struct nlFloatColour
+{
+    float c[4]; // offset 0x0, size 0x10
+}; // total size: 0x10
+
 #endif // _NLCOLOUR_H_

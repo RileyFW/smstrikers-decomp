@@ -1,17 +1,15 @@
 #include "Game/Transitions/TransitionSequence.h"
 
 /**
- * Offset/Address/Size: 0x0 | 0x80208F0C | size: 0x8
- */
-void TransitionSequence::CutTime() const
-{
-}
-
-/**
  * Offset/Address/Size: 0xB0C | 0x80208ED4 | size: 0x38
  */
 TransitionSequence::TransitionSequence()
 {
+    m_pTransitions = NULL;
+    m_nNumTransitions = 0;
+    m_pPlaying = NULL;
+    m_pSound = NULL;
+    m_CutAt = -1.0f;
 }
 
 /**
@@ -19,6 +17,29 @@ TransitionSequence::TransitionSequence()
  */
 TransitionSequence::~TransitionSequence()
 {
+    if (m_pTransitions != nullptr)
+    {
+        for (int i = 0; i < m_nNumTransitions; i++)
+        {
+            delete m_pTransitions[i];
+            m_pTransitions[i] = nullptr;
+
+            delete[] m_pSound[i].soundStr;
+            m_pSound[i].soundStr = nullptr;
+        }
+
+        delete[] m_pTransitions;
+        m_pTransitions = nullptr;
+
+        delete[] m_pPlaying;
+        m_pPlaying = nullptr;
+
+        delete[] m_pEarly;
+        m_pEarly = nullptr;
+
+        delete[] m_pSound;
+        m_pSound = nullptr;
+    }
 }
 
 /**
@@ -26,6 +47,13 @@ TransitionSequence::~TransitionSequence()
  */
 void TransitionSequence::DoSanityCheck()
 {
+    for (int i = 0; i < m_nNumTransitions; i++)
+    {
+        if (m_pTransitions[i] != nullptr)
+        {
+            m_pTransitions[i]->DoSanityCheck();
+        }
+    }
 }
 
 /**
@@ -59,22 +87,43 @@ void TransitionSequence::Cancel()
 /**
  * Offset/Address/Size: 0x480 | 0x80208848 | size: 0x98
  */
-void TransitionSequence::GetTransitionLength()
+float TransitionSequence::GetTransitionLength()
 {
+    float totalLength = 0.0f;
+
+    for (int i = 0; i < m_nNumTransitions; i++)
+    {
+        float transitionLength = m_pTransitions[i]->GetTransitionLength();
+        totalLength += transitionLength;
+
+        totalLength -= m_pEarly[i];
+    }
+
+    return totalLength;
 }
 
 /**
  * Offset/Address/Size: 0x478 | 0x80208840 | size: 0x8
  */
-void TransitionSequence::Time() const
+float TransitionSequence::Time() const
 {
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x438 | 0x80208800 | size: 0x40
  */
-void TransitionSequence::IsFinished()
+bool TransitionSequence::IsFinished()
 {
+    for (int i = 0; i < m_nNumTransitions; i++)
+    {
+        if (m_pPlaying[i] != 2)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**

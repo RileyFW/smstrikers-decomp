@@ -9,13 +9,13 @@
 class ScreenTransition
 {
 public:
-    ScreenTransition() { };
+    // ScreenTransition() { };
     /* 0x08 */ virtual ~ScreenTransition() { };
     /* 0x0C */ virtual void Update(float) = 0;
     /* 0x10 */ virtual void Render(eGLView) = 0;
     /* 0x14 */ virtual bool IsFinished() = 0;
     /* 0x18 */ virtual float Time() const = 0;
-    /* 0x1C */ virtual void CutTime() const { };
+    /* 0x1C */ virtual float CutTime() const { return 0.0f; };
     /* 0x20 */ virtual void Reset() = 0;
     /* 0x24 */ virtual void Cancel() = 0;
     /* 0x28 */ virtual float GetTransitionLength() = 0;
@@ -54,7 +54,7 @@ public:
     /* 0x24 */ ScreenTransition* m_SelectedTransition;
     /* 0x28 */ float m_fCurrentTime;
     /* 0x2C */ float m_fCurrentLength;
-    /* 0x30 */ Vector m_Transitions;
+    /* 0x30 */ Vector<ScreenTransition, DefaultAllocator> m_Transitions;
     /* 0x3C */ bool m_Cut;
 }; // total size: 0x40
 

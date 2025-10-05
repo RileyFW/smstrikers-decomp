@@ -13,7 +13,7 @@ public:
     void FullCoverage(const nlColour&, float);
     void SetupRectangle(float, float, float, float, float);
     void SetupRotatedRectangle(float, float, float, float, float, float);
-    void SetColour(const nlColour&);
+    void SetColour(const nlColour& col);
 
     /* 0x00 */ nlVector2 m_pos[4];
     /* 0x20 */ nlVector2 m_uv[4];
