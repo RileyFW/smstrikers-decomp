@@ -710,7 +710,7 @@ config.libs = [
             # Game/Transitions
             Object(NonMatching, "Game/Transitions/ScreenTransitionManager.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Transitions/ColourBlendScreenTransition.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/Transitions/ScriptedTransition.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/Transitions/ScriptedTransition.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Transitions/TransLight.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Transitions/TransitionSequence.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Transitions/ModelTransition.cpp", extra_cflags=["-inline deferred"]),
