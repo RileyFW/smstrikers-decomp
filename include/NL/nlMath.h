@@ -176,6 +176,20 @@ struct nlMatrix3
         } f;
     };
 
+    inline void SetIdentity()
+    {
+        f.m32 = 0.0f;
+        f.m31 = 0.0f;
+        f.m23 = 0.0f;
+        f.m21 = 0.0f;
+        f.m13 = 0.0f;
+        f.m12 = 0.0f;
+
+        f.m33 = 1.0f;
+        f.m22 = 1.0f;
+        f.m11 = 1.0f;
+    }
+
     inline nlVector2 operator*(const nlVector2& v_in) const
     {
         nlVector2 tmp;

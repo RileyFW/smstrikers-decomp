@@ -7,7 +7,7 @@ gl_ScreenInfo _ScreenInfo;
  */
 u32 glGetScreenHeight()
 {
-    return _ScreenInfo.m_screenHeight;
+    return _ScreenInfo.ScreenHeight;
 }
 
 /**
@@ -15,13 +15,13 @@ u32 glGetScreenHeight()
  */
 u32 glGetScreenWidth()
 {
-    return _ScreenInfo.m_screenWidth;
+    return _ScreenInfo.ScreenWidth;
 }
 
 /**
  * Offset/Address/Size: 0x20 | 0x801DE3EC | size: 0xC
  */
- gl_ScreenInfo* glGetScreenInfo()
+gl_ScreenInfo* glGetScreenInfo()
 {
     return &_ScreenInfo;
 }

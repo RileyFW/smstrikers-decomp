@@ -19,12 +19,7 @@ public:
     /* 0x20 */ nlVector2 m_uv[4];
     /* 0x40 */ nlColour m_colour[4];
     /* 0x50 */ float depth;
-
-    // /* 0x40 */ unsigned long c0;
-    // /* 0x44 */ unsigned long c1;
-    // /* 0x48 */ unsigned long c2;
-    // /* 0x4C */ unsigned long c3;
-};
+}; // total size: 0x54
 
 bool glAttachPoly2(eGLView, unsigned long, glPoly2*, unsigned long*, const void*);
 

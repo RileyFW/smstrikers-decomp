@@ -26,18 +26,10 @@
 
 // Performance metric string array
 static const char* str_perf0[]
-    = { "VERTICES", "CLIP_VTX", "CLIP_CLKS", "XF_WAIT_IN", "XF_WAIT_OUT", "XF_XFRM_CLKS",
-          "XF_LIT_CLKS", "XF_BOT_CLKS", "XF_REGLD_CLKS", "XF_REGRD_CLKS", "CLIP_RATIO", "TRIANGLES",
-          "TRIANGLES_CULLED", "TRIANGLES_PASSED", "TRIANGLES_SCISSORED", "TRIANGLES_0TEX", "TRIANGLES_1TEX", "TRIANGLES_2TEX",
-          "TRIANGLES_3TEX", "TRIANGLES_4TEX", "TRIANGLES_5TEX", "TRIANGLES_6TEX", "TRIANGLES_7TEX", "TRIANGLES_8TEX",
-          "TRIANGLES_0CLR", "TRIANGLES_1CLR", "TRIANGLES_2CLR", "QUAD_0CVG", "QUAD_NON0CVG", "QUAD_1CVG",
-          "QUAD_2CVG", "QUAD_3CVG", "QUAD_4CVG", "AVG_QUAD_CNT", "CLOCKS" };
+    = { "VERTICES", "CLIP_VTX", "CLIP_CLKS", "XF_WAIT_IN", "XF_WAIT_OUT", "XF_XFRM_CLKS", "XF_LIT_CLKS", "XF_BOT_CLKS", "XF_REGLD_CLKS", "XF_REGRD_CLKS", "CLIP_RATIO", "TRIANGLES", "TRIANGLES_CULLED", "TRIANGLES_PASSED", "TRIANGLES_SCISSORED", "TRIANGLES_0TEX", "TRIANGLES_1TEX", "TRIANGLES_2TEX", "TRIANGLES_3TEX", "TRIANGLES_4TEX", "TRIANGLES_5TEX", "TRIANGLES_6TEX", "TRIANGLES_7TEX", "TRIANGLES_8TEX", "TRIANGLES_0CLR", "TRIANGLES_1CLR", "TRIANGLES_2CLR", "QUAD_0CVG", "QUAD_NON0CVG", "QUAD_1CVG", "QUAD_2CVG", "QUAD_3CVG", "QUAD_4CVG", "AVG_QUAD_CNT", "CLOCKS" };
 
 // Performance counter string array for GPU/texture metrics
-static const char* str_perf1[] = { "TEXELS", "TX_IDLE", "TX_REGS", "TX_MEMSTALL", "TC_CHECK1_2", "TC_CHECK3_4",
-    "TC_CHECK5_6", "TC_CHECK7_8", "TC_MISS", "VC_ELEMQ_FULL", "VC_MISSQ_FULL", "VC_MEMREQ_FULL",
-    "VC_STATUS7", "VC_MISSREP_FULL", "VC_STREAMBUF_LOW", "VC_ALL_STALLS", "VERTICES", "FIFO_REQ",
-    "CALL_REQ", "VC_MISS_REQ", "CP_ALL_REQ", "CLOCKS" };
+static const char* str_perf1[] = { "TEXELS", "TX_IDLE", "TX_REGS", "TX_MEMSTALL", "TC_CHECK1_2", "TC_CHECK3_4", "TC_CHECK5_6", "TC_CHECK7_8", "TC_MISS", "VC_ELEMQ_FULL", "VC_MISSQ_FULL", "VC_MEMREQ_FULL", "VC_STATUS7", "VC_MISSREP_FULL", "VC_STREAMBUF_LOW", "VC_ALL_STALLS", "VERTICES", "FIFO_REQ", "CALL_REQ", "VC_MISS_REQ", "CP_ALL_REQ", "CLOCKS" };
 
 GXRenderModeObj glx_rmode;
 
@@ -239,8 +231,7 @@ void glplatSendFrame()
             }
             temp_r30 = nlVirtualLargestBlock();
             glFontBegin(0);
-            glFontPrintf((eGLView)0x21, 1, var_r31 + 0x24, "%uKB free : %u misses, %u us latency (frame %u)", temp_r30 >> 0xAU, print0,
-                print1, print2);
+            glFontPrintf((eGLView)0x21, 1, var_r31 + 0x24, "%uKB free : %u misses, %u us latency (frame %u)", temp_r30 >> 0xAU, print0, print1, print2);
             glFontEnd();
         }
     }
@@ -569,16 +560,16 @@ bool glplatStartup(gl_ScreenInfo* arg0)
     //     glx_FIFOSize = 256 * (256 * var_f1);
     // }
 
-    arg0->m_screenWidth = 640;
-    arg0->m_screenHeight = 448;
-    arg0->m_unk_0x08 = 6;
-    arg0->m_unk_0x0C = 6;
-    arg0->m_unk_0x10 = 6;
-    arg0->m_unk_0x14 = 6;
-    arg0->m_unk_0x18 = 24;
-    arg0->m_unk_0x1C = 0;
-    arg0->m_unk_0x20 = 1.0f;
-    arg0->m_unk_0x24 = 0;
+    arg0->ScreenWidth = 640;
+    arg0->ScreenHeight = 448;
+    arg0->ColourDepth[0] = 6;
+    arg0->ColourDepth[1] = 6;
+    arg0->ColourDepth[2] = 6;
+    arg0->ColourDepth[3] = 6;
+    arg0->ZDepth = 24;
+    arg0->StencilDepth = 0;
+    arg0->PixelCentre = 1.0f;
+    arg0->FSAA = false;
     glx_CopyDispScaleFactor = 1.0f;
 
     // temp_r3_2 = VIGetTvFormat(24, 6, 448, 1.0f);
@@ -587,16 +578,16 @@ bool glplatStartup(gl_ScreenInfo* arg0)
     switch (temp_r3_2)
     {       /* switch 1; irregular */
     case 0: /* switch 1 */
-        glx_VideoMode = eVideoMode_0;
+        glx_VideoMode = VideoMode_NTSC;
         var_r29 = &GXNtsc480IntDf;
         break;
     case 5: /* switch 1 */
     case 1: /* switch 1 */
-        glx_VideoMode = eVideoMode_1;
+        glx_VideoMode = VideoMode_PAL;
         var_r29 = &glPal480IntDf;
         break;
     case 2: /* switch 1 */
-        glx_VideoMode = eVideoMode_2;
+        glx_VideoMode = VideoMode_MPAL;
         var_r29 = &GXMpal480IntDf;
         break;
     default: /* switch 1 */
@@ -613,7 +604,7 @@ bool glplatStartup(gl_ScreenInfo* arg0)
         glx_bProgressiveMode = false;
     }
     GXAdjustForOverscan(var_r29, &glx_rmode, 0, 16);
-    if (glx_VideoMode == eVideoMode_1)
+    if (glx_VideoMode == VideoMode_PAL)
     {
         glx_rmode.efbHeight = 448;
         glx_CopyDispScaleFactor = GXGetYScaleFactor(448, glx_rmode.xfbHeight);
@@ -715,7 +706,7 @@ loop_43:
  */
 void glx_SetPal50Mode()
 {
-    glx_SwitchVideoMode(&glPal480IntDf, eVideoMode_1);
+    glx_SwitchVideoMode(&glPal480IntDf, VideoMode_PAL);
 }
 
 /**
@@ -723,7 +714,7 @@ void glx_SetPal50Mode()
  */
 void glx_SetRGB60Mode()
 {
-    glx_SwitchVideoMode(&GXEurgb60Hz480IntDf, eVideoMode_3);
+    glx_SwitchVideoMode(&GXEurgb60Hz480IntDf, VideoMode_PAL60);
 }
 
 /**
@@ -731,7 +722,7 @@ void glx_SetRGB60Mode()
  */
 void glx_SetInterlacedMode()
 {
-    glx_SwitchVideoMode(&GXNtsc480IntDf, eVideoMode_0);
+    glx_SwitchVideoMode(&GXNtsc480IntDf, VideoMode_NTSC);
     glx_bProgressiveMode = 0;
 }
 
@@ -740,7 +731,7 @@ void glx_SetInterlacedMode()
  */
 void glx_SetProgressiveMode()
 {
-    glx_SwitchVideoMode(&GXNtsc480Prog, eVideoMode_0);
+    glx_SwitchVideoMode(&GXNtsc480Prog, VideoMode_NTSC);
     glx_bProgressiveMode = 1;
 }
 

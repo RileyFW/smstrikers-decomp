@@ -44,6 +44,12 @@ CharT* nlStrChr(const CharT* str, CharT ch)
     return nullptr;
 }
 
+template <typename CharT>
+int nlStrCmp(const CharT* str1, const CharT* str2)
+{
+    return nlStrNCmp(str1, str2, nlStrLen(str1));
+}
+
 /**
  * Offset/Address/Size: 0x0 | 0x801514FC | size: 0x48
  * CrowdMood: void nlStrNCmp<char>(const char*, const char*, unsigned long)

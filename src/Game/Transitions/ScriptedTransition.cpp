@@ -1,7 +1,12 @@
 #include "Game/Transitions/ScriptedTransition.h"
 
+#include "Game/Character.h"
 #include "stdlib.h"
 #include "strtold.h"
+#include "NL/gl/glState.h"
+#include "NL/nlString.h"
+
+#include "types.h"
 
 inline float parseFloat(const char* str, float defaultValue = 0.0f)
 {
@@ -364,7 +369,7 @@ void RotateTexture::ApplyModifier(glPoly2& poly, float time)
     {
         nlVector2 temp;
         nlMultVectorMatrix(temp, poly.m_pos[i], m3);
-        poly.m_pos[i] = temp;
+        poly.m_uv[i] = temp;
     }
 }
 
@@ -419,8 +424,8 @@ void ScreenBlur::ApplyModifier(glPoly2&, float)
  */
 void ScreenBlur::InitializeFromParser(SimpleParser* parser)
 {
-    m_fStartBlend = parseFloat(parser->NextTokenOnLine(true));
-    m_fEndBlend = parseFloat(parser->NextTokenOnLine(true));
+    m_fStartBlend = parseFloat(parser->NextTokenOnLine(true), 1.0f);
+    m_fEndBlend = parseFloat(parser->NextTokenOnLine(true), 1.0f);
 }
 
 /**
@@ -435,7 +440,7 @@ ScreenBlur::~ScreenBlur()
  */
 void ScreenGrab::Cleanup()
 {
-    glViewSetFilter(GLV_Particles, GLFilter_None);
+    glViewSetFilter(GLV_ScreenGrab, GLFilter_None);
     m_bDoGrab = true;
 }
 
@@ -544,8 +549,69 @@ void ScriptedScreenTransition::Update(float dt)
 /**
  * Offset/Address/Size: 0x708 | 0x80207034 | size: 0x1B8
  */
-void ScriptedScreenTransition::Render(eGLView)
+void ScriptedScreenTransition::Render(eGLView view)
 {
+    glPoly2 poly;                                 // r1+0xC
+    nlColour colour = { 0xFF, 0xFF, 0xFF, 0xFF }; // r1+0x8
+
+    nlVec2Set(poly.m_pos[0], -1.0f, -1.0f);
+    nlVec2Set(poly.m_pos[1], -1.0f, 1.0f);
+    nlVec2Set(poly.m_pos[2], 1.0f, 1.0f);
+    nlVec2Set(poly.m_pos[3], 1.0f, -1.0f);
+
+    poly.depth = -1.0f;
+
+    nlVec2Set(poly.m_uv[0], -1.0f, -1.0f);
+    nlVec2Set(poly.m_uv[1], -1.0f, 1.0f);
+    nlVec2Set(poly.m_uv[2], 1.0f, 1.0f);
+    nlVec2Set(poly.m_uv[3], 1.0f, -1.0f);
+
+    *(u32*)&poly.m_colour[0] = *(u32*)&colour; // sp4C (0x4C) -> offset 0x40
+    *(u32*)&poly.m_colour[1] = *(u32*)&colour; // sp50 (0x50) -> offset 0x44
+    *(u32*)&poly.m_colour[2] = *(u32*)&colour; // sp54 (0x54) -> offset 0x48
+    *(u32*)&poly.m_colour[3] = *(u32*)&colour; // sp58 (0x58) -> offset 0x4C
+
+    // *(u32*)&colour = 0xFFFFFFFF;
+    float normalizedTime;
+    if (m_fLength > 0.00001) // @532 = 0.0f
+    {
+        normalizedTime = m_fCurrentTime / m_fLength;
+    }
+    else
+    {
+        normalizedTime = 0.0f; // @333 = 0.0f
+    }
+
+    float finalTime;
+    switch (m_eTimeLine)
+    {
+    case TIME_ACCEL:
+        finalTime = normalizedTime * normalizedTime;
+        break;
+    case TIME_DECEL:
+        finalTime = nlSqrt(normalizedTime, true);
+        break;
+    case TIME_LINEAR:
+        finalTime = normalizedTime;
+        break;
+    default:
+        finalTime = normalizedTime;
+        break;
+    }
+
+    glSetDefaultState(false);
+    glSetCurrentTexture(m_nTexture, GLTT_Diffuse);
+    glSetTextureState(GLTS_DiffuseWrap, 3);
+    glSetRasterState(GLS_AlphaBlend, 1);
+
+    for (int i = 0; i < m_nModifiers; i++)
+    {
+        m_pModifiers[i]->ApplyModifier(poly, finalTime);
+    }
+
+    glSetCurrentRasterState(glHandleizeRasterState());
+    glSetCurrentTextureState(glHandleizeTextureState());
+    poly.Attach(view, 0, nullptr, 0xFFFFFFFF);
 }
 
 /**
@@ -553,18 +619,112 @@ void ScriptedScreenTransition::Render(eGLView)
  */
 void ScriptedScreenTransition::Cancel()
 {
+    for (int i = 0; i < m_nModifiers; i++)
+    {
+        m_pModifiers[i]->Cleanup();
+    }
 }
 
 /**
  * Offset/Address/Size: 0x3B8 | 0x80206CE4 | size: 0x2E0
  */
-void ScriptedScreenTransition::InitializeFromParser(SimpleParser*)
+void ScriptedScreenTransition::InitializeFromParser(SimpleParser* parser)
 {
+    TransitionModifierInterface* pModifiers[25]; // r1+0x8
+    m_nModifiers = 0;
+
+    for (char* pToken = parser->NextToken(true); pToken != nullptr; pToken = parser->NextToken(true))
+    {
+        if (nlStrCmp<char>(pToken, "end") == 0)
+            break;
+
+        if (nlStrCmp<char>(pToken, "length") == 0)
+        {
+            m_fLength = atof(parser->NextTokenOnLine(true));
+        }
+        else if (nlStrCmp<char>(pToken, "texture") == 0)
+        {
+            m_nTexture = glHash(parser->NextTokenOnLine(true));
+        }
+        else if (nlStrCmp<char>(pToken, "time") == 0)
+        {
+            char* temp_r3 = parser->NextTokenOnLine(true);
+            if (nlStrCmp<char>(temp_r3, "linear") == 0)
+            {
+                m_eTimeLine = TIME_LINEAR;
+            }
+            else if (nlStrCmp<char>(temp_r3, "accelerate") == 0)
+            {
+                m_eTimeLine = TIME_ACCEL;
+            }
+            else if (nlStrCmp<char>(temp_r3, "decelarate") == 0)
+            {
+                m_eTimeLine = TIME_DECEL;
+            }
+        }
+        else
+        {
+            TransitionModifierInterface* pModifier = GetModifierFromName(pToken);
+            pModifier->InitializeFromParser(parser);
+            pModifiers[m_nModifiers] = pModifier;
+            m_nModifiers += 1;
+        }
+    }
+
+    pModifiers[m_nModifiers] = new (nlMalloc(0x4C, 8, false)) TransitionModifiers::ToScreenCoordinates();
+    m_nModifiers += 1;
+
+    m_pModifiers = (TransitionModifierInterface**)nlMalloc(m_nModifiers * sizeof(TransitionModifierInterface*), 8, 0);
+    memcpy(m_pModifiers, pModifiers, m_nModifiers * sizeof(TransitionModifierInterface*));
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x8020692C | size: 0x3B8
  */
-void ScriptedScreenTransition::GetModifierFromName(char*)
+TransitionModifierInterface* ScriptedScreenTransition::GetModifierFromName(char* pName)
 {
+    if (nlStrCmp<char>(pName, "modelscale") == 0)
+    {
+        return new (nlMalloc(0x14, 8, false)) TransitionModifiers::ScaleModel();
+    }
+
+    if (nlStrCmp<char>(pName, "colour") == 0)
+    {
+        return new (nlMalloc(0xC, 8, false)) TransitionModifiers::ColourBlend();
+    }
+
+    if (nlStrCmp<char>(pName, "texturescale") == 0)
+    {
+        return new (nlMalloc(0x14, 8, false)) TransitionModifiers::ScaleTexture();
+    }
+
+    if (nlStrCmp<char>(pName, "modelshift") == 0)
+    {
+        return new (nlMalloc(0x14, 8, false)) TransitionModifiers::TranslateModel();
+    }
+
+    if (nlStrCmp<char>(pName, "textureshift") == 0)
+    {
+        return new (nlMalloc(0x14, 8, false)) TransitionModifiers::TranslateTexture();
+    }
+    if (nlStrCmp<char>(pName, "modelrotate") == 0)
+    {
+        return new (nlMalloc(0x18, 8, false)) TransitionModifiers::RotateModel();
+    }
+
+    if (nlStrCmp<char>(pName, "texturerotate") == 0)
+    {
+        return new (nlMalloc(0x18, 8, false)) TransitionModifiers::RotateTexture();
+    }
+
+    if (nlStrCmp<char>(pName, "screenblur") == 0)
+    {
+        return new (nlMalloc(0xC, 8, false)) TransitionModifiers::ScreenBlur();
+    }
+
+    if (nlStrCmp<char>(pName, "screengrab") == 0)
+    {
+        return new (nlMalloc(0xC, 8, false)) TransitionModifiers::ScreenGrab();
+    }
+    return NULL;
 }

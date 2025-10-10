@@ -8,25 +8,37 @@
 
 enum eVideoMode
 {
-    eVideoMode_0,
-    eVideoMode_1,
-    eVideoMode_2,
-    eVideoMode_3,
+    VideoMode_NTSC = 0,
+    VideoMode_PAL = 1,
+    VideoMode_MPAL = 2,
+    VideoMode_PAL60 = 3,
+    VideoMode_Num = 4,
 };
 
-struct gl_ScreenInfo // size: 0x28
+// struct gl_ScreenInfo // size: 0x28
+// {
+//     /* 0x00 */ u32 m_screenWidth;
+//     /* 0x04 */ u32 m_screenHeight;
+//     /* 0x08 */ u32 m_unk_0x08;
+//     /* 0x0C */ u32 m_unk_0x0C;
+//     /* 0x10 */ u32 m_unk_0x10;
+//     /* 0x14 */ u32 m_unk_0x14;
+//     /* 0x18 */ u32 m_unk_0x18;
+//     /* 0x1C */ u32 m_unk_0x1C;
+//     /* 0x20 */ float m_unk_0x20;
+//     /* 0x24 */ u32 m_unk_0x24;
+// };
+
+struct gl_ScreenInfo
 {
-    /* 0x00 */ u32 m_screenWidth;
-    /* 0x04 */ u32 m_screenHeight;
-    /* 0x08 */ u32 m_unk_0x08;
-    /* 0x0C */ u32 m_unk_0x0C;
-    /* 0x10 */ u32 m_unk_0x10;
-    /* 0x14 */ u32 m_unk_0x14;
-    /* 0x18 */ u32 m_unk_0x18;
-    /* 0x1C */ u32 m_unk_0x1C;
-    /* 0x20 */ float m_unk_0x20;
-    /* 0x24 */ u32 m_unk_0x24;
-};
+    /* 0x00 */ int ScreenWidth;
+    /* 0x04 */ int ScreenHeight;
+    /* 0x08 */ int ColourDepth[4];
+    /* 0x18 */ int ZDepth;
+    /* 0x1C */ int StencilDepth;
+    /* 0x20 */ float PixelCentre;
+    /* 0x24 */ bool FSAA;
+}; // total size: 0x28
 
 void glplatViewProjectPoint(eGLView, const nlVector3&, nlVector3&);
 void glplatEndFrame();

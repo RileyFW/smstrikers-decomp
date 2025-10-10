@@ -189,7 +189,7 @@ void glPoly2::FullCoverage(const nlColour& col, float z)
     const float width = glGetOrthographicWidth();
     const float height = glGetOrthographicHeight();
     gl_ScreenInfo* screenInfo = glGetScreenInfo();
-    const float border = screenInfo->m_unk_0x20;
+    const float border = screenInfo->PixelCentre;
 
     nlVec2Set(m_pos[0], -border, -border);
     nlVec2Set(m_pos[1], -border, height - border);
