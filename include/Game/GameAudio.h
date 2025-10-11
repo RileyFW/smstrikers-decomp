@@ -7,6 +7,12 @@
 #include "NL/nlMath.h"
 #include "NL/nlDLRing.h"
 
+// Forward declarations
+namespace Audio
+{
+struct SoundAttributes;
+}
+
 // void TrackedSFXPriorityCallback(SFXPlaySet*, unsigned long, cGameSFX*);
 // void TrackedSFXFilterFreqTypeCheckCallback(unsigned long, cGameSFX*);
 // void TrackedSFXPitchFreqTypeCheckCallback(unsigned long, cGameSFX*);

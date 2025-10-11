@@ -9,7 +9,6 @@
 class ScreenTransition
 {
 public:
-    // ScreenTransition() { };
     /* 0x08 */ virtual ~ScreenTransition() { };
     /* 0x0C */ virtual void Update(float) = 0;
     /* 0x10 */ virtual void Render(eGLView) = 0;

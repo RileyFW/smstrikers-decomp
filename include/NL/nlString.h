@@ -146,7 +146,7 @@ void nlToLower(CharT* str)
  * Ball: void nlStrNCpy<char>(char*, const char*, unsigned long)
  */
 template <typename CharT>
-void nlStrNCpy(CharT* str1, const CharT* str2, unsigned long len)
+CharT* nlStrNCpy(CharT* str1, const CharT* str2, unsigned long len)
 // void nlStrNCpy<c>__FPcPCcUl(u8 *arg0, u8 *arg1, u32 arg2)
 {
     //     s32 temp_cr0_eq;
@@ -193,7 +193,7 @@ void nlStrNCpy(CharT* str1, const CharT* str2, unsigned long len)
         str2 = str2 + 1;
     }
     str1[len + -1] = '\0';
-    return;
+    return str1;
 }
 
 /**

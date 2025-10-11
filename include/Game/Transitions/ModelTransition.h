@@ -33,7 +33,7 @@ public:
 
     void DoSanityCheck();
     void RenderOutline() const;
-    virtual ModeledScreenTransition* LoadFromParser(SimpleParser*);
+    ModeledScreenTransition* LoadFromParser(SimpleParser*);
 
     /* 0x04 */ glModel* m_pModels;                   // offset 0x4, size 0x4
     /* 0x08 */ u32 m_nModels;                        // offset 0x8, size 0x4

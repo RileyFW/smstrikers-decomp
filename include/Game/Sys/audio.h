@@ -5,6 +5,8 @@
 #include "NL/nlMath.h"
 #include "NL/plat/plataudio.h"
 
+#include "Game/Render/Nis.h"
+
 // void ReadVolGroupSettings();
 // void nlDeleteList<FadeAudioData>(FadeAudioData**);
 // void nlListRemoveElement<FadeAudioData>(FadeAudioData**, FadeAudioData*, FadeAudioData**);
@@ -108,25 +110,25 @@ SFXEmitter* GetEmitter(unsigned long);
 void SetListenerActive(bool);
 bool IsListenerActive();
 void SetOutputMode(MusyXOutputType);
-// void SetPitchBendOnSFX(unsigned long, unsigned short);
-// void SetFilterFreqOnSFX(unsigned long, unsigned short);
-// void ActivateFilterOnSFX(unsigned long, bool);
-// void SetPitchBendOnAllDialogueSFX(unsigned short);
-// void ActivateFilterOnAllCurrentSFX(bool);
-// void SetVolGroupVolume(int, float, int);
-// void SetSFXVolumeGroup(unsigned long, int);
-// void SetSFXVolume(unsigned long, float);
-// void Update3DSFXEmitters();
-// void UpdateFades(float);
+void SetPitchBendOnSFX(unsigned long, unsigned short);
+void SetFilterFreqOnSFX(unsigned long, unsigned short);
+void ActivateFilterOnSFX(unsigned long, bool);
+void SetPitchBendOnAllDialogueSFX(unsigned short);
+void ActivateFilterOnAllCurrentSFX(bool);
+void SetVolGroupVolume(int, float, int);
+void SetSFXVolumeGroup(unsigned long, int);
+void SetSFXVolume(unsigned long, float);
+void Update3DSFXEmitters();
+void UpdateFades(float);
 void Update(float);
 int GetSndIDError();
-// void IsSFXPlaying(unsigned long);
+void IsSFXPlaying(unsigned long);
 void StopSFX(unsigned long);
 // void PlaySFXEventFromScript(const SoundEventData&, const char*, float, float);
-// void StopCharSFXbyStr(const char*, NisCharacterClass);
-// void StopWorldSFXbyStr(const char*);
-// void PlayCharSFXbyStr(const char*, NisCharacterClass, float, float, bool, bool, const nlVector3*, const nlVector3*, unsigned long*);
-// void PlayWorldSFXbyStr(const char*, float, float, bool, bool, const nlVector3*, const nlVector3*, unsigned long*);
+void StopCharSFXbyStr(const char* szSFXType, NisCharacterClass charIdentifier);
+void StopWorldSFXbyStr(const char* szSFXType);
+void PlayCharSFXbyStr(const char* szSFXType, NisCharacterClass charIdentifier, float fVol, float fDelay, bool bIs3D, bool bKeepTrack, const nlVector3* pInitialPosVector, const nlVector3* pInitialDirVector, unsigned long* unkPtr);
+void PlayWorldSFXbyStr(const char* szSFXType, float fVol, float fDelay, bool bIs3D, bool bKeepTrack, const nlVector3* pInitialPosVector, const nlVector3* pInitialDirVector, unsigned long* unkPtr);
 // void RemoveDelayedSFX(unsigned long);
 // void IsDelayedCharSFX(unsigned long, cGameSFX*);
 // void AddDelayedSFX(const Audio::SoundAttributes&, unsigned long, float, float, cGameSFX*);
@@ -147,6 +149,9 @@ bool IsInited();
 // void InitializeReverb(eStadiumID, unsigned char);
 // void Initialize(bool);
 // void CreateTrackMgr<3>();
+
+// eCharSFX enum is defined in CharacterAudio.h
+
 }; // namespace Audio
 
 // class cGameSFX

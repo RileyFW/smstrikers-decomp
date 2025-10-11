@@ -6,6 +6,22 @@
 
 #include "Game/GameAudio.h"
 #include "Game/Physics/PhysicsCharacter.h"
+#include "Game/Sys/audio.h"
+
+enum CharDialogueType
+{
+    CHAR_DIALOGUE_ATTACK = 0,
+    CHAR_DIALOGUE_GET_HIT = 1,
+    CHAR_DIALOGUE_HIT = 2,
+    CHAR_DIALOGUE_PAIN = 3,
+    CHAR_DIALOGUE_ELECTROCUTE = 4,
+    CHAR_DIALOGUE_WAVE = 5,
+    CHAR_DIALOGUE_EXERT = 6,
+    CHAR_DIALOGUE_KICK = 7,
+    CHAR_CLAP = 8,
+    CHAR_FOOTSTEP_WALK = 9,
+    CHAR_FOOTSTEP_RUN = 10,
+};
 
 namespace Audio
 {

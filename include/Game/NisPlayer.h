@@ -2,15 +2,13 @@
 #define _NISPLAYER_H_
 
 #include "types.h"
+#include "Game/Render/Nis.h"
 #include "NL/nlFile.h"
 
 class Nis;
 struct NisHeader;
 class Event;
 
-// Temporary typedefs for unknown enum-like types
-typedef int NisTarget;
-typedef int NisWinnerType;
 typedef int NisUseStadiumOffset;
 typedef int NisUseFilter;
 
