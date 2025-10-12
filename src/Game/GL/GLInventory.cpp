@@ -1,5 +1,7 @@
 #include "Game/GL/GLInventory.h"
 
+GLInventory glInventory;
+
 /**
  * Offset/Address/Size: 0x1058 | 0x801E32F0 | size: 0x50
  */
@@ -20,15 +22,65 @@ void GLInventory::Create()
  */
 void GLInventory::Delete()
 {
-    m_vertexAnimTree.Clear();
-    m_materialListTree.Clear();
+    FORCE_DONT_INLINE;
+    m_bCreated = false;
+
+    for (int level = 0; level < 16; level++)
+    {
+        ReleaseLevel(level);
+
+        nlListContainer<void*>* fileData = m_pFileData[level];
+
+        if (fileData != nullptr)
+        {
+            // nlWalkList<ListEntry<void*>, ListContainerBase<void*, NewAdapter<ListEntry<void*> > > >(
+            //     fileData->m_Head,
+            //     fileData,
+            //     &ListContainerBase<void*, NewAdapter<ListEntry<void*> > >::DeleteEntry);
+
+            fileData->m_Head = nullptr;
+            fileData->m_Tail = nullptr;
+            delete fileData;
+        }
+        delete m_pSkinData[level];
+        delete m_pModels[level];
+        delete m_pShadowVolumes[level];
+        delete m_pTextureAnims[level];
+        delete m_pVertexAnims[level];
+        delete m_pMaterialLists[level];
+    }
 }
 
 /**
  * Offset/Address/Size: 0xB68 | 0x801E2E00 | size: 0xE4
  */
-void GLInventory::ReleaseLevel(int)
+void GLInventory::ReleaseLevel(int nLevel)
 {
+    FORCE_DONT_INLINE;
+    nlListContainer<void*>* fileData = m_pFileData[nLevel];
+
+    if (fileData != nullptr)
+    {
+        ListEntry<void*>* current = fileData->m_Head;
+        while (current != nullptr)
+        {
+            ListEntry<void*>* next = current->next;
+            delete current->data; // Delete the actual data
+            current = next;
+        }
+
+        // nlWalkList<ListEntry<void*>, ListContainerBase<void*, NewAdapter<ListEntry<void*> > > >(fileData->m_Head, fileData, &ListContainerBase<void*, NewAdapter<ListEntry<void*> > >::DeleteEntry);
+
+        fileData->m_Head = nullptr;
+        fileData->m_Tail = nullptr;
+    }
+
+    m_pSkinData[nLevel]->Release();      // freeing_GLInventory<nlChunk>
+    m_pModels[nLevel]->Release();        // clearing_GLInventory<glModel>
+    m_pShadowVolumes[nLevel]->Release(); // deleting_GLInventory<GLShadowVolume>
+    m_pTextureAnims[nLevel]->Release();  // deleting_GLInventory<GLTextureAnim>
+    m_pVertexAnims[nLevel]->Release();   // deleting_GLInventory<GLVertexAnim>
+    m_pMaterialLists[nLevel]->Release(); // deleting_GLInventory<GLMaterialList>
 }
 
 /**
@@ -36,13 +88,19 @@ void GLInventory::ReleaseLevel(int)
  */
 void GLInventory::ResourceMark()
 {
+    m_nLevel++;
 }
 
 /**
  * Offset/Address/Size: 0xB00 | 0x801E2D98 | size: 0x58
  */
-void GLInventory::ResourceRelease(int)
+void GLInventory::ResourceRelease(int nLevel)
 {
+    while (m_nLevel != nLevel)
+    {
+        ReleaseLevel(m_nLevel);
+        m_nLevel--;
+    }
 }
 
 /**
@@ -87,13 +145,6 @@ GLTextureAnim* GLInventory::GetTextureAnim(unsigned long)
  */
 void GLInventory::AddVertexAnim(unsigned long key, GLVertexAnim* vertexAnim)
 {
-    // m_materialListTree.AllocateEntry(&key, &materialList);
-    AVLTreeNode* node;
-    m_vertexAnimTree.AddAVLNode(&m_materialListTree.m_root_node_0x10, &vertexAnim, &key, &node, 0);
-    if (node == nullptr)
-    {
-        m_vertexAnimTree.m_Root += 1;
-    }
 }
 
 /**
@@ -109,22 +160,58 @@ GLVertexAnim* GLInventory::GetVertexAnim(unsigned long)
  */
 void GLInventory::AddMaterialList(unsigned long key, GLMaterialList* materialList)
 {
-    // m_materialListTree.AllocateEntry(&key, &materialList);
-    AVLTreeNode* node;
-    m_materialListTree.AddAVLNode(&m_materialListTree.m_root_node_0x10, &materialList, &key, &node, 0);
-    if (node == nullptr)
+    deleting_GLInventory<GLMaterialList>* pMaterialLists = m_pMaterialLists[m_nLevel];
+    AVLTreeNode** existingNode = nullptr;
+
+    u32 result = pMaterialLists->m_pItems->AddAVLNode(
+        (AVLTreeNode**)&pMaterialLists->m_pItems->m_Root,
+        &key,
+        &materialList,
+        existingNode,
+        0);
+
+    if (existingNode == nullptr)
     {
-        m_materialListTree.m_root_node_0x10 += 1;
-        // m_materialListTree.AllocateEntry(&key, materialList);
+        pMaterialLists->m_pItems->m_NumElements++;
     }
 }
 
 /**
  * Offset/Address/Size: 0x548 | 0x801E27E0 | size: 0xC8
  */
-GLMaterialList* GLInventory::GetMaterialList(unsigned long)
+GLMaterialList* GLInventory::GetMaterialList(unsigned long key)
 {
-    return nullptr; // TODO: Implement actual lookup
+    GLMaterialList* result = nullptr;
+
+    for (int level = m_nLevel; level >= 0; level--)
+    {
+        deleting_GLInventory<GLMaterialList>* pMaterialLists = m_pMaterialLists[level];
+        AVLTreeEntry<unsigned long, GLMaterialList*>* node = pMaterialLists->m_pItems->m_Root;
+
+        while (node != nullptr)
+        {
+            if (key == node->key)
+            {
+                result = node->value;
+                break;
+            }
+            else if (key < node->key)
+            {
+                node = (AVLTreeEntry<unsigned long, GLMaterialList*>*)node->node.left;
+            }
+            else
+            {
+                node = (AVLTreeEntry<unsigned long, GLMaterialList*>*)node->node.right;
+            }
+        }
+
+        if (result != nullptr)
+        {
+            break;
+        }
+    }
+
+    return result;
 }
 
 /**

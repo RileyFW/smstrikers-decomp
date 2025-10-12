@@ -19,15 +19,15 @@ public:
     };
 
     virtual ~ColourBlendScreenTransition() { };
-    virtual void Update(float);
-    virtual void Render(eGLView);
+    virtual void Update(float dt);
+    virtual void Render(eGLView view);
     virtual void Reset() { m_fCurrentTime = 0.0f; };
     virtual bool IsFinished() { return m_fCurrentTime > m_fLength; };
     virtual void Cancel() { };
     virtual float Time() const { return m_fCurrentTime / m_fLength; };
     virtual float GetTransitionLength() { return m_fLength; };
 
-    static ColourBlendScreenTransition* GetFromParser(SimpleParser*);
+    static ColourBlendScreenTransition* GetFromParser(SimpleParser* parser);
 
     /* 0x04 */ float m_fLength;
     /* 0x08 */ float m_fCurrentTime;

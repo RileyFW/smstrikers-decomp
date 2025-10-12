@@ -1,5 +1,17 @@
 #include "Game/Transitions/ScreenTransitionManager.h"
 
+#include "Game/Transitions/TransitionSequence.h"
+#include "Game/Transitions/ColourBlendScreenTransition.h"
+#include "Game/Transitions/ScriptedTransition.h"
+#include "Game/Transitions/ModelTransition.h"
+
+#include "Game/Sys/simpleparser.h"
+
+#include "string.h"
+
+#include "NL/nlMath.h"
+#include "NL/nlString.h"
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80206908 | size: 0x24
 //  */
@@ -131,13 +143,48 @@ ScreenTransitionManager::ScreenTransitionManager()
  */
 ScreenTransitionManager::~ScreenTransitionManager()
 {
+    DeleteAllTransitions();
+    delete[] m_Transitions.mData;
 }
 
 /**
  * Offset/Address/Size: 0x7F4 | 0x802058E4 | size: 0x108
  */
-void ScreenTransitionManager::Render(float)
+void ScreenTransitionManager::Render(float dt)
 {
+    if (m_pActiveTransition)
+    {
+        m_pActiveTransition->Update(dt);
+
+        if (m_pActiveTransition->IsFinished())
+        {
+            m_pActiveTransition->Cancel();
+            m_pActiveTransition = 0;
+
+            if (m_pCallback)
+            {
+                m_pCallback->TransitionFinished();
+            }
+        }
+        else
+        {
+            m_fCurrentTime += dt;
+
+            if (m_pCallback)
+            {
+                float curProgress = m_fCurrentLength;
+                float progress = 0.0f;
+                if (curProgress > 0.0f)
+                {
+                    progress = m_fCurrentTime / curProgress;
+                }
+
+                m_pCallback->TransitionProgressed(progress);
+            }
+
+            m_pActiveTransition->Render(m_eView);
+        }
+    }
 }
 
 /**
@@ -145,6 +192,16 @@ void ScreenTransitionManager::Render(float)
  */
 void ScreenTransitionManager::CancelAllTransitions()
 {
+    if (m_pActiveTransition != nullptr)
+    {
+        m_pActiveTransition->Cancel();
+
+        if (m_pCallback != nullptr)
+        {
+            m_pCallback->TransitionFinished();
+        }
+    }
+    m_pActiveTransition = nullptr;
 }
 
 /**
@@ -152,34 +209,175 @@ void ScreenTransitionManager::CancelAllTransitions()
  */
 void ScreenTransitionManager::DeleteAllTransitions()
 {
+    if (m_pActiveTransition != nullptr)
+    {
+        m_pActiveTransition->Cancel();
+
+        if (m_pCallback != nullptr)
+        {
+            m_pCallback->TransitionFinished();
+        }
+    }
+
+    m_pActiveTransition = nullptr;
+    m_TransitionMap.DeleteValues();
 }
 
 /**
  * Offset/Address/Size: 0x5A4 | 0x80205694 | size: 0x178
  */
-void ScreenTransitionManager::AddTransitionToMap(char*, ScreenTransition*)
+void ScreenTransitionManager::AddTransitionToMap(char* name, ScreenTransition* pTransition)
 {
+    AVLTreeNode* outNode = nullptr;
+    u32 transitionHash = glHash(name);
+
+    m_TransitionMap.AddAVLNode((AVLTreeNode**)&m_TransitionMap.m_Root, &transitionHash, pTransition, &outNode, m_TransitionMap.m_NumElements);
+
+    if (outNode == nullptr)
+    {
+        m_TransitionMap.m_NumElements++;
+    }
+
+    BasicString<char, Detail::TempStringAllocator>* nameString = nullptr;
+
+    nameString = (BasicString<char, Detail::TempStringAllocator>*)nlMalloc(16, 8, true);
+
+    if (nameString != nullptr)
+    {
+        nameString->m_data = nullptr;
+        nameString->m_size = 0;
+        nameString->m_capacity = 0;
+        nameString->m_refCount = 1;
+
+        const char* namePtr = name;
+        while (*namePtr != '\0')
+        {
+            nameString->m_size++;
+            namePtr++;
+        }
+
+        nameString->m_size++;
+
+        nameString->m_data = (char*)nlMalloc(nameString->m_size, 8, true);
+        nameString->m_capacity = nameString->m_size;
+
+        for (int i = 0; i < nameString->m_size - 1; i++)
+        {
+            nameString->m_data[i] = name[i];
+        }
+        nameString->m_data[nameString->m_size - 1] = '\0';
+
+        m_Transitions.push_back(*nameString);
+
+        nameString->m_refCount--;
+        if (nameString->m_refCount == 0)
+        {
+            if (nameString->m_data != nullptr)
+            {
+                delete[] nameString->m_data;
+            }
+            nlFree(nameString);
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0x504 | 0x802055F4 | size: 0xA0
  */
-void ScreenTransitionManager::EnableRandomTransition(const char*)
+void ScreenTransitionManager::EnableRandomTransition(const char* filter)
 {
+    SelectRandomTransition(filter);
+
+    if (m_pActiveTransition != nullptr)
+    {
+        m_pActiveTransition->Cancel();
+    }
+
+    if (m_SelectedTransition != nullptr)
+    {
+        m_SelectedTransition->Reset();
+        m_pActiveTransition = m_SelectedTransition;
+        m_SelectedTransition = nullptr;
+        m_eView = static_cast<eGLView>(29);
+        m_fCurrentTime = 0.0f;
+        m_Cut = false;
+        m_fCurrentLength = m_pActiveTransition->GetTransitionLength();
+    }
 }
 
 /**
  * Offset/Address/Size: 0x33C | 0x8020542C | size: 0x1C8
  */
-void ScreenTransitionManager::SelectRandomTransition(const char*)
+void ScreenTransitionManager::SelectRandomTransition(const char* filter)
 {
+    FORCE_DONT_INLINE;
+    // Vector<BasicString<char, Detail::TempStringAllocator>, DefaultAllocator> matchingTransitions;
+    Vector<BasicString<char, Detail::TempStringAllocator>, DefaultAllocator> matchingTransitions;
+    // Vector<ScreenTransition, DefaultAllocator> matchingTransitions;
+    matchingTransitions.reserve(8);
+
+    m_SelectedTransition = nullptr;
+
+    for (int i = 0; i < m_Transitions.mSize; i++)
+    {
+        const char* transitionName = m_Transitions.mData[i].c_str();
+        if (strstr(transitionName, filter) != nullptr)
+        {
+            // Vector<BasicString<char, Detail::TempStringAllocator>, DefaultAllocator>::push_back(const BasicString<char, Detail::TempStringAllocator>&)
+            matchingTransitions.push_back(m_Transitions.mData[i]);
+        }
+    }
+
+    // If we found matching transitions, randomly select one
+    if (matchingTransitions.mSize > 0)
+    {
+        // Generate a random index
+        int randomIndex = nlRandom(matchingTransitions.mSize, &nlDefaultSeed);
+
+        const char* selectedTransitionName = matchingTransitions.mData[randomIndex].c_str();
+
+        unsigned long transitionHash = glHash(selectedTransitionName);
+
+        // Search the AVL tree for the transition with this hash
+        AVLTreeEntry<unsigned long, ScreenTransition*>* foundEntry = nullptr;
+        AVLTreeEntry<unsigned long, ScreenTransition*>* current = m_TransitionMap.m_Root;
+
+        while (current != nullptr)
+        {
+            unsigned long currentKey = current->key;
+
+            if (transitionHash == currentKey)
+            {
+                foundEntry = current;
+                break;
+            }
+            else if (transitionHash < currentKey)
+            {
+                current = (AVLTreeEntry<unsigned long, ScreenTransition*>*)current->node.left;
+            }
+            else
+            {
+                current = (AVLTreeEntry<unsigned long, ScreenTransition*>*)current->node.right;
+            }
+        }
+
+        if (foundEntry != nullptr)
+        {
+            m_SelectedTransition = foundEntry->value;
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0x2FC | 0x802053EC | size: 0x40
  */
-void ScreenTransitionManager::GetSelectedTransitionCutTime() const
+float ScreenTransitionManager::GetSelectedTransitionCutTime() const
 {
+    if (m_SelectedTransition != nullptr)
+    {
+        return m_SelectedTransition->CutTime();
+    }
+    return 0.0f;
 }
 
 /**
@@ -187,6 +385,22 @@ void ScreenTransitionManager::GetSelectedTransitionCutTime() const
  */
 void ScreenTransitionManager::EnableSelectedTransition()
 {
+    if (m_pActiveTransition != nullptr)
+    {
+        m_pActiveTransition->Cancel();
+    }
+
+    if (m_SelectedTransition != nullptr)
+    {
+        m_SelectedTransition->Reset();
+        m_pActiveTransition = m_SelectedTransition;
+        m_SelectedTransition = nullptr;
+        m_eView = GLV_Transitions;
+        m_fCurrentTime = 0.0f;
+        m_Cut = false;
+
+        m_fCurrentLength = m_pActiveTransition->GetTransitionLength();
+    }
 }
 
 /**
@@ -194,4 +408,48 @@ void ScreenTransitionManager::EnableSelectedTransition()
  */
 void ScreenTransitionManager::AddTransitions(char* loadedData, unsigned long fileSize)
 {
+    SimpleParser parser;
+    char szNameBuffer[64];
+
+    parser.StartParsing(loadedData, fileSize, true);
+    char* pToken = parser.NextToken(true);
+
+    while (pToken != nullptr)
+    {
+        if (nlStrCmp<char>(pToken, "colourblend") == 0)
+        {
+            pToken = parser.NextTokenOnLine(true);
+            nlStrNCpy<char>(szNameBuffer, pToken, 0x40);
+            AddTransitionToMap(szNameBuffer, ColourBlendScreenTransition::GetFromParser(&parser));
+        }
+        else if (nlStrCmp<char>(pToken, "sequence") == 0)
+        {
+            nlStrNCpy<char>(szNameBuffer, parser.NextTokenOnLine(true), 0x40);
+            TransitionSequence* transitionSequence = new (nlMalloc(0x20, 8, 0)) TransitionSequence();
+            transitionSequence->Initialize(&parser);
+            AddTransitionToMap(szNameBuffer, transitionSequence);
+        }
+        else if (nlStrCmp<char>(pToken, "transition") == 0)
+        {
+            nlStrNCpy<char>(szNameBuffer, parser.NextTokenOnLine(true), 0x40);
+            ScriptedScreenTransition* scriptedTransition = new (nlMalloc(0x1C, 8, 0)) ScriptedScreenTransition();
+            scriptedTransition->InitializeFromParser(&parser);
+            AddTransitionToMap(szNameBuffer, scriptedTransition);
+        }
+        else if (nlStrCmp<char>(pToken, "model") == 0)
+        {
+            nlStrNCpy<char>(szNameBuffer, parser.NextTokenOnLine(true), 0x40);
+            ModeledScreenTransition* modeledTransition = new (nlMalloc(0xC4, 8, 0)) ModeledScreenTransition();
+            modeledTransition->LoadFromParser(&parser);
+            AddTransitionToMap(szNameBuffer, modeledTransition);
+        }
+        else if (*pToken == 0x23)
+        {
+            while (pToken != nullptr)
+            {
+                pToken = parser.NextTokenOnLine(true);
+            }
+        }
+        pToken = parser.NextToken(true);
+    }
 }

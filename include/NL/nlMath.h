@@ -323,6 +323,8 @@ int nlRandom(unsigned int, unsigned int*);
 void nlSetRandomSeed(unsigned int, unsigned int*);
 void nlInitRandom();
 
+extern unsigned int nlDefaultSeed;
+
 #include "NL/platvmath.h"
 #include "NL/platqmath.h"
 #include "NL/utility.h"

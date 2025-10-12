@@ -8,6 +8,10 @@ template <typename T, typename Allocator = DefaultAllocator>
 class Vector
 {
 public:
+    void reserve(int capacity);
+    void push_back(const T& value);
+    void insert(T* position, const T* first, const T* last);
+
     /* 0x0 */ T* mData;
     /* 0x4 */ int mSize;
     /* 0x8 */ int mCapacity;

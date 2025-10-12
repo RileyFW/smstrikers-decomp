@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+#include "NL/nlAdapter.h"
 #include "NL/nlDLRing.h"
 #include "NL/nlSlotPool.h"
 
@@ -27,20 +28,20 @@ public:
     }
 };
 
-template <typename T>
-class NewAdapter
-{
-public:
-    typedef ListEntry<T> EntryType; // Add this line
+// template <typename T>
+// class NewAdapter
+// {
+// public:
+//     typedef ListEntry<T> EntryType; // Add this line
 
-    static void DeleteEntry(ListEntry<T>* entry)
-    {
-        if (entry)
-        {
-            delete entry;
-        }
-    }
-};
+//     static void DeleteEntry(ListEntry<T>* entry)
+//     {
+//         if (entry)
+//         {
+//             delete entry;
+//         }
+//     }
+// };
 
 template <typename T, typename Adapter>
 class ListContainerBase

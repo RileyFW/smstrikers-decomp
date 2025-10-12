@@ -18,8 +18,8 @@ public:
     TransitionSequence();
 
     virtual ~TransitionSequence();
-    virtual void Update(float);
-    virtual void Render(eGLView);
+    virtual void Update(float dt);
+    virtual void Render(eGLView view);
     virtual void Reset();
     virtual bool IsFinished();
     virtual void Cancel();
@@ -28,7 +28,7 @@ public:
     virtual float GetTransitionLength();
 
     void DoSanityCheck();
-    void Initialize(SimpleParser*);
+    void Initialize(SimpleParser* parser);
 
     /* 0x4, */ class ScreenTransition** m_pTransitions;
     /* 0x8, */ unsigned short m_nNumTransitions;

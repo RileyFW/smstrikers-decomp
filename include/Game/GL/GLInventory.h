@@ -1,14 +1,76 @@
 #ifndef _GLINVENTORY_H_
 #define _GLINVENTORY_H_
 
-#include "NL/nlAVLTreeBase.h"
+#include "NL/nlList.h"
+#include "NL/nlAVLTree.h"
 
-class nlChunk;
-class GLMaterialList;
-class GLVertexAnim;
-class GLTextureAnim;
+#include "Game/SAnim.h"
+#include "Game/GL/GLMaterial.h"
+#include "Game/GL/GLVertexAnim.h"
+#include "Game/GL/GLTextureAnim.h"
 class GLShadowVolume;
 class glModel;
+
+template <typename ValueType>
+class freeing_GLInventory
+{
+public:
+    ~freeing_GLInventory()
+    {
+        FORCE_DONT_INLINE;
+        Release();
+        delete m_pItems;
+    }
+
+    void Release()
+    {
+        FORCE_DONT_INLINE;
+    }
+
+    /* 0x0 */ nlAVLTree<unsigned long, ValueType*, DefaultKeyCompare<unsigned long> >* m_pItems; // offset 0x0, size 0x4
+}; // total size: 0x4
+
+template <typename ValueType>
+class clearing_GLInventory
+{
+public:
+    ~clearing_GLInventory()
+    {
+        FORCE_DONT_INLINE;
+        Release();
+        delete m_pItems;
+    }
+
+    void Release()
+    {
+        FORCE_DONT_INLINE;
+        if (m_pItems != nullptr)
+        {
+            m_pItems->Clear();
+        }
+    }
+
+    /* 0x0 */ nlAVLTree<unsigned long, ValueType*, DefaultKeyCompare<unsigned long> >* m_pItems; // offset 0x0, size 0x4
+}; // total size: 0x4
+
+template <typename ValueType>
+class deleting_GLInventory
+{
+public:
+    ~deleting_GLInventory()
+    {
+        FORCE_DONT_INLINE;
+        Release();
+        delete m_pItems;
+    }
+
+    void Release()
+    {
+        FORCE_DONT_INLINE;
+    }
+
+    /* 0x0 */ nlAVLTree<unsigned long, ValueType*, DefaultKeyCompare<unsigned long> >* m_pItems;
+}; // total size: 0x4
 
 class GLInventory
 {
@@ -32,10 +94,15 @@ public:
     void MakeSkinMesh(unsigned long);
     void Update(float);
 
-    /* 0x00 */ u8 m_unk_0x00[0x08];
-    /* 0x08 */ AVLTreeBase<unsigned long, GLVertexAnim*, NewAdapter<AVLTreeEntry<unsigned long, GLVertexAnim*> >, DefaultKeyCompare<unsigned long> > m_vertexAnimTree;
-    /* 0x1C */ u8 m_unk_0x1C[0x1C0];
-    /* 0x1DC */ AVLTreeBase<unsigned long, GLMaterialList*, NewAdapter<AVLTreeEntry<unsigned long, GLMaterialList*> >, DefaultKeyCompare<unsigned long> > m_materialListTree;
-};
+    /* 0x000 */ nlListContainer<void*>* m_pFileData[16];
+    /* 0x040 */ freeing_GLInventory<nlChunk>* m_pSkinData[16];
+    /* 0x080 */ clearing_GLInventory<glModel>* m_pModels[16];
+    /* 0x0C0 */ deleting_GLInventory<GLShadowVolume>* m_pShadowVolumes[16];
+    /* 0x100 */ deleting_GLInventory<GLTextureAnim>* m_pTextureAnims[16];
+    /* 0x140 */ deleting_GLInventory<GLVertexAnim>* m_pVertexAnims[16];
+    /* 0x180 */ deleting_GLInventory<GLMaterialList>* m_pMaterialLists[16];
+    /* 0x1C0 */ int m_nLevel;
+    /* 0x1C4 */ unsigned char m_bCreated;
+}; // total size: 0x1C8
 
 #endif // _GLINVENTORY_H_
