@@ -2,6 +2,7 @@
 #define _NLSTRING_H_
 
 #include "types.h"
+#include "strtold.h"
 
 #ifndef nlPrintf
 extern void nlPrintf(const char*, ...);

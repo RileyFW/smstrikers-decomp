@@ -243,8 +243,8 @@ void TransitionSequence::Initialize(SimpleParser* parser)
     // float pEarly[20];
     // TransitionSounds sound[20] = { { nullptr, false }, { nullptr, false }, { nullptr, false }, { nullptr, false }, { nullptr, false }, { nullptr, false }, { nullptr, false }, { nullptr, false }, { nullptr, false }, { nullptr, false } };
 
-    ScreenTransition* pTrans[20] = {};
-    float pEarly[20];
+    ScreenTransition* pTrans[20];
+    float pEarly[20] = {};
     TransitionSounds sound[20] = {};
 
     m_nNumTransitions = 0;

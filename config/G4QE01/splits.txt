@@ -427,7 +427,7 @@ Game/AI/ScriptAction.cpp:
 	.bss        start:0x8030F390 end:0x8030F3B8
 	.sdata2     start:0x80375798 end:0x803757A8
 
-ShotMeter.o:
+Game/AI/ShotMeter.cpp:
 	.text       start:0x80062120 end:0x80062950
 	.text       start:0x80062950 end:0x80062950
 	.text       start:0x80062950 end:0x80062950

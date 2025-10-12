@@ -31,7 +31,6 @@ public:
     void AttachToModel(glModel*);
     void DetachFromModel(glModel*);
 
-    // total size: 0x108
     /* 0x0, */ float m_fStartScale;                          // size 0x4
     /* 0x4, */ float m_fEndScale;                            // size 0x4
     /* 0x8, */ unsigned long m_nDirType;                     // size 0x4

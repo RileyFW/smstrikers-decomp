@@ -711,7 +711,7 @@ config.libs = [
             Object(NonMatching, "Game/Transitions/ScreenTransitionManager.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Transitions/ColourBlendScreenTransition.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Transitions/ScriptedTransition.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/Transitions/TransLight.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/Transitions/TransLight.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Transitions/TransitionSequence.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Transitions/ModelTransition.cpp", extra_cflags=["-inline deferred"]),
 
@@ -866,6 +866,7 @@ config.libs = [
             Object(NonMatching, "Game/AI/ScriptAction.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/AI/FilteredRandom.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/AI/Fuzzy.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/ShotMeter.cpp", extra_cflags=["-inline deferred"]),
 
             # AI Scripts
             Object(NonMatching, "Game/AI/Scripts/RootScript.cpp", extra_cflags=["-inline deferred"]),

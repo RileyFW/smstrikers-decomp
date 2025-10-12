@@ -33,6 +33,11 @@ void ShotMeter::GetTotalDuration() const
  */
 void ShotMeter::Reset()
 {
+    m_eShotMeterState = SHOT_METER_ACTIVE;
+    m_fTime = 0.0f;
+    m_fScoreValue = 0.0f;
+    m_fSpeedValue = 0.0f;
+    m_fSTSValue = 0.0f;
 }
 
 /**
