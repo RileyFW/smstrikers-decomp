@@ -5,6 +5,17 @@
 #include "Game/Net.h"
 #include "Game/Ball.h"
 
+#pragma push
+#pragma pack(1)
+struct sCornerSegment
+{
+    /* 0x0 */ nlVector2 vCenter;
+    /* 0x8 */ u16 thetaStart;
+    /* 0xA */ u16 thetaEnd;
+    /* 0xC */ f32 fRadius;
+}; // total size: 0x10
+#pragma pop
+
 struct Corner
 {
     float unk0;
@@ -45,6 +56,7 @@ public:
 
     static nlVector3_ mv3FieldPosition;
     static nlVector3_ mSidelines[4];
+    // static sCornerSegment mCorners[4];
     static Corner mCorners;
     static float mfPenaltyBoxX;
     static float mfPenaltyBoxY;

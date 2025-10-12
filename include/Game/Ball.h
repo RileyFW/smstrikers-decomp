@@ -74,7 +74,7 @@ public:
     nlVector3* GetDrawablePosition() const;
     nlVector3* GetAIVelocity() const;
     void PostPhysicsUpdate(float);
-    void CollideWithWallCallback();
+    static void CollideWithWallCallback();
     void CollideWithGroundCallback();
     void CollideWithCharacterCallback(cPlayer*, const nlVector3&);
     void ClearBallEffects();
