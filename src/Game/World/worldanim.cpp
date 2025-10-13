@@ -1,80 +1,20 @@
-#include "worldanim.h"
-
-/**
- * Offset/Address/Size: 0x934 | 0x8019BD5C | size: 0x24
- */
-void AVLTreeBase<unsigned long, AnimationSet*, NewAdapter<AVLTreeEntry<unsigned long, AnimationSet*>>, DefaultKeyCompare<unsigned long>>::DeleteEntry(AVLTreeEntry<unsigned long, AnimationSet*>*)
-{
-}
-
-/**
- * Offset/Address/Size: 0x8D0 | 0x8019BCF8 | size: 0x64
- */
-void AVLTreeBase<unsigned long, AnimationSet*, NewAdapter<AVLTreeEntry<unsigned long, AnimationSet*>>, DefaultKeyCompare<unsigned long>>::AllocateEntry(void*, void*)
-{
-}
-
-/**
- * Offset/Address/Size: 0x8A4 | 0x8019BCCC | size: 0x2C
- */
-void AVLTreeBase<unsigned long, AnimationSet*, NewAdapter<AVLTreeEntry<unsigned long, AnimationSet*>>, DefaultKeyCompare<unsigned long>>::CompareKey(void*, AVLTreeNode*)
-{
-}
-
-/**
- * Offset/Address/Size: 0x878 | 0x8019BCA0 | size: 0x2C
- */
-void AVLTreeBase<unsigned long, AnimationSet*, NewAdapter<AVLTreeEntry<unsigned long, AnimationSet*>>, DefaultKeyCompare<unsigned long>>::CompareNodes(AVLTreeNode*, AVLTreeNode*)
-{
-}
-
-/**
- * Offset/Address/Size: 0x870 | 0x8019BC98 | size: 0x8
- */
-void AVLTreeBase<unsigned long, AnimationSet*, NewAdapter<AVLTreeEntry<unsigned long, AnimationSet*>>, DefaultKeyCompare<unsigned long>>::CastUp(AVLTreeNode*) const
-{
-}
-
-/**
- * Offset/Address/Size: 0x118 | 0x8019B540 | size: 0x758
- */
-void AVLTreeBase<unsigned long, AnimationSet*, NewAdapter<AVLTreeEntry<unsigned long, AnimationSet*>>, DefaultKeyCompare<unsigned long>>::PostorderTraversal(AVLTreeEntry<unsigned long, AnimationSet*>*, void (AVLTreeBase<unsigned long, AnimationSet*, NewAdapter<AVLTreeEntry<unsigned long, AnimationSet*>>, DefaultKeyCompare<unsigned long>>::*)(AVLTreeEntry<unsigned long, AnimationSet*>*))
-{
-}
-
-/**
- * Offset/Address/Size: 0xB4 | 0x8019B4DC | size: 0x64
- */
-void AVLTreeBase<unsigned long, AnimationSet*, NewAdapter<AVLTreeEntry<unsigned long, AnimationSet*>>, DefaultKeyCompare<unsigned long>>::DestroyTree(void (AVLTreeBase<unsigned long, AnimationSet*, NewAdapter<AVLTreeEntry<unsigned long, AnimationSet*>>, DefaultKeyCompare<unsigned long>>::*)(AVLTreeEntry<unsigned long, AnimationSet*>*))
-{
-}
-
-/**
- * Offset/Address/Size: 0x5C | 0x8019B484 | size: 0x58
- */
-void AVLTreeBase<unsigned long, AnimationSet*, NewAdapter<AVLTreeEntry<unsigned long, AnimationSet*>>, DefaultKeyCompare<unsigned long>>::Clear()
-{
-}
-
-/**
- * Offset/Address/Size: 0x0 | 0x8019B428 | size: 0x5C
- */
-void AVLTreeBase<unsigned long, AnimationSet*, NewAdapter<AVLTreeEntry<unsigned long, AnimationSet*>>, DefaultKeyCompare<unsigned long>>::~AVLTreeBase()
-{
-}
+#include "Game/World/worldanim.h"
 
 /**
  * Offset/Address/Size: 0x5C8 | 0x8019B394 | size: 0x94
  */
 WorldAnimManager::WorldAnimManager()
 {
-}
-
-/**
- * Offset/Address/Size: 0x568 | 0x8019B334 | size: 0x60
- */
-void nlAVLTree<unsigned long, AnimationSet*, DefaultKeyCompare<unsigned long>>::~nlAVLTree()
-{
+    cInventory<cSHierarchy>* inv = (cInventory<cSHierarchy>*)nlMalloc(sizeof(cInventory<cSHierarchy>), 8, 0);
+    if (inv != NULL)
+    {
+        inv->m_lItemList.m_Head = NULL;
+        inv->m_lItemList.m_Tail = NULL;
+        inv->m_lMemList.m_Head = NULL;
+        inv->m_lMemList.m_Tail = NULL;
+        inv->m_nItemCount = 0;
+    }
+    m_pHierarchyInventory = inv;
 }
 
 /**
@@ -82,6 +22,7 @@ void nlAVLTree<unsigned long, AnimationSet*, DefaultKeyCompare<unsigned long>>::
  */
 WorldAnimManager::~WorldAnimManager()
 {
+    // TODO: Implement
 }
 
 /**
@@ -89,25 +30,31 @@ WorldAnimManager::~WorldAnimManager()
  */
 void WorldAnimController::SetAnimation(const char*, ePlayMode)
 {
+    // TODO: Implement
 }
 
 /**
  * Offset/Address/Size: 0x44 | 0x8019AE10 | size: 0x14
  */
-void WorldAnimController::SetAnimationTime(float)
+void WorldAnimController::SetAnimationTime(float fTime)
 {
+    cPN_SAnimController* cntrl = m_pPoseTree;
+    cntrl->m_fPrevTime = cntrl->m_fTime;
+    cntrl->m_fTime = fTime;
 }
 
 /**
  * Offset/Address/Size: 0x38 | 0x8019AE04 | size: 0xC
  */
-void WorldAnimController::GetAnimationTime()
+float WorldAnimController::GetAnimationTime()
 {
+    return m_pPoseTree->m_fTime;
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x8019ADCC | size: 0x38
  */
-void WorldAnimController::GetAnimationDuration()
+float WorldAnimController::GetAnimationDuration()
 {
+    return (float)m_pPoseTree->m_pSAnim->m_numFrames / 30.0f;
 }

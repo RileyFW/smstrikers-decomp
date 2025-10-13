@@ -11,7 +11,7 @@ class cHeadTrack
 {
 public:
     cHeadTrack();
-    virtual ~cHeadTrack();
+    virtual ~cHeadTrack() { };
 
     void Update(const nlMatrix4& m4HeadMatrix, const nlMatrix4& m4ConstraintMatrix, float fDeltaT, unsigned short aOOIConstraint, int nHeadSpinMax, int nHeadTiltMax, float fSmoothTime);
 

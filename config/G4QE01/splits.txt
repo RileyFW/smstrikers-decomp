@@ -2566,7 +2566,7 @@ NL/gl/glAppAttach.cpp:
 	.sdata      start:0x803728B8 end:0x80372908
 	.sbss       start:0x80373E38 end:0x80373E70
 
-FlickDetection.o:
+Game/Pad/FlickDetection.cpp:
 	.text       start:0x801920F0 end:0x801922CC
 	.text       start:0x801922CC end:0x80192308
 	.text       start:0x80192308 end:0x80192320
@@ -2633,7 +2633,7 @@ Game/WorldManager.cpp:
 	.sbss       start:0x80373EC8 end:0x80373ED0
 	.sdata2     start:0x80376B08 end:0x80376B10
 
-worldanim.o:
+Game/World/worldanim.cpp:
 	.text       start:0x8019ADCC end:0x8019B428
 	.text       start:0x8019B428 end:0x8019B428
 	.text       start:0x8019B428 end:0x8019B428

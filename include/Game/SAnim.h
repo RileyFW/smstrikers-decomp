@@ -8,6 +8,12 @@
 
 #include "Game/PoseAccumulator.h"
 
+enum ePlayMode
+{
+    PM_CYCLIC = 0,
+    PM_HOLD = 1,
+};
+
 typedef struct cSAnimCallback
 {
     /* 0x00 */ f32 time;
@@ -36,6 +42,8 @@ public:
     void GetRootTrans(float, nlVector3*) const;
     void CreateCallback(float, unsigned int, void (*)(unsigned int));
     float GetMorphWeight(int, float) const;
+
+    void GetCallbackList() const;
 
     /* 0x00 */ u32 m_chunkID;
     /* 0x04 */ s32 m_chunkSize;

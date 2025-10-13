@@ -4,6 +4,9 @@
 #include "types.h"
 #include "NL/nlMath.h"
 
+#include "Game/AI/HeadTrack.h"
+#include "Game/SAnim/pnSAnimController.h"
+
 #include "Game/CharacterEffects.h"
 #include "Game/Blinker.h"
 
@@ -86,8 +89,8 @@ enum PosUpdateMethod
     PosUpdateMethod_0 = 0
 };
 
-class cHeadTrack;
-class cPN_SAnimController;
+// class cHeadTrack;
+// class cPN_SAnimController;
 
 #include "Game/Drawable/DrawableObj.h"
 
@@ -210,17 +213,17 @@ public:
     /* 0x120 */ nlVector3 m_v3ScreenPosition;
 };
 
-class cPN_SAnimController
-{
-public:
-    ~cPN_SAnimController();
-};
+// class cPN_SAnimController
+// {
+// public:
+//     ~cPN_SAnimController();
+// };
 
-class cHeadTrack
-{
-public:
-    virtual ~cHeadTrack();
-};
+// class cHeadTrack
+// {
+// public:
+//     virtual ~cHeadTrack();
+// };
 
 // class PhysicsCharacter
 // {

@@ -28,8 +28,8 @@ public:
     cPoseNode* GetChild(int) const;
     cPoseNode* GetChild(int);
 
-    cPoseNode* m_children[3];
-    int m_numChildren;
-};
+    /* 0x4 */ cPoseNode* m_children[3];
+    /* 0x10 */ int m_numChildren;
+}; // total size: 0x14
 
 #endif // _POSENODE_H_

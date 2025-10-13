@@ -553,19 +553,19 @@ void AIEventHandler(Event*, void*)
 {
 }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80012044 | size: 0x6C
- */
-cPN_SAnimController::~cPN_SAnimController()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80012044 | size: 0x6C
+//  */
+// cPN_SAnimController::~cPN_SAnimController()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x800120B0 | size: 0x48
- */
-cHeadTrack::~cHeadTrack()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x800120B0 | size: 0x48
+//  */
+// cHeadTrack::~cHeadTrack()
+// {
+// }
 
 // /**
 //  * Offset/Address/Size: 0x48 | 0x800120F8 | size: 0x60

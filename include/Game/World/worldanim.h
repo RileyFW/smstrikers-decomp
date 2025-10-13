@@ -2,7 +2,8 @@
 #define _WORLDANIM_H_
 
 #include "NL/nlList.h"
-#include "Game/Render/SkinAnimatedNPC.h"
+#include "NL/nlAVLTree.h"
+#include "Game/SAnim/pnSAnimController.h"
 
 template <typename T>
 class cInventory
@@ -22,16 +23,18 @@ public:
 class WorldAnimController
 {
 public:
+    virtual ~WorldAnimController() { };
+
     void SetAnimation(const char* szAnimationName, ePlayMode playMode);
     void SetAnimationTime(float fTime);
-    void GetAnimationTime();
-    void GetAnimationDuration();
+    float GetAnimationTime();
+    float GetAnimationDuration();
 
 public:
-    /* 0x4, */ class cPoseAccumulator* m_pPoseAccumulator;
-    /* 0x8, */ class cPN_SAnimController* m_pPoseTree;
+    /* 0x4, */ cPoseAccumulator* m_pPoseAccumulator;
+    /* 0x8, */ cPN_SAnimController* m_pPoseTree;
     /* 0xC, */ float m_fSpeed;
-    /* 0x10 */ class AnimationSet* m_pAnimationSet;
+    /* 0x10 */ AnimationSet* m_pAnimationSet;
     /* 0x14 */ bool m_bIsGanged;
 }; // total size: 0x18
 
@@ -40,7 +43,10 @@ class WorldAnimManager
 public:
     WorldAnimManager();
     ~WorldAnimManager();
-};
+
+    /* 0x0 */ cInventory<cSHierarchy>* m_pHierarchyInventory;                                               // offset 0x0, size 0x4
+    /* 0x4 */ nlAVLTree<unsigned long, AnimationSet*, DefaultKeyCompare<unsigned long> > m_animationSetMap; // offset 0x4, size 0x14
+}; // total size: 0x18
 
 // class nlAVLTree<unsigned long, AnimationSet*, DefaultKeyCompare<unsigned long>>
 // {

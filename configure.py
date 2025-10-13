@@ -822,6 +822,10 @@ config.libs = [
             Object(Matching, "Game/WorldManager.cpp"),
             Object(NonMatching, "Game/BasicStadium.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/World/WorldLoader.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/World/worldanim.cpp", extra_cflags=["-inline deferred"]),
+
+            # Pad
+            Object(Matching, "Game/Pad/FlickDetection.cpp", extra_cflags=["-inline deferred"]),
 
             # Tasks
             Object(Matching, "Game/WorldUpdateTask.cpp", extra_cflags=["-inline deferred"]),

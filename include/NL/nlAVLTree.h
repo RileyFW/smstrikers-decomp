@@ -10,7 +10,7 @@ class nlAVLTree : public AVLTreeBase<KeyType, ValueType, NewAdapter<AVLTreeEntry
 public:
     nlAVLTree()
         : AVLTreeBase<KeyType, ValueType, NewAdapter<AVLTreeEntry<KeyType, ValueType> >, CompareType>() { };
-    virtual ~nlAVLTree() { };
+    ~nlAVLTree() { };
 };
 
 #endif // _NLAVLTREE_H_

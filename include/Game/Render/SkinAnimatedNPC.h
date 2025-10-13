@@ -8,12 +8,6 @@
 #include "NL/gl/glModel.h"
 #include "NL/nlMath.h"
 
-enum ePlayMode
-{
-    PM_CYCLIC = 0,
-    PM_HOLD = 1,
-};
-
 class cPN_SAnimController;
 class GLSkinMesh;
 class cPoseNode;
