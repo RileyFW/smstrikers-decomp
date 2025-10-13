@@ -1130,9 +1130,14 @@ config.libs = [
             Object(NonMatching, "Game/Effects/EmissionManager.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Effects/PhotoFlashEffect.cpp", extra_cflags=["-inline deferred"]),
 
-            # Game/DB
+            # DB
             Object(NonMatching, "Game/DB/SaveLoad.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/DB/UserOptions.cpp", extra_cflags=["-inline deferred"]),
+
+            # Debug
+            Object(NonMatching, "Game/Debug/FrameCounter.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Debug/ShapeRender.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Debug/TimeRegions.cpp", extra_cflags=["-inline deferred"]),
         ],
     ),
     GameLib(

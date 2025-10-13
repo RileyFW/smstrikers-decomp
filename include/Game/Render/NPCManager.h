@@ -4,8 +4,9 @@
 #include "types.h"
 
 #include "NL/nlList.h"
-#include "Game/SHierarchy.h"
-#include "Game/Render/SkinAnimatedNPC.h"
+// #include "Game/SHierarchy.h"
+// #include "Game/Render/SkinAnimatedNPC.h"
+#include "Game/Render/Bowser.h"
 
 // void nlListAddStart<ListEntry<SkinAnimatedNPC*>>(ListEntry<SkinAnimatedNPC*>**, ListEntry<SkinAnimatedNPC*>*, ListEntry<SkinAnimatedNPC*>**);
 
@@ -18,7 +19,6 @@ struct NPCTemplate
 
 class cInventory;
 class ChainChomp;
-class Bowser;
 
 class NPCManager
 {

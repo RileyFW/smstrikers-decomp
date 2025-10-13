@@ -2141,7 +2141,7 @@ ShootToScoreMeter.o:
 	.sbss       start:0x80373C50 end:0x80373C70
 	.sdata2     start:0x803766C8 end:0x80376770
 
-TimeRegions.o:
+Game/Debug/TimeRegions.cpp:
 	.text       start:0x80161E20 end:0x801626A8
 	.text       start:0x801626A8 end:0x801627A8
 	.text       start:0x801627A8 end:0x801627D4
@@ -4361,7 +4361,7 @@ Game/Sys/tweak.cpp:
 	.text       start:0x801FB0EC end:0x801FB290
 	.sdata2     start:0x80377368 end:0x80377370
 
-ShapeRender.o:
+Game/Debug/ShapeRender.cpp:
 	.text       start:0x801FB290 end:0x801FCB9C
 	.ctors      start:0x8028D564 end:0x8028D568
 	.rodata     start:0x802A05E0 end:0x802A0600
@@ -4371,7 +4371,7 @@ ShapeRender.o:
 	.sbss       start:0x803743D0 end:0x803743E0
 	.sdata2     start:0x80377370 end:0x803773B8
 
-FrameCounter.o:
+Game/Debug/FrameCounter.cpp:
 	.text       start:0x801FCB9C end:0x801FDF8C
 	.text       start:0x801FDF8C end:0x801FDF8C
 	.text       start:0x801FDF8C end:0x801FE0D4
