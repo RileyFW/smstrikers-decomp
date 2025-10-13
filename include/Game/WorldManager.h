@@ -9,7 +9,7 @@ public:
     static World* s_World;
 
     static void DestroyWorld();
-    static void LoadWorld(const char*, bool);
+    static bool LoadWorld(const char* szBaseName, bool forfe);
     static void UpdateWorld(float dt = 0.f);
     static void RenderWorld();
 };

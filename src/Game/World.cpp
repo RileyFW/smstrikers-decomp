@@ -217,7 +217,7 @@ bool World::LoadGeometry(const char*, bool, bool, unsigned long*, int*)
 /**
  * Offset/Address/Size: 0x376C | 0x80198430 | size: 0x68
  */
-void World::Load(bool forfe)
+bool World::Load(bool forfe)
 {
     DoLoad();
     if (forfe == FALSE)
@@ -225,6 +225,7 @@ void World::Load(bool forfe)
         DoInitialize();
     }
     m_Locked = true;
+    return true;
 }
 
 /**

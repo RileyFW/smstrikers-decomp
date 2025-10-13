@@ -820,6 +820,8 @@ config.libs = [
             # World
             Object(NonMatching, "Game/World.cpp"),
             Object(Matching, "Game/WorldManager.cpp"),
+            Object(NonMatching, "Game/BasicStadium.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/World/WorldLoader.cpp", extra_cflags=["-inline deferred"]),
 
             # Tasks
             Object(Matching, "Game/WorldUpdateTask.cpp", extra_cflags=["-inline deferred"]),
@@ -842,9 +844,6 @@ config.libs = [
             Object(Matching, "Game/PadMonkey.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/PadActions.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/RumbleActions.cpp", extra_cflags=["-inline deferred"]),
-
-            # World Objects
-            Object(NonMatching, "Game/BasicStadium.cpp", extra_cflags=["-inline deferred"]),
 
             # Render
             Object(NonMatching, "Game/Render/Presentation.cpp", extra_cflags=["-inline deferred"]),

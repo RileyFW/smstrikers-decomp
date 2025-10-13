@@ -1,6 +1,6 @@
 #pragma pool_data off
 
-#include "debug.h"
+#include "Game/Sys/debug.h"
 #include "Game/Sys/simpleparser.h"
 
 #include "extras.h"
@@ -12,7 +12,7 @@ extern void nlPrintf(const char*, ...);
 namespace tDebugPrintManager
 {
 
-const char* szChannelNames[DEBUG_CHANNEL_COUNT] = {
+const char* szChannelNames[DC_NUM_CHANNELS] = {
     "STARTUP",
     "GL",
     "GLPLAT",
@@ -35,8 +35,7 @@ const char* szChannelNames[DEBUG_CHANNEL_COUNT] = {
     "CONFIGSYS",
 };
 
-bool abChannels[DEBUG_CHANNEL_COUNT] = { true, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false };
+bool abChannels[DC_NUM_CHANNELS] = { true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
 
 /**
  * Offset/Address/Size: 0x0 | 0x801D6770 | size: 0x54
@@ -52,13 +51,13 @@ int Print(eDEBUG_CHANNEL, const char*, ...)
 void Initialize()
 {
     // Zero out all channels
-    for (int i = 0; i < DEBUG_CHANNEL_COUNT; ++i)
+    for (int i = 0; i < DC_NUM_CHANNELS; ++i)
         abChannels[i] = 0;
 
     // Parse file; if it fails, enable all
     if (ParseDebugChannelFile("PrintCfg.txt") == 0)
     {
-        for (int i = 0; i < DEBUG_CHANNEL_COUNT; ++i)
+        for (int i = 0; i < DC_NUM_CHANNELS; ++i)
         {
             abChannels[i] = 1;
         }
@@ -94,7 +93,7 @@ bool ParseDebugChannelFile(const char* path)
                 continue;
 
             // scan list of known channel names and mark enabled
-            for (int chan = 0; chan < DEBUG_CHANNEL_COUNT; ++chan)
+            for (int chan = 0; chan < DC_NUM_CHANNELS; ++chan)
             {
                 if (strcmpi(szChannelNames[chan], token) == 0)
                 {

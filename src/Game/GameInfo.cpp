@@ -561,8 +561,9 @@ void GameInfoManager::SetPreviousTeamStats()
 /**
  * Offset/Address/Size: 0x969C | 0x8017ED40 | size: 0x18
  */
-void GameInfoManager::GetStadium() const
+eStadiumID GameInfoManager::GetStadium() const
 {
+    return STAD_YOSHI_STADIUM;
 }
 
 /**

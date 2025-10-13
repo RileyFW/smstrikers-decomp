@@ -1,6 +1,6 @@
 #include "Game/Blinker.h"
 
-#include "Sys/debug.h"
+#include "Game/Sys/debug.h"
 #include "string.h"
 
 #include "NL/nlPrint.h"
@@ -92,7 +92,7 @@ Blinker::Blinker(const char* szBaseName, unsigned long model0Hash, GLMaterialLis
 
     if (m_pEyes[0] == 0)
     {
-        tDebugPrintManager::Print(DEBUG_RENDER, "%s has no eyes on material 0\n", szBaseName);
+        tDebugPrintManager::Print(DC_RENDER, "%s has no eyes on material 0\n", szBaseName);
         return;
     }
 
@@ -208,7 +208,7 @@ Blinker::Blinker(const char* szBaseName, unsigned long model0Hash, GLMaterialLis
 
     if (!found || !glTextureLoad(m_Textures[1]) || !glTextureLoad(m_Textures[2]))
     {
-        tDebugPrintManager::Print(DEBUG_RENDER, "Error: %s not properly configured for blinking.\n", szBaseName);
+        tDebugPrintManager::Print(DC_RENDER, "Error: %s not properly configured for blinking.\n", szBaseName);
         return;
     }
 

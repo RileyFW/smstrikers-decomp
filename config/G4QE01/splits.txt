@@ -2620,7 +2620,7 @@ Game/World.cpp:
 	.sbss       start:0x80373E78 end:0x80373EC0
 	.sdata2     start:0x80376AA8 end:0x80376B08
 
-WorldLoader.o:
+Game/World/WorldLoader.cpp:
 	.text       start:0x8019AB18 end:0x8019AC38
 	.text       start:0x8019AC38 end:0x8019AC38
 	.text       start:0x8019AC38 end:0x8019AC60

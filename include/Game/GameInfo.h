@@ -98,9 +98,15 @@ enum eSidekickID
 
 enum eStadiumID
 {
-    eStadiumID_None = 0,
-    eStadiumID_Stadium1 = 1,
-    eStadiumID_Stadium2 = 2,
+    STAD_INVALID = -1,
+    STAD_MARIO_STADIUM = 0,
+    STAD_PEACH_TOAD_STADIUM = 1,
+    STAD_DK_DAISY = 2,
+    STAD_WARIO_STADIUM = 3,
+    STAD_YOSHI_STADIUM = 4,
+    STAD_SUPER_STADIUM = 5,
+    STAD_FORBIDDEN_DOME = 6,
+    MAX_STADIUMS = 7,
 };
 
 enum eUserGameResult
@@ -250,7 +256,7 @@ public:
     void GetTeamStatsByIndex(unsigned short);
     void pGetTeamStatsByIndex(unsigned short);
     void SetPreviousTeamStats();
-    void GetStadium() const;
+    eStadiumID GetStadium() const;
     void GetMatchupInfo(short, unsigned short) const;
     void SetUserSelectedCupTeam(eTeamID);
     void SetUserSelectedCupSidekick(eSidekickID);

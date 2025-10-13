@@ -2,6 +2,7 @@
 #define _WORLD_H_
 
 #include "NL/nlMath.h"
+#include "Game/TerrainTypes.h"
 
 // void DoTranslucency(DrawableObject*);
 // void nlListAddStart<ListEntry<LightObject*>>(ListEntry<LightObject*>**, ListEntry<LightObject*>*, ListEntry<LightObject*>**);
@@ -9,18 +10,6 @@
 // void nlDLRingGetStart<DLListEntry<WorldAnimController*>>(DLListEntry<WorldAnimController*>*);
 // void nlStrChr<char>(const char*, char);
 // void 0x8028D34C..0x8028D350 | size: 0x4;
-
-enum eTerrain
-{
-    T_Grass = 0,
-    T_BlueGrass = 1,
-    T_Concrete = 2,
-    T_BlueConcrete = 3,
-    T_Wood = 4,
-    T_Metal = 5,
-    T_Rubber = 6,
-    T_Num = 7,
-};
 
 class WorldAnimManager;
 class DrawableObject;
@@ -76,7 +65,7 @@ public:
     void AddToHyperSTSDrawables(unsigned long, DrawableModel*);
     bool LoadGeometry(glModel*, unsigned long, bool, bool, unsigned long*, int*, bool);
     bool LoadGeometry(const char*, bool, bool, unsigned long*, int*);
-    void Load(bool);
+    bool Load(bool forfe);
 
     /* 0x004 */ WorldAnimManager* m_pWorldAnimManager;
     /* 0x008 */ s32 m_lightMap;

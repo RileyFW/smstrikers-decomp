@@ -18,12 +18,12 @@ void WorldManager::DestroyWorld()
 /**
  * Offset/Address/Size: 0x44 | 0x8019ACA4 | size: 0x68
  */
-void WorldManager::LoadWorld(const char* arg0, bool arg1)
+bool WorldManager::LoadWorld(const char* szBaseName, bool forfe)
 {
     void* this_00 = nlMalloc(0x18C, 8, FALSE);
-    this_00 = new (this_00) BasicStadium(arg0);
+    this_00 = new (this_00) BasicStadium(szBaseName);
     s_World = (World*)this_00;
-    s_World->Load(arg1);
+    return s_World->Load(forfe);
 }
 
 /**

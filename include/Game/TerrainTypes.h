@@ -3,13 +3,14 @@
 
 enum eTerrain
 {
-    TERRAIN_GRASS = 0,
-    TERRAIN_BLUEGRASS = 1,
-    TERRAIN_CONCRETE = 2,
-    TERRAIN_BLUECONCRETE = 3,
-    TERRAIN_WOOD = 4,
-    TERRAIN_METAL = 5,
-    TERRAIN_RUBBER = 6
+    T_Grass = 0,
+    T_BlueGrass = 1,
+    T_Concrete = 2,
+    T_BlueConcrete = 3,
+    T_Wood = 4,
+    T_Metal = 5,
+    T_Rubber = 6,
+    T_Num = 7,
 };
 
 const char* GetTerrainName(eTerrain terrain);
