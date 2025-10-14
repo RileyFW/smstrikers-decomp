@@ -1,17 +1,14 @@
 #ifndef _FECAPTAINCOMPONENT_H_
 #define _FECAPTAINCOMPONENT_H_
+
 #include "Game/FE/feInput.h"
+#include "Game/GameInfo.h"
 
 class TLComponentInstance;
 class TLInstance;
 class TLSlide;
 class InlineHasher;
 class FEPresentation;
-
-enum eSidekickID
-{
-    SIDEKICK_ID_0 = 0,
-};
 
 class IChooseCaptain
 {

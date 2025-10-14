@@ -41,6 +41,21 @@ enum eTeamSide
     HOME_AWAY = 2,
 };
 
+enum eTeamID
+{
+    TEAM_INVALID = -1,
+    TEAM_DAISY = 0,
+    TEAM_DONKEYKONG = 1,
+    TEAM_LUIGI = 2,
+    TEAM_MARIO = 3,
+    TEAM_PEACH = 4,
+    TEAM_WALUIGI = 5,
+    TEAM_WARIO = 6,
+    TEAM_YOSHI = 7,
+    TEAM_MYSTERY = 8,
+    NUM_TEAMS = 9,
+};
+
 void MostDefensivePlayer(const void*, const void*);
 void MostOffensiveThreat(const void*, const void*);
 void BestAbleToInterceptBall(const void*, const void*);

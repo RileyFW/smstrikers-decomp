@@ -1,18 +1,22 @@
 #ifndef _SHCUPCHOOSECAPTAIN_H_
 #define _SHCUPCHOOSECAPTAIN_H_
 
+#include "Game/DB/Cup.h"
+
 class CupChooseCaptainSceneV2
 {
 public:
     enum eCupCaptainState
     {
-        eCupCaptainState_0 = 0
+        CUP_STATE_CAPTAIN = 0,
+        CUP_STATE_SK = 1,
+        CUP_STATE_READY = 2,
     };
 
-    enum eSidekickID
-    {
-        eSidekickID_0 = 0
-    };
+    // enum eSidekickID
+    // {
+    //     eSidekickID_0 = 0
+    // };
 
     CupChooseCaptainSceneV2(bool);
     ~CupChooseCaptainSceneV2();

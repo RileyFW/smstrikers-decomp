@@ -1,246 +1,72 @@
 #ifndef _GAMEINFO_H_
 #define _GAMEINFO_H_
 
-#include "Game/FE/feInput.h"
 #include "types.h"
+#include "Dolphin/os.h"
+
+#include "Game/FE/feInput.h"
 
 #include "NL/nlSingleton.h"
 #include "NL/nlConfig.h"
 
+#include "Game/Team.h"
+#include "Game/TrophyInfo.h"
 #include "Game/GameTweaks.h"
 
 #include "Game/DB/UserOptions.h"
+#include "Game/DB/CustomTournament.h"
+#include "Game/DB/StatsTracker.h"
+#include "Game/DB/Cup.h"
 
-// enum eSkillLevel
-// {
-//     TRAINING = 0,
-//     ROOKIE = 1,
-//     PROFESSIONAL = 2,
-//     SUPERSTAR = 3,
-//     LEGEND = 4,
-// };
-
-// struct GameplaySettings
-// {
-//     /* 0x0 */ eSkillLevel SkillLevel;
-//     /* 0x4 */ s32 GameTime;
-//     /* 0x8 */ bool PowerUps;
-//     /* 0x9 */ bool Shoot2Score;
-//     /* 0xA */ bool BowserAttackEnabled;
-//     /* 0xB */ bool RumbleEnabled;
-// }; // total size: 0xC
-
-// struct PowerupSettings
-// {
-//     /* 0x0 */ bool RedShells;
-//     /* 0x1 */ bool GreenShells;
-//     /* 0x2 */ bool BlueShells;
-//     /* 0x3 */ bool SpinyShells;
-//     /* 0x4 */ bool Starman;
-//     /* 0x5 */ bool Twister;
-//     /* 0x6 */ bool Bobombs;
-//     /* 0x7 */ bool Bananas;
-// }; // total size: 0x8
+struct Spoil
+{
+    /* 0x000 */ CupRecord mCupHistory[10];
+    /* 0x208 */ unsigned char mNumRecords;
+    /* 0x20A */ unsigned short mNumWins;
+    /* 0x20C */ unsigned short mNumLosses;
+    /* 0x20E */ unsigned short mNumCupWins;
+    /* 0x210 */ eTeamID mCurrentChamp;
+    /* 0x214 */ bool mIsCPUChamp;
+}; // total size: 0x218
 
 struct UserInfo
 {
-    // total size: 0x113C
-    /* 0x00 */ unsigned long mSaveID;
-    u8 pad04[0x2C];                               // offset 0x4, size 0x4
-                                                  // struct AudioSettings mAudioOptions; // offset 0x4, size 0x20
-                                                  // struct VisualSettings mVisualOptions; // offset 0x24, size 0xC
-    /* 0x30 */ GameplaySettings mGameplayOptions; // offset 0x30, size 0xC
-    /* 0x3C */ PowerupSettings mPowerupOptions;   // offset 0x3C, size 0x8
-    u8 pad0x44[0x10F8];
-    // struct CheatSettings mCheatOptions; // offset 0x44, size 0x8
-    // unsigned char mTrophies[2]; // offset 0x4C, size 0x2
-    // struct Spoil mSpoils[8]; // offset 0x50, size 0x10C0
-    // unsigned char mIsFlowerCupUnlocked; // offset 0x1110, size 0x1
-    // unsigned char mIsStarCupUnlocked; // offset 0x1111, size 0x1
-    // unsigned short mNumGamesPlayed; // offset 0x1112, size 0x2
-    // unsigned short mNumGoalsScored; // offset 0x1114, size 0x2
-    // unsigned short mNumSTSAttempts; // offset 0x1116, size 0x2
-    // unsigned short mNumPerfectPasses; // offset 0x1118, size 0x2
-    // unsigned short mNumHits; // offset 0x111A, size 0x2
-    // struct BasicGameInfo mBowserCupFinalRound; // offset 0x111C, size 0x20
+    /* 0x0000 */ unsigned long mSaveID;
+    /* 0x0004 */ AudioSettings mAudioOptions;
+    /* 0x0024 */ VisualSettings mVisualOptions;
+    /* 0x0030 */ GameplaySettings mGameplayOptions;
+    /* 0x003C */ PowerupSettings mPowerupOptions;
+    /* 0x0044 */ CheatSettings mCheatOptions;
+    /* 0x004C */ unsigned char mTrophies[2];
+    /* 0x0050 */ Spoil mSpoils[8];
+    /* 0x1110 */ bool mIsFlowerCupUnlocked;
+    /* 0x1111 */ bool mIsStarCupUnlocked;
+    /* 0x1112 */ unsigned short mNumGamesPlayed;
+    /* 0x1114 */ unsigned short mNumGoalsScored;
+    /* 0x1116 */ unsigned short mNumSTSAttempts;
+    /* 0x1118 */ unsigned short mNumPerfectPasses;
+    /* 0x111A */ unsigned short mNumHits;
+    /* 0x111C */ BasicGameInfo mBowserCupFinalRound;
 }; // total size: 0x113C
-
-class Spoil
-{
-public:
-};
-
-enum eTrophyType
-{
-    eTrophyType_None = 0,
-    eTrophyType_Bronze = 1,
-    eTrophyType_Silver = 2,
-    eTrophyType_Gold = 3,
-};
-
-enum eTeamID
-{
-    eTeamID_None = -1,
-    eTeamID_Team0 = 0,
-    eTeamID_Team1 = 1,
-};
-
-enum eSidekickID
-{
-    SK_MYSTERY = -2,
-    SK_INVALID = -1,
-    SK_TOAD = 0,
-    SK_KOOPA = 1,
-    SK_HAMMERBROS = 2,
-    SK_BIRDO = 3,
-    NUM_SIDEKICKS = 4,
-};
-
-enum eStadiumID
-{
-    STAD_INVALID = -1,
-    STAD_MARIO_STADIUM = 0,
-    STAD_PEACH_TOAD_STADIUM = 1,
-    STAD_DK_DAISY = 2,
-    STAD_WARIO_STADIUM = 3,
-    STAD_YOSHI_STADIUM = 4,
-    STAD_SUPER_STADIUM = 5,
-    STAD_FORBIDDEN_DOME = 6,
-    MAX_STADIUMS = 7,
-};
-
-enum eUserGameResult
-{
-    eUserGameResult_None = 0,
-    eUserGameResult_Win = 1,
-    eUserGameResult_Loss = 2,
-};
-
-struct BaseCup
-{
-public:
-    // 5 pure-virtuals (nulls in BaseCup vtable)
-    void GetGameInfo(int team, int round);
-    void* GetTeamStats(int team);
-    int GetNumTeams();
-    int GetNumRounds();
-    void GetRoundResults(int round);
-
-    // Implemented in BaseCup (present in BaseCup vtable)
-    void SerializeData(void* dst) const;
-    void DeserializeData(void* src);
-    int GetSaveDataSize() const;
-
-    /* 0x0, */ eTeamID mUserSelectedTeam;         // offset 0x0, size 0x4
-    /* 0x4, */ eSidekickID mUserSelectedSidekick; // offset 0x4, size 0x4
-    /* 0x8, */ s16 mRoundNumber;                  // offset 0x8, size 0x2
-    /* 0xA, */ s16 mGameNumber;                   // offset 0xA, size 0x2
-    /* 0xC, */ u16 mHumanTeams;                   // offset 0xC, size 0x2
-    /* 0xE, */ bool mCupStarted;                  // offset 0xE, size 0x1
-    /* 0x10 */ GameplaySettings mCupSettings;     // offset 0x10, size 0xC
-
-    // /* 0x00 */ s32 m_unk_0x00;
-    // /* 0x04 */ s32 m_unk_0x04;
-    // /* 0x08 */ s16 m_unk_0x08;
-    // /* 0x0A */ s16 m_unk_0x0A;
-    // /* 0x0C */ s16 m_unk_0x0C;
-    // /* 0x0D */ bool m_unk_0x0D;
-    // /* 0x0E */ u8 m_unk_0x0E[0x0C];
-
-    // /* 0x08 */ s32 m_unk_0x08;
-    // /* 0x0C */ s32 m_unk_0x0C;
-    // /* 0x10 */ s32 m_unk_0x10;
-    // /* 0x14 */ s16 m_unk_0x14;
-    // /* 0x16 */ s16 m_unk_0x16;
-    // /* 0x18 */ s16 m_unk_0x18;
-    // /* 0x1A */ s16 m_unk_0x1A;
-    // /* 0x1C */ s16 m_unk_0x1C;
-    // /* 0x1E */ s16 m_unk_0x1E;
-}; // total size: 0x20
-
-template <int NumTeams, int NumRounds>
-class Cup : public BaseCup
-{
-public:
-    virtual void GetGameInfo(int team, int round);
-    virtual void* GetTeamStats(int team);
-    virtual int GetNumTeams() { return NumTeams; }
-    virtual int GetNumRounds() { return NumRounds; }
-    virtual void GetRoundResults(int round);
-};
-
-template <int NumTeams>
-class Knockout : public BaseCup
-{
-public:
-    virtual void GetGameInfo(int team, int round);
-    virtual void* GetTeamStats(int team);
-    virtual int GetNumTeams() { return NumTeams; }
-    virtual int GetNumRounds() { return 0; }
-    virtual void GetRoundResults(int round);
-};
-
-// typedef struct BaseCup
-// {
-//     /* 0x00 */ s32 unk0;  /* inferred */
-//     /* 0x04 */ s32 unk4;  /* inferred */
-//     /* 0x08 */ s32 unk8;  /* inferred */
-//     /* 0x0C */ s32 unkC;  /* inferred */
-//     /* 0x10 */ s32 unk10; /* inferred */
-// } BaseCup;                /* size >= 0x14 */
-
-typedef struct BasicGameInfo
-{
-    /* 0x00 */ s32 unk0;  /* inferred */
-    /* 0x04 */ s32 unk4;  /* inferred */
-    /* 0x08 */ s32 unk8;  /* inferred */
-    /* 0x0C */ s32 unkC;  /* inferred */
-    /* 0x10 */ s32 unk10; /* inferred */
-    /* 0x14 */ s16 unk14; /* inferred */
-    /* 0x16 */ s16 unk16; /* inferred */
-    /* 0x18 */ s16 unk18; /* inferred */
-    /* 0x1A */ s16 unk1A; /* inferred */
-    /* 0x1C */ s16 unk1C; /* inferred */
-    /* 0x1E */ s16 unk1E; /* inferred */
-} BasicGameInfo;
-
-// typedef struct Cup<4, 3>
-// {
-//     /* 0x000 */ s32 unk0;         /* inferred */
-//     /* 0x004 */ s32 unk4;         /* inferred */
-//     /* 0x008 */ s32 unk8;         /* inferred */
-//     /* 0x00C */ s32 unkC;         /* inferred */
-//     /* 0x010 */ s32 unk10;        /* inferred */
-//     /* 0x014 */ char pad14[0xC];  /* maybe part of unk10[4]? */
-//     /* 0x020 */ s32 unk20;        /* inferred */
-//     /* 0x024 */ char pad24[0xBC]; /* maybe part of unk20[0x30]? */
-//     /* 0x0E0 */ s32 unkE0;        /* inferred */
-//     /* 0x0E4 */ char padE4[0xFC]; /* maybe part of unkE0[0x40]? */
-//     /* 0x1E0 */ s32 unk1E0;       /* inferred */
-// } Cup<4, 3>;
-
-class CupRecord
-{
-public:
-};
-
-class SomeClass
-{
-public:
-    /* 0x0000 */ eTeamID m_unk_0x00;
-    /* 0x0004 */ eSidekickID m_unk_0x04;
-    /* 0x0008 */ u32 m_unk_0x08;
-    /* 0x000C */ s16 m_unk_0x0C;
-};
 
 class GameInfoManager : public nlSingleton<GameInfoManager>
 {
 public:
     enum eGameModes
     {
-        eGameModes_None = 0,
-        eGameModes_Cup = 1,
-        eGameModes_Tournament = 2,
+        GM_INVALID = -1,
+        GM_FRIENDLY = 0,
+        GM_MUSHROOM_CUP = 1,
+        GM_FLOWER_CUP = 2,
+        GM_STAR_CUP = 3,
+        GM_BOWSER_CUP = 4,
+        GM_SUPER_MUSHROOM_CUP = 5,
+        GM_SUPER_FLOWER_CUP = 6,
+        GM_SUPER_STAR_CUP = 7,
+        GM_SUPER_BOWSER_CUP = 8,
+        GM_TOURNAMENT = 9,
+        GM_DEMO = 10,
+        GM_NUM_MODES = 11,
     };
 
 public:
@@ -251,8 +77,8 @@ public:
     void SetTeam(short, eTeamID);
     void GetSidekick(short) const;
     void SetSidekick(short, eSidekickID);
-    void GetNumPlayingTeams() const;
-    void GetNumRounds() const;
+    u16 GetNumPlayingTeams() const;
+    u16 GetNumRounds() const;
     void GetTeamStatsByIndex(unsigned short);
     void pGetTeamStatsByIndex(unsigned short);
     void SetPreviousTeamStats();
@@ -318,7 +144,7 @@ public:
     void IsSuperStadiumUnlocked() const;
     void IsSuperTeamUnlocked() const;
     void IsSuperCupModeUnlocked() const;
-    void IsLegendSkillUnlocked() const;
+    bool IsLegendSkillUnlocked() const;
     void IsAllSTSCheatUnlocked() const;
     void IsTiltCheatUnlocked() const;
     void IsGlassJawGoalieUnlocked() const;
@@ -333,180 +159,48 @@ public:
     void IsStunnedGoaliesOn() const;
     void IsInfinitePowerupsOn() const;
     void IsTiltingFieldOn() const;
-    void IsPerfectStrikesOn() const;
-    void IsBowserAttackEnabled() const;
-    void GetSkillLevel();
+    bool IsPerfectStrikesOn() const;
+    bool IsBowserAttackEnabled() const;
+    eSkillLevel GetSkillLevel();
     void GetSkillLevelAsDifficultyID();
-    void GetCustomPowerups() const;
+    CustomPowerups GetCustomPowerups() const;
 
-    // /* 0x0004 */ u8 pad0[0x495C];
-    // /* 0x4960 */ SomeClass* m_unk_0x4960;
-
-    // BasicGameInfo* mGameInfo[11];                 // offset 0x10, size 0x2C
-    // enum eUserGameResult mUserLastResults[11];    // offset 0x3C, size 0x2C
-    // enum eUserGameResult mCupMatchRequirement;    // offset 0x68, size 0x4
-    // unsigned char mDoingKnockout;                 // offset 0x6C, size 0x1
-    // unsigned char mDidRoundJustEnd;               // offset 0x6D, size 0x1
-    // enum eDifficultyID mCurrentDifficulty[2];     // offset 0x70, size 0x8
-    // struct Cup mMushroomCupSeries;                // offset 0x78, size 0x1E4
-    // struct Cup mFlowerCupSeries;                  // offset 0x25C, size 0x388
-    // struct Cup mStarCupSeries;                    // offset 0x5E4, size 0x5A8
-    // struct Cup mBowserCupSeries;                  // offset 0xB8C, size 0x5A8
-    // struct Knockout mBowserCupKnockout;           // offset 0x1134, size 0x184
-    // struct Cup mSuperMushroomCupSeries;           // offset 0x12B8, size 0x2A8
-    // struct Cup mSuperFlowerCupSeries;             // offset 0x1560, size 0x56C
-    // struct Cup mSuperStarCupSeries;               // offset 0x1ACC, size 0x930
-    // struct Cup mSuperBowserCupSeries;             // offset 0x23FC, size 0x930
-    // struct Knockout mSuperBowserCupKnockout;      // offset 0x2D2C, size 0x184
-    // int mCheckpointTeamPoints[9];                 // offset 0x2EB0, size 0x24
-    int mCheckpointTeamPoints[9]; // offset 0x2EB0, size 0x24
-    u8 _pad0x04[0x2EAC];
-    /* 0x2ED4*/ UserInfo mUserInfo; // offset 0x2ED4, size 0x113C
-    // class CustomTournament mCustomTournamentInfo; // offset 0x4010, size 0x944
-    u8 _padCustomTourtament[0x944];
-    eGameModes mCurrentMode;         // offset 0x4954, size 0x4
-    bool mDemoEnabled;               // offset 0x4958, size 0x1
-    bool mIsInStrikers101Mode;       // offset 0x4959, size 0x1
-    bool mGoToChooseCaptains;        // offset 0x495A, size 0x1
-    eFEINPUT_PAD mMainUserPadNumber; // offset 0x495C, size 0x4
+    /* 0x0004 */ GameplaySettings mCurGameGameplayOptions;
+    /* 0x0010 */ BasicGameInfo* mGameInfo[11];
+    /* 0x003C */ eUserGameResult mUserLastResults[11];
+    /* 0x0068 */ eUserGameResult mCupMatchRequirement;
+    /* 0x006C */ bool mDoingKnockout;
+    /* 0x006D */ bool mDidRoundJustEnd;
+    /* 0x0070 */ eDifficultyID mCurrentDifficulty[2];
+    /* 0x0078 */ Cup<4, 3> mMushroomCupSeries;        // size 0x1E4
+    /* 0x025C */ Cup<6, 5> mFlowerCupSeries;          // size 0x388
+    /* 0x05E4 */ Cup<8, 7> mStarCupSeries;            // size 0x5A8
+    /* 0x0B8C */ Cup<8, 7> mBowserCupSeries;          // size 0x5A8
+    /* 0x1134 */ Knockout<4> mBowserCupKnockout;      // size 0x184
+    /* 0x12B8 */ Cup<4, 6> mSuperMushroomCupSeries;   // size 0x2A8
+    /* 0x1560 */ Cup<6, 10> mSuperFlowerCupSeries;    // size 0x56C
+    /* 0x1ACC */ Cup<8, 14> mSuperStarCupSeries;      // size 0x930
+    /* 0x23FC */ Cup<8, 14> mSuperBowserCupSeries;    // size 0x930
+    /* 0x2D2C */ Knockout<4> mSuperBowserCupKnockout; // size 0x184
+    /* 0x2EB0 */ int mCheckpointTeamPoints[9];
+    /* 0x2ED4 */ UserInfo mUserInfo;
+    /* 0x4010 */ CustomTournament mCustomTournamentInfo;
+    /* 0x4954 */ eGameModes mCurrentMode;
+    /* 0x4958 */ bool mDemoEnabled;
+    /* 0x4959 */ bool mIsInStrikers101Mode;
+    /* 0x495A */ bool mGoToChooseCaptains;
+    /* 0x495C */ eFEINPUT_PAD mMainUserPadNumber;
     /* 0x4960 */ BaseCup* mCurrentCup;
     /* 0x4964 */ BaseCup* mPreviousCup;
-    // struct PlayerStats mUserStats[4];             // offset 0x4968, size 0xD0
-    // struct TeamStats mPreviousTeamStats[8];       // offset 0x4A38, size 0x200
-    // unsigned char mUseCurGameSettings;            // offset 0x4C38, size 0x1
-    // unsigned char mDisplayTrophy[6];              // offset 0x4C39, size 0x6
-    // enum eMilestoneColour mTrophyColourState[5];  // offset 0x4C40, size 0x14
-    // unsigned int mPreGameUnlockedState;           // offset 0x4C54, size 0x4
-    // unsigned int mUnlockedTriggers;               // offset 0x4C58, size 0x4
-    // enum eStadiumID mLastHumanStadium;            // offset 0x4C5C, size 0x4
-
-    u8 _pad0x4968[0x2F8];
-
-    /* 0x4C60 */ AudioSettings mCurGameAudioSettings; // offset 0x4C60, size 0x20
+    /* 0x4968 */ PlayerStats mUserStats[4];
+    /* 0x4A38 */ TeamStats mPreviousTeamStats[8];
+    /* 0x4C38 */ bool mUseCurGameSettings;
+    /* 0x4C39 */ bool mDisplayTrophy[6];
+    /* 0x4C40 */ eMilestoneColour mTrophyColourState[5];
+    /* 0x4C54 */ u32 mPreGameUnlockedState;
+    /* 0x4C58 */ u32 mUnlockedTriggers;
+    /* 0x4C5C */ eStadiumID mLastHumanStadium;
+    /* 0x4C60 */ AudioSettings mCurGameAudioSettings;
 }; // total size: 0x4C80
-
-// class Cup<8, 14>
-// {
-// public:
-//     void GetTeamStats(int);
-//     void GetSaveDataSize() const;
-//     void DeserializeData(void*);
-//     void SerializeData(void*) const;
-//     void GetGameInfo(int, int);
-//     void GetNumTeams();
-//     void GetNumRounds();
-//     void GetRoundResults(int);
-// };
-
-// class Cup<8, 7>
-// {
-// public:
-//     void GetTeamStats(int);
-//     void GetSaveDataSize() const;
-//     void DeserializeData(void*);
-//     void SerializeData(void*) const;
-//     void GetGameInfo(int, int);
-//     void GetNumTeams();
-//     void GetNumRounds();
-//     void GetRoundResults(int);
-// };
-
-// class Cup<6, 10>
-// {
-// public:
-//     void GetSaveDataSize() const;
-//     void DeserializeData(void*);
-//     void SerializeData(void*) const;
-//     void GetGameInfo(int, int);
-//     void GetTeamStats(int);
-//     void GetNumTeams();
-//     void GetNumRounds();
-//     void GetRoundResults(int);
-// };
-
-// class Cup<4, 6>
-// {
-// public:
-//     void GetSaveDataSize() const;
-//     void DeserializeData(void*);
-//     void SerializeData(void*) const;
-//     void GetGameInfo(int, int);
-//     void GetTeamStats(int);
-//     void GetNumTeams();
-//     void GetNumRounds();
-//     void GetRoundResults(int);
-// };
-
-// class Knockout<4>
-// {
-// public:
-//     void GetSaveDataSize() const;
-//     void DeserializeData(void*);
-//     void SerializeData(void*) const;
-//     void GetGameInfo(int, int);
-//     void GetTeamStats(int);
-//     void GetNumTeams();
-//     void GetNumRounds();
-//     void GetRoundResults(int);
-// };
-
-// class Cup<6, 5>
-// {
-// public:
-//     void GetSaveDataSize() const;
-//     void DeserializeData(void*);
-//     void SerializeData(void*) const;
-//     void GetGameInfo(int, int);
-//     void GetTeamStats(int);
-//     void GetNumTeams();
-//     void GetNumRounds();
-//     void GetRoundResults(int);
-// };
-
-// class Cup<4, 3>
-// {
-// public:
-//     void GetSaveDataSize() const;
-//     void DeserializeData(void*);
-//     void SerializeData(void*) const;
-//     void GetGameInfo(int, int);
-//     void GetTeamStats(int);
-//     void GetNumTeams();
-//     void GetNumRounds();
-//     void GetRoundResults(int);
-// };
-
-// class Spoil
-// {
-// public:
-//     Spoil();
-// };
-
-// class CupRecord
-// {
-// public:
-//     CupRecord();
-// };
-
-// class BaseCup
-// {
-// public:
-//     void SerializeData(void*) const;
-//     void DeserializeData(void*);
-//     void GetSaveDataSize() const;
-// };
-
-// class Config
-// {
-// public:
-//     void Get<BasicString<char, Detail::TempStringAllocator>>(const char*, BasicString<char, Detail::TempStringAllocator>);
-//     void TagValuePair::Get<BasicString<char, Detail::TempStringAllocator>>() const;
-// };
-
-// class BasicGameInfo
-// {
-// public:
-//     BasicGameInfo();
-// };
 
 #endif // _GAMEINFO_H_

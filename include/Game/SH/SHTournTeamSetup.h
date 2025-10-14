@@ -2,16 +2,7 @@
 #define _SHTOURNTEAMSETUP_H_
 
 #include "types.h"
-
-enum eTeamID
-{
-    eTeamID_0 = 0
-};
-
-enum eSidekickID
-{
-    eSidekickID_0 = 0
-};
+#include "Game/DB/Cup.h"
 
 class TournTeamSetupSceneV2
 {

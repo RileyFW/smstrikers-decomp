@@ -1,0 +1,145 @@
+#ifndef _CUSTOMTOURNAMENT_H_
+#define _CUSTOMTOURNAMENT_H_
+
+#include "types.h"
+#include "Game/Team.h"
+#include "Game/DB/UserOptions.h"
+#include "Game/DB/Cup.h"
+
+enum eTournamentMode
+{
+    TM_INVALID = -1,
+    TM_LEAGUE = 0,
+    TM_KNOCKOUT = 1,
+    TM_NUMTOURNMODES = 2,
+};
+
+class CustomTournament
+{
+public:
+    // void @class$264CustomTournament_cpp::@class$264CustomTournament_cpp();
+    CustomTournament();
+    ~CustomTournament();
+    void ConstructCup();
+    void GetSaveDataSize() const;
+    void SerializeData(void*) const;
+    void DeserializeData(void*);
+
+    union
+    {
+        Cup<3, 7> cup31;                          // size 0x144
+        Cup<4, 7> cup41;                          // size 0x1E4
+        Cup<5, 7> cup51;                          // size 0x2A8
+        Cup<6, 7> cup61;                          // size 0x388
+        Cup<7, 7> cup71;                          // size 0x488
+        Cup<8, 7> cup81;                          // size 0x5A8
+        Cup<3, 14> cup32;                         // size 0x1A8
+        Cup<4, 14> cup42;                         // size 0x2A8
+        Cup<5, 14> cup52;                         // size 0x3EC
+        Cup<6, 14> cup62;                         // size 0x56C
+        Cup<7, 14> cup72;                         // size 0x730
+        Cup<8, 14> cup82;                         // size 0x930
+        Knockout<4> knockout4;                    // size 0x184
+        Knockout<8> knockout8;                    // size 0x304
+    } m_dataSpace;                                // offset 0x0, size 0x930
+    /* 0x930 */ unsigned long m_fenceBoundary;    // offset 0x930, size 0x4
+    /* 0x934 */ struct BaseCup* m_cup;            // offset 0x934, size 0x4
+    /* 0x938 */ enum eTournamentMode m_tournMode; // offset 0x938, size 0x4
+    /* 0x93C */ unsigned char m_numTeams;         // offset 0x93C, size 0x1
+    /* 0x93D */ unsigned char m_numGamesPerTeam;  // offset 0x93D, size 0x1
+    /* 0x93E */ unsigned char m_cupConstructed;   // offset 0x93E, size 0x1
+    /* 0x940 */ int m_largestCupSize;             // offset 0x940, size 0x4
+}; // total size: 0x944
+
+// class Knockout<8>
+// {
+// public:
+//     void DeserializeData(void*);
+//     void SerializeData(void*) const;
+//     void GetSaveDataSize() const;
+//     void GetRoundResults(int);
+//     void GetNumRounds();
+//     void GetNumTeams();
+//     void GetTeamStats(int);
+//     void GetGameInfo(int, int);
+// };
+
+// class Cup<7, 14>
+// {
+// public:
+//     void DeserializeData(void*);
+//     void SerializeData(void*) const;
+//     void GetSaveDataSize() const;
+//     void GetRoundResults(int);
+//     void GetNumRounds();
+//     void GetNumTeams();
+//     void GetTeamStats(int);
+//     void GetGameInfo(int, int);
+// };
+
+// class Cup<5, 10>
+// {
+// public:
+//     void DeserializeData(void*);
+//     void SerializeData(void*) const;
+//     void GetSaveDataSize() const;
+//     void GetRoundResults(int);
+//     void GetNumRounds();
+//     void GetNumTeams();
+//     void GetTeamStats(int);
+//     void GetGameInfo(int, int);
+// };
+
+// class Cup<3, 6>
+// {
+// public:
+//     void DeserializeData(void*);
+//     void SerializeData(void*) const;
+//     void GetSaveDataSize() const;
+//     void GetRoundResults(int);
+//     void GetNumRounds();
+//     void GetNumTeams();
+//     void GetTeamStats(int);
+//     void GetGameInfo(int, int);
+// };
+
+// class Cup<7, 7>
+// {
+// public:
+//     void DeserializeData(void*);
+//     void SerializeData(void*) const;
+//     void GetSaveDataSize() const;
+//     void GetRoundResults(int);
+//     void GetNumRounds();
+//     void GetNumTeams();
+//     void GetTeamStats(int);
+//     void GetGameInfo(int, int);
+// };
+
+// class Cup<5, 5>
+// {
+// public:
+//     void DeserializeData(void*);
+//     void SerializeData(void*) const;
+//     void GetSaveDataSize() const;
+//     void GetRoundResults(int);
+//     void GetNumRounds();
+//     void GetNumTeams();
+//     void GetTeamStats(int);
+//     void GetGameInfo(int, int);
+// };
+
+// class Cup<3, 3>
+// {
+// public:
+//     void DeserializeData(void*);
+//     void SerializeData(void*) const;
+//     void GetSaveDataSize() const;
+//     void GetRoundResults(int);
+//     void GetNumRounds();
+//     void GetNumTeams();
+//     void GetTeamStats(int);
+//     void GetGameInfo(int, int);
+// };
+
+#endif // _CUSTOMTOURNAMENT_H_

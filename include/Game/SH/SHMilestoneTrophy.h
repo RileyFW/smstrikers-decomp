@@ -3,12 +3,8 @@
 
 #include "types.h"
 
+#include "Game/TrophyInfo.h"
 #include "Game/FE/feButtonComponent.h"
-
-enum eTrophyType
-{
-    eTrophyType_0 = 0
-};
 
 class MilestoneTrophyScene
 {

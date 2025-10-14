@@ -3,6 +3,16 @@
 
 #include "types.h"
 
+enum eMilestoneColour
+{
+    INVALID_MILESTONE_COLOUR = -1,
+    MILESTONE_BLACK = 0,
+    MILESTONE_BRONZE = 1,
+    MILESTONE_SILVER = 2,
+    MILESTONE_GOLD = 3,
+    NUM_MILESTONE_COLOURS = 4,
+};
+
 enum eTrophyType
 {
     INVALID_TROPHY = -1,

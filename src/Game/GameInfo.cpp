@@ -1,485 +1,7 @@
 #include "Game/GameInfo.h"
-
 #include "NL/nlMemory.h"
 
-// nlSingleton<GameInfoManager> GameInfoManager::s_pInstance;
-
-// /**
-//  * Offset/Address/Size: 0x0 | 0x8018151C | size: 0x44
-//  */
-// BasicGameInfo::BasicGameInfo()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0xA8 | 0x80181498 | size: 0x84
-//  */
-// void Config::TagValuePair::Get<BasicString<char, Detail::TempStringAllocator>>() const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x0 | 0x801813F0 | size: 0xA8
-//  */
-// void Config::Get<BasicString<char, Detail::TempStringAllocator>>(const char*, BasicString<char, Detail::TempStringAllocator>)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1328 | 0x801813E0 | size: 0x10
-//  */
-// void Cup<4, 3>::GetRoundResults(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1320 | 0x801813D8 | size: 0x8
-//  */
-// void Cup<4, 3>::GetNumRounds()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1318 | 0x801813D0 | size: 0x8
-//  */
-// void Cup<4, 3>::GetNumTeams()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1304 | 0x801813BC | size: 0x14
-//  */
-// void Cup<4, 3>::GetTeamStats(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x12E8 | 0x801813A0 | size: 0x1C
-//  */
-// void Cup<4, 3>::GetGameInfo(int, int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x12D8 | 0x80181390 | size: 0x10
-//  */
-// void Cup<6, 5>::GetRoundResults(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x12D0 | 0x80181388 | size: 0x8
-//  */
-// void Cup<6, 5>::GetNumRounds()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x12C8 | 0x80181380 | size: 0x8
-//  */
-// void Cup<6, 5>::GetNumTeams()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x12B4 | 0x8018136C | size: 0x14
-//  */
-// void Cup<6, 5>::GetTeamStats(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1298 | 0x80181350 | size: 0x1C
-//  */
-// void Cup<6, 5>::GetGameInfo(int, int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1288 | 0x80181340 | size: 0x10
-//  */
-// void Cup<8, 7>::GetRoundResults(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1280 | 0x80181338 | size: 0x8
-//  */
-// void Cup<8, 7>::GetNumRounds()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1278 | 0x80181330 | size: 0x8
-//  */
-// void Cup<8, 7>::GetNumTeams()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x125C | 0x80181314 | size: 0x1C
-//  */
-// void Cup<8, 7>::GetGameInfo(int, int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x124C | 0x80181304 | size: 0x10
-//  */
-// void Cup<4, 6>::GetRoundResults(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1244 | 0x801812FC | size: 0x8
-//  */
-// void Cup<4, 6>::GetNumRounds()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x123C | 0x801812F4 | size: 0x8
-//  */
-// void Cup<4, 6>::GetNumTeams()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1228 | 0x801812E0 | size: 0x14
-//  */
-// void Cup<4, 6>::GetTeamStats(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x120C | 0x801812C4 | size: 0x1C
-//  */
-// void Cup<4, 6>::GetGameInfo(int, int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x11FC | 0x801812B4 | size: 0x10
-//  */
-// void Cup<6, 10>::GetRoundResults(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x11F4 | 0x801812AC | size: 0x8
-//  */
-// void Cup<6, 10>::GetNumRounds()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x11EC | 0x801812A4 | size: 0x8
-//  */
-// void Cup<6, 10>::GetNumTeams()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x11D8 | 0x80181290 | size: 0x14
-//  */
-// void Cup<6, 10>::GetTeamStats(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x11BC | 0x80181274 | size: 0x1C
-//  */
-// void Cup<6, 10>::GetGameInfo(int, int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x11AC | 0x80181264 | size: 0x10
-//  */
-// void Cup<8, 14>::GetRoundResults(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x11A4 | 0x8018125C | size: 0x8
-//  */
-// void Cup<8, 14>::GetNumRounds()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x119C | 0x80181254 | size: 0x8
-//  */
-// void Cup<8, 14>::GetNumTeams()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1180 | 0x80181238 | size: 0x1C
-//  */
-// void Cup<8, 14>::GetGameInfo(int, int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1170 | 0x80181228 | size: 0x10
-//  */
-// void Knockout<4>::GetRoundResults(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1168 | 0x80181220 | size: 0x8
-//  */
-// void Knockout<4>::GetNumRounds()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1160 | 0x80181218 | size: 0x8
-//  */
-// void Knockout<4>::GetNumTeams()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x114C | 0x80181204 | size: 0x14
-//  */
-// void Knockout<4>::GetTeamStats(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1024 | 0x801810DC | size: 0x128
-//  */
-// void Knockout<4>::GetGameInfo(int, int)
-// {
-// }
-
-/**
- * Offset/Address/Size: 0x101C | 0x801810D4 | size: 0x8
- */
-int BaseCup::GetSaveDataSize() const
-{
-    return 0x1B;
-}
-
-/**
- * Offset/Address/Size: 0xF64 | 0x8018101C | size: 0xB8
- */
-void BaseCup::DeserializeData(void* src)
-{
-    unsigned char* p = (unsigned char*)src;
-    memcpy(&mUserSelectedTeam, p, 4);
-    p += 4;
-    memcpy(&mUserSelectedSidekick, p, 4);
-    p += 4;
-    memcpy(&mRoundNumber, p, 2);
-    p += 2;
-    memcpy(&mGameNumber, p, 2);
-    p += 2;
-    memcpy(&mHumanTeams, p, 2);
-    p += 2;
-    memcpy(&mCupStarted, p, 1);
-    p += 1;
-    memcpy(&mCupSettings, p, 0x0C);
-}
-
-/**
- * Offset/Address/Size: 0xEA4 | 0x80180F5C | size: 0xC0
- */
-void BaseCup::SerializeData(void* dst) const
-{
-    unsigned char* p = (unsigned char*)dst;
-    memcpy(p, &mUserSelectedTeam, 4);
-    p += 4;
-    memcpy(p, &mUserSelectedSidekick, 4);
-    p += 4;
-    memcpy(p, &mRoundNumber, 2);
-    p += 2;
-    memcpy(p, &mGameNumber, 2);
-    p += 2;
-    memcpy(p, &mHumanTeams, 2);
-    p += 2;
-    memcpy(p, &mCupStarted, 1);
-    p += 1;
-    memcpy(p, &mCupSettings, 0x0C);
-}
-
-// /**
-//  * Offset/Address/Size: 0xE54 | 0x80180F0C | size: 0x50
-//  */
-// CupRecord::CupRecord()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0xDF0 | 0x80180EA8 | size: 0x64
-//  */
-// Spoil::Spoil()
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0xCF4 | 0x80180DAC | size: 0xFC
-//  */
-// void Cup<4, 3>::SerializeData(void*) const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0xBF8 | 0x80180CB0 | size: 0xFC
-//  */
-// void Cup<6, 5>::SerializeData(void*) const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0xAFC | 0x80180BB4 | size: 0xFC
-//  */
-// void Cup<8, 7>::SerializeData(void*) const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0xA00 | 0x80180AB8 | size: 0xFC
-//  */
-// void Knockout<4>::SerializeData(void*) const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x904 | 0x801809BC | size: 0xFC
-//  */
-// void Cup<4, 6>::SerializeData(void*) const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x808 | 0x801808C0 | size: 0xFC
-//  */
-// void Cup<6, 10>::SerializeData(void*) const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x70C | 0x801807C4 | size: 0xFC
-//  */
-// void Cup<8, 14>::SerializeData(void*) const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x618 | 0x801806D0 | size: 0xF4
-//  */
-// void Cup<4, 3>::DeserializeData(void*)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x610 | 0x801806C8 | size: 0x8
-//  */
-// void Cup<4, 3>::GetSaveDataSize() const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x51C | 0x801805D4 | size: 0xF4
-//  */
-// void Cup<6, 5>::DeserializeData(void*)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x514 | 0x801805CC | size: 0x8
-//  */
-// void Cup<6, 5>::GetSaveDataSize() const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x420 | 0x801804D8 | size: 0xF4
-//  */
-// void Cup<8, 7>::DeserializeData(void*)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x418 | 0x801804D0 | size: 0x8
-//  */
-// void Cup<8, 7>::GetSaveDataSize() const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x324 | 0x801803DC | size: 0xF4
-//  */
-// void Knockout<4>::DeserializeData(void*)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x31C | 0x801803D4 | size: 0x8
-//  */
-// void Knockout<4>::GetSaveDataSize() const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x228 | 0x801802E0 | size: 0xF4
-//  */
-// void Cup<4, 6>::DeserializeData(void*)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x220 | 0x801802D8 | size: 0x8
-//  */
-// void Cup<4, 6>::GetSaveDataSize() const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x12C | 0x801801E4 | size: 0xF4
-//  */
-// void Cup<6, 10>::DeserializeData(void*)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x124 | 0x801801DC | size: 0x8
-//  */
-// void Cup<6, 10>::GetSaveDataSize() const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x30 | 0x801800E8 | size: 0xF4
-//  */
-// void Cup<8, 14>::DeserializeData(void*)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x28 | 0x801800E0 | size: 0x8
-//  */
-// void Cup<8, 14>::GetSaveDataSize() const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x14 | 0x801800CC | size: 0x14
-//  */
-// void Cup<8, 7>::GetTeamStats(int)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x0 | 0x801800B8 | size: 0x14
-//  */
-// void Cup<8, 14>::GetTeamStats(int)
-// {
-// }
+extern bool g_e3_Build;
 
 /**
  * Offset/Address/Size: 0x9E90 | 0x8017F534 | size: 0xB84
@@ -507,6 +29,7 @@ void GameInfoManager::GetTeam(short) const
  */
 void GameInfoManager::SetTeam(short, eTeamID)
 {
+    mUserInfo.mSaveID = sizeof(mCustomTournamentInfo);
 }
 
 /**
@@ -526,15 +49,22 @@ void GameInfoManager::SetSidekick(short, eSidekickID)
 /**
  * Offset/Address/Size: 0x9D24 | 0x8017F3C8 | size: 0x4C
  */
-void GameInfoManager::GetNumPlayingTeams() const
+u16 GameInfoManager::GetNumPlayingTeams() const
 {
+    if (mCurrentMode == 0x4 || mCurrentMode == 0x8)
+    {
+        return 8;
+    }
+
+    return mCurrentCup->GetNumTeams();
 }
 
 /**
  * Offset/Address/Size: 0x9CF4 | 0x8017F398 | size: 0x30
  */
-void GameInfoManager::GetNumRounds() const
+u16 GameInfoManager::GetNumRounds() const
 {
+    return mCurrentCup->GetNumRounds();
 }
 
 /**
@@ -563,7 +93,7 @@ void GameInfoManager::SetPreviousTeamStats()
  */
 eStadiumID GameInfoManager::GetStadium() const
 {
-    return STAD_YOSHI_STADIUM;
+    return mGameInfo[mCurrentMode]->mStadiumIndex;
 }
 
 /**
@@ -578,12 +108,12 @@ void GameInfoManager::GetMatchupInfo(short, unsigned short) const
  */
 void GameInfoManager::SetUserSelectedCupTeam(eTeamID team)
 {
-    s32* temp_r4;
     mCurrentCup->mUserSelectedTeam = team;
-    if (team != eTeamID_None)
+
+    if (team != TEAM_INVALID)
     {
         mCurrentCup->mRoundNumber = 0;
-        mCurrentCup->mRoundNumber = mCurrentCup->mRoundNumber | (1 << team);
+        mCurrentCup->mRoundNumber = (s32)(mCurrentCup->mRoundNumber | (1 << team));
     }
 }
 
@@ -1008,8 +538,9 @@ void GameInfoManager::IsSuperCupModeUnlocked() const
 /**
  * Offset/Address/Size: 0xF1C | 0x801765C0 | size: 0x8
  */
-void GameInfoManager::IsLegendSkillUnlocked() const
+bool GameInfoManager::IsLegendSkillUnlocked() const
 {
+    return true;
 }
 
 /**
@@ -1113,24 +644,57 @@ void GameInfoManager::IsTiltingFieldOn() const
 /**
  * Offset/Address/Size: 0x17C | 0x80175820 | size: 0x60
  */
-void GameInfoManager::IsPerfectStrikesOn() const
+bool GameInfoManager::IsPerfectStrikesOn() const
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x14C | 0x801757F0 | size: 0x30
  */
-void GameInfoManager::IsBowserAttackEnabled() const
+bool GameInfoManager::IsBowserAttackEnabled() const
 {
+    if (g_e3_Build)
+    {
+        return false;
+    }
+
+    if (mIsInStrikers101Mode)
+    {
+        return false;
+    }
+
+    return mCurGameGameplayOptions.BowserAttackEnabled;
 }
 
 /**
  * Offset/Address/Size: 0xF8 | 0x8017579C | size: 0x54
  */
-void GameInfoManager::GetSkillLevel()
+eSkillLevel GameInfoManager::GetSkillLevel()
 {
-}
+    if (mIsInStrikers101Mode)
+        return TRAINING;
 
+    const eSkillLevel* p;
+
+    if (mUseCurGameSettings)
+    {
+        p = &mCurGameGameplayOptions.SkillLevel;
+    }
+    else
+    {
+        if ((mCurrentMode == GM_FRIENDLY) || (mCurrentMode == GM_DEMO))
+        {
+            p = &mUserInfo.mGameplayOptions.SkillLevel;
+        }
+        else
+        {
+            p = &mCurrentCup->mCupSettings.SkillLevel;
+        }
+    }
+
+    return *p;
+}
 /**
  * Offset/Address/Size: 0x60 | 0x80175704 | size: 0x98
  */
@@ -1141,6 +705,27 @@ void GameInfoManager::GetSkillLevelAsDifficultyID()
 /**
  * Offset/Address/Size: 0x0 | 0x801756A4 | size: 0x60
  */
-void GameInfoManager::GetCustomPowerups() const
+CustomPowerups GameInfoManager::GetCustomPowerups() const
 {
+    if (mIsInStrikers101Mode)
+    {
+        return CP_OFF;
+    }
+
+    bool useCheatSettings;
+    eGameModes currentMode = mCurrentMode;
+    if ((currentMode == GM_FRIENDLY) || (currentMode == GM_TOURNAMENT))
+    {
+        useCheatSettings = false;
+        if ((currentMode == GM_FRIENDLY) || (currentMode == GM_TOURNAMENT))
+        {
+            useCheatSettings = true;
+        }
+        if (useCheatSettings)
+        {
+            return mUserInfo.mCheatOptions.mCustomPowerups;
+        }
+        return CP_OFF;
+    }
+    return CP_OFF;
 }

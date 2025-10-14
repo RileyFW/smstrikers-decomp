@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+#include "Game/TrophyInfo.h"
 #include "Game/FE/feButtonComponent.h"
 
 class Spoil
@@ -10,11 +11,6 @@ class Spoil
 public:
     Spoil();
     ~Spoil();
-};
-
-enum eTrophyType
-{
-    eTrophyType_0 = 0
 };
 
 class CupTrophyScene
