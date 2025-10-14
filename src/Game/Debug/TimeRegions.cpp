@@ -3,23 +3,19 @@
 #include "Game/BasicStadium.h"
 #include "NL/nlTask.h"
 #include "Game/Ball.h"
+#include "Game/Camera/CameraMan.h"
 
 #include "Game/Debug/FrameCounter.h"
 #include "NL/nlPrint.h"
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x801627A8 | size: 0x2C
-//  */
-// void nlListAddEnd<ListEntry<TimeRegion*>>(ListEntry<TimeRegion*>**, ListEntry<TimeRegion*>**, ListEntry<TimeRegion*>*)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x0 | 0x801626A8 | size: 0x100
-//  */
-// TimeRegion::~TimeRegion()
-// {
-// }
+TimeRegion* pGamePlayTimeRegion;
+TimeRegion* pNISTimeRegion;
+TimeRegion* pAutoReplayTimeRegion;
+TimeRegion* pCentreFieldTimeRegion;
+TimeRegion* pLeftFieldTimeRegion;
+TimeRegion* pRightFieldTimeRegion;
+TimeRegion* pBowserTimeRegion;
+TimeRegion* pShotTimeRegion;
 
 /**
  * Offset/Address/Size: 0x838 | 0x80162658 | size: 0x50
@@ -43,22 +39,45 @@ bool IsDuringGameplay()
 /**
  * Offset/Address/Size: 0x7B8 | 0x801625D8 | size: 0x68
  */
-void CentreOfField()
+bool CentreOfField()
 {
+    const nlVector3& targetPosition = (*nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)).GetTargetPosition();
+    bool isCenter = false;
+    if ((nlTaskManager::m_pInstance->m_CurrState == 0x2) && ((float)fabs(targetPosition.f.x) < 5.7f))
+    {
+        isCenter = true;
+    }
+    return isCenter;
+}
+
+inline bool IsInCenterZone()
+{
+    const nlVector3& v = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->GetTargetPosition();
+    unsigned long curState = nlTaskManager::m_pInstance->m_CurrState;
+
+    return curState == 2 && fabsf(v.f.x) < 5.7f;
 }
 
 /**
  * Offset/Address/Size: 0x6DC | 0x801624FC | size: 0xDC
  */
-void LeftSideOfField()
+bool LeftSideOfField()
 {
+    const nlVector3& v = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->GetTargetPosition();
+    unsigned long curState = nlTaskManager::m_pInstance->m_CurrState;
+
+    return curState == 2 && !IsInCenterZone() && v.f.x < 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x600 | 0x80162420 | size: 0xDC
  */
-void RightSideOfField()
+bool RightSideOfField()
 {
+    const nlVector3& v = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->GetTargetPosition();
+    unsigned long curState = nlTaskManager::m_pInstance->m_CurrState;
+
+    return curState == 2 && !IsInCenterZone() && v.f.x > 0.0f;
 }
 
 /**
@@ -98,6 +117,14 @@ bool IsShotInProgress()
  */
 void InitializeTimeRegions()
 {
+    pGamePlayTimeRegion = new TimeRegion("during gameplay", IsDuringGameplay);
+    pNISTimeRegion = new TimeRegion("during NIS", IsDuringNIS);
+    pAutoReplayTimeRegion = new TimeRegion("during auto-replay", IsDuringAutoreplay);
+    pCentreFieldTimeRegion = new TimeRegion("at centre of field", CentreOfField);
+    pLeftFieldTimeRegion = new TimeRegion("on left side of field", LeftSideOfField);
+    pRightFieldTimeRegion = new TimeRegion("on right side of field", RightSideOfField);
+    pBowserTimeRegion = new TimeRegion("when bowser is around", IsBowserAround);
+    pShotTimeRegion = new TimeRegion("when shot in progress", IsShotInProgress);
 }
 
 /**
@@ -105,4 +132,12 @@ void InitializeTimeRegions()
  */
 void DestroyTimeRegions()
 {
+    delete pGamePlayTimeRegion;
+    delete pNISTimeRegion;
+    delete pAutoReplayTimeRegion;
+    delete pCentreFieldTimeRegion;
+    delete pLeftFieldTimeRegion;
+    delete pRightFieldTimeRegion;
+    delete pBowserTimeRegion;
+    delete pShotTimeRegion;
 }

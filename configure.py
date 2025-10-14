@@ -1138,6 +1138,9 @@ config.libs = [
             Object(NonMatching, "Game/Debug/FrameCounter.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Debug/ShapeRender.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Debug/TimeRegions.cpp", extra_cflags=["-inline deferred"]),
+
+            # Loader
+            Object(NonMatching, "Game/Loader/LoadingManager.cpp", extra_cflags=["-inline deferred"]),
         ],
     ),
     GameLib(

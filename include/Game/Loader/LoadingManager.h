@@ -2,14 +2,21 @@
 #define _LOADINGMANAGER_H_
 
 #include "Game/Loader.h"
+#include "NL/nlTask.h"
 
-class LoadingManager
+class LoadingManager : public nlTask
 {
 public:
     LoadingManager(unsigned int);
-    void GetName();
-    void Run(float);
+    virtual void Run(float);
+    virtual const char* GetName();
     void QueueLoader(Loader*);
-};
+
+    /* 0x18 */ u32 m_MaxEntries;
+    /* 0x1C */ u32 m_CurrEntry;
+    /* 0x20 */ u32 m_NumEntries;
+    /* 0x24 */ Loader** m_LoaderQueue;
+    /* 0x28 */ bool m_LoadFinished;
+}; // total size: 0x2C
 
 #endif // _LOADINGMANAGER_H_

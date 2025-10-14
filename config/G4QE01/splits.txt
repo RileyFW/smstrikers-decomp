@@ -4187,7 +4187,7 @@ Game/GL/GLRenderBuffer.cpp:
 	.bss        start:0x80343220 end:0x80343240
 	.sbss       start:0x80374338 end:0x80374340
 
-LoadingManager.o:
+Game/Loader/LoadingManager.cpp:
 	.text       start:0x801E8224 end:0x801E85CC
 	.text       start:0x801E85CC end:0x801E85CC
 	.text       start:0x801E85CC end:0x801E85CC

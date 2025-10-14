@@ -12,8 +12,7 @@ class ListEntry
 {
 public:
     /* 0x00 */ ListEntry<T>* next;
-    /* 0x04 */ ListEntry<T>* prev; // not sure if this is used
-    /* 0x08 */ T data;
+    /* 0x04 */ T data;
 
     ListEntry()
         : next(nullptr)
@@ -27,21 +26,6 @@ public:
     {
     }
 };
-
-// template <typename T>
-// class NewAdapter
-// {
-// public:
-//     typedef ListEntry<T> EntryType; // Add this line
-
-//     static void DeleteEntry(ListEntry<T>* entry)
-//     {
-//         if (entry)
-//         {
-//             delete entry;
-//         }
-//     }
-// };
 
 template <typename T, typename Adapter>
 class ListContainerBase
