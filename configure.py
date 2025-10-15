@@ -838,6 +838,8 @@ config.libs = [
             Object(Matching, "Game/DispatchEventsTask.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/ResetTask.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/TransitionTask.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/BeginFrameTask.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/EndFrameTask.cpp", extra_cflags=["-inline deferred"]),
 
             # Triggers
             Object(Matching, "Game/Triggers/BinaryTriggerFile.cpp", extra_cflags=["-inline deferred"]),
@@ -856,6 +858,7 @@ config.libs = [
             Object(NonMatching, "Game/Render/RenderShadow.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/StaticModelExplodable.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/AnimatedModelExplodable.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/GameObjectLighting.cpp", extra_cflags=["-inline deferred"]),
 
             # AI
             Object(Matching, "Game/AI/AILoader.cpp", extra_cflags=["-inline deferred"]),
@@ -1146,6 +1149,7 @@ config.libs = [
     GameLib(
         "NL (Next Level Library)",
         [
+            Object(NonMatching, "NL/nlBind.cpp"),
             Object(NonMatching, "NL/nlAVLTree.cpp"),
             Object(NonMatching, "NL/nlBundleFile.cpp"),
             Object(NonMatching, "NL/nlConfig.cpp"),

@@ -1662,7 +1662,7 @@ Game/CharacterEffects.cpp:
 	.ctors      start:0x8028D2D4 end:0x8028D2D8
 	.data       start:0x802AF508 end:0x802AF5A0
 
-GameObjectLighting.o:
+Game/GameObjectLighting.cpp:
 	.text       start:0x8012A83C end:0x8012B410
 	.ctors      start:0x8028D2D8 end:0x8028D2DC
 	.rodata     start:0x8029B0F8 end:0x8029B110
@@ -2337,13 +2337,13 @@ Game/WorldUpdateTask.cpp:
 	.sdata      start:0x803726F0 end:0x803726F8
 	.sdata2     start:0x80376920 end:0x80376928
 
-EndFrameTask.o:
+Game/EndFrameTask.cpp:
 	.text       start:0x8016E694 end:0x8016E6D4
 	.text       start:0x8016E6D4 end:0x8016E6E0
 	.text       start:0x8016E6E0 end:0x8016E6E0
 	.data       start:0x802C0FA8 end:0x802C0FC8
 
-BeginFrameTask.o:
+Game/BeginFrameTask.cpp:
 	.text       start:0x8016E6E0 end:0x80170160
 	.text       start:0x80170160 end:0x8017016C
 	.text       start:0x8017016C end:0x8017016C
@@ -4029,7 +4029,7 @@ NL/nlConfig.cpp:
 	.sbss       start:0x803742C8 end:0x803742D0
 	.sdata2     start:0x803770B8 end:0x803770C0
 
-nlBind.o:
+NL/nlBind.cpp:
 	.text       start:0x801D6770 end:0x801D6770
 	.sdata2     start:0x803770C0 end:0x803770C8
 
