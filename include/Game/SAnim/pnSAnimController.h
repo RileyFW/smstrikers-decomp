@@ -23,8 +23,11 @@ class cPN_SAnimController : public cPoseNode
 {
 public:
     void SetTime(float);
-    void GetType();
+    int GetType() { return 0x2; };
+
     cPN_SAnimController(cSAnim*, const AnimRetarget*, ePlayMode, void (*)(unsigned int, cPN_SAnimController*), unsigned int, bool);
+    ~cPN_SAnimController() { };
+
     void Update(float);
     void UpdateSynchronized(float);
     void Evaluate(float, cPoseAccumulator*) const;

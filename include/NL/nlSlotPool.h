@@ -24,8 +24,8 @@ void nlListAddStart(T** head, T* newNode, T** prev)
 class SlotPoolBase
 {
 public:
-    ~SlotPoolBase();
     SlotPoolBase();
+    ~SlotPoolBase();
 
     static void BaseAddNewBlock(SlotPoolBase* pool, unsigned int entrySize);
     static void BaseFreeBlocks(SlotPoolBase* pool, unsigned int entrySize);
@@ -55,6 +55,10 @@ template <typename T>
 class BasicSlotPool : public SlotPoolBase
 {
 public:
+    ~BasicSlotPool()
+    {
+        BaseFreeBlocks(this, sizeof(T));
+    };
 }; // total size: 0x18
 
 template <typename T>
@@ -62,10 +66,7 @@ class SlotPool : public BasicSlotPool<T>
 {
 public:
     // SlotPool();
-    ~SlotPool()
-    {
-        BaseFreeBlocks(this, sizeof(T));
-    };
+    ~SlotPool() { };
     // T* Allocate();
     // void Free(T*);
     // void Clear();

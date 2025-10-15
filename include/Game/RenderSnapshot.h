@@ -64,7 +64,7 @@ public:
     /* 0x1AA8 */ u8* mpExplodableVisibilityRecords;
     /* 0x1AAC */ nlVector3 mCameraUp;
     /* 0x1AB8 */ float mFrameBlendPercent;
-    /* 0x1ABC */ u8 pad1ABC0[0x4];
+    /* 0x1ABC */ f32 m_unk1ABC;
 }; // SIZE: 0x1AC0
 
 #endif // _RENDERSNAPSHOT_H_

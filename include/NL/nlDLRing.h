@@ -9,10 +9,9 @@ template <typename T>
 class DLListEntry
 {
 public:
-    DLListEntry<T>* m_next; // Offset 0x0 - Next entry in the ring
-    DLListEntry<T>* m_prev; // Offset 0x4 - Previous entry in the ring
-
-    T* m_data; // Offset 0x8 - Pointer to the actual data
+    /* 0x0 */ DLListEntry<T>* m_next;
+    /* 0x4 */ DLListEntry<T>* m_prev;
+    /* 0x8 */ T* m_data;
 
     DLListEntry()
         : m_next(nullptr)
@@ -27,12 +26,6 @@ public:
         , m_data(data)
     {
     }
-
-    // // Destructor
-    // ~DLListEntry()
-    // {
-    //     // Note: Does not delete m_data - that's the responsibility of the container
-    // }
 };
 
 template <typename T>

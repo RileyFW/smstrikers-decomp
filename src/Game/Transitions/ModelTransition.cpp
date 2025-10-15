@@ -191,6 +191,14 @@ void ModeledScreenTransition::Reset()
  */
 void ModeledScreenTransition::Cancel()
 {
+    if (m_pPoseTree != NULL)
+    {
+        delete m_pPoseTree;
+    }
+    m_pPoseTree = NULL;
+
+    delete[] m_Effects;
+    m_Effects = NULL;
 }
 
 /**
@@ -205,5 +213,9 @@ ModeledScreenTransition* ModeledScreenTransition::LoadFromParser(SimpleParser*)
  */
 float ModeledScreenTransition::GetTransitionLength()
 {
-    return 0.0f;
+    if (m_pAnim == NULL)
+    {
+        return 0.0f;
+    }
+    return m_pAnim->m_numFrames / 30.0f;
 }

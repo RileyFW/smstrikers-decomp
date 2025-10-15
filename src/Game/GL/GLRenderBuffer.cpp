@@ -1,5 +1,11 @@
 #include "Game/GL/GLRenderBuffer.h"
 
+#include "NL/nlMemory.h"
+
+bool GLRenderBuffer::m_bInstance = false;
+
+u32 glRenderBuffer[4];
+
 // /**
 //  * Offset/Address/Size: 0x60 | 0x801E81CC | size: 0x58
 //  */
@@ -47,4 +53,29 @@
  */
 GLRenderBuffer::~GLRenderBuffer()
 {
+    DLListEntry<GLDrawableData*>* current = nlDLRingGetStart<DLListEntry<GLDrawableData*> >(m_drawableData.m_Head);
+    DLListEntry<GLDrawableData*>* head = m_drawableData.m_Head;
+
+    while (current != nullptr)
+    {
+        nlFree(current->m_data);
+
+        if (nlDLRingIsEnd<DLListEntry<GLDrawableData*> >(head, current))
+        {
+            current = nullptr;
+        }
+        else
+        {
+            current = current->m_next;
+        }
+    }
+
+    m_drawableData.m_Head = nullptr;
+
+    nlWalkDLRing<DLListEntry<GLDrawableData*>, DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > > >(
+        m_drawableData.m_Head,
+        &m_drawableData,
+        &DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > >::DeleteEntry);
+
+    m_drawableData.m_Head = nullptr;
 }
