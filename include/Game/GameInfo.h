@@ -73,10 +73,10 @@ public:
     GameInfoManager();
     virtual ~GameInfoManager();
 
-    void GetTeam(short) const;
-    void SetTeam(short, eTeamID);
-    void GetSidekick(short) const;
-    void SetSidekick(short, eSidekickID);
+    eTeamID GetTeam(short homeaway) const;
+    void SetTeam(short homeaway, eTeamID teamid);
+    eSidekickID GetSidekick(short homeaway) const;
+    void SetSidekick(short homeaway, eSidekickID sidekickid);
     u16 GetNumPlayingTeams() const;
     u16 GetNumRounds() const;
     void GetTeamStatsByIndex(unsigned short);

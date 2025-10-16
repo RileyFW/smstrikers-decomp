@@ -1,20 +1,11 @@
 #include "Game/CharacterTemplate.h"
 
 cCharacter* g_pCharacters[10];
-tCharacterTemplateInfo g_aCharacterTemplateInfo[10];
+static tCharacterTemplateInfo g_aCharacterTemplateInfo[13];
 
 s32 skiptexture = 0xFFFFFFFF;
 
-// Structure for goalie texture information
-struct tGoalieTextureInfo
-{
-    /* 0x00 */ const char* characterName; // Character name string
-    /* 0x04 */ const char* texturePath;   // Texture file path
-    /* 0x08 */ void* unk_0x08;            // Unknown field (null pointer)
-}; // size = 0x0C (12 bytes)
-
-// String constants for goalie texture information
-static const char* const s_GoalieCharacterNames[] = {
+static const char* const s_GoalieCharacterNames[9] = {
     "daisygoalie",      // @1109
     "donkeykonggoalie", // @1111
     "luigigoalie",      // @1113
@@ -26,7 +17,7 @@ static const char* const s_GoalieCharacterNames[] = {
     "superteamgoalie"   // @1123
 };
 
-static const char* const s_GoalieTexturePaths[] = {
+static const char* const s_GoalieTexturePaths[9] = {
     "characters/daisygoalie/daisygoalie.glt",           // @1110
     "characters/donkeykonggoalie/donkeykonggoalie.glt", // @1112
     "characters/luigigoalie/luigigoalie.glt",           // @1114
@@ -38,8 +29,10 @@ static const char* const s_GoalieTexturePaths[] = {
     "characters/superteamgoalie/superteamgoalie.glt"    // @1124
 };
 
+// tGoalieTemplateInfo g_GoalieTextureInfo[9];
+
 // Global goalie texture info array
-tGoalieTextureInfo g_GoalieTextureInfo[9] = {
+tGoalieTemplateInfo g_GoalieTextureInfo[9] = {
     { s_GoalieCharacterNames[0], s_GoalieTexturePaths[0], nullptr },
     { s_GoalieCharacterNames[1], s_GoalieTexturePaths[1], nullptr },
     { s_GoalieCharacterNames[2], s_GoalieTexturePaths[2], nullptr },
@@ -148,20 +141,25 @@ void CharacterLoadingGuts(tCharacterTemplate*, const tCharacterTemplateInfo&, eC
 /**
  * Offset/Address/Size: 0x20EC | 0x800143D4 | size: 0x3C
  */
-void IsCaptain(eCharacterClass)
+bool IsCaptain(eCharacterClass cc)
 {
+    if (((cc - 1) <= 1U) || ((cc - 5) <= 2U) || ((cc - 9) <= 2U) || (cc == 0xC))
+    {
+        return true;
+    }
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x2128 | 0x80014410 | size: 0x34
  */
-const char* GetCharacterName(eCharacterClass arg0)
+char* GetCharacterName(eCharacterClass arg0)
 {
     if (arg0 < 0xD)
     {
-        return (const char*)g_aCharacterTemplateInfo[arg0].m_unk_0x00;
+        return (char*)g_aCharacterTemplateInfo[arg0].szCharName;
     }
-    return g_GoalieTextureInfo[arg0].characterName;
+    return (char*)g_GoalieTextureInfo[arg0].szCharName;
 }
 
 // /**

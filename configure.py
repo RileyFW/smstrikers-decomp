@@ -742,7 +742,7 @@ config.libs = [
             Object(NonMatching, "Game/Field.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Character.cpp"),
             Object(NonMatching, "Game/CharacterTemplate.cpp"),
-            Object(NonMatching, "Game/CharacterEffects.cpp"),
+            Object(Matching, "Game/CharacterEffects.cpp"),
             Object(NonMatching, "Game/Player.cpp"),
 
             Object(NonMatching, "Game/Goalie.cpp"),

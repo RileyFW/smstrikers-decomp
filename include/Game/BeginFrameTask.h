@@ -8,7 +8,7 @@ void DrawGrid(int);
 void DrawSafeFrame();
 void SetupRenderInfo();
 void SetupMatrices();
-void cb_ParticleLighting(glModel* pModel);
+glModel* cb_ParticleLighting(glModel* pModel);
 
 class BeginFrameTask : public nlTask
 {

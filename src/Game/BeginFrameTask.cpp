@@ -4,6 +4,9 @@
 #include "NL/gl/glUserData.h"
 #include "Game/GameObjectLighting.h"
 
+#include "NL/glx/glxTexture.h"
+
+const u32 GLTT_BumpLocal_bit = 1 << (int)GLTT_BumpLocal;
 // /**
 //  * Offset/Address/Size: 0xA8 | 0x80170214 | size: 0x84
 //  */
@@ -21,30 +24,23 @@
 /**
  * Offset/Address/Size: 0x19E8 | 0x801700C8 | size: 0x98
  */
-void cb_ParticleLighting(glModel* pModel)
+glModel* cb_ParticleLighting(glModel* pModel)
 {
-    //     glModelPacket* var_r28;
-    //     s32 temp_r30;
-    //     s32 temp_r31;
-    //     u32 temp_r29;
-    //     void* temp_r27;
+    glModelPacket* pPacket; // r27
+    u32 LitProgram = glGetProgram("3d pointlit");
+    u32 lightRamp = GetGameObjectLightRamp();
+    void* pLightData = GetInGameLightData();
+    pPacket = pModel->packets;
 
-    //     temp_r29 = glGetProgram("3d pointlit");
-    //     temp_r30 = GetGameObjectLightRamp();
-    //     var_r28 = arg0->unkC;
-    //     temp_r27 = GetInGameLightData();
-    //     temp_r31 = GLTT_BumpLocal_bit;
-    // loop_2:
-    //     if (var_r28 < (void*)(arg0->unkC + (arg0->unk0 * 0x4A)))
-    //     {
-    //         var_r28->unk1C = temp_r29;
-    //         var_r28->unk3C = temp_r30;
-    //         var_r28->unk40 |= temp_r31;
-    //         glUserAttach(temp_r27, var_r28, 0);
-    //         var_r28 += 0x4A;
-    //         goto loop_2;
-    //     }
-    //     return arg0;
+    while (pPacket < &pModel->packets[pModel->numPackets])
+    {
+        pPacket->state.program = LitProgram;
+        pPacket->state.texture[5] = lightRamp;
+        pPacket->state.texconfig |= GLTT_BumpLocal_bit;
+        glUserAttach(pLightData, pPacket, 0);
+        pPacket++;
+    }
+    return pModel;
 }
 
 /**

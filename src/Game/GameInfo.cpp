@@ -20,30 +20,75 @@ GameInfoManager::~GameInfoManager()
 /**
  * Offset/Address/Size: 0x9DEC | 0x8017F490 | size: 0x30
  */
-void GameInfoManager::GetTeam(short) const
+eTeamID GameInfoManager::GetTeam(short homeaway) const
 {
+    if (mGameInfo[mCurrentMode] == nullptr)
+        return TEAM_INVALID;
+    return mGameInfo[mCurrentMode]->mTeamIndex[homeaway];
 }
+
+// /* GameInfoManager::SetTeam (short, eTeamID) */
+// void SetTeam__15GameInfoManagerFs7eTeamID(GameInfoManager *this, s16 arg0, ? arg1)
+// {
+//     *((this + (this->unk4954 * 4))->unk10 + (arg0 * 4)) = (s32)arg1;
+// }
+
+// /* GameInfoManager::GetTeam (short) const */
+// s32 GetTeam__15GameInfoManagerCFs(GameInfoManager* this, s16 arg0)
+// {
+//     u32 temp_r3;
+
+//     temp_r3 = (this + (this->unk4954 * 4))->unk10;
+//     if (temp_r3 == 0U)
+//     {
+//         return -1;
+//     }
+//     return *(temp_r3 + (arg0 * 4));
 
 /**
  * Offset/Address/Size: 0x9DCC | 0x8017F470 | size: 0x20
  */
-void GameInfoManager::SetTeam(short, eTeamID)
+void GameInfoManager::SetTeam(short homeaway, eTeamID teamid)
 {
-    mUserInfo.mSaveID = sizeof(mCustomTournamentInfo);
+    mGameInfo[mCurrentMode]->mTeamIndex[homeaway] = teamid;
 }
 
 /**
  * Offset/Address/Size: 0x9D94 | 0x8017F438 | size: 0x38
  */
-void GameInfoManager::GetSidekick(short) const
+eSidekickID GameInfoManager::GetSidekick(short homeaway) const
 {
+    if (mGameInfo[mCurrentMode]->mTeamIndex[homeaway] == TEAM_MYSTERY)
+        return SK_MYSTERY;
+    return mGameInfo[mCurrentMode]->mSidekickIndex[homeaway];
 }
+// /* GameInfoManager::SetSidekick (short, eSidekickID) */
+// void SetSidekick__15GameInfoManagerFs11eSidekickID(GameInfoManager *this, s16 arg0, ? arg1)
+// {
+//     ((this + (this->unk4954 * 4))->unk10 + (arg0 * 4))->unk8 = (s32)arg1;
+// }
+
+// /* GameInfoManager::GetSidekick (short) const */
+// s32 GetSidekick__15GameInfoManagerCFs(GameInfoManager* this, s16 arg0)
+// {
+//     s32 temp_r3;
+//     s32 temp_r4;
+
+//     temp_r4 = arg0 * 4;
+//     temp_r3 = (this + (this->unk4954 * 4))->unk10;
+//     if ((s32) * (temp_r3 + temp_r4) == 8)
+//     {
+//         return -2;
+//     }
+//     return (temp_r3 + temp_r4)->unk8;
+// }
 
 /**
  * Offset/Address/Size: 0x9D70 | 0x8017F414 | size: 0x24
  */
-void GameInfoManager::SetSidekick(short, eSidekickID)
+void GameInfoManager::SetSidekick(short homeaway, eSidekickID sidekickid)
 {
+    mGameInfo[mCurrentMode]->mSidekickIndex[homeaway] = sidekickid;
 }
 
 /**

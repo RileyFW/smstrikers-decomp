@@ -7,6 +7,7 @@ nlSingleton<GameSceneManager> GameSceneManager::s_pInstance;
  */
 GameSceneManager::GameSceneManager()
 {
+    // EMPTY
 }
 
 /**
@@ -14,6 +15,7 @@ GameSceneManager::GameSceneManager()
  */
 GameSceneManager::~GameSceneManager()
 {
+    // EMPTY
 }
 
 /**

@@ -1,6 +1,7 @@
 #include "Game/GameObjectLighting.h"
 
 #include "NL/gl/glState.h"
+#include "types.h"
 
 u32 gStadiumGameObjectLightingParams[7] = {
     glGetTexture("MarioStadiumPlayerLightRamp"),
@@ -15,15 +16,19 @@ u32 gStadiumGameObjectLightingParams[7] = {
 /**
  * Offset/Address/Size: 0xB0C | 0x8012B348 | size: 0x8
  */
-void GetCameraRelativeLightData()
+void* GetCameraRelativeLightData()
 {
+    FORCE_DONT_INLINE;
+    return NULL;
 }
 
 /**
  * Offset/Address/Size: 0xB04 | 0x8012B340 | size: 0x8
  */
-void GetInGameLightData()
+void* GetInGameLightData()
 {
+    FORCE_DONT_INLINE;
+    return NULL;
 }
 
 /**
@@ -50,6 +55,8 @@ void UpdateGameObjectLighting()
 /**
  * Offset/Address/Size: 0x0 | 0x8012A83C | size: 0x34
  */
-void GetGameObjectLightRamp()
+u32 GetGameObjectLightRamp()
 {
+    FORCE_DONT_INLINE;
+    return 0;
 }

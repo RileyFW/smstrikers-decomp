@@ -1,6 +1,6 @@
 #include "Game/CharacterEffects.h"
 
-EffectsTexturing fxTexturing[] = {
+static EffectsTexturing fxTexturing[] = {
     { 0xFFFFFFFF, 0x00000000, 0x00000000 },
     { glGetTexture("effects/fx_env_ice"), 0x00000003, 0x00000000 },
     { glGetTexture("effects/fx_env_fire"), 0x00000003, 0x01000000 },

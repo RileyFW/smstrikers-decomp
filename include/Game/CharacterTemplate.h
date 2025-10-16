@@ -3,29 +3,33 @@
 
 #include "Game/Character.h"
 
-struct tCharacterTextureInfo
+struct tGoalieTemplateInfo
 {
-    /* 0x0 */ char pad0[4];
-    /* 0x4 */ u8* unk4;     /* inferred */
-    /* 0x8 */ u8 unk8;      /* inferred */
-    /* 0x9 */ char pad9[3]; /* maybe part of unk8[4]? */
-}; /* size = 0xC */
+    const char* szCharName;        // offset 0x0, size 0x4
+    const char* szTextureFilename; // offset 0x4, size 0x4
+    unsigned char bLoaded;         // offset 0x8, size 0x1
+}; // total size: 0xC
 
 struct tCharacterTemplateInfo
 {
-    /* 0x00 */ u32* m_unk_0x00;
-    /* 0x04 */ char m_pad_0x04[0xC];
-    /* 0x10 */ u8* m_unk_0x10;
-    /* 0x14 */ s8* m_unk_0x14;
-    /* 0x18 */ char m_pad_0x18[8];
-    /* 0x20 */ s8* m_unk_0x20;
-    /* 0x24 */ char m_pad_0x24[0xC];
-    /* 0x30 */ s32 m_unk_0x30;
-    /* 0x34 */ SoundPropAccessor* m_unk_0x34;
-    /* 0x38 */ char m_pad_0x38[4];
-    /* 0x3C */ s8* m_unk_0x3C;
-    /* 0x40 */ char m_pad_0x40[4];
-};
+    const char* szCharName;                       // offset 0x0, size 0x4
+    eClassTypes classType;                        // offset 0x4, size 0x4
+    const char* szModelFilename;                  // offset 0x8, size 0x4
+    const char* szBlendedModelFilename;           // offset 0xC, size 0x4
+    const char* szTextureFilename;                // offset 0x10, size 0x4
+    const char* szTriggerFilename;                // offset 0x14, size 0x4
+    void (*pTriggerCallback)(unsigned int);       // offset 0x18, size 0x4
+    const char* szHierarchyFilename;              // offset 0x1C, size 0x4
+    const char* szHierarchy;                      // offset 0x20, size 0x4
+    const struct AnimProperties* pAnimProperties; // offset 0x24, size 0x4
+    int nNumAnimProperties;                       // offset 0x28, size 0x4
+    const char* szAnimFilename;                   // offset 0x2C, size 0x4
+    const char* szEffectsName;                    // offset 0x30, size 0x4
+    SoundPropAccessor* pSFXPropAccessor;          // offset 0x34, size 0x4
+    const char* szPhysicsFilename;                // offset 0x38, size 0x4
+    const char* szTweaksFilename;                 // offset 0x3C, size 0x4
+    const char* szAnimRetargetFilename;           // offset 0x40, size 0x4
+}; // total size: 0x44
 
 class tCharacterTemplate;
 class tCharacterTemplateInfo;
@@ -39,8 +43,8 @@ void CreateSidekick(int, int, eCharacterClass, eCharacterClass, bool);
 s32 SidekickTexture_cb(unsigned long);
 void CreateCharacter(int, int, eCharacterClass, bool);
 void CharacterLoadingGuts(tCharacterTemplate*, const tCharacterTemplateInfo&, eCharacterClass, bool);
-void IsCaptain(eCharacterClass);
-const char* GetCharacterName(eCharacterClass);
+bool IsCaptain(eCharacterClass);
+char* GetCharacterName(eCharacterClass);
 
 // void LexicalCast<bool, const char*>(const char* const&);
 // void LexicalCast<bool, float>(const float&);
