@@ -1,4 +1,4 @@
-#include "pnFeather.h"
+#include "Game/SAnim/pnFeather.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x801EFF88 | size: 0x8
@@ -7,12 +7,12 @@ void cPN_Feather::GetType()
 {
 }
 
-/**
- * Offset/Address/Size: 0x9F0 | 0x801EFF24 | size: 0x64
- */
-void SlotPool<cPN_Feather>::~SlotPool()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x9F0 | 0x801EFF24 | size: 0x64
+//  */
+// void SlotPool<cPN_Feather>::~SlotPool()
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x890 | 0x801EFDC4 | size: 0xEC

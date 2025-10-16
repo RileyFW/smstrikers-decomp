@@ -1,6 +1,7 @@
 #ifndef _DEFAULTLOOSE_H_
 #define _DEFAULTLOOSE_H_
 
+#include "Game/AI/DecisionEntity.h"
 
 class Fuzzy
 {

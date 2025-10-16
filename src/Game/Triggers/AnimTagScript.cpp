@@ -1,11 +1,11 @@
-#include "AnimTagScript.h"
+#include "Game/Triggers/AnimTagScript.h"
 
-/**
- * Offset/Address/Size: 0x0 | 0x80214594 | size: 0x8C
- */
-void nlBSearch<BinaryTriggerFile::ANIM_RECORD, unsigned long>(const unsigned long&, BinaryTriggerFile::ANIM_RECORD*, int)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80214594 | size: 0x8C
+//  */
+// void nlBSearch<BinaryTriggerFile::ANIM_RECORD, unsigned long>(const unsigned long&, BinaryTriggerFile::ANIM_RECORD*, int)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x0 | 0x80214530 | size: 0x64

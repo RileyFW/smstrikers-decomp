@@ -55,7 +55,7 @@ Game/AnimInventory.cpp:
 	.data       start:0x802A1A78 end:0x802A1AF8
 	.sbss       start:0x80373658 end:0x80373660
 
-AvoidController.o:
+Game/AI/AvoidController.cpp:
 	.text       start:0x80007654 end:0x800099D4
 	.text       start:0x800099D4 end:0x800099D4
 	.text       start:0x800099D4 end:0x800099D4
@@ -145,7 +145,7 @@ Game/Field.cpp:
 	.sbss       start:0x80373690 end:0x80373698
 	.sdata2     start:0x80374E90 end:0x80374E98
 
-Fielder.o:
+Game/AI/Fielder.cpp:
 	.text       start:0x8001933C end:0x80026A98
 	.text       start:0x80026A98 end:0x80026A98
 	.text       start:0x80026A98 end:0x80026A98
@@ -169,7 +169,7 @@ Fielder.o:
 	.sbss       start:0x80373698 end:0x803736B8
 	.sdata2     start:0x80374E98 end:0x80374FF8
 
-FielderActions.o:
+Game/AI/FielderActions.cpp:
 	.text       start:0x80026B38 end:0x8002FD14
 	.text       start:0x8002FD14 end:0x8002FD14
 	.text       start:0x8002FD14 end:0x8002FD14
@@ -195,7 +195,7 @@ FielderActions.o:
 	.sbss       start:0x803736B8 end:0x803736F0
 	.sdata2     start:0x80374FF8 end:0x80375110
 
-FielderDesires.o:
+Game/AI/FielderDesires.cpp:
 	.text       start:0x80030D84 end:0x8003744C
 	.text       start:0x8003744C end:0x8003744C
 	.text       start:0x8003744C end:0x8003744C
@@ -250,7 +250,7 @@ Game/AI/Fuzzy.cpp:
 	.sbss       start:0x80373700 end:0x80373708
 	.sdata2     start:0x803752B8 end:0x803752C8
 
-FuzzyVariant.o:
+Game/AI/FuzzyVariant.cpp:
 	.text       start:0x8003C4F0 end:0x8003C574
 	.text       start:0x8003C574 end:0x8003C574
 	.text       start:0x8003C574 end:0x8003C574
@@ -325,7 +325,7 @@ Game/Goalie.cpp:
 	.sbss       start:0x80373710 end:0x80373720
 	.sdata2     start:0x803753D0 end:0x80375500
 
-GoalieActions.o:
+Game/AI/GoalieActions.cpp:
 	.text       start:0x8004E53C end:0x80052C4C
 	.text       start:0x80052C4C end:0x80052C4C
 	.ctors      start:0x8028D294 end:0x8028D298
@@ -339,7 +339,7 @@ Game/GoalieFatigue.cpp:
 	.text       start:0x80052C4C end:0x80052D08
 	.sdata2     start:0x803755E0 end:0x803755F0
 
-GoalieLooseBall.o:
+Game/AI/GoalieLooseBall.cpp:
 	.text       start:0x80052D08 end:0x80053420
 	.text       start:0x80053420 end:0x80053420
 	.rodata     start:0x8028DBA8 end:0x8028DBD8
@@ -347,7 +347,7 @@ GoalieLooseBall.o:
 	.sbss       start:0x80373728 end:0x80373738
 	.sdata2     start:0x803755F0 end:0x80375608
 
-GoalieSave.o:
+Game/AI/GoalieSave.cpp:
 	.text       start:0x80053420 end:0x80056044
 	.text       start:0x80056044 end:0x8005699C
 	.text       start:0x8005699C end:0x800569C0
@@ -434,7 +434,7 @@ Game/AI/ShotMeter.cpp:
 	.rodata     start:0x8028DC28 end:0x8028DC38
 	.sdata2     start:0x803757A8 end:0x803757D0
 
-SpaceSearch.o:
+Game/AI/SpaceSearch.cpp:
 	.text       start:0x80062950 end:0x8006420C
 	.text       start:0x8006420C end:0x80064394
 	.text       start:0x80064394 end:0x80064394
@@ -469,7 +469,7 @@ Game/TweaksBase.cpp:
 	.text       start:0x80066268 end:0x80066268
 	.data       start:0x802A7D10 end:0x802A7D20
 
-Variant.o:
+Game/AI/Variant.cpp:
 	.text       start:0x80066268 end:0x80067258
 	.text       start:0x80067258 end:0x80067258
 	.text       start:0x80067258 end:0x80067258
@@ -481,7 +481,7 @@ Variant.o:
 	.bss        start:0x8030F3B8 end:0x8030F3D0
 	.sdata      start:0x80371240 end:0x80371278
 
-CommonScript.o:
+Game/AI/CommonScript.cpp:
 	.text       start:0x8006A1D0 end:0x80079B54
 	.text       start:0x80079B54 end:0x80079B54
 	.text       start:0x80079B54 end:0x80079C38
@@ -507,7 +507,7 @@ Game/AI/Scripts/RootScript.cpp:
 	.bss        start:0x8030F3D0 end:0x80310F50
 	.sdata2     start:0x803758E8 end:0x803758F8
 
-FormationScript.o:
+Game/AI/Scripts/FormationScript.cpp:
 	.text       start:0x8007D03C end:0x8007E960
 	.text       start:0x8007E960 end:0x8007E960
 	.text       start:0x8007E960 end:0x8007E960
@@ -518,7 +518,7 @@ FormationScript.o:
 	.sdata      start:0x80371310 end:0x80371340
 	.sdata2     start:0x803758F8 end:0x80375908
 
-ScriptCaching.o:
+Game/AI/ScriptCaching.cpp:
 	.text       start:0x8007E960 end:0x8007E960
 	.text       start:0x8007E960 end:0x8007E960
 	.sdata      start:0x80371340 end:0x80371348
@@ -533,7 +533,7 @@ Game/AI/Scripts/ScriptDefines.cpp:
 	.text       start:0x8007EA88 end:0x8007EA88
 	.sbss       start:0x803737E0 end:0x803737F8
 
-ScriptQuestions.o:
+Game/AI/Scripts/ScriptQuestions.cpp:
 	.text       start:0x8007EA88 end:0x800848FC
 	.text       start:0x800848FC end:0x800848FC
 	.text       start:0x800848FC end:0x8008490C
@@ -549,7 +549,7 @@ Game/ScriptTuning.cpp:
 	.data       start:0x802A7DE0 end:0x802A8A28
 	.sdata2     start:0x80375990 end:0x80375998
 
-DefaultDefensive.o:
+Game/AI/Scripts/Plays/DefaultDefensive.cpp:
 	.text       start:0x800856B8 end:0x8008B084
 	.text       start:0x8008B084 end:0x8008B084
 	.text       start:0x8008B084 end:0x8008B084
@@ -560,7 +560,7 @@ DefaultDefensive.o:
 	.sdata      start:0x80371348 end:0x80371370
 	.sdata2     start:0x80375998 end:0x803759C8
 
-DefaultLoose.o:
+Game/AI/Scripts/Plays/DefaultLoose.cpp:
 	.text       start:0x8008B084 end:0x8008CA8C
 	.text       start:0x8008CA8C end:0x8008CA8C
 	.text       start:0x8008CA8C end:0x8008CA8C
@@ -571,7 +571,7 @@ DefaultLoose.o:
 	.sdata      start:0x80371370 end:0x80371378
 	.sdata2     start:0x803759C8 end:0x803759D8
 
-DefaultOffensive.o:
+Game/AI/Scripts/Plays/DefaultOffensive.cpp:
 	.text       start:0x8008CA8C end:0x80093A64
 	.text       start:0x80093A64 end:0x80093A64
 	.text       start:0x80093A64 end:0x80093A64
@@ -588,7 +588,7 @@ Game/FE/feAsyncImage.cpp:
 	.text       start:0x80093F1C end:0x80093F1C
 	.data       start:0x802A8A28 end:0x802A8A38
 
-LidOpenMessage.o:
+Game/FE/LidOpenMessage.cpp:
 	.text       start:0x80093F1C end:0x800947AC
 	.text       start:0x800947AC end:0x800947AC
 	.text       start:0x800947AC end:0x800947AC
@@ -1043,7 +1043,7 @@ Game/SH/SHSpoils.cpp:
 	.sbss       start:0x803738C8 end:0x803738D0
 	.sdata2     start:0x80375C68 end:0x80375C70
 
-BraggingRights.o:
+Game/FE/BraggingRights.cpp:
 	.text       start:0x800D1FFC end:0x800D556C
 	.text       start:0x800D556C end:0x800D556C
 	.text       start:0x800D556C end:0x800D5B14
@@ -1203,7 +1203,7 @@ Game/SH/SHCupHub.cpp:
 	.sbss       start:0x803738E0 end:0x803738E8
 	.sdata2     start:0x80375CD8 end:0x80375D30
 
-CupTickerManager.o:
+Game/FE/Cup/CupTickerManager.cpp:
 	.text       start:0x800F1FC8 end:0x800F3D68
 	.text       start:0x800F3D68 end:0x800F402C
 	.text       start:0x800F402C end:0x800F402C
@@ -1261,7 +1261,7 @@ Game/OverlayHandlerInGameText.cpp:
 	.sdata      start:0x80371E58 end:0x80371EE8
 	.sdata2     start:0x80375D70 end:0x80375D78
 
-OverlayHandlerSummary.o:
+Game/FE/Overlay/OverlayHandlerSummary.cpp:
 	.text       start:0x800FCBA0 end:0x800FF430
 	.text       start:0x800FF430 end:0x800FF430
 	.text       start:0x800FF430 end:0x800FF91C
@@ -1317,7 +1317,7 @@ Game/OverlayHandlerDemo.cpp:
 	.text       start:0x8010566C end:0x8010566C
 	.data       start:0x802AD980 end:0x802AD9B0
 
-OverlayHandlerWinner.o:
+Game/FE/Overlay/OverlayHandlerWinner.cpp:
 	.text       start:0x8010566C end:0x80106794
 	.text       start:0x80106794 end:0x80106794
 	.text       start:0x80106794 end:0x80106DDC
@@ -1671,7 +1671,7 @@ Game/GameObjectLighting.cpp:
 	.sbss       start:0x80373AB8 end:0x80373AC8
 	.sdata2     start:0x803760E0 end:0x80376120
 
-Nis.o:
+Game/Render/Nis.cpp:
 	.text       start:0x8012B410 end:0x8012CFA4
 	.text       start:0x8012CFA4 end:0x8012CFA4
 	.text       start:0x8012CFA4 end:0x8012CFA4
@@ -1858,7 +1858,7 @@ Game/PhysicsWall.cpp:
 	.data       start:0x802AFE68 end:0x802AFE90
 	.sdata2     start:0x80376360 end:0x80376368
 
-Game/audio.cpp:
+Game/Audio/audio.cpp:
 	.text       start:0x8013C514 end:0x8014122C
 	.text       start:0x8014122C end:0x8014122C
 	.text       start:0x8014122C end:0x8014122C
@@ -1882,7 +1882,7 @@ Game/audio.cpp:
 	.sbss       start:0x80373B58 end:0x80373B78
 	.sdata2     start:0x80376368 end:0x803763B0
 
-AudioEventHandler.o:
+Game/Audio/AudioEventHandler.cpp:
 	.text       start:0x801423B4 end:0x80143DCC
 	.text       start:0x80143DCC end:0x80143DCC
 	.text       start:0x80143DCC end:0x80143DCC
@@ -1899,7 +1899,7 @@ AudioEventHandler.o:
 	.sbss       start:0x80373B78 end:0x80373B98
 	.sdata2     start:0x803763B0 end:0x803763D8
 
-AudioLoader.o:
+Game/Audio/AudioLoader.cpp:
 	.text       start:0x80143DCC end:0x80147E60
 	.text       start:0x80147E60 end:0x80147E60
 	.text       start:0x80147E60 end:0x80147E60
@@ -1922,7 +1922,7 @@ AudioLoader.o:
 	.sbss       start:0x80373B98 end:0x80373BA8
 	.sdata2     start:0x803763D8 end:0x803763E8
 
-AudioScriptEventMgr.o:
+Game/Audio/AudioScriptEventMgr.cpp:
 	.text       start:0x80149154 end:0x8014B46C
 	.text       start:0x8014B46C end:0x8014B46C
 	.text       start:0x8014B46C end:0x8014B4A0
@@ -1947,7 +1947,7 @@ AudioScriptEventMgr.o:
 	.sdata2     start:0x803763E8 end:0x80376428
 	.sbss2      start:0x80377F50 end:0x80377F58
 
-AudioStream.o:
+Game/Audio/AudioStream.cpp:
 	.text       start:0x8014B818 end:0x8014BED4
 	.text       start:0x8014BED4 end:0x8014BED4
 	.text       start:0x8014BED4 end:0x8014BED4
@@ -1966,14 +1966,14 @@ AudioStream.o:
 	.sdata      start:0x80372538 end:0x803725B0
 	.sbss       start:0x80373BC0 end:0x80373BC8
 
-Game/CharacterAudio.cpp:
+Game/Audio/CharacterAudio.cpp:
 	.text       start:0x8014C3A4 end:0x8014D714
 	.text       start:0x8014D714 end:0x8014D714
 	.text       start:0x8014D714 end:0x8014D714
 	.data       start:0x802B1CE0 end:0x802B33A0
 	.sdata2     start:0x80376428 end:0x80376438
 
-CrowdMood.o:
+Game/Audio/CrowdMood.cpp:
 	.text       start:0x8014D714 end:0x8015139C
 	.text       start:0x8015139C end:0x801514FC
 	.text       start:0x801514FC end:0x801514FC
@@ -1987,7 +1987,7 @@ CrowdMood.o:
 	.sbss       start:0x80373BC8 end:0x80373BD0
 	.sdata2     start:0x80376438 end:0x80376490
 
-Game/GameAudio.cpp:
+Game/Audio/GameAudio.cpp:
 	.text       start:0x80151544 end:0x80153BF0
 	.text       start:0x80153BF0 end:0x80153BF0
 	.text       start:0x80153BF0 end:0x80153BF0
@@ -2019,7 +2019,7 @@ Game/Audio/SoundEventScript.cpp:
 	.sbss       start:0x80373BD0 end:0x80373BD8
 	.sdata2     start:0x803764B0 end:0x803764B8
 
-WorldAudio.o:
+Game/Audio/WorldAudio.cpp:
 	.text       start:0x80154944 end:0x80154D58
 	.text       start:0x80154D58 end:0x80154D58
 	.ctors      start:0x8028D2F8 end:0x8028D2FC
@@ -2027,7 +2027,7 @@ WorldAudio.o:
 	.data       start:0x802BE368 end:0x802BFC68
 	.bss        start:0x803234D0 end:0x80327128
 
-StreamTrack.o:
+Game/Audio/StreamTrack.cpp:
 	.text       start:0x80154D58 end:0x8015733C
 	.text       start:0x8015733C end:0x8015733C
 	.text       start:0x8015733C end:0x801573F0
@@ -2049,7 +2049,7 @@ StreamTrack.o:
 	.bss        start:0x80327128 end:0x80327138
 	.sdata2     start:0x803764B8 end:0x803764E0
 
-PriorityStream.o:
+Game/Audio/PriorityStream.cpp:
 	.text       start:0x80157AB4 end:0x8015896C
 	.text       start:0x8015896C end:0x8015896C
 	.text       start:0x8015896C end:0x8015896C
@@ -2068,7 +2068,7 @@ Game/Render/AnimatedModelExplodable.cpp:
 	.bss        start:0x80327138 end:0x803286A8
 	.sbss       start:0x80373BD8 end:0x80373BE8
 
-Bowser.o:
+Game/Render/Bowser.cpp:
 	.text       start:0x80158D74 end:0x8015D95C
 	.text       start:0x8015D95C end:0x8015D964
 	.text       start:0x8015D964 end:0x8015D964
@@ -2090,7 +2090,7 @@ Game/Render/CameraGuy.cpp:
 	.sbss       start:0x80373BF8 end:0x80373C08
 	.sdata2     start:0x803765C0 end:0x803765D8
 
-ChainChomp.o:
+Game/Render/ChainChomp.cpp:
 	.text       start:0x8015DD04 end:0x8015F198
 	.text       start:0x8015F198 end:0x8015F1A0
 	.text       start:0x8015F1A0 end:0x8015F1A0
@@ -2105,14 +2105,14 @@ ChainChomp.o:
 	.sbss       start:0x80373C08 end:0x80373C20
 	.sdata2     start:0x803765D8 end:0x80376668
 
-GraphicsLoader.o:
+Game/Render/GraphicsLoader.cpp:
 	.text       start:0x8015F1DC end:0x8015F264
 	.text       start:0x8015F264 end:0x8015F264
 	.ctors      start:0x8028D308 end:0x8028D30C
 	.data       start:0x802C0050 end:0x802C00D0
 	.sbss       start:0x80373C20 end:0x80373C28
 
-Indicators.o:
+Game/Render/Indicators.cpp:
 	.text       start:0x8015F264 end:0x8015FFE0
 	.ctors      start:0x8028D30C end:0x8028D310
 	.rodata     start:0x8029FCB0 end:0x8029FCC0
@@ -2123,7 +2123,7 @@ Indicators.o:
 	.sdata2     start:0x80376668 end:0x803766B0
 	.sbss2      start:0x80377F58 end:0x80377F60
 
-ShootToScoreArrow.o:
+Game/Render/ShootToScoreArrow.cpp:
 	.text       start:0x8015FFE0 end:0x80160260
 	.ctors      start:0x8028D310 end:0x8028D314
 	.data       start:0x802C01D0 end:0x802C0220
@@ -2132,7 +2132,7 @@ ShootToScoreArrow.o:
 	.sdata2     start:0x803766B0 end:0x803766C8
 	.sbss2      start:0x80377F60 end:0x80377F68
 
-ShootToScoreMeter.o:
+Game/Render/ShootToScoreMeter.cpp:
 	.text       start:0x80160260 end:0x80161E20
 	.ctors      start:0x8028D314 end:0x8028D318
 	.data       start:0x802C0220 end:0x802C0350
@@ -2172,7 +2172,7 @@ Game/Render/depthoffield.cpp:
 	.sbss       start:0x80373C98 end:0x80373CA0
 	.sdata2     start:0x803767A8 end:0x803767C0
 
-Jumbotron.o:
+Game/Render/Jumbotron.cpp:
 	.text       start:0x801637E8 end:0x80163E7C
 	.text       start:0x80163E7C end:0x80163E7C
 	.text       start:0x80163E7C end:0x80163E7C
@@ -2211,7 +2211,7 @@ Game/Render/SkinAnimatedNPC.cpp:
 	.sbss       start:0x80373CA8 end:0x80373CB8
 	.sdata2     start:0x803767E8 end:0x803767F8
 
-SkinAnimatedMovableNPC.o:
+Game/Render/SkinAnimatedMovableNPC.cpp:
 	.text       start:0x80165070 end:0x801654BC
 	.text       start:0x801654BC end:0x801654C4
 	.text       start:0x801654C4 end:0x801654C4
@@ -2240,7 +2240,7 @@ Game/Render/NPCLoader.cpp:
 	.data       start:0x802C06F8 end:0x802C0710
 	.sbss       start:0x80373CD0 end:0x80373CD8
 
-NPCManager.o:
+Game/Render/NPCManager.cpp:
 	.text       start:0x80165EC4 end:0x801672AC
 	.text       start:0x801672AC end:0x801672AC
 	.text       start:0x801672AC end:0x801672D0
@@ -2250,7 +2250,7 @@ NPCManager.o:
 	.sdata      start:0x80372678 end:0x80372690
 	.sdata2     start:0x80376810 end:0x80376818
 
-SidelineExplodable.o:
+Game/Render/SidelineExplodable.cpp:
 	.text       start:0x80167360 end:0x80169744
 	.text       start:0x80169744 end:0x80169784
 	.text       start:0x80169784 end:0x80169784
@@ -2295,7 +2295,7 @@ Game/Effects/PhotoFlashEffect.cpp:
 	.sdata2     start:0x803768A0 end:0x803768B0
 	.sbss2      start:0x80377F70 end:0x80377F78
 
-ElectricFence.o:
+Game/Render/ElectricFence.cpp:
 	.text       start:0x8016B030 end:0x8016C650
 	.text       start:0x8016C650 end:0x8016C650
 	.text       start:0x8016C650 end:0x8016C898
@@ -2362,7 +2362,7 @@ Game/BeginFrameTask.cpp:
 	.sbss       start:0x80373D48 end:0x80373D78
 	.sdata2     start:0x80376928 end:0x80376990
 
-FrontEndTask.o:
+Game/FrontEndTask.cpp:
 	.text       start:0x80170298 end:0x801709C4
 	.text       start:0x801709C4 end:0x801709D0
 	.text       start:0x801709D0 end:0x801709D0
@@ -2379,7 +2379,7 @@ Game/TweakerTask.cpp:
 	.data       start:0x802C10A0 end:0x802C10B8
 	.sdata      start:0x80372720 end:0x80372728
 
-ComUpdateTask.o:
+Game/ComUpdateTask.cpp:
 	.text       start:0x80170AD4 end:0x80170ADC
 	.text       start:0x80170ADC end:0x80170AE8
 	.text       start:0x80170AE8 end:0x80170AE8
@@ -2403,7 +2403,7 @@ Game/PlatPadUpdateTask.cpp:
 	.text       start:0x80170BAC end:0x80170BAC
 	.data       start:0x802C1100 end:0x802C1120
 
-GameRenderTask.o:
+Game/GameRenderTask.cpp:
 	.text       start:0x80170BAC end:0x80171594
 	.text       start:0x80171594 end:0x801715A0
 	.text       start:0x801715A0 end:0x801715A0
@@ -2496,7 +2496,7 @@ Game/GameInfo.cpp:
 	.sdata2     start:0x80376A28 end:0x80376A30
 	.sbss2      start:0x80377F80 end:0x80377F88
 
-StatsTracker.o:
+Game/DB/StatsTracker.cpp:
 	.text       start:0x80181560 end:0x801868FC
 	.text       start:0x801868FC end:0x80186B9C
 	.text       start:0x80186B9C end:0x80186B9C
@@ -2525,7 +2525,7 @@ Game/DB/SaveLoad.cpp:
 	.sdata      start:0x80372838 end:0x80372840
 	.sbss       start:0x80373E08 end:0x80373E38
 
-CustomTournament.o:
+Game/DB/CustomTournament.cpp:
 	.text       start:0x8018D4B0 end:0x8018E608
 	.text       start:0x8018E608 end:0x8018F70C
 	.text       start:0x8018F70C end:0x8018F70C
@@ -2545,7 +2545,7 @@ Game/DB/UserOptions.cpp:
 	.sdata      start:0x80372840 end:0x80372888
 	.sdata2     start:0x80376A48 end:0x80376A68
 
-Simmer.o:
+Game/DB/Simmer.cpp:
 	.text       start:0x8019087C end:0x80191498
 	.text       start:0x80191498 end:0x801918A0
 	.text       start:0x801918A0 end:0x801918A0
@@ -2675,7 +2675,7 @@ Game/TerrainTypes.cpp:
 	.bss        start:0x8032B530 end:0x8032B550
 	.sdata      start:0x80372970 end:0x80372990
 
-AnimTrigger.o:
+Game/Triggers/AnimTrigger.cpp:
 	.text       start:0x8019ECE4 end:0x8019EDB0
 	.text       start:0x8019EDB0 end:0x8019EDB0
 	.text       start:0x8019EDB0 end:0x8019EDB0
@@ -2708,7 +2708,7 @@ Game/WorldTriggers.cpp:
 	.data       start:0x802C3A00 end:0x802C3A10
 	.sdata2     start:0x80376B80 end:0x80376B88
 
-SebringAnimScript.o:
+Game/Triggers/SebringAnimScript.cpp:
 	.text       start:0x801A4078 end:0x801A4078
 	.text       start:0x801A4078 end:0x801A40B4
 	.text       start:0x801A40B4 end:0x801A42B0
@@ -3878,7 +3878,7 @@ NL/plat/plataudio.cpp:
 	.sbss       start:0x80374190 end:0x80374218
 	.sdata2     start:0x80376FA8 end:0x80376FD0
 
-PlatStream.o:
+Game/Sys/PlatStream.cpp:
 	.text       start:0x801C70C4 end:0x801C7748
 	.text       start:0x801C7748 end:0x801C775C
 	.text       start:0x801C775C end:0x801C775C
@@ -3888,7 +3888,7 @@ PlatStream.o:
 	.bss        start:0x8032ECE0 end:0x8032EEE0
 	.sbss       start:0x80374218 end:0x80374220
 
-GCStream.o:
+Game/Sys/GCStream.cpp:
 	.text       start:0x801C77B0 end:0x801C9184
 	.text       start:0x801C9184 end:0x801C9770
 	.text       start:0x801C9770 end:0x801C9770
@@ -3899,7 +3899,7 @@ GCStream.o:
 	.sdata      start:0x80373000 end:0x80373010
 	.sbss       start:0x80374220 end:0x80374228
 
-gcmemcard.o:
+Game/Sys/gcmemcard.cpp:
 	.text       start:0x801C9770 end:0x801CAB40
 	.text       start:0x801CAB40 end:0x801CAB40
 	.text       start:0x801CAB40 end:0x801CB450
@@ -3910,7 +3910,7 @@ gcmemcard.o:
 	.sdata      start:0x80373010 end:0x80373020
 	.sbss       start:0x80374228 end:0x80374230
 
-movie.o:
+Game/Sys/movie.cpp:
 	.text       start:0x801CB7BC end:0x801CBF38
 	.text       start:0x801CBF38 end:0x801CBF38
 	.text       start:0x801CBF38 end:0x801CBF38
@@ -3923,7 +3923,7 @@ movie.o:
 	.sdata      start:0x80373020 end:0x80373038
 	.sbss       start:0x80374230 end:0x80374258
 
-THPSimple.o:
+Game/Sys/THPSimple.cpp:
 	.text       start:0x801CBF64 end:0x801CD74C
 	.data       start:0x802FD510 end:0x802FD610
 	.bss        start:0x8032F000 end:0x8032F700
@@ -4147,7 +4147,7 @@ Game/GL/GLSkinMesh.cpp:
 	.text       start:0x801E0508 end:0x801E0644
 	.sdata2     start:0x80377158 end:0x80377160
 
-ShaderSkinMesh.o:
+Game/GL/ShaderSkinMesh.cpp:
 	.text       start:0x801E0644 end:0x801E1434
 	.text       start:0x801E1434 end:0x801E20F4
 	.text       start:0x801E20F4 end:0x801E20F4
@@ -4210,7 +4210,7 @@ Game/SAnim.cpp:
 	.text       start:0x801EA5E0 end:0x801EA65C
 	.sdata2     start:0x80377198 end:0x803771C0
 
-pnSAnimController.o:
+Game/SAnim/pnSAnimController.cpp:
 	.text       start:0x801EA65C end:0x801EB580
 	.text       start:0x801EB580 end:0x801EB598
 	.text       start:0x801EB598 end:0x801EB5A0
@@ -4232,7 +4232,7 @@ Game/SHierarchy.cpp:
 	.text       start:0x801EDFEC end:0x801EE720
 	.text       start:0x801EE720 end:0x801EE720
 
-pnBlender.o:
+Game/SAnim/pnBlender.cpp:
 	.text       start:0x801EE720 end:0x801EECD0
 	.text       start:0x801EECD0 end:0x801EED44
 	.text       start:0x801EED44 end:0x801EED44
@@ -4242,7 +4242,7 @@ pnBlender.o:
 	.sbss       start:0x80374340 end:0x80374348
 	.sdata2     start:0x80377208 end:0x80377218
 
-pnSingleAxisBlender.o:
+Game/SAnim/pnSingleAxisBlender.cpp:
 	.text       start:0x801EED44 end:0x801EF4C0
 	.text       start:0x801EF4C0 end:0x801EF534
 	.text       start:0x801EF534 end:0x801EF534
@@ -4251,7 +4251,7 @@ pnSingleAxisBlender.o:
 	.bss        start:0x80343318 end:0x80343340
 	.sdata2     start:0x80377218 end:0x80377230
 
-pnFeather.o:
+Game/SAnim/pnFeather.cpp:
 	.text       start:0x801EF534 end:0x801EFF88
 	.text       start:0x801EFF88 end:0x801EFF90
 	.text       start:0x801EFF90 end:0x801EFF90
@@ -4261,7 +4261,7 @@ pnFeather.o:
 	.sbss       start:0x80374348 end:0x80374350
 	.sdata2     start:0x80377230 end:0x80377248
 
-AnimRetargeter.o:
+Game/SAnim/AnimRetargeter.cpp:
 	.text       start:0x801EFF90 end:0x801F00E4
 
 NL/plat/globalpad.cpp:
@@ -4543,7 +4543,7 @@ Game/Transitions/TransLight.cpp:
 	.sdata      start:0x803733B8 end:0x803733D8
 	.sdata2     start:0x80377510 end:0x80377520
 
-fontmanager.o:
+Game/Font/fontmanager.cpp:
 	.text       start:0x80209694 end:0x80209BD0
 	.text       start:0x80209BD0 end:0x80209BD0
 	.text       start:0x80209BD0 end:0x80209BE0
@@ -4769,7 +4769,7 @@ Game/Triggers/BinaryTriggerFile.cpp:
 	.text       start:0x802142DC end:0x80214354
 	.text       start:0x80214354 end:0x80214354
 
-AnimTagScript.o:
+Game/Triggers/AnimTagScript.cpp:
 	.text       start:0x80214354 end:0x80214530
 	.text       start:0x80214530 end:0x80214594
 	.text       start:0x80214594 end:0x80214594
@@ -5605,22 +5605,22 @@ Dolphin/vi/vi.c:
 	.sdata      start:0x803735D8 end:0x803735E8
 	.sbss       start:0x80374808 end:0x80374870
 
-vm.a/VM.c:
+Dolphin/vm.a/VM.c:
 	.text       start:0x8025F240 end:0x8025F528
 	.sdata      start:0x803735E8 end:0x803735F0
 	.sbss       start:0x80374870 end:0x80374888
 
-vm.a/VMPageReplacement.c:
+Dolphin/vm.a/VMPageReplacement.c:
 	.text       start:0x8025F528 end:0x8025F83C
 	.sdata      start:0x803735F0 end:0x803735F8
 	.sbss       start:0x80374888 end:0x80374890
 
-vm.a/VMMapping.c:
+Dolphin/vm.a/VMMapping.c:
 	.text       start:0x8025F83C end:0x8025FB48
 	.data       start:0x80307810 end:0x80307878
 	.sbss       start:0x80374890 end:0x803748A0
 
-vmbase.a/VMBase.c:
+Dolphin/vm.a/VMBase.c:
 	.text       start:0x8025FB48 end:0x802607B4
 	.sbss       start:0x803748A0 end:0x803748C0
 

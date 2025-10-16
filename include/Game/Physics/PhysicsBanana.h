@@ -3,7 +3,7 @@
 
 #include "Game/Physics/PhysicsSphere.h"
 #include "Game/Sys/eventman.h"
-#include "Game/Fielder.h"
+#include "Game/AI/Fielder.h"
 
 class PowerupBase;
 

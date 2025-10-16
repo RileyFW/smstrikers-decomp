@@ -1,4 +1,4 @@
-#include "pnSingleAxisBlender.h"
+#include "Game/SAnim/pnSingleAxisBlender.h"
 
 /**
  * Offset/Address/Size: 0x6C | 0x801EF52C | size: 0x8
@@ -14,12 +14,12 @@ cPN_SingleAxisBlender::~cPN_SingleAxisBlender()
 {
 }
 
-/**
- * Offset/Address/Size: 0x718 | 0x801EF45C | size: 0x64
- */
-void SlotPool<cPN_SingleAxisBlender>::~SlotPool()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x718 | 0x801EF45C | size: 0x64
+//  */
+// void SlotPool<cPN_SingleAxisBlender>::~SlotPool()
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x5DC | 0x801EF320 | size: 0xD4

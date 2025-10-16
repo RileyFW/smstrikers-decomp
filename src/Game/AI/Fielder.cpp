@@ -1,4 +1,4 @@
-#include "Game/Fielder.h"
+#include "Game/AI/Fielder.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x8001933C | size: 0x3C
@@ -500,72 +500,80 @@ void cFielder::SetFrozen(float)
 /**
  * Offset/Address/Size: 0x67CC | 0x8001FB08 | size: 0x14
  */
-void cFielder::IsFrozen() const
+bool cFielder::IsFrozen() const
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x67E0 | 0x8001FB1C | size: 0x14
  */
-void cFielder::IsDefense() const
+bool cFielder::IsDefense() const
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x67F4 | 0x8001FB30 | size: 0x14
  */
-void cFielder::IsMidField() const
+bool cFielder::IsMidField() const
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x6808 | 0x8001FB44 | size: 0x14
  */
-void cFielder::IsWinger() const
+bool cFielder::IsWinger() const
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x681C | 0x8001FB58 | size: 0x10
  */
-void cFielder::IsStriker() const
+bool cFielder::IsStriker() const
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x682C | 0x8001FB68 | size: 0x3C
  */
-void cFielder::IsSlideTackling() const
+bool cFielder::IsSlideTackling() const
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x6868 | 0x8001FBA4 | size: 0x88
  */
-void cFielder::IsHitting() const
+bool cFielder::IsHitting() const
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x68F0 | 0x8001FC2C | size: 0x110
  */
-void cFielder::IsFallenDown(float) const
+bool cFielder::IsFallenDown(float) const
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x6A00 | 0x8001FD3C | size: 0xEC
  */
-void cFielder::GetReceivePassBallContactOffset(nlVector3&, unsigned short, const LooseBallContactAnimInfo*)
-{
-}
+// void cFielder::GetReceivePassBallContactOffset(nlVector3&, unsigned short, const LooseBallContactAnimInfo*)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x6AEC | 0x8001FE28 | size: 0x130
  */
-void cFielder::GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsigned short, bool, bool)
-{
-}
+// void cFielder::GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsigned short, bool, bool)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x6C1C | 0x8001FF58 | size: 0x130
@@ -598,8 +606,9 @@ void cFielder::SetAction(eFielderActionState)
 /**
  * Offset/Address/Size: 0x6DD0 | 0x8002010C | size: 0x14
  */
-void cFielder::IsActionDone() const
+bool cFielder::IsActionDone() const
 {
+    return false;
 }
 
 /**
@@ -661,23 +670,23 @@ void cFielder::DoPenaltyCardBooking(cFielder*, ePenaltyType)
 /**
  * Offset/Address/Size: 0x84AC | 0x800217E8 | size: 0x2FC
  */
-void cFielder::DoLooseBallContactFromRunVolley(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&)
-{
-}
+// void cFielder::DoLooseBallContactFromRunVolley(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x87A8 | 0x80021AE4 | size: 0x270
  */
-void cFielder::DoLooseBallContactFromRun(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&)
-{
-}
+// void cFielder::DoLooseBallContactFromRun(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x8A18 | 0x80021D54 | size: 0x290
  */
-void cFielder::DoLooseBallContactFromIdle(nlVector3&, float&, nlVector3&, float&, unsigned short, const LooseBallContactAnimInfo*)
-{
-}
+// void cFielder::DoLooseBallContactFromIdle(nlVector3&, float&, nlVector3&, float&, unsigned short, const LooseBallContactAnimInfo*)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x8CA8 | 0x80021FE4 | size: 0x2B4
@@ -818,8 +827,9 @@ void cFielder::IsTurboing()
 /**
  * Offset/Address/Size: 0xA5DC | 0x80023918 | size: 0xCC
  */
-void cFielder::IsCharacterInAir(bool) const
+bool cFielder::IsCharacterInAir(bool) const
 {
+    return false;
 }
 
 /**
@@ -836,33 +846,33 @@ void cFielder::UsePerfectPass()
 {
 }
 
-/**
- * Offset/Address/Size: 0xA6D0 | 0x80023A0C | size: 0x3C
- */
-void cFielder::ClearPassTargetIfAmThePassTarget()
-{
-}
+// /**
+//  * Offset/Address/Size: 0xA6D0 | 0x80023A0C | size: 0x3C
+//  */
+// void cFielder::ClearPassTargetIfAmThePassTarget()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0xA70C | 0x80023A48 | size: 0xF8
- */
-void cFielder::CollideWithWallCallback(const CollisionPlayerWallData*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0xA70C | 0x80023A48 | size: 0xF8
+//  */
+// void cFielder::CollideWithWallCallback(const CollisionPlayerWallData*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0xA804 | 0x80023B40 | size: 0x10C
- */
-void cFielder::CollideWithBowserCallback(Bowser*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0xA804 | 0x80023B40 | size: 0x10C
+//  */
+// void cFielder::CollideWithBowserCallback(Bowser*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0xA910 | 0x80023C4C | size: 0x1BC
- */
-void cFielder::CollideWithChainCallback(ChainChomp*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0xA910 | 0x80023C4C | size: 0x1BC
+//  */
+// void cFielder::CollideWithChainCallback(ChainChomp*)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0xAACC | 0x80023E08 | size: 0xC4
@@ -888,9 +898,9 @@ void cFielder::CollideWithShellCallback(ePowerupSize, bool, const nlVector3&, co
 /**
  * Offset/Address/Size: 0xAEBC | 0x800241F8 | size: 0x151C
  */
-void cFielder::CollideWithCharacterCallback(CollisionPlayerPlayerData*)
-{
-}
+// void cFielder::CollideWithCharacterCallback(CollisionPlayerPlayerData*)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0xC3D8 | 0x80025714 | size: 0x38
@@ -955,51 +965,51 @@ cFielder::~cFielder()
 {
 }
 
-/**
- * Offset/Address/Size: 0xD2E8 | 0x80026624 | size: 0x474
- */
-cFielder::cFielder(int, int, eCharacterClass, const int*, cSHierarchy*, cAnimInventory*, const CharacterPhysicsData*, FielderTweaks*, AnimRetargetList*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0xD2E8 | 0x80026624 | size: 0x474
+//  */
+// cFielder::cFielder(int, int, eCharacterClass, const int*, cSHierarchy*, cAnimInventory*, const CharacterPhysicsData*, FielderTweaks*, AnimRetargetList*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80026A98 | size: 0x3C
- */
-FilteredRandomChance::~FilteredRandomChance()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80026A98 | size: 0x3C
+//  */
+// FilteredRandomChance::~FilteredRandomChance()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x3C | 0x80026AD4 | size: 0x3C
- */
-FilteredRandomReal::~FilteredRandomReal()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x3C | 0x80026AD4 | size: 0x3C
+//  */
+// FilteredRandomReal::~FilteredRandomReal()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80026B10 | size: 0x8
- */
-void cNet::GetNetHeight()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80026B10 | size: 0x8
+//  */
+// void cNet::GetNetHeight()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x8 | 0x80026B18 | size: 0x8
- */
-void cNet::GetNetWidth()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x8 | 0x80026B18 | size: 0x8
+//  */
+// void cNet::GetNetWidth()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80026B20 | size: 0x8
- */
-void PlayerAttackData::GetID()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80026B20 | size: 0x8
+//  */
+// void PlayerAttackData::GetID()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80026B28 | size: 0x10
- */
-void 0x8028D280..0x8028D284 | size : 0x4
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80026B28 | size: 0x10
+//  */
+// void 0x8028D280..0x8028D284 | size : 0x4
+// {
+// }

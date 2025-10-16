@@ -101,8 +101,9 @@ void GetAABBDimensions(const glModel*, AABBDimensions&, unsigned long)
 /**
  * Offset/Address/Size: 0x10A4 | 0x80120EB0 | size: 0x1C8
  */
-void DrawableModel::Clone() const
+bool DrawableModel::Clone() const
 {
+    return false;
 }
 
 /**
@@ -220,13 +221,15 @@ DrawableShadow::~DrawableShadow()
 /**
  * Offset/Address/Size: 0x0 | 0x80122A20 | size: 0x8
  */
-void DrawableModel::IsDrawableModel()
+bool DrawableModel::IsDrawableModel()
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x8 | 0x80122A28 | size: 0x4
  */
-void DrawableModel::AsDrawableModel()
+DrawableModel* DrawableModel::AsDrawableModel()
 {
+    return NULL;
 }

@@ -1,6 +1,9 @@
 #ifndef _GOALIELOOSEBALL_H_
 #define _GOALIELOOSEBALL_H_
 
+#include "NL/nlMath.h"
+#include "Game/Player.h"
+
 void LooseBallCallback(float, float, unsigned long, float, void*);
 
 class LooseBallAnims

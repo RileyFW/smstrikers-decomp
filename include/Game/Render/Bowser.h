@@ -4,8 +4,11 @@
 #include "NL/nlMath.h"
 #include "NL/nlTimer.h"
 
+#include "Game/Inventory.h"
+#include "Game/Physics/PhysicsObject.h"
 #include "Game/CharacterAudio.h"
 #include "Game/Render/SkinAnimatedMovableNPC.h"
+#include "Game/Effects/EmissionController.h"
 
 void AnimSoundCallback(unsigned int);
 
@@ -55,11 +58,11 @@ class cFielder;
 class Bowser : public SkinAnimatedMovableNPC
 {
 public:
-    // Bowser(cSHierarchy&, int, PhysicsNPC&, cInventory<cSAnim>*);
+    Bowser(cSHierarchy&, int, PhysicsNPC&, cInventory<cSAnim>*);
     virtual ~Bowser();
-    virtual SkinAnimatedNPC_Type GetSkinAnimatedNPC_Type() const;
+    virtual SkinAnimatedNPC_Type GetSkinAnimatedNPC_Type() const { return SkinAnimatedNPC_BOWSER; };
     virtual void Update(float);
-    // void CollisionCallback(PhysicsObject*, PhysicsObject*, const nlVector3&);
+    void CollisionCallback(PhysicsObject*, PhysicsObject*, const nlVector3&);
     void ActionInit();
     void ActionThrow();
     void ActionRoll();
@@ -74,15 +77,15 @@ public:
     void ActionIdle();
     void SetTiltParameters(float);
     void CheckForAbort();
-    // void UpdateFireEmitter(EmissionController&);
-    // void UpdateBowserLandEmitter(EmissionController&);
+    void UpdateFireEmitter(EmissionController&);
+    void UpdateBowserLandEmitter(EmissionController&);
     void FindTarget();
     void SetupBaseSFX();
     // void PlaySFX(Audio::eCharSFX, PosUpdateMethod, float, bool);
     void CheckFootSteps();
     void GetHeadSpin() const;
     void GetHeadTilt() const;
-    // void DrawShadow(const cPoseAccumulator&, const nlMatrix4&);
+    void DrawShadow(const cPoseAccumulator&, const nlMatrix4&);
 
     /* 0x080 */ nlMatrix4 mLastHeadMatrix;
     /* 0x0C0 */ cHeadTrack* mpHeadTrack;

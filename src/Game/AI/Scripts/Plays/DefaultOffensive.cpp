@@ -1,11 +1,11 @@
-#include "DefaultOffensive.h"
+#include "Game/AI/Scripts/Plays/DefaultOffensive.h"
 
-/**
- * Offset/Address/Size: 0x0 | 0x80093A64 | size: 0x8
- */
-void PositionOf<cFielder*>(cFielder*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80093A64 | size: 0x8
+//  */
+// void PositionOf<cFielder*>(cFielder*)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x6B9C | 0x80093628 | size: 0x43C

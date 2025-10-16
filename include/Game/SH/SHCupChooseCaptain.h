@@ -13,11 +13,6 @@ public:
         CUP_STATE_READY = 2,
     };
 
-    // enum eSidekickID
-    // {
-    //     eSidekickID_0 = 0
-    // };
-
     CupChooseCaptainSceneV2(bool);
     ~CupChooseCaptainSceneV2();
     void SceneCreated();

@@ -1,6 +1,6 @@
 #include "Game/Team.h"
 
-#include "Game/Fielder.h"
+#include "Game/AI/Fielder.h"
 
 cTeam* g_pTeams[2] = { NULL, NULL };
 

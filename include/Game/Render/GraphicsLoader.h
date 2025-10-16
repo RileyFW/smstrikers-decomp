@@ -1,12 +1,14 @@
 #ifndef _GRAPHICSLOADER_H_
 #define _GRAPHICSLOADER_H_
 
-void 0x8028D308..0x8028D30C | size: 0x4;
+#include "Game/Loader.h"
 
-class GraphicsLoader
+// void 0x8028D308..0x8028D30C | size: 0x4;
+
+class GraphicsLoader : public Loader
 {
 public:
-    void StartLoad(LoadingManager*);
+    virtual bool StartLoad(LoadingManager*);
 };
 
 #endif // _GRAPHICSLOADER_H_

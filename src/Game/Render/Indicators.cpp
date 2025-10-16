@@ -1,11 +1,4 @@
-#include "Indicators.h"
-
-/**
- * Offset/Address/Size: 0xCA8 | 0x8015FF0C | size: 0xD4
- */
-void 0x8028D30C..0x8028D310 | size: 0x4
-{
-}
+#include "Game/Render/Indicators.h"
 
 /**
  * Offset/Address/Size: 0x868 | 0x8015FACC | size: 0x440

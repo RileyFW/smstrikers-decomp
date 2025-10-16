@@ -1,18 +1,18 @@
-#include "ScriptQuestions.h"
+#include "Game/AI/Scripts/ScriptQuestions.h"
 
-/**
- * Offset/Address/Size: 0x8 | 0x80084904 | size: 0x8
- */
-void PositionOf<cPlayer*>(cPlayer*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x8 | 0x80084904 | size: 0x8
+//  */
+// void PositionOf<cPlayer*>(cPlayer*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x800848FC | size: 0x8
- */
-void PositionOf<cBall*>(cBall*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x800848FC | size: 0x8
+//  */
+// void PositionOf<cBall*>(cBall*)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x5E44 | 0x800848CC | size: 0x30
@@ -164,9 +164,9 @@ void Deker(cFielder*)
 /**
  * Offset/Address/Size: 0x579C | 0x80084224 | size: 0x2C
  */
-void RepeatingLastDesire(cFielder*, eScriptFielderDesire)
-{
-}
+// void RepeatingLastDesire(cFielder*, eScriptFielderDesire)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x54B4 | 0x80083F3C | size: 0x2E8

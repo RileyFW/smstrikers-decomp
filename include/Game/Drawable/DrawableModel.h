@@ -29,7 +29,7 @@ class DrawableModel : public DrawableObject
 {
 public:
     /* 0x04 */ virtual ~DrawableModel();
-    /* 0x08 */ virtual void Clone() const;
+    /* 0x08 */ virtual bool Clone() const;
     /* 0x0C */ virtual void Draw();
     /* 0x10 */ virtual void DrawPlanarShadow();
     /* 0x14 */ virtual bool IsDrawableModel();

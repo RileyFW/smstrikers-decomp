@@ -6,8 +6,8 @@ extern cBall* g_pBall;
 
 cNet* cField::mpNet[2]; // = { nullptr, nullptr };
 
-nlVector3_ cField::mv3FieldPosition = { 20.60211f, 12.0825f, 0.0f };
-nlVector3_ cField::mSidelines[4] = { { 1.0f, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, -1.0f, 0.0f } };
+nlVector3 cField::mv3FieldPosition = { 20.60211f, 12.0825f, 0.0f };
+nlVector3 cField::mSidelines[4] = { { 1.0f, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, -1.0f, 0.0f } };
 
 extern "C" void CollideWithWallCallback__5cBallFv(); // forward decl
 
@@ -56,8 +56,8 @@ void cField::Init(cNet* net0, cNet* net1)
 {
     mpNet[0] = net0;
     mpNet[1] = net1;
-    net0->m_baseLocation.f.x = -mv3FieldPosition.f[0];
-    net1->m_baseLocation.f.x = mv3FieldPosition.f[0];
+    net0->m_baseLocation.f.x = -mv3FieldPosition.f.x;
+    net1->m_baseLocation.f.x = mv3FieldPosition.f.x;
 }
 
 /**
@@ -67,9 +67,9 @@ float cField::GetGoalLineX(float side)
 {
     if (side > 0)
     {
-        return mv3FieldPosition.f[0];
+        return mv3FieldPosition.f.x;
     }
-    return -mv3FieldPosition.f[0];
+    return -mv3FieldPosition.f.x;
 }
 
 /**
@@ -79,9 +79,9 @@ float cField::GetGoalLineX(unsigned int side)
 {
     if (side > 0)
     {
-        return mv3FieldPosition.f[0];
+        return mv3FieldPosition.f.x;
     }
-    return -mv3FieldPosition.f[0];
+    return -mv3FieldPosition.f.x;
 }
 
 /**
@@ -91,9 +91,9 @@ float cField::GetSidelineY(unsigned int side)
 {
     if (side > 0)
     {
-        return mv3FieldPosition.f[1];
+        return mv3FieldPosition.f.y;
     }
-    return -mv3FieldPosition.f[1];
+    return -mv3FieldPosition.f.y;
 }
 
 /**
@@ -137,9 +137,9 @@ cNet* cField::GetNet(float side)
  */
 bool cField::IsOnField(const nlVector3& location)
 {
-    if ((float)fabs(location.f.x) <= mv3FieldPosition.f[0])
+    if ((float)fabs(location.f.x) <= mv3FieldPosition.f.x)
     {
-        if ((float)fabs(location.f.y) <= mv3FieldPosition.f[1])
+        if ((float)fabs(location.f.y) <= mv3FieldPosition.f.y)
         {
             return true;
         }
@@ -168,17 +168,17 @@ static inline float ClampMax(float v, float max)
  */
 void cField::FixOutOfBoundsPosition(nlVector3& v, float fMinDistanceFromWall)
 {
-    float half;
     float min, max;
+    float half;
 
+    half = mv3FieldPosition.f.x;
     float& x = v.f.x;
-    half = mv3FieldPosition.f[0];
     min = -half + fMinDistanceFromWall;
     max = half - fMinDistanceFromWall;
     v.f.x = ClampMax(ClampMin(x, min), max);
 
     float& y = v.f.y;
-    half = mv3FieldPosition.f[1];
+    half = mv3FieldPosition.f.y;
     min = -half + fMinDistanceFromWall;
     max = half - fMinDistanceFromWall;
     v.f.y = ClampMax(ClampMin(y, min), max);
@@ -189,6 +189,6 @@ void cField::FixOutOfBoundsPosition(nlVector3& v, float fMinDistanceFromWall)
  */
 void cField::SetFieldDimensions(float, float, float)
 {
-    mpNet[0]->m_baseLocation.f.x = -mv3FieldPosition.f[0];
-    mpNet[1]->m_baseLocation.f.x = mv3FieldPosition.f[0];
+    mpNet[0]->m_baseLocation.f.x = -mv3FieldPosition.f.x;
+    mpNet[1]->m_baseLocation.f.x = mv3FieldPosition.f.x;
 }

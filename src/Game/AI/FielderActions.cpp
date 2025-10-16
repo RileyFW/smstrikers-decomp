@@ -1,67 +1,67 @@
-#include "FielderActions.h"
+#include "Game/AI/FielderActions.h"
 
-/**
- * Offset/Address/Size: 0x13C | 0x80030010 | size: 0xD74
- */
-void FormatImpl<BasicString<char, Detail::TempStringAllocator>>::operator%<const char*>(const char* const&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x13C | 0x80030010 | size: 0xD74
+//  */
+// void FormatImpl<BasicString<char, Detail::TempStringAllocator> >::operator% <const char*>(const char* const&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x114 | 0x8002FFE8 | size: 0x28
- */
-void FormatImpl<BasicString<char, Detail::TempStringAllocator>>::operator BasicString<char, Detail::TempStringAllocator>() const
-{
-}
+// /**
+//  * Offset/Address/Size: 0x114 | 0x8002FFE8 | size: 0x28
+//  */
+// void FormatImpl<BasicString<char, Detail::TempStringAllocator> >::operator BasicString<char, Detail::TempStringAllocator>() const
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x8002FED4 | size: 0x114
- */
-void Format<BasicString<char, Detail::TempStringAllocator>, const char*>(const BasicString<char, Detail::TempStringAllocator>&, const char* const&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8002FED4 | size: 0x114
+//  */
+// void Format<BasicString<char, Detail::TempStringAllocator>, const char*>(const BasicString<char, Detail::TempStringAllocator>&, const char* const&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x8002FEBC | size: 0x18
- */
-void nlDLRingGetStart<cBaseCamera>(cBaseCamera*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8002FEBC | size: 0x18
+//  */
+// void nlDLRingGetStart<cBaseCamera>(cBaseCamera*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x118 | 0x8002FE7C | size: 0x40
- */
-void 0x8002FEBC..0x8002FED4 | size: 0x18
-{
-}
+// /**
+//  * Offset/Address/Size: 0x118 | 0x8002FE7C | size: 0x40
+//  */
+// void 0x8002FEBC..0x8002FED4 | size : 0x18
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x30 | 0x8002FD94 | size: 0xE8
- */
-void Detail::LexicalCastImpl<BasicString<char, Detail::TempStringAllocator>, const char*>::Do(const char*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x30 | 0x8002FD94 | size: 0xE8
+//  */
+// void Detail::LexicalCastImpl<BasicString<char, Detail::TempStringAllocator>, const char*>::Do(const char*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x8002FD64 | size: 0x30
- */
-void LexicalCast<BasicString<char, Detail::TempStringAllocator>, const char*>(const char* const&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8002FD64 | size: 0x30
+//  */
+// void LexicalCast<BasicString<char, Detail::TempStringAllocator>, const char*>(const char* const&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x8002FD5C | size: 0x8
- */
-void cNet::GetPostRadius()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8002FD5C | size: 0x8
+//  */
+// void cNet::GetPostRadius()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x8002FD14 | size: 0x48
- */
-void Function1<void, EmissionController&>::FunctorBase::~FunctorBase()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8002FD14 | size: 0x48
+//  */
+// void Function1<void, EmissionController&>::FunctorBase::~FunctorBase()
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x8654 | 0x8002F18C | size: 0xB88

@@ -8,7 +8,7 @@
 #include "NL/gl/glTexture.h"
 
 #include "Game/Team.h"
-#include "Game/Fielder.h"
+#include "Game/AI/Fielder.h"
 
 #include "Game/Sys/audio.h"
 #include "types.h"

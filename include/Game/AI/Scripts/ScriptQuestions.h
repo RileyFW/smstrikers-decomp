@@ -1,6 +1,13 @@
 #ifndef _SCRIPTQUESTIONS_H_
 #define _SCRIPTQUESTIONS_H_
 
+#include "NL/nlMath.h"
+#include "Game/Player.h"
+#include "Game/Ball.h"
+#include "Game/Team.h"
+#include "Game/Game.h"
+#include "Game/AI/Fielder.h"
+
 void InOffensiveZoneOfPlayer(cBall*, cPlayer*);
 void InDefensiveZoneOfPlayer(cBall*, cPlayer*);
 void InOffensiveZone(cPlayer*);
@@ -97,7 +104,7 @@ void LikelyToUsePowerup(cFielder*, int);
 void AbleToUsePowerup(cFielder*, int);
 void AbleToInterceptBallForSwapController(cFielder*);
 void AbleToInterceptBall(cPlayer*);
-void RepeatingLastDesire(cFielder*, eScriptFielderDesire);
+// void RepeatingLastDesire(cFielder*, eScriptFielderDesire);
 void Deker(cFielder*);
 void Passer(cFielder*);
 void Shooter(cFielder*);
@@ -119,6 +126,7 @@ void LastBallOwner(cPlayer*);
 void BallOwnerT(cTeam*);
 void BallOwner(cPlayer*);
 void CalcSelectChance(float, float);
-void PositionOf<cBall*>(cBall*);
-void PositionOf<cPlayer*>(cPlayer*);
+// void PositionOf<cBall*>(cBall*);
+// void PositionOf<cPlayer*>(cPlayer*);
+
 #endif // _SCRIPTQUESTIONS_H_

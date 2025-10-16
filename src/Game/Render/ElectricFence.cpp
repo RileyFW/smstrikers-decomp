@@ -1,32 +1,32 @@
-#include "ElectricFence.h"
+#include "Game/Render/ElectricFence.h"
 
-/**
- * Offset/Address/Size: 0x0 | 0x8016C898 | size: 0x64
- */
-void SlotPool<ElectricFenceData>::~SlotPool()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8016C898 | size: 0x64
+//  */
+// void SlotPool<ElectricFenceData>::~SlotPool()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x1E4 | 0x8016C834 | size: 0x64
- */
-void SlotPool<ElectricFenceGeometry>::~SlotPool()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x1E4 | 0x8016C834 | size: 0x64
+//  */
+// void SlotPool<ElectricFenceGeometry>::~SlotPool()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x9C | 0x8016C6EC | size: 0x2C
- */
-void nlListAddEnd<ElectricFenceData>(ElectricFenceData**, ElectricFenceData**, ElectricFenceData*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x9C | 0x8016C6EC | size: 0x2C
+//  */
+// void nlListAddEnd<ElectricFenceData>(ElectricFenceData**, ElectricFenceData**, ElectricFenceData*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x8016C650 | size: 0x9C
- */
-void nlListRemoveElement<ElectricFenceData>(ElectricFenceData**, ElectricFenceData*, ElectricFenceData**)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8016C650 | size: 0x9C
+//  */
+// void nlListRemoveElement<ElectricFenceData>(ElectricFenceData**, ElectricFenceData*, ElectricFenceData**)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x1370 | 0x8016C3A0 | size: 0x2B0

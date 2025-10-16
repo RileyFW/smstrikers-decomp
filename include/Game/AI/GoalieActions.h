@@ -1,7 +1,10 @@
 #ifndef _GOALIEACTIONS_H_
 #define _GOALIEACTIONS_H_
 
-void 0x8028D294..0x8028D298 | size: 0x4;
+// void 0x8028D294..0x8028D298 | size: 0x4;
+
+class cPN_SingleAxisBlender;
+class cPN_SAnimController;
 
 class Goalie
 {

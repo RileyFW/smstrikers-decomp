@@ -3,7 +3,7 @@
 #include "string.h"
 
 #include "NL/nlConfig.h"
-#include "Game/WorldAudio.h"
+#include "Game/Audio/WorldAudio.h"
 
 extern bool g_ForceDoubleBallTransition;
 

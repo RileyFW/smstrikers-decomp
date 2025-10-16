@@ -10,6 +10,7 @@ class PhysicsBox : PhysicsObject
 public:
     void SetDensity(float);
     PhysicsBox(CollisionSpace*, PhysicsWorld*, float, float, float);
+    virtual int GetObjectType() const { return 0x1; };
 };
 
 #endif // _PHYSICSBOX_H_

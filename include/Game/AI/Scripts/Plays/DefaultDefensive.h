@@ -1,6 +1,8 @@
 #ifndef _DEFAULTDEFENSIVE_H_
 #define _DEFAULTDEFENSIVE_H_
 
+#include "Game/AI/DecisionEntity.h"
+#include "Game/Team.h"
 
 class Fuzzy
 {

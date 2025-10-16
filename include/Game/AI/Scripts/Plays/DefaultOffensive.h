@@ -1,7 +1,11 @@
 #ifndef _DEFAULTOFFENSIVE_H_
 #define _DEFAULTOFFENSIVE_H_
 
-void PositionOf<cFielder*>(cFielder*);
+#include "Game/AI/DecisionEntity.h"
+#include "Game/AI/Fielder.h"
+#include "Game/Team.h"
+
+// void PositionOf<cFielder*>(cFielder*);
 
 class Fuzzy
 {

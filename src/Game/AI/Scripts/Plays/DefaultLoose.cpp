@@ -1,4 +1,4 @@
-#include "DefaultLoose.h"
+#include "Game/AI/Scripts/Plays/DefaultLoose.h"
 
 /**
  * Offset/Address/Size: 0x15CC | 0x8008C650 | size: 0x43C

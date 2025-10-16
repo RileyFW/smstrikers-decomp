@@ -2,8 +2,7 @@
 #define _FORMATION_H_
 
 #include "NL/nlMath.h"
-// #include "Game/Fielder.h"
-// #include "Game/Team.h"
+// #include "Game/AI/Fielder.h"
 
 class cTeam;
 class cFielder;

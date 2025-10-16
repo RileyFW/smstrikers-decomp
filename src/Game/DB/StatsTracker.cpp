@@ -1,67 +1,67 @@
-#include "StatsTracker.h"
+#include "Game/DB/StatsTracker.h"
 
-/**
- * Offset/Address/Size: 0x2C7C | 0x80189818 | size: 0x144
- */
-void Format<BasicString<char, Detail::TempStringAllocator>, const char*, const char*, const char*, const char*, const char*>(const BasicString<char, Detail::TempStringAllocator>&, const char* const&, const char* const&, const char* const&, const char* const&, const char* const&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x2C7C | 0x80189818 | size: 0x144
+//  */
+// void Format<BasicString<char, Detail::TempStringAllocator>, const char*, const char*, const char*, const char*, const char*>(const BasicString<char, Detail::TempStringAllocator>&, const char* const&, const char* const&, const char* const&, const char* const&, const char* const&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x2B20 | 0x801896BC | size: 0x15C
- */
-void Format<BasicString<char, Detail::TempStringAllocator>, int, int, int, int, int, int, int>(const BasicString<char, Detail::TempStringAllocator>&, const int&, const int&, const int&, const int&, const int&, const int&, const int&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x2B20 | 0x801896BC | size: 0x15C
+//  */
+// void Format<BasicString<char, Detail::TempStringAllocator>, int, int, int, int, int, int, int>(const BasicString<char, Detail::TempStringAllocator>&, const int&, const int&, const int&, const int&, const int&, const int&, const int&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x1DAC | 0x80188948 | size: 0xD74
- */
-void FormatImpl<BasicString<char, Detail::TempStringAllocator>>::operator%<const char*>(const char* const&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x1DAC | 0x80188948 | size: 0xD74
+//  */
+// void FormatImpl<BasicString<char, Detail::TempStringAllocator>>::operator%<const char*>(const char* const&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x1038 | 0x80187BD4 | size: 0xD74
- */
-void FormatImpl<BasicString<char, Detail::TempStringAllocator>>::operator%<float>(const float&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x1038 | 0x80187BD4 | size: 0xD74
+//  */
+// void FormatImpl<BasicString<char, Detail::TempStringAllocator>>::operator%<float>(const float&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0xEDC | 0x80187A78 | size: 0x15C
- */
-void Format<BasicString<char, Detail::TempStringAllocator>, const char*, const char*, const char*, const char*, const char*, float, float>(const BasicString<char, Detail::TempStringAllocator>&, const char* const&, const char* const&, const char* const&, const char* const&, const char* const&, const float&, const float&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0xEDC | 0x80187A78 | size: 0x15C
+//  */
+// void Format<BasicString<char, Detail::TempStringAllocator>, const char*, const char*, const char*, const char*, const char*, float, float>(const BasicString<char, Detail::TempStringAllocator>&, const char* const&, const char* const&, const char* const&, const char* const&, const char* const&, const float&, const float&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x168 | 0x80186D04 | size: 0xD74
- */
-void FormatImpl<BasicString<char, Detail::TempStringAllocator>>::operator%<int>(const int&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x168 | 0x80186D04 | size: 0xD74
+//  */
+// void FormatImpl<BasicString<char, Detail::TempStringAllocator>>::operator%<int>(const int&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80186B9C | size: 0x168
- */
-void Format<BasicString<char, Detail::TempStringAllocator>, int, int, int, int, int, int, int, int>(const BasicString<char, Detail::TempStringAllocator>&, const int&, const int&, const int&, const int&, const int&, const int&, const int&, const int&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80186B9C | size: 0x168
+//  */
+// void Format<BasicString<char, Detail::TempStringAllocator>, int, int, int, int, int, int, int, int>(const BasicString<char, Detail::TempStringAllocator>&, const int&, const int&, const int&, const int&, const int&, const int&, const int&, const int&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0xBC | 0x801869B8 | size: 0x1E4
- */
-void BasicString<char, Detail::TempStringAllocator>::AppendInPlace<Detail::TempStringAllocator>(const BasicString<char, Detail::TempStringAllocator>&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0xBC | 0x801869B8 | size: 0x1E4
+//  */
+// void BasicString<char, Detail::TempStringAllocator>::AppendInPlace<Detail::TempStringAllocator>(const BasicString<char, Detail::TempStringAllocator>&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x801868FC | size: 0xBC
- */
-void BasicString<char, Detail::TempStringAllocator>::Append<Detail::TempStringAllocator>(const BasicString<char, Detail::TempStringAllocator>&) const
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x801868FC | size: 0xBC
+//  */
+// void BasicString<char, Detail::TempStringAllocator>::Append<Detail::TempStringAllocator>(const BasicString<char, Detail::TempStringAllocator>&) const
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x52FC | 0x8018685C | size: 0xA0

@@ -33,6 +33,7 @@
 class CommonDesireData
 {
 public:
+    CommonDesireData();
     ~CommonDesireData();
     CommonDesireData(const CommonDesireData&);
     float CalcFuzzyChance(float fChance);

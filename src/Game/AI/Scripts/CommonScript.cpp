@@ -2,7 +2,7 @@
 
 #include "Game/Team.h"
 #include "Game/Player.h"
-#include "Game/Fielder.h"
+#include "Game/AI/Fielder.h"
 
 // /**
 //  * Offset/Address/Size: 0x654 | 0x8007A56C | size: 0x80
@@ -70,9 +70,9 @@ SaveConfidence::~SaveConfidence()
 /**
  * Offset/Address/Size: 0x0 | 0x80079B54 | size: 0xE4
  */
-FuzzyVariant::FuzzyVariant(const FuzzyVariant&)
-{
-}
+// FuzzyVariant::FuzzyVariant(const FuzzyVariant&)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0xF1B0 | 0x80079380 | size: 0x7D4

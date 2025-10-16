@@ -1,4 +1,4 @@
-#include "GoalieLooseBall.h"
+#include "Game/AI/GoalieLooseBall.h"
 
 /**
  * Offset/Address/Size: 0x6FC | 0x80053404 | size: 0x1C

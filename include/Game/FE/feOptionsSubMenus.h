@@ -1,6 +1,7 @@
 #ifndef _FEOPTIONSSUBMENUS_H_
 #define _FEOPTIONSSUBMENUS_H_
 
+#include "Game/DB/UserOptions.h"
 #include "Game/FE/feButtonComponent.h"
 
 class FEPresentation;
@@ -20,7 +21,7 @@ public:
     void Save();
     void Update(float);
     ~OptionsSaveLoad();
-    void OptionsSaveLoad(FEPresentation*, ButtonComponent::ButtonState);
+    OptionsSaveLoad(FEPresentation*, ButtonComponent::ButtonState);
     void ChangesMade();
 };
 
@@ -32,7 +33,7 @@ public:
     void Save();
     ~OptionsGameplayMenuV2();
     void BuildSkillLevelMenu(TLComponentInstance*, int, int);
-    void OptionsGameplayMenuV2(FEPresentation*, ButtonComponent::ButtonState, GameplaySettings&, int);
+    OptionsGameplayMenuV2(FEPresentation*, ButtonComponent::ButtonState, GameplaySettings&, int);
     void ChangesMade();
 };
 
@@ -43,7 +44,7 @@ public:
     void Save();
     void Update(float);
     ~OptionsVisualMenuV2();
-    void OptionsVisualMenuV2(FEPresentation*, ButtonComponent::ButtonState, VisualSettings&);
+    OptionsVisualMenuV2(FEPresentation*, ButtonComponent::ButtonState, VisualSettings&);
     void ChangesMade();
 };
 
@@ -54,19 +55,19 @@ public:
     void Revert();
     void Save();
     ~OptionsAudioMenuV2();
-    void OptionsAudioMenuV2(FEPresentation*, ButtonComponent::ButtonState, AudioSettings&);
+    OptionsAudioMenuV2(FEPresentation*, ButtonComponent::ButtonState, AudioSettings&);
     void ChangesMade();
 };
 
 class OptionsCheatsMenu
 {
 public:
-    void BuildCustomPowerupsList(TLComponentInstance*, CheatSettings::CustomPowerups, FEPresentation*);
+    // void BuildCustomPowerupsList(TLComponentInstance*, CheatSettings::CustomPowerups, FEPresentation*);
     void BuildLockableSubMenuList(int, TLComponentInstance*, FEPresentation*, bool, int);
     void Revert();
     void Save();
     ~OptionsCheatsMenu();
-    void OptionsCheatsMenu(FEPresentation*, ButtonComponent::ButtonState, CheatSettings&);
+    OptionsCheatsMenu(FEPresentation*, ButtonComponent::ButtonState, CheatSettings&);
     void ChangesMade();
 };
 

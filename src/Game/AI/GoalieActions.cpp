@@ -1,11 +1,11 @@
-#include "GoalieActions.h"
+#include "Game/AI/GoalieActions.h"
 
-/**
- * Offset/Address/Size: 0x4700 | 0x80052C3C | size: 0x10
- */
-void 0x8028D294..0x8028D298 | size: 0x4
-{
-}
+// /**
+//  * Offset/Address/Size: 0x4700 | 0x80052C3C | size: 0x10
+//  */
+// void 0x8028D294..0x8028D298 | size: 0x4
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x4518 | 0x80052A54 | size: 0x1E8
