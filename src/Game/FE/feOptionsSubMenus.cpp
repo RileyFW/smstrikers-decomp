@@ -31,7 +31,7 @@ OptionsSaveLoad::~OptionsSaveLoad()
 /**
  * Offset/Address/Size: 0x210 | 0x800B5254 | size: 0x410
  */
-void OptionsSaveLoad::OptionsSaveLoad(FEPresentation*, ButtonComponent::ButtonState)
+OptionsSaveLoad::OptionsSaveLoad(FEPresentation*, ButtonComponent::ButtonState)
 {
 }
 
@@ -73,7 +73,7 @@ void OptionsGameplayMenuV2::BuildSkillLevelMenu(TLComponentInstance*, int, int)
 /**
  * Offset/Address/Size: 0xEE0 | 0x800B5F24 | size: 0x850
  */
-void OptionsGameplayMenuV2::OptionsGameplayMenuV2(FEPresentation*, ButtonComponent::ButtonState, GameplaySettings&, int)
+OptionsGameplayMenuV2::OptionsGameplayMenuV2(FEPresentation*, ButtonComponent::ButtonState, GameplaySettings&, int)
 {
 }
 
@@ -108,7 +108,7 @@ OptionsVisualMenuV2::~OptionsVisualMenuV2()
 /**
  * Offset/Address/Size: 0x19E0 | 0x800B6A24 | size: 0x6E8
  */
-void OptionsVisualMenuV2::OptionsVisualMenuV2(FEPresentation*, ButtonComponent::ButtonState, VisualSettings&)
+OptionsVisualMenuV2::OptionsVisualMenuV2(FEPresentation*, ButtonComponent::ButtonState, VisualSettings&)
 {
 }
 
@@ -143,16 +143,16 @@ OptionsAudioMenuV2::~OptionsAudioMenuV2()
 /**
  * Offset/Address/Size: 0x2D44 | 0x800B7D88 | size: 0x76C
  */
-void OptionsAudioMenuV2::OptionsAudioMenuV2(FEPresentation*, ButtonComponent::ButtonState, AudioSettings&)
+OptionsAudioMenuV2::OptionsAudioMenuV2(FEPresentation*, ButtonComponent::ButtonState, AudioSettings&)
 {
 }
 
 /**
  * Offset/Address/Size: 0x34B0 | 0x800B84F4 | size: 0x88C
  */
-void OptionsCheatsMenu::BuildCustomPowerupsList(TLComponentInstance*, CheatSettings::CustomPowerups, FEPresentation*)
-{
-}
+// void OptionsCheatsMenu::BuildCustomPowerupsList(TLComponentInstance*, CheatSettings::CustomPowerups, FEPresentation*)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x3D3C | 0x800B8D80 | size: 0x7D4
@@ -185,7 +185,7 @@ OptionsCheatsMenu::~OptionsCheatsMenu()
 /**
  * Offset/Address/Size: 0x47AC | 0x800B97F0 | size: 0x720
  */
-void OptionsCheatsMenu::OptionsCheatsMenu(FEPresentation*, ButtonComponent::ButtonState, CheatSettings&)
+OptionsCheatsMenu::OptionsCheatsMenu(FEPresentation*, ButtonComponent::ButtonState, CheatSettings&)
 {
 }
 

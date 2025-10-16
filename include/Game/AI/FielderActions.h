@@ -1,12 +1,17 @@
 #ifndef _FIELDERACTIONS_H_
 #define _FIELDERACTIONS_H_
 
+#include "NL/nlMath.h"
+#include "Game/Effects/EmissionController.h"
+#include "Game/Camera/MatrixEffectCam.h"
+#include "Game/Player.h"
+
 void HyperStrikeEffectUpdate(EmissionController&);
 void OtherMatrixCamFinishedCallback(MatrixEffectCam*);
 void MatrixCamFinishedCallback(MatrixEffectCam*);
 void GetClosestWallPoint(const nlVector3&);
-void 0x8002FEBC..0x8002FED4 | size: 0x18;
-void nlDLRingGetStart<cBaseCamera>(cBaseCamera*);
+// void 0x8002FEBC..0x8002FED4 | size: 0x18;
+// void nlDLRingGetStart<cBaseCamera>(cBaseCamera*);
 
 class cFielder
 {
@@ -75,47 +80,41 @@ public:
     void ActionWait(float);
 };
 
+// class Function1<void, EmissionController&>
+// {
+// public:
+//     void FunctorBase::~FunctorBase();
+// };
 
-class Function1<void, EmissionController&>
-{
-public:
-    void FunctorBase::~FunctorBase();
-};
+// class cNet
+// {
+// public:
+//     void GetPostRadius();
+// };
 
+// class LexicalCast<BasicString<char, Detail
+// {
+// public:
+//     void TempStringAllocator>, const char*>(const char* const&);
+// };
 
-class cNet
-{
-public:
-    void GetPostRadius();
-};
+// class Detail
+// {
+// public:
+//     void LexicalCastImpl<BasicString<char, Detail::TempStringAllocator>, const char*>::Do(const char*);
+// };
 
+// class Format<BasicString<char, Detail
+// {
+// public:
+//     void TempStringAllocator>, const char*>(const BasicString<char, Detail::TempStringAllocator>&, const char* const&);
+// };
 
-class LexicalCast<BasicString<char, Detail
-{
-public:
-    void TempStringAllocator>, const char*>(const char* const&);
-};
-
-
-class Detail
-{
-public:
-    void LexicalCastImpl<BasicString<char, Detail::TempStringAllocator>, const char*>::Do(const char*);
-};
-
-
-class Format<BasicString<char, Detail
-{
-public:
-    void TempStringAllocator>, const char*>(const BasicString<char, Detail::TempStringAllocator>&, const char* const&);
-};
-
-
-class FormatImpl<BasicString<char, Detail
-{
-public:
-    void TempStringAllocator>>::operator%<const char*>(const char* const&);
-    void TempStringAllocator>>::operator BasicString<char, Detail::TempStringAllocator>() const;
-};
+// class FormatImpl<BasicString<char, Detail
+// {
+// public:
+//     void TempStringAllocator>>::operator%<const char*>(const char* const&);
+//     void TempStringAllocator>>::operator BasicString<char, Detail::TempStringAllocator>() const;
+// };
 
 #endif // _FIELDERACTIONS_H_

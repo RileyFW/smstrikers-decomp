@@ -2,10 +2,7 @@
 #define _FECAPTAINGRIDCOMPONENT_H_
 #include "Game/FE/feInput.h"
 
-enum eTeamID
-{
-    TEAM_ID_0 = 0,
-};
+#include "Game/Team.h"
 
 class TLComponentInstance;
 class TLInstance;

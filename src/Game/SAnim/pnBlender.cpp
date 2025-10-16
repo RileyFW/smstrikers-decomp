@@ -1,4 +1,4 @@
-#include "pnBlender.h"
+#include "Game/SAnim/pnBlender.h"
 
 /**
  * Offset/Address/Size: 0x6C | 0x801EED3C | size: 0x8
@@ -14,12 +14,12 @@ cPN_Blender::~cPN_Blender()
 {
 }
 
-/**
- * Offset/Address/Size: 0x54C | 0x801EEC6C | size: 0x64
- */
-void SlotPool<cPN_Blender>::~SlotPool()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x54C | 0x801EEC6C | size: 0x64
+//  */
+// void SlotPool<cPN_Blender>::~SlotPool()
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x440 | 0x801EEB60 | size: 0x98

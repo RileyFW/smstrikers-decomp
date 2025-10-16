@@ -17,8 +17,8 @@
 #include "Game/FixedUpdateTask.h"
 #include "Game/ParticleUpdateTask.h"
 
-#include "Game/AudioLoader.h"
-#include "Game/WorldAudio.h"
+#include "Game/Audio/AudioLoader.h"
+#include "Game/Audio/WorldAudio.h"
 
 extern float gfPerfectPassSFXVol;
 extern bool gbCanFadeOutPerfectPassSFX;

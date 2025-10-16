@@ -1,11 +1,4 @@
-#include "Bowser.h"
-
-/**
- * Offset/Address/Size: 0x0 | 0x8015D95C | size: 0x8
- */
-void Bowser::GetSkinAnimatedNPC_Type() const
-{
-}
+#include "Game/Render/Bowser.h"
 
 /**
  * Offset/Address/Size: 0x4BBC | 0x8015D930 | size: 0x2C
@@ -17,7 +10,8 @@ void AnimSoundCallback(unsigned int)
 /**
  * Offset/Address/Size: 0x4638 | 0x8015D3AC | size: 0x584
  */
-Bowser::Bowser(cSHierarchy&, int, PhysicsNPC&, cInventory<cSAnim>*)
+Bowser::Bowser(cSHierarchy& pHierarchy, int nModelID, PhysicsNPC& mpPhysObj, cInventory<cSAnim>* pInventorySAnim)
+    : SkinAnimatedMovableNPC(pHierarchy, nModelID, mpPhysObj)
 {
 }
 
@@ -171,9 +165,9 @@ void Bowser::SetupBaseSFX()
 /**
  * Offset/Address/Size: 0x290 | 0x80159004 | size: 0xA4
  */
-void Bowser::PlaySFX(Audio::eCharSFX, PosUpdateMethod, float, bool)
-{
-}
+// void Bowser::PlaySFX(Audio::eCharSFX, PosUpdateMethod, float, bool)
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x9C | 0x80158E10 | size: 0x1F4

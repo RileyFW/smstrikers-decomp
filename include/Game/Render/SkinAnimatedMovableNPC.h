@@ -10,9 +10,9 @@
 class SkinAnimatedMovableNPC : public SkinAnimatedNPC
 {
 public:
-    SkinAnimatedMovableNPC(cSHierarchy&, int, PhysicsNPC&);
+    SkinAnimatedMovableNPC(cSHierarchy& pHierarchy, int nModelID, PhysicsNPC& mpPhysObj);
     virtual ~SkinAnimatedMovableNPC();
-    virtual SkinAnimatedNPC_Type GetSkinAnimatedNPC_Type() const;
+    virtual SkinAnimatedNPC_Type GetSkinAnimatedNPC_Type() const { return SkinAnimatedNPC_MOVABLE; };
     virtual void Render();
     virtual void RenderFromReplay(const cPoseAccumulator&, const nlMatrix4*);
     virtual void Update(float);

@@ -1,7 +1,7 @@
 #ifndef _AIPLAY_H_
 #define _AIPLAY_H_
 
-#include "Game/Fielder.h"
+#include "Game/AI/Fielder.h"
 #include "Game/AI/DecisionEntity.h"
 
 enum eAIPlay

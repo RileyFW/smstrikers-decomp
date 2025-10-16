@@ -1,7 +1,7 @@
 #ifndef _DECISIONENTITY_H_
 #define _DECISIONENTITY_H_
 
-#include "Game/Fielder.h"
+#include "Game/AI/Fielder.h"
 #include "Game/AI/FuzzyVariant.h"
 
 // Forward declarations

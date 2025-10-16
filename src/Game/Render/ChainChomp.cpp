@@ -1,11 +1,4 @@
-#include "ChainChomp.h"
-
-/**
- * Offset/Address/Size: 0x0 | 0x8015F1A0 | size: 0x3C
- */
-void 0x8028D304..0x8028D308 | size: 0x4
-{
-}
+#include "Game/Render/ChainChomp.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x8015F198 | size: 0x8

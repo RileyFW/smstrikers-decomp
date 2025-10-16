@@ -690,6 +690,10 @@ config.libs = [
         "SMS (Super Mario Strikers)",
         [
             Object(NonMatching, "Game/main.cpp"),
+            Object(NonMatching, "Game/ComUpdateTask.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/FrontEndTask.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/GameRenderTask.cpp", extra_cflags=["-inline deferred"]),
+
             Object(Matching, "Game/Sys/clock.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Sys/debug.cpp"),
             Object(NonMatching, "Game/Sys/simpleparser.cpp", extra_cflags=["-inline deferred"]),
@@ -699,6 +703,12 @@ config.libs = [
             Object(NonMatching, "Game/Sys/FloatingPointExceptions.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Sys/CallStackDumper.cpp", extra_cflags=["-inline deferred"]),    
             Object(NonMatching, "Game/Core/mtRandom.cpp", extra_cflags=["-inline deferred"]),
+
+            Object(NonMatching, "Game/Sys/PlatStream.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Sys/GCStream.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Sys/movie.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Sys/THPSimple.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Sys/gcmemcard.cpp", extra_cflags=["-inline deferred"]),
 
             # Game Objects
             Object(NonMatching, "Game/Game.cpp", extra_cflags=["-inline deferred"]),    
@@ -757,10 +767,22 @@ config.libs = [
 
             # Game Render
             Object(NonMatching, "Game/Render/FlareHandler.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/Nis.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Render/CameraGuy.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/SkinAnimatedNPC.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Render/depthoffield.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Render/Wiper.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/Bowser.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/ChainChomp.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/GraphicsLoader.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/Indicators.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/ShootToScoreArrow.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/ShootToScoreMeter.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/Jumbotron.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/SkinAnimatedMovableNPC.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/NPCManager.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/SidelineExplodable.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/ElectricFence.cpp", extra_cflags=["-inline deferred"]),
 
             # related to character (should probably be in Game/Render)
             Object(Matching, "Game/PoseNode.cpp", extra_cflags=["-inline deferred"]),
@@ -768,6 +790,11 @@ config.libs = [
             Object(NonMatching, "Game/SHierarchy.cpp"),
 
             Object(NonMatching, "Game/SAnim.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/SAnim/AnimRetargeter.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/SAnim/pnSAnimController.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/SAnim/pnBlender.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/SAnim/pnSingleAxisBlender.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/SAnim/pnFeather.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/AnimInventory.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Blinker.cpp"),   
 
@@ -781,11 +808,19 @@ config.libs = [
             Object(Matching, "Game/TerrainTypes.cpp"),
 
             # Audio
-            Object(NonMatching, "Game/CharacterAudio.cpp"),   
-            Object(NonMatching, "Game/GameAudio.cpp"),   
-            Object(NonMatching, "Game/audio.cpp"),   
+            Object(NonMatching, "Game/Audio/CharacterAudio.cpp"),   
+            Object(NonMatching, "Game/Audio/GameAudio.cpp"),   
+            Object(NonMatching, "Game/Audio/audio.cpp"),   
             Object(Matching, "Game/Audio/SebringSoundDefines.cpp" , extra_cflags=["-inline deferred"]),   
             Object(NonMatching, "Game/Audio/SoundEventScript.cpp" , extra_cflags=["-inline deferred"]),   
+            Object(NonMatching, "Game/Audio/WorldAudio.cpp", extra_cflags=["-inline deferred"]),   
+            Object(NonMatching, "Game/Audio/AudioEventHandler.cpp", extra_cflags=["-inline deferred"]),   
+            Object(NonMatching, "Game/Audio/AudioLoader.cpp", extra_cflags=["-inline deferred"]),   
+            Object(NonMatching, "Game/Audio/AudioScriptEventMgr.cpp", extra_cflags=["-inline deferred"]),  
+            Object(NonMatching, "Game/Audio/AudioStream.cpp", extra_cflags=["-inline deferred"]),  
+            Object(NonMatching, "Game/Audio/CrowdMood.cpp", extra_cflags=["-inline deferred"]),  
+            Object(NonMatching, "Game/Audio/StreamTrack.cpp", extra_cflags=["-inline deferred"]),   
+            Object(NonMatching, "Game/Audio/PriorityStream.cpp", extra_cflags=["-inline deferred"]),   
 
             # Physics
             Object(NonMatching, "Game/Physics.cpp", extra_cflags=["-inline deferred"]),
@@ -846,6 +881,10 @@ config.libs = [
             Object(Matching, "Game/MarioTriggers.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/WorldTriggers.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/CharacterTriggers.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Triggers/AnimTagScript.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Triggers/SebringAnimScript.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Triggers/AnimTrigger.cpp", extra_cflags=["-inline deferred"]),
+            
 
             Object(Matching, "Game/PadMonkey.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/PadActions.cpp", extra_cflags=["-inline deferred"]),
@@ -859,7 +898,8 @@ config.libs = [
             Object(NonMatching, "Game/Render/StaticModelExplodable.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/AnimatedModelExplodable.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/GameObjectLighting.cpp", extra_cflags=["-inline deferred"]),
-
+            Object(NonMatching, "Game/Font/fontmanager.cpp", extra_cflags=["-inline deferred"]),
+            
             # AI
             Object(Matching, "Game/AI/AILoader.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/AI/AIPlay.cpp", extra_cflags=["-inline deferred"]),
@@ -871,10 +911,25 @@ config.libs = [
             Object(NonMatching, "Game/AI/DecisionEntity.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/AI/ScriptAction.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/AI/FilteredRandom.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/AI/Fuzzy.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/AI/ShotMeter.cpp", extra_cflags=["-inline deferred"]),
-
-            # AI Scripts
+            Object(NonMatching, "Game/AI/AvoidController.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/Fielder.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/FielderDesires.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/FielderActions.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/Fuzzy.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/FuzzyVariant.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/GoalieActions.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/GoalieLooseBall.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/GoalieSave.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/CommonScript.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/SpaceSearch.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/Variant.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/Scripts/FormationScript.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/ScriptCaching.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/Scripts/ScriptQuestions.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/Scripts/Plays/DefaultDefensive.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/Scripts/Plays/DefaultOffensive.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/AI/Scripts/Plays/DefaultLoose.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/AI/Scripts/RootScript.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/AI/Scripts/ScriptDefines.cpp", extra_cflags=["-inline deferred"]),            
 
@@ -891,7 +946,7 @@ config.libs = [
             Object(NonMatching, "Game/OverlayHandlerGoal.cpp", extra_cflags=["-inline deferred"]),
 
             Object(NonMatching, "Game/FE/feTweenFuncs.cpp"),
-            # Object(NonMatching, "Game/FE/feOptionsSubMenus.cpp"),
+            Object(NonMatching, "Game/FE/feOptionsSubMenus.cpp"),
             Object(NonMatching, "Game/FE/feScene.cpp"),
             Object(NonMatching, "Game/FE/feRender.cpp"),
             Object(Matching, "Game/FE/feFontResource.cpp", extra_cflags=["-inline deferred"]),
@@ -918,13 +973,18 @@ config.libs = [
             Object(NonMatching, "Game/FE/fePresentation.cpp"),
             Object(NonMatching, "Game/FE/feMapMenu.cpp"),
             Object(NonMatching, "Game/FE/feResourceManager.cpp"),
-            # Object(NonMatching, "Game/FE/feCaptainGridComponent.cpp"),
+            Object(NonMatching, "Game/FE/feCaptainGridComponent.cpp"),
             Object(NonMatching, "Game/FE/feInput.cpp"),
             Object(NonMatching, "Game/FE/feScrollingTicker.cpp"),
             Object(NonMatching, "Game/FE/feMusic.cpp"),
             Object(NonMatching, "Game/FE/feInGameMessengerManager.cpp"),
-            # Object(NonMatching, "Game/FE/feHelpFuncs.cpp"),
+            Object(NonMatching, "Game/FE/feHelpFuncs.cpp"),
             Object(NonMatching, "Game/FE/feSlideMenu.cpp"),
+            Object(NonMatching, "Game/FE/LidOpenMessage.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/FE/BraggingRights.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/FE/Cup/CupTickerManager.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/FE/Overlay/OverlayHandlerSummary.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/FE/Overlay/OverlayHandlerWinner.cpp", extra_cflags=["-inline deferred"]),
 
             Object(NonMatching, "Game/FE/tlSlide.cpp"),
             Object(Matching, "Game/FE/tlComponent.cpp"),
@@ -974,7 +1034,7 @@ config.libs = [
             Object(NonMatching, "Game/Drawable/DrawableBall.cpp"),
             Object(NonMatching, "Game/Drawable/DrawablePowerup.cpp"),
             Object(NonMatching, "Game/Drawable/DrawableExplosionFragment.cpp"),
-            # Object(NonMatching, "Game/Drawable/DrawableModel.cpp"),
+            Object(NonMatching, "Game/Drawable/DrawableModel.cpp"),
             Object(NonMatching, "Game/Drawable/DrawableTmModel.cpp"),
             Object(NonMatching, "Game/Drawable/DrawableSkinModel.cpp"),
 
@@ -991,6 +1051,7 @@ config.libs = [
             Object(NonMatching, "Game/GL/GLSkinMesh.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/GL/gluMeshWriter.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/GL/gluSkinMesh.cpp", extra_cflags=["-inline off"]),
+            Object(NonMatching, "Game/GL/ShaderSkinMesh.cpp", extra_cflags=["-inline deferred"]),
 
             # FX
             Object(NonMatching, "Game/ObjectBlur.cpp"),
@@ -1136,6 +1197,9 @@ config.libs = [
             # DB
             Object(NonMatching, "Game/DB/SaveLoad.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/DB/UserOptions.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/DB/StatsTracker.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/DB/Simmer.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/DB/CustomTournament.cpp", extra_cflags=["-inline deferred"]),
 
             # Debug
             Object(NonMatching, "Game/Debug/FrameCounter.cpp", extra_cflags=["-inline deferred"]),
@@ -1366,6 +1430,12 @@ config.libs = [
 
             # Dolphin/VI
             Object(Matching, "Dolphin/vi/vi.c"),
+
+            # Dolphin/vm.a
+            Object(NonMatching, "Dolphin/vm.a/VM.c"),
+            Object(NonMatching, "Dolphin/vm.a/VMPageReplacement.c"),
+            Object(NonMatching, "Dolphin/vm.a/VMMapping.c"),
+            Object(NonMatching, "Dolphin/vm.a/VMBase.c"),
         ],
     ),
 

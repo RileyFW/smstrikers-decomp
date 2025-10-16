@@ -1,6 +1,7 @@
 #ifndef _FORMATIONSCRIPT_H_
 #define _FORMATIONSCRIPT_H_
 
+#include "Game/Team.h"
 
 class Fuzzy
 {

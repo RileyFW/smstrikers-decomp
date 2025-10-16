@@ -1,4 +1,4 @@
-#include "pnSAnimController.h"
+#include "Game/SAnim/pnSAnimController.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x801EB598 | size: 0x8
@@ -14,19 +14,19 @@ void cPN_SAnimController::SetTime(float)
 {
 }
 
-/**
- * Offset/Address/Size: 0x0 | 0x801EB580 | size: 0x8
- */
-void cPN_SAnimController::GetType()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x801EB580 | size: 0x8
+//  */
+// void cPN_SAnimController::GetType()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0xEC0 | 0x801EB51C | size: 0x64
- */
-void SlotPool<cPN_SAnimController>::~SlotPool()
-{
-}
+// /**
+//  * Offset/Address/Size: 0xEC0 | 0x801EB51C | size: 0x64
+//  */
+// void SlotPool<cPN_SAnimController>::~SlotPool()
+// {
+// }
 
 /**
  * Offset/Address/Size: 0xDC0 | 0x801EB41C | size: 0x98

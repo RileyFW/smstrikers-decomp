@@ -1,6 +1,8 @@
 #ifndef _SEBRINGANIMSCRIPT_H_
 #define _SEBRINGANIMSCRIPT_H_
 
+#include "Game/Triggers/AnimTagScript.h"
+
 class SebringAnimTagScriptInterpreter : public AnimTagScriptInterpreter
 {
 public:

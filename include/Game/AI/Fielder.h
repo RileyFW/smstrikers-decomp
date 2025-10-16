@@ -4,28 +4,69 @@
 #include "types.h"
 #include "NL/nlMath.h"
 
+#include "Game/Net.h"
 #include "Game/Player.h"
 #include "Game/AI/Powerups.h"
 #include "Game/AI/ScriptAction.h"
 
 enum eTurboRequest
 {
-    eTurboRequest_0 = 0
+    TR_FAR_DISTANCE = 0,
+    TR_MOVING_TARGET = 1,
+    TR_FORCED_ON = 2,
+    TR_FORCED_OFF = 3,
 };
 
 enum eFielderActionState
 {
-    eFielderActionState_0 = 0
+    ACTION_NEED_ACTION = -1,
+    ACTION_DEKE = 0,
+    ACTION_ELECTROCUTION = 1,
+    ACTION_HIT = 2,
+    ACTION_HIT_REACT = 3,
+    ACTION_IDLE_TURN = 4,
+    ACTION_LATE_ONETIMER_FROM_VOLLEY = 5,
+    ACTION_LOOSE_BALL_PASS = 6,
+    ACTION_LOOSE_BALL_SHOT = 7,
+    ACTION_ONETIMER = 8,
+    ACTION_ONETOUCH_PASS_FROM_VOLLEY = 9,
+    ACTION_PASS = 10,
+    ACTION_POST_WHISTLE = 11,
+    ACTION_RECEIVE_PASS = 12,
+    ACTION_RUNNING = 13,
+    ACTION_RUNNING_WB = 14,
+    ACTION_RUNNING_WB_TURBO = 15,
+    ACTION_RUNNING_WB_TURBO_TURN = 16,
+    ACTION_SHOT = 17,
+    ACTION_SHOOT_TO_SCORE = 18,
+    ACTION_SLIDE_ATTACK = 19,
+    ACTION_SLIDE_ATTACK_REACT = 20,
+    ACTION_BOMB_REACT = 21,
+    ACTION_SHELL_REACT = 22,
+    ACTION_BANANA_REACT = 23,
+    ACTION_STS_HIT_REACT = 24,
+    ACTION_SQUISH_REACT = 25,
+    ACTION_SLIDE_FAIL_REACT = 26,
+    ACTION_WAIT = 27,
+    NUM_FIELDER_ACTIONS = 28,
 };
 
 enum eAwardPowerupType
 {
-    eAwardPowerupType_0 = 0
+    AWARD_POWERUP_POWER_SHOT = 0,
+    AWARD_POWERUP_INTERCEPT_PASS = 1,
+    AWARD_POWERUP_PERFECT_PASS = 2,
+    AWARD_POWERUP_CONTEXT_DEKE = 3,
+    NUM_AWARD_POWERUP_TYPES = 4,
 };
 
 enum ePenaltyType
 {
-    ePenaltyType_0 = 0
+    PEN_TYPE_HIT_WITH_BALL = 0,
+    PEN_TYPE_HIT_NO_BALL = 1,
+    PEN_TYPE_SLIDE_WITH_BALL = 2,
+    PEN_TYPE_SLIDE_NO_BALL = 3,
+    NUM_PEN_TYPES = 4,
 };
 
 class cBall;

@@ -2,15 +2,12 @@
 #define _FESIDEKICKGRIDCOMPONENT_H_
 #include "Game/FE/feInput.h"
 
+#include "Game/DB/Cup.h"
+
 class TLComponentInstance;
 class TLInstance;
 class TLSlide;
 class InlineHasher;
-
-enum eSidekickID
-{
-    SIDEKICK_ID_0 = 0,
-};
 
 class ISidekickGridComponent
 {

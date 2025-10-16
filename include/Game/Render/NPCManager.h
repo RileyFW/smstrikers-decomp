@@ -3,10 +3,9 @@
 
 #include "types.h"
 
-#include "NL/nlList.h"
-// #include "Game/SHierarchy.h"
-// #include "Game/Render/SkinAnimatedNPC.h"
+#include "Game/Inventory.h"
 #include "Game/Render/Bowser.h"
+#include "Game/Render/ChainChomp.h"
 
 // void nlListAddStart<ListEntry<SkinAnimatedNPC*>>(ListEntry<SkinAnimatedNPC*>**, ListEntry<SkinAnimatedNPC*>*, ListEntry<SkinAnimatedNPC*>**);
 
@@ -16,9 +15,6 @@ struct NPCTemplate
     /* 0x04 */ s32 modelID;            // offset 0x4, size 0x4
     /* 0x08 */ cSHierarchy* hierarchy; // offset 0x8, size 0x4
 }; // total size: 0xC
-
-class cInventory;
-class ChainChomp;
 
 class NPCManager
 {
@@ -31,12 +27,12 @@ public:
     void UpdateAINPCs(float);
     void CreateNPCTemplate(int, bool);
 
-    /* 0x04 */ cInventory* mpInventorySAnim;               // offset 0x4, size 0x4
-    /* 0x08 */ cInventory* mpInventorySHierarchy;          // offset 0x8, size 0x4
-    /* 0x0C */ nlListContainer<SkinAnimatedNPC*> mNPCList; // offset 0xC, size 0xC
-    /* 0x18 */ ChainChomp* mpChainChomp;                   // offset 0x18, size 0x4
-    /* 0x1C */ Bowser* mpBowser;                           // offset 0x1C, size 0x4
-    /* 0x20 */ NPCTemplate mNPCTemplate[7];                // offset 0x20, size 0x54
+    /* 0x04 */ cInventory<cSAnim>* mpInventorySAnim;
+    /* 0x08 */ cInventory<cSHierarchy>* mpInventorySHierarchy;
+    /* 0x0C */ nlListContainer<SkinAnimatedNPC*> mNPCList;
+    /* 0x18 */ ChainChomp* mpChainChomp;
+    /* 0x1C */ Bowser* mpBowser;
+    /* 0x20 */ NPCTemplate mNPCTemplate[7];
 }; // total size: 0x74
 
 // class ListContainerBase<SkinAnimatedNPC*, NewAdapter<ListEntry<SkinAnimatedNPC*>>>

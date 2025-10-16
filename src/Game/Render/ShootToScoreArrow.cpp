@@ -1,11 +1,11 @@
-#include "ShootToScoreArrow.h"
+#include "Game/Render/ShootToScoreArrow.h"
 
-/**
- * Offset/Address/Size: 0x214 | 0x801601F4 | size: 0x6C
- */
-void 0x8028D310..0x8028D314 | size: 0x4
-{
-}
+// /**
+//  * Offset/Address/Size: 0x214 | 0x801601F4 | size: 0x6C
+//  */
+// void 0x8028D310..0x8028D314 | size: 0x4
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x1D4 | 0x801601B4 | size: 0x40

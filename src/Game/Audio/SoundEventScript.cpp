@@ -1,6 +1,6 @@
 #include "Game/Audio/SoundEventScript.h"
 
-#include "Game/AudioLoader.h"
+#include "Game/Audio/AudioLoader.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x80153FD8 | size: 0x96C

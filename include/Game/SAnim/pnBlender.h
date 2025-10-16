@@ -1,6 +1,7 @@
 #ifndef _PNBLENDER_H_
 #define _PNBLENDER_H_
 
+#include "Game/PoseAccumulator.h"
 
 class cPN_Blender
 {
@@ -15,11 +16,10 @@ public:
     void BlendRootRot(unsigned short*, float, float*);
 };
 
-
-class SlotPool<cPN_Blender>
-{
-public:
-    void ~SlotPool();
-};
+// class SlotPool<cPN_Blender>
+// {
+// public:
+//     void ~SlotPool();
+// };
 
 #endif // _PNBLENDER_H_

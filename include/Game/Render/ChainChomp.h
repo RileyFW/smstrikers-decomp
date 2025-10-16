@@ -1,8 +1,16 @@
 #ifndef _CHAINCHOMP_H_
 #define _CHAINCHOMP_H_
 
+#include "Game/SHierarchy.h"
+#include "Game/SAnim.h"
+#include "Game/Physics/PhysicsNPC.h"
+#include "Game/Team.h"
+#include "Game/AI/Fielder.h"
+#include "Game/PoseAccumulator.h"
+#include "Game/World/worldanim.h"
+
 void UpdateChainEmitter(EmissionController&);
-void 0x8028D304..0x8028D308 | size: 0x4;
+// void 0x8028D304..0x8028D308 | size: 0x4;
 
 class ChainChomp
 {

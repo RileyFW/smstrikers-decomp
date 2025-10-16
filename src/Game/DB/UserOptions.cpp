@@ -7,7 +7,7 @@
 #include "NL/nlMemory.h"
 #include "NL/nlBasicString.h"
 
-#include "Game/AudioLoader.h"
+#include "Game/Audio/AudioLoader.h"
 #include "Game/GameInfo.h"
 
 extern bool g_e3_Build;

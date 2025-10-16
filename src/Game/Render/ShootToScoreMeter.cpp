@@ -1,11 +1,11 @@
-#include "ShootToScoreMeter.h"
+#include "Game/Render/ShootToScoreMeter.h"
 
-/**
- * Offset/Address/Size: 0x1A78 | 0x80161CD8 | size: 0x148
- */
-void 0x8028D314..0x8028D318 | size: 0x4
-{
-}
+// /**
+//  * Offset/Address/Size: 0x1A78 | 0x80161CD8 | size: 0x148
+//  */
+// void 0x8028D314..0x8028D318 | size: 0x4
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x19C8 | 0x80161C28 | size: 0xB0

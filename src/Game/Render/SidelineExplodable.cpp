@@ -1,102 +1,95 @@
-#include "SidelineExplodable.h"
+#include "Game/Render/SidelineExplodable.h"
 
-/**
- * Offset/Address/Size: 0x0 | 0x8016A0C0 | size: 0x64
- */
-void SlotPool<SidelineExplodableNode>::~SlotPool()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8016A0C0 | size: 0x64
+//  */
+// void SlotPool<SidelineExplodableNode>::~SlotPool()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x8016A0A8 | size: 0x18
- */
-void Bind<void, void (*)(EmissionController&, ExplosionFragment*), Placeholder<0>, ExplosionFragment*>(void (*)(EmissionController&, ExplosionFragment*), const Placeholder<0>&, ExplosionFragment* const&)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8016A0A8 | size: 0x18
+//  */
+// void Bind<void, void (*)(EmissionController&, ExplosionFragment*), Placeholder<0>, ExplosionFragment*>(void (*)(EmissionController&, ExplosionFragment*), const Placeholder<0>&, ExplosionFragment* const&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x100 | 0x8016A07C | size: 0x2C
- */
-void nlListAddEnd<DrawableFragmentHandleNode>(DrawableFragmentHandleNode**, DrawableFragmentHandleNode**, DrawableFragmentHandleNode*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x100 | 0x8016A07C | size: 0x2C
+//  */
+// void nlListAddEnd<DrawableFragmentHandleNode>(DrawableFragmentHandleNode**, DrawableFragmentHandleNode**, DrawableFragmentHandleNode*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0xBC | 0x8016A038 | size: 0x44
- */
-void nlListRemoveStart<DrawableFragmentHandleNode>(DrawableFragmentHandleNode**, DrawableFragmentHandleNode**)
-{
-}
+// /**
+//  * Offset/Address/Size: 0xBC | 0x8016A038 | size: 0x44
+//  */
+// void nlListRemoveStart<DrawableFragmentHandleNode>(DrawableFragmentHandleNode**, DrawableFragmentHandleNode**)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x20 | 0x80169F9C | size: 0x9C
- */
-void nlListRemoveElement<SidelineExplodableNode>(SidelineExplodableNode**, SidelineExplodableNode*, SidelineExplodableNode**)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x20 | 0x80169F9C | size: 0x9C
+//  */
+// void nlListRemoveElement<SidelineExplodableNode>(SidelineExplodableNode**, SidelineExplodableNode*, SidelineExplodableNode**)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80169F7C | size: 0x20
- */
-void nlListCountElements<SidelineExplodableNode>(SidelineExplodableNode*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80169F7C | size: 0x20
+//  */
+// void nlListCountElements<SidelineExplodableNode>(SidelineExplodableNode*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80169F74 | size: 0x8
- */
-void PhysicsBox::GetObjectType() const
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80169F6C | size: 0x8
+//  */
+// void CollisionExplosionFragmentPlayerData::GetID()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80169F6C | size: 0x8
- */
-void CollisionExplosionFragmentPlayerData::GetID()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x36C | 0x80169CC0 | size: 0x2AC
+//  */
+// void Vector<ExplosionFragment, DefaultAllocator>::Vector(int, const char*)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x36C | 0x80169CC0 | size: 0x2AC
- */
-void Vector<ExplosionFragment, DefaultAllocator>::Vector(int, const char*)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x27C | 0x80169BD0 | size: 0xF0
+//  */
+// void Vector<ExplosionFragment, DefaultAllocator>::reserve(int)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x27C | 0x80169BD0 | size: 0xF0
- */
-void Vector<ExplosionFragment, DefaultAllocator>::reserve(int)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80169954 | size: 0x27C
+//  */
+// void Vector<ExplosionFragment, DefaultAllocator>::resize(int)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80169954 | size: 0x27C
- */
-void Vector<ExplosionFragment, DefaultAllocator>::resize(int)
-{
-}
+// /**
+//  * Offset/Address/Size: 0x16C | 0x801698F0 | size: 0x64
+//  */
+// void SlotPool<DrawableFragmentHandleNode>::~SlotPool()
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x16C | 0x801698F0 | size: 0x64
- */
-void SlotPool<DrawableFragmentHandleNode>::~SlotPool()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x70 | 0x801697F4 | size: 0x34
+//  */
+// void Function1<void, EmissionController&>::FunctorImpl<BindExp2<void, void (*)(EmissionController&, ExplosionFragment*), Placeholder<0>, ExplosionFragment*> >::operator()(EmissionController&)
+// {
+// }
 
-/**
- * Offset/Address/Size: 0x70 | 0x801697F4 | size: 0x34
- */
-void Function1<void, EmissionController&>::FunctorImpl<BindExp2<void, void (*)(EmissionController&, ExplosionFragment*), Placeholder<0>, ExplosionFragment*>>::operator()(EmissionController&)
-{
-}
-
-/**
- * Offset/Address/Size: 0x0 | 0x80169784 | size: 0x70
- */
-void Function1<void, EmissionController&>::FunctorImpl<BindExp2<void, void (*)(EmissionController&, ExplosionFragment*), Placeholder<0>, ExplosionFragment*>>::Clone() const
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80169784 | size: 0x70
+//  */
+// void Function1<void, EmissionController&>::FunctorImpl<BindExp2<void, void (*)(EmissionController&, ExplosionFragment*), Placeholder<0>, ExplosionFragment*> >::Clone() const
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x8 | 0x8016974C | size: 0x38
@@ -112,12 +105,12 @@ void SidelineExplosionPhysicsObject::GetObjectType() const
 {
 }
 
-/**
- * Offset/Address/Size: 0x2388 | 0x801696E8 | size: 0x5C
- */
-void Function1<void, EmissionController&>::FunctorImpl<BindExp2<void, void (*)(EmissionController&, ExplosionFragment*), Placeholder<0>, ExplosionFragment*>>::~FunctorImpl()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x2388 | 0x801696E8 | size: 0x5C
+//  */
+// void Function1<void, EmissionController&>::FunctorImpl<BindExp2<void, void (*)(EmissionController&, ExplosionFragment*), Placeholder<0>, ExplosionFragment*> >::~FunctorImpl()
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x2188 | 0x801694E8 | size: 0x200
@@ -287,12 +280,12 @@ void SidelineExplodableManager::GetFragmentFromHandle(unsigned short)
 {
 }
 
-/**
- * Offset/Address/Size: 0x508 | 0x80167868 | size: 0x60
- */
-PhysicsBox::~PhysicsBox()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x508 | 0x80167868 | size: 0x60
+//  */
+// PhysicsBox::~PhysicsBox()
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x358 | 0x801676B8 | size: 0x1B0

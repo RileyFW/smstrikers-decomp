@@ -1,16 +1,10 @@
-#include "SkinAnimatedMovableNPC.h"
-
-/**
- * Offset/Address/Size: 0x0 | 0x801654BC | size: 0x8
- */
-void SkinAnimatedMovableNPC::GetSkinAnimatedNPC_Type() const
-{
-}
+#include "Game/Render/SkinAnimatedMovableNPC.h"
 
 /**
  * Offset/Address/Size: 0x3A4 | 0x80165414 | size: 0xA8
  */
-SkinAnimatedMovableNPC::SkinAnimatedMovableNPC(cSHierarchy&, int, PhysicsNPC&)
+SkinAnimatedMovableNPC::SkinAnimatedMovableNPC(cSHierarchy& pHierarchy, int nModelID, PhysicsNPC& mpPhysObj)
+    : SkinAnimatedNPC(pHierarchy, nModelID)
 {
 }
 

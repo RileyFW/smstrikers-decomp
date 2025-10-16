@@ -1,6 +1,8 @@
 #ifndef _PNFEATHER_H_
 #define _PNFEATHER_H_
 
+#include "Game/SHierarchy.h"
+#include "Game/PoseAccumulator.h"
 
 class cPN_Feather
 {
@@ -21,11 +23,10 @@ public:
     void BlendRootRot(unsigned short*, float, float*);
 };
 
-
-class SlotPool<cPN_Feather>
-{
-public:
-    void ~SlotPool();
-};
+// class SlotPool<cPN_Feather>
+// {
+// public:
+//     void ~SlotPool();
+// };
 
 #endif // _PNFEATHER_H_

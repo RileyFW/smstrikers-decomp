@@ -1,7 +1,7 @@
 #ifndef _SHOTMETER_H_
 #define _SHOTMETER_H_
 
-#include "Game/Fielder.h"
+#include "Game/AI/Fielder.h"
 
 enum eShotMeterState
 {

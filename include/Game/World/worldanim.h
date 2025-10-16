@@ -3,16 +3,8 @@
 
 #include "NL/nlList.h"
 #include "NL/nlAVLTree.h"
+#include "Game/Inventory.h"
 #include "Game/SAnim/pnSAnimController.h"
-
-template <typename T>
-class cInventory
-{
-public:
-    /* 0x0 */ nlListContainer<T> m_lItemList;
-    /* 0xC */ nlListContainer<T> m_lMemList;
-    /* 0x18 */ int m_nItemCount;
-}; // total size: 0x1C
 
 class AnimationSet
 {
