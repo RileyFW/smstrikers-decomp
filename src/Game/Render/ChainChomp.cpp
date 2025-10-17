@@ -1,16 +1,13 @@
 #include "Game/Render/ChainChomp.h"
 
-/**
- * Offset/Address/Size: 0x0 | 0x8015F198 | size: 0x8
- */
-void ChainChomp::GetSkinAnimatedNPC_Type() const
-{
-}
+#include "Game/ReplayManager.h"
+#include "Game/Effects/EmissionController.h"
 
 /**
  * Offset/Address/Size: 0x12BC | 0x8015EFC0 | size: 0x1D8
  */
-ChainChomp::ChainChomp(cSHierarchy&, int, PhysicsNPC&, cInventory<cSAnim>*)
+ChainChomp::ChainChomp(cSHierarchy& pHierarchy, int nModelID, PhysicsNPC& mpPhysObj, cInventory<cSAnim>* pInventorySAnim)
+    : SkinAnimatedMovableNPC(pHierarchy, nModelID, mpPhysObj)
 {
 }
 
@@ -38,8 +35,21 @@ void ChainChomp::CollisionCallback(PhysicsObject*, PhysicsObject*, const nlVecto
 /**
  * Offset/Address/Size: 0x8E8 | 0x8015E5EC | size: 0x94
  */
-void UpdateChainEmitter(EmissionController&)
+void UpdateChainEmitter(EmissionController& controller)
 {
+    if (ReplayManager::Instance()->mRender != nullptr)
+    {
+        {
+            ReplayManager* replayManager = ReplayManager::Instance();
+            controller.SetPosition(replayManager->mRender->mChainChomp.mPosition);
+        }
+        {
+            ReplayManager* replayManager = ReplayManager::Instance();
+            controller.SetVelocity(replayManager->mRender->mChainChomp.mVelocity);
+        }
+        nlVector3 direction = { 0.0f, 0.0f, 0.0f };
+        controller.SetDirection(direction);
+    }
 }
 
 /**

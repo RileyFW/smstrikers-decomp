@@ -1,6 +1,8 @@
 #ifndef _CHAINCHOMP_H_
 #define _CHAINCHOMP_H_
 
+#include "Game/Render/SkinAnimatedMovableNPC.h"
+
 #include "Game/SHierarchy.h"
 #include "Game/SAnim.h"
 #include "Game/Physics/PhysicsNPC.h"
@@ -12,13 +14,13 @@
 void UpdateChainEmitter(EmissionController&);
 // void 0x8028D304..0x8028D308 | size: 0x4;
 
-class ChainChomp
+class ChainChomp : public SkinAnimatedMovableNPC
 {
 public:
-    void GetSkinAnimatedNPC_Type() const;
     ChainChomp(cSHierarchy&, int, PhysicsNPC&, cInventory<cSAnim>*);
-    ~ChainChomp();
-    void Update(float);
+    virtual ~ChainChomp();
+    virtual SkinAnimatedNPC_Type GetSkinAnimatedNPC_Type() const { return SkinAnimatedNPC_CHAIN_CHOMP; };
+    virtual void Update(float);
     void CollisionCallback(PhysicsObject*, PhysicsObject*, const nlVector3&);
     void FindTarget(cTeam*);
     void Fall(cFielder*, cFielder*);

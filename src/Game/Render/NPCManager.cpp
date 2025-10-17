@@ -38,8 +38,14 @@ NPCManager::~NPCManager()
 /**
  * Offset/Address/Size: 0x47C | 0x80166340 | size: 0x5C
  */
-void NPCManager::UpdateNPCs(float)
+void NPCManager::UpdateNPCs(float dt)
 {
+    ListEntry<SkinAnimatedNPC*>* current = mNPCList.m_Head;
+    while (current != nullptr)
+    {
+        current->data->Update(dt);
+        current = current->next;
+    }
 }
 
 /**
@@ -47,13 +53,21 @@ void NPCManager::UpdateNPCs(float)
  */
 void NPCManager::RenderNPCs()
 {
+    ListEntry<SkinAnimatedNPC*>* current = mNPCList.m_Head;
+    while (current != nullptr)
+    {
+        current->data->Render();
+        current = current->next;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x3D0 | 0x80166294 | size: 0x60
  */
-void NPCManager::UpdateAINPCs(float)
+void NPCManager::UpdateAINPCs(float dt)
 {
+    mpChainChomp->Update(dt);
+    mpBowser->Update(dt);
 }
 
 /**
