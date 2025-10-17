@@ -129,8 +129,8 @@ public:
     void UpdateTransform();
     void Init(cFielder*, Bowser*);
     void PlayPowerupSound(ePowerUpType, PowerupBase::PowerupSound, const nlVector3&, float);
-    void PlayPowerupSound(ePowerUpType, PowerupBase::PowerupSound, PhysicsObject*, float);
-    void StopPowerupInEffectSound(SFXEmitter*);
+    static void PlayPowerupSound(ePowerUpType, PowerupBase::PowerupSound, PhysicsObject*, float);
+    static void StopPowerupInEffectSound(SFXEmitter*);
 
     /* 0x04 */ bool m_bShouldDestroy;
     /* 0x08 */ DrawableObject* m_pDrawableObj;

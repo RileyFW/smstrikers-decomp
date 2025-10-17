@@ -139,7 +139,7 @@ void EmissionManager::DestroyAll(bool)
 /**
  * Offset/Address/Size: 0x54C | 0x801F8E6C | size: 0xA0
  */
-void EmissionManager::Destroy(unsigned long, const EffectsGroup*)
+void EmissionManager::Destroy(unsigned long userData, const EffectsGroup* pEffectsGroup)
 {
 }
 

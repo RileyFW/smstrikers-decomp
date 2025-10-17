@@ -11,8 +11,16 @@
 #include "Game/PoseAccumulator.h"
 #include "Game/World/worldanim.h"
 
+enum eChainChompState
+{
+    CHAIN_STATE_HIDDEN = 0,
+    CHAIN_STATE_FALL = 1,
+    CHAIN_STATE_RECOVER = 2,
+    CHAIN_STATE_CHASE = 3,
+    CHAIN_STATE_LEAVE = 4,
+};
+
 void UpdateChainEmitter(EmissionController&);
-// void 0x8028D304..0x8028D308 | size: 0x4;
 
 class ChainChomp : public SkinAnimatedMovableNPC
 {
@@ -25,9 +33,19 @@ public:
     void FindTarget(cTeam*);
     void Fall(cFielder*, cFielder*);
     void Hide(bool);
-    void IsHidden() const;
-    void Move(float);
-    void DrawShadow(const cPoseAccumulator&, const nlMatrix4&);
-};
+    bool IsHidden() const;
+    virtual void Move(float);
+    virtual void DrawShadow(const cPoseAccumulator&, const nlMatrix4&);
+
+    /* 0x80 */ cSAnim* mpIdleAnim;
+    /* 0x84 */ cSAnim* mpRecoverAnim;
+    /* 0x88 */ cSAnim* mpDropAnim;
+    /* 0x8C */ cFielder* mpTarget;
+    /* 0x90 */ eChainChompState meChainChompState;
+    /* 0x94 */ Timer mtStateTimer;
+    /* 0x98 */ SFXEmitter* mpInEffectSFX;
+    /* 0x9C */ cFielder* mpThrower;
+    /* 0xA0 */ int mnThrowerPadID;
+}; // total size: 0xA4
 
 #endif // _CHAINCHOMP_H_

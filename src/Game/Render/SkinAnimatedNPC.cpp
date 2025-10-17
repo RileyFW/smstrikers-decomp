@@ -1,4 +1,5 @@
 #include "Game/Render/SkinAnimatedNPC.h"
+#include "types.h"
 
 /**
  * Offset/Address/Size: 0x60C | 0x80164FB0 | size: 0xC0
@@ -52,8 +53,9 @@ void SkinAnimatedNPC::DrawShadow(const cPoseAccumulator&, const nlMatrix4&)
 /**
  * Offset/Address/Size: 0x74 | 0x80164A18 | size: 0x130
  */
-void SkinAnimatedNPC::SetAnimState(cSAnim&, float, ePlayMode)
+void SkinAnimatedNPC::SetAnimState(cSAnim& pAnim, float fBlendTime, ePlayMode ePlayMode)
 {
+    FORCE_DONT_INLINE
 }
 
 /**

@@ -11,15 +11,20 @@ class SkinAnimatedMovableNPC : public SkinAnimatedNPC
 {
 public:
     SkinAnimatedMovableNPC(cSHierarchy& pHierarchy, int nModelID, PhysicsNPC& mpPhysObj);
-    virtual ~SkinAnimatedMovableNPC();
-    virtual SkinAnimatedNPC_Type GetSkinAnimatedNPC_Type() const { return SkinAnimatedNPC_MOVABLE; };
-    virtual void Render();
-    virtual void RenderFromReplay(const cPoseAccumulator&, const nlMatrix4*);
-    virtual void Update(float);
+    /* 0x08 */ virtual ~SkinAnimatedMovableNPC();
+    /* 0x0C */ virtual SkinAnimatedNPC_Type GetSkinAnimatedNPC_Type() const { return SkinAnimatedNPC_MOVABLE; };
+    /* 0x10 */ virtual void Render();
+    /* 0x14 */ virtual void RenderFromReplay(const cPoseAccumulator&, const nlMatrix4*);
+    /* 0x18 */ virtual void Update(float);
+    /* 0x1C */ virtual void DrawShadow(const glModel*, const nlMatrix4&);
+    /* 0x20 */ virtual void DrawShadow(const cPoseAccumulator&, const nlMatrix4&);
+    /* 0x24 */ virtual void GetHeadSpin() const;
+    /* 0x28 */ virtual void GetHeadTilt() const;
+    /* 0x2C */ virtual void SetPosition(const nlVector3&);
+    /* 0x30 */ virtual void move(float) = 0;
+    /* 0x34 */ virtual void AnimMove(float, bool);
+    /* 0x38 */ virtual void AnimMoveSeek(float, float, float, bool);
     void AnimTranslate(float, bool);
-    void AnimMove(float, bool);
-    void AnimMoveSeek(float, float, float, bool);
-    void SetPosition(const nlVector3&);
 
     /* 0x5C */ nlVector3 mv3Position;
     /* 0x68 */ nlVector3 mv3Velocity;
