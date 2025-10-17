@@ -63,7 +63,7 @@ class PlatTexture;
 
 void glplatTextureReplace(unsigned long, const void*, unsigned long);
 void glplatTextureAdd(unsigned long, const void*, unsigned long);
-void glx_CreatePlatTexture();
+PlatTexture* glx_CreatePlatTexture();
 void glplatTextureGetNumBits(int);
 u32 glplatTextureGetHeight();
 u32 glplatTextureGetWidth();
@@ -74,7 +74,7 @@ void glxParseTextureBundle(const char*);
 bool glplatLoadTextureBundle(const char* filename);
 void BundleSortProc(const glTexBundleDict*, const glTexBundleDict*);
 void glx_MakeTexture(GXTextureHeader*, unsigned long);
-void glx_AddTex(unsigned long, PlatTexture*);
+bool glx_AddTex(unsigned long, PlatTexture*);
 PlatTexture* glx_GetTex(unsigned long, bool, bool);
 void glx_GetGridTexture(int, int);
 void glx_MakeGridTexture(int, int);
@@ -97,18 +97,16 @@ public:
     void Create(int, int, eGXTextureFormat, int, bool, bool);
     void CreateWithMemory(int, int, eGXTextureFormat, int, const void*);
 
-    /* 0x00 */ u16 m_Width;    // offset 0x0, size 0x2
-    /* 0x02 */ u16 m_Height;   // offset 0x2, size 0x2
-    /* 0x04 */ u16 m_Levels;   // offset 0x4, size 0x2
-    /* 0x06 */ u16 m_MaxLevel; // offset 0x6, size 0x2
+    /* 0x8 */ int m_unk8;
 
-    /* --- DWARF seens to be different here --- */
-    /* 0x8 */ u8 m_unk8;
-    /* 0x9 */ s8 m_unk9;
+    /* 0x00 */ u16 m_Width;   // offset 0x0, size 0x2
+    /* 0x02 */ u16 m_Height;  // offset 0x2, size 0x2
+    /* 0x04 */ u8 m_Levels;   // offset 0x4, size 0x2
+    /* 0x06 */ u8 m_MaxLevel; // offset 0x6, size 0x2
 
     /* 0x08 */ eGXTextureFormat m_Format; // offset 0x8, size 0x4
     /* 0x0C */ int m_nPaletteEntries;     // offset 0xC, size 0x4
-    /* 0x10 */ bool m_bMissingTexture;    // offset 0x10, size 0x1
+                                          // /* 0x10 */ bool m_bMissingTexture;    // offset 0x10, size 0x1
     /* 0x14 */ char* m_SwizzledData;      // offset 0x14, size 0x4
     /* 0x18 */ char* m_LinearData;        // offset 0x18, size 0x4
     /* 0x1C */ u16* m_PaletteData;        // offset 0x1C, size 0x4

@@ -2,8 +2,11 @@
 #include "NL/nlMemory.h"
 #include "NL/glx/glxMemory.h"
 #include "NL/gl/glMatrix.h"
+#include "NL/gl/glConstant.h"
 #include "NL/nlDebug.h"
 #include "Dolphin/os.h"
+#include "Game/Sys/debug.h"
+#include "Game/GL/GLInventory.h"
 
 bool glx_MemoryDump;
 u32 ResourceMemSize;
@@ -17,12 +20,14 @@ u32 g_uResourceMarker = 0;
 
 u32 p_frame[4];
 u32 n_frame[4];
-u32 FrameMemSizes[2] = {FrameMemSizeReal = 0xE00000, FrameMemSizeVirt = 0xA00000};  // Add this line
+u32 FrameMemSizes[2] = { FrameMemSizeReal = 0xE00000, FrameMemSizeVirt = 0xA00000 }; // Add this line
 GLXMemoryInfo g_uResourceAlloc[16];
+
+GLInventory glInventory;
 
 const char* szMemoryNames[] = {
     "header",
-    "matrix", 
+    "matrix",
     "index",
     "vert",
     "tex",
@@ -65,7 +70,7 @@ u32 glplatFrameAlloc(unsigned long, eGLMemory)
 /**
  * Offset/Address/Size: 0x200 | 0x801B6B28 | size: 0x110
  */
-void glplatResourceRelease(unsigned long long)
+void glplatResourceRelease(unsigned long long resourceId)
 {
 }
 
@@ -79,22 +84,22 @@ void glplatResourceMark()
 /**
  * Offset/Address/Size: 0x440 | 0x801B6D68 | size: 0xB4
  */
- unsigned long glplatResourceAlloc(unsigned long arg0, eGLMemory arg1)
+unsigned long glplatResourceAlloc(unsigned long arg0, eGLMemory arg1)
 {
     s32 temp_r30;
     s32 temp_r3;
-    u32 *temp_r5;
+    u32* temp_r5;
 
     temp_r30 = (p_phys + (n_phys + 0x1F)) & 0xFFFFFFE0;
     temp_r3 = arg0 + (temp_r30 - p_phys);
     n_phys = temp_r3;
-    if (temp_r3 > ResourceMemSize) 
+    if (temp_r3 > ResourceMemSize)
     {
         OSReport("out of resource memory (%s)\n", szMemoryNames[arg1]);
         nlBreak();
     }
     temp_r5 = (u32*)&g_uResourceAlloc[g_uResourceMarker];
-    temp_r5[temp_r3]  = temp_r5[temp_r3] + arg0;
+    temp_r5[temp_r3] = temp_r5[temp_r3] + arg0;
     return temp_r30;
 }
 
@@ -119,13 +124,13 @@ void glx_FreeMemory1(const char*)
  */
 void glx_FreeMemory0()
 {
-    glx_mem0 = ResourceMemSize - n_phys;    
+    glx_mem0 = ResourceMemSize - n_phys;
 }
 
 /**
  * Offset/Address/Size: 0x8FC | 0x801B7224 | size: 0x10
  */
- u32 glx_GetFreeMemory()
+u32 glx_GetFreeMemory()
 {
     return ResourceMemSize - n_phys;
 }
@@ -135,11 +140,9 @@ void glx_FreeMemory0()
  */
 GLXMemoryInfo::GLXMemoryInfo()
 {
-    m_unk_0x00 = 0;
-    m_unk_0x04 = 0;
-    m_unk_0x08 = 0;
-    m_unk_0x0C = 0;
-    m_unk_0x10 = 0;
-    m_unk_0x14 = 0;
-    m_unk_0x18 = 0;
+    for (int i = 0; i < 6; i++)
+    {
+        m_uBytes[i] = 0;
+    }
+    m_uTexBundle = 0;
 }

@@ -32,13 +32,16 @@ class GLXMemoryInfo
 public:
     GLXMemoryInfo();
 
-    /* 0x00 */ u32 m_unk_0x00;
-    /* 0x04 */ u32 m_unk_0x04;
-    /* 0x08 */ u32 m_unk_0x08;
-    /* 0x0C */ u32 m_unk_0x0C;
-    /* 0x10 */ u32 m_unk_0x10;
-    /* 0x14 */ u32 m_unk_0x14;
-    /* 0x18 */ u32 m_unk_0x18;
-};
+    // /* 0x00 */ u32 m_unk_0x00;
+    // /* 0x04 */ u32 m_unk_0x04;
+    // /* 0x08 */ u32 m_unk_0x08;
+    // /* 0x0C */ u32 m_unk_0x0C;
+    // /* 0x10 */ u32 m_unk_0x10;
+    // /* 0x14 */ u32 m_unk_0x14;
+    // /* 0x18 */ u32 m_unk_0x18;
+
+    /* 0x00 */ unsigned long m_uBytes[6];
+    /* 0x18 */ unsigned long m_uTexBundle;
+}; // total size: 0x1C
 
 #endif // _GLXMEMORY_H_

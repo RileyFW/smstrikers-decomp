@@ -11,7 +11,7 @@ u8 asyncToVirMemBuffer[0x4000];
  * Offset/Address/Size: 0x0 | 0x801CED54 | size: 0xEC
  */
 void nlReadAsyncToVirtualMemory(nlFile* file, void* buffer, int size, ReadAsyncCallback callback, unsigned long alignment,
-                                unsigned long length, void* userData)
+    unsigned long length, void* userData)
 {
     s32 var_r11 = 0;
     nlReadAsync(file, buffer, size, &nlFileGC::AsyncToVirMemBufferCallback, var_r11);
@@ -85,8 +85,9 @@ void nlCancelPendingAsyncReads(nlFile*)
 /**
  * Offset/Address/Size: 0x2C4 | 0x801CF018 | size: 0x34
  */
-void nlAsyncReadsPending(nlFile*)
+bool nlAsyncReadsPending(nlFile*)
 {
+    return false;
 }
 
 /**

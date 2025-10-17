@@ -53,8 +53,9 @@ PlatTexture::~PlatTexture()
 /**
  * Offset/Address/Size: 0x644 | 0x801B7900 | size: 0xA8
  */
-void glx_CreatePlatTexture()
+PlatTexture* glx_CreatePlatTexture()
 {
+    return new PlatTexture();
 }
 
 /**
@@ -134,8 +135,9 @@ void glx_MakeTexture(GXTextureHeader*, unsigned long)
 /**
  * Offset/Address/Size: 0xF00 | 0x801B81BC | size: 0x94
  */
-void glx_AddTex(unsigned long, PlatTexture*)
+bool glx_AddTex(unsigned long handle, PlatTexture* platTex)
 {
+    return false;
 }
 
 /**

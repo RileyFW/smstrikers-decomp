@@ -11,7 +11,7 @@ class AsyncEntry;
 void nlReadAsyncToVirtualMemory(nlFile*, void*, int, ReadAsyncCallback, unsigned long, unsigned long, void*);
 void nlAsyncLoadFileToVirtualMemory(nlFile*, int, void*, ReadAsyncCallback, unsigned long);
 void nlCancelPendingAsyncReads(nlFile*, void (*)(nlFile*, void*, unsigned int, unsigned long, LoadAsyncCallback));
-void nlAsyncReadsPending(nlFile*);
+bool nlAsyncReadsPending(nlFile*);
 void* nlLoadEntireFileToVirtualMemory(const char*, int*, unsigned int, void*, eAllocType);
 void nlReadToVirtualMemory(nlFile*, void*, unsigned int, unsigned int);
 u32 nlGetFilePosition(nlFile*);

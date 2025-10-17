@@ -463,7 +463,7 @@ void NetMesh::SetTexture(unsigned long texture)
     if (sbDontUseLowestNetTextureLOD != 0)
     {
         PlatTexture* tex = glx_GetTex(texture, true, true);
-        tex->m_unk9 = tex->m_unk8 - 1;
+        tex->m_MaxLevel = tex->m_Levels - 1;
         tex->Prepare();
     }
 }

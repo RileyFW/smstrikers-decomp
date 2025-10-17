@@ -77,7 +77,7 @@ void PhysicsBall::AddResistanceForces()
     nlVector3 local_7c; // 7c, 80, 84
     nlVector3 local_94; // 94, 98, 9c
     nlVector3 local_b8;
-    nlVector3 local_ac;
+    // nlVector3 local_ac;
     nlVector3 local_a0;
     nlVector3 local_58;
     nlVector3 local_d0;
@@ -165,9 +165,10 @@ void PhysicsBall::AddResistanceForces()
             {
                 GetLinearVelocity((nlVector3*)&local_b8); // b8 bc c0
 
-                local_ac.f.z = 0.0;
-                local_ac.f.y = 0.0;
-                local_ac.f.x = 0.0; // ac, b0, b4
+                // local_ac.f.z = 0.0;
+                // local_ac.f.y = 0.0;
+                // local_ac.f.x = 0.0; // ac, b0, b4
+                nlVector3 local_ac = { 0.f, 0.f, 0.f };
 
                 dVar4 = GetRadius();
 
@@ -410,20 +411,14 @@ void PhysicsBall::PostUpdate()
  */
 void PhysicsBall::PreUpdate()
 {
-    float l, n;
     nlVector3 vec;
     GetLinearVelocity(&vec);
 
-    if (2500.f < vec.f.x * vec.f.x + vec.f.y * vec.f.y + vec.f.z * vec.f.z)
+    float l = (vec.f.x * vec.f.x) + (vec.f.y * vec.f.y) + (vec.f.z * vec.f.z);
+    if (l > 2500.f)
     {
-        float l = nlSqrt(vec.f.x * vec.f.x + vec.f.y * vec.f.y + vec.f.z * vec.f.z, true);
-        float n = 50.f / l;
-        float x = n * vec.f.x;
-        float y = n * vec.f.y;
-        float z = n * vec.f.z;
-        vec.f.x = x;
-        vec.f.y = y;
-        vec.f.z = z;
+        float n = 50.f / nlSqrt(l, true);
+        nlVec3Set(vec, n * vec.f.x, n * vec.f.y, n * vec.f.z);
         SetLinearVelocity(vec);
     }
     PhysicsObject::PreUpdate();

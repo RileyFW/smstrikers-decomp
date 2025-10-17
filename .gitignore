@@ -26,6 +26,7 @@ build.ninja
 # decompctx output
 ctx.*
 *.ctx
+*.csv
 
 #class_gen output
 include/_class_gen/
