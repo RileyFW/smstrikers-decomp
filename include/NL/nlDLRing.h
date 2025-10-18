@@ -26,7 +26,7 @@ public:
         , m_data(data)
     {
     }
-};
+}; // total size: 0xC
 
 template <typename T>
 void nlDLRingInsert(T** head, T* afterNode, T* newNode)

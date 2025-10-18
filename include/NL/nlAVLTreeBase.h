@@ -74,10 +74,10 @@ public:
     void PostorderTraversal(AVLTreeEntry<KeyType, ValueType>* curr, void (AVLTreeBase::*cb)(AVLTreeEntry<KeyType, ValueType>*));
 
     template <typename CallbackType>
-    void Walk(CallbackType* cbClass, void (CallbackType::*cb)(void*, void*, unsigned long&, unsigned long*));
+    void Walk(CallbackType* cbClass, void (CallbackType::*cb)(const KeyType&, ValueType*));
 
     template <typename CallbackType>
-    void InorderWalk(AVLTreeEntry<KeyType, ValueType>* curr, CallbackType* cbClass, void (CallbackType::*cb)(void*, void*, unsigned long&, unsigned long*));
+    void InorderWalk(AVLTreeEntry<KeyType, ValueType>* curr, CallbackType* cbClass, void (CallbackType::*cb)(const KeyType&, ValueType*));
 
     virtual int CompareNodes(AVLTreeNode* a, AVLTreeNode* b);
     virtual int CompareKey(void* key, AVLTreeNode* n);
@@ -202,27 +202,25 @@ AVLTreeNode* AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::Alloca
 template <typename KeyType, typename ValueType, typename AllocatorType, typename CompareType>
 template <typename CallbackType>
 void AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::Walk(CallbackType* cbClass,
-    void (CallbackType::*cb)(void*, void*, unsigned long&, unsigned long*))
+    // void (CallbackType::*cb)(void*, void*, unsigned long&, unsigned long*))
+    void (CallbackType::*cb)(const KeyType&, ValueType*))
 {
-    if (m_Root != nullptr)
-    {
-        InorderWalk(m_Root, cbClass, cb);
-    }
+    InorderWalk(m_Root, cbClass, cb);
 }
 
 template <typename KeyType, typename ValueType, typename AllocatorType, typename CompareType>
 template <typename CallbackType>
 void AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::InorderWalk(AVLTreeEntry<KeyType, ValueType>* curr,
-    CallbackType* cbClass, void (CallbackType::*cb)(void*, void*, unsigned long&, unsigned long*))
+    // CallbackType* cbClass, void (CallbackType::*cb)(void*, void*, unsigned long&, unsigned long*))
+    CallbackType* cbClass, void (CallbackType::*cb)(const KeyType&, ValueType*))
 {
-    // if (curr != nullptr)
-    // {
-    //     InorderWalk((AVLTreeEntry<KeyType, ValueType>*)curr->node.left, cbClass, cb);
-    //     unsigned long key = (unsigned long)curr->key;
-    //     unsigned long value = reinterpret_cast<unsigned long>(&curr->value);
-    //     (cbClass->*cb)(nullptr, nullptr, key, &value);
-    //     InorderWalk((AVLTreeEntry<KeyType, ValueType>*)curr->node.right, cbClass, cb);
-    // }
+    FORCE_DONT_INLINE;
+    if (curr != nullptr)
+    {
+        InorderWalk((AVLTreeEntry<KeyType, ValueType>*)curr->node.left, cbClass, cb);
+        (cbClass->*cb)(curr->key, &curr->value);
+        InorderWalk((AVLTreeEntry<KeyType, ValueType>*)curr->node.right, cbClass, cb);
+    }
 }
 
 #endif // _AVLTREEBASE_H_

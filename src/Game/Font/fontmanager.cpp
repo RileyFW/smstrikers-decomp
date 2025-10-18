@@ -54,6 +54,7 @@
  */
 FontManager::FontManager()
 {
+    // SlotPoolBase::BaseAddNewBlock(&m_fonts.m_Allocator, 0xC);
 }
 
 /**

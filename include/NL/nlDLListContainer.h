@@ -12,7 +12,7 @@ public:
 
     /* 0x0 */ Adapter m_Allocator;    // offset 0x0, size 0x1
     /* 0x4 */ DLListEntry<T>* m_Head; // offset 0x4, size 0x4
-}; // total size: 0x8
+}; // total size: 0x1C
 
 template <typename T>
 class nlDLListContainer : public DLListContainerBase<T, NewAdapter<DLListEntry<T> > >

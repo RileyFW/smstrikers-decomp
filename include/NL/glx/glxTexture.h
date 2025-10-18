@@ -1,8 +1,13 @@
 #ifndef _GLXTEXTURE_H_
 #define _GLXTEXTURE_H_
 
+#include "types.h"
 #include "Dolphin/gx/GXEnum.h"
 #include "Dolphin/gx/GXStruct.h"
+
+#include "NL/nlMemory.h"
+
+typedef unsigned long (*glxTextureLoadCallback_t)(unsigned long);
 
 enum eGXTextureFormat
 {
@@ -57,35 +62,42 @@ enum eGLTextureFormatType
     eGLTextureFormatType_0,
 };
 
-class glTexBundleDict;
-class GXTextureHeader;
-class PlatTexture;
+struct BundleEntry
+{
+    /* 0x0 */ unsigned long hash;
+    /* 0x4 */ unsigned long offset;
+    /* 0x8 */ unsigned long fileSize;
+    /* 0xC */ unsigned long pad;
+}; // total size: 0x10
 
-void glplatTextureReplace(unsigned long, const void*, unsigned long);
-void glplatTextureAdd(unsigned long, const void*, unsigned long);
-PlatTexture* glx_CreatePlatTexture();
-void glplatTextureGetNumBits(int);
-u32 glplatTextureGetHeight();
-u32 glplatTextureGetWidth();
-bool glplatTextureLoad(unsigned long);
-void glplatEndLoadTextureBundle(void*, unsigned long);
-void glplatBeginLoadTextureBundle(const char*, void (*)(void*, unsigned long, void*), void*);
-void glxParseTextureBundle(const char*);
-bool glplatLoadTextureBundle(const char* filename);
-void BundleSortProc(const glTexBundleDict*, const glTexBundleDict*);
-void glx_MakeTexture(GXTextureHeader*, unsigned long);
-bool glx_AddTex(unsigned long, PlatTexture*);
-PlatTexture* glx_GetTex(unsigned long, bool, bool);
-void glx_GetGridTexture(int, int);
-void glx_MakeGridTexture(int, int);
-void glx_SetGridMode(bool);
-void glxInitTex();
-void glx_BackupTexMarkerLevel(int);
-void glx_AdvanceTexMarkerLevel();
-void glx_GetTexMarkerLevel();
-void glx_SetLoadCallback(unsigned long (*)(unsigned long));
-// void nlQSort<glTexBundleDict>(glTexBundleDict*, int, int (*)(const glTexBundleDict*, const glTexBundleDict*));
-// void nlListAddStart<ListEntry<PlatTexture*>>(ListEntry<PlatTexture*>**, ListEntry<PlatTexture*>*, ListEntry<PlatTexture*>**);
+struct glTexBundleDict : public BundleEntry
+{
+}; // total size: 0x10
+
+struct BundleHeader
+{
+    /* 0x0 */ unsigned long magic;
+    /* 0x4 */ unsigned long numTextures;
+    /* 0x8 */ unsigned long pad1;
+    /* 0xC */ unsigned long pad2;
+}; // total size: 0x10
+
+struct glTexBundleHeader : public BundleHeader
+{
+    /* 0x10 */ unsigned long pad[4]; // size 0x10
+}; // total size: 0x20
+
+struct GXTextureHeader
+{
+    /* 0x00 */ unsigned long numLevels;
+    /* 0x04 */ eGXTextureFormat format;
+    /* 0x08 */ unsigned char numBits[4];
+    /* 0x0C */ unsigned char missingTexture;
+    /* 0x0E */ unsigned short width;
+    /* 0x10 */ unsigned short height;
+    /* 0x14 */ unsigned long numEntries;
+    /* 0x18 */ unsigned long pad[2];
+}; // total size: 0x20
 
 class PlatTexture
 {
@@ -97,29 +109,72 @@ public:
     void Create(int, int, eGXTextureFormat, int, bool, bool);
     void CreateWithMemory(int, int, eGXTextureFormat, int, const void*);
 
-    /* 0x8 */ int m_unk8;
-
-    /* 0x00 */ u16 m_Width;   // offset 0x0, size 0x2
-    /* 0x02 */ u16 m_Height;  // offset 0x2, size 0x2
-    /* 0x04 */ u8 m_Levels;   // offset 0x4, size 0x2
-    /* 0x06 */ u8 m_MaxLevel; // offset 0x6, size 0x2
-
-    /* 0x08 */ eGXTextureFormat m_Format; // offset 0x8, size 0x4
-    /* 0x0C */ int m_nPaletteEntries;     // offset 0xC, size 0x4
-                                          // /* 0x10 */ bool m_bMissingTexture;    // offset 0x10, size 0x1
-    /* 0x14 */ char* m_SwizzledData;      // offset 0x14, size 0x4
-    /* 0x18 */ char* m_LinearData;        // offset 0x18, size 0x4
-    /* 0x1C */ u16* m_PaletteData;        // offset 0x1C, size 0x4
-    /* 0x20 */ u8 m_Bits[4];              // offset 0x20, size 0x4
-    /* 0x24 */ _GXTexObj m_TexObj;        // offset 0x24, size 0x20
-    /* 0x44 */ _GXTlutObj m_TlutObj;      // offset 0x44, size 0xC
+    /* 0x00 */ int m_unk8;
+    /* 0x04 */ u16 m_Width;
+    /* 0x06 */ u16 m_Height;
+    /* 0x08 */ u8 m_Levels;
+    /* 0x09 */ u8 m_MaxLevel;
+    /* 0x0C */ eGXTextureFormat m_Format;
+    /* 0x10 */ s16 m_nPaletteEntries;
+    /* 0x12 */ bool m_bMissingTexture;
+    /* 0x14 */ void* m_SwizzledData;
+    /* 0x18 */ void* m_LinearData;
+    /* 0x1C */ u16* m_PaletteData;
+    /* 0x20 */ u8 m_Bits[4];
+    /* 0x24 */ _GXTexObj m_TexObj;   // size 0x20
+    /* 0x44 */ _GXTlutObj m_TlutObj; // size 0xC
 }; // total size: 0x50
+
+void glplatTextureReplace(unsigned long, const void*, unsigned long);
+void glplatTextureAdd(unsigned long, const void*, unsigned long);
+PlatTexture* glx_CreatePlatTexture();
+int glplatTextureGetNumBits(int);
+u32 glplatTextureGetHeight();
+u32 glplatTextureGetWidth();
+bool glplatTextureLoad(unsigned long);
+bool glplatEndLoadTextureBundle(void* data, unsigned long size);
+bool glplatBeginLoadTextureBundle(const char* filename, void (*callback)(void*, unsigned long, void*), void* param);
+bool glxParseTextureBundle(const char*);
+bool glplatLoadTextureBundle(const char* filename);
+WEAKFUNC int BundleSortProc(const glTexBundleDict* a, const glTexBundleDict* b);
+PlatTexture* glx_MakeTexture(GXTextureHeader* header, unsigned long handle);
+bool glx_AddTex(unsigned long handle, PlatTexture* platTex);
+PlatTexture* glx_GetTex(unsigned long, bool, bool);
+PlatTexture* glx_GetGridTexture(int width, int height);
+PlatTexture* glx_MakeGridTexture(int width, int height);
+bool glx_SetGridMode(bool bGrid);
+void glxInitTex();
+void glx_BackupTexMarkerLevel(int level);
+void glx_AdvanceTexMarkerLevel();
+int glx_GetTexMarkerLevel();
+glxTextureLoadCallback_t glx_SetLoadCallback(glxTextureLoadCallback_t callback);
 
 class TexDestructor
 {
 public:
-    void CallDestructor(const unsigned long&, PlatTexture**);
+    /**
+     * Offset/Address/Size: 0x197C | 0x801B8C38 | size: 0x48
+     */
+    void CallDestructor(const unsigned long&, PlatTexture** texture)
+    {
+        PlatTexture* texture_ptr;
+        void* linear_data;
+
+        texture_ptr = *texture;
+        if (texture_ptr != NULL)
+        {
+            linear_data = texture_ptr->m_LinearData;
+            if (linear_data != NULL)
+            {
+                nlFree(linear_data);
+                texture_ptr->m_LinearData = NULL;
+            }
+        }
+    }
 };
+
+// void nlQSort<glTexBundleDict>(glTexBundleDict*, int, int (*)(const glTexBundleDict*, const glTexBundleDict*));
+// void nlListAddStart<ListEntry<PlatTexture*>>(ListEntry<PlatTexture*>**, ListEntry<PlatTexture*>*, ListEntry<PlatTexture*>**);
 
 // class AVLTreeBase<unsigned long, PlatTexture*, NewAdapter<AVLTreeEntry<unsigned long, PlatTexture*>>, DefaultKeyCompare<unsigned long>>
 // {

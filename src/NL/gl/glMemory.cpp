@@ -19,15 +19,15 @@ void glResourceMark()
 /**
  * Offset/Address/Size: 0x40 | 0x801D8FFC | size: 0x20
  */
-void* glFrameAlloc(unsigned long size, eGLMemory arg1)
+void* glFrameAlloc(unsigned long size, eGLMemory memType)
 {
-    return (void*)glplatFrameAlloc(size, arg1);
+    return (void*)glplatFrameAlloc(size, memType);
 }
 
 /**
  * Offset/Address/Size: 0x60 | 0x801D901C | size: 0x20
  */
-void* glResourceAlloc(unsigned long size, eGLMemory arg1)
+void* glResourceAlloc(unsigned long size, eGLMemory memType)
 {
-    return (void*)glplatResourceAlloc(size, arg1);
+    return (void*)glplatResourceAlloc(size, memType);
 }
