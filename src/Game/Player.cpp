@@ -1,26 +1,34 @@
 #include "Game/Player.h"
 #include "Game/Character.h"
+#include "Game/Ball.h"
+
+#include "Game/AI/Fielder.h"
+
+#include "Game/CharacterTemplate.h"
+#include "Game/SAnim/pnFeather.h"
+
+float g_fPassInterceptNoPickupTimer = 5.0f;
 
 /**
  * Offset/Address/Size: 0x0 | 0x80057550 | size: 0x20
  */
-s32 cPlayer::GetUniqueID(int arg0) const
+s32 cPlayer::GetUniqueID(int nTeamID) const
 {
-    if (arg0 == -1)
+    if (nTeamID == -1)
     {
-        arg0 = *(s32*)m_pTeam;
+        nTeamID = *(s32*)m_pTeam;
     }
-    arg0 *= 5;
-    return arg0 + m_ID;
+    nTeamID *= 5;
+    return nTeamID + m_ID;
 }
 
 /**
  * Offset/Address/Size: 0x20 | 0x80057570 | size: 0x48
  */
-void cPlayer::SetNoPickUpTime(float arg0)
+void cPlayer::SetNoPickUpTime(float NewNoPickUpTime)
 {
-    // To add .. some bits get set (arg0 <= 0.f)...
-    m_tNoPickupTimer.SetSeconds(arg0);
+    m_pPhysicsCharacter->m_CanCollideWithBall = (NewNoPickUpTime <= 0.0f);
+    m_tNoPickupTimer.SetSeconds(NewNoPickUpTime);
 }
 
 /**
@@ -62,9 +70,9 @@ void cPlayer::PostPhysicsUpdate()
 /**
  * Offset/Address/Size: 0x454 | 0x800579A4 | size: 0x34
  */
-void cPlayer::PreUpdate(float arg0)
+void cPlayer::PreUpdate(float dt)
 {
-    cCharacter::PreUpdate(arg0);
+    cCharacter::PreUpdate(dt);
     m_bCanTestController = true;
 }
 
@@ -117,8 +125,24 @@ void cPlayer::ClearSwapControllerTimer()
 /**
  * Offset/Address/Size: 0x990 | 0x80057EE0 | size: 0x80
  */
-void cPlayer::ClearPowerupAnimState(bool)
+void cPlayer::ClearPowerupAnimState(bool bIsEndGame)
 {
+    bool bRemovePowerup = false;
+    if ((bIsEndGame != 0) && (m_pPowerupLayer->GetChild(1) != 0))
+    {
+        bRemovePowerup = 1;
+    }
+
+    m_pPowerupLayer->BeginBlendOut(0.1f);
+    if (m_eClassType == FIELDER)
+    {
+        cFielder* pFielder = (cFielder*)this;
+        pFielder->m_nPowerupAnimID = -1;
+        if (bRemovePowerup != 0)
+        {
+            pFielder->m_ePowerup = POWER_UP_NONE;
+        }
+    }
 }
 
 /**
@@ -133,6 +157,10 @@ void cPlayer::DoRegularPassing(cPlayer*, bool, bool, bool, bool)
  */
 void cPlayer::ResetUnPossessionTimer()
 {
+    if (m_pBall == NULL)
+    {
+        m_tBallUnPossessionTimer.SetSeconds(0.0f);
+    }
 }
 
 /**
@@ -147,12 +175,11 @@ void cPlayer::ReleaseBall()
  */
 cGlobalPad* cPlayer::GetGlobalPad()
 {
-    // temp_r3 = this->unk1C0;
     if (m_pController != NULL)
     {
         return m_pController->m_pPad;
     }
-    return 0;
+    return NULL;
 }
 
 /**
@@ -165,15 +192,21 @@ void cPlayer::DoFindBestPassTarget(bool, bool)
 /**
  * Offset/Address/Size: 0x1930 | 0x80058E80 | size: 0x24
  */
-void cPlayer::IsCaptain() const
+bool cPlayer::IsCaptain() const
 {
+    return ::IsCaptain(m_eCharacterClass);
 }
 
 /**
  * Offset/Address/Size: 0x1954 | 0x80058EA4 | size: 0x28
  */
-void cPlayer::IsOnSameTeam(cPlayer*)
+bool cPlayer::IsOnSameTeam(cPlayer* other)
 {
+    if ((other != NULL) && (other->m_pTeam == m_pTeam))
+    {
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -209,13 +242,26 @@ void cPlayer::GetClosestOpponentFielder(nlVector3*)
  */
 void cPlayer::CollideWithCharacterCallback(CollisionPlayerPlayerData*)
 {
+    // EMPTY
 }
 
 /**
  * Offset/Address/Size: 0x23D4 | 0x80059924 | size: 0x64
  */
-void cPlayer::CollideWithBallCallback(cBall*)
+void cPlayer::CollideWithBallCallback(cBall* pBall)
 {
+    if (pBall->m_pPassTarget != NULL)
+    {
+        if (pBall->m_pPassTarget != this)
+        {
+            m_tNoPickupPassInterceptTimer.SetSeconds(g_fPassInterceptNoPickupTimer);
+        }
+    }
+
+    if (pBall->m_pOwner == NULL)
+    {
+        pBall->m_pLastTouch = this;
+    }
 }
 
 /**
@@ -293,19 +339,5 @@ cPlayer::~cPlayer()
  */
 cPlayer::cPlayer(int arg0, eCharacterClass characterClass, const int* arg2, cSHierarchy* hierarchy, cAnimInventory* animInventory, const CharacterPhysicsData* physData, PlayerTweaks* playerTweaks, AnimRetargetList* animRetargetList, eClassTypes classType)
     : cCharacter(characterClass, arg2, hierarchy, animInventory, physData, playerTweaks->fPhysCapsuleHeight, playerTweaks->fPhysCapsuleRadius, animRetargetList, classType)
-{
-}
-
-/**
- * Offset/Address/Size: 0x332C | 0x8005A87C | size: 0x34
- */
-// void Timer::__defctor()
-// {
-// }
-
-/**
- * Offset/Address/Size: 0x0 | 0x8005A8B0 | size: 0x4
- */
-void cPlayer::InitActionPostWhistle()
 {
 }

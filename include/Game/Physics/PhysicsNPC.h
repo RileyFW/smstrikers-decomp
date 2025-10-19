@@ -12,7 +12,7 @@ public:
     typedef void (*CallbackFn)(PhysicsObject*, PhysicsObject*, const nlVector3&);
 
     PhysicsNPC(float);
-    virtual ~PhysicsNPC();
+    virtual ~PhysicsNPC() { };
     virtual int GetObjectType() const { return 0x1A; };
     virtual bool SetContactInfo(dContact* contact, PhysicsObject* other, bool first);
     virtual int Contact(PhysicsObject*, dContact*, int);
@@ -21,7 +21,7 @@ public:
     // void SetCallbackFunction(void (*)(PhysicsObject*, PhysicsObject*, const nlVector3&));
 
     /* 0x2C */ CallbackFn mpTriggerCallbackFunc;
-    /* 0x30 */ /*SkinAnimatedMovableNPC*/ PhysicsObject* mpAINPC;
-};
+    /* 0x30 */ SkinAnimatedMovableNPC* mpAINPC;
+}; // total size: 0x34
 
 #endif // _PHYSICSNPC_H_

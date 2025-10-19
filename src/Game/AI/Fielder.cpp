@@ -564,16 +564,16 @@ bool cFielder::IsFallenDown(float) const
 /**
  * Offset/Address/Size: 0x6A00 | 0x8001FD3C | size: 0xEC
  */
-// void cFielder::GetReceivePassBallContactOffset(nlVector3&, unsigned short, const LooseBallContactAnimInfo*)
-// {
-// }
+void cFielder::GetReceivePassBallContactOffset(nlVector3&, unsigned short, const LooseBallContactAnimInfo*)
+{
+}
 
 /**
  * Offset/Address/Size: 0x6AEC | 0x8001FE28 | size: 0x130
  */
-// void cFielder::GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsigned short, bool, bool)
-// {
-// }
+void cFielder::GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsigned short, bool, bool)
+{
+}
 
 /**
  * Offset/Address/Size: 0x6C1C | 0x8001FF58 | size: 0x130
@@ -820,8 +820,9 @@ bool cFielder::IsRunning() const
 /**
  * Offset/Address/Size: 0xA548 | 0x80023884 | size: 0x94
  */
-void cFielder::IsTurboing()
+bool cFielder::IsTurboing()
 {
+    return false;
 }
 
 /**
@@ -835,8 +836,9 @@ bool cFielder::IsCharacterInAir(bool) const
 /**
  * Offset/Address/Size: 0xA6A8 | 0x800239E4 | size: 0x10
  */
-void cFielder::IsPlayingPowerupAnim()
+bool cFielder::IsPlayingPowerupAnim()
 {
+    return false;
 }
 
 /**
@@ -846,33 +848,33 @@ void cFielder::UsePerfectPass()
 {
 }
 
-// /**
-//  * Offset/Address/Size: 0xA6D0 | 0x80023A0C | size: 0x3C
-//  */
-// void cFielder::ClearPassTargetIfAmThePassTarget()
-// {
-// }
+/**
+ * Offset/Address/Size: 0xA6D0 | 0x80023A0C | size: 0x3C
+ */
+void cFielder::ClearPassTargetIfAmThePassTarget()
+{
+}
 
-// /**
-//  * Offset/Address/Size: 0xA70C | 0x80023A48 | size: 0xF8
-//  */
-// void cFielder::CollideWithWallCallback(const CollisionPlayerWallData*)
-// {
-// }
+/**
+ * Offset/Address/Size: 0xA70C | 0x80023A48 | size: 0xF8
+ */
+void cFielder::CollideWithWallCallback(const CollisionPlayerWallData*)
+{
+}
 
-// /**
-//  * Offset/Address/Size: 0xA804 | 0x80023B40 | size: 0x10C
-//  */
-// void cFielder::CollideWithBowserCallback(Bowser*)
-// {
-// }
+/**
+ * Offset/Address/Size: 0xA804 | 0x80023B40 | size: 0x10C
+ */
+void cFielder::CollideWithBowserCallback(Bowser*)
+{
+}
 
-// /**
-//  * Offset/Address/Size: 0xA910 | 0x80023C4C | size: 0x1BC
-//  */
-// void cFielder::CollideWithChainCallback(ChainChomp*)
-// {
-// }
+/**
+ * Offset/Address/Size: 0xA910 | 0x80023C4C | size: 0x1BC
+ */
+void cFielder::CollideWithChainCallback(ChainChomp*)
+{
+}
 
 /**
  * Offset/Address/Size: 0xAACC | 0x80023E08 | size: 0xC4
@@ -898,9 +900,9 @@ void cFielder::CollideWithShellCallback(ePowerupSize, bool, const nlVector3&, co
 /**
  * Offset/Address/Size: 0xAEBC | 0x800241F8 | size: 0x151C
  */
-// void cFielder::CollideWithCharacterCallback(CollisionPlayerPlayerData*)
-// {
-// }
+void cFielder::CollideWithCharacterCallback(CollisionPlayerPlayerData*)
+{
+}
 
 /**
  * Offset/Address/Size: 0xC3D8 | 0x80025714 | size: 0x38

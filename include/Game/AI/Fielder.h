@@ -69,203 +69,402 @@ enum ePenaltyType
     NUM_PEN_TYPES = 4,
 };
 
+enum ePenaltyCardStatus
+{
+    PENALTY_CARD_NONE = -1,
+    PENALTY_CARD_YELLOW_1 = 0,
+    PENALTY_CARD_YELLOW_2 = 1,
+    PENALTY_CARD_RED = 2,
+    NUM_PENALTY_CARDS = 3,
+};
+
+enum eStrafeDirection
+{
+    STRAFE_IDLE = 0,
+    STRAFE_RIGHT = 1,
+    STRAFE_LEFT = 2,
+    STRAFE_FORWARD = 3,
+    STRAFE_BACK = 4,
+};
+
+enum eRole
+{
+    ROLE_STRIKER = 0,
+    ROLE_WINGER = 1,
+    ROLE_MIDFIELD = 2,
+    ROLE_DEFENCE = 3,
+    NUM_ROLES = 4,
+};
+
+enum eShootToScoreResult
+{
+    S2S_SAVED = 0,
+    S2S_SAVED_YELLOW = 1,
+    S2S_SCORE = 2,
+    S2S_SUPER_SHOT = 3,
+};
+
+enum eSlideAttackState
+{
+    SLIDE_ATTACK_DOWN = 0,
+    SLIDE_ATTACK_DECELERATE = 1,
+};
+
+struct ActionShootToScoreVars
+{
+    float fFrameButtonDownTime2;         // offset 0x0, size 0x4
+    float fFrameButtonDownTime1;         // offset 0x4, size 0x4
+    float fGreenRegionWidth;             // offset 0x8, size 0x4
+    float fShootToScoreActiveTime;       // offset 0xC, size 0x4
+    float fMeterFractionTime;            // offset 0x10, size 0x4
+    class nlVector3 v3MeterPosition;     // offset 0x14, size 0xC
+    unsigned char bShootWasPressed;      // offset 0x20, size 0x1
+    unsigned char isCaptainSts;          // offset 0x21, size 0x1
+    unsigned char isCurrentlyInvincible; // offset 0x22, size 0x1
+    unsigned char isInUnbreakablePart;   // offset 0x23, size 0x1
+    class cAnimCamera* captainStsCamera; // offset 0x24, size 0x4
+    float preCaptainStsPlaybackSpeed;    // offset 0x28, size 0x4
+    float fCaptainYellowWidth;           // offset 0x2C, size 0x4
+}; // total size: 0x30
+
 class cBall;
+class LooseBallContactAnimInfo;
+class ChainChomp;
+class Bowser;
 
 class cFielder : public cPlayer
 {
 public:
-    void DoSpeedBoost();
-    void DoAIWindupActionSelection();
-    void DoAIReceivePassActionSelection();
-    void DoAILooseBallActionSelection();
-    void StartRunning();
-    void S2SShootWasPressed();
-    void GetDistanceToDesiredPos();
-    void UpdatePlay(float);
-    void UpdateController(float);
-    void UpdateHeadTracking(float);
-    void UpdateActionState(float);
-    void UseTeamPowerup(cFielder*);
-    void SetPowerup(ePowerUpType, int, cFielder*);
-    void ThrowPowerup();
-    void Update(float);
-    void PostPhysicsUpdate();
-    void PreUpdate(float);
-    void TestButtonsRunningWB(float);
-    void TestButtonsRunning();
-    void TestQueuedActions();
-    void TestButtonsToQueueActions(float);
-    void TestCollisionForInvicibility(cFielder*);
-    void ShouldIWave();
-    void ShouldITurboWithoutBall();
-    void ShouldIStrafe();
-    void SetDesire(eFielderDesireState, float);
-    void GetSlideAttackSpeed();
-    void GetSpeedPowerupAdjusted(float);
-    void SetDesiredSpeed(float, float);
-    void SetDesiredSpeedAndDirectionToPosition(float, const nlVector3&, eTurboRequest, float, float);
-    void SetPosition(const nlVector3&);
-    void CanISlideAttack(const nlVector3&, const nlVector3&, float*);
-    void ShouldILeadPass();
-    void ShouldIClearBall();
-    void SetRunningWBAnimState(float);
-    void SetRunningTurboAnimState();
-    void SetRunningAnimState(float);
-    // void RunningSABcallback(unsigned int, cPN_SingleAxisBlender*);
-    void SetIdleWBAnimState();
-    void SetIdleAnimState();
-    void SetIdleStrafeAnimState();
-    void SetStrafeRightAnimState();
-    void SetStrafeLeftAnimState();
-    void SetStopWBAnimState();
-    void SetStopAnimState();
-    void SetBackRunningStopRecoverAnimState();
-    void SetBackRunningStopStartAnimState();
-    void SetBackRunningStopAnimState();
-    void SetBackRunningToRunAnimState();
-    void SetRunToBackRunningAnimState();
-    void SetRunBackwardsAnimState();
-    void SetHardStopTurnAnimState();
-    void SetHardStopRecoverAnimState();
-    void SetHardStopAnimState();
-    void SetRunTurboAnimState(int, bool);
-    void SetStartWBAnimState();
-    void SetWindupWBAnimState();
-    void SetStartAnimState(int);
-    void GetOneTouchShotDesire();
-    void SetAttemptOneTouchShot();
-    void SetAttemptOneTouchPass();
-    void CleanActionShootToScore();
-    void ClearVolleyPass();
-    void ClearTimers();
-    void CalcPointOnPerimeter(nlVector3&, const nlVector3&, float);
-    void CalculateStrafeDirection(unsigned short, unsigned short);
-    void CanBreakOutOfSlideTackle();
-    void CanBeBlownUp();
-    void CanPickupBall(cBall*);
-    void DoFindBestSlideAttackTarget(nlVector3&, nlVector3&);
-    void SetFrozen(float);
-    bool IsFrozen() const;
-    bool IsDefense() const;
-    bool IsMidField() const;
-    bool IsWinger() const;
-    bool IsStriker() const;
-    bool IsSlideTackling() const;
-    bool IsHitting() const;
-    bool IsFallenDown(float) const;
-    // void GetReceivePassBallContactOffset(nlVector3&, unsigned short, const LooseBallContactAnimInfo*);
-    // void GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsigned short, bool, bool);
-    void GetOneTimerBallContactAnimInfo(unsigned short, const nlVector3&, const nlVector3&, bool, bool);
-    void GetFormationPosition(nlVector3&, float);
-    void SetAction(eFielderActionState);
-    bool IsActionDone() const;
-    void DoResetShotMeter(float);
-    void DoRegularShooting();
-    void DoFindBestShotTarget(nlVector3&, float&, bool);
-    void DoFindBestHitTarget();
-    void DoCalcShootToScoreResult(float, float, float, float, float);
-    void DoAwardPowerupStuff(eAwardPowerupType, float);
-    void DoPositioningInterceptBall();
-    void DoPenaltyCardBooking(cFielder*, ePenaltyType);
-    // void DoLooseBallContactFromRunVolley(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&);
-    // void DoLooseBallContactFromRun(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&);
-    // void DoLooseBallContactFromIdle(nlVector3&, float&, nlVector3&, float&, unsigned short, const LooseBallContactAnimInfo*);
-    void DoHandleActiveShotMeter();
-    void DoClearBall();
-    void ShootBallDueToContact(unsigned short);
-    void ShootBallDueToContact(const nlVector3&);
-    void SetDesireDuration(float, bool);
-    void SetBombImpactTime(const nlVector3&, float);
-    void SetKickOffWaitTime();
-    void SetSlideAttackSuccessFlag();
-    void CalcShootToScoreShot(nlVector3&, nlVector3&);
-    void CalcRegularShot(nlVector3&, nlVector3&);
-    void CleanUpPowerupEffect();
-    void CleanUpAction();
-    bool IsPreparingForOneTimer() const;
-    bool IsReceivingVolleyPass() const;
-    bool IsBallAwayFromCarrier() const;
-    bool IsInvincible() const;
-    bool IsRunning() const;
-    void IsTurboing();
-    bool IsCharacterInAir(bool) const;
-    void IsPlayingPowerupAnim();
-    void UsePerfectPass();
-    void ClearPassTargetIfAmThePassTarget();
-    // void CollideWithWallCallback(const CollisionPlayerWallData*);
-    // void CollideWithBowserCallback(Bowser*);
-    // void CollideWithChainCallback(ChainChomp*);
-    void CollideWithBananaCallback(const nlVector3&);
-    void CollideWithFreezeCallback();
-    void CollideWithShellCallback(ePowerupSize, bool, const nlVector3&, const nlVector3&);
-    // void CollideWithCharacterCallback(CollisionPlayerPlayerData*);
-    void SetMark(cFielder*);
-    void CanReceivePass();
-    void CanLooseBallPass();
-    void CanLooseBallShoot();
-    void CanDoCaptainShootToScore();
-    void CalculateNewDesire();
-    void AbortPendingThoughts();
-    void AbortPlay();
-
-    // void QueueDesire(eFielderDesireState, float, FuzzyVariant, FuzzyVariant);
-    // void ClearQueuedDesire();
-    void InitDesire(const sDesireParams*, float);
-    // void InitDesire(eFielderDesireState, float, float, FuzzyVariant, FuzzyVariant);
-    // void UpdateDesireState(float);
-    // void EndDesire(bool);
-    // void CleanUpDesire(eFielderDesireState);
-    // void DesireInterceptBall(float);
-    // void DesireMark(float);
-    // void DesireSupportBall(float, bool);
-    // void InitDesireGetOpen();
-    // void InitDesireOneTimerFromRun(unsigned short, const nlVector3&, const nlVector3&, bool, bool);
-    // void DesireOneTimer(float);
-    // void InitDesireReceivePassFromIdle(const LooseBallContactAnimInfo*, unsigned short, bool);
-    // void DesireReceivePassFromIdle(float);
-    // void InitDesireReceivePassFromRun(const LooseBallContactAnimInfo*, const nlVector3&, bool, const nlVector3&);
-    // void DesireReceivePassFromRun(float);
-    // void InitDesireRunToNet();
-    // void DesireSlideAttack(float);
-    // void DesireUserControlled(float);
-    // void DesireUsePowerup(float);
-    // void DesireWindupShot(float);
-
+    cFielder(int, int, eCharacterClass, const int*, cSHierarchy*, cAnimInventory*, const CharacterPhysicsData*, FielderTweaks*, AnimRetargetList*);
     ~cFielder();
-    // cFielder(int, int, eCharacterClass, const int*, cSHierarchy*, cAnimInventory*, const CharacterPhysicsData*, FielderTweaks*,
-    //          AnimRetargetList*);
+    void AbortPlay();
+    void AbortPendingThoughts();
+    void CalculateNewDesire();
+    void CanDoCaptainShootToScore();
+    void CanLooseBallShoot();
+    void CanLooseBallPass();
+    void CanReceivePass();
+    void SetMark(cFielder*);
+    void CollideWithCharacterCallback(CollisionPlayerPlayerData*);
+    void CollideWithShellCallback(ePowerupSize, bool, const nlVector3&, const nlVector3&);
+    void CollideWithFreezeCallback();
+    void CollideWithBananaCallback(const nlVector3&);
+    void CollideWithChainCallback(ChainChomp*);
+    void CollideWithBowserCallback(Bowser*);
+    void CollideWithWallCallback(const CollisionPlayerWallData*);
+    void ClearPassTargetIfAmThePassTarget();
+    void UsePerfectPass();
+    bool IsPlayingPowerupAnim();
+    bool IsCharacterInAir(bool) const;
+    bool IsTurboing();
+    bool IsRunning() const;
+    bool IsInvincible() const;
+    bool IsBallAwayFromCarrier() const;
+    bool IsReceivingVolleyPass() const;
+    bool IsPreparingForOneTimer() const;
+    void CleanUpAction();
+    void CleanUpPowerupEffect();
+    void CalcRegularShot(nlVector3&, nlVector3&);
+    void CalcShootToScoreShot(nlVector3&, nlVector3&);
+    void SetSlideAttackSuccessFlag();
+    void SetKickOffWaitTime();
+    void SetBombImpactTime(const nlVector3&, float);
+    void SetDesireDuration(float, bool);
+    void ShootBallDueToContact(const nlVector3&);
+    void ShootBallDueToContact(unsigned short);
+    void DoClearBall();
+    void DoHandleActiveShotMeter();
+    void DoLooseBallContactFromIdle(nlVector3&, float&, nlVector3&, float&, unsigned short, const LooseBallContactAnimInfo*);
+    void DoLooseBallContactFromRun(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&);
+    void DoLooseBallContactFromRunVolley(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&);
+    void DoPenaltyCardBooking(cFielder*, ePenaltyType);
+    void DoPositioningInterceptBall();
+    void DoAwardPowerupStuff(eAwardPowerupType, float);
+    void DoCalcShootToScoreResult(float, float, float, float, float);
+    void DoFindBestHitTarget();
+    void DoFindBestShotTarget(nlVector3&, float&, bool);
+    void DoRegularShooting();
+    void DoResetShotMeter(float);
+    bool IsActionDone() const;
+    void SetAction(eFielderActionState);
+    void GetFormationPosition(nlVector3&, float);
+    void GetOneTimerBallContactAnimInfo(unsigned short, const nlVector3&, const nlVector3&, bool, bool);
+    void GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsigned short, bool, bool);
+    void GetReceivePassBallContactOffset(nlVector3&, unsigned short, const LooseBallContactAnimInfo*);
+    bool IsFallenDown(float) const;
+    bool IsHitting() const;
+    bool IsSlideTackling() const;
+    bool IsStriker() const;
+    bool IsWinger() const;
+    bool IsMidField() const;
+    bool IsDefense() const;
+    bool IsFrozen() const;
+    void SetFrozen(float);
+    void DoFindBestSlideAttackTarget(nlVector3&, nlVector3&);
+    void CanPickupBall(cBall*);
+    void CanBeBlownUp();
+    void CanBreakOutOfSlideTackle();
+    void CalculateStrafeDirection(unsigned short, unsigned short);
+    void CalcPointOnPerimeter(nlVector3&, const nlVector3&, float);
+    void ClearTimers();
+    void ClearVolleyPass();
+    void CleanActionShootToScore();
+    void SetAttemptOneTouchPass();
+    void SetAttemptOneTouchShot();
+    void GetOneTouchShotDesire();
+    void SetStartAnimState(int);
+    void SetWindupWBAnimState();
+    void SetStartWBAnimState();
+    void SetRunTurboAnimState(int, bool);
+    void SetHardStopAnimState();
+    void SetHardStopRecoverAnimState();
+    void SetHardStopTurnAnimState();
+    void SetRunBackwardsAnimState();
+    void SetRunToBackRunningAnimState();
+    void SetBackRunningToRunAnimState();
+    void SetBackRunningStopAnimState();
+    void SetBackRunningStopStartAnimState();
+    void SetBackRunningStopRecoverAnimState();
+    void SetStopAnimState();
+    void SetStopWBAnimState();
+    void SetStrafeLeftAnimState();
+    void SetStrafeRightAnimState();
+    void SetIdleStrafeAnimState();
+    void SetIdleAnimState();
+    void SetIdleWBAnimState();
+    void RunningSABcallback(unsigned int, cPN_SingleAxisBlender*);
+    void SetRunningAnimState(float);
+    void SetRunningTurboAnimState();
+    void SetRunningWBAnimState(float);
+    void ShouldIClearBall();
+    void ShouldILeadPass();
+    void CanISlideAttack(const nlVector3&, const nlVector3&, float*);
+    void SetPosition(const nlVector3&);
+    void SetDesiredSpeedAndDirectionToPosition(float, const nlVector3&, eTurboRequest, float, float);
+    void SetDesiredSpeed(float, float);
+    void GetSpeedPowerupAdjusted(float);
+    void GetSlideAttackSpeed();
+    void SetDesire(eFielderDesireState, float);
+    void ShouldIStrafe();
+    void ShouldITurboWithoutBall();
+    void ShouldIWave();
+    void TestCollisionForInvicibility(cFielder*);
+    void TestButtonsToQueueActions(float);
+    void TestQueuedActions();
+    void TestButtonsRunning();
+    void TestButtonsRunningWB(float);
+    void PreUpdate(float);
+    void PostPhysicsUpdate();
+    void Update(float);
+    void ThrowPowerup();
+    void SetPowerup(ePowerUpType, int, cFielder*);
+    void UseTeamPowerup(cFielder*);
+    void UpdateActionState(float);
+    void UpdateHeadTracking(float);
+    void UpdateController(float);
+    void UpdatePlay(float);
+    void GetDistanceToDesiredPos();
+    void S2SShootWasPressed();
+    void StartRunning();
+    void DoAILooseBallActionSelection();
+    void DoAIReceivePassActionSelection();
+    void DoAIWindupActionSelection();
+    void DoSpeedBoost();
 
-    u8 m_unk_0x00[0xB0];
-    const char* m_unk_0xB0;
+    // to be verified
+    void QueueDesire(eFielderDesireState, float, FuzzyVariant, FuzzyVariant);
+    void ClearQueuedDesire();
+    void InitDesire(const sDesireParams*, float);
+    void InitDesire(eFielderDesireState, float, float, FuzzyVariant, FuzzyVariant);
+    void UpdateDesireState(float);
+    void EndDesire(bool);
+    void CleanUpDesire(eFielderDesireState);
+    void DesireInterceptBall(float);
+    void DesireMark(float);
+    void DesireSupportBall(float, bool);
+    void InitDesireGetOpen();
+    void InitDesireOneTimerFromRun(unsigned short, const nlVector3&, const nlVector3&, bool, bool);
+    void DesireOneTimer(float);
+    void InitDesireReceivePassFromIdle(const LooseBallContactAnimInfo*, unsigned short, bool);
+    void DesireReceivePassFromIdle(float);
+    void InitDesireReceivePassFromRun(const LooseBallContactAnimInfo*, const nlVector3&, bool, const nlVector3&);
+    void DesireReceivePassFromRun(float);
+    void InitDesireRunToNet();
+    void DesireSlideAttack(float);
+    void DesireUserControlled(float);
+    void DesireUsePowerup(float);
+    void DesireWindupShot(float);
 
-    u8 m_padding_0xB8[0x110];
-
-    /* 0x398 */ cFielder* m_pMark;
-};
-
-// class FilteredRandomChance
-// {
-// public:
-//     ~FilteredRandomChance();
-// };
-
-// class FilteredRandomReal
-// {
-// public:
-//     ~FilteredRandomReal();
-// };
-
-// class cNet
-// {
-// public:
-//     void GetNetHeight();
-//     void GetNetWidth();
-// };
-
-// class PlayerAttackData
-// {
-// public:
-//     void GetID();
-// };
+    unsigned char m_bHasBeenUpdated;         // offset 0x1D4, size 0x1
+    enum eFielderActionState m_eActionState; // offset 0x1D8, size 0x4
+    float m_fShootToScoreActiveTime;         // offset 0x1DC, size 0x4
+    class Timer m_tFrozenTimer;              // offset 0x1E0, size 0x4
+    struct                                   /* @class$486Powerups_cpp */
+    {
+        // total size: 0x4
+        unsigned char bStickWasReset;             // offset 0x0, size 0x1
+        unsigned char bPossibleSuccessfulDeke;    // offset 0x1, size 0x1
+        unsigned char bPossibleTurboMove;         // offset 0x2, size 0x1
+        unsigned char bTurboButtonDownLastUpdate; // offset 0x3, size 0x1
+    } mActionDekeVars;                            // offset 0x1E4, size 0x4
+    struct                                        /* @class$487Powerups_cpp */
+    {
+        // total size: 0x4
+        float electrocutionTime; // offset 0x0, size 0x4
+    } mActionElectrocutionVars;  // offset 0x1E8, size 0x4
+    struct                       /* @class$488Powerups_cpp */
+    {
+        // total size: 0x1
+        unsigned char bDoFrameLock; // offset 0x0, size 0x1
+    } mActionHitReactActionVars;    // offset 0x1EC, size 0x1
+    struct                          /* @class$489Powerups_cpp */
+    {
+        // total size: 0x4
+        float fRumbleDirection; // offset 0x0, size 0x4
+    } mActionRumbleVars;        // offset 0x1F0, size 0x4
+    struct                      /* @class$490Powerups_cpp */
+    {
+        // total size: 0x2
+        unsigned char bIsShootToScore; // offset 0x0, size 0x1
+        unsigned char bIsChipShot;     // offset 0x1, size 0x1
+    } mActionShotVars;                 // offset 0x1F4, size 0x2
+    struct                             /* @class$491Powerups_cpp */
+    {
+        // total size: 0x8
+        class cPlayer* passTarget; // offset 0x0, size 0x4
+        unsigned char bVolleyPass; // offset 0x4, size 0x1
+    } mActionLooseBallPassVars;    // offset 0x1F8, size 0x8
+    struct                         /* @class$492Powerups_cpp */
+    {
+        // total size: 0x1
+        unsigned char bIsChipShot; // offset 0x0, size 0x1
+    } mActionLooseBallShotVars;    // offset 0x200, size 0x1
+    struct                         /* @class$493Powerups_cpp */
+    {
+        // total size: 0x4
+        float fOneTimerAnimTime; // offset 0x0, size 0x4
+    } mActionOneTimerVars;       // offset 0x204, size 0x4
+    struct                       /* @class$494Powerups_cpp */
+    {
+        // total size: 0x8
+        class cPlayer* pPassTarget;   // offset 0x0, size 0x4
+        unsigned char bVolleyPass;    // offset 0x4, size 0x1
+        unsigned char bAllowLeadPass; // offset 0x5, size 0x1
+    } mActionPassingVars;             // offset 0x208, size 0x8
+    struct                            /* @class$495Powerups_cpp */
+    {
+        // total size: 0x8
+        enum eStrafeDirection eLastStrafeDirection; // offset 0x0, size 0x4
+        unsigned char bFirstCycleOfTurbo;           // offset 0x4, size 0x1
+    } mActionRunningVars;                           // offset 0x210, size 0x8
+    struct                                          /* @class$496Powerups_cpp */
+    {
+        // total size: 0x1
+        unsigned char bWaitForAnimToFinish; // offset 0x0, size 0x1
+    } mActionRunningWBVars;                 // offset 0x218, size 0x1
+    struct                                  /* @class$497Powerups_cpp */
+    {
+        // total size: 0x1
+        unsigned char bForcedMirrorSwap; // offset 0x0, size 0x1
+    } mActionRunningWBTurboVars;         // offset 0x219, size 0x1
+    struct                               /* @class$498Powerups_cpp */
+    {
+        // total size: 0x8
+        eSlideAttackState eSlideAttackState;        // offset 0x0, size 0x4
+        unsigned char bAttackSucceeded;             // offset 0x4, size 0x1
+        unsigned char bIsBButtonReset;              // offset 0x5, size 0x1
+        unsigned char bWasStarMushroomUsedDuring;   // offset 0x6, size 0x1
+    } mActionSlideAttackVars;                       // offset 0x21C, size 0x8
+    ActionShootToScoreVars mActionShootToScoreVars; // offset 0x224, size 0x30
+    eFielderDesireState m_eFielderDesireState;      // offset 0x254, size 0x4
+    eFielderDesireState m_ePrevFielderDesireState;  // offset 0x258, size 0x4
+    int m_eDesireSubState;                          // offset 0x25C, size 0x4
+    class Timer m_tDesireDuration;                  // offset 0x260, size 0x4
+    float m_fDesireConfidence;                      // offset 0x264, size 0x4
+    struct sDesireParams m_sQueuedDesireParams;     // offset 0x268, size 0x68
+    struct                                          /* @class$499Powerups_cpp */
+    {
+        // total size: 0x28
+        class Timer tMiscTimer;            // offset 0x0, size 0x4
+        class Timer tAge;                  // offset 0x4, size 0x4
+        float fMisc;                       // offset 0x8, size 0x4
+        class cPlayer* pSBC;               // offset 0xC, size 0x4
+        class cPlayer* pBallOwner;         // offset 0x10, size 0x4
+        class nlVector3 v3DesiredPosition; // offset 0x14, size 0xC
+        unsigned char bInPosition;         // offset 0x20, size 0x1
+        enum eTurboRequest turboRequest;   // offset 0x24, size 0x4
+    } m_DesireCommonVars;                  // offset 0x2D0, size 0x28
+    struct                                 /* @class$500Powerups_cpp */
+    {
+        // total size: 0x1
+        unsigned char bDidWave; // offset 0x0, size 0x1
+    } m_DesireGetOpenVars;      // offset 0x2F8, size 0x1
+    struct                      /* @class$501Powerups_cpp */
+    {
+        // total size: 0x2C
+        unsigned short aDesiredFacingDirection; // offset 0x0, size 0x2
+        class nlVector3 v3DesiredPosition;      // offset 0x4, size 0xC
+        float fDesiredTime;                     // offset 0x10, size 0x4
+        class nlVector3 v3BallPosition;         // offset 0x14, size 0xC
+        int nOneTimerAnim;                      // offset 0x20, size 0x4
+        float fOneTimerAnimTime;                // offset 0x24, size 0x4
+        unsigned char bIsChipShot;              // offset 0x28, size 0x1
+        unsigned char bVolleyPassReceive;       // offset 0x29, size 0x1
+    } m_DesireOneTimerVars;                     // offset 0x2FC, size 0x2C
+    struct                                      /* @class$502Powerups_cpp */
+    {
+        // total size: 0x38
+        class nlVector3 v3DesiredPosition;       // offset 0x0, size 0xC
+        unsigned short aDesiredFacingDirection;  // offset 0xC, size 0x2
+        float fDesiredTime;                      // offset 0x10, size 0x4
+        class nlVector3 v3BallPosition;          // offset 0x14, size 0xC
+        int nReceivePassAnim;                    // offset 0x20, size 0x4
+        float fReceivePassAnimTime;              // offset 0x24, size 0x4
+        int iAttemptOneTouchShot;                // offset 0x28, size 0x4
+        unsigned char bFailedToInitOneTouchShot; // offset 0x2C, size 0x1
+        signed short iAttemptOneTouchPass;       // offset 0x2E, size 0x2
+        unsigned char bVolleyPassReceive;        // offset 0x30, size 0x1
+        class cPlayer* pOneTouchPassTarget;      // offset 0x34, size 0x4
+    } m_DesireReceivePassSharedVars;             // offset 0x328, size 0x38
+    struct                                       /* @class$503Powerups_cpp */
+    {
+        // total size: 0x4
+        class cFielder* m_pSlideAttackTarget; // offset 0x0, size 0x4
+    } m_DesireSlideAttackVars;                // offset 0x360, size 0x4
+    struct                                    /* @class$504Powerups_cpp */
+    {
+        // total size: 0x1
+        unsigned char bIsBallAwayFromCarrier;  // offset 0x0, size 0x1
+    } m_DesireWindupForShotVars;               // offset 0x364, size 0x1
+    class Timer mtKickOffWaitTimer;            // offset 0x368, size 0x4
+    class Timer m_tPowerupEffectTime;          // offset 0x36C, size 0x4
+    ePowerUpType m_ePowerup;                   // offset 0x370, size 0x4
+    int mnNumPowerups;                         // offset 0x374, size 0x4
+    class cFielder* m_pPowerupTarget;          // offset 0x378, size 0x4
+    int m_nPowerupAnimID;                      // offset 0x37C, size 0x4
+    class Timer mtBombImpactTime;              // offset 0x380, size 0x4
+    class nlVector3 mv3BombImpactLocation;     // offset 0x384, size 0xC
+    float mfBombImpactRadius;                  // offset 0x390, size 0x4
+    ePenaltyCardStatus m_ePenaltyCardStatus;   // offset 0x394, size 0x4
+    class cFielder* m_pMark;                   // offset 0x398, size 0x4
+    class cFielder* m_pMarker;                 // offset 0x39C, size 0x4
+    eRole m_eRole;                             // offset 0x3A0, size 0x4
+    class AIPlay* m_pCurrentPlay;              // offset 0x3A4, size 0x4
+    class nlVector3 m_v3DesiredPosition;       // offset 0x3A8, size 0xC
+    float m_fDistanceToDesiredPosition;        // offset 0x3B4, size 0x4
+    class nlVector3 m_v3AccumDesiredPos;       // offset 0x3B8, size 0xC
+    float m_fAccumDesiredPosWeight;            // offset 0x3C4, size 0x4
+    class AvoidController* m_pAvoidance;       // offset 0x3C8, size 0x4
+    class ShotMeter* m_pShotMeter;             // offset 0x3CC, size 0x4
+    eShootToScoreResult meS2SResult;           // offset 0x3D0, size 0x4
+    unsigned char mbCanKickoff;                // offset 0x3D4, size 0x1
+    unsigned char mbWasHitByPowerupThisFrame;  // offset 0x3D5, size 0x1
+    unsigned char mbCaptShootToScoreEffectOn;  // offset 0x3D6, size 0x1
+    unsigned long mThoughtHashCalcDesire;      // offset 0x3D8, size 0x4
+    unsigned long mThoughtHashInitRunToNet;    // offset 0x3DC, size 0x4
+    unsigned long mThoughtHashInitGetOpen;     // offset 0x3E0, size 0x4
+    unsigned long mThoughtHashInitWindupPass;  // offset 0x3E4, size 0x4
+    unsigned long mThoughtHashInitCutAndBreak; // offset 0x3E8, size 0x4
+}; // total size: 0x3EC
 
 #endif // _FIELDER_H_

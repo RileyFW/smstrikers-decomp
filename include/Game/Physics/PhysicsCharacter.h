@@ -22,6 +22,13 @@ public:
     void GetCharacterPositionXY(nlVector3*);
     void ResolvePhysicsBoneIDFromName(const char*);
     void GetRadius(float*);
-};
+
+    /* 0x80 */ unsigned int m_CanCollideWithWall : 1;
+    /* 0x81 */ unsigned int m_CanCollideWithBall : 1;
+    /* 0x82 */ unsigned int m_HasCollidedWithBall : 1;
+    /* 0x83 */ unsigned int m_CanCollidedWithGoalLine : 1;
+    /* 0x84 */ class cCharacter* m_pAICharacter;
+    /* 0x88 */ class PhysicsColumn* m_pPlayerPlayerColumn;
+}; // total size: 0x8C
 
 #endif // _PHYSICSCHARACTER_H_

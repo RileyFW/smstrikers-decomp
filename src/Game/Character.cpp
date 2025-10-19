@@ -449,7 +449,7 @@ void cCharacter::InitBlur(int arg0)
 
     if (m_eClassType == FIELDER)
     {
-        nlStrNCat<char>(sp8, szMushroomBlurTextureBase, ((cPlayer*)this)->m_pTeam->GetCaptain()->m_unk_0xB0, 0x40);
+        nlStrNCat<char>(sp8, szMushroomBlurTextureBase, ((cPlayer*)this)->m_pTeam->GetCaptain()->m_szEffectsName, 0x40);
     }
 
     const char* var_r3 = szMushroomBlurTextureBase;

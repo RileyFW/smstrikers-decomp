@@ -104,8 +104,8 @@ public:
     void ReleaseBall();
     cGlobalPad* GetGlobalPad();
     void DoFindBestPassTarget(bool, bool);
-    void IsCaptain() const;
-    void IsOnSameTeam(cPlayer*);
+    bool IsCaptain() const;
+    bool IsOnSameTeam(cPlayer*);
     void SetAIPad(cAIPad*);
     void PlayAttackReactionSounds(float);
     void PickupBall(cBall*);
@@ -121,7 +121,7 @@ public:
     void SetDesiredFacingDirection();
     void ResetDesiredDirections(unsigned short);
     void SetSpaceSearch(SpaceSearch*);
-    virtual void InitActionPostWhistle();
+    virtual void InitActionPostWhistle() { };
 
     /* 0x12C */ s32 m_ID;                                // offset 0x12C, size 0x4
     /* 0x130 */ bool m_bIsContactingWall;                // offset 0x130, size 0x1
