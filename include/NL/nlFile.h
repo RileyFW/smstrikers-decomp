@@ -29,7 +29,6 @@ public:
     /* 0x0C */ virtual u32 FileSize(unsigned int* size) = 0;
     /* 0x10 */ virtual void Read(void* buffer, unsigned int size) = 0;
 
-    // /* 0x04 */ u32 m_unk_0x04;
     /* 0x04 */ Counter PendingAsync;
     /* 0x08 */ u32 m_Position;
 }; // total size: 0xC
