@@ -110,7 +110,7 @@ void nlReadToVirtualMemory(nlFile*, void*, unsigned int, unsigned int)
  */
 u32 nlGetFilePosition(nlFile* file)
 {
-    return file->m_unk_0x08;
+    return file->m_Position;
 }
 
 /**
@@ -121,13 +121,13 @@ void nlSeek(nlFile* file, unsigned int offset, unsigned long origin)
     switch (origin)
     { /* irregular */
     case 0:
-        file->m_unk_0x08 = offset;
+        file->m_Position = offset;
         return;
     case 1:
-        file->m_unk_0x08 = (s32)(file->m_unk_0x08 + offset);
+        file->m_Position = (s32)(file->m_Position + offset);
         return;
     case 2:
-        file->m_unk_0x08 = (s32)(file->FileSize(NULL) - offset);
+        file->m_Position = (s32)(file->FileSize(NULL) - offset);
         return;
     }
 }

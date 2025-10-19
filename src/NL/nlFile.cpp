@@ -2,14 +2,33 @@
 #include "NL/nlFileGC.h"
 #include "NL/nlMemory.h"
 
-typedef struct
+struct AsyncFileLoadData
 {
-    nlFile* file;               // unk0
-    void* alloc_data;           // unk4
-    unsigned long datasize;     // unk8
-    LoadAsyncCallback callback; // unkC
-    void* user_data;            // unk10
-} AsyncFileLoadData;
+    /* 0x00 */ nlFile* file;
+    /* 0x04 */ void* alloc_data;
+    /* 0x08 */ unsigned long datasize;
+    /* 0x0C */ LoadAsyncCallback callback;
+    /* 0x10 */ void* user_data;
+
+    AsyncFileLoadData()
+        : file(nullptr)
+        , alloc_data(nullptr)
+        , datasize(0)
+        , callback(nullptr)
+        , user_data(nullptr)
+    {
+    }
+
+    // Constructor with const parameters
+    AsyncFileLoadData(nlFile* const f, void* const alloc, const unsigned long size, LoadAsyncCallback const cb, void* const user)
+        : file(f)
+        , alloc_data(alloc)
+        , datasize(size)
+        , callback(cb)
+        , user_data(user)
+    {
+    }
+};
 
 /**
  * Offset/Address/Size: 0x0 | 0x801CEA30 | size: 0xF8
@@ -44,16 +63,8 @@ bool nlLoadEntireFileAsync(const char* filename, LoadAsyncCallback callback, voi
             user_data = NULL;
         }
 
-        _asyncData = (AsyncFileLoadData*)nlMalloc(0x14, 8, 1);
-        if (_asyncData != NULL)
-        {
-            _asyncData->file = file;
-            _asyncData->alloc_data = alloc_data;
-            _asyncData->datasize = datasize;
-            _asyncData->callback = callback;
-            _asyncData->user_data = user_data;
-        }
-        nlReadAsync(file, alloc_data, datasize, nlLoadEntireFileAsyncCallback, *(unsigned long*)_asyncData);
+        _asyncData = new (nlMalloc(0x14, 8, 1)) AsyncFileLoadData(file, alloc_data, datasize, callback, user_data);
+        nlReadAsync(file, alloc_data, datasize, nlLoadEntireFileAsyncCallback, (unsigned long)_asyncData);
     }
     return 1;
 }
@@ -63,53 +74,50 @@ bool nlLoadEntireFileAsync(const char* filename, LoadAsyncCallback callback, voi
  */
 void nlLoadEntireFileAsyncCallback(nlFile* file, void* arg2, unsigned int arg3, unsigned long arg4)
 {
-    void** temp_r3;
-    AsyncFileLoadData* asyncData = (AsyncFileLoadData*)arg3;
-
-    asyncData->callback(asyncData->alloc_data, asyncData->datasize, asyncData->user_data);
-    // temp_r3 = asyncData->file;
-
-    delete file;
-
-    // if (temp_r3 != NULL) {
-    //     (*temp_r3)->unk8(1);
-    // }
-    // __dl__FPv(arg3);
+    AsyncFileLoadData* p = (AsyncFileLoadData*)arg4;
+    p->callback(p->alloc_data, (unsigned long)p->datasize, p->user_data);
+    delete p->file;
+    delete (p);
 }
 
 /**
  * Offset/Address/Size: 0x160 | 0x801CEB90 | size: 0xDC
  */
-void* nlLoadEntireFile(const char* filename, unsigned long* fileSize, unsigned int alignment, eAllocType type)
+void* nlLoadEntireFile(const char* filename, unsigned long* outSize, unsigned int alignment, eAllocType type)
 {
-    void* data = NULL;
     unsigned int filesize;
-    nlFile* file = nlOpen(filename);
+    unsigned long datasize;
+    nlFile* file;
+    AsyncFileLoadData* _asyncData;
+    void* alloc_data = NULL;
+
+    file = nlOpen(filename);
     if (file != NULL)
     {
-        unsigned long datasize = file->FileSize(&filesize);
+        datasize = file->FileSize(&filesize);
         if (datasize != 0)
         {
-            if (type == 1)
+            void* tmp;
+            if (type == AllocateEnd)
             {
-                data = nlMalloc(datasize, alignment, 1);
+                tmp = nlMalloc(filesize, alignment, true);
             }
             else
             {
-                data = nlMalloc(datasize, alignment, 0);
+                tmp = nlMalloc(filesize, alignment, false);
             }
-
-            file->Read(data, datasize);
+            alloc_data = tmp;
+            file->Read(tmp, datasize);
         }
 
         delete file;
 
-        if (fileSize != NULL)
+        if (outSize != NULL)
         {
-            *fileSize = datasize;
+            *outSize = datasize;
         }
     }
-    return data;
+    return alloc_data;
 }
 
 /**

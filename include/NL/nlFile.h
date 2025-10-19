@@ -14,6 +14,12 @@ enum eAllocType
     AllocateEnd = 1,
 };
 
+class Counter
+{
+public:
+    long m_Count; // offset 0x0, size 0x4
+}; // total size: 0x4
+
 class nlFile
 {
 public:
@@ -23,9 +29,10 @@ public:
     /* 0x0C */ virtual u32 FileSize(unsigned int* size) = 0;
     /* 0x10 */ virtual void Read(void* buffer, unsigned int size) = 0;
 
-    /* 0x04 */ u32 m_unk_0x04;
-    /* 0x08 */ u32 m_unk_0x08; // current position
-};
+    // /* 0x04 */ u32 m_unk_0x04;
+    /* 0x04 */ Counter PendingAsync;
+    /* 0x08 */ u32 m_Position;
+}; // total size: 0xC
 
 bool nlLoadEntireFileAsync(const char*, LoadAsyncCallback callback, void* userData, unsigned int size, eAllocType type);
 void nlLoadEntireFileAsyncCallback(nlFile*, void*, unsigned int, unsigned long);
