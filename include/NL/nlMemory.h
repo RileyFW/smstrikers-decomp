@@ -6,7 +6,6 @@
 
 inline void* operator new(unsigned long, void* p)
 {
-    // ASSERT(p != NULL);
     return p;
 }
 
@@ -15,12 +14,25 @@ inline void* operator new[](unsigned long, void* p)
     return p;
 }
 
-void nlFree(void*);
-void* nlMalloc(unsigned long, unsigned int, bool);
+/*
+this code snippets are from Cuyler / discord commuity - no yet integrating it, as I would need to refactors different
+files to use it instead of the current new/malloc implementation.
+
+void* operator new(size_t size) {
+    return nlMalloc(size, 8, false);
+}
+
+void* operator new(size_t size, size_t alignment) {
+    return nlMalloc(size, alignment, false);
+}
+*/
+
+void nlFree(void* ptr);
+void* nlMalloc(unsigned long size, unsigned int alignment, bool atEnd);
 void* nlMalloc(unsigned long);
 void* operator new(unsigned long);
-void operator delete[](void*);
-void operator delete(void*);
+void operator delete[](void* ptr);
+void operator delete(void* ptr);
 unsigned int nlVirtualTotalFree();
 unsigned int nlVirtualLargestBlock();
 void nlVirtualFree(void*);

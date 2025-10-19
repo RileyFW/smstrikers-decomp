@@ -509,17 +509,6 @@ inline bool IsValidTextureDimension(int dimension)
     return validDimensions;
 }
 
-inline ListEntry<PlatTexture*>* CreateTextureListEntry(PlatTexture* newTexture)
-{
-    ListEntry<PlatTexture*>* listEntry = (ListEntry<PlatTexture*>*)nlMalloc(8, 8, false);
-    if (listEntry != nullptr)
-    {
-        listEntry->next = nullptr;
-        listEntry->data = newTexture;
-    }
-    return listEntry;
-}
-
 /**
  * Offset/Address/Size: 0x1128 | 0x801B83E4 | size: 0x1C4
  */
@@ -547,14 +536,8 @@ PlatTexture* glx_GetGridTexture(int width, int height)
     }
 
     PlatTexture* newTexture = glx_MakeGridTexture(width, height);
-    // ListEntry<PlatTexture*>* listEntry; // = (ListEntry<PlatTexture*>*)nlMalloc(8, 8, false);
-    // if ((listEntry = (ListEntry<PlatTexture*>*)nlMalloc(8, 8, false)) != nullptr)
-    // {
-    //     listEntry->next = nullptr;
-    //     listEntry->data = newTexture;
-    // }
+    ListEntry<PlatTexture*>* listEntry = new (nlMalloc(8, 8, false)) ListEntry<PlatTexture*>(newTexture);
 
-    ListEntry<PlatTexture*>* listEntry = CreateTextureListEntry(newTexture);
     nlListAddStart(&gridTextures.m_Head, listEntry, &gridTextures.m_Tail);
     return gridTextures.m_Head->data;
 }

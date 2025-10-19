@@ -20,7 +20,7 @@ public:
     {
     }
 
-    ListEntry(T* data)
+    ListEntry(T data)
         : next(nullptr)
         , data(data)
     {
@@ -46,9 +46,10 @@ public:
         // Implementation for removing entries
     }
 
-    /* 0x0 */ NewAdapter<T> m_Allocator; // offset 0x0, size 0x1
-    /* 0x4 */ ListEntry<T>* m_Head;      // offset 0x4, size 0x4
-    /* 0x8 */ ListEntry<T>* m_Tail;      // offset 0x8, size 0x4
+    // offsets and sizes are dependent on the adapter
+    /* 0x0 */ NewAdapter<T> m_Allocator;
+    /* 0x4 */ ListEntry<T>* m_Head;
+    /* 0x8 */ ListEntry<T>* m_Tail;
 };
 
 template <typename T>
