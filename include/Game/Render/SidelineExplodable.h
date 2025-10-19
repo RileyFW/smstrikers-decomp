@@ -3,7 +3,7 @@
 
 #include "Game/Physics/PhysicsBox.h"
 #include "Game/Effects/EmissionController.h"
-#include "Game/Physics/PhysicsObject.h"
+// #include "Game/Physics/PhysicsObject.h"
 
 class ExplodableCategoryData
 {
@@ -42,15 +42,17 @@ void UpdateEmissionControllerPosition(EmissionController&, ExplosionFragment*);
 // void nlListAddEnd<DrawableFragmentHandleNode>(DrawableFragmentHandleNode**, DrawableFragmentHandleNode**, DrawableFragmentHandleNode*);
 // void Bind<void, void (*)(EmissionController&, ExplosionFragment*), Placeholder<0>, ExplosionFragment*>(void (*)(EmissionController&, ExplosionFragment*), const Placeholder<0>&, ExplosionFragment* const&);
 
-class SidelineExplosionPhysicsObject
+class SidelineExplosionPhysicsObject : public PhysicsBox
 {
 public:
-    void GetObjectType() const;
-    void Contact(PhysicsObject*, dContact*, int, PhysicsObject*);
-    void SetContactInfo(dContact*, PhysicsObject*, bool);
-    void PostUpdate();
-    ~SidelineExplosionPhysicsObject();
-};
+    virtual ~SidelineExplosionPhysicsObject();
+    virtual int GetObjectType() const { return 0x1C; };
+    virtual bool SetContactInfo(dContact* contact, PhysicsObject* other, bool first);
+    virtual int Contact(PhysicsObject* other, dContact* contact, int what, PhysicsObject* otherObject);
+    virtual void PostUpdate();
+
+    ExplosionFragment* mpExplosionFragment;
+}; // total size: 0x30
 
 class SidelineExplodableManager
 {
@@ -63,9 +65,11 @@ public:
     void TriggerExplosions(const nlVector3&, float);
     void DestroyAllActiveFragments(bool);
     void RemoveSidelineExplodable(SidelineExplodable*);
-    void GetFragmentFromHandle(unsigned short);
+    static ExplosionFragment* GetFragmentFromHandle(unsigned short);
     void AssociateEffectWithNearbyFloatingCamera(EmissionController*);
     void UnAssociateEffectWithNearbyFloatingCamera(EmissionController*);
+
+    static ExplosionFragment** sFragmentLookupTable;
 };
 
 // class PhysicsBox

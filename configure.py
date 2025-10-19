@@ -776,7 +776,7 @@ config.libs = [
             Object(NonMatching, "Game/Render/ChainChomp.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/GraphicsLoader.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/Indicators.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/Render/ShootToScoreArrow.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Render/ShootToScoreArrow.cpp"),
             Object(NonMatching, "Game/Render/ShootToScoreMeter.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/Jumbotron.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Render/SkinAnimatedMovableNPC.cpp", extra_cflags=["-inline deferred"]),

@@ -1,5 +1,7 @@
 #include "Game/Render/SidelineExplodable.h"
 
+ExplosionFragment** SidelineExplodableManager::sFragmentLookupTable = NULL;
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8016A0C0 | size: 0x64
 //  */
@@ -98,12 +100,12 @@ ExplosionFragment::ExplosionFragment()
 {
 }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80169744 | size: 0x8
- */
-void SidelineExplosionPhysicsObject::GetObjectType() const
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80169744 | size: 0x8
+//  */
+// void SidelineExplosionPhysicsObject::GetObjectType() const
+// {
+// }
 
 // /**
 //  * Offset/Address/Size: 0x2388 | 0x801696E8 | size: 0x5C
@@ -276,8 +278,14 @@ void SidelineExplodableManager::RemoveSidelineExplodable(SidelineExplodable*)
 /**
  * Offset/Address/Size: 0x568 | 0x801678C8 | size: 0x20
  */
-void SidelineExplodableManager::GetFragmentFromHandle(unsigned short)
+ExplosionFragment* SidelineExplodableManager::GetFragmentFromHandle(unsigned short handle)
 {
+    if (sFragmentLookupTable == NULL)
+    {
+        return 0;
+    }
+    // return *(sFragmentLookupTable__25SidelineExplodableManager.unk0 + ((this * 4) & 0x3FFFC));
+    return sFragmentLookupTable[handle];
 }
 
 // /**
@@ -290,15 +298,20 @@ void SidelineExplodableManager::GetFragmentFromHandle(unsigned short)
 /**
  * Offset/Address/Size: 0x358 | 0x801676B8 | size: 0x1B0
  */
-void SidelineExplosionPhysicsObject::Contact(PhysicsObject*, dContact*, int, PhysicsObject*)
+int SidelineExplosionPhysicsObject::Contact(PhysicsObject* other, dContact* contact, int what, PhysicsObject* otherObject)
 {
+    return 0;
 }
 
 /**
  * Offset/Address/Size: 0x338 | 0x80167698 | size: 0x20
  */
-void SidelineExplosionPhysicsObject::SetContactInfo(dContact*, PhysicsObject*, bool)
+bool SidelineExplosionPhysicsObject::SetContactInfo(dContact* contact, PhysicsObject* other, bool first)
 {
+    contact->surface.mu = 75.0f;
+    contact->surface.mode = 0x14;
+    contact->surface.soft_cfm = 0.0001f;
+    return true;
 }
 
 /**
