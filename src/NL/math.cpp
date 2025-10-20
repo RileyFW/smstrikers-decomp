@@ -10,17 +10,26 @@ void nlCartesianToPolar(nlPolar&, float, float)
 /**
  * Offset/Address/Size: 0x4D4 | 0x801F07D0 | size: 0x6C
  */
-void nlPolarToCartesian(float&, float&, unsigned short, float)
+void nlPolarToCartesian(float& x, float& y, unsigned short angle, float radius)
 {
+    float* x_ptr = &x;
+    float* y_ptr = &y;
+    nlSinCos(y_ptr, x_ptr, angle);
+    *x_ptr *= radius;
+    *y_ptr *= radius;
 }
 
 /**
  * Offset/Address/Size: 0x46C | 0x801F0768 | size: 0x68
  */
-void nlPolarToCartesian(nlVector3&, const nlPolar&)
+void nlPolarToCartesian(nlVector3& result, const nlPolar& polar)
 {
+    float radius = polar.r;
+    u16 angle = (u16)polar.a;
+    nlSinCos(&result.f.y, &result.f.x, angle);
+    result.f.x *= radius;
+    result.f.y *= radius;
 }
-
 /**
  * Offset/Address/Size: 0x3EC | 0x801F06E8 | size: 0x80
  */
@@ -38,8 +47,21 @@ void nlCartesianToPolar(nlPolar& out, const nlVector3& in)
 /**
  * Offset/Address/Size: 0x2B8 | 0x801F05B4 | size: 0xAC
  */
-void nlMakeQuat(nlQuaternion& out, const nlVector3& in, float ang_rad)
+void nlMakeQuat(nlQuaternion& out, const nlVector3& v3RotationAxis, float ang_rad)
 {
+    f32 temp_f31;
+    f32 temp_f1;
+    s32 temp_r31;
+
+    temp_r31 = 0.5f * (ang_rad * 10430.378f);
+
+    temp_f31 = nlSin((u16)temp_r31 + 0x4000);
+    temp_f1 = nlSin((u16)temp_r31);
+
+    out.f.x = v3RotationAxis.f.x * temp_f1;
+    out.f.y = v3RotationAxis.f.y * temp_f1;
+    out.f.z = v3RotationAxis.f.z * temp_f1;
+    out.f.w = temp_f31;
 }
 
 /**

@@ -1,6 +1,7 @@
 #include "Game/Sys/simpleparser.h"
 
 #include "ctype.h"
+#include "NL/nlString.h"
 
 /**
  * Offset/Address/Size: 0x988 | 0x801D732C | size: 0x10
@@ -130,17 +131,424 @@ restart:
 /**
  * Offset/Address/Size: 0x33C | 0x801D6CE0 | size: 0x4E0
  */
-char* SimpleParser::NextToken(bool)
+char* SimpleParser::NextToken(bool bToLower)
 {
-    return nullptr;
+    char* retval;
+    char* var_r5;
+
+    unsigned int tokenLength; // r30
+    int nPrevBuffer;          // r0
+
+    if (m_CurrPos == this->m_EndOfLine)
+    {
+        var_r5 = NULL;
+    }
+    else
+    {
+        for (;;)
+        {
+            unsigned char isWhitespaceChar = 0;
+            char* tokenStart = m_CurrPos;
+            char currentChar = *tokenStart;
+            int charAsciiValue = (s8) * (u8*)tokenStart;
+            if ((__ctype_map[(u8)charAsciiValue] & 0x6) != 0)
+            {
+                if (m_bSpacesAreWhitespace || charAsciiValue != 0x20)
+                    isWhitespaceChar = 1;
+            }
+
+            if (!isWhitespaceChar)
+                break;
+
+            unsigned char canAdvancePosition;
+            // if (m_CurrPos == m_EndOfLine)
+            if (tokenStart == this->m_EndOfLine)
+            {
+                canAdvancePosition = 0;
+            }
+            else
+            {
+                canAdvancePosition = 1;
+                m_CurrPos += 1;
+            }
+
+            if (canAdvancePosition == 0)
+            {
+                var_r5 = NULL;
+                goto skip_1;
+            }
+        }
+        int var_r30 = 0;
+        for (;;)
+        {
+            if (bToLower != 0)
+            {
+                m_TokenBuffer[m_CurrentBuffer][var_r30] = nlToLower<char>(*m_CurrPos);
+            }
+            else
+            {
+                m_TokenBuffer[m_CurrentBuffer][var_r30] = *m_CurrPos;
+            }
+
+            // char* temp_r3 = m_CurrPos;
+            var_r30++;
+
+            unsigned char canAdvancePosition;
+            if (m_CurrPos == m_EndOfLine)
+            {
+                canAdvancePosition = 0;
+            }
+            else
+            {
+                canAdvancePosition = 1;
+                m_CurrPos += 1;
+            }
+
+            if (canAdvancePosition == 0)
+            {
+                break;
+            }
+
+            unsigned char isNextCharWhitespace = 0;
+            int nextCharAsciiValue = (s8) * (u8*)m_CurrPos;
+
+            if ((__ctype_map[(u8)nextCharAsciiValue] & 0x6) != 0)
+            {
+                if (m_bSpacesAreWhitespace || nextCharAsciiValue != 0x20)
+                    isNextCharWhitespace = 1;
+            }
+
+            if (isNextCharWhitespace != 0)
+            {
+                break;
+            }
+        }
+
+        m_TokenBuffer[m_CurrentBuffer][var_r30] = 0;
+        var_r5 = m_TokenBuffer[m_CurrentBuffer];
+        m_CurrentBuffer = (m_CurrentBuffer + 1) % 5;
+    }
+
+skip_1:
+    retval = var_r5;
+
+    if (var_r5 == NULL)
+    {
+        unsigned char isWhitespace;
+        char currentChar;
+        char* lineStart;
+
+        unsigned char exitLoop;
+        if (m_AmountLeft <= 1)
+        {
+            exitLoop = 0;
+        }
+        else
+        {
+        restart:
+            for (;;)
+            {
+                isWhitespace = 0;
+                lineStart = m_EndOfLine;
+                currentChar = *lineStart;
+                int charValue = (s8) * (u8*)lineStart;
+                if ((__ctype_map[(u8)charValue] & 0x6) != 0)
+                {
+                    if (m_bSpacesAreWhitespace || charValue != 0x20)
+                        isWhitespace = 1;
+                }
+
+                if (!isWhitespace)
+                    break;
+
+                unsigned char canAdvance;
+                if (m_AmountLeft <= 1)
+                {
+                    canAdvance = 0;
+                }
+                else
+                {
+                    canAdvance = 1;
+                    m_EndOfLine += 1;
+                    m_AmountLeft -= 1;
+                }
+
+                if (canAdvance == 0)
+                {
+                    exitLoop = 0;
+                    goto skip_2;
+                }
+            }
+
+            if ((int)(signed char)currentChar == 0x23)
+            {
+                for (;;)
+                {
+                    unsigned char hasAdvanced;
+                    if (m_AmountLeft <= 1)
+                    {
+                        hasAdvanced = 0;
+                    }
+                    else
+                    {
+                        hasAdvanced = 1;
+                        m_EndOfLine += 1;
+                        m_AmountLeft -= 1;
+                    }
+
+                    unsigned char foundNewline;
+                    if (hasAdvanced == 0)
+                    {
+                        foundNewline = 0;
+                    }
+                    else
+                    {
+                        if (*m_EndOfLine == '\n')
+                        {
+                            foundNewline = 1;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (foundNewline == 0)
+                    {
+                        exitLoop = 0;
+                        goto skip_2;
+                    }
+
+                    goto restart; // I am sure this was not in the original code, but it is here to make the assembly match.
+                }
+            }
+            else
+            {
+                m_CurrPos = lineStart;
+                unsigned char canAdvance;
+                do
+                {
+                    if (m_AmountLeft <= 1)
+                    {
+                        canAdvance = 0;
+                    }
+                    else
+                    {
+                        canAdvance = 1;
+                        m_EndOfLine += 1;
+                        m_AmountLeft -= 1;
+                    }
+                } while ((canAdvance != 0) && (*m_EndOfLine != '\n'));
+                exitLoop = 1;
+            }
+        }
+    skip_2:
+        if (exitLoop == 0)
+        {
+            return NULL;
+        }
+
+        char* var_r5_7;
+
+        if (m_CurrPos == m_EndOfLine)
+        {
+            var_r5_7 = NULL;
+        }
+        else
+        {
+            unsigned char isWhitespaceChar;
+            char currentChar;
+            char* tokenStart;
+
+            for (;;)
+            {
+                isWhitespaceChar = 0;
+                tokenStart = m_CurrPos;
+                currentChar = *tokenStart;
+                int charAsciiValue = (s8) * (u8*)tokenStart;
+                if ((__ctype_map[(u8)charAsciiValue] & 0x6) != 0)
+                {
+                    if (m_bSpacesAreWhitespace || charAsciiValue != 0x20)
+                        isWhitespaceChar = 1;
+                }
+
+                if (!isWhitespaceChar)
+                    break;
+
+                unsigned char canAdvancePosition;
+                if (tokenStart == this->m_EndOfLine)
+                {
+                    canAdvancePosition = 0;
+                }
+                else
+                {
+                    canAdvancePosition = 1;
+                    m_CurrPos += 1;
+                }
+
+                if (canAdvancePosition == 0)
+                {
+                    var_r5_7 = NULL;
+                    goto skip_3;
+                }
+            }
+            tokenLength = 0;
+            for (;;)
+            {
+                if (bToLower != 0)
+                {
+                    m_TokenBuffer[m_CurrentBuffer][tokenLength] = nlToLower<char>(*m_CurrPos);
+                }
+                else
+                {
+                    m_TokenBuffer[m_CurrentBuffer][tokenLength] = *m_CurrPos;
+                }
+
+                tokenLength += 1;
+
+                unsigned char canAdvancePosition;
+                if (m_CurrPos == m_EndOfLine)
+                {
+                    canAdvancePosition = 0;
+                }
+                else
+                {
+                    canAdvancePosition = 1;
+                    m_CurrPos = m_CurrPos + 1;
+                }
+
+                if (canAdvancePosition == 0)
+                {
+                    break;
+                }
+
+                unsigned char isNextCharWhitespace = 0;
+                int nextCharAsciiValue = (s8) * (u8*)m_CurrPos;
+
+                if ((__ctype_map[(u8)nextCharAsciiValue] & 0x6) != 0)
+                {
+                    if (m_bSpacesAreWhitespace || nextCharAsciiValue != 0x20)
+                        isNextCharWhitespace = 1;
+                }
+
+                if (isNextCharWhitespace != 0)
+                {
+                    break;
+                }
+            }
+
+            m_TokenBuffer[m_CurrentBuffer][tokenLength] = 0;
+            nPrevBuffer = m_CurrentBuffer;
+            var_r5_7 = m_TokenBuffer[nPrevBuffer];
+            m_CurrentBuffer = (nPrevBuffer + 1) % 5;
+        }
+    skip_3:
+        retval = var_r5_7;
+    }
+
+    return retval;
 }
 
 /**
  * Offset/Address/Size: 0x160 | 0x801D6B04 | size: 0x1DC
  */
-char* SimpleParser::NextTokenOnLine(bool)
+char* SimpleParser::NextTokenOnLine(bool bToLower)
 {
-    return nullptr;
+    unsigned char isWhitespaceChar;
+    char currentChar;
+    char* tokenStart;
+
+    unsigned int tokenLength; // r30
+    int nPrevBuffer;          // r0
+
+    if (m_CurrPos == m_EndOfLine)
+    {
+        return NULL;
+    }
+
+    // Skip leading whitespace
+    for (;;)
+    {
+        isWhitespaceChar = 0;
+        tokenStart = m_CurrPos;
+        currentChar = *tokenStart;
+        int charAsciiValue = (s8) * (u8*)tokenStart;
+        if ((__ctype_map[(u8)charAsciiValue] & 0x6) != 0)
+        {
+            if (m_bSpacesAreWhitespace || charAsciiValue != 0x20)
+                isWhitespaceChar = 1;
+        }
+
+        if (!isWhitespaceChar)
+            break;
+
+        unsigned char canAdvancePosition;
+        if (tokenStart == this->m_EndOfLine)
+        {
+            canAdvancePosition = 0;
+        }
+        else
+        {
+            canAdvancePosition = 1;
+            m_CurrPos += 1;
+        }
+
+        if (canAdvancePosition == 0)
+        {
+            return NULL;
+        }
+    }
+
+    // Extract token characters
+    tokenLength = 0;
+    for (;;)
+    {
+        if (bToLower != 0)
+        {
+            m_TokenBuffer[m_CurrentBuffer][tokenLength] = nlToLower<char>(*m_CurrPos);
+        }
+        else
+        {
+            m_TokenBuffer[m_CurrentBuffer][tokenLength] = *m_CurrPos;
+        }
+
+        tokenLength += 1;
+
+        unsigned char canAdvancePosition;
+        if (m_CurrPos == m_EndOfLine)
+        {
+            canAdvancePosition = 0;
+        }
+        else
+        {
+            canAdvancePosition = 1;
+            m_CurrPos = m_CurrPos + 1;
+        }
+
+        if (canAdvancePosition == 0)
+        {
+            break;
+        }
+
+        unsigned char isNextCharWhitespace = 0;
+        int nextCharAsciiValue = (s8) * (u8*)m_CurrPos;
+
+        if ((__ctype_map[(u8)nextCharAsciiValue] & 0x6) != 0)
+        {
+            if (m_bSpacesAreWhitespace || nextCharAsciiValue != 0x20)
+                isNextCharWhitespace = 1;
+        }
+
+        if (isNextCharWhitespace != 0)
+        {
+            break;
+        }
+    }
+
+    m_TokenBuffer[m_CurrentBuffer][tokenLength] = 0;
+    nPrevBuffer = m_CurrentBuffer;
+    m_CurrentBuffer = (nPrevBuffer + 1) % 5;
+    return m_TokenBuffer[nPrevBuffer];
 }
 
 /**

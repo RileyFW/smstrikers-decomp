@@ -7,9 +7,9 @@ class SimpleParser
 {
 public:
     SimpleParser();
-    bool StartParsing(char*, int, bool);
-    char* NextToken(bool);
-    char* NextTokenOnLine(bool);
+    bool StartParsing(char* data, int size, bool bSpacesAreWhitespace);
+    char* NextToken(bool bToLower);
+    char* NextTokenOnLine(bool bToLower);
     bool AdvanceLine();
 
     /* 0x000 */ char m_TokenBuffer[5][256];
