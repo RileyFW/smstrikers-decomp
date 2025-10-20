@@ -1,6 +1,7 @@
 #include "NL/gl/glModel.h"
 #include "NL/gl/glMemory.h"
 #include "NL/gl/glUserData.h"
+#include "types.h"
 #include <string.h>
 
 /**
@@ -135,6 +136,8 @@ glModel* glModelDup(const glModel* src, bool arg1)
 /**
  * Offset/Address/Size: 0x3A0 | 0x801DF0D4 | size: 0x8C
  */
-void glModelPacketDup(const glModelPacket*, bool)
+glModelPacket* glModelPacketDup(const glModelPacket* pPacket, bool bUserDup)
 {
+    FORCE_DONT_INLINE;
+    return NULL;
 }

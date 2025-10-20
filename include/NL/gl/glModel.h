@@ -14,6 +14,6 @@ struct glModel
 void* glModelDupArrayNoStreams(const glModel*, unsigned long, bool, bool);
 glModel* glModelDupNoStreams(const glModel*, bool, bool);
 glModel* glModelDup(const glModel*, bool);
-void glModelPacketDup(const glModelPacket*, bool);
+glModelPacket* glModelPacketDup(const glModelPacket* pPacket, bool bUserDup);
 
 #endif // _GLMODEL_H_

@@ -1,5 +1,65 @@
 #include "NL/gl/glAppAttach.h"
 
+#include "NL/gl/glState.h"
+#include "NL/gl/glMemory.h"
+
+const u32 UnlitProgram = glGetProgram("3d unlit");
+const u32 LitProgram = glGetProgram("3d pointlit");
+const u32 LightTexture = glGetTexture("global/lightramp");
+const u32 BlackTexture = glGetTexture("global/black");
+const u32 WhiteTexture = glGetTexture("global/white");
+
+static void* glapp_CoPlanarUserData;
+static void* glapp_NoFogUserData;
+static void* glapp_NoRasterizedAlphaUserData;
+static void* glapp_OnePassFresnelUserData;
+
+const u32 MovieTexture_Y = glGetTexture("movie");
+
+PlatTexture* ResolvedBlackTexture __attribute__((section(".sdata"))) = (PlatTexture*)0xFFFFFFFF;
+PlatTexture* ResolvedWhiteTexture __attribute__((section(".sdata"))) = (PlatTexture*)0xFFFFFFFF;
+
+const u32 MovieTexture_U = glGetTexture("movie_u");
+const u32 MovieTexture_V = glGetTexture("movie_v");
+const u32 MovieProgram = glGetProgram("2d movie");
+
+const char* view_names[0x22] = {
+    "ShadowTexture",       // @378
+    "GrabTexture",         // @379
+    "Skybox",              // @380
+    "Shadowed",            // @381
+    "Shadow0",             // @382
+    "ShadowBlend0",        // @383
+    "WorldShadowed",       // @384
+    "Unshadowed",          // @385
+    "BigBlackPolygon",     // @386
+    "Warble",              // @387
+    "WarbleBlend",         // @388
+    "Characters",          // @389
+    "CoPlanar0",           // @390
+    "CoPlanar",            // @391
+    "Shadow1",             // @392
+    "ShadowBlend1",        // @393
+    "UnsortedPerspective", // @394
+    "UnsortedOrtho",       // @395
+    "DepthOfField",        // @396
+    "LingeringParticles",  // @397
+    "Particles",           // @398
+    "InvisiblePlane",      // @399
+    "ElectricFence",       // @400
+    "CameraSpace",         // @401
+    "ScreenBlur",          // @402
+    "ScreenBlur2",         // @403
+    "ScreenGrab",          // @404
+    "FrontEnd",            // @405
+    "Transitions",         // @406
+    "Transitions3D",       // @407
+    "Anark3DBG",           // @408
+    "Anark",               // @409
+    "Anark3DFG",           // @410
+    "Debug"                // @411
+};
+
 /**
  * Offset/Address/Size: 0x0 | 0x80191948 | size: 0x41C
  */
@@ -7,11 +67,71 @@ void glplatAttachPacket(eGLView, unsigned long, const glModelPacket*)
 {
 }
 
+inline glModelStream* getDetail(glModelStream* start, const glModelStream* end)
+{
+    while (start < end)
+    {
+        if ((s32)start->id == 3)
+        {
+            return start;
+        }
+        start++;
+    }
+    return NULL;
+}
+
 /**
  * Offset/Address/Size: 0x41C | 0x80191D64 | size: 0x210
  */
-void glplatModifyPacket(eGLView, const glModelPacket*)
+glModelPacket* glplatModifyPacket(eGLView view, const glModelPacket* pPacket)
 {
+    glModelPacket* pFinal = (glModelPacket*)pPacket; // r28
+    glModelPacket* p;
+    glModelStream* streams; // r0
+    glModelStream* detail;  // r29
+
+    if ((((s32)view == 0xC) || ((s32)view == 0xD)) && ((u32)pPacket->indexBuffer != 0U) && (glUserHasType((eGLUserData)0x10, pPacket) == 0))
+    {
+        pFinal = glModelPacketDup(pPacket, true);
+        glUserAttach(glapp_CoPlanarUserData, pFinal, 0);
+        glSetRasterState(pFinal->state.raster, (eGLState)2, 3U);
+        glSetRasterState(pFinal->state.raster, (eGLState)0, 1U);
+        glSetRasterState(pFinal->state.raster, (eGLState)1, 1U);
+    }
+
+    if ((u32)pFinal->state.texture[0] == (u32)MovieTexture_Y)
+    {
+        p = glModelPacketDup(pFinal, true);
+        glSetRasterState(p->state.raster, (eGLState)3, 0U);
+        glSetRasterState(p->state.raster, (eGLState)5, 0U);
+        p->state.program = MovieProgram;
+        p->state.texture[0] = MovieTexture_Y;
+        p->state.texture[1] = MovieTexture_U;
+        p->state.texture[2] = MovieTexture_V;
+        p->state.texconfig = 7;
+
+        glSetTextureState(p->state.texturestate, (eGLTextureState)0, 3U);
+        glSetTextureState(p->state.texturestate, (eGLTextureState)1, 3U);
+        glSetTextureState(p->state.texturestate, (eGLTextureState)2, 3U);
+        glSetTextureState(p->state.texturestate, (eGLTextureState)6, 0U);
+        glSetTextureState(p->state.texturestate, (eGLTextureState)7, 0U);
+        glSetTextureState(p->state.texturestate, (eGLTextureState)8, 0U);
+
+        u32 numNewStreams = p->numStreams + 1;
+        u32 numOldStreams = p->numStreams;
+        streams = (glModelStream*)glFrameAlloc(numNewStreams * sizeof(glModelStream), (eGLMemory)0);
+        memcpy(streams, pFinal->streams, numNewStreams * sizeof(glModelStream));
+
+        detail = getDetail(pFinal->streams, &pFinal->streams[pFinal->numStreams]);
+        memcpy(&streams[numNewStreams], detail, sizeof(glModelStream));
+
+        streams[numNewStreams].id = 4;
+        // streams[numNewStreams].id = 4;
+        p->streams = streams;
+        p->numStreams = numNewStreams;
+        pFinal = p;
+    }
+    return pFinal;
 }
 
 /**
@@ -19,34 +139,48 @@ void glplatModifyPacket(eGLView, const glModelPacket*)
  */
 void glAppStartup()
 {
+    glapp_CoPlanarUserData = glUserAlloc((eGLUserData)0x10, 0U, 1);
+    glapp_NoFogUserData = glUserAlloc((eGLUserData)0xF, 0U, 1);
+    glapp_NoRasterizedAlphaUserData = glUserAlloc((eGLUserData)0xD, 0U, 1);
+    glapp_OnePassFresnelUserData = glUserAlloc((eGLUserData)0x11, 0U, 1);
+    ResolvedBlackTexture = glx_GetTex((unsigned long)BlackTexture, 1, 1);
+    ResolvedWhiteTexture = glx_GetTex((u32)WhiteTexture, 1, 1);
 }
 
 /**
  * Offset/Address/Size: 0x6C0 | 0x80192008 | size: 0x8
  */
-void glAppGetOnePassFresnelUserData()
+void* glAppGetOnePassFresnelUserData()
 {
+    return glapp_OnePassFresnelUserData;
 }
 
 /**
  * Offset/Address/Size: 0x6C8 | 0x80192010 | size: 0x8
  */
-void glAppGetNoFogUserData()
+void* glAppGetNoFogUserData()
 {
+    return glapp_NoFogUserData;
 }
 
 /**
  * Offset/Address/Size: 0x6D0 | 0x80192018 | size: 0x8
  */
-void glAppGetCoPlanarUserData()
+void* glAppGetCoPlanarUserData()
 {
+    return glapp_CoPlanarUserData;
 }
 
 /**
  * Offset/Address/Size: 0x6D8 | 0x80192020 | size: 0x30
  */
-void gld_ViewName(int)
+char* gld_ViewName(int view)
 {
+    if ((view < 0) || (view > 0x22))
+    {
+        return "[bad view]";
+    }
+    return (char*)view_names[view];
 }
 
 /**
