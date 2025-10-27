@@ -7,7 +7,9 @@
 #include "NL/nlTask.h"
 #include "NL/nlBasicString.h"
 #include "Game/OverlayHandlerInGameText.h"
-nlSingleton<OverlayManager> OverlayManager::s_pInstance;
+
+// nlSingleton<OverlayManager> OverlayManager::s_pInstance;
+//
 
 /**
  * Offset/Address/Size: 0xB48 | 0x800C8974 | size: 0x60

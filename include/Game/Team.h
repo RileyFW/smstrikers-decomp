@@ -70,10 +70,10 @@ public:
     void ClearCurrentPowerUp();
     void TogglePowerup(bool);
     bool IncrementPowerupMeter(float);
-    void GetCurrentPowerUp() const;
-    void IsCurrentNoPowerup() const;
-    void IsCurrentMushroom() const;
-    void IsCurrentStar() const;
+    PowerUpTeamType GetCurrentPowerUp() const;
+    bool IsCurrentNoPowerup() const;
+    bool IsCurrentMushroom() const;
+    bool IsCurrentStar() const;
     void GetPowerUpByIndex(int) const;
     void SetIsPowerUpNew(int, bool);
     void SetCurrentPowerUp(ePowerUpType, int);
@@ -101,19 +101,11 @@ public:
     cFielder* GetFrontMostFielder();
     cFielder* GetRearMostFielder();
 
-    /* 0x0, */ int m_nSide;
-    /* ------------------------------------ */
-
-    /* 0x4, */ cFielder* m_pPlayers[4];
-    /* 0x14, */ Goalie* m_pGoalie;
-    // /* 0x18, */ cFielder* m_pStriker;
-    // /* 0x18, */ cFielder* m_pFielders[5];
-
-    /* ------------------------------------ */
-    // /* 0x4, */ cPlayer* m_pPlayers[5];
+    /* 0x00 */ int m_nSide;
+    /* 0x04 */ cFielder* m_pPlayers[4];
+    /* 0x14 */ Goalie* m_pGoalie;
     /* 0x18 */ cFielder* m_pAIOrderedFielders[4];
     /* 0x28 */ cFielder* m_pBallInterceptOrderedFielders[4];
-    /* ------------------------------------ */
     /* 0x38 */ cNet* m_pNet;
     /* 0x3C */ int m_nScore;
     /* 0x40 */ int m_nCurrentPowerUp;

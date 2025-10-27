@@ -19,7 +19,7 @@ enum OverlaySlideName
     NUM_SLIDE_NAMES = 8,
 };
 
-class OverlayManager : public BaseGameSceneManager
+class OverlayManager : public BaseGameSceneManager, public nlSingleton<OverlayManager>
 {
 public:
     OverlayManager();
@@ -35,7 +35,7 @@ public:
     void ShowDemoSlide();
     void RestartGoalOverlay();
 
-    static nlSingleton<OverlayManager> s_pInstance;
+    // static nlSingleton<OverlayManager> s_pInstance;
 
     class InGameTextOverlay* mInGameTextOverlay;         // offset 0x108, size 0x4
     bool mIsHUDSlideIn;                                  // offset 0x10C, size 0x1

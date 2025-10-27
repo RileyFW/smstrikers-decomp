@@ -128,20 +128,22 @@ restart:
     return true;
 }
 
+static inline void AdvanceBuffer(int& currentBuffer)
+{
+    currentBuffer = (currentBuffer + 1) % 5;
+}
+
 /**
  * Offset/Address/Size: 0x33C | 0x801D6CE0 | size: 0x4E0
  */
 char* SimpleParser::NextToken(bool bToLower)
 {
-    char* retval;
-    char* var_r5;
-
-    unsigned int tokenLength; // r30
-    int nPrevBuffer;          // r0
+    char* result;
+    char* currentToken;
 
     if (m_CurrPos == this->m_EndOfLine)
     {
-        var_r5 = NULL;
+        currentToken = NULL;
     }
     else
     {
@@ -174,24 +176,24 @@ char* SimpleParser::NextToken(bool bToLower)
 
             if (canAdvancePosition == 0)
             {
-                var_r5 = NULL;
+                currentToken = NULL;
                 goto skip_1;
             }
         }
-        int var_r30 = 0;
+        int bufferIndex = 0;
         for (;;)
         {
             if (bToLower != 0)
             {
-                m_TokenBuffer[m_CurrentBuffer][var_r30] = nlToLower<char>(*m_CurrPos);
+                m_TokenBuffer[m_CurrentBuffer][bufferIndex] = nlToLower<char>(*m_CurrPos);
             }
             else
             {
-                m_TokenBuffer[m_CurrentBuffer][var_r30] = *m_CurrPos;
+                m_TokenBuffer[m_CurrentBuffer][bufferIndex] = *m_CurrPos;
             }
 
             // char* temp_r3 = m_CurrPos;
-            var_r30++;
+            bufferIndex++;
 
             unsigned char canAdvancePosition;
             if (m_CurrPos == m_EndOfLine)
@@ -224,24 +226,24 @@ char* SimpleParser::NextToken(bool bToLower)
             }
         }
 
-        m_TokenBuffer[m_CurrentBuffer][var_r30] = 0;
-        var_r5 = m_TokenBuffer[m_CurrentBuffer];
+        m_TokenBuffer[m_CurrentBuffer][bufferIndex] = 0;
+        currentToken = m_TokenBuffer[m_CurrentBuffer];
         m_CurrentBuffer = (m_CurrentBuffer + 1) % 5;
     }
 
 skip_1:
-    retval = var_r5;
+    result = currentToken;
 
-    if (var_r5 == NULL)
+    if (currentToken == NULL)
     {
         unsigned char isWhitespace;
         char currentChar;
         char* lineStart;
 
-        unsigned char exitLoop;
+        unsigned char shouldExitLoop;
         if (m_AmountLeft <= 1)
         {
-            exitLoop = 0;
+            shouldExitLoop = 0;
         }
         else
         {
@@ -275,7 +277,7 @@ skip_1:
 
                 if (canAdvance == 0)
                 {
-                    exitLoop = 0;
+                    shouldExitLoop = 0;
                     goto skip_2;
                 }
             }
@@ -315,7 +317,7 @@ skip_1:
 
                     if (foundNewline == 0)
                     {
-                        exitLoop = 0;
+                        shouldExitLoop = 0;
                         goto skip_2;
                     }
 
@@ -339,20 +341,20 @@ skip_1:
                         m_AmountLeft -= 1;
                     }
                 } while ((canAdvance != 0) && (*m_EndOfLine != '\n'));
-                exitLoop = 1;
+                shouldExitLoop = 1;
             }
         }
     skip_2:
-        if (exitLoop == 0)
+        if (shouldExitLoop == 0)
         {
             return NULL;
         }
 
-        char* var_r5_7;
+        char* nextToken;
 
         if (m_CurrPos == m_EndOfLine)
         {
-            var_r5_7 = NULL;
+            nextToken = NULL;
         }
         else
         {
@@ -388,11 +390,11 @@ skip_1:
 
                 if (canAdvancePosition == 0)
                 {
-                    var_r5_7 = NULL;
+                    nextToken = NULL;
                     goto skip_3;
                 }
             }
-            tokenLength = 0;
+            u32 tokenLength = 0;
             for (;;)
             {
                 if (bToLower != 0)
@@ -438,15 +440,14 @@ skip_1:
             }
 
             m_TokenBuffer[m_CurrentBuffer][tokenLength] = 0;
-            nPrevBuffer = m_CurrentBuffer;
-            var_r5_7 = m_TokenBuffer[nPrevBuffer];
-            m_CurrentBuffer = (nPrevBuffer + 1) % 5;
+            nextToken = m_TokenBuffer[m_CurrentBuffer];
+            m_CurrentBuffer = (m_CurrentBuffer + 1) % 5;
         }
     skip_3:
-        retval = var_r5_7;
+        result = nextToken;
     }
 
-    return retval;
+    return result;
 }
 
 /**

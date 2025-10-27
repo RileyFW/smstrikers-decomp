@@ -38,7 +38,7 @@ enum ePowerupSize
 
 struct PowerUpTeamType
 {
-    /* 0x0 */ enum ePowerUpType eType;
+    /* 0x0 */ ePowerUpType eType;
     /* 0x4 */ int nnumOfPowerups;
     /* 0x8 */ unsigned char bIsNew;
 }; // total size: 0xC

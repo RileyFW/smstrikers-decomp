@@ -1,6 +1,9 @@
 #include "Game/Team.h"
 
 #include "Game/AI/Fielder.h"
+#include "Game/Audio/WorldAudio.h"
+#include "Game/OverlayHandlerHUD.h"
+#include "Game/OverlayManager.h"
 
 cTeam* g_pTeams[2] = { NULL, NULL };
 
@@ -23,8 +26,15 @@ cTeam::~cTeam()
 /**
  * Offset/Address/Size: 0x1C1C | 0x80065FC8 | size: 0x70
  */
-void cTeam::SetDifficulty(eDifficultyID)
+void cTeam::SetDifficulty(eDifficultyID difficulty)
 {
+    if (difficulty < 0)
+    {
+        difficulty = DIFF_MEDIUM;
+    }
+
+    SkillTweaks::GetSkillTweaks(m_nSide)->Init(difficulty, false);
+    SkillTweaks::GetSkillTweaks(m_nSide)->HookupTweakeables(m_nSide); // actually a dead function
 }
 
 /**
@@ -32,6 +42,10 @@ void cTeam::SetDifficulty(eDifficultyID)
  */
 void cTeam::ClearAllPowerUps()
 {
+    m_ePowerupList[0].eType = POWER_UP_NONE;
+    m_ePowerupList[0].nnumOfPowerups = 0;
+    m_ePowerupList[1].eType = POWER_UP_NONE;
+    m_ePowerupList[1].nnumOfPowerups = 0;
 }
 
 /**
@@ -39,13 +53,72 @@ void cTeam::ClearAllPowerUps()
  */
 void cTeam::ClearCurrentPowerUp()
 {
+    if (m_ePowerupList[0].eType == POWER_UP_NONE)
+    {
+        m_ePowerupList[1].eType = POWER_UP_NONE;
+        m_ePowerupList[1].nnumOfPowerups = 0;
+        mbHasToggledPowerup = false;
+        return;
+    }
+
+    m_ePowerupList[0].eType = POWER_UP_NONE;
+    m_ePowerupList[0].nnumOfPowerups = 0;
+
+    if (m_ePowerupList[1].eType != POWER_UP_NONE)
+    {
+        if (!mbHasToggledPowerup)
+        {
+            m_ePowerupList[0].eType = m_ePowerupList[1].eType;
+            m_ePowerupList[0].nnumOfPowerups = m_ePowerupList[1].nnumOfPowerups;
+            m_ePowerupList[1].eType = POWER_UP_NONE;
+            m_ePowerupList[1].nnumOfPowerups = 0;
+        }
+    }
+    else
+    {
+        mbHasToggledPowerup = false;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x1A4C | 0x80065DF8 | size: 0x148
  */
-void cTeam::TogglePowerup(bool)
+void cTeam::TogglePowerup(bool bToggle)
 {
+    static bool bAudioToggleSwitch = true;
+
+    PowerUpTeamType tmp = m_ePowerupList[1];
+    m_ePowerupList[1] = m_ePowerupList[0];
+    m_ePowerupList[0] = tmp;
+
+    if (!bToggle)
+    {
+        if ((m_ePowerupList[0].eType != POWER_UP_NONE) || (m_ePowerupList[1].eType != POWER_UP_NONE))
+        {
+            if (bAudioToggleSwitch)
+            {
+                Audio::gWorldSFX.Play(Audio::WORLDSFX_FILTER_START, 100.0f, -1.0f, true, 100.0f);
+            }
+            else
+            {
+                Audio::gWorldSFX.Play(Audio::WORLDSFX_FILTER_END, 100.0f, -1.0f, true, 100.0f);
+            }
+            bAudioToggleSwitch = !bAudioToggleSwitch;
+        }
+    }
+
+    OverlayManager* pOverlayManager = OverlayManager::s_pInstance;
+    HUDOverlay* pHUDOverlay = (HUDOverlay*)pOverlayManager->GetScene(OVERLAY_HUD);
+    pHUDOverlay->SwapPowerUps(m_nSide);
+
+    if (m_ePowerupList[1].eType != POWER_UP_NONE || m_ePowerupList[0].eType == POWER_UP_NONE)
+    {
+        mbHasToggledPowerup = true;
+    }
+    else
+    {
+        mbHasToggledPowerup = false;
+    }
 }
 
 /**
@@ -59,29 +132,37 @@ bool cTeam::IncrementPowerupMeter(float)
 /**
  * Offset/Address/Size: 0x18D0 | 0x80065C7C | size: 0x40
  */
-void cTeam::GetCurrentPowerUp() const
+PowerUpTeamType cTeam::GetCurrentPowerUp() const
 {
+    if (m_ePowerupList[0].eType == POWER_UP_NONE)
+    {
+        return m_ePowerupList[1];
+    }
+    return m_ePowerupList[0];
 }
 
 /**
  * Offset/Address/Size: 0x18BC | 0x80065C68 | size: 0x14
  */
-void cTeam::IsCurrentNoPowerup() const
+bool cTeam::IsCurrentNoPowerup() const
 {
+    return m_ePowerupList[0].eType == POWER_UP_NONE;
 }
 
 /**
  * Offset/Address/Size: 0x18A8 | 0x80065C54 | size: 0x14
  */
-void cTeam::IsCurrentMushroom() const
+bool cTeam::IsCurrentMushroom() const
 {
+    return m_ePowerupList[0].eType == POWER_UP_MUSHROOM;
 }
 
 /**
  * Offset/Address/Size: 0x1894 | 0x80065C40 | size: 0x14
  */
-void cTeam::IsCurrentStar() const
+bool cTeam::IsCurrentStar() const
 {
+    return m_ePowerupList[0].eType == POWER_UP_STAR;
 }
 
 /**
@@ -290,27 +371,23 @@ cFielder* cTeam::GetDefence() const
  */
 cFielder* cTeam::GetFrontMostFielder()
 {
-    cFielder* best = m_pPlayers[0];
     cFielder* p;
-
-    // index 1
-    p = m_pPlayers[1];
-    if (!best || (p && (p->m_v3AIPosition.f.x < best->m_v3AIPosition.f.x)))
+    cFielder* pRearFrontFielder = NULL;
+    if (m_pPlayers[0] != NULL)
     {
-        best = p;
+        pRearFrontFielder = m_pPlayers[0];
     }
 
-    // index 2
-    p = m_pPlayers[2];
-    if (!best || (p->m_v3AIPosition.f.x < best->m_v3AIPosition.f.x))
-        best = p;
+    for (int i = 1; i < 4; i++)
+    {
+        p = m_pPlayers[i];
+        if ((pRearFrontFielder == NULL) || (p->m_v3AIPosition.f.x < pRearFrontFielder->m_v3AIPosition.f.x))
+        {
+            pRearFrontFielder = p;
+        }
+    }
 
-    // index 3
-    p = m_pPlayers[3];
-    if (!best || (p->m_v3AIPosition.f.x < best->m_v3AIPosition.f.x))
-        best = p;
-
-    return best;
+    return pRearFrontFielder;
 }
 
 /**
@@ -318,25 +395,21 @@ cFielder* cTeam::GetFrontMostFielder()
  */
 cFielder* cTeam::GetRearMostFielder()
 {
-    cFielder* best = m_pPlayers[0];
     cFielder* p;
-
-    // index 1
-    p = m_pPlayers[1];
-    if (!best || (p && (p->m_v3AIPosition.f.x < best->m_v3AIPosition.f.x)))
+    cFielder* pRearMostFielder = NULL;
+    if (m_pPlayers[0] != NULL)
     {
-        best = p;
+        pRearMostFielder = m_pPlayers[0];
     }
 
-    // index 2
-    p = m_pPlayers[2];
-    if (!best || (p->m_v3AIPosition.f.x < best->m_v3AIPosition.f.x))
-        best = p;
+    for (int i = 1; i < 4; i++)
+    {
+        p = m_pPlayers[i];
+        if ((pRearMostFielder == NULL) || (p->m_v3AIPosition.f.x < pRearMostFielder->m_v3AIPosition.f.x))
+        {
+            pRearMostFielder = p;
+        }
+    }
 
-    // index 3
-    p = m_pPlayers[3];
-    if (!best || (p->m_v3AIPosition.f.x < best->m_v3AIPosition.f.x))
-        best = p;
-
-    return best;
+    return pRearMostFielder;
 }
