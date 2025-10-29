@@ -48,7 +48,7 @@ public:
     void GetRotation(nlMatrix4*) const;
     void SetRotation(const nlMatrix4&);
     void SetRotation(const nlMatrix3&);
-    nlVector3* GetPosition();
+    nlVector3& GetPosition();
     void GetPosition(nlVector3*) const;
     void SetPosition(const nlVector3&, CoordinateType);
     void CheckForNaN();

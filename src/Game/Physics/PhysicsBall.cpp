@@ -156,12 +156,12 @@ void PhysicsBall::AddResistanceForces()
     if ((m_parentObject == NULL) && (m_bUseAngularVel != 0))
     {
         temp_f29 = 0.02 + GetRadius();
-        if (GetPosition()->f.z < temp_f29)
+        if (GetPosition().f.z < temp_f29)
         {
             float dVar4 = GetRadius();
             dVar4 = 0.02f + dVar4;
-            nlVector3* iVar2 = GetPosition();
-            if (iVar2->f.z < dVar4)
+            nlVector3& iVar2 = GetPosition();
+            if (iVar2.f.z < dVar4)
             {
                 GetLinearVelocity((nlVector3*)&local_b8); // b8 bc c0
 
@@ -221,8 +221,8 @@ void PhysicsBall::AddResistanceForces()
         float dVar4 = GetRadius();
         dVar4 = 0.02f + dVar4;
 
-        nlVector3* iVar2 = GetPosition();
-        if ((dVar4 < iVar2->f.z)
+        nlVector3& iVar2 = GetPosition();
+        if ((dVar4 < iVar2.f.z)
             && (GetLinearVelocity(&local_7c), 1.f < local_7c.f.x * local_7c.f.x + local_7c.f.z * local_7c.f.z + local_7c.f.y * local_7c.f.y)
             && (GetAngularVelocity(&local_94), 1.f < local_94.f.x * local_94.f.x + local_94.f.z * local_94.f.z + local_94.f.y * local_94.f.y))
         {
@@ -305,11 +305,12 @@ int PhysicsBall::Contact(PhysicsObject* other, dContact* contact, int param)
             GetPosition(&pos);
             if ((contact->geom.normal[2] > 0.f) && ((contact->geom.pos[2] + GetRadius()) < pos.f.z))
             {
-                u32* src = (u32*)GetPosition();
-                u32* dst = (u32*)&_pos;
-                dst[0] = src[0];
-                dst[1] = src[1];
-                dst[2] = src[2];
+                // u32* src = (u32*)GetPosition();
+                // u32* dst = (u32*)&_pos;
+                // dst[0] = src[0];
+                // dst[1] = src[1];
+                // dst[2] = src[2];
+                _pos = GetPosition();
 
                 temp_f2 = contact->geom.normal[2]; // unk44
                 temp_f1 = contact->geom.depth;     // unk4C
@@ -388,13 +389,13 @@ void PhysicsBall::PostUpdate()
         SetLinearVelocity(linVel);
     }
 
-    if ((GetPosition()->f.z > 20.f) && (linVel.f.z > 0.f))
+    if ((GetPosition().f.z > 20.f) && (linVel.f.z > 0.f))
     {
         linVel.f.z *= 0.9f;
         SetLinearVelocity(linVel);
     }
 
-    if (GetPosition()->f.z < GetRadius())
+    if (GetPosition().f.z < GetRadius())
     {
         m_bIsSupportedByGround = 1;
         GetPosition(&pos);

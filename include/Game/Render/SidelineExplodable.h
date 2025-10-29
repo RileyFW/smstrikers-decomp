@@ -1,9 +1,25 @@
 #ifndef _SIDELINEEXPLODABLE_H_
 #define _SIDELINEEXPLODABLE_H_
 
+#include "NL/nlList.h"
+
 #include "Game/Physics/PhysicsBox.h"
 #include "Game/Effects/EmissionController.h"
 // #include "Game/Physics/PhysicsObject.h"
+
+#include "Game/Sys/eventman.h"
+
+class cFielder;
+
+class CollisionExplosionFragmentPlayerData : public EventData
+{
+public:
+    virtual u32 GetID() { return 0xFA; };
+
+    /* 0x04 */ cFielder* pPlayer;
+    /* 0x08 */ nlVector3 v3CollisionLocation;
+    /* 0x14 */ nlVector3 v3CollisionVelocity;
+}; // total size: 0x20
 
 class ExplodableCategoryData
 {
@@ -11,27 +27,57 @@ public:
     void LoadGeometry();
 };
 
-class SidelineExplodable
-{
-public:
-    SidelineExplodable();
-    ~SidelineExplodable();
-    void Initialize(int);
-    void Allocate();
-    void Update(float);
-    void DestroyAllActiveFragments(bool);
-    void Explode();
-    void FindExplosionAngleRange(unsigned short&, unsigned short&) const;
-};
-
 class ExplosionFragment
 {
 public:
     ExplosionFragment();
-    ~ExplosionFragment();
-    void GetPosition() const;
-    void GetRotation(nlMatrix4*) const;
-};
+    virtual ~ExplosionFragment();
+    virtual void SetStationaryTransform(const nlMatrix4&);
+    virtual void GetRotation(nlMatrix4*) const;
+    virtual nlVector3& GetPosition() const;
+
+    /* 0x04 */ PhysicsObject* mpPhysicsObject;
+    /* 0x08 */ unsigned short mDrawableFragmentID;
+    /* 0x0C */ unsigned long mFragmentModelHash;
+    /* 0x10 */ float mfRemainingLifespan;
+    /* 0x14 */ bool mbIsActive;
+    /* 0x15 */ bool mbInfiniteLifespan;
+    /* 0x16 */ bool mbIsStationary;
+    /* 0x18 */ nlMatrix4* mStationaryTransform;
+    /* 0x1C */ EmissionController* mpSmokeEmissionController;
+
+    static float sfFadeOutTime;
+}; // total size: 0x20
+
+class SidelineExplodable
+{
+public:
+    SidelineExplodable();
+    virtual ~SidelineExplodable();
+    virtual void Allocate();
+    virtual void Update(float);
+    virtual void Initialize(int);
+    void Explode();
+    void DestroyAllActiveFragments(bool);
+    void FindExplosionAngleRange(unsigned short&, unsigned short&) const;
+
+    /* 0x4, */ Vector<ExplosionFragment> mExplosionFragments; // offset 0x4, size 0xC
+    /* 0x10 */ int mNumActiveFragments;                       // offset 0x10, size 0x4
+    /* 0x14 */ unsigned short mMinExplosionAngle;             // offset 0x14, size 0x2
+    /* 0x16 */ unsigned short mMaxExplosionAngle;             // offset 0x16, size 0x2
+    /* 0x18 */ bool mbAngleRangeInitialized;                  // offset 0x18, size 0x1
+    /* 0x1C */ int mNumFragmentModels;                        // offset 0x1C, size 0x4
+    /* 0x20 */ bool mbIsMainModelVisible;                     // offset 0x20, size 0x1
+    /* 0x24 */ float mfExplodeTime;                           // offset 0x24, size 0x4
+    /* 0x28 */ EmissionController* mpAssociatedEffect;        // offset 0x28, size 0x4
+}; // total size: 0x2C
+
+class SidelineExplodableNode
+{
+public:
+    /* 0x0 */ SidelineExplodable* mpExplodable;
+    /* 0x4 */ SidelineExplodableNode* next;
+}; // total size: 0x8
 
 void SidelineExplodableTextureLoadCallback(unsigned long);
 void EmissionControllerFinished(EmissionController&, ExplosionFragment*);
@@ -59,17 +105,19 @@ class SidelineExplodableManager
 public:
     void CleanUp();
     void Update(float);
-    void GetNumExplodables();
-    void GetVisibilityOfExplodableModels(bool*, int);
-    void SetVisibilityOfUnexplodedModels(bool*, int);
+    static int GetNumExplodables();
+    static void GetVisibilityOfExplodableModels(bool* visibility, int numExplodables);
+    static void SetVisibilityOfUnexplodedModels(bool* visibility, int numExplodables);
     void TriggerExplosions(const nlVector3&, float);
-    void DestroyAllActiveFragments(bool);
+    static void DestroyAllActiveFragments(bool renewExplodables);
     void RemoveSidelineExplodable(SidelineExplodable*);
     static ExplosionFragment* GetFragmentFromHandle(unsigned short);
     void AssociateEffectWithNearbyFloatingCamera(EmissionController*);
-    void UnAssociateEffectWithNearbyFloatingCamera(EmissionController*);
+    static void UnAssociateEffectWithNearbyFloatingCamera(EmissionController* pEmissionController);
 
     static ExplosionFragment** sFragmentLookupTable;
+    static nlList<SidelineExplodableNode> sSidelineExplodableList;
+    static SlotPool<SidelineExplodableNode> sSidelineExplodableNodeSlotPool;
 };
 
 // class PhysicsBox

@@ -44,18 +44,15 @@ loop_5:
  */
 void TLSlide::UpdateAsset(TLInstance* instance, float time)
 {
+    for (TLInstance* child = instance->pChildren; child != NULL && !nlDLRingIsEnd<TLInstance>(this->m_instances, child); child = child->m_next)
+    {
+        TLComponentInstance* component = (TLComponentInstance*)nlDLRingGetStart<TLInstance>(child);
+
+        if (component->GetType() == FEOT_GROUP)
+        {
+            component->Update(time);
+        }
+
+        UpdateAsset(child, time);
+    }
 }
-
-// /**
-//  * Offset/Address/Size: 0x0 | 0x8020FF48 | size: 0x20
-//  */
-// void nlDLRingIsEnd<TLInstance>(TLInstance*, TLInstance*)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x20 | 0x8020FF68 | size: 0x18
-//  */
-// void nlDLRingGetStart<TLInstance>(TLInstance*)
-// {
-// }

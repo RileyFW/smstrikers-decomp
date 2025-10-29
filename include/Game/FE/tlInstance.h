@@ -7,6 +7,17 @@
 #include "Game/FE/tlComponent.h"
 #include "Game/FE/FEAudio.h"
 
+enum eFELibObjectType
+{
+    FEOT_UNKNOWN = -1,
+    FEOT_LAYER = 0,
+    FEOT_IMAGE = 1,
+    FEOT_TEXT = 2,
+    FEOT_COMPONENT = 3,
+    FEOT_GROUP = 4,
+    // FEOT_OBJECT_TYPE_ANY = -2147483648,
+};
+
 struct UnkStruct
 {
     /* 0x00 */ char unk0;
@@ -18,6 +29,8 @@ struct UnkStruct
 class TLInstance
 {
 public:
+    eFELibObjectType GetType() const { return FEOT_UNKNOWN; };
+
     void SetAssetColour(const nlColour&);
     void SetAssetScale(float, float, float);
     void SetAssetRotation(float, float, float);
@@ -31,12 +44,11 @@ public:
     const nlVector3* GetAssetScale() const;
     const nlVector3* GetAssetPosition() const;
 
-    // /* 0x00 */ char pad00[0xC];
-    // /* 0x00 */ FEAudio* m_unk_0x00;
     /* 0x00 */ TLInstance* m_next;
     /* 0x04 */ TLInstance* m_prev;
-    /* 0x08 */ char pad08[0x4];
+    /* 0x08 */ TLInstance* pChildren;
     /* 0x0C */ TLComponent* m_component;
+    // /* 0x0C */ const FELibObject* m_pLibRefObject; // offset 0xC, size 0x4
     /* 0x10 */ f32 m_start;
     /* 0x14 */ f32 m_duration;
     /* 0x18 */ UnkStruct* m_unk_0x18;

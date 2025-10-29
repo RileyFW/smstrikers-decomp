@@ -107,4 +107,77 @@ void nlDeleteList(T** head)
     *head = NULL;
 }
 
+template <typename T>
+T* nlListRemoveStart(T** head, T** tail)
+{
+    T* current_node = *head;
+    if (current_node == NULL)
+    {
+        return NULL;
+    }
+    if ((tail != NULL) && (*tail == current_node))
+    {
+        *tail = NULL;
+    }
+    T* node_to_remove = *head;
+    *head = node_to_remove->next;
+    return node_to_remove;
+}
+
+template <typename T>
+void nlListAddEnd(T** head, T** tail, T* node)
+{
+    node->next = NULL;
+    T* temp_r6 = *tail;
+    if (temp_r6 != NULL)
+    {
+        temp_r6->next = node;
+        *tail = node;
+        return;
+    }
+    *tail = node;
+    *head = node;
+}
+
+template <typename T>
+class nlList
+{
+public:
+    ~nlList()
+    {
+        T* node;
+        do
+        {
+            node = nlListRemoveStart<T>(&m_pStart, &m_pEnd);
+            ::operator delete(node);
+        } while (m_pStart != 0);
+    }
+
+    T* m_pStart; // offset 0x0, size 0x4
+    T* m_pEnd;   // offset 0x4, size 0x4
+}; // total size: 0x8
+
+template <typename T>
+void nlListRemoveElement(T** head, T* node, T** tail)
+{
+    T* next = node->next;
+    if (next == node)
+    {
+        *head = NULL;
+    }
+}
+
+template <typename T>
+s32 nlListCountElements(T* head)
+{
+    T* node = head;
+    s32 count = 0;
+    while (node != NULL)
+    {
+        node = node->next;
+        count += 1;
+    }
+    return count;
+}
+
 #endif

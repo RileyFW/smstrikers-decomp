@@ -32,7 +32,7 @@ void FETweenManager::Update(float)
  * Offset/Address/Size: 0x6F0 | 0x800A2944 | size: 0x160
  */
 void FETweenManager::createTween(float*, float*, float, float, unsigned char, float (*)(float, float, float, float), void*,
-                                 void (*)(void*, const float*))
+    void (*)(void*, const float*))
 {
 }
 
@@ -53,15 +53,18 @@ FETweenManager::FETweenManager()
 /**
  * Offset/Address/Size: 0xA78 | 0x800A2CCC | size: 0xC
  */
-void FETweener::setDoneCallFunc(void (*)(void*), void*)
+void FETweener::setDoneCallFunc(void (*doneFunc)(void*), void* doneFuncParam)
 {
+    m_doneFunc = doneFunc;
+    m_doneFuncParam = doneFuncParam;
 }
 
 /**
  * Offset/Address/Size: 0xA84 | 0x800A2CD8 | size: 0x8
  */
-void FETweener::setNextTween(FETweener*)
+void FETweener::setNextTween(FETweener* next)
 {
+    m_nextTween = next;
 }
 
 /**

@@ -9,6 +9,7 @@ class Vector
 {
 public:
     void reserve(int capacity);
+    void resize(int size);
     void push_back(const T& value);
     void insert(T* position, const T* first, const T* last);
 

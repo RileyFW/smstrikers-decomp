@@ -108,17 +108,16 @@ void PhysicsObject::SetPosition(const nlVector3& pos, PhysicsObject::CoordinateT
 {
     nlMatrix4 rot;     // sp54
     nlMatrix4 inv_rot; // sp14
-    nlVector3* p;      // temp_r3
     nlVector3 _pos;    // sp8...sp10
 
     if ((m_parentObject != NULL) && (type == 0))
     {
         m_parentObject->GetRotation(&rot);
-        p = m_parentObject->GetPosition();
+        nlVector3& p = m_parentObject->GetPosition();
 
-        rot.m[3][0] = p->f.x;
-        rot.m[3][1] = p->f.y;
-        rot.m[3][2] = p->f.z;
+        rot.m[3][0] = p.f.x;
+        rot.m[3][1] = p.f.y;
+        rot.m[3][2] = p.f.z;
         rot.m[3][3] = 1.0f;
 
         nlInvertRotTransMatrix(inv_rot, rot);
@@ -275,10 +274,10 @@ void PhysicsObject::GetPosition(nlVector3* position) const
 /**
  * Offset/Address/Size: 0xD50 | 0x80200A4C | size: 0x34
  */
-nlVector3* PhysicsObject::GetPosition()
+nlVector3& PhysicsObject::GetPosition()
 {
     GetPosition(&m_position);
-    return &m_position;
+    return m_position;
 }
 
 /**

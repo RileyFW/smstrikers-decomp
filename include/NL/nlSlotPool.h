@@ -55,7 +55,7 @@ template <typename T>
 class BasicSlotPool : public SlotPoolBase
 {
 public:
-    ~BasicSlotPool()
+    virtual ~BasicSlotPool()
     {
         BaseFreeBlocks(this, sizeof(T));
     };
@@ -65,12 +65,7 @@ template <typename T>
 class SlotPool : public BasicSlotPool<T>
 {
 public:
-    // SlotPool();
-    ~SlotPool() { };
-    // T* Allocate();
-    // void Free(T*);
-    // void Clear();
-    // void Initialize(unsigned int, unsigned int);
+    virtual ~SlotPool() { };
 }; // total size: 0x18
 
 #endif // _NLSLOTPOOL_H_
