@@ -3,6 +3,8 @@
 
 #include "Game/Player.h"
 #include "Game/GoalieFatigue.h"
+#include "Game/AI/GoalieSave.h"
+#include "Game/AI/GoalieLooseBall.h"
 
 #include "NL/nlMath.h"
 
@@ -19,40 +21,6 @@ class Event;
 class cPN_SAnimController;
 class CollisionPlayerPlayerData;
 class cBall;
-
-enum eLooseBallAnimType
-{
-    LOOSEBALL_ANIM_PICKUP = 0,
-    LOOSEBALL_ANIM_KICK = 1,
-    LOOSEBALL_ANIM_TRAP = 2,
-    LOOSEBALL_ANIM_ATTACK = 3,
-    LOOSEBALL_ANIM_SWAT = 4,
-    NUM_LOOSEBALL_ANIM_TYPES = 5,
-};
-
-class LooseBallInfo
-{
-public:
-    /* 0x00 */ nlVector3 mv3PickupPos;
-    /* 0x0C */ s32 mnAnimID;
-    /* 0x10 */ eLooseBallAnimType mAnimType;
-    /* 0x14 */ f32 mfPickupDistance;
-    /* 0x18 */ u16 maPickupAngle;
-    /* 0x1C */ f32 mfPickupTime;
-    /* 0x20 */ f32 mfAnimDuration;
-}; // total size: 0x24
-
-struct SaveBlendInfo // most probably not the right place for this
-{
-    /* 0x0, */ float mfStartTime;
-    /* 0x4, */ float mfMilestoneTime[5];
-    /* 0x18 */ float mfMilestoneScale[4][5];
-    /* 0x68 */ float mfSaveBlendPrimary;
-    /* 0x6C */ float mfSaveBlendSecondary;
-    /* 0x70 */ float mfSaveBlendComposite;
-    /* 0x74 */ class SaveData* mpSaveData[4];
-    /* 0x84 */ class nlVector3 mv3BlendedSavePos;
-}; // total size: 0x90
 
 enum eGoalieActionState
 {
@@ -123,7 +91,7 @@ enum eUrgency
     NUM_URGENCY_LEVELS = 3,
 };
 
-class Goalie //: public cPlayer
+class Goalie : public cPlayer
 {
 public:
     enum eNaviMode
@@ -159,10 +127,10 @@ public:
     void CheckForDelflectAwayFromNet();
     void CheckForLooseBallShotInProgress();
     void CheckForSTSAttack();
-    void IsLooseBallClose(float);
-    void IsWithinPounceRange();
-    void IsOpponentBallCarrierInRange();
-    void IsOpponentInSTS();
+    bool IsLooseBallClose(float);
+    bool IsWithinPounceRange();
+    bool IsOpponentBallCarrierInRange();
+    bool IsOpponentInSTS();
     void IsPassThreat();
     void MakeSaveEvent(bool);
     void UpdateActionState(float);
@@ -251,7 +219,7 @@ public:
 class GoalieSaveData
 {
 public:
-    void GetID();
+    u32 GetID() { return 0x13C; }
 };
 
 #endif // _GOALIE_H_

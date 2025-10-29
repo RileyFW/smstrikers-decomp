@@ -1,4 +1,9 @@
 #include "Game/Goalie.h"
+#include "Game/AI/GoalieLooseBall.h"
+#include "Game/Ball.h"
+#include "Game/AI/Fielder.h"
+#include "Game/SAnim.h"
+#include "types.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x80042AFC | size: 0x148
@@ -215,6 +220,7 @@ void Goalie::InitActionMove(bool)
  */
 void Goalie::InitActionLooseBallSetup()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -222,6 +228,23 @@ void Goalie::InitActionLooseBallSetup()
  */
 void Goalie::InitActionLooseBallCatch()
 {
+    CleanGoalieAction();
+
+    mPrevGoalieActionState = mGoalieActionState;
+    mGoalieActionState = GOALIEACTION_LOOSEBALL_CATCH;
+    mnSubstate = 0;
+
+    mv3LocalContactPosition.f.x = 0.2f;
+
+    mpSaveData = GoalieSave::FindBestSave(mBlendInfo, mv3LocalContactPosition, mfTargetTime, false, 1, true);
+
+    mpLooseBallInfo = NULL;
+    mMoveDirection = GOALIEDIR_IDLE;
+
+    if (mpSaveData == NULL)
+    {
+        InitActionLooseBallSetup();
+    }
 }
 
 /**
@@ -229,13 +252,31 @@ void Goalie::InitActionLooseBallCatch()
  */
 void Goalie::CleanGoalieAction()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x5878 | 0x80048374 | size: 0x6C
  */
-void Goalie::PlayNewAnim(int)
+void Goalie::PlayNewAnim(int nAnimID)
 {
+    if (nAnimID == m_eAnimID)
+    {
+        cPN_SAnimController* pController = m_pCurrentAnimController;
+        bool bSkipSetAnimState = false;
+
+        if (pController->m_ePlayMode == PM_HOLD && pController->m_fTime == 1.0f)
+        {
+            bSkipSetAnimState = true;
+        }
+
+        if (!bSkipSetAnimState)
+        {
+            return;
+        }
+    }
+
+    SetAnimState(nAnimID, true, 0.2f, false, false);
 }
 
 /**
@@ -255,15 +296,19 @@ void Goalie::SetupBlender(bool, const float*, int, int)
 /**
  * Offset/Address/Size: 0x5F40 | 0x80048A3C | size: 0x64
  */
-void Goalie::SaveBlendCallback(unsigned int, cPN_SAnimController*)
+void Goalie::SaveBlendCallback(unsigned int nParam, cPN_SAnimController* pAnimCtrl)
 {
 }
 
 /**
  * Offset/Address/Size: 0x5FA4 | 0x80048AA0 | size: 0x54
  */
-void Goalie::SetGoalieAction(eGoalieActionState, int)
+void Goalie::SetGoalieAction(eGoalieActionState newGoalieState, int newSubstate)
 {
+    CleanGoalieAction();
+    mPrevGoalieActionState = mGoalieActionState;
+    mGoalieActionState = newGoalieState;
+    mnSubstate = newSubstate;
 }
 
 /**
@@ -290,29 +335,59 @@ void Goalie::IsPassThreat()
 /**
  * Offset/Address/Size: 0x631C | 0x80048E18 | size: 0x6C
  */
-void Goalie::IsOpponentInSTS()
+bool Goalie::IsOpponentInSTS()
 {
+    cFielder* pFielder = g_pBall->GetOwnerFielder();
+    if ((pFielder != NULL) && !IsOnSameTeam(pFielder) && (pFielder->m_eActionState == ACTION_SHOOT_TO_SCORE))
+    {
+        return true;
+    }
+
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x6388 | 0x80048E84 | size: 0x138
  */
-void Goalie::IsOpponentBallCarrierInRange()
+bool Goalie::IsOpponentBallCarrierInRange()
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x64C0 | 0x80048FBC | size: 0xDC
  */
-void Goalie::IsWithinPounceRange()
+bool Goalie::IsWithinPounceRange()
 {
+    cFielder* pFielder = g_pBall->GetOwnerFielder();
+    if ((pFielder != NULL) && !IsOnSameTeam(pFielder))
+    {
+        if (pFielder->m_eActionState == ACTION_SHOOT_TO_SCORE)
+        {
+            return false;
+        }
+
+        const float temp_f5 = m_v3Position.f.y - pFielder->m_v3Position.f.y;
+        const float temp_f4 = LooseBallAnims::mTrapBallInfo.mfPickupDistance + ((GoalieTweaks*)m_pTweaks)->fPounceRange;
+        const float temp_f1 = m_v3Position.f.x - pFielder->m_v3Position.f.x;
+        const float temp_f4_2 = temp_f4 * temp_f4;
+
+        if ((temp_f4_2 > ((temp_f1 * temp_f1) + (temp_f5 * temp_f5)))
+            || (temp_f4_2 > ((m_v3Position.f.x - g_pBall->m_v3Position.f.x) * (m_v3Position.f.x - g_pBall->m_v3Position.f.x) + (m_v3Position.f.y - g_pBall->m_v3Position.f.y) * (m_v3Position.f.y - g_pBall->m_v3Position.f.y))))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x659C | 0x80049098 | size: 0x43C
  */
-void Goalie::IsLooseBallClose(float)
+bool Goalie::IsLooseBallClose(float)
 {
+    return false;
 }
 
 /**
@@ -481,20 +556,14 @@ void Goalie::Update(float)
  */
 Goalie::~Goalie()
 {
+    GoalieSave::ClearData();
+    LooseBallAnims::Destroy();
 }
 
 /**
  * Offset/Address/Size: 0xB780 | 0x8004E27C | size: 0x2B8
  */
-Goalie::Goalie(eCharacterClass charClass, const int* arg_0, cSHierarchy* hierarchie, cAnimInventory* animInventory,
-    const CharacterPhysicsData* characterPhysicsData, GoalieTweaks* tweaks, AnimRetargetList* retargetList)
-// : cPlayer(0, charClass, arg_0, hierarchie, animInventory, characterPhysicsData, tweaks, retargetList, eClassTypes::eClassTypes_0)
-{
-}
-
-/**
- * Offset/Address/Size: 0x0 | 0x8004E534 | size: 0x8
- */
-void GoalieSaveData::GetID()
+Goalie::Goalie(eCharacterClass charClass, const int* nModelID, cSHierarchy* pHierarchy, cAnimInventory* pAnimInventory, const CharacterPhysicsData* pPhysicsData, GoalieTweaks* pCharTweaks, AnimRetargetList* pAnimRetargetList)
+    : cPlayer(0, charClass, nModelID, pHierarchy, pAnimInventory, pPhysicsData, pCharTweaks, pAnimRetargetList, GOALIE)
 {
 }

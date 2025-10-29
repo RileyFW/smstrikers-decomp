@@ -81,7 +81,7 @@ enum ePadActions
 class cPlayer : public cCharacter
 {
 public:
-    cPlayer(int, eCharacterClass, const int*, cSHierarchy*, cAnimInventory*, const CharacterPhysicsData*, PlayerTweaks*, AnimRetargetList*, eClassTypes);
+    cPlayer(int nPlayerID, eCharacterClass cc, const int* nModelID, cSHierarchy* pHierarchy, cAnimInventory* pAnimInventory, const CharacterPhysicsData* pPhysicsData, PlayerTweaks* pPlayerTweaks, AnimRetargetList* pAnimRetargetList, eClassTypes eNewClassType);
     virtual ~cPlayer();
 
     s32 GetUniqueID(int) const;
@@ -157,6 +157,6 @@ public:
     /* 0x1C8 */ cBall* m_pBall;                          // offset 0x1C8, size 0x4
     /* 0x1CC */ cTeam* m_pTeam;                          // offset 0x1CC, size 0x4
     /* 0x1D0 */ SpaceSearch* m_pSpaceSearch;             // offset 0x1D0, size 0x4
-};
+}; // total size: 0x1D4
 
 #endif // _PLAYER_H_

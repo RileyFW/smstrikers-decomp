@@ -199,8 +199,9 @@ void GoalieSave::InitData(Goalie*)
 /**
  * Offset/Address/Size: 0x1FC0 | 0x800553E0 | size: 0x2BC
  */
-void GoalieSave::FindBestSave(SaveBlendInfo&, const nlVector3&, float, bool, unsigned int, bool)
+SaveData* GoalieSave::FindBestSave(SaveBlendInfo&, const nlVector3&, float, bool, unsigned int, bool)
 {
+    return NULL;
 }
 
 /**

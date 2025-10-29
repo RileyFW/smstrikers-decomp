@@ -168,29 +168,71 @@ bool cTeam::IsCurrentStar() const
 /**
  * Offset/Address/Size: 0x183C | 0x80065BE8 | size: 0x58
  */
-void cTeam::GetPowerUpByIndex(int) const
+PowerUpTeamType cTeam::GetPowerUpByIndex(int index) const
 {
+    PowerUpTeamType result;
+    if (index >= 0)
+    {
+        return m_ePowerupList[index];
+    }
+    result.eType = POWER_UP_NONE;
+    result.nnumOfPowerups = 0;
+    return result;
 }
 
 /**
  * Offset/Address/Size: 0x1824 | 0x80065BD0 | size: 0x18
  */
-void cTeam::SetIsPowerUpNew(int, bool)
+void cTeam::SetIsPowerUpNew(int index, bool bIsNew)
 {
+    if (index >= 0)
+    {
+        m_ePowerupList[index].bIsNew = bIsNew;
+    }
 }
+
+#pragma push
+#pragma optimization_level 0
+static inline unsigned int FakeRuntimeZero()
+{
+    register unsigned int z = 0;
+    return z;
+}
+#pragma pop
 
 /**
  * Offset/Address/Size: 0x17D0 | 0x80065B7C | size: 0x54
  */
-void cTeam::SetCurrentPowerUp(ePowerUpType, int)
+void cTeam::SetCurrentPowerUp(ePowerUpType newType, int count)
 {
+    unsigned char usedFirstSlot = 0;
+    if (m_ePowerupList[0].eType == POWER_UP_NONE && FakeRuntimeZero() == 0)
+    {
+        m_ePowerupList[0].eType = newType;
+        usedFirstSlot = 1;
+        m_ePowerupList[0].nnumOfPowerups = count;
+        m_ePowerupList[0].bIsNew = true;
+    }
+
+    if (m_ePowerupList[1].eType == POWER_UP_NONE && !usedFirstSlot)
+    {
+        m_ePowerupList[1].eType = newType;
+        m_ePowerupList[1].nnumOfPowerups = count;
+        m_ePowerupList[1].bIsNew = true;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x17B0 | 0x80065B5C | size: 0x20
  */
-void cTeam::SetPlayer(cPlayer*, int)
+void cTeam::SetPlayer(cPlayer* pPlayer, int index)
 {
+    m_pPlayers[index] = (cFielder*)pPlayer;
+    if (index < 4)
+    {
+        m_pAIOrderedFielders[index] = (cFielder*)pPlayer;
+        m_pBallInterceptOrderedFielders[index] = (cFielder*)pPlayer;
+    }
 }
 
 /**
@@ -198,7 +240,7 @@ void cTeam::SetPlayer(cPlayer*, int)
  */
 void cTeam::SetGoalie(Goalie* goalie)
 {
-    m_pGoalie = goalie;
+    m_pPlayers[4] = (cFielder*)goalie;
 }
 
 /**
@@ -206,15 +248,24 @@ void cTeam::SetGoalie(Goalie* goalie)
  */
 Goalie* cTeam::GetGoalie()
 {
-    return m_pGoalie;
+    return (Goalie*)m_pPlayers[4];
 }
 
 /**
  * Offset/Address/Size: 0x1734 | 0x80065AE0 | size: 0x6C
  */
-cPlayer* cTeam::GetControlledPlayer(cGlobalPad*)
+cPlayer* cTeam::GetControlledPlayer(cGlobalPad* pPad)
 {
-    return nullptr;
+    cPlayer* res = nullptr;
+    for (int i = 0; i < 5; i++)
+    {
+        if (m_pPlayers[i]->GetGlobalPad() == pPad)
+        {
+            res = (cPlayer*)m_pPlayers[i];
+            break;
+        }
+    }
+    return res;
 }
 
 /**

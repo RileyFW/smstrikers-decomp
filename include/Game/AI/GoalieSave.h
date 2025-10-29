@@ -1,7 +1,7 @@
 #ifndef _GOALIESAVE_H_
 #define _GOALIESAVE_H_
 
-#include "Game/Goalie.h"
+#include "NL/nlMath.h"
 #include "NL/nlList.h"
 
 // void InsertSorted(nlDLListContainer<MyMiniData*>&, MyMiniData*);
@@ -14,25 +14,57 @@
 // void nlDLRingInsert<DLListEntry<MyMiniData*>>(DLListEntry<MyMiniData*>**, DLListEntry<MyMiniData*>*, DLListEntry<MyMiniData*>*);
 // void 0x8028D298..0x8028D29C | size: 0x4;
 
-class SaveData;
+class SaveData
+{
+public:
+    /* 0x00 */ int mnAnimID;
+    /* 0x04 */ SaveData* mpFailAnimData;
+    /* 0x08 */ int mnRecoverAnimID;
+    /* 0x0C */ unsigned int muSaveType;
+    /* 0x10 */ nlVector3 mv3SavePos;
+    /* 0x1C */ nlVector3 mv3TakeoffPos;
+    /* 0x28 */ float mfDuration;
+    /* 0x2C */ float mfMilestonePercent[5];
+    /* 0x40 */ float mfFatigueValue;
+    /* 0x44 */ SaveData* mpConnectedSaveData[4];
+    /* 0x54 */ nlVector3 mv3GroupMinCoords;
+    /* 0x60 */ nlVector3 mv3GroupMaxCoords;
+    /* 0x6C */ char mszName[16];
+    /* 0x7C */ int muIndex;
+}; // total size: 0x80
+
+struct SaveBlendInfo // most probably not the right place for this
+{
+public:
+    /* 0x0, */ float mfStartTime;
+    /* 0x4, */ float mfMilestoneTime[5];
+    /* 0x18 */ float mfMilestoneScale[4][5];
+    /* 0x68 */ float mfSaveBlendPrimary;
+    /* 0x6C */ float mfSaveBlendSecondary;
+    /* 0x70 */ float mfSaveBlendComposite;
+    /* 0x74 */ class SaveData* mpSaveData[4];
+    /* 0x84 */ class nlVector3 mv3BlendedSavePos;
+}; // total size: 0x90
+
+class Goalie;
 
 class GoalieSave
 {
 public:
-    void ClearData();
-    void InitData(Goalie*);
-    void FindBestSave(SaveBlendInfo&, const nlVector3&, float, bool, unsigned int, bool);
-    void FindBestInList(SaveBlendInfo&, nlListContainer<SaveData*>&, const nlVector3&, float, unsigned int, bool);
-    void GetClosestBlendedPos(SaveBlendInfo&, const nlVector3&, SaveData*);
-    void GetMissChipSaveData(bool, bool);
-    void GetRandomSTSMissData(bool);
-    void GetSTSSpinMissData(bool);
-    void GetRandomSTSSaveData();
-    void TriggerCallback(float, float, unsigned long, float, void*);
-    void AddAreaToGrid(SaveData*);
-    void AddSegmentToGrid(SaveData*, SaveData*);
-    void AddChainToGrid(SaveData*, bool);
-    void AddToGrid(SaveData*);
+    static void ClearData();
+    static void InitData(Goalie*);
+    static SaveData* FindBestSave(SaveBlendInfo&, const nlVector3&, float, bool, unsigned int, bool);
+    static void FindBestInList(SaveBlendInfo&, nlListContainer<SaveData*>&, const nlVector3&, float, unsigned int, bool);
+    static void GetClosestBlendedPos(SaveBlendInfo&, const nlVector3&, SaveData*);
+    static void GetMissChipSaveData(bool, bool);
+    static void GetRandomSTSMissData(bool);
+    static void GetSTSSpinMissData(bool);
+    static void GetRandomSTSSaveData();
+    static void TriggerCallback(float, float, unsigned long, float, void*);
+    static void AddAreaToGrid(SaveData*);
+    static void AddSegmentToGrid(SaveData*, SaveData*);
+    static void AddChainToGrid(SaveData*, bool);
+    static void AddToGrid(SaveData*);
 };
 
 // class AVLTreeBase<int, SaveData*, NewAdapter<AVLTreeEntry<int, SaveData*>>, DefaultKeyCompare<int>>
