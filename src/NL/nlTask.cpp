@@ -59,9 +59,9 @@ void nlTaskManager::RunAllTasks()
         taskIterator = nlDLRingGetStart<nlTask>(m_pInstance->m_lTaskList);
     loop_6:
         currentTicker = nlGetTicker();
-        tickerDifference = nlGetTickerDifference(taskIterator->m_unk_0x14, currentTicker);
-        taskIterator->m_unk_0x14 = currentTicker;
-        if (taskIterator->m_unk_0x10 & m_pInstance->m_CurrState)
+        tickerDifference = nlGetTickerDifference(taskIterator->nPrevTicker, currentTicker);
+        taskIterator->nPrevTicker = currentTicker;
+        if (taskIterator->statesActive & m_pInstance->m_CurrState)
         {
             clampedDeltaTime = tickerDifference / 1000.f;
             if (clampedDeltaTime < g_fTaskTimeLowerBound)
@@ -87,15 +87,15 @@ void nlTaskManager::RunAllTasks()
 /**
  * Offset/Address/Size: 0x168 | 0x801D2A64 | size: 0xC4
  */
-void nlTaskManager::AddTask(nlTask* arg0, unsigned int arg1, unsigned int arg2)
+void nlTaskManager::AddTask(nlTask* task, unsigned int priority, unsigned int statesActive)
 {
-    arg0->m_unk_0x0C = arg1;
-    arg0->m_unk_0x10 = arg2;
-    arg0->m_unk_0x14 = nlGetTicker();
+    task->nPriority = priority;
+    task->statesActive = statesActive;
+    task->nPrevTicker = nlGetTicker();
 
     if (m_pInstance->m_lTaskList == nullptr)
     {
-        nlDLRingAddStart<nlTask>(&m_pInstance->m_lTaskList, arg0);
+        nlDLRingAddStart<nlTask>(&m_pInstance->m_lTaskList, task);
         return;
     }
 
@@ -103,7 +103,7 @@ void nlTaskManager::AddTask(nlTask* arg0, unsigned int arg1, unsigned int arg2)
     nlTask* currentTask = nlDLRingGetStart<nlTask>(m_pInstance->m_lTaskList);
     while (currentTask != nullptr)
     {
-        if (currentTask->m_unk_0x0C >= arg1)
+        if (currentTask->nPriority >= priority)
         {
             currentTask = currentTask->m_prev;
             break;
@@ -118,7 +118,7 @@ void nlTaskManager::AddTask(nlTask* arg0, unsigned int arg1, unsigned int arg2)
         }
     }
 
-    nlDLRingInsert<nlTask>(&m_pInstance->m_lTaskList, currentTask, arg0);
+    nlDLRingInsert<nlTask>(&m_pInstance->m_lTaskList, currentTask, task);
 }
 
 /**

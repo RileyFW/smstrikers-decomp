@@ -1,4 +1,5 @@
 #include "types.h"
+#include "Game/main.h"
 
 // static int g_Region __attribute__((section(".sdata2"))) = 1;
 static int const g_Region = 1;
@@ -10,6 +11,9 @@ static bool g_Europe = false;
 static bool g_bFranticPausing = false;
 static int g_Language = 0;
 static void* g_pTheLoadingManagerTask = nullptr;
+
+ClockUpdateTask clockUpdateTask;
+AudioUpdateTask audioUpdateTask;
 
 int main(void)
 {
@@ -23,6 +27,8 @@ static void SetupViews()
 
 static void Initialize()
 {
+    nlTaskManager::AddTask(&clockUpdateTask, 0, -1);
+    nlTaskManager::AddTask(&audioUpdateTask, 0, -1);
     return;
 }
 

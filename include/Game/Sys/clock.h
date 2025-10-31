@@ -31,8 +31,8 @@ public:
 class ClockManager
 {
 public:
-    void Initialize();
-    void Update(float);
+    static void Initialize();
+    static void Update(float dt);
 
     /* 0x00 */ static Clock* m_inactiveList;
     /* 0x04 */ static Clock* m_activeList;

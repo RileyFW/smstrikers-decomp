@@ -1,6 +1,22 @@
 #include "Game/DB/SaveLoad.h"
 
+class MemCard
+{
+public:
+    int GetSerialID() const;
+};
+
 bool InOperation = false;
+
+LoadCallbacks LoadSystem;
+
+MemCard** g_MemCards = nullptr;
+struct MemCardIDInfo
+{
+    u32 serialID;
+    u32 cardID;
+};
+MemCardIDInfo mLastKnownMemCardID;
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8018D40C | size: 0xA4
@@ -160,8 +176,9 @@ void SaveLoad::StartLoad(int, void (*)(long), bool, bool)
 /**
  * Offset/Address/Size: 0xBEC | 0x8018A548 | size: 0x10
  */
-void SaveLoad::DidGameIDChange()
+bool SaveLoad::DidGameIDChange()
 {
+    return LoadSystem.m_GameIDTestResult;
 }
 
 // /**
@@ -244,6 +261,8 @@ void SaveLoad::FreeAllCallbackMemory()
 /**
  * Offset/Address/Size: 0x0 | 0x8018995C | size: 0x34
  */
-void SaveLoad::RememberCurrentMemCardSerialID(int)
+void SaveLoad::RememberCurrentMemCardSerialID(int id)
 {
+    mLastKnownMemCardID.serialID = g_MemCards[id]->GetSerialID();
+    // mLastKnownMemCardID.cardID = id;
 }

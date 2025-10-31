@@ -1,4 +1,4 @@
-#include "clock.h"
+#include "Game/Sys/clock.h"
 #include "NL/nlTask.h"
 
 Clock* ClockManager::m_inactiveList = NULL;

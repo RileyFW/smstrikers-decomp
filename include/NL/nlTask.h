@@ -3,13 +3,6 @@
 
 #include "types.h"
 
-// Global task time bounds
-
-// bool nlDLRingIsEnd<nlTask>(nlTask*, nlTask*);
-// void nlDLRingGetStart<nlTask>(nlTask*);
-// void nlDLRingAddStart<nlTask>(nlTask**, nlTask*);
-// void nlDLRingInsert<nlTask>(nlTask**, nlTask*, nlTask*);
-
 class nlTask
 {
 public:
@@ -19,9 +12,9 @@ public:
 
     /* 0x04 */ nlTask* m_next;
     /* 0x08 */ nlTask* m_prev;
-    /* 0x0C */ u32 m_unk_0x0C;
-    /* 0x10 */ u32 m_unk_0x10;
-    /* 0x14 */ u32 m_unk_0x14; // current ticker value
+    /* 0x0C */ u32 nPriority;
+    /* 0x10 */ u32 statesActive;
+    /* 0x14 */ u32 nPrevTicker;
 }; // size 0x18
 
 class nlTaskManager

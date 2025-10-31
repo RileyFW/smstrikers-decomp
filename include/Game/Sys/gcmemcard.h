@@ -1,6 +1,8 @@
 #ifndef _GCMEMCARD_H_
 #define _GCMEMCARD_H_
 
+#include "Game/DB/SaveLoad.h"
+
 // void 0x801CB768..0x801CB7BC | size: 0x54;
 // class MemCardFunctor
 // {
