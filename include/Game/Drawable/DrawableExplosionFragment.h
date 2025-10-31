@@ -1,6 +1,7 @@
 #ifndef _DRAWABLEEXPLOSIONFRAGMENT_H_
 #define _DRAWABLEEXPLOSIONFRAGMENT_H_
 
+#include "Game/Replay.h"
 #include "Game/Physics/PhysicsObject.h"
 
 // void Replayable<3, SaveFrame, unsigned long>(SaveFrame&, unsigned long&);
@@ -11,6 +12,9 @@
 class DrawableExplosionFragment
 {
 public:
+    template <typename T>
+    void Replay(T&);
+
     void Blend(const float*, const DrawableExplosionFragment&, const DrawableExplosionFragment&);
     void Render() const;
     void Grab();
@@ -25,5 +29,11 @@ public:
     /* 0x24 */ u32 mFragmentModelHash;
     /* 0x28 */ PhysicsObject* mpPhysicsObject;
 }; // total size: 0x2C
+
+template <>
+void DrawableExplosionFragment::Replay<SaveFrame>(SaveFrame&);
+
+template <>
+void DrawableExplosionFragment::Replay<LoadFrame>(LoadFrame&);
 
 #endif // _DRAWABLEEXPLOSIONFRAGMENT_H_

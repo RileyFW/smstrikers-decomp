@@ -1,6 +1,7 @@
 #ifndef _DRAWABLECHARACTER_H_
 #define _DRAWABLECHARACTER_H_
 
+#include "Game/Replay.h"
 #include "Game/Drawable/DrawableObj.h"
 #include "Game/CharacterEffects.h"
 #include "Game/Render/Bowser.h"
@@ -49,6 +50,9 @@ class LoadFrame;
 class DrawableCharacter
 {
 public:
+    template <typename T>
+    void Replay(T&);
+
     void OnlyRenderingOneCharacter();
     void RenderAllCharacters();
     void RenderOnlyOneCharacter(const cCharacter&, bool);
@@ -86,6 +90,12 @@ public:
     /* 0x50 */ Bowser* mBowser;                     // offset 0x50, size 0x4
     /* 0x54 */ bool mDirt;                          // offset 0x54, size 0x1
 }; // total size: 0x58
+
+template <>
+void DrawableCharacter::Replay<SaveFrame>(SaveFrame&);
+
+template <>
+void DrawableCharacter::Replay<LoadFrame>(LoadFrame&);
 
 // class cPoseAccumulator
 // {

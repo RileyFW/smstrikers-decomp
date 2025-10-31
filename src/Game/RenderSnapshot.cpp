@@ -12,165 +12,144 @@
 #include "Game/GL/GLInventory.h"
 #include "Game/GL/GLTextureAnim.h"
 #include "NL/gl/glState.h"
+#include "Game/Render/CrowdManager.h"
+#include "Game/Effects/EmissionManager.h"
+
+#include "Game/ReplaySpecializations.h"
 
 extern cCharacter* g_pCharacters[10];
 extern bool g_GoalLightEnabled;
 extern float g_AllActorsHidden;
 extern GLInventory glInventory;
-
-// /**
-//  * Offset/Address/Size: 0x4D8 | 0x80113F20 | size: 0x3C
-//  */
-// void Replayable<1, LoadFrame, DrawableNetMesh>(LoadFrame&, DrawableNetMesh&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x49C | 0x80113EE4 | size: 0x3C
-//  */
-// void Replayable<3, LoadFrame, EmissionManager>(LoadFrame&, EmissionManager&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x460 | 0x80113EA8 | size: 0x3C
-//  */
-// void Replayable<1, LoadFrame, CrowdManager>(LoadFrame&, CrowdManager&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x3E4 | 0x80113E2C | size: 0x7C
-//  */
-// void Replayable<1, LoadFrame, bool>(LoadFrame&, bool&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x390 | 0x80113DD8 | size: 0x54
-//  */
-// void Replayable<1, LoadFrame, nlVector3>(LoadFrame&, nlVector3&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x364 | 0x80113DAC | size: 0x2C
-//  */
-// void Replayable<0, LoadFrame, DrawableBall>(LoadFrame&, DrawableBall&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x2F4 | 0x80113D3C | size: 0x70
-//  */
-// void Replayable<0, LoadFrame, bool>(LoadFrame&, bool&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x2C8 | 0x80113D10 | size: 0x2C
-//  */
-// void Replayable<0, LoadFrame, DrawableExplosionFragment>(LoadFrame&, DrawableExplosionFragment&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x29C | 0x80113CE4 | size: 0x2C
-//  */
-// void Replayable<0, LoadFrame, DrawablePowerup>(LoadFrame&, DrawablePowerup&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x270 | 0x80113CB8 | size: 0x2C
-//  */
-// void Replayable<0, LoadFrame, DrawableCharacter>(LoadFrame&, DrawableCharacter&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x234 | 0x80113C7C | size: 0x3C
-//  */
-// void Replayable<1, SaveFrame, DrawableNetMesh>(SaveFrame&, DrawableNetMesh&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1F8 | 0x80113C40 | size: 0x3C
-//  */
-// void Replayable<3, SaveFrame, EmissionManager>(SaveFrame&, EmissionManager&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x1BC | 0x80113C04 | size: 0x3C
-//  */
-// void Replayable<1, SaveFrame, CrowdManager>(SaveFrame&, CrowdManager&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x158 | 0x80113BA0 | size: 0x64
-//  */
-// void Replayable<1, SaveFrame, bool>(SaveFrame&, bool&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x108 | 0x80113B50 | size: 0x50
-//  */
-// void Replayable<1, SaveFrame, nlVector3>(SaveFrame&, nlVector3&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0xDC | 0x80113B24 | size: 0x2C
-//  */
-// void Replayable<0, SaveFrame, DrawableBall>(SaveFrame&, DrawableBall&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x84 | 0x80113ACC | size: 0x58
-//  */
-// void Replayable<0, SaveFrame, bool>(SaveFrame&, bool&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x58 | 0x80113AA0 | size: 0x2C
-//  */
-// void Replayable<0, SaveFrame, DrawableExplosionFragment>(SaveFrame&, DrawableExplosionFragment&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x2C | 0x80113A74 | size: 0x2C
-//  */
-// void Replayable<0, SaveFrame, DrawablePowerup>(SaveFrame&, DrawablePowerup&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x0 | 0x80113A48 | size: 0x2C
-//  */
-// void Replayable<0, SaveFrame, DrawableCharacter>(SaveFrame&, DrawableCharacter&)
-// {
-// }
+extern f32 g_fFixedUpdateTick;
 
 /**
  * Offset/Address/Size: 0x294 | 0x801138E8 | size: 0x160
  */
-// void RenderSnapshot::Replay<SaveFrame>(SaveFrame&)
-// {
-// }
+template <>
+void RenderSnapshot::Replay<SaveFrame>(SaveFrame& frame)
+{
+    for (int i = 0; i < 10; i++)
+    {
+        Replayable<0, SaveFrame, DrawableCharacter>(frame, mCharacters[i]);
+    }
+
+    for (int i = 0; i < 150; i++)
+    {
+        Replayable<0, SaveFrame, DrawablePowerup>(frame, mPowerups[i]);
+    }
+
+    for (int i = 0; i < 20; i++)
+    {
+        Replayable<0, SaveFrame, DrawableExplosionFragment>(frame, mExplosionFragments[i]);
+    }
+
+    for (int i = 0; i < mNumExplodables; i++)
+    {
+        Replayable<0, SaveFrame, bool>(frame, reinterpret_cast<bool&>(mpExplodableVisibilityRecords[i]));
+    }
+
+    Replayable<0, SaveFrame, DrawableCharacter>(frame, mChainChomp);
+    Replayable<0, SaveFrame, DrawableCharacter>(frame, mBowser);
+    Replayable<0, SaveFrame, DrawableBall>(frame, mBall);
+    Replayable<1, SaveFrame, nlVector3>(frame, mCameraUp);
+    Replayable<1, SaveFrame, bool>(frame, mGoalLight);
+
+    Replayable<1, SaveFrame, CrowdManager>(frame, CrowdManager::instance);
+    {
+        Replayable<3, SaveFrame, EmissionManager>(frame, EmissionManager::InstanceForReplayOnly());
+    }
+
+    if (NetMesh::s_bAnimatedNetMeshEnabled)
+    {
+        Replayable<1, SaveFrame, DrawableNetMesh>(frame, *mpNetMeshPositiveX);
+        Replayable<1, SaveFrame, DrawableNetMesh>(frame, *mpNetMeshNegativeX);
+    }
+
+    mValid = true;
+}
 
 /**
  * Offset/Address/Size: 0x0 | 0x80113654 | size: 0x294
  */
-// void RenderSnapshot::Replay<LoadFrame>(LoadFrame&)
-// {
-// }
+template <>
+void RenderSnapshot::Replay<LoadFrame>(LoadFrame& frame)
+{
+    nlVector3* pos;
+    for (int i = 0; i < 10; i++)
+    {
+        Replayable<0, LoadFrame, DrawableCharacter>(frame, mCharacters[i]);
+    }
+
+    for (int i = 0; i < 150; i++)
+    {
+        Replayable<0, LoadFrame, DrawablePowerup>(frame, mPowerups[i]);
+    }
+
+    for (int i = 0; i < 20; i++)
+    {
+        Replayable<0, LoadFrame, DrawableExplosionFragment>(frame, mExplosionFragments[i]);
+    }
+
+    for (int i = 0; i < mNumExplodables; i++)
+    {
+        Replayable<0, LoadFrame, bool>(frame, reinterpret_cast<bool&>(mpExplodableVisibilityRecords[i]));
+    }
+
+    Replayable<0, LoadFrame, DrawableCharacter>(frame, mChainChomp);
+    Replayable<0, LoadFrame, DrawableCharacter>(frame, mBowser);
+    Replayable<0, LoadFrame, DrawableBall>(frame, mBall);
+    Replayable<1, LoadFrame, nlVector3>(frame, mCameraUp);
+    Replayable<1, LoadFrame, bool>(frame, mGoalLight);
+
+    Replayable<1, LoadFrame, CrowdManager>(frame, CrowdManager::instance);
+
+    if (frame.mReplayNonBlendables == REPLAY_NON_BLENDABLES)
+    {
+        Replayable<3, LoadFrame, EmissionManager>(frame, EmissionManager::InstanceForReplayOnly());
+    }
+
+    if (NetMesh::s_bAnimatedNetMeshEnabled)
+    {
+        if (frame.mInterval == 1)
+        {
+            static bool doUpdate = false;
+
+            static nlVector3 ballPrevPosition = { 0.0f, 0.0f, 0.0f };
+
+            if (doUpdate)
+            {
+                doUpdate = false;
+
+                pos = &mBall.mPosition;
+                NetMesh::spPositiveXNetMesh->Update(g_fFixedUpdateTick, *pos, ballPrevPosition, mDoGoalieNetTestPosX, nullptr);
+                NetMesh::spNegativeXNetMesh->Update(g_fFixedUpdateTick, *pos, ballPrevPosition, mDoGoalieNetTestNegX, nullptr);
+                ballPrevPosition = *pos;
+
+                mpNetMeshPositiveX->Grab(*PhysicsNet::spPhysNetPositiveX->mpNetMesh);
+                mpNetMeshNegativeX->Grab(*PhysicsNet::spPhysNetNegativeX->mpNetMesh);
+            }
+
+            static float previousTime = 0.0f;
+
+            if (frame.mNonBlendableAheadOfFrame > 0.0f)
+            {
+                if (frame.mNonBlendableAheadOfFrame < previousTime)
+                {
+                    mpNetMeshPositiveX->Grab(*PhysicsNet::spPhysNetPositiveX->mpNetMesh);
+                    mpNetMeshNegativeX->Grab(*PhysicsNet::spPhysNetNegativeX->mpNetMesh);
+                    doUpdate = true;
+                }
+                previousTime = frame.mNonBlendableAheadOfFrame;
+            }
+        }
+
+        Replayable<1, LoadFrame, DrawableNetMesh>(frame, *mpNetMeshPositiveX);
+        Replayable<1, LoadFrame, DrawableNetMesh>(frame, *mpNetMeshNegativeX);
+    }
+
+    mValid = true;
+}
 
 /**
  * Offset/Address/Size: 0x844 | 0x80113518 | size: 0x13C

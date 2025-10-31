@@ -24,6 +24,9 @@ class DrawableCharacter;
 class DrawableBall
 {
 public:
+    template <typename T>
+    void Replay(T&);
+
     void EvaluateFrom(DrawableCharacter&);
     void Blend(const float*, const DrawableBall&, const DrawableBall&);
     void Render() const;
@@ -43,5 +46,11 @@ public:
     /* 0x24 */ nlQuaternion mOrientation;       // offset 0x24, size 0x10
     /* 0x34 */ nlQuaternion mPrevOrientation;   // offset 0x34, size 0x10
 }; // total size: 0x44
+
+template <>
+void DrawableBall::Replay<SaveFrame>(SaveFrame&);
+
+template <>
+void DrawableBall::Replay<LoadFrame>(LoadFrame&);
 
 #endif // _DRAWABLEBALL_H_

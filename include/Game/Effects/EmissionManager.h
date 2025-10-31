@@ -50,7 +50,7 @@ public:
     void Shutdown();
     void Startup(eGLView);
 
-    EmissionManager& InstanceForReplayOnly();
+    static EmissionManager& InstanceForReplayOnly();
 
     /* 0x00 */ bool m_bRecording;
 };

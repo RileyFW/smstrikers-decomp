@@ -4,39 +4,21 @@
 #include "types.h"
 #include "NL/nlMath.h"
 
+#include "Game/Replay.h"
+
 #include "Game/Drawable/DrawableBall.h"
 #include "Game/Drawable/DrawableCharacter.h"
 #include "Game/Drawable/DrawablePowerup.h"
 #include "Game/Drawable/DrawableExplosionFragment.h"
-
-// void Replayable<0, SaveFrame, DrawableCharacter>(SaveFrame&, DrawableCharacter&);
-// void Replayable<0, SaveFrame, DrawablePowerup>(SaveFrame&, DrawablePowerup&);
-// void Replayable<0, SaveFrame, DrawableExplosionFragment>(SaveFrame&, DrawableExplosionFragment&);
-// void Replayable<0, SaveFrame, bool>(SaveFrame&, bool&);
-// void Replayable<0, SaveFrame, DrawableBall>(SaveFrame&, DrawableBall&);
-// void Replayable<1, SaveFrame, nlVector3>(SaveFrame&, nlVector3&);
-// void Replayable<1, SaveFrame, bool>(SaveFrame&, bool&);
-// void Replayable<1, SaveFrame, CrowdManager>(SaveFrame&, CrowdManager&);
-// void Replayable<3, SaveFrame, EmissionManager>(SaveFrame&, EmissionManager&);
-// void Replayable<1, SaveFrame, DrawableNetMesh>(SaveFrame&, DrawableNetMesh&);
-// void Replayable<0, LoadFrame, DrawableCharacter>(LoadFrame&, DrawableCharacter&);
-// void Replayable<0, LoadFrame, DrawablePowerup>(LoadFrame&, DrawablePowerup&);
-// void Replayable<0, LoadFrame, DrawableExplosionFragment>(LoadFrame&, DrawableExplosionFragment&);
-// void Replayable<0, LoadFrame, bool>(LoadFrame&, bool&);
-// void Replayable<0, LoadFrame, DrawableBall>(LoadFrame&, DrawableBall&);
-// void Replayable<1, LoadFrame, nlVector3>(LoadFrame&, nlVector3&);
-// void Replayable<1, LoadFrame, bool>(LoadFrame&, bool&);
-// void Replayable<1, LoadFrame, CrowdManager>(LoadFrame&, CrowdManager&);
-// void Replayable<3, LoadFrame, EmissionManager>(LoadFrame&, EmissionManager&);
-// void Replayable<1, LoadFrame, DrawableNetMesh>(LoadFrame&, DrawableNetMesh&);
 
 class DrawableNetMesh;
 
 class RenderSnapshot
 {
 public:
-    // void Replay<SaveFrame>(SaveFrame&);
-    // void Replay<LoadFrame>(LoadFrame&);
+    template <typename T>
+    void Replay(T&);
+
     void Initialize();
     void Free();
     void Grab();
@@ -67,6 +49,10 @@ public:
     /*  0x1ABC */ float mFrameBlendPercent;
 }; // total size: 0x1ABC
 
-// SIZE: 0x1AC0
+template <>
+void RenderSnapshot::Replay<SaveFrame>(SaveFrame&);
+
+template <>
+void RenderSnapshot::Replay<LoadFrame>(LoadFrame&);
 
 #endif // _RENDERSNAPSHOT_H_
