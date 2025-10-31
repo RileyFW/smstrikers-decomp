@@ -27,7 +27,7 @@ public:
     /* 0x00 */ s8 mType;
     /* 0x04 */ float mScale;
     /* 0x08 */ float mRadius;
-    /* 0x0C */ unsigned char mVisible;
+    /* 0x0C */ bool mVisible;
     /* 0x10 */ nlVector3 mPosition;
     /* 0x1C */ u16 mOrientation;
 }; // total size: 0x20

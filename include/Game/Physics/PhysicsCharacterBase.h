@@ -61,7 +61,7 @@ public:
 
     void GetBoneIDForSubObject(const PhysicsObject*) const;
     void AddBoneVolumes(PhysicsWorld*, CollisionSpace*, cPoseAccumulator*, const CharacterPhysicsData*, unsigned long, unsigned long);
-    void UpdatePose(cPoseAccumulator*, float);
+    virtual void UpdatePose(cPoseAccumulator*, float);
     void SetFacingDirection(unsigned short);
     void ReleaseObject();
     void ContainObject(PhysicsObject*);

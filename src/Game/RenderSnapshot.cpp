@@ -1,5 +1,23 @@
 #include "Game/RenderSnapshot.h"
 
+#include "Game/Drawable/DrawableNetMesh.h"
+#include "Game/Render/SidelineExplodable.h"
+#include "Game/BasicStadium.h"
+#include "Game/Render/NPCManager.h"
+#include "Game/Camera/CameraMan.h"
+#include "Game/Render/NetMesh.h"
+#include "Game/Physics/PhysicsNet.h"
+#include "Game/Goalie.h"
+#include "Game/Render/SkinAnimatedMovableNPC.h"
+#include "Game/GL/GLInventory.h"
+#include "Game/GL/GLTextureAnim.h"
+#include "NL/gl/glState.h"
+
+extern cCharacter* g_pCharacters[10];
+extern bool g_GoalLightEnabled;
+extern float g_AllActorsHidden;
+extern GLInventory glInventory;
+
 // /**
 //  * Offset/Address/Size: 0x4D8 | 0x80113F20 | size: 0x3C
 //  */
@@ -159,6 +177,21 @@
  */
 void RenderSnapshot::Initialize()
 {
+    DrawableNetMesh* pNetMesh = new (nlMalloc(0x28, 8, false)) DrawableNetMesh(true);
+    mpNetMeshPositiveX = pNetMesh;
+
+    pNetMesh = new (nlMalloc(0x28, 8, false)) DrawableNetMesh(false);
+    mpNetMeshNegativeX = pNetMesh;
+
+    for (int i = 0; i < 20; i++)
+    {
+        mExplosionFragments[i].mID = i;
+    }
+
+    mNumExplodables = SidelineExplodableManager::GetNumExplodables();
+    mpExplodableVisibilityRecords = (unsigned char*)nlMalloc(mNumExplodables, 8, false);
+
+    mValid = false;
 }
 
 /**
@@ -166,6 +199,21 @@ void RenderSnapshot::Initialize()
  */
 void RenderSnapshot::Free()
 {
+    for (int i = 0; i < 10; i++)
+    {
+        mCharacters[i].Free();
+    }
+
+    mChainChomp.Free();
+    mBowser.Free();
+
+    delete mpNetMeshPositiveX;
+    delete mpNetMeshNegativeX;
+    delete[] mpExplodableVisibilityRecords;
+
+    mpNetMeshPositiveX = nullptr;
+    mpNetMeshNegativeX = nullptr;
+    mpExplodableVisibilityRecords = nullptr;
 }
 
 /**
@@ -173,6 +221,61 @@ void RenderSnapshot::Free()
  */
 void RenderSnapshot::Grab()
 {
+    for (int i = 0; i < 10; i++)
+    {
+        mCharacters[i].Grab(*g_pCharacters[i]);
+    }
+
+    for (int i = 0; i < 150; i++)
+    {
+        mPowerups[i].Grab(i);
+    }
+
+    for (int i = 0; i < 20; i++)
+    {
+        mExplosionFragments[i].Grab();
+    }
+
+    if (mpExplodableVisibilityRecords != nullptr)
+    {
+        SidelineExplodableManager::GetVisibilityOfExplodableModels((bool*)mpExplodableVisibilityRecords, mNumExplodables);
+    }
+
+    {
+        const BasicStadium* stadium = BasicStadium::GetCurrentStadium();
+        mChainChomp.Grab(*(stadium->mpNPCManager->mpChainChomp));
+    }
+
+    {
+        const BasicStadium* stadium = BasicStadium::GetCurrentStadium();
+        mBowser.Grab(*(stadium->mpNPCManager->mpBowser));
+    }
+
+    mBall.Grab();
+
+    mGoalLight = g_GoalLightEnabled;
+
+    if (NetMesh::s_bAnimatedNetMeshEnabled)
+    {
+        if (mpNetMeshPositiveX != nullptr)
+        {
+            PhysicsNet* physNet = PhysicsNet::spPhysNetPositiveX;
+            mpNetMeshPositiveX->Grab(*physNet->mpNetMesh);
+        }
+        if (mpNetMeshNegativeX != nullptr)
+        {
+            PhysicsNet* physNet = PhysicsNet::spPhysNetNegativeX;
+            mpNetMeshNegativeX->Grab(*physNet->mpNetMesh);
+        }
+
+        mDoGoalieNetTestPosX = Goalie::mbPosGoalieNetCheck;
+        mDoGoalieNetTestNegX = Goalie::mbNegGoalieNetCheck;
+    }
+
+    int stackSize = cCameraManager::m_UpVectorStackSize;
+    mCameraUp = cCameraManager::m_UpVectorStack[stackSize];
+
+    mValid = true;
 }
 
 /**
@@ -180,7 +283,20 @@ void RenderSnapshot::Grab()
  */
 int RenderSnapshot::NumDrawableObjects() const
 {
-    return 0;
+    int ret = 11;
+
+    if (mChainChomp.mVisible)
+        ret = 12;
+    if (mBowser.mVisible)
+        ret++;
+
+    for (int i = 0; i < 150; i++)
+    {
+        if (mPowerups[i].mVisible)
+            ret++;
+    }
+
+    return ret;
 }
 
 /**
@@ -196,13 +312,70 @@ const nlVector3& RenderSnapshot::GetPositionForDrawableObject(int) const
  */
 void RenderSnapshot::Invalidate()
 {
+    mValid = false;
 }
 
 /**
  * Offset/Address/Size: 0x21C | 0x80112EF0 | size: 0x1B4
  */
-void RenderSnapshot::Render(float) const
+void RenderSnapshot::Render(float deltaTime) const
 {
+    float hideTime = 0.0f;
+    bool bAllActorsHidden = false;
+
+    if (g_AllActorsHidden > 0.0f)
+    {
+        g_AllActorsHidden -= deltaTime;
+        bAllActorsHidden = true;
+    }
+
+    if (!mValid)
+        return;
+
+    if (!bAllActorsHidden)
+    {
+        {
+            const BasicStadium* stadium = BasicStadium::GetCurrentStadium();
+            mChainChomp.Render(*(stadium->mpNPCManager->mpChainChomp));
+        }
+
+        {
+            const BasicStadium* stadium = BasicStadium::GetCurrentStadium();
+            mBowser.Render(*(stadium->mpNPCManager->mpBowser));
+        }
+
+        for (int i = 0; i < 10; i++)
+        {
+            mCharacters[i].Render(*g_pCharacters[i]);
+        }
+
+        for (int i = 0; i < 150; i++)
+        {
+            mPowerups[i].Render(i);
+        }
+
+        for (int i = 0; i < 20; i++)
+        {
+            mExplosionFragments[i].Render();
+        }
+
+        mBall.Render();
+    }
+
+    mpNetMeshPositiveX->Render();
+    mpNetMeshNegativeX->Render();
+    SidelineExplodableManager::SetVisibilityOfUnexplodedModels((bool*)mpExplodableVisibilityRecords, mNumExplodables);
+
+    int stackSize = cCameraManager::m_UpVectorStackSize;
+    cCameraManager::m_UpVectorStack[stackSize] = mCameraUp;
+
+    static u32 texAnimHandle = glGetTexture("wario_stadium/goallight.ifl");
+
+    GLTextureAnim* pTexAnim = glInventory.GetTextureAnim(texAnimHandle);
+    if (pTexAnim != nullptr)
+    {
+        pTexAnim->m_isStopped = !mGoalLight;
+    }
 }
 
 /**
@@ -222,6 +395,8 @@ void RenderSnapshot::Blend(const float*, const RenderSnapshot&, const RenderSnap
 /**
  * Offset/Address/Size: 0x0 | 0x80112CD4 | size: 0xC
  */
-void RenderSnapshot::GetMutable()
+RenderSnapshot& RenderSnapshot::GetMutable()
 {
+    mValid = true;
+    return *this;
 }

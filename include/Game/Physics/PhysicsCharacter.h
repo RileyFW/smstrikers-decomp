@@ -20,7 +20,7 @@ public:
     void GetCharacterVelocityXY(nlVector3*);
     void SetCharacterPositionXY(const nlVector3&);
     void GetCharacterPositionXY(nlVector3*);
-    void ResolvePhysicsBoneIDFromName(const char*);
+    virtual void ResolvePhysicsBoneIDFromName(const char*);
     void GetRadius(float*);
 
     /* 0x80 */ unsigned int m_CanCollideWithWall : 1;

@@ -11,10 +11,10 @@ public:
     void Update(float);
     void RegisterShot(float);
 
-    /* 0x00 */ f32 m_unk_0x00;
-    /* 0x04 */ f32 m_unk_0x04;
-    /* 0x08 */ f32 m_unk_0x08;
-    /* 0x0C */ f32 m_unk_0x0C;
-};
+    /* 0x00 */ f32 mfEnergyLevel;
+    /* 0x04 */ f32 mfRecoverRate;
+    /* 0x08 */ f32 mfTimeSinceLastSave;
+    /* 0x0C */ f32 mfHotStreakTimer;
+}; // total size: 0x10
 
 #endif // _GOALIEFATIGUE_H_

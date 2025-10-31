@@ -227,7 +227,7 @@ void BlurHandler::RenderMesh(unsigned long textureID)
     glSetCurrentTexture(textureID, GLTT_Diffuse);
     glSetCurrentProgram(glGetProgram("3d unlit"));
     var_f31 = 0.0f;
-    *(u32*)&sp8 = 0xFFFFFFFF;
+    // *(u32*)&sp8 = 0xFFFFFFFF;
     if (m_bAdditive != 0)
     {
         nlColourSet(sp8, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -277,7 +277,7 @@ void BlurHandler::RenderMesh(unsigned long textureID)
                     }
                 }
                 temp_r0_2 = m_pointRingBuffer;
-                temp_f2 = ReplayManager::Instance()->mRender->m_unk1ABC;
+                temp_f2 = ReplayManager::Instance()->mRender->mFrameBlendPercent; // m_unk1ABC;
                 temp_r6 = &temp_r0_2[var_r26].v3Top;
                 temp_r5_2 = &temp_r0_2[var_r27].v3Top;
                 temp_f3 = 1.0f - temp_f2;

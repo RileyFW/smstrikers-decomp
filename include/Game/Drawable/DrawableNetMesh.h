@@ -2,6 +2,7 @@
 #define _DRAWABLENETMESH_H_
 
 #include "Game/Drawable/DrawableObj.h"
+#include "Game/Render/NetMesh.h"
 
 // void Replayable<0, LoadFrame, float>(LoadFrame&, float&);
 // void Replayable<0, SaveFrame, float>(SaveFrame&, float&);
@@ -9,7 +10,6 @@
 
 class LoadFrame;
 class SaveFrame;
-class NetMesh;
 
 class DrawableNetMesh
 {
@@ -22,6 +22,15 @@ public:
     void RenderInvisiblePlanes() const;
     ~DrawableNetMesh();
     DrawableNetMesh(bool);
-};
+
+    /* 0x00 */ nlVector3* mpPosition; // offset 0x0, size 0x4
+    /* 0x04 */ int miNetIndex;        // offset 0x4, size 0x4
+    /* 0x08 */ int mNumQuads;         // offset 0x8, size 0x4
+    /* 0x0C */ int mNumVertices;      // offset 0xC, size 0x4
+    /* 0x10 */ int mNumTriIndices;    // offset 0x10, size 0x4
+    /* 0x14 */ float mJolt;           // offset 0x14, size 0x4
+    /* 0x18 */ NetMesh* mpNetMesh;    // offset 0x18, size 0x4
+    /* 0x1C */ bool mbInitialized;    // offset 0x1C, size 0x1
+}; // total size: 0x20
 
 #endif // _DRAWABLENETMESH_H_

@@ -5,10 +5,10 @@
  */
 GoalieFatigue::GoalieFatigue()
 {
-    m_unk_0x00 = 0.0f;
-    m_unk_0x04 = 1.0f;
-    m_unk_0x08 = 0.0f;
-    m_unk_0x0C = 0.0f;
+    mfEnergyLevel = 0.0f;
+    mfRecoverRate = 1.0f;
+    mfTimeSinceLastSave = 0.0f;
+    mfHotStreakTimer = 0.0f;
 }
 
 /**
@@ -16,31 +16,27 @@ GoalieFatigue::GoalieFatigue()
  */
 void GoalieFatigue::Reset()
 {
-    m_unk_0x00 = 100.0f;
-    m_unk_0x08 = 0.0f;
-    m_unk_0x0C = 0.0f;
+    mfEnergyLevel = 100.0f;
+    mfTimeSinceLastSave = 0.0f;
+    mfHotStreakTimer = 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x38 | 0x80052C84 | size: 0x50
  */
-void GoalieFatigue::Update(float arg0)
+void GoalieFatigue::Update(float dt)
 {
-    f32 temp_f0;
-    f32 temp_f2;
-
-    temp_f2 = m_unk_0x00;
-    if (temp_f2 < 100.0f)
+    if (mfEnergyLevel < 100.0f)
     {
-        m_unk_0x00 = (m_unk_0x04 * arg0) + temp_f2;
+        mfEnergyLevel = (mfRecoverRate * dt) + mfEnergyLevel;
     }
-    temp_f0 = m_unk_0x0C;
-    if (temp_f0 > 0.0f)
+
+    if (mfHotStreakTimer > 0.0f)
     {
-        m_unk_0x0C = temp_f0 - arg0;
-        if (m_unk_0x0C <= 0.0f)
+        mfHotStreakTimer = mfHotStreakTimer - dt;
+        if (mfHotStreakTimer <= 0.0f)
         {
-            m_unk_0x00 = 100.0f;
+            mfEnergyLevel = 100.0f;
         }
     }
 }
@@ -48,15 +44,15 @@ void GoalieFatigue::Update(float arg0)
 /**
  * Offset/Address/Size: 0x0 | 0x80052C4C | size: 0x38
  */
-void GoalieFatigue::RegisterShot(float arg0)
+void GoalieFatigue::RegisterShot(float fLevel)
 {
-    m_unk_0x00 -= arg0;
-    if (m_unk_0x00 < 100.0f)
+    mfEnergyLevel -= fLevel;
+    if (mfEnergyLevel < 100.0f)
     {
-        m_unk_0x0C = 0.0f;
-        if (m_unk_0x00 < 0.0f)
+        mfHotStreakTimer = 0.0f;
+        if (mfEnergyLevel < 0.0f)
         {
-            m_unk_0x00 = 0.0f;
+            mfEnergyLevel = 0.0f;
         }
     }
 }

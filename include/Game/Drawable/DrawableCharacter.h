@@ -2,6 +2,8 @@
 #define _DRAWABLECHARACTER_H_
 
 #include "Game/Drawable/DrawableObj.h"
+#include "Game/CharacterEffects.h"
+#include "Game/Render/Bowser.h"
 
 // void FindBoundingSphereAccurate(nlVector3*, float*, int, const nlVector3*);
 // void DrawableCharacterHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int);
@@ -68,21 +70,21 @@ public:
     // void Replay<LoadFrame>(LoadFrame&);
     // void Replay<SaveFrame>(SaveFrame&);
 
-    unsigned char mVisible;                    // offset 0x0, size 0x1
-    class nlVector3 mPosition;                 // offset 0x4, size 0xC
-    class nlVector3 mBip01Position;            // offset 0x10, size 0xC
-    class nlVector3 mHeadPosition;             // offset 0x1C, size 0xC
-    float mHeight;                             // offset 0x28, size 0x4
-    class nlVector3 mVelocity;                 // offset 0x2C, size 0xC
-    unsigned short mFacingDirection;           // offset 0x38, size 0x2
-    unsigned short mHeadSpin;                  // offset 0x3A, size 0x2
-    unsigned short mHeadTilt;                  // offset 0x3C, size 0x2
-    class cPoseNode* mPoseTree;                // offset 0x40, size 0x4
-    class cPoseAccumulator* mPoseAccumulator;  // offset 0x44, size 0x4
-    class EffectsTexturing* mEffectsTexturing; // offset 0x48, size 0x4
-    class cCharacter* mCharacter;              // offset 0x4C, size 0x4
-    class Bowser* mBowser;                     // offset 0x50, size 0x4
-    unsigned char mDirt;                       // offset 0x54, size 0x1
+    /* 0x0, */ bool mVisible;                       // offset 0x0, size 0x1
+    /* 0x4, */ nlVector3 mPosition;                 // offset 0x4, size 0xC
+    /* 0x10 */ nlVector3 mBip01Position;            // offset 0x10, size 0xC
+    /* 0x1C */ nlVector3 mHeadPosition;             // offset 0x1C, size 0xC
+    /* 0x28 */ float mHeight;                       // offset 0x28, size 0x4
+    /* 0x2C */ nlVector3 mVelocity;                 // offset 0x2C, size 0xC
+    /* 0x38 */ unsigned short mFacingDirection;     // offset 0x38, size 0x2
+    /* 0x3A */ unsigned short mHeadSpin;            // offset 0x3A, size 0x2
+    /* 0x3C */ unsigned short mHeadTilt;            // offset 0x3C, size 0x2
+    /* 0x40 */ cPoseNode* mPoseTree;                // offset 0x40, size 0x4
+    /* 0x44 */ cPoseAccumulator* mPoseAccumulator;  // offset 0x44, size 0x4
+    /* 0x48 */ EffectsTexturing* mEffectsTexturing; // offset 0x48, size 0x4
+    /* 0x4C */ cCharacter* mCharacter;              // offset 0x4C, size 0x4
+    /* 0x50 */ Bowser* mBowser;                     // offset 0x50, size 0x4
+    /* 0x54 */ bool mDirt;                          // offset 0x54, size 0x1
 }; // total size: 0x58
 
 // class cPoseAccumulator

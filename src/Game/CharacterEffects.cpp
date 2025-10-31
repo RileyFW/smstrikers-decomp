@@ -1,11 +1,11 @@
 #include "Game/CharacterEffects.h"
 
 static EffectsTexturing fxTexturing[] = {
-    { 0xFFFFFFFF, 0x00000000, 0x00000000 },
-    { glGetTexture("effects/fx_env_ice"), 0x00000003, 0x00000000 },
-    { glGetTexture("effects/fx_env_fire"), 0x00000003, 0x01000000 },
-    { glGetTexture("effects/fx_yellow_glow"), 0x00000000, 0x00010000 },
-    { glGetTexture("effects/fx_electrocution"), 0x00000000, 0x01000000 },
+    { 0xFFFFFFFF, GLB_None, false, false },
+    { glGetTexture("effects/fx_env_ice"), GLB_ScaledAdditive, false, false },
+    { glGetTexture("effects/fx_env_fire"), GLB_ScaledAdditive, true, false },
+    { glGetTexture("effects/fx_yellow_glow"), GLB_None, false, true },
+    { glGetTexture("effects/fx_electrocution"), GLB_None, true, false },
 };
 
 /**
