@@ -14,8 +14,10 @@ public:
         FOLLOW_ANIM_VIEWER_CHARACTER = 3,
     };
 
+    cFollowCamera();
     cFollowCamera(cFollowCamera::FollowTarget);
-    // virtual ~cFollowCamera() { };
+    virtual ~cFollowCamera() { };
+
     /* 0x0C */ virtual eCameraType GetType()
     {
         if (m_FollowTarget == FOLLOW_BALL)

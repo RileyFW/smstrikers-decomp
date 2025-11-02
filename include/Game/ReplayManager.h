@@ -49,7 +49,7 @@ public:
     void InitializeSnapshots();
     void Uninitialize();
     void GrabSnapshot();
-    void GetMutableRenderSnapshot();
+    RenderSnapshot& GetMutableRenderSnapshot();
     void Flush();
     void ResetSnapshots();
     void PrepareForRecording();

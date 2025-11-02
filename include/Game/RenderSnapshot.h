@@ -19,6 +19,13 @@ public:
     template <typename T>
     void Replay(T&);
 
+    RenderSnapshot()
+    {
+        mpNetMeshPositiveX = nullptr;
+        mpNetMeshNegativeX = nullptr;
+        mFrameBlendPercent = 0.0f;
+    }
+
     void Initialize();
     void Free();
     void Grab();
@@ -47,7 +54,7 @@ public:
     /*  0x1AAC */ int mNumExplodables;
     /*  0x1AB0 */ nlVector3 mCameraUp;
     /*  0x1ABC */ float mFrameBlendPercent;
-}; // total size: 0x1ABC
+}; // total size: 0x1AC0
 
 template <>
 void RenderSnapshot::Replay<SaveFrame>(SaveFrame&);

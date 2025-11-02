@@ -13,6 +13,7 @@ class DrawablePowerup;
 class CrowdManager;
 class EmissionManager;
 class DrawableNetMesh;
+class RenderSnapshot;
 
 class WriteByteStream
 {
@@ -136,6 +137,9 @@ public:
     float BeginTime() const;
     float EndTime() const;
     void PlayReel(int);
+
+    template <typename T>
+    void Record(float time, T& snapshot, unsigned int events);
 
     /* 0x00 */ Frame* mFree;            // offset 0x0, size 0x4
     /* 0x04 */ Reel mReels[4];          // offset 0x4, size 0x40

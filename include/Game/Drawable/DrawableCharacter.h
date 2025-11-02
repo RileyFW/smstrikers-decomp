@@ -7,7 +7,7 @@
 #include "Game/Render/Bowser.h"
 
 // void FindBoundingSphereAccurate(nlVector3*, float*, int, const nlVector3*);
-// void DrawableCharacterHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int);
+void DrawableCharacterHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int);
 // void Replayable<1>(LoadFrame&, char, cPoseNode*&);
 // void Replayable<1>(SaveFrame&, char, cPoseNode*&);
 // void Replayable<0>(SaveFrame&, char, cPoseNode*&);
@@ -53,26 +53,26 @@ public:
     template <typename T>
     void Replay(T&);
 
-    void OnlyRenderingOneCharacter();
-    void RenderAllCharacters();
-    void RenderOnlyOneCharacter(const cCharacter&, bool);
-    void GetBallOrientation() const;
-    void GetBallPosition() const;
-    void EvaluateFrom(const cPoseNode&, const nlVector3&, unsigned short);
-    void Blend(const float*, const DrawableCharacter&, const DrawableCharacter&);
-    void Render(SkinAnimatedMovableNPC&) const;
-    void Grab(SkinAnimatedMovableNPC&);
-    void SendToGl(const cCharacter&) const;
-    void Render(cCharacter&) const;
-    void BuildNodeMatrices();
-    void DrawableBowserHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int);
-    void Grab(cCharacter&);
-    void GetAnimController() const;
-    void Free();
-    ~DrawableCharacter();
     DrawableCharacter();
-    // void Replay<LoadFrame>(LoadFrame&);
-    // void Replay<SaveFrame>(SaveFrame&);
+    ~DrawableCharacter();
+
+    void Free();
+    cPN_SAnimController& GetAnimController() const;
+    void Grab(cCharacter&);
+    void DrawableBowserHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int);
+    void BuildNodeMatrices();
+    void Render(cCharacter&) const;
+    void SendToGl(const cCharacter&) const;
+    void Grab(SkinAnimatedMovableNPC&);
+    void Render(SkinAnimatedMovableNPC&) const;
+    void Blend(const float*, const DrawableCharacter&, const DrawableCharacter&);
+    void EvaluateFrom(const cPoseNode&, const nlVector3&, unsigned short);
+    void GetBallPosition() const;
+    void GetBallOrientation() const;
+
+    static void RenderOnlyOneCharacter(const cCharacter&, bool);
+    static void RenderAllCharacters();
+    static cCharacter* OnlyRenderingOneCharacter();
 
     /* 0x0, */ bool mVisible;                       // offset 0x0, size 0x1
     /* 0x4, */ nlVector3 mPosition;                 // offset 0x4, size 0xC

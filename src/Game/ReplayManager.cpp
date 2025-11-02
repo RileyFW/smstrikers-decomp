@@ -1,4 +1,27 @@
 #include "Game/ReplayManager.h"
+#include "Game/Camera/CameraMan.h"
+#include "NL/nlTask.h"
+#include "NL/nlMemory.h"
+#include "PowerPC_EABI_Support/Runtime/MWCPlusLib.h"
+#include "PowerPC_EABI_Support/Runtime/global_destructor_chain.h"
+
+extern float g_fSimulationTick;
+
+// Forward declarations for constructor/destructor functions
+extern "C"
+{
+    void __ct__14RenderSnapshotFv(void*, int);
+    void __dt__14RenderSnapshotFv(void*, int);
+    void __dt__13ReplayManagerFv(void*, int);
+}
+
+namespace
+{
+static bool sInitialized = false;
+static char sInstanceStorage[sizeof(ReplayManager)];
+static ReplayManager* sInstance = reinterpret_cast<ReplayManager*>(sInstanceStorage);
+static DestructorChain sDestructorChain;
+} // namespace
 
 // /**
 //  * Offset/Address/Size: 0x3B4 | 0x80112CC4 | size: 0x10
@@ -96,7 +119,8 @@ ReplayManager::~ReplayManager()
  */
 ReplayManager* ReplayManager::Instance()
 {
-    return nullptr;
+    static ReplayManager instance;
+    return &instance;
 }
 
 /**
@@ -104,6 +128,9 @@ ReplayManager* ReplayManager::Instance()
  */
 void ReplayManager::Initialize()
 {
+    mMemory = (u8*)nlVirtualAlloc(0x1C0000, false);
+    mReplay = new (nlMalloc(0x48, 8, false)) Replay((char*)mMemory, 0x1C0000, 0x8000);
+    mTime = 0.0f;
 }
 
 /**
@@ -111,6 +138,10 @@ void ReplayManager::Initialize()
  */
 void ReplayManager::InitializeSnapshots()
 {
+    for (int i = 0; i < 3; i++)
+    {
+        mSnapshots[i].Initialize();
+    }
 }
 
 /**
@@ -118,6 +149,16 @@ void ReplayManager::InitializeSnapshots()
  */
 void ReplayManager::Uninitialize()
 {
+    nlVirtualFree(mMemory);
+    mMemory = nullptr;
+
+    for (int i = 0; i < 3; i++)
+    {
+        mSnapshots[i].Free();
+    }
+
+    delete mReplay;
+    mReplay = nullptr;
 }
 
 /**
@@ -125,13 +166,27 @@ void ReplayManager::Uninitialize()
  */
 void ReplayManager::GrabSnapshot()
 {
+    RenderSnapshot* temp = mCurrent;
+    mCurrent = mPrevious;
+    mPrevious = temp;
+
+    mCurrent->Grab();
+
+    if (nlTaskManager::m_pInstance->m_CurrState == 2)
+    {
+        mTime = mReplay->EndTime() + g_fSimulationTick;
+        mReplay->Record<RenderSnapshot>(mTime, *mCurrent, mEvents);
+        mEvents = 0;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x6B4 | 0x80112424 | size: 0x2C
  */
-void ReplayManager::GetMutableRenderSnapshot()
+RenderSnapshot& ReplayManager::GetMutableRenderSnapshot()
 {
+    mRender = mCurrent;
+    return mRender->GetMutable();
 }
 
 /**
@@ -139,6 +194,28 @@ void ReplayManager::GetMutableRenderSnapshot()
  */
 void ReplayManager::Flush()
 {
+    delete mReplay;
+    mReplay = new (nlMalloc(0x48, 8, false)) Replay((char*)mMemory, 0x1C0000, 0x8000);
+
+    int i;
+    RenderSnapshot* p = mSnapshots;
+    for (i = 0; i < 3; i++, p++)
+    {
+        p->Invalidate();
+    }
+
+    RenderSnapshot* temp = mCurrent;
+    mCurrent = mPrevious;
+    mPrevious = temp;
+
+    mCurrent->Grab();
+
+    if (nlTaskManager::m_pInstance->m_CurrState == 2)
+    {
+        mTime = mReplay->EndTime() + g_fSimulationTick;
+        mReplay->Record<RenderSnapshot>(mTime, *mCurrent, mEvents);
+        mEvents = 0;
+    }
 }
 
 /**
@@ -146,6 +223,23 @@ void ReplayManager::Flush()
  */
 void ReplayManager::ResetSnapshots()
 {
+    for (int i = 0; i < 3; i++)
+    {
+        mSnapshots[i].Invalidate();
+    }
+
+    RenderSnapshot* temp = mCurrent;
+    mCurrent = mPrevious;
+    mPrevious = temp;
+
+    mCurrent->Grab();
+
+    if (nlTaskManager::m_pInstance->m_CurrState == 2)
+    {
+        mTime = mReplay->EndTime() + g_fSimulationTick;
+        mReplay->Record<RenderSnapshot>(mTime, *mCurrent, mEvents);
+        mEvents = 0;
+    }
 }
 
 /**
@@ -153,20 +247,60 @@ void ReplayManager::ResetSnapshots()
  */
 void ReplayManager::PrepareForRecording()
 {
+    cCameraManager::Remove(mDebugCamera);
+    mTime = mReplay->EndTime();
+    mCurrent->Invalidate();
+    mPrevious->Invalidate();
+    mRender = nullptr;
 }
 
 /**
  * Offset/Address/Size: 0x454 | 0x801121C4 | size: 0x6C
  */
-void ReplayManager::SetCurrentTime(float)
+void ReplayManager::SetCurrentTime(float time)
 {
+    mTime = time;
+
+    if (mTime < mReplay->BeginTime())
+    {
+        mTime = mReplay->BeginTime();
+    }
+
+    if (mTime > mReplay->EndTime())
+    {
+        mTime = mReplay->EndTime();
+    }
 }
 
 /**
  * Offset/Address/Size: 0x3C0 | 0x80112130 | size: 0x94
  */
-void ReplayManager::EventHandler(Event*)
+void ReplayManager::EventHandler(Event* event)
 {
+    if (event->m_uEventID == 0xD)
+    {
+        mEvents |= 4;
+    }
+    if (event->m_uEventID == 0x14)
+    {
+        mEvents |= 2;
+    }
+    if (event->m_uEventID == 0xE)
+    {
+        mEvents |= 8;
+    }
+    if (event->m_uEventID == 5)
+    {
+        mEvents |= 1;
+    }
+    if (event->m_uEventID == 0xF)
+    {
+        mEvents |= 0x16;
+    }
+    if (event->m_uEventID == 0xF)
+    {
+        mEvents |= 1;
+    }
 }
 
 /**

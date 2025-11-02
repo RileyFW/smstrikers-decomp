@@ -1030,7 +1030,7 @@ config.libs = [
             # GFX
             Object(NonMatching, "Game/Drawable/DrawableObj.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableNetMesh.cpp"),
-            Object(NonMatching, "Game/Drawable/DrawableCharacter.cpp"),
+            Object(NonMatching, "Game/Drawable/DrawableCharacter.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableBall.cpp"),
             Object(NonMatching, "Game/Drawable/DrawablePowerup.cpp"),
             Object(NonMatching, "Game/Drawable/DrawableExplosionFragment.cpp"),
