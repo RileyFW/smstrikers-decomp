@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include "NL/nlMath.h"
+#include "NL/nlSlotPool.h"
 
 // Forward declarations
 class DrawableCharacter;
@@ -95,43 +96,58 @@ enum ReplayType
 class Replay
 {
 public:
-    class Reel
+    struct Frame
     {
-        Reel() { };
-    };
+        Frame(char* begin, int size, Frame* next);
 
-    class Frame
+        /* 0x00 */ float mTime;
+        /* 0x04 */ char* mBegin;
+        /* 0x08 */ int mSize;
+        /* 0x0C */ int mInterval;
+        /* 0x10 */ unsigned int mEvents;
+        /* 0x14 */ int mReelIdx;
+        /* 0x18 */ Frame* mNext;
+    }; // total size: 0x1C
+
+    struct Reel
     {
-        Frame(char*, int, Frame*) { };
-    };
+        Reel()
+        {
+            // mQuality = 0;
+            mBegin = nullptr;
+            mLast = nullptr;
+            mAge = 0;
+        };
+
+        /* 0x0 */ Frame* mBegin;
+        /* 0x4 */ Frame* mLast;
+        /* 0x8 */ int mAge; // or float?
+    }; // total size: 0xC (corrected from 0x10)
 
     Replay(char*, int, int);
     ~Replay();
 
-    void Next(Frame*, int) const;
-    void TimeOfLastOccurence(unsigned int) const;
+    Frame* Next(Frame*, int) const;
+    float TimeOfLastOccurence(unsigned int) const;
     void NewFrame();
-    void IsReelValid(int) const;
-    void DidOccurInLastNumSeconds(unsigned int, float) const;
+    bool IsReelValid(int) const;
+    bool DidOccurInLastNumSeconds(unsigned int, float) const;
     void LockReel(float, int, int);
-    void BeginTime() const;
-    void EndTime() const;
+    float BeginTime() const;
+    float EndTime() const;
     void PlayReel(int);
 
     /* 0x00 */ Frame* mFree;            // offset 0x0, size 0x4
     /* 0x04 */ Reel mReels[4];          // offset 0x4, size 0x40
-    /* 0x44 */ int mReelIdx;            // offset 0x44, size 0x4
-    /* 0x48 */ int mTick;               // offset 0x48, size 0x4
-    /* 0x4C */ int mMemorySize;         // offset 0x4C, size 0x4
-    /* 0x50 */ int mMaxFrameSize;       // offset 0x50, size 0x4
-    /* 0x54 */ int mActualMaxFrameSize; // offset 0x54, size 0x4
-    /* 0x58 */ Reel* mHighlights[3];    // offset 0x58, size 0xC
-}; // total size: 0x64
+    /* 0x34 */ int mReelIdx;            // offset 0x44, size 0x4
+    /* 0x38 */ int mTick;               // offset 0x48, size 0x4
+    /* 0x3C */ int mMemorySize;         // offset 0x4C, size 0x4
+    /* 0x40 */ int mMaxFrameSize;       // offset 0x50, size 0x4
+    /* 0x44 */ int mActualMaxFrameSize; // offset 0x54, size 0x4
+    /* 0x48 */ Reel* mHighlights[3];    // offset 0x58, size 0xC
 
-// class SlotPool < Replay
-// {
-// public:
-//     void Frame > ::~SlotPool();
-// };
+    static SlotPool<Frame> mSlotPool;
+
+}; // total size: 0x64
 
 #endif // _REPLAY_H_

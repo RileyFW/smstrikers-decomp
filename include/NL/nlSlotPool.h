@@ -55,7 +55,21 @@ template <typename T>
 class BasicSlotPool : public SlotPoolBase
 {
 public:
-    virtual ~BasicSlotPool()
+    BasicSlotPool()
+        : SlotPoolBase()
+    {
+        this->m_Initial = 0x400;
+        BaseAddNewBlock(this, sizeof(T));
+        this->m_Delta = 0x80;
+    }
+    // BasicSlotPool(const int initial, const int delta)
+    //     : SlotPoolBase()
+    // {
+    //     this->m_Initial = initial;
+    //     BaseAddNewBlock(this, sizeof(T));
+    //     this->m_Delta = delta;
+    // }
+    ~BasicSlotPool()
     {
         BaseFreeBlocks(this, sizeof(T));
     };
@@ -65,7 +79,10 @@ template <typename T>
 class SlotPool : public BasicSlotPool<T>
 {
 public:
-    virtual ~SlotPool() { };
+    // SlotPool()
+    //     : BasicSlotPool<T>(0x400, 0x80)
+    // {
+    // }
 }; // total size: 0x18
 
 #endif // _NLSLOTPOOL_H_

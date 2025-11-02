@@ -1,24 +1,60 @@
 #include "Game/Replay.h"
+#include "NL/nlConfig.h"
+#include "NL/nlLexicalCast.h"
 
-// /**
-//  * Offset/Address/Size: 0x68 | 0x80214278 | size: 0x64
-//  */
-// void SlotPool<Replay::Frame>::~SlotPool()
-// {
-// }
+SlotPool<Replay::Frame> Replay::mSlotPool;
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x802141FC | size: 0x14
-//  */
-// void Replay::Reel::Reel()
-// {
-// }
+namespace
+{
+bool renderMemoryLayout = false;
+}
 
 /**
  * Offset/Address/Size: 0x7C8 | 0x80214074 | size: 0x188
  */
-Replay::Replay(char*, int, int)
+Replay::Replay(char* memory, int memorySize, int maxFrameSize)
 {
+    Frame* frame = nullptr;
+
+    // Allocate a Frame from the slot pool if none available
+    if (mSlotPool.m_FreeList == nullptr)
+    {
+        SlotPoolBase::BaseAddNewBlock(&mSlotPool, sizeof(Frame));
+    }
+
+    // Get a Frame from the free list
+    if (mSlotPool.m_FreeList != nullptr)
+    {
+        frame = (Frame*)mSlotPool.m_FreeList;
+        mSlotPool.m_FreeList = (SlotPoolEntry*)frame->mNext;
+    }
+
+    // Initialize the Frame if we got one
+    if (frame != nullptr)
+    {
+        frame->mTime = 0.0f;
+        frame->mBegin = memory;
+        frame->mSize = memorySize;
+        frame->mInterval = 0;
+        frame->mEvents = 0;
+        frame->mReelIdx = -1;
+        frame->mNext = nullptr;
+    }
+
+    mFree = frame;
+
+    mReelIdx = 0;
+    mTick = 0;
+    mMemorySize = memorySize;
+    mMaxFrameSize = maxFrameSize;
+    mActualMaxFrameSize = 0;
+
+    mFree->mNext = mFree;
+    mReels[0].mLast = mFree;
+    mReels[0].mBegin = mFree;
+
+    Config& config = Config::Global();
+    renderMemoryLayout = GetConfigBool(config, "draw_replay_bar", false);
 }
 
 /**
@@ -28,25 +64,71 @@ Replay::~Replay()
 {
 }
 
-// /**
-//  * Offset/Address/Size: 0x714 | 0x80213FC0 | size: 0x2C
-//  */
-// void Replay::Frame::Frame(char*, int, Replay::Frame*)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x714 | 0x80213FC0 | size: 0x2C
+ */
+Replay::Frame::Frame(char* begin, int size, Frame* next)
+{
+    mTime = 0.0f;
+    mBegin = begin;
+    mSize = size;
+    mInterval = 0;
+    mEvents = 0;
+    mReelIdx = -1;
+    mNext = next;
+}
 
 /**
  * Offset/Address/Size: 0x6AC | 0x80213F58 | size: 0x68
  */
-void Replay::Next(Replay::Frame*, int) const
+Replay::Frame* Replay::Next(Replay::Frame* frame, int reelIdx) const
 {
+    Frame* current = frame->mNext;
+
+    while (current != mReels[reelIdx].mBegin)
+    {
+        if (current->mReelIdx == reelIdx)
+        {
+            return current;
+        }
+
+        if (reelIdx == 0 && current->mReelIdx > 0)
+        {
+            if (frame->mTime <= current->mTime)
+            {
+                return current;
+            }
+        }
+
+        current = current->mNext;
+    }
+
+    return nullptr;
+}
+
+inline Replay::Frame* GetFrame(const Replay::Reel* mReels, int reelIdx)
+{
+    return mReels[reelIdx].mBegin;
 }
 
 /**
  * Offset/Address/Size: 0x618 | 0x80213EC4 | size: 0x94
  */
-void Replay::TimeOfLastOccurence(unsigned int) const
+float Replay::TimeOfLastOccurence(unsigned int events) const
 {
+    Frame* frame = GetFrame(mReels, mReelIdx);
+    float time = frame->mTime;
+
+    while (frame != nullptr)
+    {
+        if ((frame->mEvents & events) != 0)
+        {
+            time = frame->mTime;
+        }
+        frame = Next(frame, mReelIdx);
+    }
+
+    return time;
 }
 
 /**
@@ -59,15 +141,33 @@ void Replay::NewFrame()
 /**
  * Offset/Address/Size: 0x480 | 0x80213D2C | size: 0x1C
  */
-void Replay::IsReelValid(int) const
+bool Replay::IsReelValid(int reelIdx) const
 {
+    return mReels[reelIdx].mBegin != nullptr;
 }
 
 /**
  * Offset/Address/Size: 0x3D4 | 0x80213C80 | size: 0xAC
  */
-void Replay::DidOccurInLastNumSeconds(unsigned int, float) const
+bool Replay::DidOccurInLastNumSeconds(unsigned int events, float seconds) const
 {
+    float timeThreshold = mReels[mReelIdx].mLast->mTime - seconds;
+    Frame* frame = GetFrame(mReels, mReelIdx);
+
+    while (frame != nullptr)
+    {
+        if (frame->mTime >= timeThreshold)
+        {
+            if ((frame->mEvents & events) != 0)
+            {
+                return true;
+            }
+        }
+
+        frame = Next(frame, mReelIdx);
+    }
+
+    return false;
 }
 
 /**
@@ -80,20 +180,23 @@ void Replay::LockReel(float, int, int)
 /**
  * Offset/Address/Size: 0x20 | 0x802138CC | size: 0x18
  */
-void Replay::BeginTime() const
+float Replay::BeginTime() const
 {
+    return mReels[mReelIdx].mBegin->mTime;
 }
 
 /**
  * Offset/Address/Size: 0x8 | 0x802138B4 | size: 0x18
  */
-void Replay::EndTime() const
+float Replay::EndTime() const
 {
+    return mReels[mReelIdx].mLast->mTime;
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x802138AC | size: 0x8
  */
-void Replay::PlayReel(int)
+void Replay::PlayReel(int reelIdx)
 {
+    mReelIdx = reelIdx;
 }
