@@ -18,13 +18,13 @@ public:
     /* 0x18 */ virtual void Update(float);
     /* 0x1C */ virtual void DrawShadow(const glModel*, const nlMatrix4&);
     /* 0x20 */ virtual void DrawShadow(const cPoseAccumulator&, const nlMatrix4&);
-    /* 0x24 */ virtual void GetHeadSpin() const;
-    /* 0x28 */ virtual void GetHeadTilt() const;
+    /* 0x24 */ virtual float GetHeadSpin() const;
+    /* 0x28 */ virtual float GetHeadTilt() const;
     /* 0x2C */ virtual void SetPosition(const nlVector3&);
-    /* 0x30 */ virtual void move(float) = 0;
-    /* 0x34 */ virtual void AnimMove(float, bool);
-    /* 0x38 */ virtual void AnimMoveSeek(float, float, float, bool);
-    void AnimTranslate(float, bool);
+    /* 0x30 */ virtual void Move(float) = 0;
+    /* 0x34 */ virtual void AnimTranslate(float, bool);
+    /* 0x38 */ virtual void AnimMove(float, bool);
+    /* 0x3C */ virtual void AnimMoveSeek(float, float, float, bool);
 
     /* 0x5C */ nlVector3 mv3Position;
     /* 0x68 */ nlVector3 mv3Velocity;

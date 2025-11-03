@@ -59,16 +59,16 @@ public:
     void Free();
     cPN_SAnimController& GetAnimController() const;
     void Grab(cCharacter&);
-    void DrawableBowserHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int);
+    static void DrawableBowserHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int);
     void BuildNodeMatrices();
     void Render(cCharacter&) const;
     void SendToGl(const cCharacter&) const;
-    void Grab(SkinAnimatedMovableNPC&);
-    void Render(SkinAnimatedMovableNPC&) const;
+    void Grab(SkinAnimatedMovableNPC& character);
+    void Render(SkinAnimatedMovableNPC& character) const;
     void Blend(const float*, const DrawableCharacter&, const DrawableCharacter&);
     void EvaluateFrom(const cPoseNode&, const nlVector3&, unsigned short);
-    void GetBallPosition() const;
-    void GetBallOrientation() const;
+    nlVector3 GetBallPosition() const;
+    nlQuaternion GetBallOrientation() const;
 
     static void RenderOnlyOneCharacter(const cCharacter&, bool);
     static void RenderAllCharacters();
@@ -89,6 +89,10 @@ public:
     /* 0x4C */ cCharacter* mCharacter;              // offset 0x4C, size 0x4
     /* 0x50 */ Bowser* mBowser;                     // offset 0x50, size 0x4
     /* 0x54 */ bool mDirt;                          // offset 0x54, size 0x1
+
+    static cCharacter* spRenderOnlyThisCharacter;
+    static bool sbRenderOpposingGoalieToo;
+
 }; // total size: 0x58
 
 template <>

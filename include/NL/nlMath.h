@@ -242,6 +242,22 @@ struct nlMatrix4
         m[2][col] = v.f.z;
     }
 
+    // inline version
+    void SetColumn_(int col, const nlVector3& v)
+    {
+        m[0][col] = v.f.x;
+        m[1][col] = v.f.y;
+        m[2][col] = v.f.z;
+    }
+
+    // inline version
+    void SetRow_(int row, const nlVector3& v)
+    {
+        m[row][0] = v.f.x;
+        m[row][1] = v.f.y;
+        m[row][2] = v.f.z;
+    }
+
     /**
      * Offset/Address/Size: 0x0 | 0x80204294 | size: 0x8
      */

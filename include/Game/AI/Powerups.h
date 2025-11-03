@@ -161,7 +161,7 @@ void InitializePowerups();
 void FindPowerUp(unsigned long);
 void PowerupCreateAndThrow(cFielder*, ePowerUpType, int, Bowser*);
 void PowerupThrowPosition(int, eThrowStyle, PowerupBase*, PowerupBase*);
-void FindPowerupTarget(cFielder*, Bowser*);
+cFielder* FindPowerupTarget(cFielder*, Bowser*);
 
 // class PhysicsShell
 // {

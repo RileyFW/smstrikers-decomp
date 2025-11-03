@@ -22,18 +22,17 @@ class AnimRetarget;
 class cPN_SAnimController : public cPoseNode
 {
 public:
-    void SetTime(float);
-    int GetType() { return 0x2; };
-
     cPN_SAnimController(cSAnim*, const AnimRetarget*, ePlayMode, void (*)(unsigned int, cPN_SAnimController*), unsigned int, bool);
-    ~cPN_SAnimController() { };
+    /* 0x08 */ virtual ~cPN_SAnimController() { };
+    /* 0x10 */ virtual void Evaluate(float, cPoseAccumulator*) const;
+    /* 0x14 */ virtual void Evaluate(int, float, cPoseAccumulator*) const;
+    /* 0x18 */ virtual void Update(float);
+    /* 0x1C */ virtual int GetType() { return 0x2; };
+    /* 0x20 */ virtual void BlendRootTrans(nlVector3*, float, float*);
+    /* 0x24 */ virtual void BlendRootRot(unsigned short*, float, float*);
 
-    void Update(float);
     void UpdateSynchronized(float);
-    void Evaluate(float, cPoseAccumulator*) const;
-    void Evaluate(int, float, cPoseAccumulator*) const;
-    void BlendRootTrans(nlVector3*, float, float*);
-    void BlendRootRot(unsigned short*, float, float*);
+    void SetTime(float);
     void ProcessCallbacks();
     void TestTrigger(float) const;
     void TestFrameTrigger(float);

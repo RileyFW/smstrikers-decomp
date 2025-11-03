@@ -4,8 +4,9 @@
 #include "Game/Drawable/DrawableObj.h"
 #include "NL/nlMath.h"
 
-// void BallLightingCB(glModel*, eGLView&, unsigned long&);
-// void BallBlurCB(glModel*, eGLView&, unsigned long&);
+glModel* BallLightingCB(glModel* pModel, eGLView& view, unsigned long& uLayer);
+glModel* BallBlurCB(glModel* pModel, eGLView& view, unsigned long& uLayer);
+
 // void Replayable<1, SaveFrame, char>(SaveFrame&, char&);
 // void Replayable<1, LoadFrame, char>(LoadFrame&, char&);
 // void Replayable<1, SaveFrame, FloatCompressor<-127, 127, 7>>(SaveFrame&, const FloatCompressor<-127, 127, 7>&);
@@ -31,7 +32,7 @@ public:
     void Blend(const float*, const DrawableBall&, const DrawableBall&);
     void Render() const;
     void Grab();
-    void IndexToPlayer(int) const;
+    DrawableCharacter* IndexToPlayer(int) const;
     // void Replay<LoadFrame>(LoadFrame&);
     // void Replay<SaveFrame>(SaveFrame&);
 

@@ -1,4 +1,8 @@
 #include "Game/Render/Bowser.h"
+#include "Game/AI/HeadTrack.h"
+#include "Game/AI/Powerups.h"
+#include "Game/AI/Fielder.h"
+#include "Game/Ball.h"
 
 /**
  * Offset/Address/Size: 0x4BBC | 0x8015D930 | size: 0x2C
@@ -153,6 +157,14 @@ void Bowser::UpdateBowserLandEmitter(EmissionController&)
  */
 void Bowser::FindTarget()
 {
+    if (g_pBall->GetOwnerFielder() != NULL && !g_pBall->GetOwnerFielder()->IsInvincible())
+    {
+        mpTarget = g_pBall->GetOwnerFielder(); // at 0x0EC
+    }
+    else
+    {
+        mpTarget = FindPowerupTarget((cFielder*)NULL, this);
+    }
 }
 
 /**
@@ -179,20 +191,23 @@ void Bowser::CheckFootSteps()
 /**
  * Offset/Address/Size: 0x60 | 0x80158DD4 | size: 0x3C
  */
-void Bowser::GetHeadSpin() const
+float Bowser::GetHeadSpin() const
 {
+    return (float)(unsigned short)(int)this->mpHeadTrack->m_fHeadSpin;
 }
 
 /**
  * Offset/Address/Size: 0x24 | 0x80158D98 | size: 0x3C
  */
-void Bowser::GetHeadTilt() const
+float Bowser::GetHeadTilt() const
 {
+    return (float)(unsigned short)(int)this->mpHeadTrack->m_fHeadTilt;
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x80158D74 | size: 0x24
  */
-void Bowser::DrawShadow(const cPoseAccumulator&, const nlMatrix4&)
+void Bowser::DrawShadow(const cPoseAccumulator& poseAccumulator, const nlMatrix4& matrix)
 {
+    SkinAnimatedNPC::DrawShadow(mpLastModel, matrix);
 }

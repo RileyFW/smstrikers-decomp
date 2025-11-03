@@ -83,8 +83,8 @@ public:
     void SetupBaseSFX();
     // void PlaySFX(Audio::eCharSFX, PosUpdateMethod, float, bool);
     void CheckFootSteps();
-    void GetHeadSpin() const;
-    void GetHeadTilt() const;
+    float GetHeadSpin() const;
+    float GetHeadTilt() const;
     void DrawShadow(const cPoseAccumulator&, const nlMatrix4&);
 
     /* 0x080 */ nlMatrix4 mLastHeadMatrix;

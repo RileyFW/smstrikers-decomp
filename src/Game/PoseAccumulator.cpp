@@ -2,6 +2,7 @@
 #include "NL/nlMemory.h"
 
 #include "math.h"
+#include "types.h"
 
 static const nlQuaternion qRotIdentity = { 0, 0, 0, 1 };
 static const nlVector3 v3ScaleIdentity = { 1.0f, 1.0f, 1.0f };
@@ -17,6 +18,8 @@ extern const TransAccum kTransAccumTemplate;
  */
 cPoseAccumulator::cPoseAccumulator(cSHierarchy* h, bool withSecondary)
 {
+    FORCE_DONT_INLINE;
+
     m_BaseSHierarchy = h;
 
     const int n = h->m_nodeCount; // boneCount
@@ -129,10 +132,10 @@ void cPoseAccumulator::Pose(const cPoseNode& node, const nlMatrix4& mat)
         r.q.f.y = 0.0f;
         r.q.f.z = 0.0f;
         r.q.f.w = 1.0f;
-        r.weight = 0.0f;
-        r.angleZ = 0;
-        r.weightZ = 0.0f;
-        r.locked = true;
+        r.quatAccumulatedWeight = 0.0f;
+        r.rotAroundZ = 0;
+        r.rotAroundZAccumulatedWeight = 0.0f;
+        r.bIdentity = true;
 
         ScaleAccum& s = m_scale[i];
         s.s.f.x = 1.0f;
@@ -157,7 +160,7 @@ void cPoseAccumulator::Pose(const cPoseNode& node, const nlMatrix4& mat)
         m_floatArray[i] = 0.0f;
     }
 
-    node.V_unk10(this, 1.0f);
+    node.Evaluate(1.0f, this);
 
     BuildNodeMatrices(mat);
 }
@@ -169,24 +172,22 @@ void cPoseAccumulator::InitAccumulators()
 {
     for (int i = 0; i < m_BaseSHierarchy->m_nodeCount; ++i)
     {
-        // --- rotation accum (stride 0x20) ---
         RotAccum& r = m_rot[i];
         r.q.f.x = 0.0f;
         r.q.f.y = 0.0f;
         r.q.f.z = 0.0f;
         r.q.f.w = 1.0f;
-        r.weight = 0.0f;
-        r.angleZ = 0;
-        r.weightZ = 0.0f;
-        r.locked = true;
+        r.quatAccumulatedWeight = 0.0f;
+        r.rotAroundZ = 0;
+        r.rotAroundZAccumulatedWeight = 0.0f;
+        r.bIdentity = true;
 
-        // --- scale accum (stride 0x14) ---
         ScaleAccum& s = m_scale[i];
         s.s.f.x = 1.0f;
         s.s.f.y = 1.0f;
         s.s.f.z = 1.0f;
         s.fAccumulatedWeight = 0.0f;
-        s.fAccumulatedWeight = true;
+        s.bIdentity = true;
 
         if (!m_BaseSHierarchy->PreserveBoneLength(i))
         {
@@ -233,18 +234,18 @@ void cPoseAccumulator::BuildNodeMatrices(const nlMatrix4& world)
         nlMatrix4* local = &m_NodeMatrices.mData[idx + 1];
 
         RotAccum* r = &m_rot[idx];
-        if (!r->locked)
+        if (!r->bIdentity)
         {
-            if (r->weight == 0.0f)
+            if (r->quatAccumulatedWeight == 0.0f)
             {
-                nlMakeRotationMatrixZ(*local, 0.0000958738f * r->angleZ);
+                nlMakeRotationMatrixZ(*local, 0.0000958738f * r->rotAroundZ);
             }
             else
             {
-                if (r->weightZ != 0.0f)
+                if (r->rotAroundZAccumulatedWeight != 0.0f)
                 {
                     float s, c;
-                    nlSinCos(&s, &c, r->angleZ);
+                    nlSinCos(&s, &c, r->rotAroundZ);
 
                     nlQuaternion qz;
                     qz.f.x = 0.0f;
@@ -252,7 +253,7 @@ void cPoseAccumulator::BuildNodeMatrices(const nlMatrix4& world)
                     qz.f.z = s;
                     qz.f.w = c;
 
-                    float t = r->weightZ / (r->weight + r->weightZ);
+                    float t = r->rotAroundZAccumulatedWeight / (r->quatAccumulatedWeight + r->rotAroundZAccumulatedWeight);
                     nlQuatNLerp(r->q, r->q, qz, t);
                 }
 
@@ -371,15 +372,15 @@ void cPoseAccumulator::BlendRot(int idx, const nlQuaternion* q, float w, bool fl
         q = &qtemp;
     }
 
-    e->weight += w;
+    e->quatAccumulatedWeight += w;
 
-    float t = w / e->weight;
+    float t = w / e->quatAccumulatedWeight;
 
     nlQuaternion tmp = e->q;
     nlQuatNLerp(e->q, tmp, *q, t);
 
     e = m_rot + idx;
-    e->locked = false;
+    e->bIdentity = false;
 }
 
 /**
@@ -392,16 +393,16 @@ void cPoseAccumulator::BlendRotAroundZ(int idx, unsigned short angle, float w)
 
     RotAccum* e = &m_rot[idx];
 
-    e->weightZ += w;
-    float t = w / e->weightZ;
+    e->rotAroundZAccumulatedWeight += w;
+    float t = w / e->rotAroundZAccumulatedWeight;
 
-    short delta = (short)(angle - e->angleZ);
+    short delta = (short)(angle - e->rotAroundZ);
     delta = (short)(t * delta);
 
-    e->angleZ = e->angleZ + (short)delta;
+    e->rotAroundZ = e->rotAroundZ + (short)delta;
 
     e = m_rot + idx;
-    e->locked = false;
+    e->bIdentity = false;
 }
 
 /**
@@ -477,12 +478,12 @@ void cPoseAccumulator::BlendRotIdentity(int idx, float w)
         return;
 
     RotAccum* a = &m_rot[idx];
-    a->weight += w;
+    a->quatAccumulatedWeight += w;
 
-    if (a->locked)
+    if (a->bIdentity)
         return;
 
-    const float t = w / a->weight;
+    const float t = w / a->quatAccumulatedWeight;
 
     nlQuaternion tmp = a->q;
     nlQuatNLerp(a->q, tmp, qRotIdentity, t);

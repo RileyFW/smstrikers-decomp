@@ -3,6 +3,7 @@
 
 #include "Game/SHierarchy.h"
 #include "Game/PoseAccumulator.h"
+#include "NL/nlSlotPool.h"
 
 enum eFeatherBlendMode
 {
@@ -13,20 +14,21 @@ enum eFeatherBlendMode
 class cPN_Feather : public cPoseNode
 {
 public:
-    void GetType();
     cPN_Feather(cSHierarchy*, void (*)(unsigned int, cPN_Feather*), unsigned int);
-    ~cPN_Feather();
+    /* 0x08 */ virtual ~cPN_Feather();
+    /* 0x14 */ virtual void Evaluate(int, float, cPoseAccumulator*) const;
+    /* 0x10 */ virtual void Evaluate(float, cPoseAccumulator*) const;
+    /* 0x18 */ virtual cPoseNode* Update(float);
+    /* 0x1C */ virtual int GetType() { return 0x1; };
+    /* 0x20 */ virtual void BlendRootTrans(nlVector3*, float, float*);
+    /* 0x24 */ virtual void BlendRootRot(unsigned short*, float, float*);
+
     void ClearNodeWeights();
     void SetNodeWeight(int, float, float);
     void SetChildFeatherWeight(int, float);
     void SetNodeWeight(int, float);
     void BeginBlendIn(float);
     void BeginBlendOut(float);
-    void Update(float);
-    void Evaluate(float, cPoseAccumulator*) const;
-    void Evaluate(int, float, cPoseAccumulator*) const;
-    void BlendRootTrans(nlVector3*, float, float*);
-    void BlendRootRot(unsigned short*, float, float*);
 
     /* 0x14 */ float* m_pFeatherWeights;
     /* 0x18 */ float m_fBlendTime;
@@ -35,6 +37,8 @@ public:
     /* 0x24 */ float m_fBlendDuration;
     /* 0x28 */ cSHierarchy* m_pBaseHierarchy;
     /* 0x2C */ eFeatherBlendMode m_eFeatherBlendMode;
+
+    static SlotPool<cPN_Feather> m_FeatherSlotPool;
 }; // total size: 0x30
 
 // class SlotPool<cPN_Feather>

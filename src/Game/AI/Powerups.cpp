@@ -80,8 +80,9 @@
 /**
  * Offset/Address/Size: 0x5EBC | 0x800607A8 | size: 0x1A0
  */
-void FindPowerupTarget(cFielder*, Bowser*)
+cFielder* FindPowerupTarget(cFielder*, Bowser*)
 {
+    return NULL;
 }
 
 /**

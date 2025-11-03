@@ -29,11 +29,10 @@ public:
 struct RotAccum
 {
     /* 0x00 */ nlQuaternion q;
-    /* 0x10 */ float weight;
-    /* 0x14 */ u16 angleZ;
-    /* 0x18 */ float weightZ;
-    /* 0x1C */ bool locked;
-    /* 0x1D */ u8 _pad[3];
+    /* 0x10 */ float quatAccumulatedWeight;
+    /* 0x14 */ u16 rotAroundZ;
+    /* 0x18 */ float rotAroundZAccumulatedWeight;
+    /* 0x1C */ bool bIdentity;
 }; // size: 0x20
 
 struct ScaleAccum
@@ -62,7 +61,8 @@ struct TransAccum
 class cPoseAccumulator
 {
 public:
-    cPoseAccumulator(cSHierarchy*, bool);
+    cPoseAccumulator(const cPoseAccumulator&) { };
+    cPoseAccumulator(cSHierarchy* hierarchy, bool withSecondary);
     void Pose(const cPoseNode&, const nlMatrix4&);
     void InitAccumulators();
     void BuildNodeMatrices(const nlMatrix4&);
@@ -78,6 +78,8 @@ public:
     s32 GetNumNodes() const;
     void MultNodeMatrices(const nlMatrix4*);
     void SetBuildNodeMatrixCallback(int, BuildNodeMatrixFn, unsigned int, unsigned int);
+
+    void operator=(const cPoseAccumulator&) { return; };
 
     /* 0x00 */ cSHierarchy* m_BaseSHierarchy;
     /* 0x04 */ Vector<nlMatrix4, DefaultAllocator> m_NodeMatrices;

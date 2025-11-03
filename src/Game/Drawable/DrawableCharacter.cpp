@@ -1,23 +1,26 @@
 #include "Game/Drawable/DrawableCharacter.h"
 #include "Game/Character.h"
+#include "Game/Player.h"
 #include "Game/AI/HeadTrack.h"
 
-cCharacter* spRenderOnlyThisCharacter = nullptr;
-bool sbRenderOpposingGoalieToo = false;
+cCharacter* DrawableCharacter::spRenderOnlyThisCharacter = nullptr;
+bool DrawableCharacter::sbRenderOpposingGoalieToo = false;
 
-// /**
-//  * Offset/Address/Size: 0x2C0 | 0x8011C5EC | size: 0x178
-//  */
-// void DrawableCharacter::Replay<SaveFrame>(SaveFrame&)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x2C0 | 0x8011C5EC | size: 0x178
+ */
+template <>
+void DrawableCharacter::Replay<SaveFrame>(SaveFrame& frame)
+{
+}
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x8011C32C | size: 0x2C0
-//  */
-// void DrawableCharacter::Replay<LoadFrame>(LoadFrame&)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x8011C32C | size: 0x2C0
+ */
+template <>
+void DrawableCharacter::Replay<LoadFrame>(LoadFrame& frame)
+{
+}
 
 /**
  * Offset/Address/Size: 0x2D50 | 0x8011BC00 | size: 0x4C
@@ -86,6 +89,7 @@ void DrawableCharacterHeadTrackCallback(unsigned int ctx, unsigned int, cPoseAcc
  */
 void DrawableCharacter::DrawableBowserHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -126,15 +130,66 @@ void DrawableCharacter::SendToGl(const cCharacter&) const
 /**
  * Offset/Address/Size: 0x924 | 0x801197D4 | size: 0x148
  */
-void DrawableCharacter::Grab(SkinAnimatedMovableNPC&)
+void DrawableCharacter::Grab(SkinAnimatedMovableNPC& character)
 {
+    mCharacter = nullptr;
+
+    if (character.GetSkinAnimatedNPC_Type() == SkinAnimatedNPC_BOWSER)
+    {
+        mBowser = (Bowser*)&character;
+    }
+
+    mPosition = character.mv3Position;
+
+    nlMatrix4& nodeMatrix = character.mpPoseAccumulator->GetNodeMatrix(0);
+    mHeight = nodeMatrix.f.m43;
+
+    mVelocity.f.x = 0.0f;
+    mVelocity.f.y = 0.0f;
+    mVelocity.f.z = 0.0f;
+
+    mFacingDirection = character.maFacingDirection;
+
+    float headSpin = character.GetHeadSpin();
+    mHeadSpin = (unsigned short)(int)headSpin;
+
+    float headTilt = character.GetHeadTilt();
+    mHeadTilt = (unsigned short)(int)headTilt;
+
+    mPoseTree = character.mpPoseTree;
+    mVisible = character.mbIsVisible;
+    mDirt = false;
+
+    if (mPoseAccumulator == nullptr)
+    {
+        mPoseAccumulator = (cPoseAccumulator*)new (nlMalloc(0x58, 8, false)) cPoseAccumulator(*character.mpPoseAccumulator);
+    }
+    else
+    {
+        // *mPoseAccumulator = *character.mpPoseAccumulator;
+    }
+
+    mEffectsTexturing = nullptr;
 }
 
 /**
  * Offset/Address/Size: 0x87C | 0x8011972C | size: 0xA8
  */
-void DrawableCharacter::Render(SkinAnimatedMovableNPC&) const
+void DrawableCharacter::Render(SkinAnimatedMovableNPC& character) const
 {
+    if (!mVisible)
+    {
+        return;
+    }
+
+    nlMatrix4 rotMatrix;
+    float angle = 0.0000958738f * (float)mFacingDirection;
+    nlMakeRotationMatrixZ(rotMatrix, angle);
+
+    rotMatrix.SetRow_(3, mPosition);
+
+    character.mbIsVisible = mVisible;
+    character.RenderFromReplay(*mPoseAccumulator, &rotMatrix);
 }
 
 /**
@@ -147,22 +202,86 @@ void DrawableCharacter::Blend(const float*, const DrawableCharacter&, const Draw
 /**
  * Offset/Address/Size: 0xD8 | 0x80118F88 | size: 0x1E0
  */
-void DrawableCharacter::EvaluateFrom(const cPoseNode&, const nlVector3&, unsigned short)
+void DrawableCharacter::EvaluateFrom(const cPoseNode& poseNode, const nlVector3& position, unsigned short facingDirection)
 {
+    mPosition = position;
+
+    mVelocity.f.x = 0.0f;
+    mVelocity.f.y = 0.0f;
+    mVelocity.f.z = 0.0f;
+
+    mFacingDirection = facingDirection;
+    mHeadSpin = 0;
+    mHeadTilt = 0;
+    mHeight = 0.0f;
+
+    mPoseAccumulator->InitAccumulators();
+
+    poseNode.Evaluate(1.0f, mPoseAccumulator);
+
+    mEffectsTexturing = fxGetTexturing(eFXTex_Nothing);
+
+    nlMatrix4 rotMatrix;
+    float angle = 0.0000958738f * (float)mFacingDirection;
+    nlMakeRotationMatrixZ(rotMatrix, angle);
+    rotMatrix.SetRow_(3, mPosition);
+
+    if (mCharacter != nullptr)
+    {
+        mPoseAccumulator->SetBuildNodeMatrixCallback(mCharacter->m_nHeadJointIndex, DrawableCharacterHeadTrackCallback, (unsigned int)this, 0);
+    }
+    else
+    {
+        if (mBowser != nullptr)
+        {
+            mPoseAccumulator->SetBuildNodeMatrixCallback(mBowser->mnHeadJointIndex, DrawableBowserHeadTrackCallback, (unsigned int)this, 0);
+        }
+    }
+
+    mPoseAccumulator->BuildNodeMatrices(rotMatrix);
+
+    if (mCharacter != nullptr)
+    {
+        mPoseAccumulator->SetBuildNodeMatrixCallback(
+            mCharacter->m_nHeadJointIndex,
+            nullptr,
+            0,
+            0);
+    }
+    else if (mBowser != nullptr)
+    {
+        mPoseAccumulator->SetBuildNodeMatrixCallback(
+            mBowser->mnHeadJointIndex,
+            nullptr,
+            0,
+            0);
+    }
+
+    nlMatrix4& bip01Matrix = mPoseAccumulator->GetNodeMatrix(mCharacter->m_nBip01JointIndex);
+    mBip01Position = bip01Matrix.GetTranslation();
+
+    nlMatrix4& headMatrix = mPoseAccumulator->GetNodeMatrix(mCharacter->m_nHeadJointIndex);
+    mHeadPosition = headMatrix.GetTranslation();
 }
 
 /**
  * Offset/Address/Size: 0x88 | 0x80118F38 | size: 0x50
  */
-void DrawableCharacter::GetBallPosition() const
+nlVector3 DrawableCharacter::GetBallPosition() const
 {
+    cPlayer* pPlayer = (cPlayer*)mCharacter;
+    nlMatrix4& matrix = mPoseAccumulator->GetNodeMatrix(pPlayer->m_nBallJointIndex);
+    return matrix.GetTranslation();
 }
 
 /**
  * Offset/Address/Size: 0x24 | 0x80118ED4 | size: 0x64
  */
-void DrawableCharacter::GetBallOrientation() const
+nlQuaternion DrawableCharacter::GetBallOrientation() const
 {
+    nlQuaternion quat;
+    nlMatrixToQuat(quat, mPoseAccumulator->GetNodeMatrix(((cPlayer*)mCharacter)->m_nBallJointIndex));
+    return quat;
 }
 
 /**

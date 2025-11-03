@@ -62,13 +62,14 @@ public:
         BaseAddNewBlock(this, sizeof(T));
         this->m_Delta = 0x80;
     }
-    // BasicSlotPool(const int initial, const int delta)
-    //     : SlotPoolBase()
-    // {
-    //     this->m_Initial = initial;
-    //     BaseAddNewBlock(this, sizeof(T));
-    //     this->m_Delta = delta;
-    // }
+    BasicSlotPool(const int initial, const int delta)
+        : SlotPoolBase()
+    {
+        this->m_Initial = initial;
+        BaseAddNewBlock(this, sizeof(T));
+        this->m_Delta = delta;
+    }
+
     ~BasicSlotPool()
     {
         BaseFreeBlocks(this, sizeof(T));

@@ -80,7 +80,7 @@ void cPoseNode::GetRootTrans(nlVector3* out, unsigned short ang)
     base.f.y = 0.0f;
     base.f.z = 0.0f;
 
-    V_GetRootTrans(&base, 1.0f, &pw);
+    BlendRootTrans(&base, 1.0f, &pw);
 
     float c, s;
     nlSinCos(&s, &c, ang);
@@ -96,5 +96,5 @@ void cPoseNode::GetRootRot(unsigned short* out)
 {
     float temp = 0.0f;
     *out = 0;
-    V_GetRootRot(out, 1.0f, &temp);
+    BlendRootRot(out, 1.0f, &temp);
 }
