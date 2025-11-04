@@ -2,7 +2,7 @@
 #define _FORMATION_H_
 
 #include "NL/nlMath.h"
-// #include "Game/AI/Fielder.h"
+#include "NL/nlTimer.h"
 
 class cTeam;
 class cFielder;
@@ -113,6 +113,13 @@ public:
     void IsFielderInPosition(cFielder*, nlVector3, bool);
 };
 
+struct CachedPosition
+{
+    /* 0x0 */ bool bCacheIsValid;
+    /* 0x1 */ bool bInPosition;
+    /* 0x4 */ nlVector3 vPosition;
+}; // total size: 0x10
+
 class FormationManager
 {
 public:
@@ -126,6 +133,12 @@ public:
     void SetNewFormationEval(eFormationType, eFormation);
     void SetNewFormationEval(eFormationType, eFormationSet);
     void CalculateFielderPosition(nlVector3&, cFielder*, bool, float);
-};
+
+    /* 0x00 */ cTeam* m_pTeam;
+    /* 0x04 */ FormationEval* m_pFormations[3];
+    /* 0x10 */ nlVector2 m_v2AIFielderCenter;
+    /* 0x18 */ Timer m_tSelectFormationsTimer;
+    /* 0x1C */ CachedPosition m_CachedPositions[4];
+}; // total size: 0x5C
 
 #endif // _FORMATION_H_

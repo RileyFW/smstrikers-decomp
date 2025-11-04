@@ -38,8 +38,9 @@ cPN_SAnimController::cPN_SAnimController(cSAnim*, const AnimRetarget*, ePlayMode
 /**
  * Offset/Address/Size: 0xAF0 | 0x801EB14C | size: 0x2D0
  */
-void cPN_SAnimController::Update(float)
+cPoseNode* cPN_SAnimController::Update(float dt)
 {
+    return this;
 }
 
 /**

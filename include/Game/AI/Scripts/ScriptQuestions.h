@@ -103,7 +103,7 @@ void CloseToBall(cPlayer*);
 void LikelyToUsePowerup(cFielder*, int);
 void AbleToUsePowerup(cFielder*, int);
 void AbleToInterceptBallForSwapController(cFielder*);
-void AbleToInterceptBall(cPlayer*);
+float AbleToInterceptBall(cPlayer*);
 // void RepeatingLastDesire(cFielder*, eScriptFielderDesire);
 void Deker(cFielder*);
 void Passer(cFielder*);

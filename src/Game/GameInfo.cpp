@@ -3,6 +3,9 @@
 
 extern bool g_e3_Build;
 
+bool isFreezingUnlocked = false;
+bool isShellsUnlocked = false;
+
 /**
  * Offset/Address/Size: 0x9E90 | 0x8017F534 | size: 0xB84
  */
@@ -27,24 +30,6 @@ eTeamID GameInfoManager::GetTeam(short homeaway) const
     return mGameInfo[mCurrentMode]->mTeamIndex[homeaway];
 }
 
-// /* GameInfoManager::SetTeam (short, eTeamID) */
-// void SetTeam__15GameInfoManagerFs7eTeamID(GameInfoManager *this, s16 arg0, ? arg1)
-// {
-//     *((this + (this->unk4954 * 4))->unk10 + (arg0 * 4)) = (s32)arg1;
-// }
-
-// /* GameInfoManager::GetTeam (short) const */
-// s32 GetTeam__15GameInfoManagerCFs(GameInfoManager* this, s16 arg0)
-// {
-//     u32 temp_r3;
-
-//     temp_r3 = (this + (this->unk4954 * 4))->unk10;
-//     if (temp_r3 == 0U)
-//     {
-//         return -1;
-//     }
-//     return *(temp_r3 + (arg0 * 4));
-
 /**
  * Offset/Address/Size: 0x9DCC | 0x8017F470 | size: 0x20
  */
@@ -62,26 +47,6 @@ eSidekickID GameInfoManager::GetSidekick(short homeaway) const
         return SK_MYSTERY;
     return mGameInfo[mCurrentMode]->mSidekickIndex[homeaway];
 }
-// /* GameInfoManager::SetSidekick (short, eSidekickID) */
-// void SetSidekick__15GameInfoManagerFs11eSidekickID(GameInfoManager *this, s16 arg0, ? arg1)
-// {
-//     ((this + (this->unk4954 * 4))->unk10 + (arg0 * 4))->unk8 = (s32)arg1;
-// }
-
-// /* GameInfoManager::GetSidekick (short) const */
-// s32 GetSidekick__15GameInfoManagerCFs(GameInfoManager* this, s16 arg0)
-// {
-//     s32 temp_r3;
-//     s32 temp_r4;
-
-//     temp_r4 = arg0 * 4;
-//     temp_r3 = (this + (this->unk4954 * 4))->unk10;
-//     if ((s32) * (temp_r3 + temp_r4) == 8)
-//     {
-//         return -2;
-//     }
-//     return (temp_r3 + temp_r4)->unk8;
-// }
 
 /**
  * Offset/Address/Size: 0x9D70 | 0x8017F414 | size: 0x24
@@ -243,8 +208,9 @@ void GameInfoManager::PickStadium(bool, eStadiumID) const
 /**
  * Offset/Address/Size: 0x8C08 | 0x8017E2AC | size: 0x20
  */
-void GameInfoManager::GetPlayingSide(unsigned short) const
+short GameInfoManager::GetPlayingSide(unsigned short) const
 {
+    return 0;
 }
 
 /**
@@ -334,8 +300,10 @@ void GameInfoManager::GetCup(GameInfoManager::eGameModes)
 /**
  * Offset/Address/Size: 0x6908 | 0x8017BFAC | size: 0x468
  */
-void GameInfoManager::IsUserQualified(GameInfoManager::eGameModes) const
+bool GameInfoManager::IsUserQualified(GameInfoManager::eGameModes) const
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
@@ -390,22 +358,25 @@ void GameInfoManager::GetMilestoneLevel(eTrophyType) const
 /**
  * Offset/Address/Size: 0x5F38 | 0x8017B5DC | size: 0x28
  */
-void GameInfoManager::IsInRegularCupMode() const
+bool GameInfoManager::IsInRegularCupMode() const
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x5F10 | 0x8017B5B4 | size: 0x28
  */
-void GameInfoManager::IsInSuperCupMode() const
+bool GameInfoManager::IsInSuperCupMode() const
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x5EC0 | 0x8017B564 | size: 0x50
  */
-void GameInfoManager::IsInCupMode() const
+bool GameInfoManager::IsInCupMode() const
 {
+    return false;
 }
 
 /**
@@ -418,29 +389,33 @@ void GameInfoManager::IsInCupOrTournamentMode() const
 /**
  * Offset/Address/Size: 0x5E48 | 0x8017B4EC | size: 0x14
  */
-void GameInfoManager::IsInDemoMode() const
+bool GameInfoManager::IsInDemoMode() const
 {
+    return mCurrentMode == GM_DEMO;
 }
 
 /**
  * Offset/Address/Size: 0x5E38 | 0x8017B4DC | size: 0x10
  */
-void GameInfoManager::IsInFriendlyMode() const
+bool GameInfoManager::IsInFriendlyMode() const
 {
+    return mCurrentMode == GM_FRIENDLY;
 }
 
 /**
  * Offset/Address/Size: 0x5E24 | 0x8017B4C8 | size: 0x14
  */
-void GameInfoManager::IsInTournamentMode() const
+bool GameInfoManager::IsInTournamentMode() const
 {
+    return mCurrentMode == GM_TOURNAMENT;
 }
 
 /**
  * Offset/Address/Size: 0x5E1C | 0x8017B4C0 | size: 0x8
  */
-void GameInfoManager::GetAudioOptions()
+AudioSettings& GameInfoManager::GetAudioOptions()
 {
+    return mUserInfo.mAudioOptions;
 }
 
 /**
@@ -448,8 +423,17 @@ void GameInfoManager::GetAudioOptions()
  */
 const GameplaySettings& GameInfoManager::GetGameplayOptions() const
 {
-    FORCE_DONT_INLINE;
-    return mUserInfo.mGameplayOptions;
+    if (mUseCurGameSettings)
+    {
+        return mCurGameGameplayOptions;
+    }
+
+    if (mCurrentMode == GM_FRIENDLY || mCurrentMode == GM_DEMO)
+    {
+        return mUserInfo.mGameplayOptions;
+    }
+
+    return mCurrentCup->mCupSettings;
 }
 
 /**
@@ -473,6 +457,8 @@ void GameInfoManager::OnPreGameState()
  */
 void GameInfoManager::OnPostGameState()
 {
+    mUseCurGameSettings = false;
+    mUserInfo.mAudioOptions.ApplySettings(true, false);
 }
 
 /**
@@ -576,8 +562,9 @@ void GameInfoManager::IsSuperTeamUnlocked() const
 /**
  * Offset/Address/Size: 0xF24 | 0x801765C8 | size: 0x24
  */
-void GameInfoManager::IsSuperCupModeUnlocked() const
+bool GameInfoManager::IsSuperCupModeUnlocked() const
 {
+    return IsUserQualified(GM_NUM_MODES);
 }
 
 /**
@@ -619,8 +606,23 @@ void GameInfoManager::IsUnlimtedPowerupsUnlocked() const
 /**
  * Offset/Address/Size: 0xA80 | 0x80176124 | size: 0xEC
  */
-void GameInfoManager::IsCustomShellsUnlocked() const
+bool GameInfoManager::IsCustomShellsUnlocked() const
 {
+    bool var_r0 = isShellsUnlocked;
+    if (var_r0 == 0)
+    {
+        bool var_r3 = GetConfigBool(Config::Global(), "givealltrophies", false);
+        if (var_r3 != 0)
+        {
+            var_r0 = 1;
+        }
+        else
+        {
+            var_r0 = (mUserInfo.mTrophies[1] & 1) != 0;
+        }
+        return var_r0;
+    }
+    return var_r0;
 }
 
 /**
@@ -647,8 +649,22 @@ void GameInfoManager::IsCustomExplosiveUnlocked() const
 /**
  * Offset/Address/Size: 0x6D0 | 0x80175D74 | size: 0xEC
  */
-void GameInfoManager::IsCustomFreezingUnlocked() const
+bool GameInfoManager::IsCustomFreezingUnlocked() const
 {
+    bool var_r0 = isFreezingUnlocked;
+    if (!var_r0)
+    {
+        if (GetConfigBool(Config::Global(), "givealltrophies", false))
+        {
+            var_r0 = true;
+        }
+        else
+        {
+            var_r0 = ((mUserInfo.mTrophies[1] >> 3) & 1) != 0;
+        }
+        return var_r0;
+    }
+    return var_r0;
 }
 
 /**
@@ -661,29 +677,95 @@ void GameInfoManager::HasHumanGameBeenPlayed() const
 /**
  * Offset/Address/Size: 0x2FC | 0x801759A0 | size: 0x120
  */
-void GameInfoManager::SetRoundResult(bool, int)
+void GameInfoManager::SetRoundResult(bool inOvertime, int winningTeam)
 {
 }
 
 /**
  * Offset/Address/Size: 0x29C | 0x80175940 | size: 0x60
  */
-void GameInfoManager::IsStunnedGoaliesOn() const
+bool GameInfoManager::IsStunnedGoaliesOn() const
 {
+    if (mIsInStrikers101Mode)
+    {
+        return false;
+    }
+
+    bool useCheatSettings;
+    eGameModes currentMode = mCurrentMode;
+    if ((currentMode == GM_FRIENDLY) || (currentMode == GM_TOURNAMENT))
+    {
+        useCheatSettings = false;
+        if ((currentMode == GM_FRIENDLY) || (currentMode == GM_TOURNAMENT))
+        {
+            useCheatSettings = true;
+        }
+        if (useCheatSettings)
+        {
+            return mUserInfo.mCheatOptions.mStunnedGoalies;
+        }
+        return false;
+    }
+
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x23C | 0x801758E0 | size: 0x60
  */
-void GameInfoManager::IsInfinitePowerupsOn() const
+bool GameInfoManager::IsInfinitePowerupsOn() const
 {
+    if (mIsInStrikers101Mode)
+    {
+        return false;
+    }
+
+    bool useCheatSettings;
+    eGameModes currentMode = mCurrentMode;
+    if ((currentMode == GM_FRIENDLY) || (currentMode == GM_TOURNAMENT))
+    {
+        useCheatSettings = false;
+        if ((currentMode == GM_FRIENDLY) || (currentMode == GM_TOURNAMENT))
+        {
+            useCheatSettings = true;
+        }
+        if (useCheatSettings)
+        {
+            return mUserInfo.mCheatOptions.mInfinitePowerups;
+        }
+        return false;
+    }
+
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x1DC | 0x80175880 | size: 0x60
  */
-void GameInfoManager::IsTiltingFieldOn() const
+bool GameInfoManager::IsTiltingFieldOn() const
 {
+    if (mIsInStrikers101Mode)
+    {
+        return false;
+    }
+
+    bool useCheatSettings;
+    eGameModes currentMode = mCurrentMode;
+    if ((currentMode == GM_FRIENDLY) || (currentMode == GM_TOURNAMENT))
+    {
+        useCheatSettings = false;
+        if ((currentMode == GM_FRIENDLY) || (currentMode == GM_TOURNAMENT))
+        {
+            useCheatSettings = true;
+        }
+        if (useCheatSettings)
+        {
+            return mUserInfo.mCheatOptions.mCheatTBD1Enabled;
+        }
+        return false;
+    }
+
+    return false;
 }
 
 /**
@@ -691,6 +773,27 @@ void GameInfoManager::IsTiltingFieldOn() const
  */
 bool GameInfoManager::IsPerfectStrikesOn() const
 {
+    if (mIsInStrikers101Mode)
+    {
+        return false;
+    }
+
+    bool useCheatSettings;
+    eGameModes currentMode = mCurrentMode;
+    if ((currentMode == GM_FRIENDLY) || (currentMode == GM_TOURNAMENT))
+    {
+        useCheatSettings = false;
+        if ((currentMode == GM_FRIENDLY) || (currentMode == GM_TOURNAMENT))
+        {
+            useCheatSettings = true;
+        }
+        if (useCheatSettings)
+        {
+            return mUserInfo.mCheatOptions.mCheatTBD2Enabled;
+        }
+        return false;
+    }
+
     return false;
 }
 

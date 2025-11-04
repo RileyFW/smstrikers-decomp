@@ -8,19 +8,42 @@
 
 #include "Game/PoseAccumulator.h"
 
+struct PackedScale
+{
+    signed short x; // offset 0x0, size 0x2
+    signed short y; // offset 0x2, size 0x2
+    signed short z; // offset 0x4, size 0x2
+}; // total size: 0x6
+
+struct PackedTrans
+{
+    float x; // offset 0x0, size 0x4
+    float y; // offset 0x4, size 0x4
+    float z; // offset 0x8, size 0x4
+}; // total size: 0xC
+
 enum ePlayMode
 {
     PM_CYCLIC = 0,
     PM_HOLD = 1,
 };
 
-typedef struct cSAnimCallback
+// typedef struct cSAnimCallback
+// {
+//     /* 0x00 */ f32 time;
+//     /* 0x04 */ u32 mask;
+//     /* 0x08 */ void (*fn)(unsigned int);
+//     /* 0x0C */ cSAnimCallback* next;
+// } cSAnimCallback; // size: 0x10
+
+class cSAnimCallback
 {
-    /* 0x00 */ f32 time;
-    /* 0x04 */ u32 mask;
-    /* 0x08 */ void (*fn)(unsigned int);
-    /* 0x0C */ cSAnimCallback* next;
-} cSAnimCallback; // size: 0x10
+public:
+    /* 0x0 */ float m_fTime;
+    /* 0x4 */ unsigned int m_nParam1;
+    /* 0x8 */ void (*m_funcCallback)(unsigned int);
+    /* 0xC */ class cSAnimCallback* next;
+}; // total size: 0x10
 
 class nlChunk
 {
@@ -29,7 +52,14 @@ public:
     /* 0x04 */ u32 m_Size;
 }; // size: 0x8
 
-class cSAnim
+class cIdentifier
+{
+public:
+    /* 0x0 */ const char* m_szName;
+    /* 0x4 */ unsigned int m_uHashID;
+}; // total size: 0x8
+
+class cSAnim : public cIdentifier
 {
 public:
     static cSAnim* Initialize(nlChunk*);
@@ -40,28 +70,27 @@ public:
     void Destroy();
     void GetRootRot(float, unsigned short*) const;
     void GetRootTrans(float, nlVector3*) const;
-    void CreateCallback(float, unsigned int, void (*)(unsigned int));
-    float GetMorphWeight(int, float) const;
+    void CreateCallback(float time, unsigned int param1, void (*funcCallback)(unsigned int));
+    float GetMorphWeight(int index, float t) const;
 
     void GetCallbackList() const;
 
-    /* 0x00 */ u32 m_chunkID;
-    /* 0x04 */ s32 m_chunkSize;
-    /* 0x08 */ unsigned long m_numFrames;
-    /* 0x0C */ unsigned long m_numBones;
-    /* 0x10 */ char pad10[4];
-    /* 0x14 */ unsigned long* m_flags;
-    /* 0x18 */ void** m_rotTracks;
-    /* 0x1C */ void** m_scaleTracks;
-    /* 0x20 */ void** m_transTracks;
-    /* 0x24 */ unsigned long m_rootKeyCount;
-    /* 0x28 */ unsigned short* m_rootRot;
-    /* 0x2C */ nlVector3* m_rootTrans;
-    /* 0x30 */ void* m_morphTable;
-    /* 0x34 */ unsigned long* m_morphIdx;
-    /* 0x38 */ unsigned char* m_morphBytes;
-    /* 0x3C */ cSAnimCallback* m_cbHead;
-    /* 0x40 */ float m_rootSpeed;
-};
+    /* 0x08 */ unsigned int m_nNumKeys;
+    /* 0x0C */ unsigned int m_nNumNodes;
+    /* 0x10 */ unsigned int m_nNumMorphChannels;
+    /* 0x14 */ const unsigned int* m_pNodeProperties;
+    /* 0x18 */ void* m_pRotKeys;
+    /* 0x1C */ PackedScale** m_pScaleKeys;
+    /* 0x20 */ PackedTrans** m_pTransKeys;
+    /* 0x24 */ unsigned int m_nNumRootKeys;
+    /* 0x28 */ unsigned short* m_pRootRot;
+    /* 0x2C */ nlVector3* m_pRootTrans;
+    /* 0x30 */ unsigned long* m_nMorphIds;
+    /* 0x34 */ const unsigned int* m_pNumMorphKeys;
+    /* 0x38 */ unsigned char* m_pMorphKeys;
+    /* 0x3C */ cSAnimCallback* m_pCallbackList;
+    /* 0x40 */ float m_fLinearSpeed;
+    /* 0x44 */ unsigned long m_nHierarchySignature;
+}; // total size: 0x48
 
 #endif // _SANIM_H_

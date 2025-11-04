@@ -56,5 +56,5 @@ float WorldAnimController::GetAnimationTime()
  */
 float WorldAnimController::GetAnimationDuration()
 {
-    return (float)m_pPoseTree->m_pSAnim->m_numFrames / 30.0f;
+    return (float)m_pPoseTree->m_pSAnim->m_nNumKeys / 30.0f;
 }

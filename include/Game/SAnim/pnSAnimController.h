@@ -26,7 +26,7 @@ public:
     /* 0x08 */ virtual ~cPN_SAnimController() { };
     /* 0x10 */ virtual void Evaluate(float, cPoseAccumulator*) const;
     /* 0x14 */ virtual void Evaluate(int, float, cPoseAccumulator*) const;
-    /* 0x18 */ virtual void Update(float);
+    /* 0x18 */ virtual cPoseNode* Update(float);
     /* 0x1C */ virtual int GetType() { return 0x2; };
     /* 0x20 */ virtual void BlendRootTrans(nlVector3*, float, float*);
     /* 0x24 */ virtual void BlendRootRot(unsigned short*, float, float*);

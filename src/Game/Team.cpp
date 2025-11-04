@@ -2,16 +2,58 @@
 
 #include "Game/AI/Fielder.h"
 #include "Game/Audio/WorldAudio.h"
+#include "Game/GameInfo.h"
 #include "Game/OverlayHandlerHUD.h"
 #include "Game/OverlayManager.h"
+#include "Game/AI/AiUtil.h"
+#include "Game/AI/Powerups.h"
+#include "Game/Ball.h"
+#include "Game/Game.h"
+
+#include "Game/AI/Scripts/ScriptQuestions.h"
+
+#include "NL/nlMath.h"
+#include <stdlib.h>
 
 cTeam* g_pTeams[2] = { NULL, NULL };
 
 /**
  * Offset/Address/Size: 0x1CF0 | 0x8006609C | size: 0x138
  */
-cTeam::cTeam(int)
+cTeam::cTeam(int side)
 {
+    m_nSide = side;
+    m_nScore = 0;
+    m_nCurrentPowerUp = 0;
+    mfPowerupMeter = 0.0f;
+    mfPowerupTimer = 0.0f;
+    meCurrentTeamStyle = TEAM_STYLE_MODERATE;
+
+    mtTeamStyleTimer.SetSeconds(0.0f);
+    mtMarkTimer.SetSeconds(0.0f);
+    mtRoleTimer.SetSeconds(0.0f);
+    mtDefensiveZoneTimer.SetSeconds(0.0f);
+    mbHasToggledPowerup = false;
+    mtBallInterceptTimer.SetSeconds(0.0f);
+
+    m_ePowerupList[0].nnumOfPowerups = 0;
+    m_ePowerupList[0].eType = POWER_UP_NONE;
+    m_ePowerupList[1].nnumOfPowerups = 0;
+    m_ePowerupList[1].eType = POWER_UP_NONE;
+
+    for (int i = 0; i < 5; i++)
+    {
+        m_pPlayers[i] = NULL;
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        m_pAIOrderedFielders[i] = NULL;
+        m_pBallInterceptOrderedFielders[i] = NULL;
+    }
+
+    m_pNet = new (nlMalloc(sizeof(cNet), 8, false)) cNet(side);
+    m_pFormationManager = new (nlMalloc(sizeof(FormationManager), 8, false)) FormationManager(this);
 }
 
 /**
@@ -271,7 +313,7 @@ cPlayer* cTeam::GetControlledPlayer(cGlobalPad* pPad)
 /**
  * Offset/Address/Size: 0x16B4 | 0x80065A60 | size: 0x80
  */
-void cTeam::GetNumAssignedControllers()
+int cTeam::GetNumAssignedControllers()
 {
 }
 
@@ -310,14 +352,18 @@ cNet* cTeam::GetOtherNet()
 /**
  * Offset/Address/Size: 0x15F8 | 0x800659A4 | size: 0x68
  */
-void cTeam::PreUpdate(float)
+void cTeam::PreUpdate(float dt)
 {
+    for (int i = 0; i < 5; i++)
+    {
+        m_pPlayers[i]->PreUpdate(dt);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x132C | 0x800656D8 | size: 0x2CC
  */
-void cTeam::Update(float)
+void cTeam::Update(float dt)
 {
 }
 
@@ -345,15 +391,33 @@ void cTeam::StopGameplayEffectsAndSounds()
 /**
  * Offset/Address/Size: 0xAD0 | 0x80064E7C | size: 0x24
  */
-void cTeam::CalculateFormationPosition(nlVector3&, cFielder*, bool, float)
+void cTeam::CalculateFormationPosition(nlVector3& pos, cFielder* pFielder, bool bParam, float fParam)
 {
+    m_pFormationManager->CalculateFielderPosition(pos, pFielder, bParam, fParam);
 }
 
 /**
  * Offset/Address/Size: 0xA68 | 0x80064E14 | size: 0x68
  */
-void BestAbleToInterceptBall(const void*, const void*)
+int BestAbleToInterceptBall(const void* a, const void* b)
 {
+    cPlayer* playerA = *(cPlayer**)a;
+    cPlayer* playerB = *(cPlayer**)b;
+
+    float scoreA = AbleToInterceptBall(playerA);
+    float scoreB = AbleToInterceptBall(playerB);
+
+    if (scoreA == scoreB)
+    {
+        return 0;
+    }
+
+    if (scoreA > scoreB)
+    {
+        return -1;
+    }
+
+    return 1;
 }
 
 /**

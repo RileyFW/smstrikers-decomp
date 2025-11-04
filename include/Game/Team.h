@@ -58,7 +58,7 @@ enum eTeamID
 
 void MostDefensivePlayer(const void*, const void*);
 void MostOffensiveThreat(const void*, const void*);
-void BestAbleToInterceptBall(const void*, const void*);
+int BestAbleToInterceptBall(const void*, const void*);
 
 class cTeam
 {
@@ -81,7 +81,7 @@ public:
     void SetGoalie(Goalie*);
     Goalie* GetGoalie();
     cPlayer* GetControlledPlayer(cGlobalPad*);
-    void GetNumAssignedControllers();
+    int GetNumAssignedControllers();
     cFielder* GetFielder(int);
     cPlayer* GetPlayer(int);
     cTeam* GetOtherTeam();

@@ -3,11 +3,22 @@
 
 #include "Game/SAnim.h"
 
+class AnimRetarget
+{
+public:
+    /* 0x0 */ unsigned long m_TargetHierarchySignature;
+    /* 0x4 */ long m_NumBones;
+    /* 0x8 */ signed short* m_pMap;
+}; // total size: 0xC
+
 class AnimRetargetList
 {
 public:
     void Initialize(nlChunk*);
-    void GetAnimRetargetWithSignature(const cSAnim*);
-};
+    AnimRetarget* GetAnimRetargetWithSignature(const cSAnim*);
+
+    /* 0x8 */ long m_NumAnimRetargets;
+    /* 0xC */ AnimRetarget* m_pAnimRetarget;
+}; // total size: 0x10
 
 #endif // _ANIMRETARGETER_H_

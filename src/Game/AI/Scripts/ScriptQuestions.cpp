@@ -171,8 +171,9 @@ void Deker(cFielder*)
 /**
  * Offset/Address/Size: 0x54B4 | 0x80083F3C | size: 0x2E8
  */
-void AbleToInterceptBall(cPlayer*)
+float AbleToInterceptBall(cPlayer*)
 {
+    return 0.0f;
 }
 
 /**

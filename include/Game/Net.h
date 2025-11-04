@@ -23,6 +23,6 @@ public:
     /* 0x00 */ s32 m_side;
     /* 0x04 */ f32 m_sideSign;
     /* 0x08 */ nlVector3 m_baseLocation;
-};
+}; // total size: 0x14
 
 #endif // _NET_H_

@@ -217,5 +217,5 @@ float ModeledScreenTransition::GetTransitionLength()
     {
         return 0.0f;
     }
-    return m_pAnim->m_numFrames / 30.0f;
+    return m_pAnim->m_nNumKeys / 30.0f;
 }

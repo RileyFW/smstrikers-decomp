@@ -121,7 +121,7 @@ public:
     virtual ~PowerupBase();
     void GetRadius() const;
     void Update(float);
-    void AwardPowerup(cTeam*);
+    static void AwardPowerup(cTeam*);
     void CollisionCallback(PhysicsObject*, PhysicsObject*, const nlVector3&, void*);
     void ThrowAt(cFielder*, Bowser*);
     void Destroy(bool);
