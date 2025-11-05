@@ -603,26 +603,29 @@ void GameInfoManager::IsUnlimtedPowerupsUnlocked() const
 {
 }
 
+bool inline IsBitSet(unsigned int flag, unsigned int bit)
+{
+    return ((flag >> bit) & 1) != 0;
+}
 /**
  * Offset/Address/Size: 0xA80 | 0x80176124 | size: 0xEC
  */
 bool GameInfoManager::IsCustomShellsUnlocked() const
 {
-    bool var_r0 = isShellsUnlocked;
-    if (var_r0 == 0)
+    bool result = isShellsUnlocked;
+    if (!isShellsUnlocked)
     {
-        bool var_r3 = GetConfigBool(Config::Global(), "givealltrophies", false);
-        if (var_r3 != 0)
+        if (GetConfigBool(Config::Global(), "givealltrophies", false))
         {
-            var_r0 = 1;
+            result = true;
         }
         else
         {
-            var_r0 = (mUserInfo.mTrophies[1] & 1) != 0;
+            result = IsBitSet(mUserInfo.mTrophies[1], 0);
         }
-        return var_r0;
+        return result;
     }
-    return var_r0;
+    return result;
 }
 
 /**
@@ -651,20 +654,20 @@ void GameInfoManager::IsCustomExplosiveUnlocked() const
  */
 bool GameInfoManager::IsCustomFreezingUnlocked() const
 {
-    bool var_r0 = isFreezingUnlocked;
-    if (!var_r0)
+    bool result = isFreezingUnlocked;
+    if (!isFreezingUnlocked)
     {
         if (GetConfigBool(Config::Global(), "givealltrophies", false))
         {
-            var_r0 = true;
+            result = true;
         }
         else
         {
-            var_r0 = ((mUserInfo.mTrophies[1] >> 3) & 1) != 0;
+            result = IsBitSet(mUserInfo.mTrophies[1], 3);
         }
-        return var_r0;
+        return result;
     }
-    return var_r0;
+    return result;
 }
 
 /**

@@ -84,14 +84,6 @@ enum eClassTypes
     NUM_CLASSES = 4,
 };
 
-enum PosUpdateMethod
-{
-    PosUpdateMethod_0 = 0
-};
-
-// class cHeadTrack;
-// class cPN_SAnimController;
-
 #include "Game/Drawable/DrawableObj.h"
 
 class cCharacter //: public PhysicsCharacterBase

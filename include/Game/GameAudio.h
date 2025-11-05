@@ -6,6 +6,14 @@
 
 #include "NL/nlMath.h"
 #include "NL/nlDLRing.h"
+#include "NL/nlDLListContainer.h"
+
+enum eClassType
+{
+    GAME = 0,
+    CHAR = 1,
+    WORLD = 2,
+};
 
 // Forward declarations
 namespace Audio
@@ -24,9 +32,14 @@ struct SoundAttributes;
 class SFXPlaySet;
 class SFXEmitter;
 
-struct SoundPropAccessor
+class SoundPropAccessor
 {
-};
+public:
+    virtual ~SoundPropAccessor();
+
+    /* 0x4 */ SoundProperties* mpSoundProp;
+    /* 0x8 */ unsigned char mbIsReloaded;
+}; // total size: 0xC
 
 class cGameSFX
 {
@@ -45,11 +58,11 @@ public:
     virtual void DeInit();
     virtual void SetSFX(SoundPropAccessor*);
     virtual int Play(Audio::SoundAttributes&);
-    virtual u32 GetClassType() const;
+    virtual eClassType GetClassType() const { return meClassType; };
 
     void ShutdownPlaySet();
     float GetSFXVol(unsigned long) const;
-    void GetSFXVolReverb(unsigned long) const;
+    float GetSFXVolReverb(unsigned long) const;
     void IsKeepingTrackOf(unsigned long, SFXPlaySet**);
     void ActivateFilterOnAllTrackedSFX(bool);
     void SetFilterFreqOnAllTrackedSFX(unsigned short);
@@ -62,28 +75,19 @@ public:
     void StopPlayingAllTrackedSFX();
     void UpdateAllTrackedSFX(float);
 
-    /* 0x04 */ bool m_unk_0x04;
-    /* 0x05 */ char pad5[3];
-    /* 0x08 */ u32 m_unk_0x08;
-    /* 0x0C */ u32 m_unk_0x0C;
-    /* 0x10 */ SFXEmitter* m_unk_0x10;
-    /* 0x14 */ u32 m_unk_0x14;
-    /* 0x18 */ DLListEntry<SFXPlaySet*>* m_unk_0x18;
-    /* 0x1C */ bool m_unk_0x1C;
-    /* 0x1D */ char pad1D[3];
-    /* 0x20 */ f32 m_unk_0x20;
-    /* 0x24 */ s32 m_unk_0x24;
-    /* 0x28 */ s32 m_classType;
-    /* 0x2C */ bool m_unk_0x2C;
-    /* 0x2D */ char pad2D[1];
-    /* 0x2E */ u16 m_unk_0x2E;
-    /* 0x30 */ u16 m_unk_0x30;
-
-    // /* 0x04 */ u8 m_padding_0x04[0x24];
-    // /* 0x28 */ u32 m_classType;
-
-    /* 0x32 */ u8 m_padding_0x2C[0x335E]; // obscure padding
-};
+    /* 0x04 */ bool mbInited;
+    /* 0x08 */ unsigned long mNumSFX;
+    /* 0x0C */ unsigned long mNumSFXTypes;
+    /* 0x10 */ SoundStrToIDNode* mpSFX;
+    /* 0x14 */ nlDLListContainer<SFXPlaySet*> mpCurPlaySet;
+    /* 0x1C */ bool mbCurPlaySetIsValid;
+    /* 0x20 */ float mfTrackedSFXCheckInterval;
+    /* 0x24 */ const char** mpSoundStrTable;
+    /* 0x28 */ eClassType meClassType;
+    /* 0x2C */ bool mbGroupFilterOn;
+    /* 0x2E */ unsigned short muGroupFilterFreq;
+    /* 0x30 */ unsigned short muGroupPitch;
+}; // total size: 0x34
 
 // class DLListContainerBase<SFXPlaySet*, NewAdapter<DLListEntry<SFXPlaySet*>>>
 // {

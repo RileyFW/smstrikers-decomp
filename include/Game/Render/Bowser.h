@@ -9,6 +9,7 @@
 #include "Game/CharacterAudio.h"
 #include "Game/Render/SkinAnimatedMovableNPC.h"
 #include "Game/Effects/EmissionController.h"
+#include "Game/Character.h"
 
 void AnimSoundCallback(unsigned int);
 
@@ -77,11 +78,11 @@ public:
     void ActionIdle();
     void SetTiltParameters(float);
     void CheckForAbort();
-    void UpdateFireEmitter(EmissionController&);
-    void UpdateBowserLandEmitter(EmissionController&);
+    static void UpdateFireEmitter(EmissionController& controller);
+    static void UpdateBowserLandEmitter(EmissionController& controller);
     void FindTarget();
     void SetupBaseSFX();
-    // void PlaySFX(Audio::eCharSFX, PosUpdateMethod, float, bool);
+    void PlaySFX(Audio::eCharSFX type, PosUpdateMethod posUpdateMethod, float fDelay, bool bIs3D);
     void CheckFootSteps();
     float GetHeadSpin() const;
     float GetHeadTilt() const;
@@ -106,6 +107,8 @@ public:
     /* 0x119 */ bool mbAlive;
     /* 0x11A */ bool mbResetPending;
     /* 0x11C */ Audio::cCharacterSFX* m_pCharacterSFX;
+
+    static float mfYAxisTilt;
 }; // total size: 0x120
 
 #endif // _BOWSER_H_

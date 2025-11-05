@@ -128,7 +128,7 @@ void Update3DSFXEmitter(SFXEmitter* emitter, const nlVector3& pos, const nlVecto
         var_f0 = 0.5f;
     }
     // bool sndUpdateEmitter(SND_EMITTER* em, SND_FVECTOR* pos, SND_FVECTOR* dir, u8 maxVol, SND_ROOM* room);
-    sndUpdateEmitter(&emitter->m_sndEmitter, &pos_vec, &dir_vec, (s8)(temp_f6 + var_f0), NULL);
+    sndUpdateEmitter(&emitter->emitter, &pos_vec, &dir_vec, (s8)(temp_f6 + var_f0), NULL);
 }
 
 /**
@@ -157,7 +157,7 @@ void Update3DSFXListener(SND_LISTENER*, const nlVector3&, const nlVector3&, cons
  * Offset/Address/Size: 0x954 | 0x801C5150 | size: 0x10C
  */
 void Add3DSFXListener(SND_LISTENER*, const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&, float, float, float, float,
-                      bool, float)
+    bool, float)
 {
 }
 
@@ -412,7 +412,7 @@ bool AddAuxEffect(MusyXEffectType type, void* data, bool arg2, unsigned char arg
 
     switch (type)
     {
-    case MusyXEffectType_0:
+    case MUSYX_EFFECT_NONE:
         // var_r25 = NULL;
         // temp_ret = nlPrintf("InitAuxEffect: MUSYX_EFFECT_NONE passed in, callback return is NULL.\n");
         // var_f1 = (bitwise f32)temp_ret;

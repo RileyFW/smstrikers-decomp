@@ -112,22 +112,23 @@ void cGameSFX::IsKeepingTrackOf(unsigned long, SFXPlaySet**)
 /**
  * Offset/Address/Size: 0x22A8 | 0x801537EC | size: 0x14
  */
-void cGameSFX::GetSFXVolReverb(unsigned long) const
+float cGameSFX::GetSFXVolReverb(unsigned long index) const
 {
+    return mpSFX[index].fVolReverb;
 }
 
 /**
  * Offset/Address/Size: 0x22BC | 0x80153800 | size: 0x14
  */
-float cGameSFX::GetSFXVol(unsigned long) const
+float cGameSFX::GetSFXVol(unsigned long index) const
 {
-    return 0.f;
+    return mpSFX[index].fVolume;
 }
 
 /**
  * Offset/Address/Size: 0x22D0 | 0x80153814 | size: 0x218
  */
-void cGameSFX::SetSFX(SoundPropAccessor*)
+void cGameSFX::SetSFX(SoundPropAccessor* pSoundPropAccessor)
 {
 }
 
@@ -142,7 +143,7 @@ void cGameSFX::ShutdownPlaySet()
     // s32 spC;
     // s32 sp8;
 
-    m_unk_0x1C = false;
+    mbCurPlaySetIsValid = false;
     StopPlayingAllTrackedSFX();
 
     // sp8 = @565.unk0;
@@ -155,7 +156,7 @@ void cGameSFX::ShutdownPlaySet()
     //     40NewAdapter < 26DLListEntry < P10SFXPlaySet
     //         >>> FPCvPvP26DLListEntry<P10SFXPlaySet> _v(this->unk18, &this->unk14, &sp8, @565.unk0, &@565);
 
-    m_unk_0x18 = NULL;
+    mpCurPlaySet.m_Head = NULL;
 }
 
 /**
@@ -164,12 +165,12 @@ void cGameSFX::ShutdownPlaySet()
 void cGameSFX::DeInit()
 {
     ShutdownPlaySet();
-    m_unk_0x10 = NULL;
-    m_unk_0x24 = 0;
-    m_unk_0x2C = false;
-    m_unk_0x2E = 0;
-    m_unk_0x30 = 0x2000;
-    m_unk_0x04 = false;
+    mpSFX = NULL;
+    mpSoundStrTable = 0;
+    mbGroupFilterOn = false;
+    muGroupFilterFreq = 0;
+    muGroupPitch = 0x2000;
+    mbInited = false;
 }
 
 /**
@@ -177,8 +178,8 @@ void cGameSFX::DeInit()
  */
 void cGameSFX::Init()
 {
-    m_unk_0x04 = true;
-    m_unk_0x1C = true;
+    mbInited = true;
+    mbCurPlaySetIsValid = true;
 }
 
 /**

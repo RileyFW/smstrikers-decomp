@@ -358,7 +358,7 @@ public:
     /* 0x32C */ float unk32C;
     /* 0x330 */ float unk330;
     /* 0x334 */ float unk334;
-    /* 0x338 */ float unk338;
+    /* 0x338 */ float unk338; // fYAxisTiltForceMultiplier
     /* 0x33C */ float unk33C;
 
 }; // total size: 0x2E0

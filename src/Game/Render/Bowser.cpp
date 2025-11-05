@@ -3,12 +3,26 @@
 #include "Game/AI/Powerups.h"
 #include "Game/AI/Fielder.h"
 #include "Game/Ball.h"
+#include "Game/Sys/eventman.h"
+#include "Game/ReplayManager.h"
+#include "NL/nlString.h"
+#include "Game/PoseAccumulator.h"
+#include "Game/Camera/CameraMan.h"
+#include "Game/Game.h"
+#include "Game/Audio/AudioLoader.h"
+// #include "Game/SoundProps/bowsergensoundproperties.h"
+#include "math.h"
+
+SoundPropAccessor* gpBOWSERSoundPropAccessor;
+
+float Bowser::mfYAxisTilt = 0.0f;
 
 /**
  * Offset/Address/Size: 0x4BBC | 0x8015D930 | size: 0x2C
  */
-void AnimSoundCallback(unsigned int)
+void AnimSoundCallback(unsigned int eventID)
 {
+    g_pEventManager->CreateValidEvent(eventID, 0x14);
 }
 
 /**
@@ -127,8 +141,24 @@ void Bowser::ActionIdle()
 /**
  * Offset/Address/Size: 0x1044 | 0x80159DB8 | size: 0xD0
  */
-void Bowser::SetTiltParameters(float)
+void Bowser::SetTiltParameters(float fYAxisTilt)
 {
+    mfYAxisTilt = fYAxisTilt;
+    cCameraManager::SetWorldUpVectorTilt(0.0f, fYAxisTilt);
+
+    if ((g_pBall != NULL) && (g_pBall->m_pPhysicsBall != NULL))
+    {
+        if ((float)fabs(fYAxisTilt) > 0.01f)
+        {
+            nlVector3 tiltForce = { 0.0f, 0.0f, 0.0f };
+            tiltForce.f.x = -fYAxisTilt * g_pGame->m_pGameTweaks->unk338;
+
+            g_pBall->m_pPhysicsBall->m_v3TiltForce = tiltForce;
+            g_pBall->m_pPhysicsBall->m_bUseTiltForce = true;
+            return;
+        }
+        g_pBall->m_pPhysicsBall->m_bUseTiltForce = false;
+    }
 }
 
 /**
@@ -141,15 +171,44 @@ void Bowser::CheckForAbort()
 /**
  * Offset/Address/Size: 0x888 | 0x801595FC | size: 0xCC
  */
-void Bowser::UpdateFireEmitter(EmissionController&)
+void Bowser::UpdateFireEmitter(EmissionController& controller)
 {
+    if (ReplayManager::Instance()->mRender != nullptr)
+    {
+        RenderSnapshot* pRenderSnapshot = ReplayManager::Instance()->mRender;
+        cPoseAccumulator* pPoseAccumulator = pRenderSnapshot->mBowser.mPoseAccumulator;
+
+        controller.SetPosition(pRenderSnapshot->mBowser.mPosition);
+        controller.SetVelocity(pRenderSnapshot->mBowser.mVelocity);
+        controller.SetPoseAccumulator(*pPoseAccumulator);
+
+        static unsigned int HeadJointID = nlStringHash("bip01 head");
+
+        nlMatrix4& headMatrix = pPoseAccumulator->GetNodeMatrixByHashID(HeadJointID);
+        nlVector3 direction;
+        // = headMatrix.GetTranslation();
+        nlVec3Set(direction, headMatrix.f.m21, headMatrix.f.m22, headMatrix.f.m23);
+        // direction.f.x = headMatrix.f.m21; // row 1, column 0
+        // direction.f.y = headMatrix.f.m22; // row 1, column 1
+        // direction.f.z = headMatrix.f.m23; // row 1, column 2
+        controller.SetDirection(direction);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x810 | 0x80159584 | size: 0x78
  */
-void Bowser::UpdateBowserLandEmitter(EmissionController&)
+void Bowser::UpdateBowserLandEmitter(EmissionController& controller)
 {
+    if (ReplayManager::Instance()->mRender != nullptr)
+    {
+        RenderSnapshot* pRenderSnapshot = ReplayManager::Instance()->mRender;
+        cPoseAccumulator* pPoseAccumulator = pRenderSnapshot->mBowser.mPoseAccumulator;
+
+        controller.SetPosition(pRenderSnapshot->mBowser.mPosition);
+        controller.SetVelocity(pRenderSnapshot->mBowser.mVelocity);
+        controller.SetPoseAccumulator(*pPoseAccumulator);
+    }
 }
 
 /**
@@ -172,14 +231,103 @@ void Bowser::FindTarget()
  */
 void Bowser::SetupBaseSFX()
 {
+    if (!AudioLoader::IsInited())
+    {
+        return;
+    }
+
+    m_pCharacterSFX->Init();
+    m_pCharacterSFX->mGroup = 8;
+    m_pCharacterSFX->mpPhysObj = (PhysicsObject*)mpPhysObj;
+    m_pCharacterSFX->SetSFX(gpBOWSERSoundPropAccessor);
+    AudioLoader::SetupBowserStadiumSoundTable(this);
+
+    // temp_r3_3 = this->unkD4;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_3, 8.2f / temp_r3_3->unk8, 0x5A, AnimSoundCallback);
+    // temp_r3_4 = this->unkD4;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_4, 18.3f / temp_r3_4->unk8, 0x5F, AnimSoundCallback);
+    // temp_r3_5 = this->unkD4;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_5, 18.3f / temp_r3_5->unk8, 0x5F, AnimSoundCallback);
+    // temp_r3_6 = this->unkD4;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_6, 25.0f / temp_r3_6->unk8, 0x60, AnimSoundCallback);
+    // temp_r3_7 = this->unkDC;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_7, 3.0f / temp_r3_7->unk8, 0x5F, AnimSoundCallback);
+    // temp_r3_8 = this->unkDC;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_8, 25.5f / temp_r3_8->unk8, 0x5F, AnimSoundCallback);
+    // temp_r3_9 = this->unkD8;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_9, 8.0f / temp_r3_9->unk8, 0x5B, AnimSoundCallback);
+    // temp_r3_10 = this->unkD8;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_10, 16.0f / temp_r3_10->unk8, 0x5C, AnimSoundCallback);
+    // temp_r3_11 = this->unkE4;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_11, 13.0f / temp_r3_11->unk8, 0x60, AnimSoundCallback);
+    // temp_r3_12 = this->unkE8;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_12, 3.0f / temp_r3_12->unk8, 0x5B, AnimSoundCallback);
+    // temp_r3_13 = this->unkE8;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_13, 13.0f / temp_r3_13->unk8, 0x5D, AnimSoundCallback);
+    // temp_r3_14 = this->unkE8;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_14, 22.7f / temp_r3_14->unk8, 0x5F, AnimSoundCallback);
+    // temp_r3_15 = this->unkE8;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_15, 22.7f / temp_r3_15->unk8, 0x5F, AnimSoundCallback);
+    // temp_r3_16 = this->unkE8;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_16, 32.0f / temp_r3_16->unk8, 0x5F, AnimSoundCallback);
+    // temp_r3_17 = this->unkE8;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_17, 32.8f / temp_r3_17->unk8, 0x5F, AnimSoundCallback);
+    // temp_r3_18 = this->unkE0;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_18, 15.7f / temp_r3_18->unk8, 0x5F, AnimSoundCallback);
+    // temp_r3_19 = this->unkE0;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_19, 20.0f / temp_r3_19->unk8, 0x63, AnimSoundCallback);
+    // temp_r3_20 = this->unkE0;
+    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_20, 39.0f / temp_r3_20->unk8, 0x5F, AnimSoundCallback);
+
+    // float numKeys = (float)mpAnim[1]->m_nNumKeys;
+    // mpAnim[1]->CreateCallback(90.0f / numKeys, 0x5A, AnimSoundCallback);
+    // mpAnim[1]->CreateCallback(95.0f / numKeys, 0x5F, AnimSoundCallback);
+    // mpAnim[1]->CreateCallback(95.0f / numKeys, 0x5F, AnimSoundCallback);
+    // mpAnim[1]->CreateCallback(96.0f / numKeys, 0x60, AnimSoundCallback);
+
+    // numKeys = (float)mpAnim[3]->m_nNumKeys;
+    // mpAnim[3]->CreateCallback(30.0f / numKeys, 0x5F, AnimSoundCallback);
+    // mpAnim[3]->CreateCallback(96.0f / numKeys, 0x5F, AnimSoundCallback);
+
+    // numKeys = (float)mpAnim[2]->m_nNumKeys;
+    // mpAnim[2]->CreateCallback(91.0f / numKeys, 0x5B, AnimSoundCallback);
+    // mpAnim[2]->CreateCallback(92.0f / numKeys, 0x5C, AnimSoundCallback);
+
+    // numKeys = (float)mpAnim[5]->m_nNumKeys;
+    // mpAnim[5]->CreateCallback(100.0f / numKeys, 0x60, AnimSoundCallback);
+
+    // numKeys = (float)mpAnim[6]->m_nNumKeys;
+    // mpAnim[6]->CreateCallback(30.0f / numKeys, 0x5B, AnimSoundCallback);
+    // mpAnim[6]->CreateCallback(100.0f / numKeys, 0x5D, AnimSoundCallback);
+    // mpAnim[6]->CreateCallback(104.0f / numKeys, 0x5F, AnimSoundCallback);
+    // mpAnim[6]->CreateCallback(104.0f / numKeys, 0x5F, AnimSoundCallback);
+    // mpAnim[6]->CreateCallback(108.0f / numKeys, 0x5F, AnimSoundCallback);
+    // mpAnim[6]->CreateCallback(108.0f / numKeys, 0x5F, AnimSoundCallback);
+
+    // numKeys = (float)mpAnim[4]->m_nNumKeys;
+    // mpAnim[4]->CreateCallback(95.0f / numKeys, 0x5F, AnimSoundCallback);
+    // mpAnim[4]->CreateCallback(99.0f / numKeys, 0x63, AnimSoundCallback);
+    // mpAnim[4]->CreateCallback(100.0f / numKeys, 0x5F, AnimSoundCallback);
 }
 
 /**
  * Offset/Address/Size: 0x290 | 0x80159004 | size: 0xA4
  */
-// void Bowser::PlaySFX(Audio::eCharSFX, PosUpdateMethod, float, bool)
-// {
-// }
+void Bowser::PlaySFX(Audio::eCharSFX type, PosUpdateMethod posUpdateMethod, float fDelay, bool bIs3D)
+{
+    Audio::SoundAttributes attrs;
+    attrs.Init();
+    attrs.SetSoundType(type, bIs3D);
+    attrs.mf_DelayTime = fDelay;
+    attrs.posUpdateMethod = posUpdateMethod;
+
+    if (posUpdateMethod == VECTORS)
+    {
+        attrs.UseStationaryPosVector(mv3Position);
+    }
+
+    m_pCharacterSFX->Play(attrs);
+}
 
 /**
  * Offset/Address/Size: 0x9C | 0x80158E10 | size: 0x1F4

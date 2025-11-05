@@ -131,13 +131,13 @@ int cCharacter::PlaySFX(Audio::SoundAttributes& attributes)
 /**
  * Offset/Address/Size: 0x394 | 0x8000E2E0 | size: 0x78
  */
-void cCharacter::SetSFX(SoundPropAccessor* arg0)
+void cCharacter::SetSFX(SoundPropAccessor* pSoundPropAccessor)
 {
     if (Audio::IsInited())
     {
         m_pCharacterSFX->Init();
-        m_pCharacterSFX->m_physicsCharacter = m_pPhysicsCharacter;
-        m_pCharacterSFX->SetSFX(arg0);
+        m_pCharacterSFX->mpPhysObj = m_pPhysicsCharacter;
+        m_pCharacterSFX->SetSFX(pSoundPropAccessor);
     }
 }
 

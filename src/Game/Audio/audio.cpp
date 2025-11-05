@@ -469,9 +469,9 @@ bool IsInited()
  */
 void SoundAttributes::UseStationaryPosVector(const nlVector3& position)
 {
-    m_vec_0x44 = position;
-    m_unk_0x5C = 2;
-    m_unk_0x30 = true;
+    pos.vPos = position;
+    posUpdateMethod = VECTORS;
+    mb_Update3DContinuously = true;
 }
 
 /**
@@ -479,10 +479,10 @@ void SoundAttributes::UseStationaryPosVector(const nlVector3& position)
  */
 void SoundAttributes::UseVectors(const nlVector3& v1, const nlVector3& v2)
 {
-    m_vec_0x44 = v1;
-    m_vec_0x50 = v2;
-    m_unk_0x5C = 2;
-    m_unk_0x30 = true;
+    pos.vPos = v1;
+    dir.vDir = v2;
+    posUpdateMethod = VECTORS;
+    mb_Update3DContinuously = true;
 }
 
 /**
@@ -492,10 +492,10 @@ void SoundAttributes::UseVectorPtrs(const nlVector3* v1, const nlVector3* v2)
 {
     // *(const nlVector3**)&m_unk_0x44 = v1;
     // *(const nlVector3**)&m_unk_0x50 = v2;
-    m_vecPtr_0x44 = v1;
-    m_vecPtr_0x50 = v2;
-    m_unk_0x5C = 3;
-    m_unk_0x30 = true;
+    pos.pvPos = v1;
+    dir.pvDir = v2;
+    posUpdateMethod = PTRS_TO_VECTORS;
+    mb_Update3DContinuously = true;
 }
 
 /**
@@ -503,18 +503,18 @@ void SoundAttributes::UseVectorPtrs(const nlVector3* v1, const nlVector3* v2)
  */
 void SoundAttributes::UsePhysObj(PhysicsObject* obj)
 {
-    m_physicsObject = obj;
-    m_unk_0x5C = 1;
-    m_unk_0x30 = true;
+    mp_PhysObj = obj;
+    posUpdateMethod = PHYSOBJ;
+    mb_Update3DContinuously = true;
 }
 
 /**
  * Offset/Address/Size: 0x4C0C | 0x80141120 | size: 0xC
  */
-void SoundAttributes::SetSoundType(unsigned long soundType, bool arg)
+void SoundAttributes::SetSoundType(unsigned long soundType, bool bIs3D)
 {
-    m_soundType = soundType;
-    m_unk_0x2C = arg;
+    mu_Type = soundType;
+    mb_Is3D = bIs3D;
 }
 
 /**
@@ -522,65 +522,65 @@ void SoundAttributes::SetSoundType(unsigned long soundType, bool arg)
  */
 void SoundAttributes::Init()
 {
-    m_unk_0x00 = 0;
-    m_soundType = -1;
-    m_unk_0x08 = -1;
-    m_unk_0x0C = PlatAudio::GetSndIDError();
+    me_ClassType = 0;
+    mu_Type = -1;
+    mu_SfxID = -1;
+    mu_VoiceID = PlatAudio::GetSndIDError();
 
-    m_unk_0x10 = 1.0f;   // from "@3248"
-    m_unk_0x14 = 1.0f;   // same as above
-    m_unk_0x18 = 0.0f;   // from "@2159"
-    m_unk_0x1C = 256.0f; // from "@1976"
-    m_unk_0x20 = 1.0f;   // same as "@3248"
-    m_unk_0x24 = 0.5f;   // from "@1977"
-    m_unk_0x28 = 256.0f; // same as "@1976"
+    mf_Volume = 1.0f;          // from "@3248"
+    mf_VolReverb = 1.0f;       // same as above
+    mf_Attenuate = 0.0f;       // from "@2159"
+    mf_VolAdjustment = 256.0f; // from "@1976"
+    mf_Panning = 1.0f;         // same as "@3248"
+    mf_DelayTime = 0.5f;       // from "@1977"
+    mf_DebugTimer = 256.0f;    // same as "@1976"
 
-    m_unk_0x2C = false;
-    m_unk_0x2D = false;
-    m_unk_0x2E = true;
-    m_unk_0x2F = false;
-    m_unk_0x30 = false;
-    m_unk_0x31 = false;
-    m_unk_0x32 = false;
-    m_unk_0x33 = false;
-    m_unk_0x34 = false;
+    mb_Is3D = false;
+    mb_IsPlaying = false;
+    mb_KeepTrack = true;
+    mb_HasCutoff = false;
+    mb_Update3DContinuously = false;
+    mb_Pausable = false;
+    mb_Restartable = false;
+    mb_UseDoppler = false;
+    mf_ReturnEmitterOnPlay = false;
 
-    m_unk_0x38 = 0.5f; // from "@1977"
-    m_unk_0x3C = 0;
-    m_physicsObject = NULL;
+    mf_CutoffTime = 0.5f; // from "@1977"
+    mp_OwnerSFX = NULL;
+    mp_PhysObj = NULL;
 
     // Clear both vector slots
     // m_unk_0x44.f = { 256.0f, 256.0f, 256.0f };
     // m_unk_0x50.f = { 256.0f, 256.0f, 256.0f };
 
-    m_vecPtr_0x44 = NULL;
-    m_vecPtr_0x50 = NULL;
+    pos.pvPos = NULL;
+    dir.pvDir = NULL;
 
-    nlVec3Set(m_vec_0x44, 256.0f, 256.0f, 256.0f);
-    nlVec3Set(m_vec_0x50, 256.0f, 256.0f, 256.0f);
+    nlVec3Set(pos.vPos, 256.0f, 256.0f, 256.0f);
+    nlVec3Set(dir.vDir, 256.0f, 256.0f, 256.0f);
 
-    m_unk_0x5C = 0;
-    m_unk_0x60 = 0;
-    m_unk_0x64 = 0;
-    m_unk_0x68 = -1;
-    m_unk_0x6C = -1;
-    m_unk_0x70 = 0;
+    posUpdateMethod = NONE;
+    ms_EventName = 0;
+    mi_SFXPriority = 0;
+    mi_GroupPriority = -1;
+    mi_VolGroup = -1;
+    mi_EmitterGroup = 0;
 
-    m_unk_0x74 = 0;
-    m_unk_0x76 = 0;
-    m_unk_0x78 = 0x2000; // li r0, 0x2000
-    m_unk_0x7A = 1;
-    m_unk_0x7B = 0;
-    m_unk_0x7C = 1;
+    mb_FilterOn = false;
+    mu_FilterFreq = 0;
+    mu_Pitch = 0x2000; // li r0, 0x2000
+    mb_NoPhasingFilter = true;
+    m_unk_0x7B = false;
+    m_unk_0x7C = true;
 }
 
-/**
- * Offset/Address/Size: 0x0 | 0x8014122C | size: 0x8
- */
-u32 cGameSFX::GetClassType() const
-{
-    return m_classType;
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8014122C | size: 0x8
+//  */
+// u32 cGameSFX::GetClassType() const
+// {
+//     return m_classType;
+// }
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80141234 | size: 0x8C

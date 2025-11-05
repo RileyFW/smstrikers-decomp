@@ -20,7 +20,7 @@ public:
     void ReadEntireSampleFileIntoMem(bool);
     void LoadInGameAudioData();
     void LoadStadiumSpecificSoundGroups(eStadiumID);
-    void SetupBowserStadiumSoundTable(Bowser*);
+    static void SetupBowserStadiumSoundTable(Bowser*);
     void SetupCharStadiumSoundTable();
     void SetupPostPhysicsCameraLoad();
     void UnloadInGame();

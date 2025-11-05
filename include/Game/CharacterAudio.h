@@ -226,12 +226,15 @@ public:
     bool IsMovementLoopPlaying();
     bool IsMovementLoopStarted();
 
-    /* 0x3390 */ s32 m_unk_0x3390;
-    /* 0x3394 */ PhysicsCharacter* m_physicsCharacter;
-    /* 0x3398 */ SFXEmitter* m_movementLoopEmitter;
+    /* 0x034 */ int mSoundTypeEnumMap[173];
+    /* 0x2E8 */ float mDebugTimer[173];
+    /* 0x59C */ SoundStrToIDNode mCharSFX[173]; // size differs from dwarf data
+    /* 0x3390 */ s32 mGroup;
+    /* 0x3394 */ PhysicsObject* mpPhysObj;
+    /* 0x3398 */ SFXEmitter* mpMovementLoopSound;
     /* 0x339C */ f32 m_unk_0x339C;
     /* 0x33A0 */ bool m_unk_0x33A0;
-};
+}; // total size: 0x30E8
 
 } // namespace Audio
 
