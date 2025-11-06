@@ -63,7 +63,7 @@ public:
     void ShutdownPlaySet();
     float GetSFXVol(unsigned long) const;
     float GetSFXVolReverb(unsigned long) const;
-    void IsKeepingTrackOf(unsigned long, SFXPlaySet**);
+    bool IsKeepingTrackOf(unsigned long, SFXPlaySet**);
     void ActivateFilterOnAllTrackedSFX(bool);
     void SetFilterFreqOnAllTrackedSFX(unsigned short);
     void SetPitchBendOnAllDialogueSFX(unsigned short);

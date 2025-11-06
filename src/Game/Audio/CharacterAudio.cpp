@@ -1,4 +1,86 @@
 #include "Game/CharacterAudio.h"
+#include "Game/Character.h"
+#include "Game/Team.h"
+#include "Game/GameInfo.h"
+#include "Game/Render/Nis.h"
+#include "Game/AI/Fielder.h"
+
+#include "NL/nlMath.h"
+#include "NL/nlSingleton.h"
+
+// struct CharFootstepSFX
+// {
+//     /* 0x00 */ Audio::eCharSFX firstElement;
+//     /* 0x04 */ u32 pad[4];
+//     /* 0x14 */ Audio::eCharSFX sfxArray[5]; // WALK_01 to WALK_05
+//     /* 0x1C */ u32 count;                   // 5
+// };
+
+extern cTeam* g_pTeams[2];
+
+// CharFootstepSFX charFootstepSFX;
+Audio::eCharSFX charFootstepSFX[2][5] = {
+    {
+        Audio::CHARSFX_RUN_01,
+        Audio::CHARSFX_RUN_02,
+        Audio::CHARSFX_RUN_03,
+        Audio::CHARSFX_RUN_04,
+        Audio::CHARSFX_RUN_05,
+    },
+    {
+        Audio::CHARSFX_WALK_01,
+        Audio::CHARSFX_WALK_02,
+        Audio::CHARSFX_WALK_03,
+        Audio::CHARSFX_WALK_04,
+        Audio::CHARSFX_WALK_05,
+    },
+};
+
+CharDialogueSFXInfo charDialogueSFXInfo[11] = {
+    { 0x00, 0x03 }, // 0, 3
+    { 0x03, 0x03 }, // 3, 3
+    { 0x06, 0x03 }, // 6, 3
+    { 0x09, 0x03 }, // 9, 3
+    { 0x0C, 0x03 }, // 12, 3
+    { 0x0F, 0x05 }, // 15, 5
+    { 0x14, 0x03 }, // 20, 3
+    { 0x17, 0x03 }, // 23, 3
+    { 0x1A, 0x03 }, // 26, 3
+    { 0x1A, 0x00 }, // 26, 0
+    { 0x1A, 0x00 }, // 26, 0
+};
+
+Audio::eCharSFX charDialogueSFX[29] = {
+    Audio::CHARSFX_EFFORTS_ATTACK_01,      // 0x21 = 33
+    Audio::CHARSFX_EFFORTS_ATTACK_02,      // 0x22 = 34
+    Audio::CHARSFX_EFFORTS_ATTACK_03,      // 0x23 = 35
+    Audio::CHARSFX_EFFORTS_GET_HIT_01,     // 0x27 = 39
+    Audio::CHARSFX_EFFORTS_GET_HIT_02,     // 0x28 = 40
+    Audio::CHARSFX_EFFORTS_GET_HIT_03,     // 0x29 = 41
+    Audio::CHARSFX_EFFORTS_HIT_01,         // 0x24 = 36
+    Audio::CHARSFX_EFFORTS_HIT_02,         // 0x25 = 37
+    Audio::CHARSFX_EFFORTS_HIT_03,         // 0x26 = 38
+    Audio::CHARSFX_EFFORTS_PAIN_01,        // 0x2A = 42
+    Audio::CHARSFX_EFFORTS_PAIN_02,        // 0x2B = 43
+    Audio::CHARSFX_EFFORTS_PAIN_03,        // 0x2C = 44
+    Audio::CHARSFX_EFFORTS_PAIN_04,        // 0x2D = 45
+    Audio::CHARSFX_EFFORTS_PAIN_05,        // 0x2E = 46
+    Audio::CHARSFX_EFFORTS_ELECTROCUTE_01, // 0x2F = 47
+    Audio::CHARSFX_EFFORTS_PERFECT_PASS,   // 0x3F = 63
+    Audio::CHARSFX_BREATH_WITH_BALL,       // 0x40 = 64
+    Audio::CHARSFX_CALL_HEY_01,            // 0x41 = 65
+    Audio::CHARSFX_CALL_HEY_02,            // 0x42 = 66
+    Audio::CHARSFX_CALL_WO_01,             // 0x43 = 67
+    Audio::CHARSFX_EFFORTS_ELECTROCUTE_02, // 0x30 = 48
+    Audio::CHARSFX_EFFORTS_ELECTROCUTE_03, // 0x31 = 49
+    Audio::CHARSFX_EFFORTS_EXERT_01,       // 0x32 = 50
+    Audio::CHARSFX_EFFORTS_EXERT_02,       // 0x33 = 51
+    Audio::CHARSFX_EFFORTS_EXERT_03,       // 0x34 = 52
+    Audio::CHARSFX_EFFORTS_KICK_01,        // 0x35 = 53
+    Audio::CHARSFX_GEN_STOS_FLOAT,         // 0x51 = 81
+    Audio::CHARSFX_GEN_STOS_FLOAT_HYPER,   // 0x52 = 82
+    Audio::CHARSFX_NIS_CLAP_01,            // 0x53 = 83
+};
 
 namespace Audio
 {
@@ -221,23 +303,60 @@ void cCharacterSFX::StartMovementLoop()
 /**
  * Offset/Address/Size: 0x1E4 | 0x8014C588 | size: 0x10C
  */
-// void cCharacterSFX::GetCharacterFromNisCharClass(NisCharacterClass)
-// {
-// }
+cCharacter* cCharacterSFX::GetCharacterFromNisCharClass(NisCharacterClass charIdentifier)
+{
+    return nullptr;
+}
 
 /**
  * Offset/Address/Size: 0x2F0 | 0x8014C694 | size: 0x1C8
  */
-// void cCharacterSFX::PlayNISRandomCharDialogue(CharDialogueType, NisCharacterClass, float, float, bool, const nlVector3*, const
-// nlVector3*, unsigned long*)
-// {
-// }
+void cCharacterSFX::PlayNISRandomCharDialogue(CharDialogueType, NisCharacterClass, float, float, bool, const nlVector3*, const nlVector3*, unsigned long*)
+{
+}
 
 /**
  * Offset/Address/Size: 0x4B8 | 0x8014C85C | size: 0x148
  */
-void cCharacterSFX::PlayRandomWalkFootstep(float, bool)
+int cCharacterSFX::PlayRandomWalkFootstep(float, bool bAvoidCurrent)
 {
+    if (mbInited == 0)
+    {
+        return -1;
+    }
+
+    // Duplicate check (dead code)
+    if (mbInited == 0)
+    {
+        return -1;
+    }
+
+    Audio::SoundAttributes attrs;
+    attrs.Init();
+    attrs.me_ClassType = 1;
+
+    s32 randomIndex = nlRandom(5, &nlDefaultSeed);
+    Audio::eCharSFX sfxType = charFootstepSFX[1][randomIndex];
+
+    if (bAvoidCurrent != 0)
+    {
+        if (mCharSFX[sfxType].m_unk_0x40 != 0)
+        {
+            sfxType = charFootstepSFX[1][(randomIndex + 1) % 5];
+        }
+    }
+
+    for (int i = (int)charFootstepSFX[1][0]; i < (int)charFootstepSFX[1][2]; i++)
+    {
+        mCharSFX[i].m_unk_0x40 = false;
+    }
+
+    mCharSFX[sfxType].m_unk_0x40 = true;
+
+    attrs.SetSoundType(sfxType, true);
+    attrs.UseStationaryPosVector(mpPhysObj->GetPosition());
+
+    return Play(attrs);
 }
 
 /**
@@ -245,35 +364,59 @@ void cCharacterSFX::PlayRandomWalkFootstep(float, bool)
  */
 void cCharacterSFX::StopPlayingAllRandomCharDialogue()
 {
+    s32 limit = charDialogueSFXInfo[6].numRandomSFX + 0x14;
+    for (s32 i = 0; i < limit; i++)
+    {
+        if (IsKeepingTrackOf(charDialogueSFX[i], nullptr))
+        {
+            cGameSFX::Stop(charDialogueSFX[i], cGameSFX::SFX_STOP_FIRST);
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0x698 | 0x8014CA3C | size: 0x98
  */
-// void cCharacterSFX::StopPlayingRandomCharDialogue(CharDialogueType)
-// {
-// }
+void cCharacterSFX::StopPlayingRandomCharDialogue(CharDialogueType dType)
+{
+    for (s32 i = charDialogueSFXInfo[dType].charDialogueSFXIndex; i < charDialogueSFXInfo[dType].charDialogueSFXIndex + charDialogueSFXInfo[dType].numRandomSFX; i++)
+    {
+        if (IsKeepingTrackOf(charDialogueSFX[i], nullptr))
+        {
+            cGameSFX::Stop(charDialogueSFX[i], cGameSFX::SFX_STOP_FIRST);
+        }
+    }
+}
 
 /**
  * Offset/Address/Size: 0x730 | 0x8014CAD4 | size: 0x94
  */
-// void cCharacterSFX::IsPlayingRandomCharDialogue(CharDialogueType)
-// {
-// }
+bool cCharacterSFX::IsPlayingRandomCharDialogue(CharDialogueType dType)
+{
+    for (s32 i = charDialogueSFXInfo[dType].charDialogueSFXIndex; i < charDialogueSFXInfo[dType].charDialogueSFXIndex + charDialogueSFXInfo[dType].numRandomSFX; i++)
+    {
+        if (IsKeepingTrackOf(charDialogueSFX[i], nullptr))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 /**
  * Offset/Address/Size: 0x7C4 | 0x8014CB68 | size: 0x498
  */
-// void cCharacterSFX::PlayRandomCharDialogue(CharDialogueType, SoundAttributes&, bool, unsigned long*)
-// {
-// }
+void cCharacterSFX::PlayRandomCharDialogue(CharDialogueType, SoundAttributes&, bool, unsigned long*)
+{
+}
 
 /**
  * Offset/Address/Size: 0xC5C | 0x8014D000 | size: 0x4D0
  */
-// void cCharacterSFX::PlayRandomCharDialogue(CharDialogueType, PosUpdateMethod, float, float, bool)
-// {
-// }
+void cCharacterSFX::PlayRandomCharDialogue(CharDialogueType, PosUpdateMethod, float, float, bool)
+{
+}
 
 /**
  * Offset/Address/Size: 0x112C | 0x8014D4D0 | size: 0x20

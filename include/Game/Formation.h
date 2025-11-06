@@ -101,16 +101,16 @@ public:
 class FormationEval
 {
 public:
-    ~FormationEval();
+    virtual ~FormationEval();
+    virtual void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
+    virtual void GetKeyPlayer();
+    virtual void GetKeyPositions(cFielder*, nlVector3&, nlVector3*, bool);
+    virtual void GetWeight();
+    virtual void IsFielderInPosition(cFielder*, nlVector3, bool);
+    virtual void SortPlayers(const nlVector2*);
+    virtual void Update(float);
     void Create(FormationManager*, eFormationType, eFormationSet, eFormation);
-    void Update(float);
-    void GetWeight();
     void AssignPositionsToFielders(unsigned int*, float (*)[4]);
-    void SortPlayers(const nlVector2*);
-    void GetKeyPlayer();
-    void GetKeyPositions(cFielder*, nlVector3&, nlVector3*, bool);
-    void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
-    void IsFielderInPosition(cFielder*, nlVector3, bool);
 };
 
 struct CachedPosition

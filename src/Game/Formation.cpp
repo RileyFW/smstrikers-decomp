@@ -34,8 +34,18 @@ FormationEval::~FormationEval()
 /**
  * Offset/Address/Size: 0x29F4 | 0x8003AC44 | size: 0x60
  */
-FormationManager::FormationManager(cTeam*)
+FormationManager::FormationManager(cTeam* pTeam)
 {
+    m_pTeam = pTeam;
+    m_tSelectFormationsTimer.SetSeconds(0.0f);
+    m_pFormations[0] = nullptr;
+    m_pFormations[1] = nullptr;
+    m_pFormations[2] = nullptr;
+    m_CachedPositions[0].bCacheIsValid = false;
+    m_CachedPositions[1].bCacheIsValid = false;
+    m_CachedPositions[2].bCacheIsValid = false;
+    m_CachedPositions[3].bCacheIsValid = false;
+    m_tSelectFormationsTimer.m_uPackedTime = 0;
 }
 
 /**
@@ -43,6 +53,11 @@ FormationManager::FormationManager(cTeam*)
  */
 FormationManager::~FormationManager()
 {
+    for (int i = 0; i < 3; ++i)
+    {
+        delete m_pFormations[i];
+        m_pFormations[i] = nullptr;
+    }
 }
 
 /**

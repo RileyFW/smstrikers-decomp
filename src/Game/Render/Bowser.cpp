@@ -242,72 +242,24 @@ void Bowser::SetupBaseSFX()
     m_pCharacterSFX->SetSFX(gpBOWSERSoundPropAccessor);
     AudioLoader::SetupBowserStadiumSoundTable(this);
 
-    // temp_r3_3 = this->unkD4;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_3, 8.2f / temp_r3_3->unk8, 0x5A, AnimSoundCallback);
-    // temp_r3_4 = this->unkD4;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_4, 18.3f / temp_r3_4->unk8, 0x5F, AnimSoundCallback);
-    // temp_r3_5 = this->unkD4;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_5, 18.3f / temp_r3_5->unk8, 0x5F, AnimSoundCallback);
-    // temp_r3_6 = this->unkD4;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_6, 25.0f / temp_r3_6->unk8, 0x60, AnimSoundCallback);
-    // temp_r3_7 = this->unkDC;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_7, 3.0f / temp_r3_7->unk8, 0x5F, AnimSoundCallback);
-    // temp_r3_8 = this->unkDC;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_8, 25.5f / temp_r3_8->unk8, 0x5F, AnimSoundCallback);
-    // temp_r3_9 = this->unkD8;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_9, 8.0f / temp_r3_9->unk8, 0x5B, AnimSoundCallback);
-    // temp_r3_10 = this->unkD8;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_10, 16.0f / temp_r3_10->unk8, 0x5C, AnimSoundCallback);
-    // temp_r3_11 = this->unkE4;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_11, 13.0f / temp_r3_11->unk8, 0x60, AnimSoundCallback);
-    // temp_r3_12 = this->unkE8;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_12, 3.0f / temp_r3_12->unk8, 0x5B, AnimSoundCallback);
-    // temp_r3_13 = this->unkE8;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_13, 13.0f / temp_r3_13->unk8, 0x5D, AnimSoundCallback);
-    // temp_r3_14 = this->unkE8;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_14, 22.7f / temp_r3_14->unk8, 0x5F, AnimSoundCallback);
-    // temp_r3_15 = this->unkE8;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_15, 22.7f / temp_r3_15->unk8, 0x5F, AnimSoundCallback);
-    // temp_r3_16 = this->unkE8;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_16, 32.0f / temp_r3_16->unk8, 0x5F, AnimSoundCallback);
-    // temp_r3_17 = this->unkE8;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_17, 32.8f / temp_r3_17->unk8, 0x5F, AnimSoundCallback);
-    // temp_r3_18 = this->unkE0;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_18, 15.7f / temp_r3_18->unk8, 0x5F, AnimSoundCallback);
-    // temp_r3_19 = this->unkE0;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_19, 20.0f / temp_r3_19->unk8, 0x63, AnimSoundCallback);
-    // temp_r3_20 = this->unkE0;
-    // CreateCallback__6cSAnimFfUiPFUi_v(temp_r3_20, 39.0f / temp_r3_20->unk8, 0x5F, AnimSoundCallback);
-
-    // float numKeys = (float)mpAnim[1]->m_nNumKeys;
-    // mpAnim[1]->CreateCallback(90.0f / numKeys, 0x5A, AnimSoundCallback);
-    // mpAnim[1]->CreateCallback(95.0f / numKeys, 0x5F, AnimSoundCallback);
-    // mpAnim[1]->CreateCallback(95.0f / numKeys, 0x5F, AnimSoundCallback);
-    // mpAnim[1]->CreateCallback(96.0f / numKeys, 0x60, AnimSoundCallback);
-
-    // numKeys = (float)mpAnim[3]->m_nNumKeys;
-    // mpAnim[3]->CreateCallback(30.0f / numKeys, 0x5F, AnimSoundCallback);
-    // mpAnim[3]->CreateCallback(96.0f / numKeys, 0x5F, AnimSoundCallback);
-
-    // numKeys = (float)mpAnim[2]->m_nNumKeys;
-    // mpAnim[2]->CreateCallback(91.0f / numKeys, 0x5B, AnimSoundCallback);
-    // mpAnim[2]->CreateCallback(92.0f / numKeys, 0x5C, AnimSoundCallback);
-
-    // numKeys = (float)mpAnim[5]->m_nNumKeys;
-    // mpAnim[5]->CreateCallback(100.0f / numKeys, 0x60, AnimSoundCallback);
-
-    // numKeys = (float)mpAnim[6]->m_nNumKeys;
-    // mpAnim[6]->CreateCallback(30.0f / numKeys, 0x5B, AnimSoundCallback);
-    // mpAnim[6]->CreateCallback(100.0f / numKeys, 0x5D, AnimSoundCallback);
-    // mpAnim[6]->CreateCallback(104.0f / numKeys, 0x5F, AnimSoundCallback);
-    // mpAnim[6]->CreateCallback(104.0f / numKeys, 0x5F, AnimSoundCallback);
-    // mpAnim[6]->CreateCallback(108.0f / numKeys, 0x5F, AnimSoundCallback);
-    // mpAnim[6]->CreateCallback(108.0f / numKeys, 0x5F, AnimSoundCallback);
-
-    // numKeys = (float)mpAnim[4]->m_nNumKeys;
-    // mpAnim[4]->CreateCallback(95.0f / numKeys, 0x5F, AnimSoundCallback);
-    // mpAnim[4]->CreateCallback(99.0f / numKeys, 0x63, AnimSoundCallback);
-    // mpAnim[4]->CreateCallback(100.0f / numKeys, 0x5F, AnimSoundCallback);
+    mpAnim[1]->CreateCallback(8.2f / mpAnim[1]->m_nNumKeys, 0x5A, AnimSoundCallback);
+    mpAnim[1]->CreateCallback(18.3f / mpAnim[1]->m_nNumKeys, 0x5F, AnimSoundCallback);
+    mpAnim[1]->CreateCallback(18.3f / mpAnim[1]->m_nNumKeys, 0x5F, AnimSoundCallback);
+    mpAnim[1]->CreateCallback(25.0f / mpAnim[1]->m_nNumKeys, 0x60, AnimSoundCallback);
+    mpAnim[3]->CreateCallback(3.0f / mpAnim[3]->m_nNumKeys, 0x5F, AnimSoundCallback);
+    mpAnim[3]->CreateCallback(25.5f / mpAnim[3]->m_nNumKeys, 0x5F, AnimSoundCallback);
+    mpAnim[2]->CreateCallback(8.0f / mpAnim[2]->m_nNumKeys, 0x5B, AnimSoundCallback);
+    mpAnim[2]->CreateCallback(16.0f / mpAnim[2]->m_nNumKeys, 0x5C, AnimSoundCallback);
+    mpAnim[5]->CreateCallback(13.0f / mpAnim[5]->m_nNumKeys, 0x60, AnimSoundCallback);
+    mpAnim[6]->CreateCallback(3.0f / mpAnim[6]->m_nNumKeys, 0x5B, AnimSoundCallback);
+    mpAnim[6]->CreateCallback(13.0f / mpAnim[6]->m_nNumKeys, 0x5D, AnimSoundCallback);
+    mpAnim[6]->CreateCallback(22.7f / mpAnim[6]->m_nNumKeys, 0x5F, AnimSoundCallback);
+    mpAnim[6]->CreateCallback(22.7f / mpAnim[6]->m_nNumKeys, 0x5F, AnimSoundCallback);
+    mpAnim[6]->CreateCallback(32.0f / mpAnim[6]->m_nNumKeys, 0x5F, AnimSoundCallback);
+    mpAnim[6]->CreateCallback(32.8f / mpAnim[6]->m_nNumKeys, 0x5F, AnimSoundCallback);
+    mpAnim[4]->CreateCallback(15.7f / mpAnim[4]->m_nNumKeys, 0x5F, AnimSoundCallback);
+    mpAnim[4]->CreateCallback(20.0f / mpAnim[4]->m_nNumKeys, 0x63, AnimSoundCallback);
+    mpAnim[4]->CreateCallback(39.0f / mpAnim[4]->m_nNumKeys, 0x5F, AnimSoundCallback);
 }
 
 /**

@@ -8,6 +8,10 @@
 #include "Game/Physics/PhysicsCharacter.h"
 #include "Game/Sys/audio.h"
 
+class cCharacter;
+class cTeam;
+class GameInfoManager;
+
 enum CharDialogueType
 {
     CHAR_DIALOGUE_ATTACK = 0,
@@ -22,6 +26,12 @@ enum CharDialogueType
     CHAR_FOOTSTEP_WALK = 9,
     CHAR_FOOTSTEP_RUN = 10,
 };
+
+struct CharDialogueSFXInfo
+{
+    /* 0x0 */ int charDialogueSFXIndex;
+    /* 0x4 */ int numRandomSFX;
+}; // total size: 0x8
 
 namespace Audio
 {
@@ -209,18 +219,18 @@ class cCharacterSFX : public cGameSFX
 public:
     cCharacterSFX();
     virtual ~cCharacterSFX();
-
     virtual void Init();
     virtual int Play(Audio::SoundAttributes&);
+
     void Stop(Audio::eCharSFX, cGameSFX::StopFlag);
-    // void PlayRandomCharDialogue(CharDialogueType, PosUpdateMethod, float, float, bool);
-    // void PlayRandomCharDialogue(CharDialogueType, Audio::SoundAttributes&, bool, unsigned long*);
-    // void IsPlayingRandomCharDialogue(CharDialogueType);
-    // void StopPlayingRandomCharDialogue(CharDialogueType);
+    void PlayRandomCharDialogue(CharDialogueType, PosUpdateMethod, float, float, bool);
+    void PlayRandomCharDialogue(CharDialogueType, Audio::SoundAttributes&, bool, unsigned long*);
+    bool IsPlayingRandomCharDialogue(CharDialogueType);
+    void StopPlayingRandomCharDialogue(CharDialogueType);
     void StopPlayingAllRandomCharDialogue();
-    void PlayRandomWalkFootstep(float, bool);
-    // void PlayNISRandomCharDialogue(CharDialogueType, NisCharacterClass, float, float, bool, const nlVector3*, const nlVector3*, unsigned long*);
-    // void GetCharacterFromNisCharClass(NisCharacterClass);
+    int PlayRandomWalkFootstep(float, bool);
+    void PlayNISRandomCharDialogue(CharDialogueType, NisCharacterClass, float, float, bool, const nlVector3*, const nlVector3*, unsigned long*);
+    static cCharacter* GetCharacterFromNisCharClass(NisCharacterClass charIdentifier);
     void StartMovementLoop();
     void StopMovementLoop();
     bool IsMovementLoopPlaying();

@@ -105,8 +105,9 @@ void TrackedSFXPitchFreqTypeCheckCallback(unsigned long, cGameSFX*)
 /**
  * Offset/Address/Size: 0x2158 | 0x8015369C | size: 0x150
  */
-void cGameSFX::IsKeepingTrackOf(unsigned long, SFXPlaySet**)
+bool cGameSFX::IsKeepingTrackOf(unsigned long sfxID, SFXPlaySet** pPlaySet)
 {
+    return false;
 }
 
 /**
