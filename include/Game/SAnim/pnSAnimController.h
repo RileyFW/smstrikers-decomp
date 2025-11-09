@@ -2,8 +2,12 @@
 #define _PNSANIMCONTROLLER_H_
 
 #include "Game/SAnim.h"
-#include "Game/PoseAccumulator.h"
 #include "NL/nlMath.h"
+#include "types.h"
+
+#include "Game/SHierarchy.h"
+#include "Game/PoseAccumulator.h"
+#include "NL/nlSlotPool.h"
 
 // class SlotPool<cPN_SAnimController>
 // {
@@ -32,28 +36,52 @@ public:
     /* 0x24 */ virtual void BlendRootRot(unsigned short*, float, float*);
 
     void UpdateSynchronized(float);
-    void SetTime(float);
+    void SetTime(float time)
+    {
+        FORCE_DONT_INLINE;
+        FORCE_DONT_INLINE;
+        FORCE_DONT_INLINE;
+        m_fPrevTime = m_fTime;
+        m_fTime = time;
+    };
     void ProcessCallbacks();
-    void TestTrigger(float) const;
-    void TestFrameTrigger(float);
-    void RemapNode(int) const;
+    bool TestTrigger(float) const;
+    bool TestFrameTrigger(float);
+    int RemapNode(int) const;
 
-    /* 0x14 */ class cSAnim* m_pSAnim;
+    inline const float get_fTime() const
+    {
+        return m_fTime;
+    }
+
+    inline const bool get_bMirror() const
+    {
+        return m_bMirror;
+    }
+
+    // inline cSAnim* get_pSAnim() const
+    // {
+    //     return m_pSAnim;
+    // }
+
+    /* 0x14 */ cSAnim* m_pSAnim;
     /* 0x18 */ float m_fTime;
-    /* 0x1C */ unsigned char m_bMirror;
-    /* 0x20 */ const class AnimRetarget* m_pAnimRetarget;
+    /* 0x1C */ bool m_bMirror;
+    /* 0x20 */ const AnimRetarget* m_pAnimRetarget;
     /* 0x24 */ float m_fPrevTime;
-    /* 0x28 */ enum ePlayMode m_ePlayMode;
-    /* 0x2C */ float m_fWeight;
-    /* 0x30 */ unsigned char m_bIgnoreTriggers;
+    /* 0x28 */ ePlayMode m_ePlayMode;
+    /* 0x2C */ mutable float m_fWeight;
+    /* 0x30 */ bool m_bIgnoreTriggers;
     /* 0x34 */ void (*m_funcPlaybackSpeedCallback)(unsigned int, class cPN_SAnimController*);
     /* 0x38 */ unsigned int m_nPlaybackSpeedCallbackParam;
     /* 0x3C */ float m_fPlaybackSpeedScale;
-    /* 0x40 */ unsigned char m_bIsSynchronized;
-    /* 0x44 */ class cPN_SAnimController* m_pSynchronizedController;
+    /* 0x40 */ bool m_bIsSynchronized;
+    /* 0x44 */ cPN_SAnimController* m_pSynchronizedController;
     /* 0x48 */ void (*m_funcSychronizedWeightCallback)(unsigned int, class cPN_SAnimController*);
     /* 0x4C */ unsigned int m_nSynchronizedWeightCallbackParam;
     /* 0x50 */ float m_fSynchronizedWeight;
+
+    static SlotPool<cPN_SAnimController> m_SAnimControllerSlotPool;
 }; // total size: 0x54
 
 #endif // _PNSANIMCONTROLLER_H_

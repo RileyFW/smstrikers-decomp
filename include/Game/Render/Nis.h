@@ -2,8 +2,11 @@
 #define _NIS_H_
 
 #include "NL/nlMath.h"
+#include "Game/SAnim/pnSAnimController.h"
+
 // #include "Game/Camera/animcam.h"
 class cAnimCamera;
+class SFXEmitter;
 
 // void Bind<void, void (*)(EmissionController&, int), Placeholder<0>, int>(void (*)(EmissionController&, int), const Placeholder<0>&, const int&);
 
@@ -86,23 +89,80 @@ struct NisHeader
     /* 0xAC */ nlVector3 stadiumOffset;
 }; // total size: 0xB8
 
+enum NisAudioType
+{
+    NIS_AUDIO_TYPE_NONE = 0,
+    NIS_AUDIO_TYPE_STREAM = 1,
+    NIS_AUDIO_TYPE_SFX = 2,
+};
+
+struct NisAudioData
+{
+
+    /* 0x00 */ NisAudioType audioType;
+    union
+    {
+        SFXEmitter* pEmitter;
+        unsigned long index;
+    }
+    /* 0x04 */ identifier;
+    /* 0x08 */ char str[128];
+    /* 0x88 */ bool isEmitter;
+    /* 0x89 */ bool stopAtNisEnd;
+    /* 0x8C */ NisAudioData* next;
+}; // total size: 0x90
+
 class Nis
 {
 public:
+    struct TriggerParams
+    {
+        /* 0x00 */ float float1;
+        /* 0x04 */ unsigned long param1;
+        /* 0x08 */ unsigned long param2;
+        /* 0x0C */ unsigned long param3;
+        /* 0x10 */ unsigned long param4;
+    }; // total size: 0x14
+
+    struct Trigger
+    {
+        /* 0x00 */ NisTriggerType type;
+        /* 0x04 */ float frameNumber;
+        /* 0x08 */ const char* name;
+        /* 0x0C */ const char* target;
+        /* 0x10 */ TriggerParams params;
+
+        void FireEffect(const Nis&) const;
+        void Fire(Nis&) const;
+    }; // total size: 0x24
+
     Nis(NisHeader&, char*, int);
-    void Name() const;
     ~Nis();
-    void Update(float);
+    char* Name() const;
+    void Update(float dt);
     void UpdateTriggers(float, float, float);
     void SelectCamera(cAnimCamera&, int);
-    void SelectRandomCamera(cAnimCamera&);
+    bool SelectRandomCamera(cAnimCamera&);
     void Render();
-    void Offset() const;
-    // void AddTrigger(NisTriggerType, float, const char*, const char*, Nis::TriggerParams*);
-    // void Trigger::FireEffect(const Nis&) const;
-    // void Trigger::Fire(Nis&) const;
+    nlVector3 Offset() const;
+    void AddTrigger(NisTriggerType, float, const char*, const char*, Nis::TriggerParams*);
     void StopAllOutstandingNisAudio();
-};
+
+    /* 0x000 */ NisHeader* mHeader;                             // offset 0x0, size 0x4
+    /* 0x004 */ NisTarget mTarget;                              // offset 0x4, size 0x4
+    /* 0x008 */ NisWinnerType mWinnerType;                      // offset 0x8, size 0x4
+    /* 0x00C */ char* mData;                                    // offset 0xC, size 0x4
+    /* 0x010 */ int mSize;                                      // offset 0x10, size 0x4
+    /* 0x014 */ int mBallId[10];                                // offset 0x14, size 0x28
+    /* 0x03C */ cPN_SAnimController* mCharacterControllers[10]; // offset 0x3C, size 0x28
+    /* 0x064 */ bool mMirrored;                                 // offset 0x64, size 0x1
+    /* 0x068 */ cAnimCamera* mCamera;                           // offset 0x68, size 0x4
+    /* 0x06C */ int mNumCameras;                                // offset 0x6C, size 0x4
+    /* 0x070 */ int mNumTriggers;                               // offset 0x70, size 0x4
+    /* 0x074 */ Trigger mTriggers[48];                          // offset 0x74, size 0x6C0
+    /* 0x734 */ int mMainCharacterIndex;                        // offset 0x734, size 0x4
+    /* 0x738 */ NisAudioData* mNisAudioDataList;                // offset 0x738, size 0x4
+}; // total size: 0x73C
 
 // class Function1<void, EmissionController&>
 // {

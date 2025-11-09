@@ -6,7 +6,7 @@
 
 static const nlQuaternion qRotIdentity = { 0, 0, 0, 1 };
 static const nlVector3 v3ScaleIdentity = { 1.0f, 1.0f, 1.0f };
-static const nlVector3_ v3TransIdentity = { 0.0f, 0.0f, 0.0f };
+static const nlVector3 v3TransIdentity = { 0.0f, 0.0f, 0.0f };
 
 extern const nlMatrix4 kPose64Template;
 extern const RotAccum kRotAccumTemplate;
@@ -110,11 +110,11 @@ cPoseAccumulator::cPoseAccumulator(cSHierarchy* h, bool withSecondary)
         if (m_BaseSHierarchy->PreserveBoneLength(i))
         {
             const nlVector3* t = m_BaseSHierarchy->GetTranslationOffset(i);
-            m_trans[i].x = t->f.x;
-            m_trans[i].y = t->f.y;
-            m_trans[i].z = t->f.z;
-            m_trans[i].weight = 1.0f;
-            m_trans[i].locked = false;
+            m_trans[i].t.f.x = t->f.x;
+            m_trans[i].t.f.y = t->f.y;
+            m_trans[i].t.f.z = t->f.z;
+            m_trans[i].fAccumulatedWeight = 1.0f;
+            m_trans[i].bIdentity = false;
         }
     }
 }
@@ -147,11 +147,11 @@ void cPoseAccumulator::Pose(const cPoseNode& node, const nlMatrix4& mat)
         if (!m_BaseSHierarchy->PreserveBoneLength(i))
         {
             TransAccum& t = m_trans[i];
-            t.x = 0.0f;
-            t.y = 0.0f;
-            t.z = 0.0f;
-            t.weight = 0.0f;
-            t.locked = true;
+            t.t.f.x = 0.0f;
+            t.t.f.y = 0.0f;
+            t.t.f.z = 0.0f;
+            t.fAccumulatedWeight = 0.0f;
+            t.bIdentity = true;
         }
     }
 
@@ -192,11 +192,11 @@ void cPoseAccumulator::InitAccumulators()
         if (!m_BaseSHierarchy->PreserveBoneLength(i))
         {
             TransAccum& t = m_trans[i];
-            t.x = 0.0f;
-            t.y = 0.0f;
-            t.z = 0.0f;
-            t.weight = 0.0f;
-            t.locked = true;
+            t.t.f.x = 0.0f;
+            t.t.f.y = 0.0f;
+            t.t.f.z = 0.0f;
+            t.fAccumulatedWeight = 0.0f;
+            t.bIdentity = true;
         }
     }
 
@@ -266,11 +266,11 @@ void cPoseAccumulator::BuildNodeMatrices(const nlMatrix4& world)
         }
 
         TransAccum* ta = &m_trans[idx];
-        if (!ta->locked)
+        if (!ta->bIdentity)
         {
-            local->m[3][0] = ta->x;
-            local->m[3][1] = ta->y;
-            local->m[3][2] = ta->z;
+            local->m[3][0] = ta->t.f.x;
+            local->m[3][1] = ta->t.f.y;
+            local->m[3][2] = ta->t.f.z;
         }
 
         int parentIdx = -1;
@@ -456,17 +456,17 @@ void cPoseAccumulator::BlendTrans(int idx, const nlVector3* v, float w, bool fli
     }
 
     TransAccum* e = m_trans + idx;
-    e->weight += w;
+    e->fAccumulatedWeight += w;
 
-    float t = w / e->weight;
+    float t = w / e->fAccumulatedWeight;
     float inv = 1.0f - t;
 
-    e->x = inv * e->x + t * v->f.x;
-    e->y = inv * e->y + t * v->f.y;
-    e->z = inv * e->z + t * v->f.z;
+    e->t.f.x = inv * e->t.f.x + t * v->f.x;
+    e->t.f.y = inv * e->t.f.y + t * v->f.y;
+    e->t.f.z = inv * e->t.f.z + t * v->f.z;
 
     e = m_trans + idx;
-    e->locked = false;
+    e->bIdentity = false;
 }
 
 /**
@@ -530,17 +530,17 @@ void cPoseAccumulator::BlendTransIdentity(int idx, float w)
         return;
 
     TransAccum* e = &m_trans[idx];
-    e->weight += w;
+    e->fAccumulatedWeight += w;
 
-    if (e->locked)
+    if (e->bIdentity)
         return;
 
-    const float f3 = w / e->weight;
+    const float f3 = w / e->fAccumulatedWeight;
     const float f2 = 1.0f - f3;
 
-    e->x = f2 * e->x + f3 * v3TransIdentity.f[0];
-    e->y = f2 * e->y + f3 * v3TransIdentity.f[1];
-    e->z = f2 * e->z + f3 * v3TransIdentity.f[2];
+    e->t.f.x = f2 * e->t.f.x + f3 * v3TransIdentity.f.x;
+    e->t.f.y = f2 * e->t.f.y + f3 * v3TransIdentity.f.y;
+    e->t.f.z = f2 * e->t.f.z + f3 * v3TransIdentity.f.z;
 }
 
 /**

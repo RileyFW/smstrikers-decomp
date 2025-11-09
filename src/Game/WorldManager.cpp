@@ -20,9 +20,7 @@ void WorldManager::DestroyWorld()
  */
 bool WorldManager::LoadWorld(const char* szBaseName, bool forfe)
 {
-    void* this_00 = nlMalloc(0x18C, 8, FALSE);
-    this_00 = new (this_00) BasicStadium(szBaseName);
-    s_World = (World*)this_00;
+    s_World = new (nlMalloc(sizeof(BasicStadium), 8, FALSE)) BasicStadium(szBaseName);
     return s_World->Load(forfe);
 }
 

@@ -91,14 +91,14 @@ public:
     void GetCurrentRoundNumber() const;
     void GetNextRoundNumber(short) const;
     void GetPreviousRoundNumber(short) const;
-    void GetFirstRoundNumber() const;
+    signed short GetFirstRoundNumber() const;
     void GetNumGamesPerRound(int) const;
-    void GetUserSelectedCupTeam() const;
+    eTeamID GetUserSelectedCupTeam() const;
     void SetStadium(eStadiumID);
     void PickStadium(bool, eStadiumID) const;
     short GetPlayingSide(unsigned short) const;
     void SetPlayingSide(unsigned short, short);
-    void GetNumPlayers() const;
+    u16 GetNumPlayers() const;
     void ResetPlayingSides();
     void SetupRoundRobinSchedule(eTeamID*, eSidekickID*);
     void SetupBowserKnockout();

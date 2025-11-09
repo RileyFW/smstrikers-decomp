@@ -173,8 +173,23 @@ void GameInfoManager::GetPreviousRoundNumber(short) const
 /**
  * Offset/Address/Size: 0x9180 | 0x8017E824 | size: 0x68
  */
-void GameInfoManager::GetFirstRoundNumber() const
+signed short GameInfoManager::GetFirstRoundNumber() const
 {
+    if ((mCurrentMode == GM_TOURNAMENT) && (mCustomTournamentInfo.m_tournMode == TM_KNOCKOUT))
+    {
+        signed short returnValue;
+        // BaseCup* currentCup = mCurrentCup;
+        if (mCurrentCup->GetNumRounds() == 2)
+        {
+            returnValue = -3;
+        }
+        else
+        {
+            returnValue = -4;
+        }
+        return returnValue;
+    }
+    return 0;
 }
 
 /**
@@ -187,15 +202,17 @@ void GameInfoManager::GetNumGamesPerRound(int) const
 /**
  * Offset/Address/Size: 0x90A0 | 0x8017E744 | size: 0xC
  */
-void GameInfoManager::GetUserSelectedCupTeam() const
+eTeamID GameInfoManager::GetUserSelectedCupTeam() const
 {
+    return mCurrentCup->mUserSelectedTeam;
 }
 
 /**
  * Offset/Address/Size: 0x9088 | 0x8017E72C | size: 0x18
  */
-void GameInfoManager::SetStadium(eStadiumID)
+void GameInfoManager::SetStadium(eStadiumID stadiumID)
 {
+    mGameInfo[mCurrentMode]->mStadiumIndex = stadiumID;
 }
 
 /**
@@ -208,23 +225,25 @@ void GameInfoManager::PickStadium(bool, eStadiumID) const
 /**
  * Offset/Address/Size: 0x8C08 | 0x8017E2AC | size: 0x20
  */
-short GameInfoManager::GetPlayingSide(unsigned short) const
+s16 GameInfoManager::GetPlayingSide(unsigned short padnumber) const
 {
-    return 0;
+    return mGameInfo[mCurrentMode]->mPadSides[padnumber];
 }
 
 /**
  * Offset/Address/Size: 0x8BE8 | 0x8017E28C | size: 0x20
  */
-void GameInfoManager::SetPlayingSide(unsigned short, short)
+void GameInfoManager::SetPlayingSide(unsigned short padnumber, short side)
 {
+    mGameInfo[mCurrentMode]->mPadSides[padnumber] = side;
 }
 
 /**
  * Offset/Address/Size: 0x8B38 | 0x8017E1DC | size: 0xB0
  */
-void GameInfoManager::GetNumPlayers() const
+u16 GameInfoManager::GetNumPlayers() const
 {
+    return 0;
 }
 
 /**
@@ -232,6 +251,11 @@ void GameInfoManager::GetNumPlayers() const
  */
 void GameInfoManager::ResetPlayingSides()
 {
+    BasicGameInfo* gameInfo = mGameInfo[mCurrentMode];
+    gameInfo->mPadSides[0] = -1;
+    gameInfo->mPadSides[1] = -1;
+    gameInfo->mPadSides[2] = -1;
+    gameInfo->mPadSides[3] = -1;
 }
 
 /**

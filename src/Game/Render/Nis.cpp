@@ -1,4 +1,5 @@
 #include "Game/Render/Nis.h"
+#include "types.h"
 
 // /**
 //  * Offset/Address/Size: 0xEA0 | 0x8012E074 | size: 0xD74
@@ -80,8 +81,9 @@ Nis::Nis(NisHeader&, char*, int)
 /**
  * Offset/Address/Size: 0x1650 | 0x8012CA60 | size: 0x8
  */
-void Nis::Name() const
+char* Nis::Name() const
 {
+    return mHeader->name;
 }
 
 /**
@@ -94,15 +96,34 @@ Nis::~Nis()
 /**
  * Offset/Address/Size: 0x1350 | 0x8012C760 | size: 0x70
  */
-void Nis::Update(float)
+void Nis::Update(float dt)
 {
+    for (int i = 0; i < 10; ++i)
+    {
+        cPN_SAnimController* pController = mCharacterControllers[i];
+        if (pController != nullptr)
+        {
+            pController->Update(dt);
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0x1270 | 0x8012C680 | size: 0xE0
  */
-void Nis::UpdateTriggers(float, float, float)
+void Nis::UpdateTriggers(float oldTime, float newTime, float duration)
 {
+    if (duration != 0.0f)
+    {
+        for (int i = 0; i < mNumTriggers; ++i)
+        {
+            float triggerFrame = (mTriggers[i].frameNumber / 30.0f) / duration;
+            if ((oldTime <= triggerFrame) && (newTime > triggerFrame))
+            {
+                mTriggers[i].Fire(*this);
+            }
+        }
+    }
 }
 
 /**
@@ -110,13 +131,22 @@ void Nis::UpdateTriggers(float, float, float)
  */
 void Nis::SelectCamera(cAnimCamera&, int)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0xF18 | 0x8012C328 | size: 0x68
  */
-void Nis::SelectRandomCamera(cAnimCamera&)
+bool Nis::SelectRandomCamera(cAnimCamera& camera)
 {
+    if (mNumCameras == 0)
+    {
+        return false;
+    }
+
+    int randomIndex = nlRandom(mNumCameras, &nlDefaultSeed);
+    SelectCamera(camera, randomIndex);
+    return true;
 }
 
 /**
@@ -129,30 +159,54 @@ void Nis::Render()
 /**
  * Offset/Address/Size: 0xCF8 | 0x8012C108 | size: 0x20
  */
-void Nis::Offset() const
+nlVector3 Nis::Offset() const
+{
+    return mHeader->stadiumOffset;
+}
+
+/**
+ * Offset/Address/Size: 0xC10 | 0x8012C020 | size: 0xE8
+ */
+void Nis::AddTrigger(NisTriggerType triggerType, float frameNumber, const char* name, const char* target, Nis::TriggerParams* trigParams)
+{
+    mTriggers[mNumTriggers].type = triggerType;
+    mTriggers[mNumTriggers].frameNumber = frameNumber;
+    mTriggers[mNumTriggers].name = name;
+    mTriggers[mNumTriggers].target = target;
+
+    TriggerParams* pParams = &(mTriggers[mNumTriggers].params);
+    pParams->float1 = -1.0f;
+    pParams->param1 = -1;
+    pParams->param2 = -1;
+    pParams->param3 = -1;
+    pParams->param4 = -1;
+
+    if (trigParams != NULL)
+    {
+        mTriggers[mNumTriggers].params.float1 = trigParams->float1;
+        mTriggers[mNumTriggers].params.param1 = trigParams->param1;
+        mTriggers[mNumTriggers].params.param2 = trigParams->param2;
+        mTriggers[mNumTriggers].params.param3 = trigParams->param3;
+        mTriggers[mNumTriggers].params.param4 = trigParams->param4;
+    }
+
+    mNumTriggers++;
+}
+
+/**
+ * Offset/Address/Size: 0x834 | 0x8012BC44 | size: 0x3DC
+ */
+void Nis::Trigger::FireEffect(const Nis&) const
 {
 }
 
-// /**
-//  * Offset/Address/Size: 0xC10 | 0x8012C020 | size: 0xE8
-//  */
-// void Nis::AddTrigger(NisTriggerType, float, const char*, const char*, Nis::TriggerParams*)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x834 | 0x8012BC44 | size: 0x3DC
-//  */
-// void Nis::Trigger::FireEffect(const Nis&) const
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x2D0 | 0x8012B6E0 | size: 0x564
-//  */
-// void Nis::Trigger::Fire(Nis&) const
-// {
-// }
+/**
+ * Offset/Address/Size: 0x2D0 | 0x8012B6E0 | size: 0x564
+ */
+void Nis::Trigger::Fire(Nis&) const
+{
+    FORCE_DONT_INLINE;
+}
 
 /**
  * Offset/Address/Size: 0x0 | 0x8012B410 | size: 0x2D0

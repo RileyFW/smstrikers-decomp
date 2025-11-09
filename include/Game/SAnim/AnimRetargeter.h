@@ -11,7 +11,7 @@ public:
     /* 0x8 */ signed short* m_pMap;
 }; // total size: 0xC
 
-class AnimRetargetList
+class AnimRetargetList : public cIdentifier
 {
 public:
     void Initialize(nlChunk*);

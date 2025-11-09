@@ -51,9 +51,9 @@ struct BaseCup
 {
     /* 0x0, */ eTeamID mUserSelectedTeam;
     /* 0x4, */ eSidekickID mUserSelectedSidekick;
-    /* 0xA, */ u16 mGameNumber;
-    /* 0xC, */ u16 mHumanTeams;
-    /* 0x8, */ u16 mRoundNumber;
+    /* 0x8, */ u16 mGameNumber;
+    /* 0xA, */ u16 mHumanTeams;
+    /* 0xC, */ u16 mRoundNumber;
     /* 0xE, */ bool mCupStarted;
     /* 0x10 */ GameplaySettings mCupSettings;
 

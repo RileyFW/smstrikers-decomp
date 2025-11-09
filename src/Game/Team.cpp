@@ -315,6 +315,17 @@ cPlayer* cTeam::GetControlledPlayer(cGlobalPad* pPad)
  */
 int cTeam::GetNumAssignedControllers()
 {
+    int count = 0;
+    for (unsigned short i = 0; i < 4; i++)
+    {
+        // short playingSide = GameInfoManager::s_pInstance->GetPlayingSide(i);
+        short playingSide = GameInfoManager::Instance()->GetPlayingSide(i);
+        if (playingSide == m_nSide)
+        {
+            count++;
+        }
+    }
+    return count;
 }
 
 /**

@@ -13,21 +13,21 @@ cSAnim* cSAnim::Initialize(nlChunk* arg0)
 /**
  * Offset/Address/Size: 0x91C | 0x801E9B30 | size: 0x424
  */
-void cSAnim::BlendRot(int arg0, int arg1, float arg2, float arg3, cPoseAccumulator* arg4, bool arg5) const
+void cSAnim::BlendRot(int nodeIndex, int remappedNodeIndex, float tNorm, float weight, cPoseAccumulator* acc, bool additive) const
 {
 }
 
 /**
  * Offset/Address/Size: 0x608 | 0x801E981C | size: 0x314
  */
-void cSAnim::BlendScale(int arg0, int arg1, float arg2, float arg3, cPoseAccumulator* arg4, bool arg5) const
+void cSAnim::BlendScale(int nodeIndex, int remappedNodeIndex, float tNorm, float weight, cPoseAccumulator* acc, bool additive) const
 {
 }
 
 /**
  * Offset/Address/Size: 0x404 | 0x801E9618 | size: 0x204
  */
-void cSAnim::BlendTrans(int bone, int track, float tNorm, float weight, cPoseAccumulator* acc, bool additive) const
+void cSAnim::BlendTrans(int nAccumulatorNode, int nSAnimNode, float fTime, float fWeight, cPoseAccumulator* pAccumulator, bool bMirror) const
 {
 }
 
@@ -45,6 +45,27 @@ void cSAnim::Destroy()
  */
 void cSAnim::GetRootRot(float t, unsigned short* outZ) const
 {
+    int nIndex;       // r0
+    float fRealIndex; // f3
+
+    if (m_nNumRootKeys != 0)
+    {
+        if (t == 0.0f || m_nNumRootKeys == 1)
+        {
+            *outZ = m_pRootRot[m_nNumRootKeys - 1];
+            return;
+        }
+
+        fRealIndex = t * (m_nNumRootKeys - 1);
+        nIndex = (int)fRealIndex;
+        float fraction = fRealIndex - nIndex;
+        const unsigned short val0 = m_pRootRot[nIndex];
+        const unsigned short val1 = m_pRootRot[nIndex + 1];
+        const u16 diff = (u16)(val1 - val0);
+        *outZ = val0 + (int)(fraction * diff);
+        return;
+    }
+    *outZ = 0;
 }
 /**
  * Offset/Address/Size: 0x1E0 | 0x801E93F4 | size: 0x10C
