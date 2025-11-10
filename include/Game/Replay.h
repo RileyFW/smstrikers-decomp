@@ -80,6 +80,11 @@ void Replayable<1, LoadFrame, nlVector3>(LoadFrame& frame, nlVector3& value);
 template <>
 void Replayable<1, SaveFrame, nlVector3>(SaveFrame& frame, nlVector3& value);
 
+template <>
+void Replayable<1, LoadFrame, int>(LoadFrame& frame, int& value);
+template <>
+void Replayable<1, SaveFrame, int>(SaveFrame& frame, int& value);
+
 template <int N, typename FrameType, typename T>
 void Replayable(FrameType& frame, T& drawable)
 {

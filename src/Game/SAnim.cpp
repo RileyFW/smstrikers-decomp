@@ -72,6 +72,29 @@ void cSAnim::GetRootRot(float t, unsigned short* outZ) const
  */
 void cSAnim::GetRootTrans(float t, nlVector3* out) const
 {
+    if (m_nNumRootKeys != 0)
+    {
+        if (t == 1.0f || m_nNumRootKeys == 1)
+        {
+            *out = m_pRootTrans[m_nNumRootKeys - 1];
+            return;
+        }
+
+        float fRealIndex = t * (m_nNumRootKeys - 1);
+        int nIndex = (int)fRealIndex;
+        float fWeight = fRealIndex - nIndex;
+        const nlVector3& val0 = m_pRootTrans[nIndex];
+        const nlVector3& val1 = m_pRootTrans[nIndex + 1];
+
+        out->f.x = (fWeight * val1.f.x) + (1.0f - fWeight) * val0.f.x;
+        out->f.y = (fWeight * val1.f.y) + (1.0f - fWeight) * val0.f.y;
+        out->f.z = (fWeight * val1.f.z) + (1.0f - fWeight) * val0.f.z;
+
+        return;
+    }
+    out->f.x = 0.0f;
+    out->f.y = 0.0f;
+    out->f.z = 0.0f;
 }
 
 /**

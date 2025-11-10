@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+// #include "Game/Replay.h"
+#include "Game/ReplaySpecializations.h"
 #include "Game/Sys/eventman.h"
 
 enum eCrowdState
@@ -13,9 +15,6 @@ enum eCrowdState
     Crowd_NumStates = 3,
 };
 
-class LoadFrame;
-class SaveFrame;
-
 void CrowdBundleLoad_cb(void*, unsigned long, void*);
 // void Replayable<1, LoadFrame, int>(LoadFrame&, int&);
 // void Replayable<1, SaveFrame, int>(SaveFrame&, int&);
@@ -23,12 +22,10 @@ void CrowdBundleLoad_cb(void*, unsigned long, void*);
 class CrowdManager
 {
 public:
-    static CrowdManager instance;
-
     void Initialize();
     void Uninitialize();
     void SetStadium(const char*);
-    void GetTextureHandle(unsigned long) const;
+    u32 GetTextureHandle(unsigned long) const;
     void Replay(LoadFrame&);
     void Replay(SaveFrame&);
     void SetState(eCrowdState, bool);
@@ -45,6 +42,8 @@ public:
     /* 0x1C */ char m_szTexture[64];
     /* 0x5C */ char m_szStadium[64];
     /* 0x9C */ u32 m_BundleLoadBase;
+
+    static CrowdManager instance;
 }; // total size: 0xA0
 
 #endif // _CROWDMANAGER_H_

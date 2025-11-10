@@ -1,6 +1,8 @@
 #ifndef _NISPLAYER_H_
 #define _NISPLAYER_H_
 
+#include "Game/InterpreterCore.h"
+
 #include "Game/Camera/animcam.h"
 #include "Game/Render/Nis.h"
 #include "Game/Sys/eventman.h"
@@ -20,10 +22,13 @@ enum NisUseFilter
     NIS_FILTER = 1,
 };
 
-class NisPlayer
+class NisPlayer : public InterpreterCore
 {
 public:
-    virtual ~NisPlayer();
+    NisPlayer();
+    /* 0x08 */ virtual ~NisPlayer();
+    /* 0x0C */ virtual void DoFunctionCall(unsigned int);
+
     void SetExtraNameFilter(const char*);
     void ResetEffects();
     void IsMirrored(NisTarget, const char*, NisWinnerType) const;
@@ -41,16 +46,14 @@ public:
     void Update(float);
     void HandleAsyncs();
     bool WorldIsFrozen() const;
-    void TimeLeft() const;
-    NisPlayer();
+    float TimeLeft() const;
 
     static NisPlayer* Instance();
-
-    virtual void DoFunctionCall(unsigned int);
 
     /* 0x24,  */ bool mActive;                  // offset 0x24, size 0x1
     /* 0x28,  */ int mDictSize;                 // offset 0x28, size 0x4
     /* 0x2C,  */ NisHeader mDict[256];          // offset 0x2C, size 0xB800
+                                                // /* 0x2C,  */ NisHeader mDict[94];           // offset 0x2C, size 0xB800
     /* 0xB82C */ char* mMemory;                 // offset 0xB82C, size 0x4
     /* 0xB830 */ int mMaxNumBallsVisible;       // offset 0xB830, size 0x4
     /* 0xB834 */ Nis* mPlaying[4];              // offset 0xB834, size 0x10

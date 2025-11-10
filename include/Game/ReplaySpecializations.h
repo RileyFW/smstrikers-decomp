@@ -36,6 +36,17 @@ void Replayable(SaveFrame& frame, bool& value)
     }
 }
 
+template <int N>
+void Replayable(SaveFrame& frame, int& value)
+{
+    if (frame.mInterval == N)
+    {
+        char temp = value ? 1 : 0;
+        memcpy(frame.mStream.mStorage, &temp, 1);
+        frame.mStream.mStorage += 1;
+    }
+}
+
 // Overloads for nlVector3 - must be declared before generic template
 template <int N>
 void Replayable(LoadFrame& frame, nlVector3& value)

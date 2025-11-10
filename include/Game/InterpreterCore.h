@@ -48,7 +48,7 @@ public:
     /* 0x18 */ u32* m_BP;
     /* 0x1C */ u32* m_SavedSP;
     /* 0x20 */ u32 m_Stop : 1;
-    /* 0x24 */ u32 m_RunState : 2;
+    /* 0x20 */ u32 m_RunState : 2;
 }; // total size: 0x24
 
 #endif // _INTERPRETERCORE_H_

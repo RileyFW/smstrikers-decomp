@@ -1,4 +1,8 @@
 #include "Game/NisPlayer.h"
+#include "Game/Effects/EmissionManager.h"
+#include "NL/nlTask.h"
+#include "NL/nlString.h"
+#include "string.h"
 
 NisPlayer* NisPlayer::m_pInstance = NULL;
 
@@ -12,8 +16,9 @@ NisPlayer::~NisPlayer()
 /**
  * Offset/Address/Size: 0x74 | 0x80114D50 | size: 0x2C
  */
-void NisPlayer::SetExtraNameFilter(const char*)
+void NisPlayer::SetExtraNameFilter(const char* filter)
 {
+    nlStrNCpy(mExtraNameFilter, filter, 128);
 }
 
 /**
@@ -21,6 +26,7 @@ void NisPlayer::SetExtraNameFilter(const char*)
  */
 void NisPlayer::ResetEffects()
 {
+    EmissionManager::Destroy(reinterpret_cast<unsigned long>(this), nullptr);
 }
 
 /**
@@ -126,13 +132,59 @@ void NisPlayer::HandleAsyncs()
  */
 bool NisPlayer::WorldIsFrozen() const
 {
-    return false;
+    // Check if task manager is in state 0x100 (256)
+    // If so, world is not frozen
+    if (nlTaskManager::m_pInstance != nullptr)
+    {
+        if (nlTaskManager::m_pInstance->m_CurrState == 0x100)
+        {
+            return false;
+        }
+    }
+
+    // Check if there's a playing NIS with "trophy" in the name
+    // Access mPlaying[0] at offset 0xBC34 (calculated as 0x10000 - 0x43cc)
+    Nis* pPlaying = *(Nis**)((char*)this + 0xBC34);
+    if (pPlaying != nullptr)
+    {
+        const char* name = pPlaying->Name();
+        if (strstr(name, "trophy") != nullptr)
+        {
+            return true; // World is frozen for trophy NIS
+        }
+    }
+
+    // Check mLoadQueue[0] at offset 0xBCFC (calculated as 0x10000 - 0x4304)
+    NisHeader* pLoadQueue = *(NisHeader**)((char*)this + 0xBCFC);
+    if (pLoadQueue == nullptr)
+    {
+        return false;
+    }
+
+    // Access current time at offset 0xBCF0 (calculated as 0x10000 - 0x4310)
+    float currentTime = *(float*)((char*)this + 0xBCF0);
+    float timeRemaining = 1.0f - currentTime;
+
+    float duration = 0.0f;
+    if (pLoadQueue != nullptr)
+    {
+        int numAnimations = pLoadQueue->numAnimations;
+        if (numAnimations > 0)
+        {
+            duration = (float)(numAnimations - 1) / 30.0f;
+        }
+    }
+
+    float frozenTime = timeRemaining * duration;
+
+    // Return true if frozenTime > 0.0f, false otherwise
+    return frozenTime > 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x3358 | 0x80118034 | size: 0xB0
  */
-void NisPlayer::TimeLeft() const
+float NisPlayer::TimeLeft() const
 {
 }
 
@@ -140,6 +192,7 @@ void NisPlayer::TimeLeft() const
  * Offset/Address/Size: 0x3408 | 0x801180E4 | size: 0x588
  */
 NisPlayer::NisPlayer()
+    : InterpreterCore(0x1000)
 {
 }
 
