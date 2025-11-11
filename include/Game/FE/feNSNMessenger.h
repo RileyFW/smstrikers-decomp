@@ -64,20 +64,17 @@ enum ScreenPosition
 class BaseOverlayHandler : public BaseSceneHandler
 {
 public:
-    BaseOverlayHandler(u32 VisibilityMask)
+    BaseOverlayHandler(u32 VisibilityMask, ScreenPosition position = POSITION_TOP)
     {
-        mPosition = POSITION_TOP;
+        mPosition = position;
         mVisibilityMask = VisibilityMask;
         mWasLastVisible = false;
     }
-    virtual ~BaseOverlayHandler();
-    ScreenPosition mPosition; // offset 0x1C, size 0x4
-    u32 mVisibilityMask;      // offset 0x20, size 0x4
-    bool mWasLastVisible;     // offset 0x24, size 0x1
-};
+    virtual ~BaseOverlayHandler() { };
 
-BaseOverlayHandler::~BaseOverlayHandler()
-{
-}
+    /* 0x1C */ ScreenPosition mPosition;
+    /* 0x20 */ u32 mVisibilityMask;
+    /* 0x24 */ bool mWasLastVisible;
+};
 
 #endif // _FENSNMESSENGER_H_

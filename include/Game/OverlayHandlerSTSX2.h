@@ -11,7 +11,7 @@ public:
     virtual ~STSX2Overlay();
     virtual void Update(float);
     virtual void SceneCreated();
-    EventCallback EventHandlerFunc(Event*, void*);
+    static void EventHandlerFunc(Event*, void*);
 
     EventHandler* m_EventHandler;
 };

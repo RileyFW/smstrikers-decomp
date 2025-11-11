@@ -10,21 +10,7 @@
 #include "NL/nlMath.h"
 #include "NL/nlString.h"
 
-// #include "Game/ReplaySpecializations.h"
-
-// /**
-//  * Offset/Address/Size: 0x54 | 0x80164954 | size: 0x50
-//  */
-// void Replayable<1, SaveFrame, int>(SaveFrame&, int&)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x0 | 0x80164900 | size: 0x54
-//  */
-// void Replayable<1, LoadFrame, int>(LoadFrame&, int&)
-// {
-// }
+#include "Game/ReplaySpecializations.h"
 
 /**
  * Offset/Address/Size: 0x978 | 0x801647F4 | size: 0x10C

@@ -67,7 +67,11 @@
  * Offset/Address/Size: 0x10C0 | 0x8010672C | size: 0x68
  */
 WinnerOverlay::WinnerOverlay()
+    : BaseOverlayHandler(-1, POSITION_ALL)
 {
+    mInputDelay = 1.0f;
+    mDoingOutTransition = false;
+    mWinningTeam = TEAM_INVALID;
 }
 
 /**
@@ -75,6 +79,9 @@ WinnerOverlay::WinnerOverlay()
  */
 WinnerOverlay::~WinnerOverlay()
 {
+    delete mWinnerActionWhite;
+    delete mWinnerAction;
+    delete mWinnerActionOutline;
 }
 
 /**

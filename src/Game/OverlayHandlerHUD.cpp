@@ -1,4 +1,7 @@
 #include "Game/OverlayHandlerHUD.h"
+#include "Game/Team.h"
+
+extern cTeam* g_pTeams[];
 
 /**
  * Offset/Address/Size: 0x124 | 0x800FA3BC | size: 0xCF0
@@ -220,6 +223,8 @@ void HUDOverlay::SetTeamIcons()
  */
 void HUDOverlay::UpdateScore()
 {
+    mNewScore[0] = g_pTeams[0]->m_nScore;
+    mNewScore[1] = g_pTeams[1]->m_nScore;
 }
 
 /**

@@ -36,14 +36,28 @@ void Replayable(SaveFrame& frame, bool& value)
     }
 }
 
-template <int N>
-void Replayable(SaveFrame& frame, int& value)
+template <>
+void Replayable<1, SaveFrame, int>(SaveFrame& frame, int& value)
 {
-    if (frame.mInterval == N)
+    if (frame.mInterval == 1)
     {
         char temp = value ? 1 : 0;
         memcpy(frame.mStream.mStorage, &temp, 1);
         frame.mStream.mStorage += 1;
+    }
+}
+
+template <>
+void Replayable<1, LoadFrame, int>(LoadFrame& frame, int& value)
+{
+    if (frame.mInterval == 1)
+    {
+        char temp = 0;
+        memcpy(&temp, frame.mStream.mStorage, 1);
+        value = (temp != 0);
+        char* storage = const_cast<char*>(frame.mStream.mStorage);
+        storage += 1;
+        frame.mStream.mStorage = storage;
     }
 }
 

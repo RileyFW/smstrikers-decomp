@@ -7,6 +7,8 @@
 #include "NL/nlTask.h"
 #include "NL/nlBasicString.h"
 #include "Game/OverlayHandlerInGameText.h"
+#include "Game/FE/feNSNMessenger.h"
+#include "Game/OverlayHandlerGoal.h"
 
 // nlSingleton<OverlayManager> OverlayManager::s_pInstance;
 //
@@ -130,6 +132,40 @@ void OverlayManager::SetVisible(SceneList scene, bool visibility, bool overrideS
  */
 void OverlayManager::HandleStateTransition(unsigned long to, unsigned long param_2)
 {
+    for (u32 i = 0; i < m_count; i++)
+    {
+        SceneList sceneType = m_types[i];
+        if (sceneType <= SCENE_LAST)
+        {
+            continue;
+        }
+
+        BaseSceneHandler* handler = m_handlers[i];
+        if (handler == nullptr)
+        {
+            continue;
+        }
+
+        if (sceneType == OVERLAY_TEXT && mIsInHighlights)
+        {
+            continue;
+        }
+
+        BaseOverlayHandler* overlayHandler = static_cast<BaseOverlayHandler*>(handler);
+        if ((overlayHandler->mVisibilityMask & param_2) != 0)
+        {
+            if (overlayHandler->mWasLastVisible == false)
+            {
+                continue;
+            }
+            overlayHandler->SetVisible(true);
+        }
+        else
+        {
+            overlayHandler->mWasLastVisible = overlayHandler->m_bVisible;
+            overlayHandler->SetVisible(false);
+        }
+    }
 }
 
 /**
@@ -166,4 +202,6 @@ void OverlayManager::ShowDemoSlide()
  */
 void OverlayManager::RestartGoalOverlay()
 {
+    GoalOverlay* goalOverlay = (GoalOverlay*)GetScene(OVERLAY_GOAL);
+    goalOverlay->Restart();
 }

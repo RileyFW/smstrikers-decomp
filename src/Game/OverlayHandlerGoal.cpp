@@ -1,5 +1,6 @@
 #include "Game/OverlayHandlerGoal.h"
 #include "Game/FE/feNSNMessenger.h"
+#include "Game/Game.h"
 
 /**
  * Offset/Address/Size: 0x106C | 0x80104868 | size: 0xCF0
@@ -91,6 +92,11 @@ GoalOverlay::GoalOverlay()
  */
 GoalOverlay::~GoalOverlay()
 {
+    if (mEventHandler != nullptr)
+    {
+        g_pEventManager->RemoveEventHandler(mEventHandler);
+        mEventHandler = nullptr;
+    }
 }
 
 /**
@@ -104,8 +110,17 @@ void GoalOverlay::SceneCreated()
 /**
  * Offset/Address/Size: 0x305C | 0x801030CC | size: 0x50
  */
-void GoalOverlay::Update(float)
+void GoalOverlay::Update(float dt)
 {
+    BaseSceneHandler::Update(dt);
+
+    if (!mIsInOvertime)
+    {
+        if (g_pGame->m_eGameState == GS_OVERTIME)
+        {
+            mIsInOvertime = true;
+        }
+    }
 }
 
 /**
