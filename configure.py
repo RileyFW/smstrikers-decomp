@@ -691,7 +691,7 @@ config.libs = [
         [
             Object(NonMatching, "Game/main.cpp"),
             Object(Matching, "Game/ComUpdateTask.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/FrontEndTask.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/FrontEndTask.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/GameRenderTask.cpp", extra_cflags=["-inline deferred"]),
 
             Object(Matching, "Game/Sys/clock.cpp", extra_cflags=["-inline deferred"]),

@@ -7,17 +7,22 @@
 #include "Game/FE/feAnimModelManager.h"
 #include "Game/GameInfo.h"
 #include "Game/DB/StatsTracker.h"
+#include "Game/GameSceneManager.h"
+#include "Game/ResetTask.h"
 #include "NL/globalpad.h"
 #include "NL/nlTask.h"
 #include "NL/nlConfig.h"
+#include "NL/nlLexicalCast.h"
 #include "NL/gl/gl.h"
 #include "Dolphin/pad.h"
+#include <math.h>
 
 float g_fUpTime;
 float g_fIdleGameTime;
 
 extern FrontEnd* g_pFrontEnd;
 extern FEInput* g_pFEInput;
+extern bool g_e3_Build;
 
 // TODO: missing header, Forward declaration
 namespace TakeGameMemSnapshot
@@ -74,7 +79,7 @@ void FrontEndTask::Run(float dt)
 
             if (buttonPressCount != 0)
             {
-                short side = (short)(GameInfoManager::Instance()->GetPlayingSide(padIdx));
+                int side = (short)(GameInfoManager::Instance()->GetPlayingSide(padIdx));
                 StatsTracker::Instance()->AddStat(STATS_BUTTON_PRESSES, side, -1, buttonPressCount);
                 StatsTracker::Instance()->AddUserStatByPad(STATS_BUTTON_PRESSES, padIdx, buttonPressCount);
             }
@@ -116,7 +121,99 @@ void FrontEndTask::Run(float dt)
 /**
  * Offset/Address/Size: 0x0 | 0x80170298 | size: 0x484
  */
-void FrontEndTask::HandleE3IdleReset(float)
+void FrontEndTask::HandleE3IdleReset(float dt)
 {
-    FORCE_DONT_INLINE;
+    if (!g_e3_Build)
+    {
+        return;
+    }
+
+    if (nlSingleton<GameInfoManager>::s_pInstance->IsInDemoMode())
+    {
+        if (nlTaskManager::m_pInstance->m_CurrState & 0x2)
+        {
+            g_fIdleGameTime = 0.0f;
+            return;
+        }
+    }
+
+    Config& config = Config::Global();
+    if (GetConfigBool(config, "notimeout", false))
+    {
+        return;
+    }
+
+    bool allIdle = true;
+
+    for (int padIdx = 0; padIdx < 4; padIdx++)
+    {
+        cGlobalPad* pad = cPadManager::GetPad(padIdx);
+        if (!pad->IsConnected())
+        {
+            continue;
+        }
+
+        if (pad->IsPressed(PAD_BUTTON_START, false)
+            || pad->IsPressed(PAD_BUTTON_A, false)
+            || pad->IsPressed(PAD_BUTTON_B, false)
+            || pad->IsPressed(PAD_BUTTON_X, false)
+            || pad->IsPressed(PAD_BUTTON_X, false) // this code/check duplication seems to be in the original code! :)
+            || pad->IsPressed(PAD_BUTTON_Y, false)
+            || pad->IsPressed(PAD_TRIGGER_R, false)
+            || pad->IsPressed(PAD_TRIGGER_L, false))
+        {
+            allIdle = false;
+            break;
+        }
+
+        if (((float)fabs(pad->AnalogLeftX()) >= 0.5f)
+            || ((float)fabs(pad->AnalogLeftY()) >= 0.5f)
+            || ((float)fabs(pad->AnalogRightX()) >= 0.5f)
+            || ((float)fabs(pad->AnalogRightY()) >= 0.5f))
+        {
+            allIdle = false;
+            break;
+        }
+
+        if (pad->IsPressed(PAD_BUTTON_UP, false)
+            || pad->IsPressed(PAD_BUTTON_DOWN, false)
+            || pad->IsPressed(PAD_BUTTON_LEFT, false)
+            || pad->IsPressed(PAD_BUTTON_RIGHT, false))
+        {
+            allIdle = false;
+            break;
+        }
+    }
+
+    if (allIdle)
+    {
+        if ((nlTaskManager::m_pInstance->m_CurrState & 0x7) != 0)
+        {
+            g_fIdleGameTime += dt;
+
+            if (g_fIdleGameTime >= 60.0f)
+            {
+                if (nlTaskManager::m_pInstance->m_CurrState == 4)
+                {
+                    if (!GameSceneManager::Instance()->IsOnStack(SCENE_TITLE))
+                    {
+                        GameSceneManager::Instance()->PopEntireStack();
+                        FESceneManager::Instance()->ForceImmediateStackProcessing();
+                        GameSceneManager::Instance()->Push(SCENE_TITLE, SCREEN_NOTHING, false);
+                    }
+                }
+                else
+                {
+                    ResetTask::s_ResetMode = 0;
+                    ResetTask::s_ResetState = (ResetTask::s_ResetState == RS_RUNNING) ? RS_STARTRESET : ResetTask::s_ResetState;
+                }
+
+                g_fIdleGameTime = 0.0f;
+            }
+        }
+    }
+    else
+    {
+        g_fIdleGameTime = 0.0f;
+    }
 }

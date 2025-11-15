@@ -28,6 +28,13 @@ Supported versions:
 
 - `G4QE01`: Rev 0 (USA)
 
+Decompilation
+=============
+
+Decompilation is the process of reverse-engineering compiled machine code back into human-readable source code. Unlike disassembly, which produces assembly language, decompilation aims to reconstruct high-level code (like C or C++) that closely matches what the original developers wrote. This process involves analyzing the binary executable, understanding its structure and behavior, and translating it back into source code that compiles to produce identical machine code. In this project, the goal is not just a close match, but a **100% match**—the decompiled source code must compile to produce byte-for-byte identical machine code to the original. This is why diffing (see the [Diffing](#diffing) section below) is an essential piece of the process, as it allows us to verify that our decompiled code produces exactly the same binary output as the original game. Decompilation projects like this one enable deeper understanding of game mechanics, facilitate modding and preservation, and serve as valuable learning resources for understanding how games were built.
+
+For interesting discoveries and insights found during the decompilation process, check out [Fun Facts](FunFacts.md).
+
 Contributing
 ============
 
@@ -35,7 +42,7 @@ Everybody can and is warmly welcome to contribute to this project! Whether you'r
 
 **How to contribute:**
 
-1. **Make a pull request** – Simply create a pull request with your changes. No need to ask for permission first!
+1. **Make a pull request** – Simply create a pull request with your changes.
 2. **Join our Discord server** – Connect with other contributors to exchange ideas, coordinate work, or get help: [Discord Server](https://discord.gg/hKx3FJJgrV)
 
 **Partial matches welcome:**
