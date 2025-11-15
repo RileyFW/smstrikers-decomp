@@ -5,6 +5,7 @@
 
 #include "Game/FE/FEPackage.h"
 #include "Game/FE/FEResourceManager.h"
+#include "Game/FE/feSceneResource.h"
 
 class FEScene
 {
@@ -17,19 +18,13 @@ public:
     void UnloadPackage();
     void Update(float);
 
-    /* 0x00 */ FEPackage* m_package;
-    /* 0x04 */ s32 m_unk_0x04;
-    /* 0x08 */ bool m_unk_0x08;
-    // /* 0x09 */ char m_unk_0x09[3];
-    /* 0x0C */ nlMatrix4 m_transf;
-    /* 0x4C */ s32 m_unk_0x4C;
-    /* 0x50 */ static FEResourceHandle m_resourceHandler;
-    /* 0x54 */ s32 m_unk_0x54;
-    /* 0x58 */ s32 m_unk_0x58;
-    /* 0x5C */ s32 m_unk_0x5C;
-    /* 0x60 */ char pad60[4];
-    /* 0x64 */ FEScene* m_scene;
-};
+    /* 0x00 */ FEPackage* m_pFEPackage;
+    /* 0x04 */ unsigned long m_uHashID;
+    /* 0x08 */ bool m_bValid;
+    /* 0x0C */ nlMatrix4 m_matView;
+    /* 0x4C */ unsigned long m_uRenderView;
+    /* 0x50 */ FESceneResource m_feSceneResourceHandle; // size 0x20
+}; // total size: 0x70
 
 class QueueResourceLoadCallback
 {

@@ -31,7 +31,7 @@ public:
     void QueueScenePop();
     void QueueScenePush(BaseSceneHandler*, const char*);
     static void ProcessPushPopQueue();
-    void GetSceneHandler(unsigned long);
+    BaseSceneHandler* GetSceneHandler(unsigned long);
     void ForceImmediateStackProcessing();
     bool AreAllScenesValid();
 

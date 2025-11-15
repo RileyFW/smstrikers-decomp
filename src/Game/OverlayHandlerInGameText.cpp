@@ -142,8 +142,8 @@ void InGameTextOverlay::SetSlide(OverlaySlideName slideName)
     this->mPendingSlideName = slideName;
     if (this->mCurrentSlideName != this->mPendingSlideName)
     {
-        this->m_pFEScene->m_package->GetPresentation()->SetActiveSlide(IGTTable[this->mPendingSlideName].mSlideName);
-        TLSlide* CurrentSlide = this->m_pFEScene->m_package->GetPresentation()->m_currentSlide;
+        this->m_pFEScene->m_pFEPackage->GetPresentation()->SetActiveSlide(IGTTable[this->mPendingSlideName].mSlideName);
+        TLSlide* CurrentSlide = this->m_pFEScene->m_pFEPackage->GetPresentation()->m_currentSlide;
         if (CurrentSlide != NULL)
         {
             CurrentSlide->m_time = 0.0f;
@@ -152,7 +152,7 @@ void InGameTextOverlay::SetSlide(OverlaySlideName slideName)
         }
         if (mCurrentSlideName != SLIDE_NAME_INVALID)
         {
-            this->m_pFEScene->m_package->GetPresentation()->SetActiveSlide(IGTTable[mCurrentSlideName].mSlideName);
+            this->m_pFEScene->m_pFEPackage->GetPresentation()->SetActiveSlide(IGTTable[mCurrentSlideName].mSlideName);
         }
     }
 }
@@ -166,7 +166,7 @@ void InGameTextOverlay::Update(float fDeltaT)
     if (this->mCurrentSlideName != this->mPendingSlideName)
     {
         this->mCurrentSlideName = this->mPendingSlideName;
-        this->m_pFEScene->m_package->GetPresentation()->SetActiveSlide(IGTTable[this->mCurrentSlideName].mSlideName);
+        this->m_pFEScene->m_pFEPackage->GetPresentation()->SetActiveSlide(IGTTable[this->mCurrentSlideName].mSlideName);
         this->mVisibilityMask = IGTTable[this->mCurrentSlideName].mTaskVisibility;
         if (this->mVisibilityMask & nlTaskManager::m_pInstance->m_CurrState)
         {

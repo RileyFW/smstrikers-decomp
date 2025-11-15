@@ -1,12 +1,47 @@
 #include "Game/FE/feSceneManager.h"
+#include "Game/FE/feInput.h"
+#include "NL/nlDLRing.h"
+#include "NL/nlDLListSlotPool.h"
 
-// nlSingleton<FESceneManager> FESceneManager::s_pInstance;
+extern FEInput* g_pFEInput;
+
+// Forward declaration
+class PackagePushPopMessage;
+extern nlDLListSlotPool<PackagePushPopMessage*> m_pushPopMessageQueue;
 
 /**
  * Offset/Address/Size: 0x0 | 0x8020D64C | size: 0xC0
  */
-void FESceneManager::Update(float)
+void FESceneManager::Update(float dt)
 {
+    ProcessPushPopQueue();
+
+    if (m_sceneHandlerStack.m_Head == nullptr)
+    {
+        return;
+    }
+
+    DLListEntry<BaseSceneHandler*>* headEntry = m_sceneHandlerStack.m_Head;
+    DLListEntry<BaseSceneHandler*>* currentEntry = nlDLRingGetStart(headEntry);
+
+    while (currentEntry != nullptr)
+    {
+        BaseSceneHandler* sceneHandler = *(currentEntry->m_data);
+        if (sceneHandler->m_pFEScene->m_bValid != false)
+        {
+            g_pFEInput->EnableInputIfSceneHasFocus(sceneHandler);
+            sceneHandler->Update(dt);
+        }
+
+        if (nlDLRingIsEnd(headEntry, currentEntry) || currentEntry == nullptr)
+        {
+            currentEntry = nullptr;
+        }
+        else
+        {
+            currentEntry = currentEntry->m_next;
+        }
+    }
 }
 
 /**
@@ -41,8 +76,29 @@ void FESceneManager::ProcessPushPopQueue()
 /**
  * Offset/Address/Size: 0x7B0 | 0x8020DDFC | size: 0x98
  */
-void FESceneManager::GetSceneHandler(unsigned long)
+BaseSceneHandler* FESceneManager::GetSceneHandler(unsigned long hashID)
 {
+    DLListEntry<BaseSceneHandler*>* headEntry = m_sceneHandlerStack.m_Head;
+    DLListEntry<BaseSceneHandler*>* currentEntry = nlDLRingGetStart(m_sceneHandlerStack.m_Head);
+
+    while (currentEntry != nullptr)
+    {
+        if (hashID == (*(currentEntry->m_data))->m_uHashID)
+        {
+            return *(currentEntry->m_data);
+        }
+
+        if (nlDLRingIsEnd(headEntry, currentEntry) || currentEntry == nullptr)
+        {
+            currentEntry = nullptr;
+        }
+        else
+        {
+            currentEntry = currentEntry->m_next;
+        }
+    }
+
+    return nullptr;
 }
 
 /**
@@ -58,7 +114,28 @@ void FESceneManager::ForceImmediateStackProcessing()
  */
 bool FESceneManager::AreAllScenesValid()
 {
-    return false;
+    DLListEntry<BaseSceneHandler*>* headEntry = m_sceneHandlerStack.m_Head;
+    DLListEntry<BaseSceneHandler*>* currentEntry = nlDLRingGetStart(headEntry);
+
+    while (currentEntry != nullptr)
+    {
+        BaseSceneHandler* sceneHandler = *(currentEntry->m_data);
+        if (sceneHandler->m_pFEScene->m_bValid == false)
+        {
+            return false;
+        }
+
+        if (nlDLRingIsEnd(headEntry, currentEntry) || currentEntry == nullptr)
+        {
+            currentEntry = nullptr;
+        }
+        else
+        {
+            currentEntry = currentEntry->m_next;
+        }
+    }
+
+    return (m_pushPopMessageQueue.m_Head == nullptr);
 }
 
 /**

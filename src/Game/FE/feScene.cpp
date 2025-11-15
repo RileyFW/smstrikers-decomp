@@ -13,7 +13,7 @@ extern bool gSebringLoadPackageToVirtualMemory;
  */
 void FEScene::Update(float dt)
 {
-    m_package->Update(dt);
+    m_pFEPackage->Update(dt);
 }
 
 /**
@@ -38,8 +38,8 @@ void QueueResourceLoadCallback::Callback(FEResourceHandle* handle)
 void FEScene::UnloadPackage()
 {
     UnloadResourceCallback unloadResourceCallback;
-    nlWalkRing<FEResourceHandle, UnloadResourceCallback>(&m_resourceHandler, &unloadResourceCallback, &UnloadResourceCallback::Callback);
-    FEResourceManager::Instance()->UnloadResource(&m_resourceHandler);
+    nlWalkRing<FEResourceHandle, UnloadResourceCallback>(&m_feSceneResourceHandle, &unloadResourceCallback, &UnloadResourceCallback::Callback);
+    FEResourceManager::Instance()->UnloadResource(&m_feSceneResourceHandle);
 }
 
 /**
@@ -62,18 +62,18 @@ void FEScene::LoadPackage(const char*)
  */
 FEScene::~FEScene()
 {
-    if (m_package != NULL)
+    if (m_pFEPackage != NULL)
     {
         if (gSebringLoadPackageToVirtualMemory)
         {
-            nlVirtualFree(m_package);
+            nlVirtualFree(m_pFEPackage);
         }
         else
         {
-            delete[] m_package;
+            delete[] m_pFEPackage;
         }
-        m_package = NULL;
-        m_unk_0x04 = 0;
+        m_pFEPackage = NULL;
+        m_uHashID = 0;
     }
 }
 
@@ -82,10 +82,11 @@ FEScene::~FEScene()
  */
 FEScene::FEScene()
 {
-    m_package = NULL;
-    m_unk_0x04 = 0;
-    m_unk_0x08 = false;
-    m_unk_0x4C = 0;
+    m_pFEPackage = NULL;
+    m_uHashID = 0;
+    m_bValid = false;
+    m_uRenderView = 0;
+    // m_feSceneResourceHandle constructor called automatically here
 
     nlVector3 FROM;
     nlVec3Set(FROM, 0.0f, 0.0f, 600.0f);
@@ -93,5 +94,5 @@ FEScene::FEScene()
     nlVec3Set(TO, 0.0f, 0.0f, 0.0f);
     nlVector3 UP;
     nlVec3Set(UP, 0.0f, 1.0f, 0.0f);
-    glMatrixLookAt(m_transf, FROM, TO, UP);
+    glMatrixLookAt(m_matView, FROM, TO, UP);
 }

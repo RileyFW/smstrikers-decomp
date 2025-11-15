@@ -31,7 +31,7 @@ public:
     /* 0x08 */ eFEResourceType m_type;
     /* 0x0C */ u32 m_hashID;
     /* 0x10 */ bool m_bValid;
-};
+}; // total size: 0x14
 
 class FEResourceManager : public nlTask, public nlSingleton<FEResourceManager>
 {

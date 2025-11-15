@@ -79,7 +79,7 @@ void StartMovieCB()
             handler = NULL;
         }
         if ((handler != NULL) && (GameSceneManager::Instance()->GetSceneType(handler) == 2)
-            && (handler->m_pFEScene->m_unk_0x08 != false))
+            && (handler->m_pFEScene->m_bValid != false))
         {
             GameSceneManager::Instance()->PopEntireStack();
             FESceneManager::Instance()->ForceImmediateStackProcessing();

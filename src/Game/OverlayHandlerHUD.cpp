@@ -182,7 +182,7 @@ void HUDOverlay::SceneCreated()
 void HUDOverlay::SetSlideIn()
 {
     FEPresentation* presentation;
-    presentation = this->m_pFEScene->m_package->GetPresentation();
+    presentation = m_pFEScene->m_pFEPackage->GetPresentation();
     presentation->SetActiveSlide("IN");
     mIsHUDSlideIn = true;
 }
@@ -193,7 +193,7 @@ void HUDOverlay::SetSlideIn()
 void HUDOverlay::SetSlideOut()
 {
     FEPresentation* presentation;
-    presentation = this->m_pFEScene->m_package->GetPresentation();
+    presentation = m_pFEScene->m_pFEPackage->GetPresentation();
     presentation->SetActiveSlide("OUT");
     mIsHUDSlideIn = false;
 }
