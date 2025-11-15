@@ -4,6 +4,7 @@
 #include "types.h"
 
 #include "NL/nlSingleton.h"
+#include "NL/nlDLListSlotPool.h"
 #include "NL/nlDLRing.h"
 
 #include "Game/BaseSceneHandler.h"
@@ -22,7 +23,7 @@
 
 class BaseSceneHandler;
 
-class FESceneManager
+class FESceneManager : public nlSingleton<FESceneManager>
 {
 public:
     void Update(float);
@@ -32,21 +33,25 @@ public:
     static void ProcessPushPopQueue();
     void GetSceneHandler(unsigned long);
     void ForceImmediateStackProcessing();
-    void AreAllScenesValid();
+    bool AreAllScenesValid();
 
     ~FESceneManager();
     FESceneManager();
 
-    /* 0x00 */ s32 m_unk_0x00;
-    /* 0x04 */ s32 m_unk_0x04;
-    /* 0x08 */ char pad8[4];
-    /* 0x0C */ DLListEntry<BaseSceneHandler*>* m_unk_0x0C;
-    /* 0x10 */ char pad10[8];
-    /* 0x18 */ DLListEntry<BaseSceneHandler*>* m_unk_0x18;
-    /* 0x1C */ FEScene* m_unk_0x1C;
-    /* 0x20 */ s32 m_unk_0x20;
+    /* 0x00 */ nlDLListSlotPool<BaseSceneHandler*> m_sceneHandlerStack;
+    /* 0x1C */ BaseSceneHandler* m_topMostScene;
+    /* 0x20 */ unsigned long m_uDefaultRenderView;
 
-    static nlSingleton<FESceneManager> s_pInstance;
+    // /* 0x00 */ s32 m_unk_0x00;
+    // /* 0x04 */ s32 m_unk_0x04;
+    // /* 0x08 */ char pad8[4];
+    // /* 0x0C */ DLListEntry<BaseSceneHandler*>* m_unk_0x0C;
+    // /* 0x10 */ char pad10[8];
+    // /* 0x18 */ DLListEntry<BaseSceneHandler*>* m_unk_0x18;
+    // /* 0x1C */ FEScene* m_unk_0x1C;
+    // /* 0x20 */ s32 m_unk_0x20;
+
+    // static nlSingleton<FESceneManager> s_pInstance;
 };
 
 // class DLListContainerBase<BaseSceneHandler*, BasicSlotPool<DLListEntry<BaseSceneHandler*>>>

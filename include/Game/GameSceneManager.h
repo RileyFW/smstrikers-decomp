@@ -6,15 +6,13 @@
 #include "NL/nlSingleton.h"
 #include "Game/BaseGameSceneManager.h"
 
-class GameSceneManager : public BaseGameSceneManager
+class GameSceneManager : public BaseGameSceneManager, public nlSingleton<GameSceneManager>
 {
 public:
     GameSceneManager();
     ~GameSceneManager();
 
     void Pop();
-
-    static nlSingleton<GameSceneManager> s_pInstance;
 };
 
 #endif // _GAMESCENEMANAGER_H_

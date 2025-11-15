@@ -115,32 +115,9 @@ public:
     void PushLoadingScene(bool);
 
 public:
-    /* 0x04 */ u32 m_count;
-    /* 0x08 */ SceneList m_types[MAX_SCENE_COUNT];
-    /* 0x88 */ BaseSceneHandler* m_handlers[MAX_SCENE_COUNT];
+    /* 0x04 */ u32 mCurrentStackDepth;
+    /* 0x08 */ SceneList m_sceneStack[MAX_SCENE_COUNT];
+    /* 0x88 */ BaseSceneHandler* mBaseSceneHandlerStack[MAX_SCENE_COUNT];
 };
-
-// class BaseSceneHandler
-// {
-// public:
-//     void SetPresentation(FEPresentation*);
-//     void InitializeSubHandlers();
-//     ~BaseSceneHandler();
-//     void SetVisible(bool);
-// };
-
-// class SlideMenuList
-// {
-// public:
-//     void SetSlide();
-// };
-
-// class IntroMovieScene
-// {
-// public:
-//     void PlayScreenBackSFX();
-//     void PlayScreenForwardSFX();
-//     ~IntroMovieScene();
-// };
 
 #endif // _BASEGAMESCENEMANAGER_H_

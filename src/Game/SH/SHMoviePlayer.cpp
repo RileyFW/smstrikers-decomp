@@ -13,6 +13,7 @@
 
 extern bool g_bRenderWorld;
 extern bool g_e3_Build;
+extern FEInput* g_pFEInput;
 
 // /**
 //  * Offset/Address/Size: 0x2D4 | 0x800BD840 | size: 0x15C

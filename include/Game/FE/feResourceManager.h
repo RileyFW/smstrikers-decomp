@@ -2,6 +2,7 @@
 #define _FERESOURCEMANAGER_H_
 
 #include "types.h"
+#include "NL/nlTask.h"
 #include "NL/nlSingleton.h"
 
 // void nlDLRingRemoveStart<DLListEntry<FEResourceHandle*>>(DLListEntry<FEResourceHandle*>**);
@@ -32,23 +33,25 @@ public:
     /* 0x10 */ bool m_bValid;
 };
 
-class FEResourceManager
+class FEResourceManager : public nlTask, public nlSingleton<FEResourceManager>
 {
 public:
-    void GetName();
     FEResourceManager();
     ~FEResourceManager();
+    virtual void Run(float);
+    virtual const char* GetName() { return "FEResource Manager"; };
+
     void Cleanup();
     void LoadPermanentResourceBundle(const char*);
     void OpenOnDemandResourceBundle(const char*);
     void Initialize();
+    void Update(float);
     void QueueResourceLoad(FEResourceHandle*);
     void UnloadResource(FEResourceHandle*);
     void UnloadPermanentResourceBundle();
     void TextureResourceLoadComplete(void*, unsigned long, unsigned long);
-    void Update(float);
 
-    static nlSingleton<FEResourceManager> s_pInstance;
+    // static nlSingleton<FEResourceManager> s_pInstance;
 };
 
 // class AVLTreeBase<unsigned long, FEResourceHandle*, BasicSlotPool<AVLTreeEntry<unsigned long, FEResourceHandle*>>,

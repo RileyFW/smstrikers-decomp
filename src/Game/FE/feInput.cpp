@@ -1,5 +1,7 @@
 #include "Game/FE/feInput.h"
 
+static FEInput* g_pFEInput;
+
 /**
  * Offset/Address/Size: 0x0 | 0x8020EA0C | size: 0x274
  */

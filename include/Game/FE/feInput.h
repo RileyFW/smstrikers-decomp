@@ -19,9 +19,18 @@ enum eFEINPUT_PAD
     FE_ALL_PADS = 8,
 };
 
+struct InputLockEntry
+{
+    /* 0x00 */ BaseSceneHandler* m_pBaseSceneHandler;
+    /* 0x04 */ int m_customID;
+}; // total size: 0x8
+
 class FEInput
 {
 public:
+    FEInput();
+    virtual ~FEInput();
+
     void EnableAnalogToDPadMapping(eFEINPUT_PAD, bool);
     void SetAutoRepeatParams(eFEINPUT_PAD, int, float, float);
     void Update(float);
@@ -36,11 +45,13 @@ public:
     void IsConnected(eFEINPUT_PAD);
     void GetGlobalPad(eFEINPUT_PAD) const;
     void Reset();
-    FEInput();
-    void Initialize();
-    virtual ~FEInput();
-};
 
-static FEInput* g_pFEInput;
+    void Initialize();
+
+    /* 0x00 */ InputLockEntry m_nExclusiveInputSceneHashIDStack[4];
+    /* 0x20 */ int m_InputLockDepth;
+    /* 0x24 */ bool m_bEnableInput[4];
+    /* 0x28 */ bool m_bInputAllowed;
+}; // total size: 0x30
 
 #endif // _FEINPUT_H_

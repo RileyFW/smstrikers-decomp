@@ -132,15 +132,15 @@ void OverlayManager::SetVisible(SceneList scene, bool visibility, bool overrideS
  */
 void OverlayManager::HandleStateTransition(unsigned long to, unsigned long param_2)
 {
-    for (u32 i = 0; i < m_count; i++)
+    for (u32 i = 0; i < mCurrentStackDepth; i++)
     {
-        SceneList sceneType = m_types[i];
+        SceneList sceneType = m_sceneStack[i];
         if (sceneType <= SCENE_LAST)
         {
             continue;
         }
 
-        BaseSceneHandler* handler = m_handlers[i];
+        BaseSceneHandler* handler = mBaseSceneHandlerStack[i];
         if (handler == nullptr)
         {
             continue;

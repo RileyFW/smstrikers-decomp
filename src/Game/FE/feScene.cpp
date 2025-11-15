@@ -39,7 +39,7 @@ void FEScene::UnloadPackage()
 {
     UnloadResourceCallback unloadResourceCallback;
     nlWalkRing<FEResourceHandle, UnloadResourceCallback>(&m_resourceHandler, &unloadResourceCallback, &UnloadResourceCallback::Callback);
-    FEResourceManager::s_pInstance.Instance()->UnloadResource(&m_resourceHandler);
+    FEResourceManager::Instance()->UnloadResource(&m_resourceHandler);
 }
 
 /**

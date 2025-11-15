@@ -1,12 +1,13 @@
 #ifndef _FRONTENDTASK_H_
 #define _FRONTENDTASK_H_
 
+#include "NL/nlTask.h"
 
-class FrontEndTask
+class FrontEndTask : public nlTask
 {
 public:
-    void GetName();
-    void Run(float);
+    virtual void Run(float);
+    virtual const char* GetName() { return "Front End"; };
     void HandleE3IdleReset(float);
 };
 

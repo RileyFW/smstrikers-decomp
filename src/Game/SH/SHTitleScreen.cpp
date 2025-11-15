@@ -64,36 +64,27 @@
  */
 void StartMovieCB()
 {
-    BaseSceneHandler* var_r31;
-    u32 temp_r0;
+    BaseSceneHandler* handler;
+    u32 sceneCount;
 
-    if (GameSceneManager::s_pInstance.Instance() != NULL)
+    if (GameSceneManager::Instance() != NULL)
     {
-        // if (s_pInstance__31nlSingleton<16GameSceneManager>.unk0 != NULL)
-        // {
-        temp_r0 = GameSceneManager::s_pInstance.Instance()->m_count;
-        if (temp_r0 != 0)
+        sceneCount = GameSceneManager::Instance()->mCurrentStackDepth;
+        if (sceneCount != 0)
         {
-            var_r31 = *GameSceneManager::s_pInstance.Instance()->m_handlers + temp_r0;
-            // = (s_pInstance__31nlSingleton<16GameSceneManager>.unk0 + (temp_r0 * 4))->unk84;
+            handler = GameSceneManager::Instance()->mBaseSceneHandlerStack[sceneCount];
         }
         else
         {
-            var_r31 = NULL;
+            handler = NULL;
         }
-        if ((var_r31 != NULL) && (GameSceneManager::s_pInstance.Instance()->GetSceneType(var_r31) == 2)
-            && (var_r31->m_pFEScene->m_unk_0x08 != false))
+        if ((handler != NULL) && (GameSceneManager::Instance()->GetSceneType(handler) == 2)
+            && (handler->m_pFEScene->m_unk_0x08 != false))
         {
-            GameSceneManager::s_pInstance.Instance()->PopEntireStack();
-            FESceneManager::s_pInstance.Instance()->ForceImmediateStackProcessing();
-            GameSceneManager::s_pInstance.Instance()->Push((SceneList)0x35, SCREEN_NOTHING, false);
-
-            // PopEntireStack__20BaseGameSceneManagerFv(s_pInstance__31nlSingleton<16GameSceneManager>.unk0);
-            // ForceImmediateStackProcessing__14FESceneManagerFv(s_pInstance__29nlSingleton<14FESceneManager>.unk0);
-            // s_pInstance__31nlSingleton<16GameSceneManager>.unk0->unk0->unkC(s_pInstance__31nlSingleton<16GameSceneManager>.unk0, 0x35, 0,
-            //                                                                 0);
+            GameSceneManager::Instance()->PopEntireStack();
+            FESceneManager::Instance()->ForceImmediateStackProcessing();
+            GameSceneManager::Instance()->Push((SceneList)0x35, SCREEN_NOTHING, false);
         }
-        // }
     }
 }
 

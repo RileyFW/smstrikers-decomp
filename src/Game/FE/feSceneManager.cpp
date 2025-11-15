@@ -1,6 +1,6 @@
 #include "Game/FE/feSceneManager.h"
 
-nlSingleton<FESceneManager> FESceneManager::s_pInstance;
+// nlSingleton<FESceneManager> FESceneManager::s_pInstance;
 
 /**
  * Offset/Address/Size: 0x0 | 0x8020D64C | size: 0xC0
@@ -56,8 +56,9 @@ void FESceneManager::ForceImmediateStackProcessing()
 /**
  * Offset/Address/Size: 0x868 | 0x8020DEB4 | size: 0xA4
  */
-void FESceneManager::AreAllScenesValid()
+bool FESceneManager::AreAllScenesValid()
 {
+    return false;
 }
 
 /**

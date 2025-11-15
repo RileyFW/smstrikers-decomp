@@ -1,5 +1,6 @@
 #include "Game/OverlayHandlerHUD.h"
 #include "Game/Team.h"
+#include "Game/FE/tlComponentInstance.h"
 
 extern cTeam* g_pTeams[];
 
@@ -232,6 +233,24 @@ void HUDOverlay::UpdateScore()
  */
 void HUDOverlay::DisplayNewScore()
 {
+    for (int team = 0; team < 2; team++)
+    {
+        if (mNewScore[team] != mScore[team])
+        {
+            mScoreUpdateDelay[team] = 0.0f;
+            mStartScoreAnimation = true;
+        }
+
+        for (int flare = 0; flare < 2; flare++)
+        {
+            if (mNumFlareCycles[team][flare] != -1)
+            {
+                mNumFlareCycles[team][flare] = 20;
+                m_pComponentFlares[team][flare]->SetActiveSlide("Slide1");
+                m_pComponentFlares[team][flare]->Update(0.0f);
+            }
+        }
+    }
 }
 
 /**

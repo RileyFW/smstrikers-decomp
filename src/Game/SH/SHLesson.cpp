@@ -11,6 +11,8 @@
 #include "NL/nlSingleton.h"
 #include "types.h"
 
+extern FEInput* g_pFEInput;
+
 int LessonScene::mLessonIndex = -1;
 // /**
 //  * Offset/Address/Size: 0x2D4 | 0x8010ACF4 | size: 0x15C
@@ -87,9 +89,9 @@ void LessonScene::Update(float fDeltaT)
 
     BaseSceneHandler::Update(fDeltaT);
     this->mButtons.CentreButtons();
-    if (nlSingleton<OverlayManager>::s_pInstance->m_count != 0)
+    if (nlSingleton<OverlayManager>::s_pInstance->mCurrentStackDepth != 0)
     {
-        scene = (MoviePlayerScene*)nlSingleton<OverlayManager>::s_pInstance->m_handlers[nlSingleton<OverlayManager>::s_pInstance->m_count - 1];
+        scene = (MoviePlayerScene*)nlSingleton<OverlayManager>::s_pInstance->mBaseSceneHandlerStack[nlSingleton<OverlayManager>::s_pInstance->mCurrentStackDepth - 1];
     }
     else
     {

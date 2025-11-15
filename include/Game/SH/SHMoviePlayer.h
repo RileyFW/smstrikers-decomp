@@ -30,6 +30,15 @@ public:
     BaseGameSceneManager* mGameSceneManager; // offset 0xAC, size 0x4
 };
 
+class IntroMovieScene : public MoviePlayerScene
+{
+public:
+    virtual ~IntroMovieScene() { };
+    virtual void PlayScreenBackSFX() { };
+    virtual void PlayScreenForwardSFX() { };
+    virtual void OverrideMovieDimensions();
+};
+
 class NLGLogoMovieScene : public MoviePlayerScene
 {
 public:

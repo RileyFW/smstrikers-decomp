@@ -7,6 +7,8 @@
 #include "NL/nlTask.h"
 #include "Game/FE/feInput.h"
 
+extern FEInput* g_pFEInput;
+
 /**
  * Offset/Address/Size: 0xBC | 0x800FC998 | size: 0x208
  */

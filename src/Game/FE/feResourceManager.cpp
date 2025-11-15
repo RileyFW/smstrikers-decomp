@@ -76,12 +76,12 @@
 // {
 // }
 
-/**
- * Offset/Address/Size: 0x0 | 0x8020D244 | size: 0xC
- */
-void FEResourceManager::GetName()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x8020D244 | size: 0xC
+//  */
+// void FEResourceManager::GetName()
+// {
+// }
 
 // /**
 //  * Offset/Address/Size: 0x900 | 0x8020D1A4 | size: 0xA0
@@ -164,6 +164,7 @@ void FEResourceManager::GetName()
  * Offset/Address/Size: 0xD48 | 0x8020C888 | size: 0x1C
  */
 FEResourceManager::FEResourceManager()
+    : nlTask()
 {
 }
 
@@ -172,6 +173,7 @@ FEResourceManager::FEResourceManager()
  */
 FEResourceManager::~FEResourceManager()
 {
+    Cleanup();
 }
 
 /**
@@ -179,6 +181,7 @@ FEResourceManager::~FEResourceManager()
  */
 void FEResourceManager::Cleanup()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
