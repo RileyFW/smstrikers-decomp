@@ -1,4 +1,8 @@
 #include "Game/Effects/EffectsTemplate.h"
+#include "Game/Effects/EmissionController.h"
+#include "NL/nlAVLTree.h"
+
+static nlAVLTree<unsigned long, EffectsTemplate*, DefaultKeyCompare<unsigned long> >* pTemplateMap = nullptr;
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x801F29E8 | size: 0x60
@@ -167,9 +171,11 @@ EffectsTemplate* parse_template(SimpleParser*, bool)
 /**
  * Offset/Address/Size: 0x27C | 0x801F0E40 | size: 0x2C
  */
-bool fxLoadTemplateBundle(const char*)
+bool fxLoadTemplateBundle(const char* filename)
 {
-    return false;
+    unsigned long fileSize;
+    void* data = fxLoadEntireFileHigh(filename, &fileSize);
+    return fxLoadTemplateBundle(data, fileSize);
 }
 
 /**
@@ -177,6 +183,7 @@ bool fxLoadTemplateBundle(const char*)
  */
 bool fxLoadTemplateBundle(void*, unsigned long)
 {
+    FORCE_DONT_INLINE;
     return false;
 }
 
@@ -192,12 +199,72 @@ bool fxLoadTemplateBundle(void*, unsigned long)
  */
 bool fxUnloadTemplates()
 {
+    if (pTemplateMap == nullptr)
+    {
+        return true;
+    }
+
+    pTemplateMap->DeleteValues();
+    delete pTemplateMap;
+    pTemplateMap = nullptr;
+    return true;
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x801F0BC4 | size: 0x90
  */
-EffectsTemplate* fxGetTemplate(unsigned long)
+EffectsTemplate* fxGetTemplate(unsigned long key)
 {
-    return nullptr;
+    EffectsTemplate** resultPtr;
+    AVLTreeEntry<unsigned long, EffectsTemplate*>* node;
+    int cmpResult;
+    bool found;
+
+    // node = pTemplateMap->m_Root;
+
+    // while (node != nullptr)
+    for (node = pTemplateMap->m_Root; node != nullptr;)
+    {
+        if (key == node->key)
+        {
+            cmpResult = 0;
+        }
+        else if (key < node->key)
+        {
+            cmpResult = -1;
+        }
+        else
+        {
+            cmpResult = 1;
+        }
+
+        found = false;
+        if (cmpResult == 0)
+        {
+            if (&resultPtr != nullptr)
+            {
+                resultPtr = &node->value;
+            }
+            found = true;
+            break;
+        }
+        else
+        {
+            if (cmpResult < 0)
+            {
+                node = (AVLTreeEntry<unsigned long, EffectsTemplate*>*)node->node.left;
+            }
+            else
+            {
+                node = (AVLTreeEntry<unsigned long, EffectsTemplate*>*)node->node.right;
+            }
+        }
+    }
+
+    if (!found)
+    {
+        return nullptr;
+    }
+
+    return *resultPtr;
 }

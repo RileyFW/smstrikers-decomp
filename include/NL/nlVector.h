@@ -8,6 +8,10 @@ template <typename T, typename Allocator = DefaultAllocator>
 class Vector
 {
 public:
+    ~Vector()
+    {
+        delete[] mData;
+    }
     void reserve(int capacity);
     void resize(int size);
     void push_back(const T& value);

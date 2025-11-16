@@ -1,6 +1,17 @@
 #include "Game/Transitions/ModelTransition.h"
 
 #include "NL/nlMath.h"
+#include "NL/nlMemory.h"
+#include "NL/nlSlotPool.h"
+#include "Game/SAnim/pnSAnimController.h"
+#include "Game/Effects/EffectsGroup.h"
+#include "Game/Effects/EmissionManager.h"
+#include "NL/gl/gl.h"
+#include "NL/gl/glMatrix.h"
+#include "NL/gl/glState.h"
+#include "NL/gl/glView.h"
+
+eGLView ModeledScreenTransition::s_3DView = GLV_Transitions;
 
 // /**
 //  * Offset/Address/Size: 0xA04 | 0x80204CA0 | size: 0x24
@@ -103,8 +114,19 @@
 /**
  * Offset/Address/Size: 0x1E60 | 0x80203F24 | size: 0x31C
  */
-void GetNumLeafNodesInHierarchy(cSHierarchy&, int, int)
+int GetNumLeafNodesInHierarchy(cSHierarchy& hierarchy, int nodeIndex, int count)
 {
+    if (hierarchy.GetNumChildren(nodeIndex) == 0)
+    {
+        return count + 1;
+    }
+
+    for (int p = 0; p < hierarchy.GetNumChildren(nodeIndex); p++)
+    {
+        count = GetNumLeafNodesInHierarchy(hierarchy, hierarchy.GetChild(nodeIndex, p), count);
+    }
+
+    return count;
 }
 
 /**
@@ -112,6 +134,7 @@ void GetNumLeafNodesInHierarchy(cSHierarchy&, int, int)
  */
 void ShuffleIntoOutline(Vector<nlVector3, DefaultAllocator>&)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -119,6 +142,7 @@ void ShuffleIntoOutline(Vector<nlVector3, DefaultAllocator>&)
  */
 void UpdateEffectsFromLeafNodes(cPoseAccumulator&, EmissionController**, cSHierarchy&, int, int)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -126,6 +150,24 @@ void UpdateEffectsFromLeafNodes(cPoseAccumulator&, EmissionController**, cSHiera
  */
 ModeledScreenTransition::ModeledScreenTransition()
 {
+    m_pModels = NULL;
+    m_nModels = 0;
+    m_pSkeleton = NULL;
+    m_pAnim = NULL;
+    m_pSkelFile = NULL;
+    m_pAnimFile = NULL;
+    m_nTexture = 0xFFFFFFFF;
+    m_pPoseAccumulator = NULL;
+    m_pPoseTree = NULL;
+    m_bScreenGrab = false;
+    m_bEnableGrab = false;
+    m_pModelMap = NULL;
+    m_pLight = NULL;
+    m_nProgram = glGetProgram("3d unlit");
+    m_Effects = NULL;
+    m_RenderOutline = false;
+    m_mWorldMatrix.SetIdentity();
+    m_EffectName[0] = '\0';
 }
 
 /**
@@ -133,6 +175,60 @@ ModeledScreenTransition::ModeledScreenTransition()
  */
 ModeledScreenTransition::~ModeledScreenTransition()
 {
+    if (m_pPoseAccumulator != NULL)
+    {
+        delete m_pPoseAccumulator;
+        m_pPoseAccumulator = NULL;
+    }
+
+    if (m_pLight != NULL)
+    {
+        for (u32 i = 0; i < m_nModels; i++)
+        {
+            m_pLight->DetachFromModel(&m_pModels[i]);
+        }
+
+        if (m_pLight != NULL)
+        {
+            delete m_pLight;
+        }
+        m_pLight = NULL;
+    }
+
+    if (m_pPoseTree != NULL)
+    {
+        delete m_pPoseTree;
+        m_pPoseTree = NULL;
+    }
+
+    if (m_pSkeleton != NULL)
+    {
+        m_pSkeleton = NULL;
+        delete[] m_pSkelFile;
+        m_pSkelFile = NULL;
+    }
+
+    if (m_pAnim != NULL)
+    {
+        m_pAnim->Destroy();
+        m_pAnim = NULL;
+        delete[] m_pAnimFile;
+        m_pAnimFile = NULL;
+    }
+
+    if (m_pModelMap != NULL)
+    {
+        delete[] m_pModelMap;
+        m_pModelMap = NULL;
+    }
+
+    if (m_Effects != NULL)
+    {
+        delete[] m_Effects;
+    }
+
+    m_pModels = NULL;
+    m_nModels = 0;
 }
 
 /**
@@ -145,8 +241,27 @@ void ModeledScreenTransition::DoSanityCheck()
 /**
  * Offset/Address/Size: 0x1520 | 0x802035E4 | size: 0xA4
  */
-void ModeledScreenTransition::Update(float)
+void ModeledScreenTransition::Update(float dt)
 {
+    if (m_pPoseTree != NULL)
+    {
+        bool skipUpdate = false;
+        if (m_pPoseTree->m_ePlayMode == PM_HOLD && m_pPoseTree->m_fTime == 1.0f)
+        {
+            skipUpdate = true;
+        }
+
+        if (!skipUpdate)
+        {
+            m_pPoseTree->Update(dt);
+            m_pPoseAccumulator->Pose(*m_pPoseTree, m_mWorldMatrix);
+        }
+    }
+
+    if (m_EffectName[0] != '\0')
+    {
+        UpdateEffectsFromLeafNodes(*m_pPoseAccumulator, m_Effects, *m_pSkeleton, 0, 0);
+    }
 }
 
 /**
@@ -154,6 +269,50 @@ void ModeledScreenTransition::Update(float)
  */
 void ModeledScreenTransition::Render(eGLView)
 {
+    if (m_pLight != NULL && m_pPoseTree != NULL)
+    {
+        m_pLight->ApplyLight(m_pPoseTree->m_fTime);
+    }
+
+    int modelMapIndex = 0;
+    // int modelIndex = 0;
+
+    for (u32 modelIndex = 0; modelIndex < m_nModels; modelIndex++)
+    {
+        int packetIndex = 0;
+
+        glModel* pModel = &m_pModels[modelIndex];
+        int nodeIndex = m_pModelMap[modelMapIndex];
+        for (; packetIndex < pModel->numPackets; packetIndex++)
+        {
+            const nlMatrix4& nodeMatrix = m_pPoseAccumulator->GetNodeMatrix(nodeIndex);
+            u32 matrixHandle = glAllocMatrix();
+            if (matrixHandle != 0xFFFFFFFF)
+            {
+                glSetMatrix(matrixHandle, nodeMatrix);
+            }
+            pModel->packets[packetIndex].state.matrix = matrixHandle;
+        }
+
+        glViewAttachModel(s_3DView, pModel);
+        modelMapIndex++;
+    }
+
+    if (m_bEnableGrab)
+    {
+        glViewSetFilter(GLV_ScreenGrab, GLFilter_Blt);
+        glViewSetFilterSource(GLV_ScreenGrab, GLTG_Main);
+        m_bEnableGrab = false;
+    }
+    else
+    {
+        glViewSetFilter(GLV_ScreenGrab, GLFilter_None);
+    }
+
+    if (m_RenderOutline)
+    {
+        RenderOutline();
+    }
 }
 
 /**
@@ -161,6 +320,7 @@ void ModeledScreenTransition::Render(eGLView)
  */
 void ModeledScreenTransition::RenderOutline() const
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -168,7 +328,12 @@ void ModeledScreenTransition::RenderOutline() const
  */
 bool ModeledScreenTransition::IsFinished()
 {
-    return false;
+    if (!m_pPoseTree)
+    {
+        return true;
+    }
+
+    return m_pPoseTree->m_ePlayMode == PM_HOLD && m_pPoseTree->m_fTime == 1.0f;
 }
 
 /**
@@ -176,6 +341,10 @@ bool ModeledScreenTransition::IsFinished()
  */
 float ModeledScreenTransition::Time() const
 {
+    if (m_pPoseTree != NULL)
+    {
+        return m_pPoseTree->m_fTime;
+    }
     return 0.0f;
 }
 
@@ -184,6 +353,50 @@ float ModeledScreenTransition::Time() const
  */
 void ModeledScreenTransition::Reset()
 {
+    cPN_SAnimController* poseTree;
+    cPN_SAnimController* controller;
+
+    if (m_pPoseTree == NULL && m_pAnim != NULL)
+    {
+        controller = NULL;
+        if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList == NULL)
+        {
+            SlotPoolBase::BaseAddNewBlock(&cPN_SAnimController::m_SAnimControllerSlotPool, 0x54);
+        }
+
+        if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList != NULL)
+        {
+            controller = (cPN_SAnimController*)cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList;
+            cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList = cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList->m_next;
+        }
+
+        controller = new (controller) cPN_SAnimController(m_pAnim, NULL, PM_HOLD, NULL, 0, false);
+        m_pPoseTree = controller;
+    }
+
+    poseTree = m_pPoseTree;
+    if (poseTree != NULL)
+    {
+        poseTree->m_fPrevTime = poseTree->m_fTime;
+        poseTree->m_fTime = 0.0f;
+    }
+
+    m_bEnableGrab = m_bScreenGrab;
+
+    if (m_EffectName[0] != '\0')
+    {
+        const int numLeafNodes = GetNumLeafNodesInHierarchy(*m_pSkeleton, 0, 0);
+        if (m_Effects == NULL)
+        {
+            m_Effects = (EmissionController**)nlMalloc(numLeafNodes * sizeof(EmissionController*), 8, false);
+        }
+
+        for (int i = 0; i < numLeafNodes; i++)
+        {
+            m_Effects[i] = EmissionManager::Create(fxGetGroup(m_EffectName), 0);
+            m_Effects[i]->m_GlView = GLV_Transitions3D;
+        }
+    }
 }
 
 /**
@@ -191,10 +404,7 @@ void ModeledScreenTransition::Reset()
  */
 void ModeledScreenTransition::Cancel()
 {
-    if (m_pPoseTree != NULL)
-    {
-        delete m_pPoseTree;
-    }
+    delete m_pPoseTree;
     m_pPoseTree = NULL;
 
     delete[] m_Effects;
@@ -206,6 +416,7 @@ void ModeledScreenTransition::Cancel()
  */
 ModeledScreenTransition* ModeledScreenTransition::LoadFromParser(SimpleParser*)
 {
+    return nullptr;
 }
 
 /**

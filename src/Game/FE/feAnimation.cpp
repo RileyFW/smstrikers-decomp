@@ -78,10 +78,9 @@ void FEAnimation::Update(float arg0)
                 }
                 if ((var_f31 != -1.0f) && (this->unk14 == 6))
                 {
-                    const nlColour* color = this->m_instance->GetAssetColour();
-                    nlColour newColor = *color;
+                    nlColour newColor = m_instance->GetAssetColour();
                     newColor.c[3] = (u8)var_f31;
-                    this->m_instance->SetAssetColour(newColor);
+                    m_instance->SetAssetColour(newColor);
                 }
             }
         }

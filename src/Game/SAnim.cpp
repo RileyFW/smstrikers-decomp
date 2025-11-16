@@ -8,6 +8,7 @@
  */
 cSAnim* cSAnim::Initialize(nlChunk* arg0)
 {
+    return nullptr;
 }
 
 /**

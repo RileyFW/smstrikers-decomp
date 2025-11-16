@@ -11,7 +11,7 @@ class DLListEntry
 public:
     /* 0x0 */ DLListEntry<T>* m_next;
     /* 0x4 */ DLListEntry<T>* m_prev;
-    /* 0x8 */ T* m_data;
+    /* 0x8 */ T m_data;
 
     DLListEntry()
         : m_next(nullptr)

@@ -8,8 +8,8 @@
  */
 void TLInstance::SetAssetColour(const nlColour& color)
 {
-    this->m_flags |= 0x10;
-    *(u32*)&this->unk60[13] = *(u32*)&color; //???
+    m_overloadFlags |= 0x10;
+    m_overloadedAttributes.colour = color;
 }
 
 /**
@@ -17,10 +17,10 @@ void TLInstance::SetAssetColour(const nlColour& color)
  */
 void TLInstance::SetAssetScale(float x, float y, float z)
 {
-    this->m_flags |= 4;
-    this->m_scale.f.x = x;
-    this->m_scale.f.y = y;
-    this->m_scale.f.z = z;
+    this->m_overloadFlags |= 4;
+    m_overloadedAttributes.v3Scale.f.x = x;
+    m_overloadedAttributes.v3Scale.f.y = y;
+    m_overloadedAttributes.v3Scale.f.z = z;
 }
 
 /**
@@ -28,10 +28,10 @@ void TLInstance::SetAssetScale(float x, float y, float z)
  */
 void TLInstance::SetAssetRotation(float x, float y, float z)
 {
-    this->m_flags |= 2;
-    this->m_rot.f.x = x;
-    this->m_rot.f.y = y;
-    this->m_rot.f.z = z;
+    this->m_overloadFlags |= 2;
+    m_overloadedAttributes.v3Rotation.f.x = x;
+    m_overloadedAttributes.v3Rotation.f.y = y;
+    m_overloadedAttributes.v3Rotation.f.z = z;
 }
 
 /**
@@ -39,10 +39,10 @@ void TLInstance::SetAssetRotation(float x, float y, float z)
  */
 void TLInstance::SetAssetPosition(float x, float y, float z)
 {
-    this->m_flags |= 1;
-    this->m_pos.f.x = x;
-    this->m_pos.f.y = y;
-    this->m_pos.f.z = z;
+    this->m_overloadFlags |= 1;
+    m_overloadedAttributes.v3Position.f.x = x;
+    m_overloadedAttributes.v3Position.f.y = y;
+    m_overloadedAttributes.v3Position.f.z = z;
 }
 
 /**
@@ -56,7 +56,7 @@ bool TLInstance::IsValidAtTime(float arg0)
     bool var_r0;
 
     var_r0 = true;
-    temp_f0 = arg0 - m_start;
+    temp_f0 = arg0 - m_fStartTime;
     if (!(temp_f0 > 0.0001f))
     {
         if (!((float)fabs(temp_f0) <= 0.0001f))
@@ -68,9 +68,9 @@ bool TLInstance::IsValidAtTime(float arg0)
     if (var_r0 != 0)
     {
         var_r0 = 1;
-        temp_f2 = m_duration;
-        temp_f3 = arg0 - m_start;
-        if (!((m_duration - temp_f3) > 0.0001f))
+        temp_f2 = m_fDuration;
+        temp_f3 = arg0 - m_fStartTime;
+        if (!((m_fDuration - temp_f3) > 0.0001f))
         {
             if (!((float)fabs(temp_f3 - temp_f2) <= 0.0001f))
             {
@@ -90,11 +90,11 @@ bool TLInstance::IsValidAtTime(float arg0)
 /**
  * Offset/Address/Size: 0xF8 | 0x80210078 | size: 0x38
  */
-const nlColour* TLInstance::GetColour() const
+const nlColour& TLInstance::GetColour() const
 {
-    if (this->m_flags & 0x10)
+    if (m_overloadFlags & 0x10)
     {
-        return (nlColour*)&this->unk60[13];
+        return m_overloadedAttributes.colour;
     }
     return m_component->GetColour();
 }
@@ -102,11 +102,11 @@ const nlColour* TLInstance::GetColour() const
 /**
  * Offset/Address/Size: 0x130 | 0x802100B0 | size: 0x38
  */
-const nlVector3* TLInstance::GetScale() const
+const feVector3& TLInstance::GetScale() const
 {
-    if (this->m_flags & 0x4)
+    if (m_overloadFlags & 0x4)
     {
-        return (nlVector3*)&this->m_scale;
+        return m_overloadedAttributes.v3Scale;
     }
     return m_component->GetScale();
 }
@@ -114,11 +114,11 @@ const nlVector3* TLInstance::GetScale() const
 /**
  * Offset/Address/Size: 0x168 | 0x802100E8 | size: 0x38
  */
-const nlVector3* TLInstance::GetRotation() const
+const feVector3& TLInstance::GetRotation() const
 {
-    if (this->m_flags & 0x2)
+    if (m_overloadFlags & 0x2)
     {
-        return (nlVector3*)&this->m_rot;
+        return m_overloadedAttributes.v3Rotation;
     }
     return m_component->GetRotation();
 }
@@ -126,11 +126,11 @@ const nlVector3* TLInstance::GetRotation() const
 /**
  * Offset/Address/Size: 0x1A0 | 0x80210120 | size: 0x38
  */
-const nlVector3* TLInstance::GetPosition() const
+const feVector3& TLInstance::GetPosition() const
 {
-    if (this->m_flags & 0x1)
+    if (m_overloadFlags & 0x1)
     {
-        return (nlVector3*)&this->m_pos;
+        return m_overloadedAttributes.v3Position;
     }
     return m_component->GetPosition();
 }
@@ -138,23 +138,23 @@ const nlVector3* TLInstance::GetPosition() const
 /**
  * Offset/Address/Size: 0x1D8 | 0x80210158 | size: 0x8
  */
-const nlColour* TLInstance::GetAssetColour() const
+const nlColour& TLInstance::GetAssetColour() const
 {
-    return (nlColour*)&this->unk60[13];
+    return m_overloadedAttributes.colour;
 }
 
 /**
  * Offset/Address/Size: 0x1E0 | 0x80210160 | size: 0x8
  */
-const nlVector3* TLInstance::GetAssetScale() const
+const feVector3& TLInstance::GetAssetScale() const
 {
-    return (nlVector3*)&this->m_scale;
+    return m_overloadedAttributes.v3Scale;
 }
 
 /**
  * Offset/Address/Size: 0x1E8 | 0x80210168 | size: 0x8
  */
-const nlVector3* TLInstance::GetAssetPosition() const
+const feVector3& TLInstance::GetAssetPosition() const
 {
-    return (nlVector3*)&this->m_pos;
+    return m_overloadedAttributes.v3Position;
 }

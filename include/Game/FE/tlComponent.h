@@ -13,9 +13,10 @@ public:
     void SetActiveSlide(unsigned long);
     void SetActiveSlide(const char*);
 
-    /* 0x40 */ u8 pad40[0x28];
-    /* 0x68 */ TLSlide* m_slides;
-    /* 0x6C */ TLSlide* m_activeSlide;
-};
+    /* 0x68 */ TLSlide* pChildren;
+    /* 0x6C */ TLSlide* m_pActiveSlide;
+    /* 0x70 */ char m_szName[32];
+    /* 0x90 */ unsigned long m_hashID;
+}; // total size: 0x94
 
 #endif // _TLCOMPONENT_H_

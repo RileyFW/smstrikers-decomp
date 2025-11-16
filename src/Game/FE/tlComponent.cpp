@@ -9,7 +9,7 @@
  */
 void TLComponent::SetActiveSlide(unsigned long hash)
 {
-    m_activeSlide = FindItemByHashID<TLSlide>(m_slides, hash);
+    m_pActiveSlide = FindItemByHashID<TLSlide>(pChildren, hash);
 }
 
 /**
@@ -18,5 +18,5 @@ void TLComponent::SetActiveSlide(unsigned long hash)
 void TLComponent::SetActiveSlide(const char* name)
 {
     unsigned long hash = nlStringLowerHash(name);
-    m_activeSlide = FindItemByHashID<TLSlide>(m_slides, hash);
+    m_pActiveSlide = FindItemByHashID<TLSlide>(pChildren, hash);
 }

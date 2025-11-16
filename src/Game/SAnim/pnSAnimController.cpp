@@ -96,7 +96,7 @@ cPoseNode* cPN_SAnimController::Update(float dt)
                     m_fTime -= 1.0f;
                 }
             }
-            else if (m_ePlayMode == PM_HOLD)
+            else
             {
                 m_fTime = 1.0f;
             }
@@ -110,7 +110,7 @@ cPoseNode* cPN_SAnimController::Update(float dt)
                     m_fTime += 1.0f;
                 }
             }
-            else if (m_ePlayMode == PM_HOLD)
+            else
             {
                 m_fTime = 0.0f;
             }
@@ -133,11 +133,11 @@ cPoseNode* cPN_SAnimController::Update(float dt)
 
                 float currTime = m_fTime;
                 float prevTime = m_fPrevTime;
-                bool shouldTrigger = false;
+                bool shouldTrigger;
 
                 if (currTime < prevTime)
                 {
-                    // Time wrapped around
+                    shouldTrigger = false;
                     if (callbackTime <= currTime || callbackTime > prevTime)
                     {
                         shouldTrigger = true;
@@ -145,7 +145,7 @@ cPoseNode* cPN_SAnimController::Update(float dt)
                 }
                 else
                 {
-                    // Normal forward playback
+                    shouldTrigger = false;
                     if (callbackTime <= currTime && callbackTime > prevTime)
                     {
                         shouldTrigger = true;
@@ -177,6 +177,7 @@ cPoseNode* cPN_SAnimController::Update(float dt)
  */
 void cPN_SAnimController::UpdateSynchronized(float)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -203,7 +204,7 @@ void cPN_SAnimController::Evaluate(int nodeIndex, float weight, cPoseAccumulator
     {
         for (int i = 0; i < m_pSAnim->m_nNumMorphChannels; ++i)
         {
-            pAccumulator->m_floatArray[i] += weight * m_pSAnim->GetMorphWeight(i, m_fTime);
+            pAccumulator->m_MorphWeights.mData[i] += weight * m_pSAnim->GetMorphWeight(i, m_fTime);
         }
     }
 
@@ -233,7 +234,7 @@ void cPN_SAnimController::Evaluate(int nodeIndex, float weight, cPoseAccumulator
     nlVector3* pTranslationOffset = pAccumulator->m_BaseSHierarchy->GetTranslationOffset(nodeIndex);
     pAccumulator->BlendRotIdentity(nodeIndex, weight);
     pAccumulator->BlendScaleIdentity(nodeIndex, weight);
-    pAccumulator->m_trans[nodeIndex].t = *pTranslationOffset;
+    pAccumulator->m_trans.mData[nodeIndex].t = *pTranslationOffset;
 }
 
 /**

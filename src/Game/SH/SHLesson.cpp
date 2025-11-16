@@ -102,14 +102,14 @@ void LessonScene::Update(float fDeltaT)
     {
         if (this->mButtons.mButtonInstance)
         {
-            this->mButtons.mButtonInstance->m_enableSoundTriggers = true;
+            this->mButtons.mButtonInstance->m_bVisible = true;
         }
     }
     else
     {
         if (this->mButtons.mButtonInstance)
         {
-            this->mButtons.mButtonInstance->m_enableSoundTriggers = false;
+            this->mButtons.mButtonInstance->m_bVisible = false;
         }
     }
     if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x100, false, nullptr))

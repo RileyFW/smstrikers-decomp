@@ -1,4 +1,5 @@
 #include "Game/Effects/EmissionController.h"
+#include "types.h"
 
 /**
  * Offset/Address/Size: 0xF2C | 0x801F881C | size: 0x104
@@ -96,6 +97,7 @@ void EmissionController::Update(float)
  */
 void* fxLoadEntireFileHigh(const char* filename, unsigned long* fileSize)
 {
+    FORCE_DONT_INLINE;
     return nullptr;
 }
 

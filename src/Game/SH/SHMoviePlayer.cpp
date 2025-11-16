@@ -214,7 +214,7 @@ void LessonMoviePlayerScene::Update(float fDeltaT)
     }
     if (mButtonComponent.mButtonInstance != nullptr)
     {
-        mButtonComponent.mButtonInstance->m_enableSoundTriggers = false;
+        mButtonComponent.mButtonInstance->m_bVisible = false;
     }
     glDiscardFrame(2);
 }

@@ -87,27 +87,12 @@ public:
 
     /* 0x00 */ cSHierarchy* m_BaseSHierarchy;
     /* 0x04 */ Vector<nlMatrix4, DefaultAllocator> m_NodeMatrices;
-    // /* 0x04 */ nlMatrix4* m_NodeMatrices;
-    // /* 0x08 */ s32 m_unk_0x08;
-    // /* 0x0C */ s32 m_unk_0x0C;
     /* 0x10 */ Vector<nlMatrix4, DefaultAllocator> m_PrevNodeMatrices;
-    // /* 0x10 */ nlMatrix4* m_matsB;
-    // /* 0x14 */ s32 m_unk_0x14;
-    // /* 0x18 */ s32 m_unk_0x18;
-    /* 0x1C */ RotAccum* m_rot;
-    /* 0x20 */ s32 m_unk_0x20;
-    /* 0x24 */ s32 m_unk_0x24;
-    /* 0x28 */ ScaleAccum* m_scale;
-    /* 0x2C */ s32 m_unk_0x2C;
-    /* 0x30 */ s32 m_unk_0x30;
-    /* 0x34 */ TransAccum* m_trans;
-    /* 0x38 */ s32 m_unk_0x38;
-    /* 0x3C */ s32 m_unk_0x3C;
-    /* 0x40 */ cBuildNodeMatrixCallbackInfo* m_cb;
-    /* 0x44 */ s32 m_unk_0x44;
-    /* 0x48 */ s32 m_unk_0x48;
-    /* 0x4C */ float* m_floatArray;
-    /* 0x50 */ s32 m_floatCount;
+    /* 0x1C */ Vector<RotAccum, DefaultAllocator> m_rot;
+    /* 0x28 */ Vector<ScaleAccum, DefaultAllocator> m_scale;
+    /* 0x34 */ Vector<TransAccum, DefaultAllocator> m_trans;
+    /* 0x40 */ Vector<cBuildNodeMatrixCallbackInfo, DefaultAllocator> m_cb;
+    /* 0x4C */ Vector<float, DefaultAllocator> m_MorphWeights;
 }; // total size: 0x58
 
 #endif // _POSEACCUMULATOR_H_

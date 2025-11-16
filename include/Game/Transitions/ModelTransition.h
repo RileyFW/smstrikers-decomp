@@ -15,7 +15,7 @@
 
 void UpdateEffectsFromLeafNodes(cPoseAccumulator&, EmissionController**, cSHierarchy&, int, int);
 void ShuffleIntoOutline(Vector<nlVector3, DefaultAllocator>&);
-void GetNumLeafNodesInHierarchy(cSHierarchy&, int, int);
+int GetNumLeafNodesInHierarchy(cSHierarchy&, int, int);
 
 class ModeledScreenTransition : public ScreenTransition
 {
@@ -54,6 +54,8 @@ public:
     /* 0xB8 */ EmissionController** m_Effects;       // offset 0xB8, size 0x4
     /* 0xBC */ bool m_RenderOutline;                 // offset 0xBC, size 0x1
     /* 0xBD */ nlColour m_OutlineColour;             // offset 0xBD, size 0x4
+
+    static eGLView s_3DView;
 }; // total size: 0xC4
 
 // class ScreenTransition

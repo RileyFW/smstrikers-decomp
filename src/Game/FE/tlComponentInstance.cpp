@@ -7,7 +7,7 @@
  */
 TLSlide* TLComponentInstance::GetActiveSlide()
 {
-    return m_component->m_activeSlide;
+    return m_component->m_pActiveSlide;
 }
 
 /**
@@ -15,8 +15,8 @@ TLSlide* TLComponentInstance::GetActiveSlide()
  */
 void TLComponentInstance::SetActiveSlide(TLSlide* slide)
 {
-    m_time = 0.0f;
-    m_component->m_activeSlide = slide;
+    m_fCurrentTime = 0.0f;
+    m_component->m_pActiveSlide = slide;
 }
 
 /**
@@ -24,7 +24,7 @@ void TLComponentInstance::SetActiveSlide(TLSlide* slide)
  */
 void TLComponentInstance::SetActiveSlide(unsigned long hash)
 {
-    m_time = 0.0f;
+    m_fCurrentTime = 0.0f;
     m_component->SetActiveSlide(hash);
 }
 
@@ -33,7 +33,7 @@ void TLComponentInstance::SetActiveSlide(unsigned long hash)
  */
 void TLComponentInstance::SetActiveSlide(const char* name)
 {
-    m_time = 0.0f;
+    m_fCurrentTime = 0.0f;
     m_component->SetActiveSlide(name);
 }
 
@@ -42,34 +42,34 @@ void TLComponentInstance::SetActiveSlide(const char* name)
  */
 void TLComponentInstance::Update(float dt)
 {
-    TLSlide* slide = m_component->m_activeSlide;
+    TLSlide* slide = m_component->m_pActiveSlide;
     if (!slide)
         return;
 
     // advance local time (0x80)
-    m_time += dt;
+    m_fCurrentTime += dt;
 
     const float total = slide->m_start + slide->m_duration;
-    if (m_time > total)
+    if (m_fCurrentTime > total)
     {
         switch (slide->m_wrapMode)
         {
         case 1: // loop
-            m_time = m_time - total;
+            m_fCurrentTime = m_fCurrentTime - total;
             break;
         case 0: // clamp
-            m_time = total;
+            m_fCurrentTime = total;
             break;
         }
     }
 
-    if (m_enableSoundTriggers)
+    if (m_bVisible)
     {
         SoundKeyframeTrigger t;
         t.m_slide = slide;
-        t.Update(slide->m_time, m_time);
+        t.Update(slide->m_time, m_fCurrentTime);
     }
 
-    slide->m_time = m_time;
+    slide->m_time = m_fCurrentTime;
     slide->Update(dt);
 }

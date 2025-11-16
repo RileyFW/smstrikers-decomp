@@ -15,7 +15,7 @@ public:
     void SetActiveSlide(const char*);
     void Update(float);
 
-    /* 0x80 */ f32 m_time; // local time
-};
+    /* 0x80 */ f32 m_fCurrentTime;
+}; // total size: 0x84
 
 #endif // _TLCOMPONENTINSTANCE_H_

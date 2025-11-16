@@ -26,7 +26,7 @@ loop_1:
 loop_5:
     if (var_r31_2 != NULL)
     {
-        if (var_r31_2->m_unk_0x78 == 4)
+        if (var_r31_2->m_type == TLAT_COMPONENT)
         {
             var_r31_2->Update(time);
         }

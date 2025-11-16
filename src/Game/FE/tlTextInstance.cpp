@@ -11,6 +11,6 @@ void TLTextInstance::SetStringId(const char* id)
     {
         id += 4;
     }
-    m_stringIdHash = nlStringLowerHash(id);
-    m_flags |= 0x8u;
+    m_LocStrId = nlStringLowerHash(id);
+    m_OverloadFlags |= 0x8u;
 }

@@ -14,12 +14,12 @@ public:
     ~GLMatrixStack();
     GLMatrixStack(int);
 
-    /* 0x00 */ nlMatrix4 m_matrix1;
-    /* 0x40 */ nlMatrix4 m_matrix2;
-    /* 0x80 */ nlMatrix4 *m_matrixStack;
-    /* 0x84 */ u8 m_stackCurPosition;
-    /* 0x88 */ u32 m_stackSize;
-    /* 0x8C */ u32 m_unk_0x8C;
-};
+    /* 0x00 */ nlMatrix4 top;
+    /* 0x40 */ nlMatrix4 inverse;
+    /* 0x80 */ nlMatrix4* stack;
+    /* 0x84 */ bool bDirtyInverse;
+    /* 0x88 */ u32 maxStackDepth;
+    /* 0x8C */ u32 stackDepth;
+}; // total size: 0x90
 
 #endif // _GLMATRIXSTACK_H_

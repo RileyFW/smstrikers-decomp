@@ -6,7 +6,7 @@
  */
 void GLMatrixStack::GetTop(nlMatrix4& result)
 {
-    result = m_matrix1;
+    result = top;
 }
 
 /**
@@ -14,8 +14,8 @@ void GLMatrixStack::GetTop(nlMatrix4& result)
  */
 void GLMatrixStack::PopMatrix()
 {
-    m_matrix1 = m_matrixStack[--m_unk_0x8C];
-    m_stackCurPosition = 1;
+    top = stack[--stackDepth];
+    bDirtyInverse = 1;
 }
 
 /**
@@ -23,8 +23,8 @@ void GLMatrixStack::PopMatrix()
  */
 void GLMatrixStack::PushMatrix()
 {
-    m_matrixStack[m_unk_0x8C++] = m_matrix1;
-    m_stackCurPosition = 1;
+    stack[stackDepth++] = top;
+    bDirtyInverse = 1;
 }
 
 /**
@@ -32,9 +32,9 @@ void GLMatrixStack::PushMatrix()
  */
 void GLMatrixStack::MultMatrix(const nlMatrix4& m)
 {
-    nlMatrix4 tmp = m_matrix1;
-    nlMultMatrices(m_matrix1, m, tmp);
-    m_stackCurPosition = 1;    
+    nlMatrix4 tmp = top;
+    nlMultMatrices(top, m, tmp);
+    bDirtyInverse = 1;
 }
 
 /**
@@ -42,9 +42,9 @@ void GLMatrixStack::MultMatrix(const nlMatrix4& m)
  */
 void GLMatrixStack::LoadIdentity()
 {
-    m_matrix1.SetIdentity();
-    m_matrix2.SetIdentity();
-    m_stackCurPosition = 0;
+    top.SetIdentity();
+    inverse.SetIdentity();
+    bDirtyInverse = 0;
 }
 
 /**
@@ -52,7 +52,7 @@ void GLMatrixStack::LoadIdentity()
  */
 GLMatrixStack::~GLMatrixStack()
 {
-    delete [] m_matrixStack;
+    delete[] stack;
 }
 
 /**
@@ -60,14 +60,14 @@ GLMatrixStack::~GLMatrixStack()
  */
 GLMatrixStack::GLMatrixStack(int stackSize)
 {
-    m_stackSize = stackSize;
-    m_unk_0x8C = 0;
-    m_matrixStack = (nlMatrix4*)nlMalloc(stackSize << 6, 8, 0);
-    for (int i = 0; i < stackSize; i++) 
+    maxStackDepth = stackSize;
+    stackDepth = 0;
+    stack = (nlMatrix4*)nlMalloc(stackSize << 6, 8, 0);
+    for (int i = 0; i < stackSize; i++)
     {
-        m_matrixStack[i].SetIdentity();
+        stack[i].SetIdentity();
     }
-    m_matrix1.SetIdentity();
-    m_matrix2.SetIdentity();
-    m_stackCurPosition = 0;
+    top.SetIdentity();
+    inverse.SetIdentity();
+    bDirtyInverse = 0;
 }

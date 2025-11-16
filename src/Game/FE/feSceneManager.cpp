@@ -1,19 +1,21 @@
 #include "Game/FE/feSceneManager.h"
 #include "Game/FE/feInput.h"
+#include "Game/FE/feRender.h"
 #include "NL/nlDLRing.h"
 #include "NL/nlDLListSlotPool.h"
 
 extern FEInput* g_pFEInput;
 
-// Forward declaration
-class PackagePushPopMessage;
-extern nlDLListSlotPool<PackagePushPopMessage*> m_pushPopMessageQueue;
+static nlDLListSlotPool<PackagePushPopMessage*> m_pushPopMessageQueue;
 
 /**
  * Offset/Address/Size: 0x0 | 0x8020D64C | size: 0xC0
  */
 void FESceneManager::Update(float dt)
 {
+    DLListEntry<BaseSceneHandler*>* headEntry;
+    DLListEntry<BaseSceneHandler*>* currentEntry;
+
     ProcessPushPopQueue();
 
     if (m_sceneHandlerStack.m_Head == nullptr)
@@ -21,16 +23,15 @@ void FESceneManager::Update(float dt)
         return;
     }
 
-    DLListEntry<BaseSceneHandler*>* headEntry = m_sceneHandlerStack.m_Head;
-    DLListEntry<BaseSceneHandler*>* currentEntry = nlDLRingGetStart(headEntry);
+    currentEntry = nlDLRingGetStart(m_sceneHandlerStack.m_Head);
+    headEntry = m_sceneHandlerStack.m_Head;
 
     while (currentEntry != nullptr)
     {
-        BaseSceneHandler* sceneHandler = *(currentEntry->m_data);
-        if (sceneHandler->m_pFEScene->m_bValid != false)
+        if (currentEntry->m_data->m_pFEScene->m_bValid != false)
         {
-            g_pFEInput->EnableInputIfSceneHasFocus(sceneHandler);
-            sceneHandler->Update(dt);
+            g_pFEInput->EnableInputIfSceneHasFocus(currentEntry->m_data);
+            currentEntry->m_data->Update(dt);
         }
 
         if (nlDLRingIsEnd(headEntry, currentEntry) || currentEntry == nullptr)
@@ -78,14 +79,17 @@ void FESceneManager::ProcessPushPopQueue()
  */
 BaseSceneHandler* FESceneManager::GetSceneHandler(unsigned long hashID)
 {
-    DLListEntry<BaseSceneHandler*>* headEntry = m_sceneHandlerStack.m_Head;
-    DLListEntry<BaseSceneHandler*>* currentEntry = nlDLRingGetStart(m_sceneHandlerStack.m_Head);
+    DLListEntry<BaseSceneHandler*>* headEntry;
+    DLListEntry<BaseSceneHandler*>* currentEntry;
+
+    currentEntry = nlDLRingGetStart(m_sceneHandlerStack.m_Head);
+    headEntry = m_sceneHandlerStack.m_Head;
 
     while (currentEntry != nullptr)
     {
-        if (hashID == (*(currentEntry->m_data))->m_uHashID)
+        if (hashID == currentEntry->m_data->m_uHashID)
         {
-            return *(currentEntry->m_data);
+            return currentEntry->m_data;
         }
 
         if (nlDLRingIsEnd(headEntry, currentEntry) || currentEntry == nullptr)
@@ -106,6 +110,7 @@ BaseSceneHandler* FESceneManager::GetSceneHandler(unsigned long hashID)
  */
 void FESceneManager::ForceImmediateStackProcessing()
 {
+    FORCE_DONT_INLINE;
     ProcessPushPopQueue();
 }
 
@@ -114,12 +119,15 @@ void FESceneManager::ForceImmediateStackProcessing()
  */
 bool FESceneManager::AreAllScenesValid()
 {
-    DLListEntry<BaseSceneHandler*>* headEntry = m_sceneHandlerStack.m_Head;
-    DLListEntry<BaseSceneHandler*>* currentEntry = nlDLRingGetStart(headEntry);
+    DLListEntry<BaseSceneHandler*>* headEntry;
+    DLListEntry<BaseSceneHandler*>* currentEntry;
+
+    currentEntry = nlDLRingGetStart(m_sceneHandlerStack.m_Head);
+    headEntry = m_sceneHandlerStack.m_Head;
 
     while (currentEntry != nullptr)
     {
-        BaseSceneHandler* sceneHandler = *(currentEntry->m_data);
+        BaseSceneHandler* sceneHandler = currentEntry->m_data;
         if (sceneHandler->m_pFEScene->m_bValid == false)
         {
             return false;
@@ -143,13 +151,29 @@ bool FESceneManager::AreAllScenesValid()
  */
 FESceneManager::~FESceneManager()
 {
+    ForceImmediateStackProcessing();
+    FERender::Cleanup();
+
+    nlWalkDLRing<DLListEntry<BaseSceneHandler*>, DLListContainerBase<BaseSceneHandler*, BasicSlotPool<DLListEntry<BaseSceneHandler*> > > >(
+        m_sceneHandlerStack.m_Head,
+        &m_sceneHandlerStack,
+        &DLListContainerBase<BaseSceneHandler*, BasicSlotPool<DLListEntry<BaseSceneHandler*> > >::DeleteEntry);
 }
 
 /**
  * Offset/Address/Size: 0x9C4 | 0x8020E010 | size: 0x70
  */
 FESceneManager::FESceneManager()
+// : m_sceneHandlerStack()
 {
+    // new (&m_sceneHandlerStack.m_Allocator) SlotPoolBase();
+    // m_sceneHandlerStack.m_Head = nullptr;
+    // m_sceneHandlerStack.m_Allocator.m_Initial = 0x14;
+    // SlotPoolBase::BaseAddNewBlock(&m_sceneHandlerStack.m_Allocator, sizeof(DLListEntry<BaseSceneHandler*>));
+    // m_sceneHandlerStack.m_Allocator.m_Delta = 0;
+    // m_uDefaultRenderView = -1;
+    // m_topMostScene = nullptr;
+    // FERender::Initialize();
 }
 
 // /**

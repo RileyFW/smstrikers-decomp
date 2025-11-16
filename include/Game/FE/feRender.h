@@ -1,6 +1,8 @@
 #ifndef _FERENDER_H_
 #define _FERENDER_H_
 
+#include "NL/gl/glMatrixStack.h"
+
 // void ConvertColour(nlColour&, const nlFloatColour&);
 // void 0x8028D570..0x8028D574 | size: 0x4;
 
@@ -15,18 +17,21 @@ class TLInstance;
 class FERender
 {
 public:
-    void RenderImageInstance(const TLImageInstance*);
-    void RenderTextInstance(TLTextInstance*);
-    void RenderScene(FEScene*);
-    void RenderPresentation(const FEPresentation*);
-    void RenderComponentInstance(TLComponentInstance*);
-    void RenderSlide(const TLSlide*);
-    void RenderTimeLineAsset(TLInstance*, float);
-    void PopTransformMatrix();
-    void PushTransformMatrix(const TLInstance*);
-    void Initialize();
-    void Cleanup();
-    void CalculateCurrentAssetColour(const TLInstance*);
+    static void RenderImageInstance(const TLImageInstance*);
+    static void RenderTextInstance(TLTextInstance*);
+    static void RenderScene(FEScene*);
+    static void RenderPresentation(const FEPresentation*);
+    static void RenderComponentInstance(TLComponentInstance*);
+    static void RenderSlide(const TLSlide*);
+    static void RenderTimeLineAsset(TLInstance*, float);
+    static void PopTransformMatrix();
+    static void PushTransformMatrix(const TLInstance*);
+    static void Initialize();
+    static void Cleanup();
+    static void CalculateCurrentAssetColour(const TLInstance*);
+
+    static GLMatrixStack* m_pMatrixStack;
+    static FEScene* m_pRenderScene;
 };
 
 // class nlFloatColour

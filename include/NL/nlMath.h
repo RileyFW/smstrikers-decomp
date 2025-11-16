@@ -258,6 +258,14 @@ struct nlMatrix4
         m[row][2] = v.f.z;
     }
 
+    void SetRow4_(int row, const float x, const float y, const float z, const float w)
+    {
+        m[row][0] = x;
+        m[row][1] = y;
+        m[row][2] = z;
+        m[row][3] = w;
+    }
+
     /**
      * Offset/Address/Size: 0x0 | 0x80204294 | size: 0x8
      */

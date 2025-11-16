@@ -18,11 +18,11 @@ public:
     ~ButtonComponent();
     ButtonComponent();
 
-    TLComponentInstance* mButtonInstance; // offset 0x0, size 0x4
-    TLImageInstance* mButtonImages[3];    // offset 0x4, size 0xC
-    TLTextInstance* mButtonLabels[3];     // offset 0x10, size 0xC
-    int mNumButtons;                      // offset 0x1C, size 0x4
-    bool mAlreadyCentred;                 // offset 0x20, size 0x1
+    /* 0x00 */ TLComponentInstance* mButtonInstance;
+    /* 0x04 */ TLImageInstance* mButtonImages[3];
+    /* 0x10 */ TLTextInstance* mButtonLabels[3];
+    /* 0x1C */ int mNumButtons;
+    /* 0x20 */ bool mAlreadyCentred;
 };
 
 // class FontCharString

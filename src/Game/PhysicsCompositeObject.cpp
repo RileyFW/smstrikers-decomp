@@ -60,7 +60,7 @@ int PhysicsCompositeObject::AddObject(PhysicsObject* object)
     {
         entry->m_next = nullptr;
         entry->m_prev = nullptr;
-        entry->m_data = &transform;
+        entry->m_data = transform;
     }
 
     nlDLRingAddEnd<DLListEntry<PhysicsTransform*> >(&m_Components.m_Head, entry);

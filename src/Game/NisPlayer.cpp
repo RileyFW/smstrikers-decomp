@@ -186,6 +186,7 @@ bool NisPlayer::WorldIsFrozen() const
  */
 float NisPlayer::TimeLeft() const
 {
+    return 0.0f;
 }
 
 /**
