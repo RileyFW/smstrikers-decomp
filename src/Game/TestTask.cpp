@@ -9,9 +9,13 @@
 
 #include "NL/nlBasicString.h"
 
-static const char* testLog;
-static const char* smokeTestSuccessOutput;     // size: 0x4, address: 0x80396644
-static const char* frameRateTestSuccessOutput; // size: 0x4, address: 0x80396648
+namespace
+{
+const char* testLog = "test.log";
+}
+
+static const char* smokeTestSuccessOutput = "smoke_test.success";
+static const char* frameRateTestSuccessOutput = "frame_rate.success";
 
 /**
  * Offset/Address/Size: 0xB4C | 0x8016D448 | size: 0x44

@@ -84,4 +84,20 @@ public:
     static SlotPool<cPN_SAnimController> m_SAnimControllerSlotPool;
 }; // total size: 0x54
 
+inline cPN_SAnimController* AllocateSAnimController()
+{
+    cPN_SAnimController* controller = nullptr;
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&cPN_SAnimController::m_SAnimControllerSlotPool, sizeof(cPN_SAnimController));
+    }
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList != NULL)
+    {
+        controller = (cPN_SAnimController*)cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList;
+        cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList = cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList->m_next;
+    }
+    return controller;
+}
+
 #endif // _PNSANIMCONTROLLER_H_

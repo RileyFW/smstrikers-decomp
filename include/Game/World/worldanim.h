@@ -5,11 +5,27 @@
 #include "NL/nlAVLTree.h"
 #include "Game/Inventory.h"
 #include "Game/SAnim/pnSAnimController.h"
+#include "Game/SAnim.h"
 
 class AnimationSet
 {
 public:
     /* 0x0 */ cInventory<cSHierarchy> m_animInventory;
+
+    inline cSAnim* FindAnimationByHash(u32 hash) const
+    {
+        ListEntry<cSAnim*>* entry = (ListEntry<cSAnim*>*)m_animInventory.m_lItemList.m_Head;
+        while (entry != NULL)
+        {
+            cSAnim* candidate = entry->data;
+            if (hash == entry->data->m_uHashID)
+            {
+                return candidate;
+            }
+            entry = entry->next;
+        }
+        return nullptr;
+    }
 }; // total size: 0x1C
 
 class WorldAnimController

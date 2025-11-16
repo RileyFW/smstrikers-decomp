@@ -1,4 +1,7 @@
 #include "Game/World/worldanim.h"
+#include "NL/nlString.h"
+#include "NL/nlSlotPool.h"
+#include "Game/SAnim.h"
 
 /**
  * Offset/Address/Size: 0x5C8 | 0x8019B394 | size: 0x94
@@ -28,9 +31,19 @@ WorldAnimManager::~WorldAnimManager()
 /**
  * Offset/Address/Size: 0x58 | 0x8019AE24 | size: 0xF4
  */
-void WorldAnimController::SetAnimation(const char*, ePlayMode)
+void WorldAnimController::SetAnimation(const char* szAnimationName, ePlayMode playMode)
 {
-    // TODO: Implement
+    u32 hash = nlStringLowerHash(szAnimationName);
+    cSAnim* anim = m_pAnimationSet->FindAnimationByHash(hash);
+
+    if (m_pPoseTree != NULL)
+    {
+        delete m_pPoseTree;
+    }
+
+    cPN_SAnimController* newController = AllocateSAnimController();
+    newController = new (newController) cPN_SAnimController(anim, NULL, playMode, NULL, 0, false);
+    m_pPoseTree = newController;
 }
 
 /**

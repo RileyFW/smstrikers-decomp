@@ -358,18 +358,7 @@ void ModeledScreenTransition::Reset()
 
     if (m_pPoseTree == NULL && m_pAnim != NULL)
     {
-        controller = NULL;
-        if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList == NULL)
-        {
-            SlotPoolBase::BaseAddNewBlock(&cPN_SAnimController::m_SAnimControllerSlotPool, 0x54);
-        }
-
-        if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList != NULL)
-        {
-            controller = (cPN_SAnimController*)cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList;
-            cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList = cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList->m_next;
-        }
-
+        controller = AllocateSAnimController();
         controller = new (controller) cPN_SAnimController(m_pAnim, NULL, PM_HOLD, NULL, 0, false);
         m_pPoseTree = controller;
     }
