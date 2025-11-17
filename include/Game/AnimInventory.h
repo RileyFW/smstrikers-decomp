@@ -21,7 +21,7 @@ struct AnimProperties
 {
     /* 0x00 */ const char* name0;
     /* 0x04 */ const char* name;
-    /* 0x08 */ int playMode;
+    /* 0x08 */ ePlayMode playMode;
     /* 0x0C */ float blendTime;
     /* 0x10 */ bool mirrored;
     // /* 0x11 */ u8 pad11[3];
@@ -40,7 +40,7 @@ public:
     // bundle ingest and lookups
     void AddAnimBundle(const char* bundlePath);
     cSAnim* GetAnim(int i);
-    int GetPlayMode(int i);
+    ePlayMode GetPlayMode(int i);
     float GetBlendTime(int i);
     bool GetMirrored(int i);
     int GetBallRotationMode(int i);

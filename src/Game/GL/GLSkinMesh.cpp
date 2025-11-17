@@ -5,23 +5,56 @@
 /**
  * Offset/Address/Size: 0xD8 | 0x801E05E0 | size: 0x64
  */
-void SkinMatrix::Set(const nlMatrix4&)
+void SkinMatrix::Set(const nlMatrix4& in)
 {
+    m[0][0] = in.m[0][0];
+    m[0][1] = in.m[1][0];
+    m[0][2] = in.m[2][0];
+    m[0][3] = in.m[3][0];
+
+    m[1][0] = in.m[0][1];
+    m[1][1] = in.m[1][1];
+    m[1][2] = in.m[2][1];
+    m[1][3] = in.m[3][1];
+
+    m[2][0] = in.m[0][2];
+    m[2][1] = in.m[1][2];
+    m[2][2] = in.m[2][2];
+    m[2][3] = in.m[3][2];
 }
 
 /**
  * Offset/Address/Size: 0x5C | 0x801E0564 | size: 0x7C
  */
-void SkinMatrix::Get(nlMatrix4& arg0) const
+void SkinMatrix::Get(nlMatrix4& out) const
 {
+    out.m[0][0] = m[0][0];
+    out.m[1][0] = m[0][1];
+    out.m[2][0] = m[0][2];
+    out.m[3][0] = m[0][3];
+
+    out.m[0][1] = m[1][0];
+    out.m[1][1] = m[1][1];
+    out.m[2][1] = m[1][2];
+    out.m[3][1] = m[1][3];
+
+    out.m[0][2] = m[2][0];
+    out.m[1][2] = m[2][1];
+    out.m[2][2] = m[2][2];
+    out.m[3][2] = m[2][3];
+
+    out.m[0][3] = 0.0f;
+    out.m[1][3] = 0.0f;
+    out.m[2][3] = 0.0f;
+    out.m[3][3] = 1.0f;
 }
 
 /**
  * Offset/Address/Size: 0x2C | 0x801E0534 | size: 0x30
  */
-void SkinMatrix::Get4x3(float* arg0) const
+void SkinMatrix::Get4x3(float* out) const
 {
-    memcpy(arg0, this, 0x30);
+    memcpy(out, m, 12 * sizeof(float));
 }
 
 /**
@@ -29,5 +62,5 @@ void SkinMatrix::Get4x3(float* arg0) const
  */
 void nlMultMatrices(SkinMatrix& arg0, const SkinMatrix& arg1, const SkinMatrix& arg2)
 {
-    // PSMTXConcat(arg0, arg2, arg1);
+    PSMTXConcat(reinterpret_cast<CMtxP>(arg2.m), reinterpret_cast<CMtxP>(arg1.m), reinterpret_cast<MtxPtr>(arg0.m));
 }

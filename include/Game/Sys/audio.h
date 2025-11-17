@@ -21,9 +21,9 @@ namespace Audio
 struct SoundAttributes
 {
     u32 me_ClassType;             // offset 0x0, size 0x4
-    unsigned long mu_Type;        // offset 0x4, size 0x4
-    unsigned long mu_SfxID;       // offset 0x8, size 0x4
-    unsigned long mu_VoiceID;     // offset 0xC, size 0x4
+    u32 mu_Type;                  // offset 0x4, size 0x4
+    u32 mu_SfxID;                 // offset 0x8, size 0x4
+    u32 mu_VoiceID;               // offset 0xC, size 0x4
     float mf_Volume;              // offset 0x10, size 0x4
     float mf_VolReverb;           // offset 0x14, size 0x4
     float mf_Attenuate;           // offset 0x18, size 0x4

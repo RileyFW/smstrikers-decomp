@@ -22,4 +22,22 @@ public:
     static SlotPool<cPN_Blender> m_BlenderSlotPool;
 }; // total size: 0x1C
 
+inline cPN_Blender* AllocateBlender()
+{
+    cPN_Blender* blender = nullptr;
+
+    if (cPN_Blender::m_BlenderSlotPool.m_FreeList == nullptr)
+    {
+        SlotPoolBase::BaseAddNewBlock(&cPN_Blender::m_BlenderSlotPool, sizeof(cPN_Blender));
+    }
+
+    if (cPN_Blender::m_BlenderSlotPool.m_FreeList != nullptr)
+    {
+        blender = (cPN_Blender*)cPN_Blender::m_BlenderSlotPool.m_FreeList;
+        cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
+    }
+
+    return blender;
+}
+
 #endif // _PNBLENDER_H_

@@ -3,13 +3,39 @@
 
 #include "NL/nlMath.h"
 
-class SkinMatrix
+struct SkinVertex
 {
-public:
+    /* 0x00 */ nlVector3 position;
+    /* 0x0C */ signed char packed_normal[4];
+}; // total size: 0x10
+
+struct SkinPair
+{
+    /* 0x00 */ unsigned short vertexIndex;
+    /* 0x02 */ unsigned short vertexWeight;
+}; // total size: 0x4
+
+struct SkinPairList
+{
+    /* 0x00 */ SkinPairList* next;
+    /* 0x04 */ unsigned int num;
+    /* 0x08 */ SkinPair* pairs;
+}; // total size: 0xC
+
+struct MorphDelta
+{
+    /* 0x00 */ nlVector3 delta;
+    /* 0x0C */ int index;
+}; // total size: 0x10
+
+struct SkinMatrix
+{
+    /* 0x00 */ float m[3][4]; // offset 0x0, size 0x30
+
     void Set(const nlMatrix4&);
     void Get(nlMatrix4&) const;
     void Get4x3(float*) const;
-};
+}; // total size: 0x30
 
 void nlMultMatrices(SkinMatrix&, const SkinMatrix&, const SkinMatrix&);
 

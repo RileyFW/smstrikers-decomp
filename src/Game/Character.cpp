@@ -9,15 +9,27 @@
 
 #include "Game/Team.h"
 #include "Game/AI/Fielder.h"
+#include "Game/AnimInventory.h"
+#include "Game/SAnim/pnBlender.h"
+#include "Game/SAnim/AnimRetargeter.h"
+#include "NL/nlSlotPool.h"
 
+#include "Game/Ball.h"
 #include "Game/Sys/audio.h"
 #include "types.h"
 
-f32 CANT_COLLIDE = *(f32*)__float_max;
+static f32 CANT_COLLIDE = *(f32*)__float_max;
 
-const char* szMushroomBlurTextureBase = "global/mushroomstreak";
+static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
+static const char szMushroomBlurTextureBase[23] = "global/mushroomstreak_";
+static const char szMushroomBlurTexture[22] = "global/mushroomstreak";
 
 extern unsigned int nlDefaultSeed;
+static bool sbElectricFenceDebug = false;
+
+eCharacterModelType cCharacter::m_ModelType = CharModel_Rigid;
+
+nlVector3 g_v3PrevJointPosition = { 0.0f, 0.0f, 0.0f };
 
 /**
  * Offset/Address/Size: 0x0 | 0x8000DF4C | size: 0x88
@@ -70,27 +82,52 @@ void cCharacter::PerformBlinking(GLSkinMesh* skinMesh, glModel* model) const
 /**
  * Offset/Address/Size: 0x12C | 0x8000E078 | size: 0x2C
  */
-void cCharacter::UpdateBlinking(float arg0)
+void cCharacter::UpdateBlinking(float fDeltaT)
 {
     Blinker* temp_r3 = m_pBlinker;
     if (temp_r3 != NULL)
     {
-        temp_r3->Update(arg0);
+        temp_r3->Update(fDeltaT);
     }
 }
 
 /**
  * Offset/Address/Size: 0x158 | 0x8000E0A4 | size: 0x80
  */
-void cCharacter::PlayRandomCharDialogue(unsigned long, PosUpdateMethod, float, float)
+void cCharacter::PlayRandomCharDialogue(unsigned long dialogueType, PosUpdateMethod posUpdateMethod, float f1, float f2)
 {
+    if (Audio::IsInited())
+    {
+        m_pCharacterSFX->PlayRandomCharDialogue((CharDialogueType)dialogueType, posUpdateMethod, f1, f2, true);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x1D8 | 0x8000E124 | size: 0xD0
  */
-void cCharacter::Play3DSFX(Audio::eCharSFX, PosUpdateMethod, float)
+int cCharacter::Play3DSFX(Audio::eCharSFX sfxType, PosUpdateMethod posUpdateMethod, float fMaxVol)
 {
+    if (!Audio::IsInited())
+    {
+        return -1;
+    }
+
+    Audio::SoundAttributes attributes;
+    attributes.Init();
+
+    attributes.me_ClassType = 1; // CHAR
+    attributes.mu_Type = sfxType;
+    attributes.mb_Is3D = true;
+    attributes.mf_Volume = fMaxVol;
+    attributes.mf_Attenuate = 1.0f;
+    attributes.posUpdateMethod = posUpdateMethod;
+
+    if (posUpdateMethod == VECTORS)
+    {
+        attributes.UseStationaryPosVector(m_v3Position);
+    }
+
+    return (Audio::IsInited() ? m_pCharacterSFX->Play(attributes) : -1);
 }
 
 /**
@@ -146,6 +183,7 @@ void cCharacter::SetSFX(SoundPropAccessor* pSoundPropAccessor)
  */
 void cCharacter::UpdateMovementState(float)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -178,15 +216,70 @@ void cCharacter::KillEffect(const EffectsGroup* effectGroup)
 /**
  * Offset/Address/Size: 0xAF8 | 0x8000EA44 | size: 0x1FC
  */
-void cCharacter::Update(float)
+void cCharacter::Update(float fDeltaT)
 {
+    m_pPoseTree = m_pPoseTree->Update(fDeltaT);
+    UpdateMovementState(fDeltaT);
+
+    if (m_bIsUsingElectrocutionTexture)
+    {
+        if (!EmissionManager::IsPlaying(GetCharacterIndex(this), fxGetGroup("electric_fence_character")))
+        {
+            if (m_bIsUsingElectrocutionTexture)
+            {
+                m_pEffectsTexturing = nullptr;
+            }
+            m_bIsUsingElectrocutionTexture = false;
+        }
+    }
+
+    m_Dirt = -((0.013333334f * fDeltaT) - m_Dirt);
+    if (m_Dirt < m_MinDirt)
+    {
+        m_Dirt = m_MinDirt;
+    }
+
+    if (m_pBlurHandler != nullptr)
+    {
+        bool bIsZero = (v3Zero.f.x == g_v3PrevJointPosition.f.x && v3Zero.f.y == g_v3PrevJointPosition.f.y && v3Zero.f.z == g_v3PrevJointPosition.f.z);
+
+        if (bIsZero)
+        {
+            g_v3PrevJointPosition = m_v3Position;
+        }
+
+        nlVector3 jointPosition;
+        nlVector3 forwardVector;
+
+        if (m_eClassType == FIELDER)
+        {
+            cSHierarchy* hierarchy = m_pPoseAccumulator->m_BaseSHierarchy;
+            const nlMatrix4& nodeMatrix = m_pPoseAccumulator->GetNodeMatrix(hierarchy->GetNodeIndexByID(nlStringLowerHash("bip01 spine1")));
+            jointPosition = *(nlVector3*)&nodeMatrix.m[3][0];
+
+            nlVec3Set(forwardVector, m_v3Position.f.x - m_v3PrevPosition.f.x, m_v3Position.f.y - m_v3PrevPosition.f.y, m_v3Position.f.z - m_v3PrevPosition.f.z);
+        }
+        // what happens here, if m_eClassType != FIELDER? ...
+
+        g_v3PrevJointPosition = jointPosition;
+        m_pBlurHandler->AddViewOrientedPoint(jointPosition, forwardVector);
+    }
 }
 
 /**
  * Offset/Address/Size: 0xCF4 | 0x8000EC40 | size: 0x84
  */
-void cCharacter::ShouldStartCrossBlend(int)
+bool cCharacter::ShouldStartCrossBlend(int animID)
 {
+    float time;
+    float threshold = 0.5f * m_pAnimInventory->GetBlendTime(animID);
+
+    time = m_pCurrentAnimController->m_fTime;
+    time = 1.0f - time;
+
+    float remaining = time * ((float)(m_pCurrentAnimController->m_pSAnim->m_nNumKeys) / 30.0f);
+
+    return (remaining <= threshold);
 }
 
 /**
@@ -221,8 +314,39 @@ void cCharacter::SetFacingDirection(unsigned short dir)
 /**
  * Offset/Address/Size: 0xE40 | 0x8000ED8C | size: 0x148
  */
-void cCharacter::SetAnimState(int, bool, float, bool, bool)
+void cCharacter::SetAnimState(int animID, bool useBlendTime, float fNonDefaultBlendTime, bool bRestartCyclic, bool bForceMirrorSwap)
 {
+    float finalBlendTime;
+    cPN_SAnimController* newController;
+    cPN_Blender* blender;
+    cPoseNode* oldController;
+
+    if (useBlendTime)
+    {
+        finalBlendTime = m_pAnimInventory->GetBlendTime(animID);
+    }
+    else
+    {
+        finalBlendTime = fNonDefaultBlendTime;
+    }
+
+    newController = NewAnimController(animID, bRestartCyclic, bForceMirrorSwap, nullptr, 0);
+    oldController = m_pAILayer[0];
+
+    if (oldController != nullptr && finalBlendTime != 0.0f)
+    {
+        blender = new (AllocateBlender()) cPN_Blender(oldController, newController, finalBlendTime);
+    }
+    else
+    {
+        delete oldController;
+        blender = nullptr;
+    }
+
+    m_pAILayer[0] = blender;
+    m_pCurrentAnimController = newController;
+
+    SetAnimID(animID);
 }
 
 /**
@@ -273,6 +397,23 @@ void cCharacter::ResetEffects()
  */
 void cCharacter::PostPhysicsUpdate()
 {
+    m_v3PrevPosition = m_v3Position;
+    m_pPhysicsCharacter->GetCharacterPositionXY(&m_v3Position);
+    m_pPhysicsCharacter->GetCharacterVelocityXY(&m_v3Velocity);
+
+    m_fActualSpeed = nlGetLength2D(m_v3Velocity.f.x, m_v3Velocity.f.y);
+
+    float angleRad = 0.0000958738f * (float)m_aActualFacingDirection;
+    nlMakeRotationMatrixZ(m_m4WorldMatrix, angleRad);
+
+    m_m4WorldMatrix.m[3][0] = m_v3Position.f.x;
+    m_m4WorldMatrix.m[3][1] = m_v3Position.f.y;
+    m_m4WorldMatrix.m[3][2] = m_v3Position.f.z;
+
+    if (m_eClassType != GOALIE || ((m_v3Position.f.x * g_pBall->m_v3Position.f.x) > 0.0f))
+    {
+        m_pPoseAccumulator->MultNodeMatrices(&m_m4WorldMatrix);
+    }
 }
 
 /**
@@ -298,13 +439,25 @@ void cCharacter::PreUpdate(float)
  */
 void cCharacter::PrePhysicsUpdate(float)
 {
+    if ((m_eClassType != GOALIE) || ((m_v3Position.f.x * g_pBall->m_v3Position.f.x) > 0.0f))
+    {
+        nlMatrix4 identityMatrix;
+        identityMatrix.SetIdentity();
+        m_pPoseAccumulator->Pose(*m_pPoseTree, identityMatrix);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x11E4 | 0x8000F130 | size: 0x4C
  */
-void cCharacter::PoseSkinMesh(cPoseAccumulator*)
+void cCharacter::PoseSkinMesh(cPoseAccumulator* pPoseAccumulator)
 {
+    GLSkinMesh* skinMesh = m_pSkinMesh[m_ModelType];
+    if (skinMesh == nullptr)
+    {
+        skinMesh = m_pSkinMesh[0];
+    }
+    skinMesh->Pose(pPoseAccumulator);
 }
 
 /**
@@ -312,96 +465,136 @@ void cCharacter::PoseSkinMesh(cPoseAccumulator*)
  */
 void cCharacter::PoseLocalSpace()
 {
+    nlMatrix4 identityMatrix;
+    identityMatrix.SetIdentity();
+    m_pPoseAccumulator->Pose(*m_pPoseTree, identityMatrix);
 }
 
 /**
  * Offset/Address/Size: 0x1270 | 0x8000F1BC | size: 0x33C
  */
-void cCharacter::NewAnimController(int, bool, bool, void (*)(unsigned int, cPN_SAnimController*), unsigned int)
+cPN_SAnimController* cCharacter::NewAnimController(int animID, bool bRestartCyclic, bool bForceMirrorSwap, void (*funcPlaybackSpeedCallback)(unsigned int, cPN_SAnimController*), unsigned int nPlaybackSpeedCallbackParam)
 {
+    FORCE_DONT_INLINE;
+    return nullptr;
+}
+
+inline float ClampMin(float speedRatio, const float min)
+{
+    if (speedRatio >= min)
+    {
+        return speedRatio;
+    }
+    return min;
+}
+
+inline float ClampMax(float speedRatio, const float max)
+{
+    if (speedRatio <= max)
+    {
+        return speedRatio;
+    }
+    return max;
 }
 
 /**
  * Offset/Address/Size: 0x15AC | 0x8000F4F8 | size: 0xD4
  */
-void cCharacter::MatchAnimSpeedToCharacterSpeed(unsigned int, cPN_SAnimController*)
+void cCharacter::MatchAnimSpeedToCharacterSpeed(unsigned int nParam, cPN_SAnimController* pController)
 {
+    cFielder* fielder = (cFielder*)nParam;
+    if (fielder->m_eMovementState != MOVEMENT_FROM_ANIM && fielder->m_eMovementState != MOVEMENT_FROM_ANIM_SEEK)
+    {
+        if (fielder->m_eClassType == FIELDER)
+        {
+            if (fielder->m_eAnimID == 0x1a && fielder->m_eActionState == ACTION_RUNNING_WB_TURBO)
+            {
+                pController->m_fPlaybackSpeedScale = 2.0f;
+                return;
+            }
+
+            pController->m_fPlaybackSpeedScale = ClampMax(ClampMin(fielder->m_fActualSpeed / pController->m_pSAnim->m_fLinearSpeed, 0.6f), 1.4f);
+            return;
+        }
+
+        pController->m_fPlaybackSpeedScale = ClampMax(ClampMin(fielder->m_fActualSpeed / pController->m_pSAnim->m_fLinearSpeed, 0.6f), 1.4f);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x1680 | 0x8000F5CC | size: 0x1C
  */
-void cCharacter::InitMovementStrafing(float arg0, float arg1, float arg2, float arg3)
+void cCharacter::InitMovementStrafing(float fDirectionSeekSpeed, float fDirectionSeekFalloff, float fAccel, float fDecel)
 {
     m_eMovementState = MOVEMENT_STRAFING;
-    m_fDirectionSeekSpeed = arg0;
-    m_fDirectionSeekFalloff = arg1;
-    m_fAccel = arg2;
-    m_fDecel = arg3;
+    m_fDirectionSeekSpeed = fDirectionSeekSpeed;
+    m_fDirectionSeekFalloff = fDirectionSeekFalloff;
+    m_fAccel = fAccel;
+    m_fDecel = fDecel;
 }
 
 /**
  * Offset/Address/Size: 0x169C | 0x8000F5E8 | size: 0x14
  */
-void cCharacter::InitMovementRunningNoTurn(float arg0, float arg1)
+void cCharacter::InitMovementRunningNoTurn(float fAccel, float fDecel)
 {
     m_eMovementState = MOVEMENT_RUNNING_NO_TURN;
-    m_fAccel = arg0;
-    m_fDecel = arg1;
+    m_fAccel = fAccel;
+    m_fDecel = fDecel;
 }
 
 /**
  * Offset/Address/Size: 0x16B0 | 0x8000F5FC | size: 0x1C
  */
-void cCharacter::InitMovementRunning(float arg0, float arg1, float arg2, float arg3)
+void cCharacter::InitMovementRunning(float fDirectionSeekSpeed, float fDirectionSeekFalloff, float fAccel, float fDecel)
 {
     m_eMovementState = MOVEMENT_RUNNING;
-    m_fDirectionSeekSpeed = arg0;
-    m_fDirectionSeekFalloff = arg1;
-    m_fAccel = arg2;
-    m_fDecel = arg3;
+    m_fDirectionSeekSpeed = fDirectionSeekSpeed;
+    m_fDirectionSeekFalloff = fDirectionSeekFalloff;
+    m_fAccel = fAccel;
+    m_fDecel = fDecel;
 }
 
 /**
  * Offset/Address/Size: 0x16CC | 0x8000F618 | size: 0x14
  */
-void cCharacter::InitMovementNone(float arg0, float arg1)
+void cCharacter::InitMovementNone(float fDirectionSeekSpeed, float fDirectionSeekFalloff)
 {
     m_eMovementState = MOVEMENT_NONE;
-    m_fDirectionSeekSpeed = arg0;
-    m_fDirectionSeekFalloff = arg1;
+    m_fDirectionSeekSpeed = fDirectionSeekSpeed;
+    m_fDirectionSeekFalloff = fDirectionSeekFalloff;
 }
 
 /**
  * Offset/Address/Size: 0x16E0 | 0x8000F62C | size: 0x14
  */
-void cCharacter::InitMovementFromAnimSeek(float arg0, float arg1)
+void cCharacter::InitMovementFromAnimSeek(float fDirectionSeekSpeed, float fDirectionSeekFalloff)
 {
     m_eMovementState = MOVEMENT_FROM_ANIM_SEEK;
-    m_fDirectionSeekSpeed = arg0;
-    m_fDirectionSeekFalloff = arg1;
+    m_fDirectionSeekSpeed = fDirectionSeekSpeed;
+    m_fDirectionSeekFalloff = fDirectionSeekFalloff;
 }
 
 /**
  * Offset/Address/Size: 0x16F4 | 0x8000F640 | size: 0x3C
  */
-void cCharacter::InitMovementFromAnim(short arg0, const nlVector3& arg1, float arg2, bool arg3)
+void cCharacter::InitMovementFromAnim(short fDirectionSeekSpeed, const nlVector3& v3AnimMoveAdjust, float fAdjustEndTime, bool bBlended)
 {
     m_eMovementState = MOVEMENT_FROM_ANIM;
-    m_nAnimTurnAdjust = arg0;
-    m_v3AnimMoveAdjust = arg1;
-    // this->unk4C = this->unk90->unk18;
-    // this->unk50 = arg2;
-    // this->unk4A = arg3;
+    m_nAnimTurnAdjust = fDirectionSeekSpeed;
+    m_v3AnimMoveAdjust = v3AnimMoveAdjust;
+    m_fAnimAdjustBeginTime = m_pCurrentAnimController->m_fTime;
+    m_fAnimAdjustEndTime = fAdjustEndTime;
+    m_bFromAnimBlended = bBlended;
 }
 
 /**
  * Offset/Address/Size: 0x1730 | 0x8000F67C | size: 0x10
  */
-void cCharacter::InitMovementDecelerateExponential(float arg0)
+void cCharacter::InitMovementDecelerateExponential(float fDecel)
 {
     m_eMovementState = MOVEMENT_DECELERATE_EXPONENTIAL;
-    m_fDecel = arg0;
+    m_fDecel = fDecel;
 }
 
 /**
@@ -427,46 +620,47 @@ void cCharacter::EndBlur()
 /**
  * Offset/Address/Size: 0x1790 | 0x8000F6DC | size: 0xBC
  */
-void cCharacter::InitBlur(int arg0)
+void cCharacter::InitBlur(int nLength)
 {
-    char* sp8 = NULL;
-    // BlurHandler* temp_r3;
-    // BlurManager* var_r3;
-    s32 var_r31;
+    char texturename[64];
+    s32 maxEntries = nLength;
 
-    var_r31 = arg0;
-    // temp_r3 = m_unk_0x114;
     if (m_pBlurHandler != NULL)
     {
         BlurManager::DestroyHandler(m_pBlurHandler, 0.15f);
         m_pBlurHandler = NULL;
     }
 
-    if (var_r31 == 0)
+    if (maxEntries == 0)
     {
-        var_r31 = 0x1E;
+        maxEntries = 30;
     }
 
     if (m_eClassType == FIELDER)
     {
-        nlStrNCat<char>(sp8, szMushroomBlurTextureBase, ((cPlayer*)this)->m_pTeam->GetCaptain()->m_szEffectsName, 0x40);
+        nlStrNCat<char>(texturename, szMushroomBlurTextureBase, ((cPlayer*)this)->m_pTeam->GetCaptain()->m_szEffectsName, 0x40);
     }
 
-    const char* var_r3 = szMushroomBlurTextureBase;
-
-    if (glTextureLoad(glGetTexture(sp8)))
+    const char* finalTextureName;
+    if (glTextureLoad(glGetTexture(texturename)))
     {
-        var_r3 = sp8;
+        finalTextureName = texturename;
+    }
+    else
+    {
+        finalTextureName = szMushroomBlurTexture;
     }
 
-    m_pBlurHandler = BlurManager::GetNewHandler(var_r3, 0.35f, var_r31, true);
+    m_pBlurHandler = BlurManager::GetNewHandler(finalTextureName, 0.35f, maxEntries, true);
 }
 
 /**
  * Offset/Address/Size: 0x184C | 0x8000F798 | size: 0x18
  */
-void cCharacter::GetPrevJointPosition(int)
+nlVector3& cCharacter::GetPrevJointPosition(int jointIndex)
 {
+    nlMatrix4& prevMatrix = m_pPoseAccumulator->m_PrevNodeMatrices.mData[jointIndex];
+    return *(nlVector3*)&prevMatrix.m[3];
 }
 
 /**
@@ -497,22 +691,67 @@ nlVector3& cCharacter::GetJointPosition(int jointIndex) const
 /**
  * Offset/Address/Size: 0x1DF4 | 0x8000FD40 | size: 0x68
  */
-void cCharacter::GetFacingDeltaToPosition(const nlVector3&)
+s16 cCharacter::GetFacingDeltaToPosition(const nlVector3& position)
 {
+    float dy = position.f.y - m_v3Position.f.y;
+    float dx = position.f.x - m_v3Position.f.x;
+    float angleRad = nlATan2f(dy, dx);
+
+    // Convert radians to 16-bit angle format (65536.0f / (2π) ≈ 10430.378f)
+    float angle16 = 10430.378f * angleRad;
+    u16 targetAngle = (u16)(s32)angle16;
+
+    return (s16)(targetAngle - m_aActualFacingDirection);
 }
 
 /**
  * Offset/Address/Size: 0x1E5C | 0x8000FDA8 | size: 0x148
  */
-void cCharacter::CalcAnimTurnAdjust(unsigned short, unsigned short, int)
+s16 cCharacter::CalcAnimTurnAdjust(unsigned short param1, unsigned short param2, int animID)
 {
+    cSAnim* anim = m_pAnimInventory->GetAnim(animID);
+    cPN_SAnimController* controller = AllocateSAnimController();
+    if (controller == nullptr)
+    {
+        return 0;
+    }
+
+    const AnimRetarget* retarget = nullptr;
+    if (m_pAnimRetargetList != nullptr)
+    {
+        retarget = m_pAnimRetargetList->GetAnimRetargetWithSignature(anim);
+    }
+
+    const bool mirrored = m_pAnimInventory->GetMirrored(animID);
+    const ePlayMode playMode = m_pAnimInventory->GetPlayMode(animID);
+
+    controller = new (controller) cPN_SAnimController(anim, retarget, playMode, nullptr, 0, mirrored);
+
+    controller->m_fPrevTime = controller->m_fTime; // 0.0f
+    controller->m_fTime = 0.0f;
+    controller->m_fPrevTime = controller->m_fTime; // 0.0f
+    controller->m_fTime = 1.0f;
+
+    unsigned short rootRot;
+    controller->GetRootRot(&rootRot);
+
+    s16 combined = param1 + rootRot;
+
+    delete controller;
+
+    return (s16)(param2 - combined);
 }
 
 /**
  * Offset/Address/Size: 0x1FA4 | 0x8000FEF0 | size: 0x5C
  */
-void cCharacter::AttachEffect(EmissionController*)
+void cCharacter::AttachEffect(EmissionController* pEmissionController)
 {
+    u32 characterIndex = GetCharacterIndex(this);
+    pEmissionController->m_uUserData = characterIndex;
+    pEmissionController->SetPoseAccumulator(*m_pPoseAccumulator);
+    pEmissionController->SetAnimController(*m_pCurrentAnimController);
+    pEmissionController->m_aFacing = m_aActualFacingDirection;
 }
 
 /**
@@ -520,13 +759,20 @@ void cCharacter::AttachEffect(EmissionController*)
  */
 void cCharacter::AdjustPoseMatrices()
 {
+    m_pPoseAccumulator->MultNodeMatrices(&m_m4WorldMatrix);
 }
 
 /**
  * Offset/Address/Size: 0x202C | 0x8000FF78 | size: 0x24
  */
-void cCharacter::GetSkinMesh() const
+GLSkinMesh* cCharacter::GetSkinMesh() const
 {
+    GLSkinMesh* skinMesh = m_pSkinMesh[m_ModelType];
+    if (skinMesh == nullptr)
+    {
+        skinMesh = m_pSkinMesh[0];
+    }
+    return skinMesh;
 }
 
 /**
@@ -536,6 +782,33 @@ cCharacter::~cCharacter()
 {
     u32 characterIndex = GetCharacterIndex(this);
     EmissionManager::Destroy(characterIndex, nullptr);
+    m_pEffectsTexturing = nullptr;
+
+    if (m_pPhysicsData != nullptr)
+    {
+        delete m_pPoseTree;
+    }
+
+    delete m_pPoseAccumulator;
+    delete m_pSkinMesh[0];
+
+    if (m_pSkinMesh[1] != nullptr)
+    {
+        delete m_pSkinMesh[1];
+    }
+
+    if (m_pPhysicsCharacter != nullptr)
+    {
+        delete m_pPhysicsCharacter;
+    }
+
+    delete m_pHeadTrack;
+    delete m_pCharacterSFX;
+
+    if (m_pBlinker != nullptr)
+    {
+        delete m_pBlinker;
+    }
 }
 
 /**
@@ -748,17 +1021,3 @@ u32 CollisionPlayerPlayerData::GetID()
 {
     return 0x51;
 }
-
-/**
- * Offset/Address/Size: 0x0 | 0x80012248 | size: 0x90
- */
-// void nlStrNCat<char>(char*, const char*, const char*, unsigned long)
-// {
-// }
-
-/**
- * Offset/Address/Size: 0x90 | 0x800122D8 | size: 0x10
- */
-// void 0x8028D274..0x8028D278 | size: 0x4
-// {
-// }

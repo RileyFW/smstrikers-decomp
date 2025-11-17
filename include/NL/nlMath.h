@@ -4,6 +4,20 @@
 #include "types.h"
 #include "Dolphin/mtx.h"
 
+float nlBezier(float*, int, float);
+float nlATan2f(float, float);
+float nlTan(unsigned short);
+float nlACos(float);
+void nlSinCos(float* presult_sin, float* presult_cos, unsigned short angle);
+float nlSin(unsigned short);
+float nlRecipSqrt(float, bool);
+float nlSqrt(float, bool);
+float nlRandomf(float, float, unsigned int*);
+float nlRandomf(float, unsigned int*);
+int nlRandom(unsigned int, unsigned int*);
+void nlSetRandomSeed(unsigned int, unsigned int*);
+void nlInitRandom();
+
 struct nlVector2_
 {
     float f[2];
@@ -89,6 +103,23 @@ struct nlVector3
         f.z = z;
     }
 };
+
+inline float nlGetLength2D(float x, float y)
+{
+    float xx = x * x;
+    float yy = y * y;
+    const float lengthSquared = xx + yy;
+    return nlSqrt(lengthSquared, true);
+}
+
+inline float nlGetLength3D(float x, float y, float z)
+{
+    float xx = x * x;
+    float yy = y * y;
+    float zz = z * z;
+    const float lengthSquared = xx + yy + zz;
+    return nlSqrt(lengthSquared, true);
+}
 
 inline void nlVec3Set(nlVector3& v0, float _x, float _y, float _z)
 {
@@ -332,20 +363,6 @@ inline void ConvertNLMat4ToDMat3_Transposed(const nlMatrix4& src, float* dest)
     nlVec4Set(*(nlVector4*)&dest[4], src.e[1], src.e[5], src.e[9], src.e[13]);
     nlVec4Set(*(nlVector4*)&dest[8], src.e[2], src.e[6], src.e[10], src.e[14]);
 }
-
-float nlBezier(float*, int, float);
-float nlATan2f(float, float);
-float nlTan(unsigned short);
-float nlACos(float);
-void nlSinCos(float* presult_sin, float* presult_cos, unsigned short angle);
-float nlSin(unsigned short);
-float nlRecipSqrt(float, bool);
-float nlSqrt(float, bool);
-float nlRandomf(float, float, unsigned int*);
-float nlRandomf(float, unsigned int*);
-int nlRandom(unsigned int, unsigned int*);
-void nlSetRandomSeed(unsigned int, unsigned int*);
-void nlInitRandom();
 
 extern unsigned int nlDefaultSeed;
 

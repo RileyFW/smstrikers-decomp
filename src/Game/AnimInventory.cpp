@@ -204,7 +204,7 @@ cSAnim* cAnimInventory::GetAnim(int i)
 /**
  * Offset/Address/Size: 0x64 | 0x80006FE0 | size: 0x14
  */
-int cAnimInventory::GetPlayMode(int i)
+ePlayMode cAnimInventory::GetPlayMode(int i)
 {
     return m_props[i].playMode;
 }

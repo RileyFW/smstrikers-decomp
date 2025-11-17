@@ -17,6 +17,7 @@
 #include "Game/PoseAccumulator.h"
 
 #include "Game/ObjectBlur.h"
+#include "Game/GL/gluSkinMesh.h"
 
 class Event;
 
@@ -84,6 +85,13 @@ enum eClassTypes
     NUM_CLASSES = 4,
 };
 
+enum eCharacterModelType
+{
+    CharModel_Rigid = 0,
+    CharModel_Blend = 1,
+    CharModel_Num = 2,
+};
+
 #include "Game/Drawable/DrawableObj.h"
 
 class cCharacter //: public PhysicsCharacterBase
@@ -103,7 +111,7 @@ public:
     void PerformBlinking(GLSkinMesh*, glModel*) const;
     void UpdateBlinking(float);
     void PlayRandomCharDialogue(unsigned long, PosUpdateMethod, float, float);
-    void Play3DSFX(Audio::eCharSFX, PosUpdateMethod, float);
+    int Play3DSFX(Audio::eCharSFX, PosUpdateMethod, float);
     void StopPlayingAllTrackedSFX();
     void StopSFX(Audio::eCharSFX);
     int PlaySFX(Audio::SoundAttributes&);
@@ -112,7 +120,7 @@ public:
     bool IsPlayingEffect(const EffectsGroup*) const;
     void EndEffect(const EffectsGroup*);
     void KillEffect(const EffectsGroup*);
-    void ShouldStartCrossBlend(int);
+    bool ShouldStartCrossBlend(int);
     void SetVelocity(const nlVector3&);
     virtual void SetPosition(const nlVector3&);
     void SetFacingDirection(unsigned short);
@@ -122,9 +130,9 @@ public:
     void CreateWorldMatrix();
     void PoseSkinMesh(cPoseAccumulator*);
     void PoseLocalSpace();
-    void NewAnimController(int, bool, bool, void (*)(unsigned int, cPN_SAnimController*), unsigned int);
-    void MatchAnimSpeedToCharacterSpeed(unsigned int, cPN_SAnimController*);
-    void InitMovementStrafing(float, float, float, float);
+    cPN_SAnimController* NewAnimController(int, bool, bool, void (*)(unsigned int, cPN_SAnimController*), unsigned int);
+    static void MatchAnimSpeedToCharacterSpeed(unsigned int nParam, cPN_SAnimController* pController);
+    void InitMovementStrafing(float fDirectionSeekSpeed, float fDirectionSeekFalloff, float fAccel, float fDecel);
     void InitMovementRunningNoTurn(float, float);
     void InitMovementRunning(float, float, float, float);
     void InitMovementNone(float, float);
@@ -134,15 +142,15 @@ public:
     void InitMovementCoast();
     void EndBlur();
     void InitBlur(int);
-    void GetPrevJointPosition(int);
+    nlVector3& GetPrevJointPosition(int jointIndex);
     void GetCurrentAnimFuture(int, float, nlVector3&, nlVector3&, unsigned short&);
     nlVector3& GetJointPositionFuture(nlVector3*, int, int, float, bool, bool, bool);
     nlVector3& GetJointPosition(int) const;
-    void GetFacingDeltaToPosition(const nlVector3&);
-    void CalcAnimTurnAdjust(unsigned short, unsigned short, int);
+    s16 GetFacingDeltaToPosition(const nlVector3&);
+    s16 CalcAnimTurnAdjust(unsigned short, unsigned short, int);
     void AttachEffect(EmissionController*);
     void AdjustPoseMatrices();
-    void GetSkinMesh() const;
+    GLSkinMesh* GetSkinMesh() const;
 
     int GetHeadJointIndex() const // does not omit code?
     {
@@ -203,6 +211,8 @@ public:
     /* 0x118 */ Blinker* m_pBlinker;
     /* 0x11C */ EffectsTexturing* m_pEffectsTexturing;
     /* 0x120 */ nlVector3 m_v3ScreenPosition;
+
+    static eCharacterModelType m_ModelType;
 };
 
 // class cPN_SAnimController
@@ -223,11 +233,16 @@ public:
 //     ~PhysicsCharacter();
 // };
 
-class GLSkinMesh
-{
-public:
-    ~GLSkinMesh();
-};
+// class GLSkinMesh
+// {
+// public:
+//     virtual ~GLSkinMesh();
+//     virtual void fnc_unk08();
+//     virtual void PoseSkinMesh(cPoseAccumulator*);
+//     // ... todo: wrong place, and more virtual fnc
+
+//     /* 0x04 */ glModel* pModel;
+// };
 
 class CharacterDirectionData
 {
