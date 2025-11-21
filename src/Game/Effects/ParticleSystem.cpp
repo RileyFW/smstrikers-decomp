@@ -115,8 +115,9 @@ void ParticleSystem::Update(float)
 /**
  * Offset/Address/Size: 0x6E0 | 0x801F5838 | size: 0x14
  */
-void ParticleSystem::GetRemainingTime() const
+float ParticleSystem::GetRemainingTime() const
 {
+    return 0.0f;
 }
 
 /**

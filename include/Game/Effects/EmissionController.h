@@ -1,14 +1,12 @@
 #ifndef _EMISSIONCONTROLLER_H_
 #define _EMISSIONCONTROLLER_H_
 
-// void fxLoadEntireFileHigh(const char*, unsigned long*);
 #include "NL/nlMath.h"
 #include "NL/gl/gl.h"
 
 #include "Game/PoseAccumulator.h"
 #include "Game/Effects/EffectsGroup.h"
 #include "Game/Effects/efList.h"
-// #include "Game/Character.h"
 
 class cPN_SAnimController;
 
@@ -19,35 +17,44 @@ enum Tag
     FUNCTOR = 2,
 };
 
+class EmissionController;
+
+struct FunctorBase
+{
+    virtual ~FunctorBase() { };
+    virtual FunctorBase* fnc_0x8() = 0;
+    virtual FunctorBase* fnc_0x10() = 0;
+};
+
 template <typename ReturnType, typename ParamType>
 class Function1
 {
-    // total size: 0x8
+public:
     enum Tag mTag; // offset 0x0, size 0x4
     union
     {                                           // inferred
         ReturnType (*mFreeFunction)(ParamType); // offset 0x4, size 0x4
-        struct FunctorBase* mFunctor;           // offset 0x4, size 0x4
+        FunctorBase* mFunctor;                  // offset 0x4, size 0x4
     };
-};
+}; // total size: 0x8
 
 void* fxLoadEntireFileHigh(const char* filename, unsigned long* fileSize);
 
 class EmissionController : public efNode
 {
 public:
-    EmissionController(EffectsGroup*, unsigned short, eGLView);
-    void InitializeSystemsFromGroup();
+    EmissionController(EffectsGroup* pEffectsGroup, unsigned short id, eGLView view);
     ~EmissionController();
+    void InitializeSystemsFromGroup();
     void SetPosition(const nlVector3&);
-    void GetPosition() const;
+    const nlVector3& GetPosition() const;
     void SetDirection(const nlVector3&);
-    void SetVelocity(const nlVector3&);
+    void SetVelocity(const nlVector3& velocity);
     void SetPoseAccumulator(const cPoseAccumulator&);
     void SetAnimController(const cPN_SAnimController&);
     void Die();
-    void GetRemainingTime() const;
-    void IsLingering() const;
+    float GetRemainingTime() const;
+    bool IsLingering() const;
     void Update(float);
     void Render();
     void SetUpdateCallback(const Function1<void, EmissionController&>&);
@@ -78,29 +85,5 @@ public:
     /* 0x84 */ UserEffectSpec** m_pUserEffects;
     /* 0x88 */ bool m_bPoseErrorDisplayed;
 };
-
-// class EmissionController
-// {
-// public:
-//     // void SetFinishedCallback(const Function1<void, EmissionController&>&);
-//     // void SetUpdateCallback(const Function1<void, EmissionController&>&);
-//     void Render();
-//     void Update(float);
-//     void IsLingering() const;
-//     void GetRemainingTime() const;
-//     void Die();
-//     void SetAnimController(const cPN_SAnimController&);
-//     void SetPoseAccumulator(const cPoseAccumulator&);
-//     void SetVelocity(const nlVector3&);
-//     void SetDirection(const nlVector3&);
-//     void GetPosition() const;
-//     void SetPosition(const nlVector3&);
-//     ~EmissionController();
-//     void InitializeSystemsFromGroup();
-//     EmissionController(EffectsGroup*, unsigned short, eGLView);
-
-//     /* 0x00 */ u8 pad[0x34];
-//     /* 0x34 */ float m_unk_0x34;
-// };
 
 #endif // _EMISSIONCONTROLLER_H_

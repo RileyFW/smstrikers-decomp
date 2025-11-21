@@ -38,6 +38,6 @@ void nlLoadEntireFileAsyncCallback(nlFile*, void*, unsigned int, unsigned long);
 void* nlLoadEntireFile(const char* filename, unsigned long* fileSize, unsigned int alignment, eAllocType type);
 void nlClose(nlFile*);
 void nlRead(nlFile*, void*, unsigned int);
-void nlFileSize(nlFile*, unsigned int*);
+unsigned int nlFileSize(nlFile*, unsigned int*);
 
 #endif // _NLFILE_H_

@@ -30,25 +30,25 @@ struct LingerMessage : public efNode
 class EmissionManager
 {
 public:
-    void KillOldest(int, bool);
-    void Replay(SaveFrame&);
-    void Replay(LoadFrame&);
+    static void KillOldest(int, bool);
+    static void Replay(SaveFrame&);
+    static void Replay(LoadFrame&);
     static void AddError(const char*, ...);
-    void ResetLingerers();
+    static void ResetLingerers();
     static void Destroy(unsigned long, const EffectsGroup*);
-    void DestroyAll(bool);
+    static void DestroyAll(bool);
     static bool IsPlaying(unsigned long, const EffectsGroup*);
     static void Kill(unsigned long, const EffectsGroup*);
-    bool IsStillAlive(EmissionController*);
-    static EmissionController* Create(EffectsGroup*, unsigned short);
-    efList* GetContainer();
+    static bool IsStillAlive(EmissionController*);
+    static EmissionController* Create(EffectsGroup* pEffectsGroup, unsigned short id);
+    static efList* GetContainer();
     static void Render(); // not sure it's static
-    void AddEffectsLight(const EffectsLight&);
-    void GetLight(int);
-    s32 GetNumLights();
+    static void AddEffectsLight(const EffectsLight&);
+    static void GetLight(int);
+    static s32 GetNumLights();
     static void Update(float); // not sure it's static
-    void Shutdown();
-    void Startup(eGLView);
+    static void Shutdown();
+    static void Startup(eGLView);
 
     static EmissionManager& InstanceForReplayOnly();
 

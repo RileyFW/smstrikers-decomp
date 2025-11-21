@@ -52,7 +52,7 @@ public:
     void RenderAllParticles(eGLView);
     void Die();
     void Update(float);
-    void GetRemainingTime() const;
+    float GetRemainingTime() const;
 };
 
 void fxParticleShutdown();

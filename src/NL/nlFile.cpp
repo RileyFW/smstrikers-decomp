@@ -139,9 +139,9 @@ void nlRead(nlFile* file, void* buffer, unsigned int size)
 /**
  * Offset/Address/Size: 0x2A0 | 0x801CECD0 | size: 0x2C
  */
-void nlFileSize(nlFile* file, unsigned int* size)
+unsigned int nlFileSize(nlFile* file, unsigned int* size)
 {
-    file->FileSize(size);
+    return file->FileSize(size);
 }
 
 /**
