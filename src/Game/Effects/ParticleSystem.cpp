@@ -1,17 +1,64 @@
 #include "Game/Effects/ParticleSystem.h"
+#include "Game/Sys/debug.h"
+#include "NL/nlMemory.h"
+#include "PowerPC_EABI_Support/Runtime/MWCPlusLib.h"
+#include "types.h"
 
-// /**
-//  * Offset/Address/Size: 0x2780 | 0x801F78D8 | size: 0x18
-//  */
-// void 0x8028D560..0x8028D564 | size: 0x4
-// {
-// }
+int ParticleSystem::m_nNumViews = 0;
+int ParticleSystem::m_NumInstances = 0;
+eGLView ParticleSystem::m_eViews[8];
+
+efList freeParticles;
+
+void* textureFrames[36];
+Particle* particleMemory;
+unsigned int MaxNumParticles;
 
 /**
  * Offset/Address/Size: 0x26F0 | 0x801F7848 | size: 0x90
  */
-ParticleSystem::ParticleSystem(EffectsTemplate*, EffectsSpec*)
+ParticleSystem::ParticleSystem(EffectsTemplate* pTemplate, EffectsSpec* pSpec)
 {
+    m_nextNode = nullptr;
+    m_prevNode = nullptr;
+
+    m_Particles.m_headNode = nullptr;
+    m_Particles.m_tailNode = nullptr;
+    m_Particles.m_numNodes = 0;
+
+    m_NumInstances++;
+
+    m_Mirror.f.x = 1.0f;
+    m_Mirror.f.y = 1.0f;
+    m_Mirror.f.z = 1.0f;
+
+    m_pTemplate = pTemplate;
+    m_pSpec = pSpec;
+
+    m_fElapsedTime = 0.0f;
+    m_fNumParticlesToCreate = 0.0f;
+    m_fDelay = 0.0f;
+    m_uLayer = 0;
+
+    m_vVelocity.f.x = 0.0f;
+    m_vVelocity.f.y = 0.0f;
+    m_vVelocity.f.z = 0.0f;
+
+    m_vPosition.f.x = 0.0f;
+    m_vPosition.f.y = 0.0f;
+    m_vPosition.f.z = 0.0f;
+
+    m_vForward.f.x = 0.0f;
+    m_vForward.f.y = 1.0f;
+    m_vForward.f.z = 0.0f;
+
+    m_vSourcePosition.f.x = 0.0f;
+    m_vSourcePosition.f.y = 0.0f;
+    m_vSourcePosition.f.z = 0.0f;
+
+    m_aFacing = 0;
+    m_bAmDying = false;
+    m_bVisible = false;
 }
 
 /**
@@ -19,6 +66,14 @@ ParticleSystem::ParticleSystem(EffectsTemplate*, EffectsSpec*)
  */
 ParticleSystem::~ParticleSystem()
 {
+    m_NumInstances = m_NumInstances - 1;
+    if (m_Particles.m_headNode != nullptr)
+    {
+        while (m_Particles.m_headNode != nullptr)
+        {
+            freeParticles.Append(m_Particles.Remove());
+        }
+    }
 }
 
 /**
@@ -26,13 +81,17 @@ ParticleSystem::~ParticleSystem()
  */
 void ParticleSystem::ClearViews()
 {
+    m_nNumViews = 0;
 }
 
 /**
  * Offset/Address/Size: 0x262C | 0x801F7784 | size: 0x20
  */
-void ParticleSystem::AddView(eGLView)
+void ParticleSystem::AddView(eGLView view)
 {
+    int numViews = m_nNumViews;
+    m_nNumViews = numViews + 1;
+    m_eViews[numViews] = view;
 }
 
 /**
@@ -103,6 +162,9 @@ void ParticleSystem::RenderAllParticles(eGLView)
  */
 void ParticleSystem::Die()
 {
+    m_fDelay = 0.0f;
+    m_fElapsedTime = 100000000000000000000.0f;
+    m_bAmDying = true;
 }
 
 /**
@@ -117,7 +179,7 @@ void ParticleSystem::Update(float)
  */
 float ParticleSystem::GetRemainingTime() const
 {
-    return 0.0f;
+    return m_pTemplate->m_fFountainLife - m_fElapsedTime;
 }
 
 /**
@@ -125,25 +187,70 @@ float ParticleSystem::GetRemainingTime() const
  */
 void BuildFrameTable()
 {
+    FORCE_DONT_INLINE;
 }
 
-/**
- * Offset/Address/Size: 0x178 | 0x801F52D0 | size: 0x10
- */
-Particle::Particle()
+// /**
+//  * Offset/Address/Size: 0x178 | 0x801F52D0 | size: 0x10
+//  */
+// Particle::Particle()
+// {
+// }
+
+static void ParticleConstructor(void* ptr, int)
 {
+    new (ptr) Particle();
 }
 
 /**
  * Offset/Address/Size: 0xAC | 0x801F5204 | size: 0xCC
  */
-void fxParticleStartup(int)
+bool fxParticleStartup(int maxNumParticles)
 {
+    MaxNumParticles = maxNumParticles;
+    BuildFrameTable();
+
+    particleMemory = new (nlMalloc(MaxNumParticles * 0x4C + 0x10, 8, false)) Particle[MaxNumParticles];
+
+    tDebugPrintManager::Print(DC_RENDER, "%dKB used by Particle pool\n", (MaxNumParticles * 0x4C) >> 10);
+
+    Particle* p;
+    for (int i = 0; i < MaxNumParticles; i++)
+    {
+        // efList& particles = freeParticles;
+        p = &particleMemory[i];
+        freeParticles.Insert(p);
+    }
+
+    return true;
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x801F5158 | size: 0xAC
  */
-void fxParticleShutdown()
+bool fxParticleShutdown()
 {
+    for (int i = 0; i < 36; i++)
+    {
+        if (textureFrames[i] != nullptr)
+        {
+            delete[] (u8*)textureFrames[i];
+            textureFrames[i] = nullptr;
+        }
+    }
+
+    while (freeParticles.m_headNode != nullptr)
+    {
+        freeParticles.Remove();
+    }
+
+    if (particleMemory != nullptr)
+    {
+        if (particleMemory != nullptr)
+        {
+            delete[] ((u8*)particleMemory - 0x10);
+        }
+        particleMemory = nullptr;
+    }
+    return true;
 }

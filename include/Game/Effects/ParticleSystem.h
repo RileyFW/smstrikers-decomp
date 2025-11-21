@@ -20,7 +20,11 @@ struct ParticleReturn
 class Particle : public efNode
 {
 public:
-    Particle();
+    Particle()
+    {
+        m_nextNode = nullptr;
+        m_prevNode = nullptr;
+    };
 
 public:
     /* 0x8, */ f32 timeElapsed;
@@ -38,13 +42,13 @@ public:
     /* 0x48 */ f32 FPS;
 };
 
-class ParticleSystem
+class ParticleSystem : public efNode
 {
 public:
     ParticleSystem(EffectsTemplate*, EffectsSpec*);
     ~ParticleSystem();
     void ClearViews();
-    void AddView(eGLView);
+    static void AddView(eGLView);
     void UpdateCoordSys();
     void UpdateCoordSys(nlMatrix4&);
     void CreateNewParticles(int);
@@ -53,10 +57,30 @@ public:
     void Die();
     void Update(float);
     float GetRemainingTime() const;
-};
 
-void fxParticleShutdown();
-void fxParticleStartup(int);
+    /* 0x08 */ EffectsSpec* m_pSpec;          // offset 0x8, size 0x4
+    /* 0x0C */ EffectsTemplate* m_pTemplate;  // offset 0xC, size 0x4
+    /* 0x10 */ float m_fElapsedTime;          // offset 0x10, size 0x4
+    /* 0x14 */ float m_fNumParticlesToCreate; // offset 0x14, size 0x4
+    /* 0x18 */ float m_fDelay;                // offset 0x18, size 0x4
+    /* 0x1C */ unsigned long m_uLayer;        // offset 0x1C, size 0x4
+    /* 0x20 */ nlVector3 m_Mirror;            // offset 0x20, size 0xC
+    /* 0x2C */ nlVector3 m_vVelocity;         // offset 0x2C, size 0xC
+    /* 0x38 */ nlVector3 m_vPosition;         // offset 0x38, size 0xC
+    /* 0x44 */ nlVector3 m_vForward;          // offset 0x44, size 0xC
+    /* 0x50 */ nlVector3 m_vSourcePosition;   // offset 0x50, size 0xC
+    /* 0x5C */ bool m_bAmDying;               // offset 0x5C, size 0x1
+    /* 0x60 */ efList m_Particles;            // offset 0x60, size 0xC
+    /* 0x6C */ unsigned short m_aFacing;      // offset 0x6C, size 0x2
+    /* 0x6E */ bool m_bVisible;               // offset 0x6E, size 0x1
+
+    static int m_nNumViews;
+    static eGLView m_eViews[8];
+    static int m_NumInstances;
+}; // total size: 0x70
+
+bool fxParticleShutdown();
+bool fxParticleStartup(int numParticles);
 void BuildFrameTable();
 void EmitSpindularPosition(nlVector3&, nlVector3&, EffectsTemplate*, EffectsSpec*, const nlMatrix4&);
 void EmitHemisphericalPosition(nlVector3&, nlVector3&, EffectsTemplate*, EffectsSpec*, const nlMatrix4&);
