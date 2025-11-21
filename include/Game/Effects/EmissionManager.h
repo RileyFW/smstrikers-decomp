@@ -33,7 +33,7 @@ public:
     void KillOldest(int, bool);
     void Replay(SaveFrame&);
     void Replay(LoadFrame&);
-    void AddError(const char*, ...);
+    static void AddError(const char*, ...);
     void ResetLingerers();
     static void Destroy(unsigned long, const EffectsGroup*);
     void DestroyAll(bool);

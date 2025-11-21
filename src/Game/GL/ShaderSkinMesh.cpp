@@ -1,8 +1,11 @@
 #include "Game/GL/ShaderSkinMesh.h"
 
 #include "Game/GL/GLSkinMesh.h"
+#include "NL/gl/glUserData.h"
+#include "NL/nlDLRing.h"
 #include "NL/nlMemory.h"
 #include "string.h"
+#include "types.h"
 
 // /**
 //  * Offset/Address/Size: 0x14C | 0x801E2240 | size: 0x58
@@ -135,6 +138,32 @@ ShaderSkinMesh::ShaderSkinMesh()
  */
 ShaderSkinMesh::~ShaderSkinMesh()
 {
+    // Delete morph-related arrays
+    delete[] morphNumDeltas;
+    delete[] morphData;
+    delete[] morphIDs;
+
+    // Delete bone maps ring if it exists
+    if (boneMaps != nullptr)
+    {
+        nlDeleteRing<BoneMapList>(&boneMaps);
+    }
+
+    // Delete temporary arrays
+    delete[] tempNormals;
+    delete[] tempMatrices;
+
+    // Delete skin pairs ring if it exists
+    if (skinPairs != nullptr)
+    {
+        nlDeleteRing<SkinPairList>(&skinPairs);
+    }
+
+    // Delete stitch array if it exists
+    if (stitchArray != nullptr)
+    {
+        delete[] stitchArray;
+    }
 }
 
 /**
@@ -163,28 +192,6 @@ void ShaderSkinMesh::ConnectToPose(cPoseAccumulator*)
  */
 void ShaderSkinMesh::SetBoneMatrix(unsigned long boneID, const nlMatrix4* matrix)
 {
-    // SkinMatrix sp10;
-    // AVLTreeNode* spC;
-    // u32 sp8;
-
-    // sp8 = arg0;
-    // Set__10SkinMatrixFRC9nlMatrix4(&sp10, arg1);
-    // AddAVLNode__18AVLTreeUntemplatedFPP11AVLTreeNodePvPvPP11AVLTreeNodeUi(&this->unk8, &this->unk10, &sp8, &sp10, &spC, this->unk18);
-    // if (spC == NULL)
-    // {
-    //     this->unk18 += 1;
-    // }
-
-    // SkinMatrix skinMatrix;
-    // AVLTreeNode* existingNode;
-
-    // skinMatrix.Set(*matrix);
-    // boneMatrices.AddAVLNode((AVLTreeNode**)&boneMatrices.m_Root, &boneID, &skinMatrix, &existingNode, boneMatrices.m_NumElements);
-
-    // if (existingNode == nullptr)
-    // {
-    //     boneMatrices.m_NumElements++;
-    // }
 }
 
 /**
@@ -192,6 +199,8 @@ void ShaderSkinMesh::SetBoneMatrix(unsigned long boneID, const nlMatrix4* matrix
  */
 nlMatrix4& ShaderSkinMesh::GetPoseMatrix(unsigned long boneID)
 {
+    nlMatrix4* foundMatrix = (nlMatrix4*)poseMatrices.FindGet(boneID);
+    return *foundMatrix;
 }
 
 /**
@@ -252,15 +261,42 @@ void ShaderSkinMesh::AppendStitchingInfo(int packetIndex, int _numPackets, int n
 /**
  * Offset/Address/Size: 0x398 | 0x801E09DC | size: 0xC0
  */
-void UserDataBuilder::AddEntry(const unsigned long&, unsigned long*)
+void UserDataBuilder::AddEntry(const unsigned long& boneID, unsigned long* registerIndex)
 {
+    SkinMatrix* foundMatrix = (SkinMatrix*)m_PoseMatrices->FindGet(boneID);
+
+    m_Bone->reg = (*registerIndex) * 3 - 0x60;
+    foundMatrix->Get4x3(m_Bone->mat);
+
+    m_Bone++;
 }
 
 /**
  * Offset/Address/Size: 0x2E4 | 0x801E0928 | size: 0xB4
  */
-void ShaderSkinMesh::MakeUserData(nlAVLTree<unsigned long, unsigned long, DefaultKeyCompare<unsigned long> >*)
+void* ShaderSkinMesh::MakeUserData(nlAVLTree<unsigned long, unsigned long, DefaultKeyCompare<unsigned long> >* boneMap)
 {
+    unsigned int count = boneMap->m_NumElements;
+    unsigned long size = count * 0x34 + 4;
+
+    void* userData = glUserAlloc(GLUD_Skin, size, false);
+    if (userData == nullptr)
+    {
+        return nullptr;
+    }
+
+    void* data = glUserGetData(userData);
+    *(unsigned int*)data = count;
+
+    GLSkinUserData* skinDataArray = (GLSkinUserData*)((char*)data + 4);
+
+    UserDataBuilder builder;
+    builder.m_Bone = skinDataArray;
+    builder.m_PoseMatrices = (nlAVLTree<unsigned long, SkinMatrix, DefaultKeyCompare<unsigned long> >*)&poseMatrices;
+
+    boneMap->Walk(&builder, &UserDataBuilder::AddEntry);
+
+    return userData;
 }
 
 /**

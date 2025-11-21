@@ -1,4 +1,11 @@
 #include "Game/Effects/EffectsGroup.h"
+#include "Game/Effects/EmissionController.h"
+#include "Game/Effects/EmissionManager.h"
+#include "NL/nlAVLTree.h"
+#include "NL/nlString.h"
+
+nlAVLTree<unsigned long, EffectsGroup*, DefaultKeyCompare<unsigned long> >* pGroupMap = nullptr;
+nlAVLTree<unsigned long, EffectsTerrainSpec*, DefaultKeyCompare<unsigned long> >* pTerrainSpecMap = nullptr;
 
 // /**
 //  * Offset/Address/Size: 0x60 | 0x801F5120 | size: 0x38
@@ -241,8 +248,19 @@
 /**
  * Offset/Address/Size: 0xFC8 | 0x801F3A10 | size: 0x38
  */
-bool EffectsTerrainSpec::HasTerrain(unsigned long) const
+bool EffectsTerrainSpec::HasTerrain(unsigned long terrainID) const
 {
+    u32 count = m_uNumTerrains;
+    u32* pTerrainIDs = m_pTerrainIDs;
+
+    for (u32 i = 0; i < count; i++)
+    {
+        if (pTerrainIDs[i] == terrainID)
+        {
+            return true;
+        }
+    }
+
     return false;
 }
 
@@ -251,6 +269,24 @@ bool EffectsTerrainSpec::HasTerrain(unsigned long) const
  */
 EffectsSpec::EffectsSpec()
 {
+    m_uHashID = 0;
+    m_pTemplate = nullptr;
+    m_eAttach = FXBind_Emitter;
+    m_uJointID = 0;
+    m_fDelay = 0.0f;
+    m_uLayer = 0;
+    m_eJointBinding = JB_Normal;
+    m_fJointVelocity = 0.0f;
+    m_bInFront = false;
+    m_bGround = false;
+    m_bLight = false;
+    m_fOffset = 0.0f;
+    m_pTerrainSpec = nullptr;
+    m_fLingerStart = 1.0f;
+    m_fLingerEnd = 1.0f;
+    m_vLocalOffset.f.x = 0.0f;
+    m_vLocalOffset.f.y = 0.0f;
+    m_vLocalOffset.f.z = 0.0f;
 }
 
 /**
@@ -258,6 +294,7 @@ EffectsSpec::EffectsSpec()
  */
 bool parse_spec(SimpleParser*, EffectsSpec&)
 {
+    FORCE_DONT_INLINE;
     return false;
 }
 
@@ -266,6 +303,7 @@ bool parse_spec(SimpleParser*, EffectsSpec&)
  */
 EffectsTerrainSpec* parse_terrain_spec(SimpleParser*)
 {
+    FORCE_DONT_INLINE;
     return nullptr;
 }
 
@@ -274,21 +312,72 @@ EffectsTerrainSpec* parse_terrain_spec(SimpleParser*)
  */
 EffectsGroup* parse_group(SimpleParser*)
 {
+    FORCE_DONT_INLINE;
     return nullptr;
 }
 
 /**
  * Offset/Address/Size: 0x30C | 0x801F2D54 | size: 0x2C
  */
-void fxLoadGroupBundle(const char*)
+bool fxLoadGroupBundle(const char* filename)
 {
+    unsigned long fileSize;
+    void* data = fxLoadEntireFileHigh(filename, &fileSize);
+    return fxLoadGroupBundle(data, fileSize);
 }
 
 /**
  * Offset/Address/Size: 0x178 | 0x801F2BC0 | size: 0x194
  */
-void fxLoadGroupBundle(void*, unsigned long)
+bool fxLoadGroupBundle(void* data, unsigned long size)
 {
+
+    if (data == nullptr)
+    {
+        return false;
+    }
+
+    pGroupMap = new (nlMalloc(0x14, 8, false)) nlAVLTree<unsigned long, EffectsGroup*, DefaultKeyCompare<unsigned long> >();
+    pTerrainSpecMap = new (nlMalloc(0x14, 8, false)) nlAVLTree<unsigned long, EffectsTerrainSpec*, DefaultKeyCompare<unsigned long> >();
+
+    SimpleParser parser;
+    parser.StartParsing((char*)data, size, true);
+
+    for (;;)
+    {
+        char* token = parser.NextToken(true);
+        if (token == nullptr)
+        {
+            break;
+        }
+
+        if (nlStrCmp<char>(token, "begin") == 0)
+        {
+            unsigned long hashID;
+            EffectsGroup* group;
+            nlAVLTree<unsigned long, EffectsGroup*, DefaultKeyCompare<unsigned long> >* map;
+            AVLTreeNode* existingNode;
+
+            group = parse_group(&parser);
+            hashID = group->m_hashID;
+
+            map = pGroupMap;
+
+            map->AddAVLNode((AVLTreeNode**)&map->m_Root, &hashID, &group, &existingNode, map->m_NumElements);
+
+            if (existingNode == nullptr)
+            {
+                map->m_NumElements++;
+            }
+        }
+        else
+        {
+            EmissionManager::AddError("EffectsGroup: unrecognized token '%s'\n", token);
+        }
+    }
+
+    nlFree(data);
+    return true;
 }
 
 /**
@@ -301,14 +390,34 @@ void fxLoadGroupBundle(void*, unsigned long)
 /**
  * Offset/Address/Size: 0xA4 | 0x801F2AEC | size: 0x74
  */
-void fxUnloadGroups()
+bool fxUnloadGroups()
 {
+    if ((pGroupMap == NULL) && (pTerrainSpecMap == NULL))
+    {
+        return true;
+    }
+
+    pGroupMap->DeleteValues();
+    delete pGroupMap;
+    pGroupMap = nullptr;
+
+    pTerrainSpecMap->DeleteValues();
+    delete pTerrainSpecMap;
+    pTerrainSpecMap = nullptr;
+
+    return true;
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x801F2A48 | size: 0xA4
  */
-EffectsGroup* fxGetGroup(const char*)
+EffectsGroup* fxGetGroup(const char* name)
 {
+    AVLTreeEntry<unsigned long, EffectsGroup*>* entry = pGroupMap->Find(nlStringHash(name));
+    if (entry != nullptr)
+    {
+        return entry->value;
+    }
+
     return nullptr;
 }

@@ -14,10 +14,11 @@
 
 class BoneMapList
 {
-    /* 0x00 */ BoneMapList* next;
-    /* 0x04 */ nlAVLTree<unsigned long, unsigned long, DefaultKeyCompare<unsigned long> > boneMap;
+public:
+    /* 0x00 */ BoneMapList* m_next;
+    /* 0x04 */ nlAVLTree<unsigned long, SkinMatrix, DefaultKeyCompare<unsigned long> > boneMap;
 
-    ~BoneMapList();
+    ~BoneMapList() { };
 }; // total size: 0x18
 
 struct GLSkinUserData
@@ -32,8 +33,8 @@ class UserDataBuilder
 public:
     void AddEntry(const unsigned long&, unsigned long*);
 
-    /* 0x00 */ UserDataBuilder* m_Bone;
-    /* 0x04 */ nlAVLTree<unsigned long, unsigned long, DefaultKeyCompare<unsigned long> >* m_PoseMatrices;
+    /* 0x00 */ GLSkinUserData* m_Bone;
+    /* 0x04 */ nlAVLTree<unsigned long, SkinMatrix, DefaultKeyCompare<unsigned long> >* m_PoseMatrices;
 }; // total size: 0x8
 
 class cPoseAccumulator;
@@ -42,7 +43,7 @@ class GLSkinMeshMatrix;
 class GLSkinMesh
 {
 public:
-    virtual ~GLSkinMesh();
+    virtual ~GLSkinMesh() { };
     virtual void ConnectToPose(cPoseAccumulator*) = 0;
     virtual void Pose(cPoseAccumulator*) = 0;
     virtual void PrepareToRender(unsigned long, const nlMatrix4*) = 0;
@@ -70,7 +71,7 @@ public:
     void AppendSkinPairList(int, const SkinPair*);
     void SetSoftwareVertices(int, const SkinVertex*);
     void AppendStitchingInfo(int, int, int, const unsigned char*);
-    void MakeUserData(nlAVLTree<unsigned long, unsigned long, DefaultKeyCompare<unsigned long> >*);
+    void* MakeUserData(nlAVLTree<unsigned long, unsigned long, DefaultKeyCompare<unsigned long> >*);
     void SetMorphNumDeltas(const unsigned long*);
     void SetMorphDeltas(int, const MorphDelta*);
 
@@ -78,7 +79,7 @@ public:
     void AttachSkinData(unsigned long, const nlMatrix4*);
 
     /* 0x08 */ nlAVLTree<unsigned long, SkinMatrix, DefaultKeyCompare<unsigned long> > boneMatrices; // offset 0x8, size 0x14
-    /* 0x1C */ nlAVLTree<unsigned long, nlMatrix4, DefaultKeyCompare<unsigned long> > poseMatrices;  // offset 0x1C, size 0x14
+    /* 0x1C */ nlAVLTree<unsigned long, SkinMatrix, DefaultKeyCompare<unsigned long> > poseMatrices; // offset 0x1C, size 0x14
     /* 0x30 */ BoneMapList* boneMaps;
     /* 0x34 */ int numBaseVerts;
     /* 0x38 */ int numSoftwareVerts;

@@ -850,9 +850,9 @@ void AIEventHandler(Event*, void*)
 /**
  * Offset/Address/Size: 0x0 | 0x80012158 | size: 0x48
  */
-GLSkinMesh::~GLSkinMesh()
-{
-}
+// GLSkinMesh::~GLSkinMesh()
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x0 | 0x800121A0 | size: 0x8

@@ -17,7 +17,7 @@ struct SkinPair
 
 struct SkinPairList
 {
-    /* 0x00 */ SkinPairList* next;
+    /* 0x00 */ SkinPairList* m_next;
     /* 0x04 */ unsigned int num;
     /* 0x08 */ SkinPair* pairs;
 }; // total size: 0xC

@@ -61,7 +61,7 @@ public:
         m_Compare = nullptr;
     };
 
-    virtual ~AVLTreeBase()
+    ~AVLTreeBase()
     {
         Clear();
     }
@@ -79,8 +79,96 @@ public:
     template <typename CallbackType>
     void InorderWalk(AVLTreeEntry<KeyType, ValueType>* curr, CallbackType* cbClass, void (CallbackType::*cb)(const KeyType&, ValueType*));
 
+    // Inline method to find an entry by key in the AVL tree
+    inline AVLTreeEntry<KeyType, ValueType>* Find(const KeyType& key) const
+    {
+        AVLTreeEntry<KeyType, ValueType>* node = m_Root;
+
+        while (node != nullptr)
+        {
+            int cmpResult;
+            if (key == node->key)
+            {
+                cmpResult = 0;
+            }
+            else if (key < node->key)
+            {
+                cmpResult = -1;
+            }
+            else
+            {
+                cmpResult = 1;
+            }
+
+            if (cmpResult == 0)
+            {
+                return node;
+            }
+            else
+            {
+                if (cmpResult < 0)
+                {
+                    node = (AVLTreeEntry<KeyType, ValueType>*)node->node.left;
+                }
+                else
+                {
+                    node = (AVLTreeEntry<KeyType, ValueType>*)node->node.right;
+                }
+            }
+        }
+
+        return nullptr;
+    }
+
+    inline ValueType* FindGet(const KeyType& key) const
+    {
+        ValueType* foundValue;
+        AVLTreeEntry<KeyType, ValueType>* node = m_Root;
+
+        while (node != nullptr)
+        {
+            int cmpResult;
+            if (key == node->key)
+            {
+                cmpResult = 0;
+            }
+            else if (key < node->key)
+            {
+                cmpResult = -1;
+            }
+            else
+            {
+                cmpResult = 1;
+            }
+
+            if (cmpResult == 0)
+            {
+                if (&foundValue != nullptr)
+                {
+                    foundValue = &node->value;
+                }
+                break;
+            }
+            else
+            {
+                if (cmpResult < 0)
+                {
+                    node = (AVLTreeEntry<KeyType, ValueType>*)node->node.left;
+                }
+                else
+                {
+                    node = (AVLTreeEntry<KeyType, ValueType>*)node->node.right;
+                }
+            }
+        }
+
+        return foundValue;
+    }
+
     virtual int CompareNodes(AVLTreeNode* a, AVLTreeNode* b);
-    virtual int CompareKey(void* key, AVLTreeNode* n);
+
+    virtual int CompareKey(void* key, AVLTreeNode* node);
+
     virtual AVLTreeNode* AllocateEntry(void* key, void* value);
 
     AVLTreeEntry<KeyType, ValueType>* CastUp(AVLTreeNode* node) const

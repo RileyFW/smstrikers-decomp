@@ -24,10 +24,10 @@ enum eJointBinding
 class EffectsTerrainSpec
 {
 public:
-    bool HasTerrain(unsigned long) const;
+    bool HasTerrain(unsigned long terrainID) const;
 
-    u32* m_pTerrainIDs;
-    u32 m_uNumTerrains;
+    unsigned long* m_pTerrainIDs;
+    unsigned long m_uNumTerrains;
 };
 
 class EffectsSpec
@@ -70,9 +70,9 @@ public:
 }; // size 0x18
 
 EffectsGroup* fxGetGroup(const char*);
-void fxUnloadGroups();
-void fxLoadGroupBundle(void*, unsigned long);
-void fxLoadGroupBundle(const char*);
+bool fxUnloadGroups();
+bool fxLoadGroupBundle(void*, unsigned long);
+bool fxLoadGroupBundle(const char*);
 
 static EffectsGroup* parse_group(SimpleParser*);
 static EffectsTerrainSpec* parse_terrain_spec(SimpleParser*);
