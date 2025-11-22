@@ -1,8 +1,13 @@
 #include "Game/Effects/EffectsTemplate.h"
 #include "Game/Effects/EmissionController.h"
+#include "Game/Effects/EmissionManager.h"
 #include "NL/nlAVLTree.h"
+#include "NL/nlMath.h"
+#include "NL/nlString.h"
+#include "Game/Sys/simpleparser.h"
 
 static nlAVLTree<unsigned long, EffectsTemplate*, DefaultKeyCompare<unsigned long> >* pTemplateMap = nullptr;
+static unsigned int uSeed = 0x9184EB0C;
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x801F29E8 | size: 0x60
@@ -140,17 +145,27 @@ static nlAVLTree<unsigned long, EffectsTemplate*, DefaultKeyCompare<unsigned lon
 /**
  * Offset/Address/Size: 0x12D8 | 0x801F1E9C | size: 0x24
  */
-float RandomizedValue(float)
+float RandomizedValue(float value)
 {
-    return 0.0f;
+    return nlRandomf(value, &uSeed);
 }
 
 /**
  * Offset/Address/Size: 0x1260 | 0x801F1E24 | size: 0x78
  */
-float RandomizedValue(float, float)
+float RandomizedValue(float base, float range)
 {
-    return 0.0f;
+    float randomOffset = nlRandomf(0.5f * range, &uSeed);
+    unsigned int randomSign = nlRandom(0x7FFFFFFF, &uSeed);
+
+    if (randomSign & 1)
+    {
+        return base + randomOffset;
+    }
+    else
+    {
+        return base - randomOffset;
+    }
 }
 
 /**
@@ -158,6 +173,7 @@ float RandomizedValue(float, float)
  */
 void GetColourComponent(SimpleParser*, nlColour*, int)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -165,6 +181,7 @@ void GetColourComponent(SimpleParser*, nlColour*, int)
  */
 EffectsTemplate* parse_template(SimpleParser*, bool)
 {
+    FORCE_DONT_INLINE;
     return nullptr;
 }
 
@@ -181,10 +198,47 @@ bool fxLoadTemplateBundle(const char* filename)
 /**
  * Offset/Address/Size: 0x13C | 0x801F0D00 | size: 0x140
  */
-bool fxLoadTemplateBundle(void*, unsigned long)
+bool fxLoadTemplateBundle(void* data, unsigned long size)
 {
-    FORCE_DONT_INLINE;
-    return false;
+    if (data == nullptr)
+    {
+        return false;
+    }
+
+    pTemplateMap = new (nlMalloc(0x14, 8, false)) nlAVLTree<unsigned long, EffectsTemplate*, DefaultKeyCompare<unsigned long> >();
+
+    SimpleParser parser;
+    parser.StartParsing((char*)data, size, true);
+
+    for (;;)
+    {
+        char* token = parser.NextToken(true);
+        if (token == nullptr)
+        {
+            break;
+        }
+
+        if (nlStrCmp<char>(token, "begin") == 0)
+        {
+            EffectsTemplate* template_ptr;
+
+            template_ptr = parse_template(&parser, false);
+
+            AVLTreeNode* existingNode;
+            pTemplateMap->AddAVLNode((AVLTreeNode**)&pTemplateMap->m_Root, &template_ptr->m_uHashID, &template_ptr, &existingNode, pTemplateMap->m_NumElements);
+            if (existingNode == nullptr)
+            {
+                pTemplateMap->m_NumElements++;
+            }
+        }
+        else
+        {
+            EmissionManager::AddError("EffectsTemplate: unrecognized token '%s'\n", token);
+        }
+    }
+
+    nlFree(data);
+    return true;
 }
 
 /**

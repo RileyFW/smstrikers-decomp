@@ -111,29 +111,229 @@ void ParticleSystem::UpdateCoordSys(nlMatrix4&)
 /**
  * Offset/Address/Size: 0x22F4 | 0x801F744C | size: 0x110
  */
-void EmitCircularPosition(nlVector3&, nlVector3&, EffectsTemplate*, EffectsSpec*, const nlMatrix4&)
+void EmitCircularPosition(nlVector3& vPosition, nlVector3& vDirection, EffectsTemplate* pTemplate, EffectsSpec* pSpec, const nlMatrix4& mLocalToWorld)
 {
+    float randomAngle = RandomizedValue(0.0f, 6.2831855f);
+
+    float sinVal;
+    float cosVal;
+    nlSinCos(&sinVal, &cosVal, (unsigned short)(int)(10430.378f * randomAngle));
+
+    float radius = RandomizedValue(pTemplate->m_rRadius.base, pTemplate->m_rRadius.range);
+
+    nlVector3 localPos;
+    localPos.f.x = cosVal * radius;
+    localPos.f.y = -sinVal * radius;
+    localPos.f.z = 0.0f;
+
+    if (pSpec != nullptr)
+    {
+        nlVec3Set(localPos,
+            localPos.f.x + pSpec->m_vLocalOffset.f.x,
+            localPos.f.y + pSpec->m_vLocalOffset.f.y,
+            localPos.f.z + pSpec->m_vLocalOffset.f.z);
+    }
+
+    if (pTemplate->m_bLocalSpace)
+    {
+        vPosition = localPos;
+    }
+    else
+    {
+        nlMultPosVectorMatrix(vPosition, localPos, mLocalToWorld);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x2168 | 0x801F72C0 | size: 0x18C
  */
-void EmitSphericalPosition(nlVector3&, nlVector3&, EffectsTemplate*, EffectsSpec*, const nlMatrix4&)
+void EmitSphericalPosition(nlVector3& vPosition, nlVector3& vDirection, EffectsTemplate* pTemplate, EffectsSpec* pSpec, const nlMatrix4& mLocalToWorld)
 {
+    float randomZ = RandomizedValue(0.0f, 2.0f);
+    float randomAngleValue = RandomizedValue(65536.0f);
+
+    float xyRadius = nlSqrt(1.0f - (randomZ * randomZ), true);
+
+    float sinVal;
+    float cosVal;
+    nlSinCos(&sinVal, &cosVal, (unsigned short)(int)(10430.378f * randomAngleValue));
+
+    nlVector3 localPos;
+    nlVector3 localDir;
+
+    float x = xyRadius * cosVal;
+    float y = xyRadius * sinVal;
+    float z = randomZ;
+
+    float radius = RandomizedValue(pTemplate->m_rRadius.base, pTemplate->m_rRadius.range);
+
+    nlVec3Set(localDir, x, y, z);
+    nlVec3Set(localPos, radius * localDir.f.x, radius * localDir.f.y, radius * localDir.f.z);
+
+    if (pSpec != nullptr)
+    {
+        nlVec3Set(localPos,
+            localPos.f.x + pSpec->m_vLocalOffset.f.x,
+            localPos.f.y + pSpec->m_vLocalOffset.f.y,
+            localPos.f.z + pSpec->m_vLocalOffset.f.z);
+    }
+
+    if (pTemplate->m_bLocalSpace)
+    {
+        vPosition = localPos;
+        vDirection = localDir;
+    }
+    else
+    {
+        nlMultPosVectorMatrix(vPosition, localPos, mLocalToWorld);
+        nlMultDirVectorMatrix(vDirection, localDir, mLocalToWorld);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x1FDC | 0x801F7134 | size: 0x18C
  */
-void EmitHemisphericalPosition(nlVector3&, nlVector3&, EffectsTemplate*, EffectsSpec*, const nlMatrix4&)
+void EmitHemisphericalPosition(nlVector3& vPosition, nlVector3& vDirection, EffectsTemplate* pTemplate, EffectsSpec* pSpec, const nlMatrix4& mLocalToWorld)
 {
+    float randomZ = RandomizedValue(-0.5f, 1.0f);
+    float randomAngleValue = RandomizedValue(6.2831855f);
+
+    float xyRadius = nlSqrt(1.0f - (randomZ * randomZ), true);
+
+    float sinVal;
+    float cosVal;
+    nlSinCos(&sinVal, &cosVal, (unsigned short)(int)(10430.378f * randomAngleValue));
+
+    nlVector3 localPos;
+    nlVector3 localDir;
+
+    float x = xyRadius * cosVal;
+    float y = xyRadius * sinVal;
+    float z = randomZ;
+
+    float radius = RandomizedValue(pTemplate->m_rRadius.base, pTemplate->m_rRadius.range);
+
+    nlVec3Set(localDir, x, y, z);
+    nlVec3Set(localPos, radius * localDir.f.x, radius * localDir.f.y, radius * localDir.f.z);
+
+    if (pSpec != nullptr)
+    {
+        nlVec3Set(localPos,
+            localPos.f.x + pSpec->m_vLocalOffset.f.x,
+            localPos.f.y + pSpec->m_vLocalOffset.f.y,
+            localPos.f.z + pSpec->m_vLocalOffset.f.z);
+    }
+
+    if (pTemplate->m_bLocalSpace)
+    {
+        vPosition = localPos;
+        vDirection = localDir;
+    }
+    else
+    {
+        nlMultPosVectorMatrix(vPosition, localPos, mLocalToWorld);
+        nlMultDirVectorMatrix(vDirection, localDir, mLocalToWorld);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x1C90 | 0x801F6DE8 | size: 0x34C
  */
-void EmitSpindularPosition(nlVector3&, nlVector3&, EffectsTemplate*, EffectsSpec*, const nlMatrix4&)
+void EmitSpindularPosition(nlVector3& vPosition, nlVector3& vDirection, EffectsTemplate* pTemplate, EffectsSpec* pSpec, const nlMatrix4& mLocalToWorld)
 {
+    nlVector3 localDir;
+    nlVector3 localPos;
+    float sin;
+    float cos;
+    float randomAngle = RandomizedValue(0.0f, 6.2831855f);
+
+    nlSinCos(&sin, &cos, (unsigned short)(int)(10430.378f * randomAngle));
+
+    float radius = RandomizedValue(pTemplate->m_rRadius.base, pTemplate->m_rRadius.range);
+
+    float x = cos * radius;
+    float y = -sin * radius;
+    float z = 0.0f;
+    nlVec3Set(localDir, x, y, z);
+
+    float tilt = RandomizedValue(pTemplate->m_rAngle.base, pTemplate->m_rAngle.range);
+    if (tilt <= -1.0f)
+    {
+        tilt = -1.0f;
+    }
+    else if (tilt >= 1.0f)
+    {
+        tilt = 1.0f;
+    }
+
+    float tiltAngle = -tilt * 10430.378f;
+    // float tanTilt = nlTan((unsigned short)(int)tiltAngle);
+
+    nlVec3Set(localDir, localPos.f.x, localPos.f.y, nlTan((unsigned short)(int)tiltAngle));
+
+    float length = nlRecipSqrt((localDir.f.x * localDir.f.x) + (localDir.f.y * localDir.f.y) + (localDir.f.z * localDir.f.z), false);
+
+    nlVec3Set(localDir,
+        length * localDir.f.x,
+        length * localDir.f.y,
+        length * localDir.f.z);
+
+    float tiltRotation = RandomizedValue(pTemplate->m_rTilt.base, pTemplate->m_rTilt.range);
+
+    if (tiltRotation != 0.0f)
+    {
+        nlSinCos(&sin, &cos, (unsigned short)(int)(10430.378f * tiltRotation));
+
+        float dirX = localDir.f.x;
+        float dirZ = localDir.f.z;
+        float posX = localPos.f.x;
+        float posZ = localPos.f.z;
+
+        localDir.f.x = (dirX * sin) + (dirZ * cos);
+        localDir.f.z = (-dirX * cos) + (dirZ * sin);
+
+        localPos.f.x = (posX * sin) + (posZ * cos);
+        localPos.f.z = (-posX * cos) + (posZ * sin);
+    }
+
+    if (pSpec != nullptr)
+    {
+        nlVec3Set(localPos,
+            localPos.f.x + pSpec->m_vLocalOffset.f.x,
+            localPos.f.y + pSpec->m_vLocalOffset.f.y,
+            localPos.f.z + pSpec->m_vLocalOffset.f.z);
+    }
+
+    if (pTemplate->m_bLocalSpace)
+    {
+        vPosition = localPos;
+        vDirection = localDir;
+    }
+    else
+    {
+        nlMultPosVectorMatrix(vPosition, localPos, mLocalToWorld);
+        nlMultDirVectorMatrix(vDirection, localDir, mLocalToWorld);
+
+        extern unsigned short hackyFacingAngle;
+        if (hackyFacingAngle != 0)
+        {
+            nlSinCos(&sin, &cos, hackyFacingAngle);
+
+            float dirX = vDirection.f.x;
+            float dirY = vDirection.f.y;
+            vDirection.f.x = (vDirection.f.x * cos) + (-dirY * sin);
+            vDirection.f.y = (vDirection.f.x * sin) + (dirY * cos);
+
+            float posX = vPosition.f.x;
+            float posY = vPosition.f.y;
+            vPosition.f.x = (posX * cos) + (-posY * sin);
+            vPosition.f.y = (posX * sin) + (posY * cos);
+        }
+
+        vPosition.f.x += mLocalToWorld.m[0][3];
+        vPosition.f.y += mLocalToWorld.m[1][3];
+        vPosition.f.z += mLocalToWorld.m[2][3];
+    }
 }
 
 /**
