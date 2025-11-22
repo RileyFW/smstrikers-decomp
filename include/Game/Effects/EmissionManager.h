@@ -29,9 +29,15 @@ struct LingerMessage : public efNode
 
 class EmissionManager
 {
+protected:
+    EmissionManager(bool recording = false)
+        : m_bRecording(recording)
+    {
+    }
+
 public:
     static void KillOldest(int, bool);
-    static void Replay(SaveFrame&);
+    void Replay(SaveFrame&);
     static void Replay(LoadFrame&);
     static void AddError(const char*, ...);
     static void ResetLingerers();
@@ -44,11 +50,11 @@ public:
     static efList* GetContainer();
     static void Render(); // not sure it's static
     static void AddEffectsLight(const EffectsLight&);
-    static void GetLight(int);
+    static EffectsLight* GetLight(int);
     static s32 GetNumLights();
     static void Update(float); // not sure it's static
-    static void Shutdown();
-    static void Startup(eGLView);
+    static bool Shutdown();
+    static bool Startup(eGLView);
 
     static EmissionManager& InstanceForReplayOnly();
 

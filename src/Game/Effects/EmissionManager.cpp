@@ -1,49 +1,104 @@
 #include "Game/Effects/EmissionManager.h"
 #include "Dolphin/types.h"
 #include "NL/nlAVLTree.h"
+#include "Game/Sys/debug.h"
+#include "Game/ReplaySpecializations.h"
 
 static class efList* controllers = nullptr;
+static class efList* errors = nullptr;
 static nlAVLTree<unsigned long, LingerMessage*, DefaultKeyCompare<unsigned long> >* lingerers = nullptr;
 static int g_nNumLights = 0;
-static unsigned long fx_sTerrain;
-
-static s8 init = 0;
-static EmissionManager instance;
+static EffectsLight g_EffectsLights[3];
 
 extern eGLView defaultView;
+
+static unsigned long fx_sTerrain;
 
 /**
  * Offset/Address/Size: 0xE38 | 0x801F9758 | size: 0x20
  */
 EmissionManager& EmissionManager::InstanceForReplayOnly()
 {
-    if (init == 0)
-    {
-        instance.m_bRecording = true;
-        init = 1;
-    }
+    static EmissionManager instance(true);
     return instance;
 }
 
 /**
  * Offset/Address/Size: 0xD6C | 0x801F968C | size: 0xCC
  */
-void EmissionManager::Startup(eGLView)
+bool EmissionManager::Startup(eGLView view)
 {
-}
+    defaultView = view;
 
-/**
- * Offset/Address/Size: 0xD0C | 0x801F962C | size: 0x60
- */
-// void nlAVLTree<unsigned long, LingerMessage*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
-// {
-// }
+    efList* tmp_controllers = (efList*)nlMalloc(sizeof(efList), 8, false);
+    if (tmp_controllers != nullptr)
+    {
+        tmp_controllers->m_headNode = nullptr;
+        tmp_controllers->m_tailNode = nullptr;
+        tmp_controllers->m_numNodes = 0;
+    }
+    controllers = tmp_controllers;
+
+    efList* tmp_errors = (efList*)nlMalloc(sizeof(efList), 8, false);
+    if (tmp_errors != nullptr)
+    {
+        tmp_errors->m_headNode = nullptr;
+        tmp_errors->m_tailNode = nullptr;
+        tmp_errors->m_numNodes = 0;
+    }
+    errors = tmp_errors;
+
+    lingerers = new (nlMalloc(sizeof(nlAVLTree<unsigned long, LingerMessage*, DefaultKeyCompare<unsigned long> >), 8, false))
+        nlAVLTree<unsigned long, LingerMessage*, DefaultKeyCompare<unsigned long> >();
+
+    return true;
+}
 
 /**
  * Offset/Address/Size: 0xC1C | 0x801F953C | size: 0xF0
  */
-void EmissionManager::Shutdown()
+bool EmissionManager::Shutdown()
 {
+    if (controllers->m_headNode != nullptr)
+    {
+        tDebugPrintManager::Print(DC_RENDER, "EmissionManager being deleted non-empty\n");
+    }
+
+    EmissionController* next;
+    EmissionController* current;
+    current = (EmissionController*)(controllers->m_headNode);
+
+    while (current != nullptr)
+    {
+        next = (EmissionController*)(current->m_nextNode);
+        controllers->Remove(current);
+        delete current;
+        current = next;
+    }
+
+    delete controllers;
+    controllers = nullptr;
+
+    LingerMessage* errorCurrent;
+    errorCurrent = (LingerMessage*)(errors->m_headNode);
+
+    while (errorCurrent != nullptr)
+    {
+        LingerMessage* errorNext = (LingerMessage*)(errorCurrent->m_nextNode);
+        errors->Remove(errorCurrent);
+        delete errorCurrent;
+        errorCurrent = errorNext;
+    }
+
+    delete errors;
+    errors = nullptr;
+
+    ResetLingerers();
+
+    delete lingerers;
+    lingerers = nullptr;
+
+    return true;
 }
 
 /**
@@ -64,15 +119,26 @@ s32 EmissionManager::GetNumLights()
 /**
  * Offset/Address/Size: 0x8F8 | 0x801F9218 | size: 0x30
  */
-void EmissionManager::GetLight(int)
+EffectsLight* EmissionManager::GetLight(int index)
 {
+    if (index < 0 || index >= g_nNumLights)
+    {
+        return nullptr;
+    }
+    return &g_EffectsLights[index];
 }
 
 /**
  * Offset/Address/Size: 0x8A8 | 0x801F91C8 | size: 0x50
  */
-void EmissionManager::AddEffectsLight(const EffectsLight&)
+void EmissionManager::AddEffectsLight(const EffectsLight& light)
 {
+    if (g_nNumLights >= 3)
+    {
+        return;
+    }
+
+    g_EffectsLights[g_nNumLights++] = light;
 }
 
 /**
@@ -80,6 +146,14 @@ void EmissionManager::AddEffectsLight(const EffectsLight&)
  */
 void EmissionManager::Render()
 {
+    g_nNumLights = 0;
+    EmissionController* current = (EmissionController*)(controllers->m_headNode);
+
+    while (current != nullptr)
+    {
+        current->Render();
+        current = (EmissionController*)(current->m_nextNode);
+    }
 }
 
 /**
@@ -95,23 +169,21 @@ efList* EmissionManager::GetContainer()
  */
 EmissionController* EmissionManager::Create(EffectsGroup* pEffectsGroup, unsigned short id)
 {
-    u16 _id = id;
+    EmissionController* pController;
 
     static u16 globalIdCounter = 1;
 
-    if (_id == 0)
+    if (id == 0)
     {
-        _id = globalIdCounter;
-        globalIdCounter++;
+        id = globalIdCounter++;
     }
 
-    if (globalIdCounter > 0x7E16)
+    if (globalIdCounter > 0x7E16) // 32278
     {
         globalIdCounter = 0;
     }
 
-    EmissionController* pController = new (nlMalloc(sizeof(EmissionController), 8, false)) EmissionController(pEffectsGroup, id, defaultView);
-
+    pController = new (nlMalloc(sizeof(EmissionController), 8, false)) EmissionController(pEffectsGroup, id, defaultView);
     controllers->Append(pController);
     return pController;
 }
@@ -223,6 +295,28 @@ void EmissionManager::DestroyAll(bool exceptPersistent)
  */
 void EmissionManager::Destroy(unsigned long userData, const EffectsGroup* pEffectsGroup)
 {
+    EmissionController* next;
+    EmissionController* current;
+
+    if (controllers == nullptr)
+    {
+        return;
+    }
+
+    current = (EmissionController*)(controllers->m_headNode);
+
+    while (current != nullptr)
+    {
+        next = (EmissionController*)(current->m_nextNode);
+
+        if (((pEffectsGroup == nullptr || current->m_pGroup == pEffectsGroup)) && (userData == current->m_uUserData))
+        {
+            controllers->Remove(current);
+            delete current;
+        }
+
+        current = next;
+    }
 }
 
 /**
@@ -230,6 +324,7 @@ void EmissionManager::Destroy(unsigned long userData, const EffectsGroup* pEffec
  */
 void EmissionManager::ResetLingerers()
 {
+    FORCE_DONT_INLINE;
     if (lingerers != nullptr)
     {
         lingerers->DeleteValues();
@@ -253,7 +348,7 @@ void EmissionManager::Replay(LoadFrame&)
 /**
  * Offset/Address/Size: 0x11C | 0x801F8A3C | size: 0x130
  */
-void EmissionManager::Replay(SaveFrame&)
+void EmissionManager::Replay(SaveFrame& frame)
 {
 }
 
@@ -276,8 +371,41 @@ void fxSetTerrain(unsigned long terrainID)
 /**
  * Offset/Address/Size: 0x0 | 0x801F8920 | size: 0x10C
  */
-void EmissionManager::KillOldest(int, bool)
+void EmissionManager::KillOldest(int num, bool lingeringOnly)
 {
+    float prevBestAge = 0.0f;
+    float currentBestAge = 0.0f;
+
+    while (num > 0)
+    {
+        EmissionController* bestController = nullptr;
+        float bestAge = 0.0f;
+        EmissionController* current = (EmissionController*)(controllers->m_headNode);
+
+        while (current != nullptr)
+        {
+            if ((!lingeringOnly || current->IsLingering()) && (current->m_uUserData + 0x21530000 != 0x0000BEEF))
+            {
+                float age = current->m_Age;
+                if ((bestAge < age) && (prevBestAge == currentBestAge || age < currentBestAge))
+                {
+                    bestAge = age;
+                    bestController = current;
+                    currentBestAge = age;
+                }
+            }
+
+            current = (EmissionController*)(current->m_nextNode);
+        }
+
+        if (bestController == nullptr)
+        {
+            break;
+        }
+
+        bestController->Die();
+        num--;
+    }
 }
 
 // /**
