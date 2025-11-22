@@ -56,9 +56,9 @@ public:
     static SaveData* FindBestSave(SaveBlendInfo&, const nlVector3&, float, bool, unsigned int, bool);
     static void FindBestInList(SaveBlendInfo&, nlListContainer<SaveData*>&, const nlVector3&, float, unsigned int, bool);
     static void GetClosestBlendedPos(SaveBlendInfo&, const nlVector3&, SaveData*);
-    static void GetMissChipSaveData(bool, bool);
-    static void GetRandomSTSMissData(bool);
-    static void GetSTSSpinMissData(bool);
+    static SaveData* GetMissChipSaveData(bool, bool);
+    static SaveData* GetRandomSTSMissData(bool);
+    static SaveData* GetSTSSpinMissData(bool);
     static void GetRandomSTSSaveData();
     static void TriggerCallback(float, float, unsigned long, float, void*);
     static void AddAreaToGrid(SaveData*);

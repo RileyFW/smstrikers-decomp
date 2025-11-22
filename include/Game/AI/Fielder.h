@@ -163,6 +163,7 @@ public:
     bool IsReceivingVolleyPass() const;
     bool IsPreparingForOneTimer() const;
     void CleanUpAction();
+    void EndAction();
     void CleanUpPowerupEffect();
     void CalcRegularShot(nlVector3&, nlVector3&);
     void CalcShootToScoreShot(nlVector3&, nlVector3&);
@@ -187,6 +188,7 @@ public:
     void DoResetShotMeter(float);
     bool IsActionDone() const;
     void SetAction(eFielderActionState);
+    void InitActionSlideAttackReact(cPlayer*, bool);
     void GetFormationPosition(nlVector3&, float);
     void GetOneTimerBallContactAnimInfo(unsigned short, const nlVector3&, const nlVector3&, bool, bool);
     void GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsigned short, bool, bool);

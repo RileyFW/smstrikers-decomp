@@ -21,6 +21,7 @@ class Event;
 class cPN_SAnimController;
 class CollisionPlayerPlayerData;
 class cBall;
+class PhysicsGoalie;
 
 enum eGoalieActionState
 {
@@ -163,9 +164,9 @@ public:
     void DoPassRelease();
     void EventHandler(Event*, void*);
     void FindSTSStunData();
-    void FindSTSMissData(const nlVector3&);
+    bool FindSTSMissData(const nlVector3&);
     void FindSTSSpinData(bool);
-    void GetPhysicsGoalie();
+    PhysicsGoalie* GetPhysicsGoalie();
     void SetDesiredSaveFacing(const nlVector3&);
     void TrackTarget(const nlVector3&, float);
     void TacklePlayer(cPlayer*);

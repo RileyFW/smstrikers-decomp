@@ -221,22 +221,25 @@ void GoalieSave::GetClosestBlendedPos(SaveBlendInfo&, const nlVector3&, SaveData
 /**
  * Offset/Address/Size: 0xF4C | 0x8005436C | size: 0x44
  */
-void GoalieSave::GetMissChipSaveData(bool, bool)
+SaveData* GoalieSave::GetMissChipSaveData(bool, bool)
 {
+    return NULL;
 }
 
 /**
  * Offset/Address/Size: 0xEBC | 0x800542DC | size: 0x90
  */
-void GoalieSave::GetRandomSTSMissData(bool)
+SaveData* GoalieSave::GetRandomSTSMissData(bool)
 {
+    return NULL;
 }
 
 /**
  * Offset/Address/Size: 0xE98 | 0x800542B8 | size: 0x24
  */
-void GoalieSave::GetSTSSpinMissData(bool)
+SaveData* GoalieSave::GetSTSSpinMissData(bool)
 {
+    return NULL;
 }
 
 /**

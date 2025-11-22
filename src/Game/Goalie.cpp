@@ -2,8 +2,14 @@
 #include "Game/AI/GoalieLooseBall.h"
 #include "Game/Ball.h"
 #include "Game/AI/Fielder.h"
+#include "Game/CharacterAudio.h"
 #include "Game/SAnim.h"
+#include "Game/Physics/PhysicsGoalie.h"
+#include "Game/Field.h"
+#include "NL/plat/plataudio.h"
 #include "types.h"
+
+static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
 /**
  * Offset/Address/Size: 0x0 | 0x80042AFC | size: 0x148
@@ -22,15 +28,56 @@ void Goalie::WhackSTSPlayer(cFielder*)
 /**
  * Offset/Address/Size: 0x298 | 0x80042D94 | size: 0x6C
  */
-void Goalie::StealBall(cPlayer*)
+void Goalie::StealBall(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return;
+    }
+
+    if (pPlayer->m_eClassType != FIELDER)
+    {
+        return;
+    }
+
+    if (pPlayer->m_pBall == NULL)
+    {
+        return;
+    }
+
+    pPlayer->ReleaseBall();
+
+    cFielder* pFielder = static_cast<cFielder*>(pPlayer);
+    if (pFielder->m_eFielderDesireState == FIELDERDESIRE_FINISH_ACTION)
+    {
+        return;
+    }
+
+    pFielder->EndDesire(false);
+    pFielder->EndAction();
 }
 
 /**
  * Offset/Address/Size: 0x304 | 0x80042E00 | size: 0xC0
  */
-void Goalie::TacklePlayer(cPlayer*)
+void Goalie::TacklePlayer(cPlayer* pPlayer)
 {
+    cFielder* pFielder = static_cast<cFielder*>(pPlayer);
+    if ((pPlayer != NULL) && (pPlayer->m_eClassType == FIELDER) && (pFielder->IsFallenDown(0.0f) == 0))
+    {
+        pPlayer->PlayRandomCharDialogue(CHAR_DIALOGUE_HIT, VECTORS, 100.0f, -1.0f);
+        if (pPlayer->m_pBall != 0)
+        {
+            pPlayer->ReleaseBall();
+        }
+        if (IsOnSameTeam(pFielder) != 0)
+        {
+            pFielder->EndDesire(false);
+            pFielder->EndAction();
+            return;
+        }
+        pFielder->InitActionSlideAttackReact(this, false);
+    }
 }
 
 /**
@@ -50,22 +97,57 @@ void Goalie::SetDesiredSaveFacing(const nlVector3&)
 /**
  * Offset/Address/Size: 0x93C | 0x80043438 | size: 0x8
  */
-void Goalie::GetPhysicsGoalie()
+PhysicsGoalie* Goalie::GetPhysicsGoalie()
 {
+    return static_cast<PhysicsGoalie*>(m_pPhysicsCharacter);
 }
 
 /**
  * Offset/Address/Size: 0x944 | 0x80043440 | size: 0x50
  */
-void Goalie::FindSTSSpinData(bool)
+void Goalie::FindSTSSpinData(bool bParam)
 {
+    mpSaveData = GoalieSave::GetSTSSpinMissData(bParam);
+
+    GoalieSave::GetClosestBlendedPos(mBlendInfo, v3Zero, mpSaveData);
+
+    mpLooseBallInfo = NULL;
 }
 
 /**
  * Offset/Address/Size: 0x994 | 0x80043490 | size: 0xF0
  */
-void Goalie::FindSTSMissData(const nlVector3&)
+bool Goalie::FindSTSMissData(const nlVector3& rPos)
 {
+    nlVector3 localPos = rPos;
+
+    float goalLineX = cField::GetGoalLineX(1U);
+    float absY = (float)fabsf(localPos.f.y);
+    float sidelineY = cField::GetSidelineY(1U);
+
+    float scale = 6.0f;
+    float threshold = goalLineX - ((absY * scale) / sidelineY);
+
+    bool bIsOutsideRange;
+    if (localPos.f.x > threshold)
+    {
+        bIsOutsideRange = true;
+    }
+    else if (localPos.f.x < -threshold)
+    {
+        bIsOutsideRange = true;
+    }
+    else
+    {
+        bIsOutsideRange = false;
+    }
+
+    mpSaveData = GoalieSave::GetRandomSTSMissData(bIsOutsideRange);
+    GoalieSave::GetClosestBlendedPos(mBlendInfo, v3Zero, mpSaveData);
+
+    mpLooseBallInfo = NULL;
+
+    return bIsOutsideRange;
 }
 
 /**
