@@ -19,14 +19,14 @@ f32 CANT_COLLIDE = *(f32*)__float_max;
 /**
  * Offset/Address/Size: 0x1420 | 0x80006ECC | size: 0x90
  */
-void MakePerpendicularPlane(const nlVector3&, unsigned short, nlVector4&, float)
+void MakePerpendicularPlane(const nlVector3& v3Positione, unsigned short aNormalAngle, nlVector4& v4Plane, float fPlaneOffset)
 {
 }
 
 /**
  * Offset/Address/Size: 0x1354 | 0x80006E00 | size: 0xCC
  */
-void MakePerpendicularPlane(const nlVector3&, const nlVector3&, nlVector4&, float)
+void MakePerpendicularPlane(const nlVector3& v3Position, const nlVector3& v3Normal, nlVector4& v4Plane, float fPlaneOffset)
 {
 }
 

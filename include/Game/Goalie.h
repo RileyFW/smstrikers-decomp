@@ -50,7 +50,8 @@ enum eGoalieActionState
     GOALIEACTION_LOOSEBALL_DESPERATE = 22,
     GOALIEACTION_OFFPLAY = 23,
     GOALIEACTION_SNAP_BALL = 24,
-    NUM_GOALIE_ACTIONS = 25,
+    GOALIEACTION_GRAB_BALL = 25,
+    NUM_GOALIE_ACTIONS = 26,
 };
 
 enum eGoalieMoveDirection
@@ -136,7 +137,7 @@ public:
     void MakeSaveEvent(bool);
     void UpdateActionState(float);
     void SetGoalieAction(eGoalieActionState, int);
-    void SaveBlendCallback(unsigned int, cPN_SAnimController*);
+    static void SaveBlendCallback(unsigned int, cPN_SAnimController*);
     void SetupBlender(bool, const float*, int, int);
     void PlayBlendedAnims(float, int);
     void PlayNewAnim(int);
@@ -153,13 +154,13 @@ public:
     void InitActionChipShotStumble();
     void InitActionDiveRecover();
     void InitActionSTSAttack();
-    void IsTeammateHoardingBall();
+    bool IsTeammateHoardingBall();
     void InitActionGrabBall();
-    void CalcBestSave(float, const nlVector3&, const nlVector3&, unsigned int, bool);
+    unsigned short CalcBestSave(float, const nlVector3&, const nlVector3&, unsigned int, bool);
     void CalcSaveParameters(float, unsigned int, bool, bool);
-    void CalcTimeToPlane();
+    float CalcTimeToPlane();
     void CanInterceptPass();
-    void ChooseRunAnim(short, const nlVector3&, float);
+    int ChooseRunAnim(short, const nlVector3&, float);
     void ChooseSwatAnim(int);
     void DoPassRelease();
     void EventHandler(Event*, void*);
@@ -173,6 +174,37 @@ public:
     void StealBall(cPlayer*);
     void WhackSTSPlayer(cFielder*);
     void InitActionPostWhistle();
+
+    void ActionLooseBallCatch(float);
+    void ActionLooseBallDesperate(float);
+    void ActionLooseBallPickup(float);
+    void ActionLooseBallPursueRolling(float);
+    void ActionLooseBallSetup(float);
+    void MoveDirectionCB(unsigned int, cPN_SingleAxisBlender*);
+    void MoveWeightCB(unsigned int, cPN_SingleAxisBlender*);
+    void StrafeSynchronizedSpeedCallback(unsigned int, cPN_SAnimController*);
+    void ActionMove(float);
+    void RunWeightCB(unsigned int, cPN_SingleAxisBlender*);
+    void ActionMoveWB(float);
+    void ActionSaveSetup(float);
+    void ActionSaveReposition(float);
+    void ActionSave(float);
+    void ActionSTS(float);
+    void ActionSTSSetup(float);
+    void ActionSTSRecover(float);
+    void ActionChipShotStumble(float);
+    void ActionDiveRecover(float);
+    void ActionPass(float);
+    void ActionPassIntercept(float);
+    void ActionPreCrouch(float);
+    void ActionPursueBallCarrier(float);
+    void ActionPursueBallPounce(float);
+    void ActionOffplay(float);
+    void ActionLooseBallPursueBouncing(float);
+    void ActionSTSAttackSetup(float);
+    void ActionSTSAttack(float);
+    void ActionSnapBall(float);
+    void ActionGrabBall(float);
 
     /* 0x1D4 */ eGoalieActionState mGoalieActionState;
     /* 0x1D8 */ eGoalieActionState mPrevGoalieActionState;

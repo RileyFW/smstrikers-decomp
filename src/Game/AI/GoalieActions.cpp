@@ -1,4 +1,4 @@
-#include "Game/AI/GoalieActions.h"
+#include "Game/Goalie.h"
 
 // /**
 //  * Offset/Address/Size: 0x4700 | 0x80052C3C | size: 0x10

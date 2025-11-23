@@ -245,8 +245,9 @@ SaveData* GoalieSave::GetSTSSpinMissData(bool)
 /**
  * Offset/Address/Size: 0xE24 | 0x80054244 | size: 0x74
  */
-void GoalieSave::GetRandomSTSSaveData()
+SaveData* GoalieSave::GetRandomSTSSaveData()
 {
+    return NULL;
 }
 
 /**

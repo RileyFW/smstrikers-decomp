@@ -59,7 +59,7 @@ public:
     static SaveData* GetMissChipSaveData(bool, bool);
     static SaveData* GetRandomSTSMissData(bool);
     static SaveData* GetSTSSpinMissData(bool);
-    static void GetRandomSTSSaveData();
+    static SaveData* GetRandomSTSSaveData();
     static void TriggerCallback(float, float, unsigned long, float, void*);
     static void AddAreaToGrid(SaveData*);
     static void AddSegmentToGrid(SaveData*, SaveData*);

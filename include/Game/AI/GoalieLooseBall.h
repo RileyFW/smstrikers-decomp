@@ -33,8 +33,8 @@ class LooseBallAnims
 public:
     static void Init(cPlayer*);
     static void Destroy();
-    static void FindLooseBallAnim(const nlVector3&, bool);
-    static void GetSwatSTSInfo(int);
+    static const LooseBallInfo* FindLooseBallAnim(const nlVector3&, bool);
+    static const LooseBallInfo* GetSwatSTSInfo(int);
     static void GetDesperationInfo(unsigned int);
 
     static LooseBallInfo* mpLooseBallInfo;

@@ -59,8 +59,9 @@ void FakeBallWorld::GetPredictedHeightLimitTime(float, float, nlVector3&, nlVect
 /**
  * Offset/Address/Size: 0x11AC | 0x80138598 | size: 0x5BC
  */
-void FakeBallWorld::GetPredictedPlaneIntersectTime(const nlVector4&, nlVector3&, nlVector3&)
+float FakeBallWorld::GetPredictedPlaneIntersectTime(const nlVector4& plane, nlVector3& v3ContactPoint, nlVector3& v3ContactVelocity)
 {
+    return 0.0f;
 }
 
 /**

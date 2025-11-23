@@ -24,14 +24,15 @@ void LooseBallAnims::Destroy()
 /**
  * Offset/Address/Size: 0xB0 | 0x80052DB8 | size: 0x118
  */
-void LooseBallAnims::FindLooseBallAnim(const nlVector3&, bool)
+const LooseBallInfo* LooseBallAnims::FindLooseBallAnim(const nlVector3&, bool)
 {
+    return NULL;
 }
 
 /**
  * Offset/Address/Size: 0x14 | 0x80052D1C | size: 0x9C
  */
-void LooseBallAnims::GetSwatSTSInfo(int)
+const LooseBallInfo* LooseBallAnims::GetSwatSTSInfo(int)
 {
 }
 
