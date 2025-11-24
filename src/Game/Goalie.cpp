@@ -548,6 +548,7 @@ void Goalie::InitActionMoveWB()
  */
 void Goalie::InitActionMove(bool)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -619,6 +620,7 @@ void Goalie::PlayNewAnim(int nAnimID)
  */
 void Goalie::PlayBlendedAnims(float, int)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -809,22 +811,25 @@ bool Goalie::IsLooseBallClose(float)
 /**
  * Offset/Address/Size: 0x69D8 | 0x800494D4 | size: 0x3A8
  */
-void Goalie::CheckForSTSAttack()
+bool Goalie::CheckForSTSAttack()
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x6D80 | 0x8004987C | size: 0x268
  */
-void Goalie::CheckForLooseBallShotInProgress()
+bool Goalie::CheckForLooseBallShotInProgress()
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x6FE8 | 0x80049AE4 | size: 0x268
  */
-void Goalie::CheckForDelflectAwayFromNet()
+float Goalie::CheckForDelflectAwayFromNet()
 {
+    return 0.0f;
 }
 
 /**
@@ -953,6 +958,43 @@ void Goalie::InitActionPreCrouch(eGoalieCrouchType crouchType)
  */
 void Goalie::InitActionPassInterceptSave()
 {
+    CleanGoalieAction();
+
+    mPrevGoalieActionState = mGoalieActionState;
+    mGoalieActionState = GOALIEACTION_SAVE;
+    mnSubstate = 0;
+
+    PlayBlendedAnims(mBlendInfo.mfStartTime, -1);
+
+    u8* pByte = (u8*)m_pPhysicsCharacter + 0x80;
+    *pByte |= 0x40; // Set bit 6
+
+    mnOffplayPending = GOALIE_OFFPLAY_NONE;
+    mbBallImpacted = false;
+
+    Event* pEvent = g_pEventManager->CreateValidEvent(0x13, 0x38);
+    GoalieSaveData* pSaveData = new (pEvent->m_data) GoalieSaveData();
+
+    pSaveData->pGoalie = this;
+    pSaveData->v3BallVelocity = v3Zero;
+    *((f32*)((u8*)pSaveData + 0x1C)) = 0.0f;
+
+    // Clear bit 7 of byte at offset 0x20
+    u8* pByte20 = (u8*)pSaveData + 0x20;
+    *pByte20 &= ~0x80;
+
+    *((u32*)((u8*)pSaveData + 0x18)) = g_pBall->m_uGoalType;
+    *((cPlayer**)((u8*)pSaveData + 0x14)) = g_pBall->m_pShooter;
+
+    u32* pWord20 = (u32*)((u8*)pSaveData + 0x20);
+    if (mpSaveData != NULL)
+    {
+        *pWord20 = (*pWord20 & 0xFFFFFF00) | (mpSaveData->muSaveType & 0xFF);
+    }
+    else
+    {
+        *pWord20 = (*pWord20 & 0xFFFFFF00) | 3;
+    }
 }
 
 /**

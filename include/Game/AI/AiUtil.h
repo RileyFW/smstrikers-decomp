@@ -11,7 +11,7 @@ float AIsgn(float fValue);
 float NormalizeVal(float fromVal, float fromMin, float fromMax);
 float NormalizeVal(float fromVal, const nlVector2& fromExtrema);
 void InterpolateRangeClamped(const nlVector2&, const nlVector2&, float);
-void InterpolateRangeClamped(float, float, float, float, float);
+float InterpolateRangeClamped(float, float, float, float, float);
 float Interpolate(float fMin, float fMax, float fPercent);
 void RotateVector(nlVector3&, const nlVector3&, nlQuaternion&);
 void GetRotationBetweenVectors(nlQuaternion&, const nlVector3&, const nlVector3&);
@@ -25,7 +25,7 @@ void TestCollision(float, const nlVector3&, const nlVector3&, float, const nlVec
 void ClipPositionToSidelines(nlVector3&, float);
 void CalcInterceptXY(const nlVector3&, float, float, const nlVector3&, const nlVector3&, int&, float*);
 void SeekSpeed(float, float, float, float, float);
-void SeekDirection(unsigned short, unsigned short, float, float, float);
+unsigned short SeekDirection(unsigned short, unsigned short, float, float, float);
 void IsPointInCone(const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&);
 void MakePerpendicularPlane(const nlVector3&, const nlVector3&, nlVector4&, float);
 void MakePerpendicularPlane(const nlVector3&, unsigned short, nlVector4&, float);

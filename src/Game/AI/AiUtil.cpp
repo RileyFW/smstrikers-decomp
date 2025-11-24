@@ -40,8 +40,9 @@ void IsPointInCone(const nlVector3&, const nlVector3&, const nlVector3&, const n
 /**
  * Offset/Address/Size: 0x110C | 0x80006BB8 | size: 0xF8
  */
-void SeekDirection(unsigned short, unsigned short, float, float, float)
+unsigned short SeekDirection(unsigned short, unsigned short, float, float, float)
 {
+    return 0;
 }
 
 /**
@@ -149,7 +150,7 @@ float Interpolate(float fMin, float fMax, float fPercent)
 /**
  * Offset/Address/Size: 0x670 | 0x8000611C | size: 0x90
  */
-void InterpolateRangeClamped(float, float, float, float, float)
+float InterpolateRangeClamped(float, float, float, float, float)
 {
 }
 

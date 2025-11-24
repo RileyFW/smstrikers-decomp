@@ -93,6 +93,31 @@ enum eUrgency
     NUM_URGENCY_LEVELS = 3,
 };
 
+struct GoalieSaveData : public EventData
+{
+    virtual u32 GetID() { return 0x13C; }
+
+    /* 0x04 */ nlVector3 v3BallVelocity;
+    /* 0x10 */ cPlayer* pGoalie;
+    /* 0x14 */ float fWowFactor;
+    /* 0x18 */ unsigned int isSTS : 1;
+    /* 0x18 */ unsigned int saveType : 31;
+}; // total size: 0x1C
+
+struct GoalScoredData : public EventData
+{
+    virtual u32 GetID() { return 0x13C; }
+
+    /* 0x04 */ unsigned int uTeamIndex : 8;
+    /* 0x04 */ unsigned int uNumGoalsScored : 8;
+    /* 0x04 */ unsigned int uGoalType : 15;
+    /* 0x04 */ unsigned int uIsHyper : 1;
+    /* 0x08 */ nlVector3 v3ShotPosition;
+    /* 0x14 */ cPlayer* pScorer;
+    /* 0x18 */ cPlayer* pAssister;
+    /* 0x1C */ cPlayer* pLastTouch[2];
+}; // total size: 0x24
+
 class Goalie : public cPlayer
 {
 public:
@@ -126,9 +151,9 @@ public:
     void InitiatePanicGrab(cPlayer*);
     void IsCloseToPlane(const nlVector3&, const nlVector3&, float);
     void IsInsideGoalieBox(const nlVector3&, float, float);
-    void CheckForDelflectAwayFromNet();
-    void CheckForLooseBallShotInProgress();
-    void CheckForSTSAttack();
+    float CheckForDelflectAwayFromNet();
+    bool CheckForLooseBallShotInProgress();
+    bool CheckForSTSAttack();
     bool IsLooseBallClose(float);
     bool IsWithinPounceRange();
     bool IsOpponentBallCarrierInRange();
@@ -180,11 +205,11 @@ public:
     void ActionLooseBallPickup(float);
     void ActionLooseBallPursueRolling(float);
     void ActionLooseBallSetup(float);
-    void MoveDirectionCB(unsigned int, cPN_SingleAxisBlender*);
-    void MoveWeightCB(unsigned int, cPN_SingleAxisBlender*);
-    void StrafeSynchronizedSpeedCallback(unsigned int, cPN_SAnimController*);
+    static void MoveDirectionCB(unsigned int, cPN_SingleAxisBlender*);
+    static void MoveWeightCB(unsigned int, cPN_SingleAxisBlender*);
+    static void StrafeSynchronizedSpeedCallback(unsigned int, cPN_SAnimController*);
     void ActionMove(float);
-    void RunWeightCB(unsigned int, cPN_SingleAxisBlender*);
+    static void RunWeightCB(unsigned int, cPN_SingleAxisBlender*);
     void ActionMoveWB(float);
     void ActionSaveSetup(float);
     void ActionSaveReposition(float);
@@ -248,11 +273,5 @@ public:
     static bool mbPosGoalieNetCheck;
     static bool mbNegGoalieNetCheck;
 }; // total size: 0x310
-
-class GoalieSaveData
-{
-public:
-    u32 GetID() { return 0x13C; }
-};
 
 #endif // _GOALIE_H_
