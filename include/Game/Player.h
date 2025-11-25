@@ -88,8 +88,8 @@ public:
     void SetNoPickUpTime(float);
     void GetAIDefNetLocation(const nlVector3*);
     void GetAIOffNetLocation(const nlVector3*);
-    void CanPickupBallFromPass(cBall*);
-    virtual void CanPickupBall(cBall*);
+    bool CanPickupBallFromPass(cBall*);
+    virtual bool CanPickupBall(cBall*);
     virtual void PostPhysicsUpdate();
     virtual void PreUpdate(float);
     virtual void PrePhysicsUpdate(float);

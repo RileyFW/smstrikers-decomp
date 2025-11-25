@@ -1236,7 +1236,7 @@ void Goalie::InitActionPassInterceptSave()
     mbBallImpacted = false;
 
     Event* pEvent = g_pEventManager->CreateValidEvent(0x13, 0x38);
-    GoalieSaveData* pSaveData = new (pEvent->m_data) GoalieSaveData();
+    GoalieSaveData* pSaveData = new ((u8*)pEvent + 0x10) GoalieSaveData();
 
     pSaveData->pGoalie = this;
     pSaveData->v3BallVelocity = v3Zero;

@@ -59,8 +59,12 @@ public:
 class SpaceSearch
 {
 public:
-    ~SpaceSearch();
+    virtual ~SpaceSearch();
     void FindBestPosition(nlVector3&, const nlVector3&, eFieldDirection, const nlVector3*, float, unsigned short);
+
+    /* 0x4 */ float m_fNetDirection;
+    /* 0x8 */ unsigned char m_bDebugOn;
+    /* 0x9 */ unsigned char m_bDrawSearchSpace;
 };
 
 #endif // _SPACESEARCH_H_

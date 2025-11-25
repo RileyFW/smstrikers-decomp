@@ -199,7 +199,7 @@ public:
     void TacklePlayer(cPlayer*);
     void StealBall(cPlayer*);
     void WhackSTSPlayer(cFielder*);
-    void InitActionPostWhistle();
+    virtual void InitActionPostWhistle();
 
     void ActionLooseBallCatch(float);
     void ActionLooseBallDesperate(float);

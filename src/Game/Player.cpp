@@ -1,11 +1,18 @@
 #include "Game/Player.h"
 #include "Game/Character.h"
 #include "Game/Ball.h"
+#include "Game/AnimInventory.h"
 
 #include "Game/AI/Fielder.h"
+#include "Game/AI/SpaceSearch.h"
 
 #include "Game/CharacterTemplate.h"
 #include "Game/SAnim/pnFeather.h"
+#include "NL/nlString.h"
+
+#include "Game/DB/StatsTracker.h"
+#include "Game/Effects/EffectsGroup.h"
+#include "Game/CharacterTriggers.h"
 
 float g_fPassInterceptNoPickupTimer = 5.0f;
 
@@ -48,15 +55,17 @@ void cPlayer::GetAIOffNetLocation(const nlVector3*)
 /**
  * Offset/Address/Size: 0x1F4 | 0x80057744 | size: 0x90
  */
-void cPlayer::CanPickupBallFromPass(cBall*)
+bool cPlayer::CanPickupBallFromPass(cBall*)
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x284 | 0x800577D4 | size: 0x1B0
  */
-void cPlayer::CanPickupBall(cBall*)
+bool cPlayer::CanPickupBall(cBall* pBall)
 {
+    return false;
 }
 
 /**
@@ -102,13 +111,46 @@ void cPlayer::CreateSingleAxisBlender(const int*, int, int, void (*)(unsigned in
  */
 void cPlayer::CollideWithWallCallback(const CollisionPlayerWallData*)
 {
+    if (this != g_pBall->m_pOwner)
+    {
+        return;
+    }
+
+    if (m_eBallRotationMode != BRM_ANIMATED)
+    {
+        return;
+    }
+
+    m_eBallRotationMode = BRM_MATCH_VELOCITY;
+
+    if (m_pBall != NULL)
+    {
+        m_ResetBaseBallOrientation = true;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x890 | 0x80057DE0 | size: 0xE8
  */
-void cPlayer::SetPowerupAnimState(int)
+void cPlayer::SetPowerupAnimState(int animID)
 {
+    s32 nodeIndex;
+    cPN_SAnimController* pController = NewAnimController(animID, false, false, nullptr, 0);
+    if (animID == 0x5F || animID == 0x61)
+    {
+        cSHierarchy* pHierarchy = m_pPoseAccumulator->m_BaseSHierarchy;
+        nodeIndex = pHierarchy->GetNodeIndexByID(nlStringLowerHash("bip01 l clavicle"));
+    }
+    else
+    {
+        cSHierarchy* pHierarchy = m_pPoseAccumulator->m_BaseSHierarchy;
+        nodeIndex = pHierarchy->GetNodeIndexByID(nlStringLowerHash("bip01 r clavicle"));
+    }
+
+    m_pPowerupLayer->ClearNodeWeights();
+    m_pPowerupLayer->SetNodeWeight(nodeIndex, 1.0f, 0.2f);
+    m_pPowerupLayer->SetChild(1, pController);
+    m_pPowerupLayer->BeginBlendIn(0.067f);
 }
 
 /**
@@ -168,6 +210,22 @@ void cPlayer::ResetUnPossessionTimer()
  */
 void cPlayer::ReleaseBall()
 {
+    m_pPhysicsCharacter->ReleaseObject();
+    m_pBall->ClearOwner();
+    m_pBall = NULL;
+
+    float fPossessionTime = m_tBallPossessionTimer.GetSeconds();
+    StatsTracker::Instance()->TrackStat(STATS_POSSESION_TIME, m_pTeam->m_nSide, m_ID, 100.0f * fPossessionTime, 0, 0, 0);
+
+    if (IsPlayingEffect(fxGetGroup("ball_sts_windup")))
+    {
+        StopSFX(Audio::CHARSFX_SHOT_WINDUP);
+        StopSFX(Audio::CHARSFX_EFFORTS_HEAD_SHAKE);
+    }
+
+    KillWindups(this);
+    StopSFX(Audio::CHARSFX_KICK_ATTEMPT);
+    m_pCharacterSFX->StopMovementLoop();
 }
 
 /**
@@ -281,8 +339,14 @@ void cPlayer::DoFlashLight(const nlVector3&, const nlVector3&, unsigned short, f
 /**
  * Offset/Address/Size: 0x26A0 | 0x80059BF0 | size: 0x5C
  */
-void cPlayer::SetAnimID(int)
+void cPlayer::SetAnimID(int animID)
 {
+    cCharacter::SetAnimID(animID);
+    m_eBallRotationMode = (eBallRotationMode)m_pAnimInventory->GetBallRotationMode(animID);
+    if (m_pBall != nullptr)
+    {
+        m_ResetBaseBallOrientation = true;
+    }
 }
 
 /**
@@ -316,15 +380,22 @@ void cPlayer::SetDesiredFacingDirection()
 /**
  * Offset/Address/Size: 0x2DE0 | 0x8005A330 | size: 0x10
  */
-void cPlayer::ResetDesiredDirections(unsigned short)
+void cPlayer::ResetDesiredDirections(unsigned short direction)
 {
+    m_aDesiredFacingDirection = direction;
+    m_aDesiredMovementDirection = m_aDesiredFacingDirection;
 }
 
 /**
  * Offset/Address/Size: 0x2DF0 | 0x8005A340 | size: 0x5C
  */
-void cPlayer::SetSpaceSearch(SpaceSearch*)
+void cPlayer::SetSpaceSearch(SpaceSearch* pSpaceSearch)
 {
+    if (m_pSpaceSearch != NULL)
+    {
+        delete m_pSpaceSearch;
+    }
+    m_pSpaceSearch = pSpaceSearch;
 }
 
 /**

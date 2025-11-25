@@ -1,4 +1,12 @@
 #include "Game/AI/FielderActions.h"
+#include "Game/Camera/CameraMan.h"
+#include "Game/RumbleActions.h"
+#include "Game/Sys/eventman.h"
+#include "Game/ReplayManager.h"
+#include "Game/Drawable/DrawableCharacter.h"
+#include "Game/FixedUpdateTask.h"
+#include "Game/ParticleUpdateTask.h"
+#include "types.h"
 
 // /**
 //  * Offset/Address/Size: 0x13C | 0x80030010 | size: 0xD74
@@ -68,6 +76,7 @@
  */
 void cFielder::asmRunning()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -75,6 +84,7 @@ void cFielder::asmRunning()
  */
 void cFielder::asmRunningWB(float)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -82,6 +92,7 @@ void cFielder::asmRunningWB(float)
  */
 void cFielder::EndAction()
 {
+    SetAction(ACTION_NEED_ACTION);
 }
 
 /**
@@ -306,27 +317,72 @@ void cFielder::InitActionShellReact(const nlVector3&, const nlVector3&)
  */
 void cFielder::InitActionRunning()
 {
+    m_pHeadTrack->m_bTrackOOI = true;
+
+    if (m_eActionState != ACTION_RUNNING)
+    {
+        mActionRunningVars.eLastStrafeDirection = STRAFE_IDLE;
+        m_aActualMovementDirection = m_aActualFacingDirection;
+        m_aDesiredFacingDirection = m_aActualFacingDirection;
+        m_aDesiredMovementDirection = m_aActualMovementDirection;
+        m_fDesiredSpee = m_fActualSpeed;
+        mActionRunningVars.bFirstCycleOfTurbo = false;
+    }
+
+    SetAction(ACTION_RUNNING);
 }
 
 /**
  * Offset/Address/Size: 0x435C | 0x8002AE94 | size: 0xA4
  */
-void cFielder::ActionRunning(float)
+void cFielder::ActionRunning(float dt)
 {
+    if (m_pBall != nullptr)
+    {
+        SetAction(ACTION_RUNNING_WB);
+        mActionRunningWBVars.bWaitForAnimToFinish = false;
+        mActionRunningVars.eLastStrafeDirection = STRAFE_IDLE;
+        m_aActualMovementDirection = m_aActualFacingDirection;
+    }
+    else
+    {
+        asmRunning();
+
+        if (CanPickupBall(g_pBall))
+        {
+            PickupBall(g_pBall);
+            SetAction(ACTION_RUNNING_WB);
+            mActionRunningWBVars.bWaitForAnimToFinish = false;
+            mActionRunningVars.eLastStrafeDirection = STRAFE_IDLE;
+            m_aActualMovementDirection = m_aActualFacingDirection;
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0x430C | 0x8002AE44 | size: 0x50
  */
-void cFielder::InitActionRunningWB(bool)
+void cFielder::InitActionRunningWB(bool bWaitForAnimToFinish)
 {
+    SetAction(ACTION_RUNNING_WB);
+    mActionRunningWBVars.bWaitForAnimToFinish = bWaitForAnimToFinish;
+    mActionRunningVars.eLastStrafeDirection = STRAFE_IDLE;
+    m_aActualMovementDirection = m_aActualFacingDirection; // m_aDesiredMovementDirection
 }
 
 /**
  * Offset/Address/Size: 0x42D4 | 0x8002AE0C | size: 0x38
  */
-void cFielder::ActionRunningWB(float)
+void cFielder::ActionRunningWB(float dt)
 {
+    if (m_pBall == nullptr)
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
+    else
+    {
+        asmRunningWB(dt);
+    }
 }
 
 /**
@@ -369,6 +425,9 @@ void cFielder::InitActionShootToScore()
  */
 void MatrixCamFinishedCallback(MatrixEffectCam*)
 {
+    const float timeScale = 1.0f;
+    FixedUpdateTask::mTimeScale = timeScale;
+    ParticleUpdateTask::SetTimeScale(timeScale);
 }
 
 /**
@@ -383,13 +442,33 @@ void cFielder::SetupCaptainSTSAnimCam(bool)
  */
 void OtherMatrixCamFinishedCallback(MatrixEffectCam*)
 {
+    // EMPTY
 }
 
 /**
  * Offset/Address/Size: 0x2C4C | 0x80029784 | size: 0xB8
  */
-void HyperStrikeEffectUpdate(EmissionController&)
+void HyperStrikeEffectUpdate(EmissionController& controller)
 {
+    if (ReplayManager::Instance()->mRender != nullptr)
+    {
+        const u32 characterIndex = controller.m_uUserData;
+        {
+            DrawableCharacter& character = ReplayManager::Instance()->mRender->mCharacters[characterIndex];
+            controller.SetPoseAccumulator(*character.mPoseAccumulator);
+        }
+        {
+            DrawableCharacter& character = ReplayManager::Instance()->mRender->mCharacters[characterIndex];
+            controller.SetAnimController(character.GetAnimController());
+        }
+    }
+
+    nlVector3 viewVector;
+    viewVector.f.x = cCameraManager::m_matView.f.m31;
+    viewVector.f.y = cCameraManager::m_matView.f.m32;
+    viewVector.f.z = cCameraManager::m_matView.f.m33;
+    cCameraManager::GetViewVector(viewVector);
+    controller.SetDirection(viewVector);
 }
 
 /**
@@ -425,6 +504,10 @@ void cFielder::InitActionSlideAttackFailReact()
  */
 void cFielder::ActionSlideAttackFailReact(float)
 {
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
@@ -439,6 +522,15 @@ void cFielder::InitActionSquishReact(const nlVector3&)
  */
 void cFielder::DoSlideAttackStats()
 {
+    const Event* pEvent = g_pEventManager->CreateValidEvent(0x19, 0x28);
+    PlayerAttackData* pData = new ((u8*)pEvent + 0x10) PlayerAttackData();
+
+    pData->pAttacker = this;
+
+    bool bHasGlobalPad = GetGlobalPad() != nullptr;
+    pData->nAttackerPadID = bHasGlobalPad ? GetGlobalPad()->m_padIndex : -1;
+
+    pData->pTarget = nullptr;
 }
 
 /**
@@ -460,6 +552,10 @@ void cFielder::InitActionSTSHitReact(cPlayer*)
  */
 void cFielder::ActionSlideAttackReact(float)
 {
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
@@ -467,6 +563,10 @@ void cFielder::ActionSlideAttackReact(float)
  */
 void cFielder::ActionBombReact(float)
 {
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
@@ -474,6 +574,18 @@ void cFielder::ActionBombReact(float)
  */
 void cFielder::ActionSTSHitReact(float)
 {
+    m_pCurrentAnimController->TestFrameTrigger(3.0f);
+
+    if (m_pCurrentAnimController->TestFrameTrigger(4.0f))
+    {
+        FireCameraRumbleFilter(0.0f, 0.2f);
+        BeginRumbleAction(RUMBLE_SOLID_CONTACT, GetGlobalPad());
+    }
+
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
@@ -481,6 +593,10 @@ void cFielder::ActionSTSHitReact(float)
  */
 void cFielder::ActionShellReact(float)
 {
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
@@ -488,6 +604,10 @@ void cFielder::ActionShellReact(float)
  */
 void cFielder::ActionBananaReact(float)
 {
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
@@ -495,13 +615,28 @@ void cFielder::ActionBananaReact(float)
  */
 void cFielder::ActionSquishReact(float)
 {
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x118 | 0x80026C50 | size: 0xC8
  */
-void cFielder::InitActionReceivePass(int, nlVector3&, float)
+void cFielder::InitActionReceivePass(int animID, nlVector3& v3TargetPos, float fAdjustEndTime)
 {
+    SetAction(ACTION_RECEIVE_PASS);
+    SetAnimState(animID, true, 0.2f, false, false);
+
+    nlVector3 v3Direction;
+    nlVec3Set(v3Direction,
+        v3TargetPos.f.x - m_v3Position.f.x,
+        v3TargetPos.f.y - m_v3Position.f.y,
+        v3TargetPos.f.z - m_v3Position.f.z);
+
+    InitMovementFromAnim(0, v3Direction, fAdjustEndTime, false);
+    m_aDesiredFacingDirection = m_aActualFacingDirection;
 }
 
 /**
@@ -509,6 +644,32 @@ void cFielder::InitActionReceivePass(int, nlVector3&, float)
  */
 void cFielder::ActionReceivePass(float)
 {
+    if (CanPickupBallFromPass(g_pBall))
+    {
+        bool bSetPerfectPass = false;
+        if (g_pBall->mbHyperSTS)
+        {
+            if (m_DesireReceivePassSharedVars.iAttemptOneTouchShot != 0)
+            {
+                if (m_eAnimID != 60)
+                {
+                    bSetPerfectPass = true;
+                }
+            }
+        }
+
+        PickupBall(g_pBall);
+
+        if (bSetPerfectPass)
+        {
+            g_pBall->SetPerfectPass(true, true);
+        }
+    }
+
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
@@ -516,6 +677,10 @@ void cFielder::ActionReceivePass(float)
  */
 void cFielder::InitActionWait()
 {
+    SetAction(ACTION_WAIT);
+    SetAnimState(0, true, 0.0f, false, false);
+    InitMovementNone(0.0f, 0.0f);
+    m_aDesiredFacingDirection = m_aActualFacingDirection;
 }
 
 /**
@@ -523,4 +688,5 @@ void cFielder::InitActionWait()
  */
 void cFielder::ActionWait(float)
 {
+    // EMPTY
 }

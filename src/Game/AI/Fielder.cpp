@@ -1,4 +1,7 @@
 #include "Game/AI/Fielder.h"
+#include "Game/AI/ShotMeter.h"
+#include "Game/Game.h"
+#include "Game/RumbleActions.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x8001933C | size: 0x3C
@@ -439,6 +442,7 @@ void cFielder::CleanActionShootToScore()
  */
 void cFielder::ClearVolleyPass()
 {
+    // EMPTY
 }
 
 /**
@@ -467,20 +471,50 @@ void cFielder::CalculateStrafeDirection(unsigned short, unsigned short)
  */
 void cFielder::CanBreakOutOfSlideTackle()
 {
+    if (m_eActionState == ACTION_SLIDE_ATTACK)
+    {
+        if (mActionSlideAttackVars.bAttackSucceeded != 0)
+        {
+            m_tSlideAttackTimer.SetSeconds(0.0f);
+            mActionSlideAttackVars.eSlideAttackState = SLIDE_ATTACK_DECELERATE;
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0x6284 | 0x8001F5C0 | size: 0x58
  */
-void cFielder::CanBeBlownUp()
+bool cFielder::CanBeBlownUp()
 {
+    switch (m_eActionState)
+    {
+    case ACTION_ELECTROCUTION:
+        // Check if anim ID is 0x75 or 0x76
+        if (m_eAnimID == 0x76 || m_eAnimID == 0x75)
+        {
+            return true;
+        }
+        return false;
+
+    case ACTION_STS_HIT_REACT:
+    case ACTION_SQUISH_REACT:
+        return false;
+
+    default:
+        return true;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x62DC | 0x8001F618 | size: 0x34
  */
-void cFielder::CanPickupBall(cBall*)
+bool cFielder::CanPickupBall(cBall* pBall)
 {
+    if (m_tFrozenTimer.m_uPackedTime != 0)
+    {
+        return false;
+    }
+    return cPlayer::CanPickupBall(pBall);
 }
 
 /**
@@ -493,8 +527,28 @@ void cFielder::DoFindBestSlideAttackTarget(nlVector3&, nlVector3&)
 /**
  * Offset/Address/Size: 0x6700 | 0x8001FA3C | size: 0xCC
  */
-void cFielder::SetFrozen(float)
+void cFielder::SetFrozen(float seconds)
 {
+    static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
+
+    m_tFrozenTimer.SetSeconds(seconds);
+    m_fDesiredSpee = 0.0f;
+    m_fActualSpeed = m_fDesiredSpee;
+    SetVelocity(v3Zero);
+
+    if (seconds > 0.0f)
+    {
+        if (m_eFielderDesireState != FIELDERDESIRE_FINISH_ACTION)
+        {
+            g_pGame->AbortPendingThought(mThoughtHashCalcDesire);
+            g_pGame->AbortPendingThought(mThoughtHashInitRunToNet);
+            g_pGame->AbortPendingThought(mThoughtHashInitGetOpen);
+            g_pGame->AbortPendingThought(mThoughtHashInitWindupPass);
+            g_pGame->AbortPendingThought(mThoughtHashInitCutAndBreak);
+            ClearQueuedDesire();
+            EndDesire(false);
+        }
+    }
 }
 
 /**
@@ -502,7 +556,7 @@ void cFielder::SetFrozen(float)
  */
 bool cFielder::IsFrozen() const
 {
-    return false;
+    return m_tFrozenTimer.m_uPackedTime != 0;
 }
 
 /**
@@ -510,7 +564,7 @@ bool cFielder::IsFrozen() const
  */
 bool cFielder::IsDefense() const
 {
-    return false;
+    return m_eRole == ROLE_DEFENCE;
 }
 
 /**
@@ -518,7 +572,7 @@ bool cFielder::IsDefense() const
  */
 bool cFielder::IsMidField() const
 {
-    return false;
+    return m_eRole == ROLE_MIDFIELD;
 }
 
 /**
@@ -526,7 +580,7 @@ bool cFielder::IsMidField() const
  */
 bool cFielder::IsWinger() const
 {
-    return false;
+    return m_eRole == ROLE_WINGER;
 }
 
 /**
@@ -534,7 +588,7 @@ bool cFielder::IsWinger() const
  */
 bool cFielder::IsStriker() const
 {
-    return false;
+    return m_eRole == ROLE_STRIKER;
 }
 
 /**
@@ -542,6 +596,10 @@ bool cFielder::IsStriker() const
  */
 bool cFielder::IsSlideTackling() const
 {
+    if ((m_tFrozenTimer.m_uPackedTime == 0) && (m_eActionState == ACTION_SLIDE_ATTACK) && ((mActionSlideAttackVars.eSlideAttackState == SLIDE_ATTACK_DOWN || mActionSlideAttackVars.eSlideAttackState == SLIDE_ATTACK_DECELERATE)))
+    {
+        return true;
+    }
     return false;
 }
 
@@ -550,7 +608,20 @@ bool cFielder::IsSlideTackling() const
  */
 bool cFielder::IsHitting() const
 {
-    return false;
+    bool isHitting = false;
+    // float fAnimTime;
+
+    const cPN_SAnimController* pAnimController = m_pCurrentAnimController;
+    const float fAnimTime = 30.0f * pAnimController->m_fTime * (pAnimController->m_pSAnim->m_nNumKeys / 30.0f);
+
+    if ((m_tFrozenTimer.m_uPackedTime == 0) && m_eActionState == ACTION_HIT)
+    {
+        if (fAnimTime >= 4.0f && fAnimTime <= 14.0f)
+        {
+            isHitting = true;
+        }
+    }
+    return isHitting;
 }
 
 /**
@@ -599,8 +670,10 @@ void cFielder::GetFormationPosition(nlVector3&, float)
 /**
  * Offset/Address/Size: 0x6D94 | 0x800200D0 | size: 0x3C
  */
-void cFielder::SetAction(eFielderActionState)
+void cFielder::SetAction(eFielderActionState actionState)
 {
+    CleanUpAction();
+    m_eActionState = actionState;
 }
 
 /**
@@ -608,14 +681,16 @@ void cFielder::SetAction(eFielderActionState)
  */
 bool cFielder::IsActionDone() const
 {
-    return false;
+    return (m_eActionState == ACTION_NEED_ACTION) ? true : false;
 }
 
 /**
  * Offset/Address/Size: 0x6DE4 | 0x80020120 | size: 0x44
  */
-void cFielder::DoResetShotMeter(float)
+void cFielder::DoResetShotMeter(float fTime)
 {
+    m_pShotMeter->Reset();
+    m_pShotMeter->m_fTime = fTime;
 }
 
 /**
@@ -726,8 +801,18 @@ void cFielder::SetDesireDuration(float, bool)
 /**
  * Offset/Address/Size: 0x94B8 | 0x800227F4 | size: 0xAC
  */
-void cFielder::SetBombImpactTime(const nlVector3&, float)
+void cFielder::SetBombImpactTime(const nlVector3& v3BombImpactLocation, float fBombImpactRadius)
 {
+    float fDeltaX = m_v3Position.f.x - v3BombImpactLocation.f.x;
+    float fDeltaY = m_v3Position.f.y - v3BombImpactLocation.f.y;
+    float fDeltaZ = m_v3Position.f.z - v3BombImpactLocation.f.z;
+
+    float fDistanceSquared = fDeltaX * fDeltaX + fDeltaY * fDeltaY + fDeltaZ * fDeltaZ;
+    float fTime = nlSqrt(fDistanceSquared, true) / 25.f;
+
+    mtBombImpactTime.SetSeconds(fTime);
+    mv3BombImpactLocation = v3BombImpactLocation;
+    mfBombImpactRadius = fBombImpactRadius;
 }
 
 /**
@@ -735,6 +820,8 @@ void cFielder::SetBombImpactTime(const nlVector3&, float)
  */
 void cFielder::SetKickOffWaitTime()
 {
+    mbCanKickoff = true;
+    mtKickOffWaitTimer.SetSeconds(2.0f);
 }
 
 /**
@@ -742,6 +829,8 @@ void cFielder::SetKickOffWaitTime()
  */
 void cFielder::SetSlideAttackSuccessFlag()
 {
+    mActionSlideAttackVars.bAttackSucceeded = true;
+    BeginRumbleAction(RUMBLE_MEDIUM_CONTACT, GetGlobalPad());
 }
 
 /**
@@ -770,6 +859,7 @@ void cFielder::CleanUpPowerupEffect()
  */
 void cFielder::CleanUpAction()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

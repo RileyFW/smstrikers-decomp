@@ -131,12 +131,29 @@ class cBall;
 class LooseBallContactAnimInfo;
 class ChainChomp;
 class Bowser;
+class AIPlay;
+class AvoidController;
+class ShotMeter;
 
 class cFielder : public cPlayer
 {
 public:
     cFielder(int, int, eCharacterClass, const int*, cSHierarchy*, cAnimInventory*, const CharacterPhysicsData*, FielderTweaks*, AnimRetargetList*);
-    ~cFielder();
+    /* 0x08 */ virtual ~cFielder();
+
+    /* 0x0C */ virtual void PostPhysicsUpdate();
+    /* 0x10 */ // virtual void PrePhysicsUpdate(float);
+    /* 0x14 */ virtual void PreUpdate(float);
+    /* 0x18 */ // virtual void SetAnimID(int);
+    /* 0x1C */ virtual void SetPosition(const nlVector3&);
+    /* 0x20 */ virtual void Update(float);
+    /* 0x24 */ virtual bool CanPickupBall(cBall*);
+    /* 0x28 */ // virtual void CollideWithBallCallback(cBall*);
+    /* 0x2C */ virtual void CollideWithCharacterCallback(CollisionPlayerPlayerData*);
+    /* 0x30 */ virtual void CollideWithWallCallback(const CollisionPlayerWallData*);
+    /* 0x34 */ // virtual void CollideWithWallCallback(const CollisionPlayerWallData*);
+    /* 0x38 */ virtual void InitActionPostWhistle();
+
     void AbortPlay();
     void AbortPendingThoughts();
     void CalculateNewDesire();
@@ -145,13 +162,11 @@ public:
     void CanLooseBallPass();
     void CanReceivePass();
     void SetMark(cFielder*);
-    void CollideWithCharacterCallback(CollisionPlayerPlayerData*);
     void CollideWithShellCallback(ePowerupSize, bool, const nlVector3&, const nlVector3&);
     void CollideWithFreezeCallback();
     void CollideWithBananaCallback(const nlVector3&);
     void CollideWithChainCallback(ChainChomp*);
     void CollideWithBowserCallback(Bowser*);
-    void CollideWithWallCallback(const CollisionPlayerWallData*);
     void ClearPassTargetIfAmThePassTarget();
     void UsePerfectPass();
     bool IsPlayingPowerupAnim();
@@ -163,7 +178,7 @@ public:
     bool IsReceivingVolleyPass() const;
     bool IsPreparingForOneTimer() const;
     void CleanUpAction();
-    void EndAction();
+    // void EndAction();
     void CleanUpPowerupEffect();
     void CalcRegularShot(nlVector3&, nlVector3&);
     void CalcShootToScoreShot(nlVector3&, nlVector3&);
@@ -203,8 +218,7 @@ public:
     bool IsFrozen() const;
     void SetFrozen(float);
     void DoFindBestSlideAttackTarget(nlVector3&, nlVector3&);
-    void CanPickupBall(cBall*);
-    void CanBeBlownUp();
+    bool CanBeBlownUp();
     void CanBreakOutOfSlideTackle();
     void CalculateStrafeDirection(unsigned short, unsigned short);
     void CalcPointOnPerimeter(nlVector3&, const nlVector3&, float);
@@ -241,7 +255,6 @@ public:
     void ShouldIClearBall();
     void ShouldILeadPass();
     void CanISlideAttack(const nlVector3&, const nlVector3&, float*);
-    void SetPosition(const nlVector3&);
     void SetDesiredSpeedAndDirectionToPosition(float, const nlVector3&, eTurboRequest, float, float);
     void SetDesiredSpeed(float, float);
     void GetSpeedPowerupAdjusted(float);
@@ -255,9 +268,6 @@ public:
     void TestQueuedActions();
     void TestButtonsRunning();
     void TestButtonsRunningWB(float);
-    void PreUpdate(float);
-    void PostPhysicsUpdate();
-    void Update(float);
     void ThrowPowerup();
     void SetPowerup(ePowerUpType, int, cFielder*);
     void UseTeamPowerup(cFielder*);
@@ -297,19 +307,82 @@ public:
     void DesireUsePowerup(float);
     void DesireWindupShot(float);
 
-    unsigned char m_bHasBeenUpdated;         // offset 0x1D4, size 0x1
-    enum eFielderActionState m_eActionState; // offset 0x1D8, size 0x4
-    float m_fShootToScoreActiveTime;         // offset 0x1DC, size 0x4
-    class Timer m_tFrozenTimer;              // offset 0x1E0, size 0x4
-    struct                                   /* @class$486Powerups_cpp */
+    // actions
+    void asmRunning();
+    void asmRunningWB(float);
+    void EndAction();
+    void InitActionDeke(ePadActions);
+    void ActionDeke(float);
+    void InitActionElectrocution(const nlVector3&, const nlVector3&);
+    void ActionElectrocution(float);
+    void InitActionHit(cFielder*);
+    void ActionHit(float);
+    void InitActionHitReact(cPlayer*, unsigned short, bool);
+    void ActionHitReact(float);
+    void InitActionIdleTurn(unsigned short);
+    void ActionIdleTurn(float);
+    void InitActionLateOneTimerFromVolley();
+    void ActionLateOneTimerFromVolley(float);
+    void DoCommonInitActionLooseBall(const nlVector3&);
+    void InitActionLooseBallPass(cFielder*, bool);
+    void ActionLooseBallPass(float);
+    void InitActionLooseBallShot(bool);
+    void ActionLooseBallShot(float);
+    void InitActionOneTimer(int, nlVector3&, float, bool);
+    void ActionOneTimer(float);
+    void InitActionOneTouchPassFromVolley(cPlayer*);
+    void ActionOneTouchPassFromVolley(float);
+    void DoCalcCanDoPerfectPass(cFielder*, const nlVector3&);
+    void InitActionPass(cPlayer*, bool, bool);
+    void ActionPass(float);
+    void ActionPostWhistle(float);
+    void InitActionBombReact(const nlVector3&, float);
+    void InitActionBombHitReact(const nlVector3&);
+    void InitActionBananaReact(const nlVector3&);
+    void InitActionShellReact(const nlVector3&, const nlVector3&);
+    void InitActionRunning();
+    void ActionRunning(float);
+    void InitActionRunningWB(bool);
+    void ActionRunningWB(float);
+    void ActionRunningWBTurbo(float);
+    void ActionRunningWBTurboTurn(float);
+    void InitActionShot(bool);
+    void ActionShot(float);
+    void InitActionShootToScore();
+    void SetupCaptainSTSAnimCam(bool);
+    void ActionShootToScore(float);
+    void InitActionSlideAttack(cFielder*, float);
+    void ActionSlideAttack(float);
+    void InitActionSlideAttackFailReact();
+    void ActionSlideAttackFailReact(float);
+    void InitActionSquishReact(const nlVector3&);
+    void DoSlideAttackStats();
+    // void InitActionSlideAttackReact(cPlayer*, bool);
+    void InitActionSTSHitReact(cPlayer*);
+    void ActionSlideAttackReact(float);
+    void ActionBombReact(float);
+    void ActionSTSHitReact(float);
+    void ActionShellReact(float);
+    void ActionBananaReact(float);
+    void ActionSquishReact(float);
+    void InitActionReceivePass(int, nlVector3&, float);
+    void ActionReceivePass(float);
+    void InitActionWait();
+    void ActionWait(float);
+
+    bool m_bHasBeenUpdated;             // offset 0x1D4, size 0x1
+    eFielderActionState m_eActionState; // offset 0x1D8, size 0x4
+    float m_fShootToScoreActiveTime;    // offset 0x1DC, size 0x4
+    Timer m_tFrozenTimer;               // offset 0x1E0, size 0x4
+    struct                              /* @class$486Powerups_cpp */
     {
         // total size: 0x4
-        unsigned char bStickWasReset;             // offset 0x0, size 0x1
-        unsigned char bPossibleSuccessfulDeke;    // offset 0x1, size 0x1
-        unsigned char bPossibleTurboMove;         // offset 0x2, size 0x1
-        unsigned char bTurboButtonDownLastUpdate; // offset 0x3, size 0x1
-    } mActionDekeVars;                            // offset 0x1E4, size 0x4
-    struct                                        /* @class$487Powerups_cpp */
+        bool bStickWasReset;             // offset 0x0, size 0x1
+        bool bPossibleSuccessfulDeke;    // offset 0x1, size 0x1
+        bool bPossibleTurboMove;         // offset 0x2, size 0x1
+        bool bTurboButtonDownLastUpdate; // offset 0x3, size 0x1
+    } mActionDekeVars;                   // offset 0x1E4, size 0x4
+    struct                               /* @class$487Powerups_cpp */
     {
         // total size: 0x4
         float electrocutionTime; // offset 0x0, size 0x4
@@ -317,9 +390,9 @@ public:
     struct                       /* @class$488Powerups_cpp */
     {
         // total size: 0x1
-        unsigned char bDoFrameLock; // offset 0x0, size 0x1
-    } mActionHitReactActionVars;    // offset 0x1EC, size 0x1
-    struct                          /* @class$489Powerups_cpp */
+        bool bDoFrameLock;       // offset 0x0, size 0x1
+    } mActionHitReactActionVars; // offset 0x1EC, size 0x1
+    struct                       /* @class$489Powerups_cpp */
     {
         // total size: 0x4
         float fRumbleDirection; // offset 0x0, size 0x4
@@ -327,21 +400,21 @@ public:
     struct                      /* @class$490Powerups_cpp */
     {
         // total size: 0x2
-        unsigned char bIsShootToScore; // offset 0x0, size 0x1
-        unsigned char bIsChipShot;     // offset 0x1, size 0x1
-    } mActionShotVars;                 // offset 0x1F4, size 0x2
-    struct                             /* @class$491Powerups_cpp */
+        bool bIsShootToScore; // offset 0x0, size 0x1
+        bool bIsChipShot;     // offset 0x1, size 0x1
+    } mActionShotVars;        // offset 0x1F4, size 0x2
+    struct                    /* @class$491Powerups_cpp */
     {
         // total size: 0x8
-        class cPlayer* passTarget; // offset 0x0, size 0x4
-        unsigned char bVolleyPass; // offset 0x4, size 0x1
-    } mActionLooseBallPassVars;    // offset 0x1F8, size 0x8
-    struct                         /* @class$492Powerups_cpp */
+        cPlayer* passTarget;    // offset 0x0, size 0x4
+        bool bVolleyPass;       // offset 0x4, size 0x1
+    } mActionLooseBallPassVars; // offset 0x1F8, size 0x8
+    struct                      /* @class$492Powerups_cpp */
     {
         // total size: 0x1
-        unsigned char bIsChipShot; // offset 0x0, size 0x1
-    } mActionLooseBallShotVars;    // offset 0x200, size 0x1
-    struct                         /* @class$493Powerups_cpp */
+        bool bIsChipShot;       // offset 0x0, size 0x1
+    } mActionLooseBallShotVars; // offset 0x200, size 0x1
+    struct                      /* @class$493Powerups_cpp */
     {
         // total size: 0x4
         float fOneTimerAnimTime; // offset 0x0, size 0x4
@@ -349,119 +422,119 @@ public:
     struct                       /* @class$494Powerups_cpp */
     {
         // total size: 0x8
-        class cPlayer* pPassTarget;   // offset 0x0, size 0x4
-        unsigned char bVolleyPass;    // offset 0x4, size 0x1
-        unsigned char bAllowLeadPass; // offset 0x5, size 0x1
-    } mActionPassingVars;             // offset 0x208, size 0x8
-    struct                            /* @class$495Powerups_cpp */
+        cPlayer* pPassTarget; // offset 0x0, size 0x4
+        bool bVolleyPass;     // offset 0x4, size 0x1
+        bool bAllowLeadPass;  // offset 0x5, size 0x1
+    } mActionPassingVars;     // offset 0x208, size 0x8
+    struct                    /* @class$495Powerups_cpp */
     {
         // total size: 0x8
-        enum eStrafeDirection eLastStrafeDirection; // offset 0x0, size 0x4
-        unsigned char bFirstCycleOfTurbo;           // offset 0x4, size 0x1
-    } mActionRunningVars;                           // offset 0x210, size 0x8
-    struct                                          /* @class$496Powerups_cpp */
+        eStrafeDirection eLastStrafeDirection; // offset 0x0, size 0x4
+        bool bFirstCycleOfTurbo;               // offset 0x4, size 0x1
+    } mActionRunningVars;                      // offset 0x210, size 0x8
+    struct                                     /* @class$496Powerups_cpp */
     {
         // total size: 0x1
-        unsigned char bWaitForAnimToFinish; // offset 0x0, size 0x1
-    } mActionRunningWBVars;                 // offset 0x218, size 0x1
-    struct                                  /* @class$497Powerups_cpp */
+        bool bWaitForAnimToFinish; // offset 0x0, size 0x1
+    } mActionRunningWBVars;        // offset 0x218, size 0x1
+    struct                         /* @class$497Powerups_cpp */
     {
         // total size: 0x1
-        unsigned char bForcedMirrorSwap; // offset 0x0, size 0x1
-    } mActionRunningWBTurboVars;         // offset 0x219, size 0x1
-    struct                               /* @class$498Powerups_cpp */
+        bool bForcedMirrorSwap;  // offset 0x0, size 0x1
+    } mActionRunningWBTurboVars; // offset 0x219, size 0x1
+    struct                       /* @class$498Powerups_cpp */
     {
         // total size: 0x8
         eSlideAttackState eSlideAttackState;        // offset 0x0, size 0x4
-        unsigned char bAttackSucceeded;             // offset 0x4, size 0x1
-        unsigned char bIsBButtonReset;              // offset 0x5, size 0x1
-        unsigned char bWasStarMushroomUsedDuring;   // offset 0x6, size 0x1
+        bool bAttackSucceeded;                      // offset 0x4, size 0x1
+        bool bIsBButtonReset;                       // offset 0x5, size 0x1
+        bool bWasStarMushroomUsedDuring;            // offset 0x6, size 0x1
     } mActionSlideAttackVars;                       // offset 0x21C, size 0x8
     ActionShootToScoreVars mActionShootToScoreVars; // offset 0x224, size 0x30
     eFielderDesireState m_eFielderDesireState;      // offset 0x254, size 0x4
     eFielderDesireState m_ePrevFielderDesireState;  // offset 0x258, size 0x4
     int m_eDesireSubState;                          // offset 0x25C, size 0x4
-    class Timer m_tDesireDuration;                  // offset 0x260, size 0x4
+    Timer m_tDesireDuration;                        // offset 0x260, size 0x4
     float m_fDesireConfidence;                      // offset 0x264, size 0x4
-    struct sDesireParams m_sQueuedDesireParams;     // offset 0x268, size 0x68
+    sDesireParams m_sQueuedDesireParams;            // offset 0x268, size 0x68
     struct                                          /* @class$499Powerups_cpp */
     {
         // total size: 0x28
-        class Timer tMiscTimer;            // offset 0x0, size 0x4
-        class Timer tAge;                  // offset 0x4, size 0x4
-        float fMisc;                       // offset 0x8, size 0x4
-        class cPlayer* pSBC;               // offset 0xC, size 0x4
-        class cPlayer* pBallOwner;         // offset 0x10, size 0x4
-        class nlVector3 v3DesiredPosition; // offset 0x14, size 0xC
-        unsigned char bInPosition;         // offset 0x20, size 0x1
-        enum eTurboRequest turboRequest;   // offset 0x24, size 0x4
-    } m_DesireCommonVars;                  // offset 0x2D0, size 0x28
-    struct                                 /* @class$500Powerups_cpp */
+        Timer tMiscTimer;            // offset 0x0, size 0x4
+        Timer tAge;                  // offset 0x4, size 0x4
+        float fMisc;                 // offset 0x8, size 0x4
+        cPlayer* pSBC;               // offset 0xC, size 0x4
+        cPlayer* pBallOwner;         // offset 0x10, size 0x4
+        nlVector3 v3DesiredPosition; // offset 0x14, size 0xC
+        bool bInPosition;            // offset 0x20, size 0x1
+        eTurboRequest turboRequest;  // offset 0x24, size 0x4
+    } m_DesireCommonVars;            // offset 0x2D0, size 0x28
+    struct                           /* @class$500Powerups_cpp */
     {
         // total size: 0x1
-        unsigned char bDidWave; // offset 0x0, size 0x1
-    } m_DesireGetOpenVars;      // offset 0x2F8, size 0x1
-    struct                      /* @class$501Powerups_cpp */
+        bool bDidWave;     // offset 0x0, size 0x1
+    } m_DesireGetOpenVars; // offset 0x2F8, size 0x1
+    struct                 /* @class$501Powerups_cpp */
     {
         // total size: 0x2C
         unsigned short aDesiredFacingDirection; // offset 0x0, size 0x2
-        class nlVector3 v3DesiredPosition;      // offset 0x4, size 0xC
+        nlVector3 v3DesiredPosition;            // offset 0x4, size 0xC
         float fDesiredTime;                     // offset 0x10, size 0x4
-        class nlVector3 v3BallPosition;         // offset 0x14, size 0xC
+        nlVector3 v3BallPosition;               // offset 0x14, size 0xC
         int nOneTimerAnim;                      // offset 0x20, size 0x4
         float fOneTimerAnimTime;                // offset 0x24, size 0x4
-        unsigned char bIsChipShot;              // offset 0x28, size 0x1
-        unsigned char bVolleyPassReceive;       // offset 0x29, size 0x1
+        bool bIsChipShot;                       // offset 0x28, size 0x1
+        bool bVolleyPassReceive;                // offset 0x29, size 0x1
     } m_DesireOneTimerVars;                     // offset 0x2FC, size 0x2C
     struct                                      /* @class$502Powerups_cpp */
     {
         // total size: 0x38
-        class nlVector3 v3DesiredPosition;       // offset 0x0, size 0xC
-        unsigned short aDesiredFacingDirection;  // offset 0xC, size 0x2
-        float fDesiredTime;                      // offset 0x10, size 0x4
-        class nlVector3 v3BallPosition;          // offset 0x14, size 0xC
-        int nReceivePassAnim;                    // offset 0x20, size 0x4
-        float fReceivePassAnimTime;              // offset 0x24, size 0x4
-        int iAttemptOneTouchShot;                // offset 0x28, size 0x4
-        unsigned char bFailedToInitOneTouchShot; // offset 0x2C, size 0x1
-        signed short iAttemptOneTouchPass;       // offset 0x2E, size 0x2
-        unsigned char bVolleyPassReceive;        // offset 0x30, size 0x1
-        class cPlayer* pOneTouchPassTarget;      // offset 0x34, size 0x4
-    } m_DesireReceivePassSharedVars;             // offset 0x328, size 0x38
-    struct                                       /* @class$503Powerups_cpp */
+        nlVector3 v3DesiredPosition;            // offset 0x0, size 0xC
+        unsigned short aDesiredFacingDirection; // offset 0xC, size 0x2
+        float fDesiredTime;                     // offset 0x10, size 0x4
+        nlVector3 v3BallPosition;               // offset 0x14, size 0xC
+        int nReceivePassAnim;                   // offset 0x20, size 0x4
+        float fReceivePassAnimTime;             // offset 0x24, size 0x4
+        int iAttemptOneTouchShot;               // offset 0x28, size 0x4
+        bool bFailedToInitOneTouchShot;         // offset 0x2C, size 0x1
+        signed short iAttemptOneTouchPass;      // offset 0x2E, size 0x2
+        bool bVolleyPassReceive;                // offset 0x30, size 0x1
+        cPlayer* pOneTouchPassTarget;           // offset 0x34, size 0x4
+    } m_DesireReceivePassSharedVars;            // offset 0x328, size 0x38
+    struct                                      /* @class$503Powerups_cpp */
     {
         // total size: 0x4
-        class cFielder* m_pSlideAttackTarget; // offset 0x0, size 0x4
-    } m_DesireSlideAttackVars;                // offset 0x360, size 0x4
-    struct                                    /* @class$504Powerups_cpp */
+        cFielder* m_pSlideAttackTarget; // offset 0x0, size 0x4
+    } m_DesireSlideAttackVars;          // offset 0x360, size 0x4
+    struct                              /* @class$504Powerups_cpp */
     {
         // total size: 0x1
-        unsigned char bIsBallAwayFromCarrier;  // offset 0x0, size 0x1
+        bool bIsBallAwayFromCarrier;           // offset 0x0, size 0x1
     } m_DesireWindupForShotVars;               // offset 0x364, size 0x1
-    class Timer mtKickOffWaitTimer;            // offset 0x368, size 0x4
-    class Timer m_tPowerupEffectTime;          // offset 0x36C, size 0x4
+    Timer mtKickOffWaitTimer;                  // offset 0x368, size 0x4
+    Timer m_tPowerupEffectTime;                // offset 0x36C, size 0x4
     ePowerUpType m_ePowerup;                   // offset 0x370, size 0x4
     int mnNumPowerups;                         // offset 0x374, size 0x4
-    class cFielder* m_pPowerupTarget;          // offset 0x378, size 0x4
+    cFielder* m_pPowerupTarget;                // offset 0x378, size 0x4
     int m_nPowerupAnimID;                      // offset 0x37C, size 0x4
-    class Timer mtBombImpactTime;              // offset 0x380, size 0x4
-    class nlVector3 mv3BombImpactLocation;     // offset 0x384, size 0xC
+    Timer mtBombImpactTime;                    // offset 0x380, size 0x4
+    nlVector3 mv3BombImpactLocation;           // offset 0x384, size 0xC
     float mfBombImpactRadius;                  // offset 0x390, size 0x4
     ePenaltyCardStatus m_ePenaltyCardStatus;   // offset 0x394, size 0x4
-    class cFielder* m_pMark;                   // offset 0x398, size 0x4
-    class cFielder* m_pMarker;                 // offset 0x39C, size 0x4
+    cFielder* m_pMark;                         // offset 0x398, size 0x4
+    cFielder* m_pMarker;                       // offset 0x39C, size 0x4
     eRole m_eRole;                             // offset 0x3A0, size 0x4
-    class AIPlay* m_pCurrentPlay;              // offset 0x3A4, size 0x4
-    class nlVector3 m_v3DesiredPosition;       // offset 0x3A8, size 0xC
+    AIPlay* m_pCurrentPlay;                    // offset 0x3A4, size 0x4
+    nlVector3 m_v3DesiredPosition;             // offset 0x3A8, size 0xC
     float m_fDistanceToDesiredPosition;        // offset 0x3B4, size 0x4
-    class nlVector3 m_v3AccumDesiredPos;       // offset 0x3B8, size 0xC
+    nlVector3 m_v3AccumDesiredPos;             // offset 0x3B8, size 0xC
     float m_fAccumDesiredPosWeight;            // offset 0x3C4, size 0x4
-    class AvoidController* m_pAvoidance;       // offset 0x3C8, size 0x4
-    class ShotMeter* m_pShotMeter;             // offset 0x3CC, size 0x4
+    AvoidController* m_pAvoidance;             // offset 0x3C8, size 0x4
+    ShotMeter* m_pShotMeter;                   // offset 0x3CC, size 0x4
     eShootToScoreResult meS2SResult;           // offset 0x3D0, size 0x4
-    unsigned char mbCanKickoff;                // offset 0x3D4, size 0x1
-    unsigned char mbWasHitByPowerupThisFrame;  // offset 0x3D5, size 0x1
-    unsigned char mbCaptShootToScoreEffectOn;  // offset 0x3D6, size 0x1
+    bool mbCanKickoff;                         // offset 0x3D4, size 0x1
+    bool mbWasHitByPowerupThisFrame;           // offset 0x3D5, size 0x1
+    bool mbCaptShootToScoreEffectOn;           // offset 0x3D6, size 0x1
     unsigned long mThoughtHashCalcDesire;      // offset 0x3D8, size 0x4
     unsigned long mThoughtHashInitRunToNet;    // offset 0x3DC, size 0x4
     unsigned long mThoughtHashInitGetOpen;     // offset 0x3E0, size 0x4

@@ -120,10 +120,10 @@ public:
     // /* 0x9D */ bool mbIsPerfectPass;
     // /* 0x9E */ bool mbIsShootToScoreShot;
     // /* 0x9F */ bool mbIsChipShot;
+    /* 0xA0 */ bool mbIsPerfectShot;
+    /* 0xA1 */ bool mbHyperSTS;
+    /* 0xA2 */ bool mbCanDamage;
     /* 0xA0 */ cPlayer* mpDamageTarget;
-    /* 0xA4 */ bool mbIsPerfectShot;
-    /* 0xA5 */ bool mbHyperSTS;
-    /* 0xA6 */ bool mbCanDamage;
     /* 0xA8 */ u32 m_unk_0xA8;
 
     // /* 0x00 */ u32 m_unk_0x00;
