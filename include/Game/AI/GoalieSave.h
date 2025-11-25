@@ -53,7 +53,7 @@ class GoalieSave
 public:
     static void ClearData();
     static void InitData(Goalie*);
-    static SaveData* FindBestSave(SaveBlendInfo&, const nlVector3&, float, bool, unsigned int, bool);
+    static SaveData* FindBestSave(SaveBlendInfo& blendInfo, const nlVector3& v3LocalPos, float fTime, bool bDoNearSearch, unsigned int uSaveType, bool bFromTakeoff);
     static void FindBestInList(SaveBlendInfo&, nlListContainer<SaveData*>&, const nlVector3&, float, unsigned int, bool);
     static void GetClosestBlendedPos(SaveBlendInfo&, const nlVector3&, SaveData*);
     static SaveData* GetMissChipSaveData(bool, bool);

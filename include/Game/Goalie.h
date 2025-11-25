@@ -5,6 +5,7 @@
 #include "Game/GoalieFatigue.h"
 #include "Game/AI/GoalieSave.h"
 #include "Game/AI/GoalieLooseBall.h"
+#include "Game/Field.h"
 
 #include "NL/nlMath.h"
 
@@ -158,7 +159,7 @@ public:
     bool IsWithinPounceRange();
     bool IsOpponentBallCarrierInRange();
     bool IsOpponentInSTS();
-    void IsPassThreat();
+    bool IsPassThreat();
     void MakeSaveEvent(bool);
     void UpdateActionState(float);
     void SetGoalieAction(eGoalieActionState, int);
@@ -182,7 +183,7 @@ public:
     bool IsTeammateHoardingBall();
     void InitActionGrabBall();
     unsigned short CalcBestSave(float, const nlVector3&, const nlVector3&, unsigned int, bool);
-    void CalcSaveParameters(float, unsigned int, bool, bool);
+    float CalcSaveParameters(float, unsigned int, bool, bool);
     float CalcTimeToPlane();
     void CanInterceptPass();
     int ChooseRunAnim(short, const nlVector3&, float);
@@ -230,6 +231,11 @@ public:
     void ActionSTSAttack(float);
     void ActionSnapBall(float);
     void ActionGrabBall(float);
+
+    inline bool IsPositionBeyondGoalLine() const
+    {
+        return (float)fabs(mv3TargetPosition.f.x) > cField::GetGoalLineX(1U);
+    }
 
     /* 0x1D4 */ eGoalieActionState mGoalieActionState;
     /* 0x1D8 */ eGoalieActionState mPrevGoalieActionState;

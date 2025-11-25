@@ -5,12 +5,22 @@
 #include "Game/Ball.h"
 #include "Game/GameTweaks.h"
 #include "Game/SAnim/pnSingleAxisBlender.h"
+#include "Game/Audio/WorldAudio.h"
+#include "Game/CharacterTriggers.h"
 #include "NL/nlMath.h"
 
 extern cTeam* g_pCurrentlyUpdatingTeam;
 extern f32 mfGoalieStepDist__6Goalie;
 
 static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
+
+inline float CalculateDistanceSquared(const nlVector3& pos1, const nlVector3& pos2)
+{
+    float dx = pos1.f.x - pos2.f.x;
+    float dy = pos1.f.y - pos2.f.y;
+    float dz = pos1.f.z - pos2.f.z;
+    return dx * dx + dy * dy + dz * dz;
+}
 
 // /**
 //  * Offset/Address/Size: 0x4700 | 0x80052C3C | size: 0x10
@@ -22,8 +32,66 @@ static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 /**
  * Offset/Address/Size: 0x4518 | 0x80052A54 | size: 0x1E8
  */
-void Goalie::ActionLooseBallCatch(float)
+void Goalie::ActionLooseBallCatch(float deltaTime)
 {
+    mfTargetTime -= deltaTime;
+
+    if (m_eAnimID == GOALIEACTION_STS)
+    {
+        if (mfTargetTime <= mBlendInfo.mfMilestoneTime[2] + 0.01f)
+        {
+            float clampedValue = mBlendInfo.mfMilestoneTime[2] - mfTargetTime;
+            if (clampedValue >= mBlendInfo.mfStartTime)
+            {
+                clampedValue = mBlendInfo.mfStartTime;
+            }
+            PlayBlendedAnims(clampedValue, -1);
+        }
+    }
+    else
+    {
+
+        if (mpSaveData == NULL || m_pCurrentAnimController->m_fTime > 0.95f)
+        {
+            if (m_pBall == NULL)
+            {
+                InitActionMove(false);
+                return;
+            }
+            InitActionMoveWB();
+            return;
+        }
+
+        if (g_pBall->m_pOwner != NULL)
+        {
+            return;
+        }
+
+        if (!m_pCurrentAnimController->TestTrigger(mpSaveData->mfMilestonePercent[2]))
+        {
+            return;
+        }
+
+        const nlVector3& leftHandPos = GetJointPosition(m_nLeftHandJointIndex);
+        const nlVector3& rightHandPos = GetJointPosition(m_nRightHandJointIndex);
+
+        float distSqLeft = g_pBall->m_v3Position.CalculateDistanceSquared(leftHandPos);
+
+        if (distSqLeft < 1.0f || g_pBall->m_v3Position.CalculateDistanceSquared(rightHandPos) < 1.0f)
+        {
+            Audio::SoundAttributes soundAttrs;
+            soundAttrs.Init();
+            soundAttrs.SetSoundType(0xC0, true);
+            soundAttrs.UseStationaryPosVector(m_v3Position);
+            soundAttrs.mf_Volume = 1.0f; // @2821 - needs verification
+            Audio::gStadGenSFX.Play(soundAttrs);
+
+            PickupBall(g_pBall);
+            mbPickedUp = true;
+            g_pBall->ClearShotInProgress();
+            EmitGoalieCatch(this, "goalie_catch", false); // @1580 is likely a string constant
+        }
+    }
 }
 
 /**
