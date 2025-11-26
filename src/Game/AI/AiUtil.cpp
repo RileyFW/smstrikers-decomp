@@ -1,5 +1,6 @@
 #include "Game/AI/AiUtil.h"
 
+#include "Game/Field.h"
 #include "math.h"
 
 char* g_sPowerupNames[9] = {
@@ -33,8 +34,9 @@ void MakePerpendicularPlane(const nlVector3& v3Position, const nlVector3& v3Norm
 /**
  * Offset/Address/Size: 0x1204 | 0x80006CB0 | size: 0x150
  */
-void IsPointInCone(const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&)
+bool IsPointInCone(const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&)
 {
+    return false;
 }
 
 /**
@@ -48,8 +50,27 @@ unsigned short SeekDirection(unsigned short, unsigned short, float, float, float
 /**
  * Offset/Address/Size: 0x10C0 | 0x80006B6C | size: 0x4C
  */
-void SeekSpeed(float, float, float, float, float)
+float SeekSpeed(float fCurrent, float fDesired, float fSeekAccel, float fSeekDecel, float fDeltaT)
 {
+    float seekRate = (fCurrent <= fDesired) ? fSeekAccel : fSeekDecel;
+    float delta = seekRate * fDeltaT;
+
+    if (fCurrent <= fDesired)
+    {
+        float newValue = fCurrent + delta;
+        if (newValue > fDesired)
+        {
+            return fDesired;
+        }
+        return newValue;
+    }
+
+    float newValue = fCurrent - delta;
+    if (newValue < fDesired)
+    {
+        return fDesired;
+    }
+    return newValue;
 }
 
 /**
@@ -62,8 +83,41 @@ void CalcInterceptXY(const nlVector3&, float, float, const nlVector3&, const nlV
 /**
  * Offset/Address/Size: 0xED0 | 0x8000697C | size: 0xD4
  */
-void ClipPositionToSidelines(nlVector3&, float)
+bool ClipPositionToSidelines(nlVector3& position, float margin)
 {
+    bool wasClipped = false;
+
+    float rightBound = cField::GetGoalLineX(1U) - margin;
+    float topBound = cField::GetSidelineY(1U) - margin;
+
+    if (position.f.x > rightBound)
+    {
+        position.f.x = rightBound;
+        wasClipped = true;
+    }
+    else
+    {
+        float temp_f0 = -1.0f * rightBound;
+        if (position.f.x < temp_f0)
+        {
+            position.f.x = temp_f0;
+            wasClipped = true;
+        }
+    }
+
+    float temp_f1 = -1.0f * topBound;
+    if (position.f.y < temp_f1)
+    {
+        position.f.y = temp_f1;
+        wasClipped = true;
+    }
+    else if (position.f.y > topBound)
+    {
+        position.f.y = topBound;
+        wasClipped = true;
+    }
+
+    return wasClipped;
 }
 
 /**
@@ -76,22 +130,51 @@ void TestCollision(float, const nlVector3&, const nlVector3&, float, const nlVec
 /**
  * Offset/Address/Size: 0xD90 | 0x8000683C | size: 0x64
  */
-void Exp(float)
+float Exp(float x)
 {
+    return exp(-x);
 }
 
 /**
  * Offset/Address/Size: 0xCE8 | 0x80006794 | size: 0xA8
  */
-void GetClosingSpeed2D(const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&)
+float GetClosingSpeed2D(const nlVector3& pos1, const nlVector3& vel1, const nlVector3& pos2, const nlVector3& vel2)
 {
+    float dx, dy;
+    dy = pos2.f.y - pos1.f.y;
+    dx = pos2.f.x - pos1.f.x;
+    float distSq = dx * dx + dy * dy;
+    float invDist = nlRecipSqrt(distSq, true);
+
+    float normDx = invDist * dx;
+    float normDy = invDist * dy;
+
+    float vel1Proj = normDx * vel1.f.x + normDy * vel1.f.y;
+    float vel2Proj = normDx * vel2.f.x + normDy * vel2.f.y;
+
+    return vel1Proj - vel2Proj;
 }
 
 /**
  * Offset/Address/Size: 0xC0C | 0x800066B8 | size: 0xDC
  */
-void GetClosingSpeed(const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&)
+float GetClosingSpeed(const nlVector3& pos1, const nlVector3& vel1, const nlVector3& pos2, const nlVector3& vel2)
 {
+    float dx, dy, dz;
+    dz = pos2.f.z - pos1.f.z;
+    dy = pos2.f.y - pos1.f.y;
+    dx = pos2.f.x - pos1.f.x;
+    float distSq = dx * dx + dy * dy + dz * dz;
+    float invDist = nlRecipSqrt(distSq, true);
+
+    float normDx = invDist * dx;
+    float normDy = invDist * dy;
+    float normDz = invDist * dz;
+
+    float vel1Proj = normDx * vel1.f.x + normDy * vel1.f.y + normDz * vel1.f.z;
+    float vel2Proj = normDx * vel2.f.x + normDy * vel2.f.y + normDz * vel2.f.z;
+
+    return vel1Proj - vel2Proj;
 }
 
 /**
@@ -114,15 +197,37 @@ void GetLocalPoint(nlVector3& v3LocalPointOut, const nlVector3& v3WorldPointIn, 
 /**
  * Offset/Address/Size: 0xABC | 0x80006568 | size: 0xB8
  */
-void GetWorldPoint(nlVector3&, const nlVector3&, const nlVector3&, unsigned short)
+void GetWorldPoint(nlVector3& v3WorldPointOut, const nlVector3& v3LocalPointIn, const nlVector3& v3RefPosition, unsigned short aRefAngle)
 {
+    f32 fSin;
+    f32 fCos;
+
+    float localX = v3LocalPointIn.f.x;
+    float localY = v3LocalPointIn.f.y;
+
+    nlSinCos(&fSin, &fCos, aRefAngle);
+
+    v3WorldPointOut.f.x = v3RefPosition.f.x + ((fCos * localX) - (fSin * localY));
+    v3WorldPointOut.f.y = v3RefPosition.f.y + ((fCos * localY) + (fSin * localX));
+    v3WorldPointOut.f.z = v3LocalPointIn.f.z;
 }
 
 /**
  * Offset/Address/Size: 0xA24 | 0x800064D0 | size: 0x98
  */
-void RotateVectorZAxis(nlVector3&, const nlVector3&, unsigned short)
+void RotateVectorZAxis(nlVector3& v3Out, const nlVector3& v3In, unsigned short angle)
 {
+    f32 fSin;
+    f32 fCos;
+
+    f32 localX = v3In.f.x;
+    f32 localY = v3In.f.y;
+
+    nlSinCos(&fSin, &fCos, angle);
+
+    v3Out.f.x = (fCos * localX) - (fSin * localY);
+    v3Out.f.y = (fCos * localY) + (fSin * localX);
+    v3Out.f.z = v3In.f.z;
 }
 
 /**

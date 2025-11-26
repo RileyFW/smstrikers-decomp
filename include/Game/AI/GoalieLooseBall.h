@@ -4,7 +4,7 @@
 #include "NL/nlMath.h"
 #include "Game/Player.h"
 
-void LooseBallCallback(float, float, unsigned long, float, void*);
+// bool LooseBallCallback(float, float, unsigned long, float, void*);
 
 enum eLooseBallAnimType
 {
@@ -34,11 +34,17 @@ public:
     static void Init(cPlayer*);
     static void Destroy();
     static const LooseBallInfo* FindLooseBallAnim(const nlVector3&, bool);
-    static const LooseBallInfo* GetSwatSTSInfo(int);
-    static void GetDesperationInfo(unsigned int);
+    static const LooseBallInfo* GetSwatSTSInfo(int nSide);
+    static const LooseBallInfo* GetDesperationInfo(unsigned int);
 
     static LooseBallInfo* mpLooseBallInfo;
+    static unsigned int muNumLooseBallAnims;
+    static LooseBallInfo mLooseBallKickInfo;
     static LooseBallInfo mTrapBallInfo;
+    static LooseBallInfo mAttackSTSInfo;
+    static LooseBallInfo mDiveBallInfo;
+    static LooseBallInfo* mLooseBallDesperationInfo[4];
+    static LooseBallInfo mSwatSTSInfo[2];
 };
 
 #endif // _GOALIELOOSEBALL_H_

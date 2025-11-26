@@ -1011,6 +1011,7 @@ void Goalie::MakeSaveEvent(bool)
  */
 bool Goalie::IsPassThreat()
 {
+    return false;
 }
 
 /**
