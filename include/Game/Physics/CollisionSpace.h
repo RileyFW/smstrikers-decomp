@@ -1,6 +1,9 @@
 #ifndef _COLLISIONSPACE_H_
 #define _COLLISIONSPACE_H_
 
+#include "Game/Physics/PhysicsWorld.h"
+#include "Game/Physics/PhysicsObject.h"
+
 #include "ode/collision.h"
 #include "ode/common.h"
 
@@ -11,23 +14,20 @@ class CollisionSpace;
 class CollisionSpace
 {
 public:
+    CollisionSpace(PhysicsWorld* physicsWorld)
+    {
+        m_physicsWorld = physicsWorld;
+        physicsWorld->AddCollisionSpace(this);
+    }
+    virtual ~CollisionSpace();
     void PreUpdate();
     void PreCollide();
     void CallPreCollide(PhysicsObject*);
     void DoCollide(void* data, dNearCallback* callback);
 
-    virtual ~CollisionSpace();
-
-    /* 0x04 */ dSpaceID m_spaceID; // is this 0x04 because of the virtual tables now?
+    /* 0x04 */ dSpaceID m_spaceID;
     /* 0x08 */ CollisionSpace* m_nextCollisionSpace;
     /* 0x0c */ PhysicsWorld* m_physicsWorld;
-};
-
-class SimpleCollisionSpace : public CollisionSpace
-{
-public:
-    SimpleCollisionSpace(PhysicsWorld*);
-    ~SimpleCollisionSpace();
 };
 
 extern CollisionSpace* g_CollisionSpace;

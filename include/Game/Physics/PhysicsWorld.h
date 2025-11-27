@@ -14,6 +14,9 @@ class DebugWriteCache;
 class PhysicsWorld
 {
 public:
+    PhysicsWorld();
+    ~PhysicsWorld();
+
     // void DoCollisions(PhysicsObject*, nlListContainer<PhysicsObject*>&);
     static void SpaceCollideCallback(void*, dxGeom*, dxGeom*);
     void Update(float, bool);
@@ -29,9 +32,6 @@ public:
     void AddCollisionSpace(CollisionSpace*);
     void SetERP(float);
     void SetCFM(float);
-
-    ~PhysicsWorld();
-    PhysicsWorld();
 
     /* 0x00 */ dWorldID m_World;
     /* 0x04 */ dJointGroupID m_ContactGroup;
