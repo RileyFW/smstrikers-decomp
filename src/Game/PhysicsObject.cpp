@@ -718,7 +718,7 @@ void PhysicsObject::MakeStatic()
 /**
  * Offset/Address/Size: 0x25C | 0x801FFF58 | size: 0x30
  */
-int PhysicsObject::Contact(PhysicsObject* obj1, dContact* contact, int param)
+ContactType PhysicsObject::Contact(PhysicsObject* obj1, dContact* contact, int param)
 {
     return Contact(obj1, contact, param, NULL);
 }
@@ -726,13 +726,13 @@ int PhysicsObject::Contact(PhysicsObject* obj1, dContact* contact, int param)
 /**
  * Offset/Address/Size: 0x218 | 0x801FFF14 | size: 0x44
  */
-int PhysicsObject::Contact(PhysicsObject* obj1, dContact* contact, int param, PhysicsObject* obj2)
+ContactType PhysicsObject::Contact(PhysicsObject* obj1, dContact* contact, int param, PhysicsObject* obj2)
 {
     if (m_parentObject != NULL)
     {
         return m_parentObject->Contact(obj1, contact, param, this);
     }
-    return 3;
+    return TWO_WAY_CONTACT;
 }
 
 /**

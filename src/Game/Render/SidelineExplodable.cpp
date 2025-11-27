@@ -291,9 +291,9 @@ ExplosionFragment* SidelineExplodableManager::GetFragmentFromHandle(unsigned sho
 /**
  * Offset/Address/Size: 0x358 | 0x801676B8 | size: 0x1B0
  */
-int SidelineExplosionPhysicsObject::Contact(PhysicsObject* other, dContact* contact, int what, PhysicsObject* otherObject)
+ContactType SidelineExplosionPhysicsObject::Contact(PhysicsObject* other, dContact* contact, int what, PhysicsObject* otherObject)
 {
-    return 0;
+    return NO_CONTACT;
 }
 
 /**

@@ -58,9 +58,9 @@ void PhysicsAIBall::PreUpdate()
 /**
  * Offset/Address/Size: 0xD84 | 0x801347B8 | size: 0x47C
  */
-int PhysicsAIBall::Contact(PhysicsObject*, dContact*, int)
+ContactType PhysicsAIBall::Contact(PhysicsObject*, dContact*, int)
 {
-    return 0;
+    return NO_CONTACT;
 }
 
 /**

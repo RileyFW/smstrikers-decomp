@@ -4,11 +4,11 @@
 /**
  * Offset/Address/Size: 0x60 | 0x8013744C | size: 0x38
  */
-int FakePhysicsBall::Contact(PhysicsObject* object, dContact* contact, int arg)
+ContactType FakePhysicsBall::Contact(PhysicsObject* object, dContact* contact, int arg)
 {
     if (mWorld.mbHitSuccess)
     {
-        return 0;
+        return NO_CONTACT;
     }
 
     return PhysicsBall::Contact(object, contact, arg);
@@ -92,13 +92,13 @@ void FakeBallWorld::Init(cBall*)
 {
 }
 
-/**
- * Offset/Address/Size: 0x0 | 0x80139670 | size: 0x8
- */
-int FakePhysicsBall::GetObjectType() const
-{
-    return 0x10;
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x80139670 | size: 0x8
+//  */
+// int FakePhysicsBall::GetObjectType() const
+// {
+//     return 0x10;
+// }
 
 /**
  * Offset/Address/Size: 0x0 | 0x80139678 | size: 0x8

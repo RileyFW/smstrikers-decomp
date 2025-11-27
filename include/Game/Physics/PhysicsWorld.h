@@ -3,6 +3,7 @@
 
 // #include "NL/nlMath.h"
 
+#include "NL/nlList.h"
 #include "ode/common.h"
 #include "ode/objects.h"
 #include "ode/collision.h"
@@ -17,8 +18,8 @@ public:
     PhysicsWorld();
     ~PhysicsWorld();
 
-    // void DoCollisions(PhysicsObject*, nlListContainer<PhysicsObject*>&);
-    static void SpaceCollideCallback(void*, dxGeom*, dxGeom*);
+    void DoCollisions(PhysicsObject*, nlListContainer<PhysicsObject*>&);
+    static void SpaceCollideCallback(void* data, dxGeom* geom1, dxGeom* geom2);
     void Update(float, bool);
     void PostUpdate();
     void PreUpdate();

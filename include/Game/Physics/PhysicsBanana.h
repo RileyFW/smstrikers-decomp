@@ -36,7 +36,7 @@ public:
     virtual bool SetContactInfo(dContact*, PhysicsObject*, bool);
     virtual void PreUpdate();
     virtual void PreCollide();
-    virtual int Contact(PhysicsObject*, dContact*, int);
+    virtual ContactType Contact(PhysicsObject*, dContact*, int);
 
     /* 0x2C */ void (*m_pTriggerCallbackFunc)(class PhysicsObject*, class PhysicsObject*, class nlVector3&, void*);
     /* 0x30 */ void* m_pCallbackParam;

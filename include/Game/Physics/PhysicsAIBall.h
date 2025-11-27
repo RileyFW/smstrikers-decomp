@@ -19,7 +19,7 @@ public:
     /* 0x14 */ virtual void PreUpdate();
     /* 0x18 */ virtual void PostUpdate();
     /* 0x1c */ virtual void PreCollide();
-    /* 0x20 */ virtual int Contact(PhysicsObject*, dContact*, int);
+    /* 0x20 */ virtual ContactType Contact(PhysicsObject*, dContact*, int);
 
     static bool IsBallOutsideNet(const nlVector3&);
     static bool DidBallJustEnterNet(const nlVector3&, nlVector3);

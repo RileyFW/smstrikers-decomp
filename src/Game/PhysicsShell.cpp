@@ -30,9 +30,9 @@ void PhysicsShell::PostUpdate()
 /**
  * Offset/Address/Size: 0x10C | 0x8013BA74 | size: 0x898
  */
-int PhysicsShell::Contact(PhysicsObject*, dContact*, int)
+ContactType PhysicsShell::Contact(PhysicsObject*, dContact*, int)
 {
-    return 0;
+    return NO_CONTACT;
 }
 
 /**

@@ -15,7 +15,7 @@ public:
     virtual ~PhysicsNPC() { };
     virtual int GetObjectType() const { return 0x1A; };
     virtual bool SetContactInfo(dContact* contact, PhysicsObject* other, bool first);
-    virtual int Contact(PhysicsObject*, dContact*, int);
+    virtual ContactType Contact(PhysicsObject*, dContact*, int);
 
     void SetCallbackFunction(CallbackFn cb);
     // void SetCallbackFunction(void (*)(PhysicsObject*, PhysicsObject*, const nlVector3&));

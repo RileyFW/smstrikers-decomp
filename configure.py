@@ -845,7 +845,7 @@ config.libs = [
             Object(NonMatching, "Game/Physics/PhysicsCharacter.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Physics/CollisionSpace.cpp" , extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/PhysicsTransform.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/PhysicsWorld.cpp"),
+            Object(Matching, "Game/Physics/PhysicsWorld.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "Game/Physics/LoadablePhysicsMesh.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Physics/CharacterPhysicsElement.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Physics/PhysicsNet.cpp", extra_cflags=["-inline deferred"]),

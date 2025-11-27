@@ -36,9 +36,9 @@ public:
 class FakePhysicsBall : public PhysicsBall
 {
 public:
-    virtual int Contact(PhysicsObject*, dContact*, int);
     virtual ~FakePhysicsBall();
-    virtual int GetObjectType() const;
+    virtual int GetObjectType() const { return 0x10; };
+    virtual ContactType Contact(PhysicsObject*, dContact*, int);
 
     /* 0x40 */ FakeBallWorld& mWorld;
 }; // total size: 0x44

@@ -94,7 +94,7 @@ public:
     virtual ~SidelineExplosionPhysicsObject();
     virtual int GetObjectType() const { return 0x1C; };
     virtual bool SetContactInfo(dContact* contact, PhysicsObject* other, bool first);
-    virtual int Contact(PhysicsObject* other, dContact* contact, int what, PhysicsObject* otherObject);
+    virtual ContactType Contact(PhysicsObject* other, dContact* contact, int what, PhysicsObject* otherObject);
     virtual void PostUpdate();
 
     ExplosionFragment* mpExplosionFragment;

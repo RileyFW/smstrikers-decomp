@@ -13,7 +13,7 @@ public:
     virtual void PreUpdate();
     virtual void PreCollide();
     virtual void PostUpdate();
-    virtual int Contact(PhysicsObject*, dContact*, int);
+    virtual ContactType Contact(PhysicsObject*, dContact*, int);
 
     void CalcAngularFromLinearVelocity(nlVector3&);
     void SetUseAngularVelocity(bool);

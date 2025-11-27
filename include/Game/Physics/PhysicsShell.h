@@ -10,7 +10,7 @@ public:
     virtual int GetObjectType() const { return 0x13; };
     virtual bool SetContactInfo(dContact* contact, PhysicsObject* other, bool first);
     virtual void PostUpdate();
-    virtual int Contact(PhysicsObject*, dContact*, int);
+    virtual ContactType Contact(PhysicsObject*, dContact*, int);
 
     /* 0x2c */ void* m_unk_0x2c;
     /* 0x30 */ void* m_unk_0x30;

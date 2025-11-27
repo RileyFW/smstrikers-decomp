@@ -55,9 +55,9 @@ void PhysicsCharacter::PreCollide()
 /**
  * Offset/Address/Size: 0xB24 | 0x80136D3C | size: 0x518
  */
-int PhysicsCharacter::Contact(PhysicsObject*, dContact*, int, PhysicsObject*)
+ContactType PhysicsCharacter::Contact(PhysicsObject*, dContact*, int, PhysicsObject*)
 {
-    return 0;
+    return NO_CONTACT;
 }
 
 /**

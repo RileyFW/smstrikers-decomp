@@ -237,7 +237,7 @@ void PhysicsBall::AddResistanceForces()
 /**
  * Offset/Address/Size: 0x698 | 0x801353AC | size: 0x250
  */
-int PhysicsBall::Contact(PhysicsObject* other, dContact* contact, int param)
+ContactType PhysicsBall::Contact(PhysicsObject* other, dContact* contact, int param)
 {
     nlVector3 pos;
     // f32 sp14;
@@ -320,7 +320,7 @@ int PhysicsBall::Contact(PhysicsObject* other, dContact* contact, int param)
 
                 if (contact->geom.depth > 0.95f)
                 {
-                    return 0;
+                    return NO_CONTACT;
                 }
 
                 temp_f30 = contact->geom.normal[1]; // arg2->unk40;
@@ -345,7 +345,7 @@ int PhysicsBall::Contact(PhysicsObject* other, dContact* contact, int param)
         // g_pBall->m_unk_0xA8 = 0;
     }
 
-    return 3;
+    return TWO_WAY_CONTACT;
 }
 
 /**

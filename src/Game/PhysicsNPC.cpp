@@ -26,18 +26,10 @@ void PhysicsNPC::SetCallbackFunction(CallbackFn cb)
     mpTriggerCallbackFunc = cb;
 }
 
-enum ContactType
-{
-    NO_CONTACT = 0,
-    ONE_WAY_CONTACT_THIS = 1,
-    ONE_WAY_CONTACT_OTHER = 2,
-    TWO_WAY_CONTACT = 3,
-};
-
 /**
  * Offset/Address/Size: 0xC0 | 0x8013B578 | size: 0x378
  */
-int PhysicsNPC::Contact(PhysicsObject* other, dContact* contact, int what)
+ContactType PhysicsNPC::Contact(PhysicsObject* other, dContact* contact, int what)
 {
     nlVector3 position;
     GetPosition(&position);
@@ -81,7 +73,7 @@ int PhysicsNPC::Contact(PhysicsObject* other, dContact* contact, int what)
                     mpTriggerCallbackFunc(this, other, contactPos);
                 }
 
-                return shouldTrigger ? 0 : 0;
+                return shouldTrigger ? NO_CONTACT : NO_CONTACT;
             }
         }
 
@@ -97,7 +89,7 @@ int PhysicsNPC::Contact(PhysicsObject* other, dContact* contact, int what)
                     SkinAnimatedNPC_Type npcType = mpAINPC->GetSkinAnimatedNPC_Type();
                     if (npcType == SkinAnimatedNPC_BOWSER) // 4
                     {
-                        return 2;
+                        return ONE_WAY_CONTACT_OTHER;
                     }
                 }
             }
@@ -149,7 +141,7 @@ int PhysicsNPC::Contact(PhysicsObject* other, dContact* contact, int what)
                         mpTriggerCallbackFunc(this, other, contactPos);
                     }
 
-                    return shouldTrigger ? 0 : 0;
+                    return shouldTrigger ? NO_CONTACT : NO_CONTACT;
                 }
             }
             else
@@ -158,7 +150,7 @@ int PhysicsNPC::Contact(PhysicsObject* other, dContact* contact, int what)
                 // if (ball->m_pPowerupObject != nullptr && ball->m_bHasPowerup)
                 if (ball != nullptr)
                 {
-                    return 0; // Don't trigger if ball has powerup
+                    return NO_CONTACT; // Don't trigger if ball has powerup
                 }
 
                 if (mpTriggerCallbackFunc != nullptr)
@@ -174,7 +166,7 @@ int PhysicsNPC::Contact(PhysicsObject* other, dContact* contact, int what)
                 // Reset ball state and invalidate cache
                 // other->m_bIsTriggered = false;
                 // FakeBallWorld::InvalidateBallCache();
-                return 2;
+                return ONE_WAY_CONTACT_OTHER;
             }
         }
         break;
@@ -193,7 +185,7 @@ int PhysicsNPC::Contact(PhysicsObject* other, dContact* contact, int what)
                     // Check if wall has no special state
                     // if (other->m_specialState == 0)
                     {
-                        return 0;
+                        return NO_CONTACT;
                     }
                 }
             }
@@ -222,7 +214,7 @@ int PhysicsNPC::Contact(PhysicsObject* other, dContact* contact, int what)
                 {
                     // if (other->m_specialState == 0)
                     {
-                        return 0;
+                        return NO_CONTACT;
                     }
                 }
             }

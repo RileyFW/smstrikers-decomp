@@ -70,7 +70,7 @@ void PhysicsBanana::PreCollide()
 /**
  * Offset/Address/Size: 0xFC | 0x80135B30 | size: 0x540
  */
-int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numContacts)
+ContactType PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numContacts)
 {
     nlVector3 bananaPos;
     GetPosition(&bananaPos);
@@ -125,7 +125,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
                     m_pTriggerCallbackFunc(this, other, contactPos, m_pCallbackParam);
                 }
 
-                return 3; // Contact handled
+                return TWO_WAY_CONTACT; // Contact handled
             }
         }
     }
@@ -148,7 +148,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
                 // Check if banana is already assigned to this player
                 if (m_pPowerupObject != nullptr && m_pPowerupObject->m_pThrower == fielder)
                 {
-                    return 0; // Ignore collision
+                    return NO_CONTACT; // Ignore collision
                 }
 
                 // Call trigger callback
@@ -163,7 +163,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
                 }
             }
         }
-        return 0; // Contact handled
+        return NO_CONTACT; // Contact handled
     }
 
     case 0x0E: // Fielder
@@ -176,13 +176,13 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
             // Check if banana is already assigned to this fielder
             if (m_pPowerupObject != nullptr && m_pPowerupObject->m_pThrower == fielder)
             {
-                return 0; // Ignore collision
+                return NO_CONTACT; // Ignore collision
             }
 
             // Check if fielder is away from ball carrier
             if (fielder->IsBallAwayFromCarrier())
             {
-                return 0; // Ignore collision
+                return NO_CONTACT; // Ignore collision
             }
 
             // Check if fielder has ball
@@ -193,7 +193,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
                 {
                     m_pPowerupObject->m_bShouldDestroy = true;
                 }
-                return 0; // Contact handled
+                return NO_CONTACT; // Contact handled
             }
 
             // Call trigger callback
@@ -207,7 +207,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
                 m_pTriggerCallbackFunc(this, other, contactPos, m_pCallbackParam);
             }
         }
-        return 0; // Contact handled
+        return NO_CONTACT; // Contact handled
     }
 
     case 0x0F: // Goalie
@@ -215,7 +215,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
         // Check if banana is already assigned to this goalie
         if (m_pPowerupObject != nullptr /*&& m_pPowerupObject->m_pThrower == other->m_parentObject*/)
         {
-            return 0; // Ignore collision
+            return NO_CONTACT; // Ignore collision
         }
 
         // Call trigger callback
@@ -228,7 +228,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
 
             m_pTriggerCallbackFunc(this, other, contactPos, m_pCallbackParam);
         }
-        return 0; // Contact handled
+        return NO_CONTACT; // Contact handled
     }
 
     case 0x10: // Ball
@@ -236,7 +236,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
         // Check if banana is already assigned to this ball
         if (m_pPowerupObject != nullptr /*&& m_pPowerupObject->m_pThrower == other->m_parentObject*/)
         {
-            return 0; // Ignore collision
+            return NO_CONTACT; // Ignore collision
         }
 
         // Call trigger callback
@@ -249,7 +249,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
 
             m_pTriggerCallbackFunc(this, other, contactPos, m_pCallbackParam);
         }
-        return 0; // Contact handled
+        return NO_CONTACT; // Contact handled
     }
 
     case 0x11: // Wall
@@ -257,7 +257,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
         // Check if banana is already assigned to this wall
         if (m_pPowerupObject != nullptr /*&& m_pPowerupObject->m_pThrower == other->m_parentObject*/)
         {
-            return 0; // Ignore collision
+            return NO_CONTACT; // Ignore collision
         }
 
         // Call trigger callback
@@ -270,7 +270,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
 
             m_pTriggerCallbackFunc(this, other, contactPos, m_pCallbackParam);
         }
-        return 0; // Contact handled
+        return NO_CONTACT; // Contact handled
     }
 
     default:
@@ -325,7 +325,7 @@ int PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int numConta
         }
     }
 
-    return 3; // Contact handled
+    return TWO_WAY_CONTACT; // Contact handled
 }
 
 /**

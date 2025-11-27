@@ -14,7 +14,7 @@ public:
 
     virtual void PostUpdate();
     virtual void PreCollide();
-    virtual int Contact(PhysicsObject*, dContact*, int, PhysicsObject*);
+    virtual ContactType Contact(PhysicsObject*, dContact*, int, PhysicsObject*);
 
     void SetCharacterVelocityXY(const nlVector3&);
     void GetCharacterVelocityXY(nlVector3*);

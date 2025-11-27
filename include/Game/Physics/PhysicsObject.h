@@ -8,6 +8,14 @@
 
 #include "Game/Physics/PhysicsWorld.h"
 
+enum ContactType
+{
+    NO_CONTACT = 0,
+    ONE_WAY_CONTACT_THIS = 1,
+    ONE_WAY_CONTACT_OTHER = 2,
+    TWO_WAY_CONTACT = 3,
+};
+
 class PhysicsObject
 {
 public:
@@ -28,8 +36,8 @@ public:
     /* 0x14 */ virtual void PreUpdate();
     /* 0x18 */ virtual void PostUpdate();
     /* 0x1c */ virtual void PreCollide() { }
-    /* 0x20 */ virtual int Contact(PhysicsObject*, dContact*, int);
-    /* 0x24 */ virtual int Contact(PhysicsObject*, dContact*, int, PhysicsObject*);
+    /* 0x20 */ virtual ContactType Contact(PhysicsObject*, dContact*, int);
+    /* 0x24 */ virtual ContactType Contact(PhysicsObject*, dContact*, int, PhysicsObject*);
     void MakeStatic();
     void SetMass(float);
     void Reconnect(dSpaceID);
