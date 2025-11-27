@@ -104,7 +104,6 @@ void PhysicsWorld::Collide()
     void (PhysicsWorld::*pmf)(PhysicsObject*) = &PhysicsWorld::PreCollide;
     for (dBodyID bodyID = dWorldGetFirstBody(m_World); bodyID != NULL; bodyID = dBodyGetNextBody(bodyID))
     {
-        // PhysicsObject* obj = (PhysicsObject*)dBodyGetData(bodyID);
         (this->*pmf)((PhysicsObject*)dBodyGetData(bodyID));
     }
 
@@ -144,11 +143,9 @@ void PhysicsWorld::PreUpdate()
  */
 void PhysicsWorld::PostUpdate()
 {
-    // void (PhysicsObject::*pmf)() = &PhysicsObject::PostUpdate;
     void (PhysicsWorld::*pmf)(PhysicsObject*) = &PhysicsWorld::PostUpdate;
     for (dBodyID bodyID = dWorldGetFirstBody(m_World); bodyID != NULL; bodyID = dBodyGetNextBody(bodyID))
     {
-        // PhysicsObject* obj = (PhysicsObject*)dBodyGetData(bodyID);
         (this->*pmf)((PhysicsObject*)dBodyGetData(bodyID));
     }
 }
@@ -158,8 +155,7 @@ void PhysicsWorld::PostUpdate()
  */
 void PhysicsWorld::Update(float quickStepSize, bool doClear)
 {
-    int pp = (u32)(-doClear | doClear) >> 0x1FU; // a convoluted way to convert a boolean to an integer
-    dWorldSetClearAccumulators(m_World, pp);
+    dWorldSetClearAccumulators(m_World, doClear ? 1 : 0);
     dWorldQuickStep(m_World, quickStepSize);
     dJointGroupEmpty(m_ContactGroup);
 }
@@ -171,10 +167,10 @@ void PhysicsWorld::SpaceCollideCallback(void* data, dxGeom* geom1, dxGeom* geom2
 {
     int i;
     dContact contacts[20];
-    dxBody* body1;           // r28
-    dxBody* body2;           // r27
-    PhysicsObject* physObj1; // r29
-    PhysicsObject* physObj2; // r26
+    dxBody* body1;
+    dxBody* body2;
+    PhysicsObject* physObj1;
+    PhysicsObject* physObj2;
 
     body1 = dGeomGetBody(geom1);
     body2 = dGeomGetBody(geom2);
@@ -230,11 +226,11 @@ void PhysicsWorld::SpaceCollideCallback(void* data, dxGeom* geom1, dxGeom* geom2
 
     if (combinedResult == 2)
     {
-        body1 = NULL; // Don't attach first body
+        body1 = NULL;
     }
     if (combinedResult == 1)
     {
-        body2 = NULL; // Don't attach second body
+        body2 = NULL;
     }
 
     for (i = 0; i < numContacts; i++)

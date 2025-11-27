@@ -179,12 +179,12 @@ bool World::LoadGeometry(const char*, bool, bool, unsigned long*, int*)
 bool World::Load(bool forfe)
 {
     DoLoad();
-    if (forfe == FALSE)
+    if (forfe == 0)
     {
         DoInitialize();
     }
-    m_Locked = true;
-    return true;
+    m_Locked = 1;
+    // TODO: return value will break match - but mathod signature needs bool, e.g. WorldManager needs it for chaining return status
 }
 
 /**
@@ -193,13 +193,6 @@ bool World::Load(bool forfe)
 World::~World()
 {
 }
-
-// /**
-//  * Offset/Address/Size: 0x3D54 | 0x80198A18 | size: 0x60
-//  */
-// void nlAVLTree<unsigned long, LightObject*, DefaultKeyCompare<unsigned long>>::~nlAVLTree()
-// {
-// }
 
 /**
  * Offset/Address/Size: 0x3DB4 | 0x80198A78 | size: 0x19C

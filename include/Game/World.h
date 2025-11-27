@@ -3,6 +3,7 @@
 
 #include "NL/nlMath.h"
 #include "Game/TerrainTypes.h"
+#include "NL/nlAVLTree.h"
 
 // void DoTranslucency(DrawableObject*);
 // void nlListAddStart<ListEntry<LightObject*>>(ListEntry<LightObject*>**, ListEntry<LightObject*>*, ListEntry<LightObject*>**);
@@ -68,9 +69,7 @@ public:
     bool Load(bool forfe);
 
     /* 0x004 */ WorldAnimManager* m_pWorldAnimManager;
-    /* 0x008 */ s32 m_lightMap;
-    // /* 0x008 */ class nlAVLTree m_lightMap;
-    /* 0x00C */ u8 pad_0x08[0x10];
+    /* 0x008 */ nlAVLTree<unsigned long, LightObject*, DefaultKeyCompare<unsigned long> > m_lightMap;
     /* 0x01C */ bool m_Locked;
     /* 0x020 */ struct glModel* m_pModels;
     /* 0x024 */ unsigned long m_uNumModels;
