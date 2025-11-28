@@ -23,6 +23,13 @@ class Event;
 class CharacterPhysicsData;
 class LightObject;
 
+struct WorldHelperChunkData
+{
+    /* 0x00 */ char m_szName[60];       // size 0x3C
+    /* 0x3C */ unsigned long m_uHashID; // size 0x4
+    /* 0x40 */ nlMatrix4 m_worldMatrix; // size 0x40
+}; // total size: 0x80
+
 class HelperObject
 {
 public:
@@ -54,13 +61,13 @@ public:
     int CompareNameToGenericName(const char*, const char*);
     void GetHashIdForGenericName(const char*) const;
     void GetShadowLight(const nlVector3&, float);
-    void AddDrawableObject(unsigned long, DrawableObject*);
-    HelperObject* FindHelperObject(unsigned long);
+    bool AddDrawableObject(unsigned long, DrawableObject*);
+    HelperObject* FindHelperObject(unsigned long uHashId);
     DrawableObject* FindDrawableObject(unsigned long);
     void HandleCameraSwitch();
     void IsSphereInFrustum(const nlMatrix4&, float);
     void ExtractFrustumPlanes();
-    void GetCustomSpecularData(glModelPacket*, bool);
+    void* GetCustomSpecularData(glModelPacket*, bool);
     void CreateLightUserData();
     bool LoadObjectData(const char*);
     void AddToHyperSTSDrawables(unsigned long, DrawableModel*);
@@ -74,19 +81,23 @@ public:
     /* 0x020 */ struct glModel* m_pModels;
     /* 0x024 */ unsigned long m_uNumModels;
     // /* 0x028 */ nlDLListContainer m_animControllerList;
-    /* 0x028 */ u8 pad_0x28[0x8];
+    /* 0x028 */ u8 pad_0x28[0x4];
     /* 0x030 */ void* m_pLightData;
     /* 0x034 */ void* m_pPlayerNISLightData;
     /* 0x038 */ void* m_pIntensityPerm;
     /* 0x03C */ void* m_pIntensityData;
     /* 0x040 */ void* m_pSTSIntensity;
     /* 0x044 */ void* m_pSpecularData;
+    /* 0x044 */ nlAVLTree<unsigned long, DrawableObject*, DefaultKeyCompare<unsigned long> > m_drawableMap;
     // /* 0x048 */ nlAVLTree m_drawableMap;
-    /* 0x048 */ u8 pad_0x48[0x14];
+    // /* 0x048 */ u8 pad_0x48[0x14];
+    /* 0x058 */ nlAVLTree<unsigned long, DrawableObject*, DefaultKeyCompare<unsigned long> > m_hyperSTSDrawableMap;
+    /* 0x070 */ nlAVLTree<unsigned long, HelperObject*, DefaultKeyCompare<unsigned long> > m_helperMap;
+    u8 pad_0x[0x4];
     // /* 0x05C */ nlAVLTree m_hyperSTSDrawableMap;
-    /* 0x05C */ u8 pad_0x5C[0x14];
+    // /* 0x05C */ u8 pad_0x5C[0x14];
     // /* 0x070 */ nlAVLTree m_helperMap;
-    /* 0x070 */ u8 pad_0x70[0x14];
+    // /* 0x070 */ u8 pad_0x70[0x14];
     /* 0x084 */ nlVector4 m_frustumPlane[5];
     /* 0x0D4 */ char m_WorldNamePrefix[64];
     /* 0x114 */ int m_WorldNameLength;

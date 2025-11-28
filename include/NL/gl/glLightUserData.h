@@ -4,6 +4,14 @@
 #include "NL/nlMath.h"
 #include "NL/nlColour.h"
 
+struct GLSpecularUserData
+{
+    /* 0x0 */ nlVector3 worldDirection;
+    /* 0x0C */ nlFloatColour colour;
+    /* 0x1C */ float intensity;
+    /* 0x20 */ float exponent;
+}; // total size: 0x24
+
 struct GLDirectionalLightUserData
 {
     /* 0x0 */ nlVector3 direction;

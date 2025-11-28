@@ -93,15 +93,17 @@ void glSetTextureState(eGLTextureState, unsigned long)
 /**
  * Offset/Address/Size: 0x410 | 0x801DC054 | size: 0x9C
  */
-void glGetTextureState(unsigned long long, eGLTextureState)
+unsigned long glGetTextureState(unsigned long long, eGLTextureState)
 {
+    return 0;
 }
 
 /**
  * Offset/Address/Size: 0x4AC | 0x801DC0F0 | size: 0x9C
  */
-void glGetTextureState(eGLTextureState)
+unsigned long glGetTextureState(eGLTextureState)
 {
+    return 0;
 }
 
 /**

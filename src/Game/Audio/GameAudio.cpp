@@ -55,7 +55,7 @@ void cGameSFX::KeepTrack(SFXEmitter*, const Audio::SoundAttributes&, unsigned lo
 /**
  * Offset/Address/Size: 0x1104 | 0x80152648 | size: 0xACC
  */
-int cGameSFX::Play(Audio::SoundAttributes&)
+unsigned long cGameSFX::Play(Audio::SoundAttributes& attributes)
 {
     return 0;
 }

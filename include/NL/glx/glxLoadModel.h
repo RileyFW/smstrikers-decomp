@@ -10,7 +10,7 @@ class BoneMapList;
 
 void glplatEndLoadModel(void*, unsigned long, unsigned long*);
 void glplatBeginLoadModel(const char*, void (*)(void*, unsigned long, void*), void*);
-void glplatLoadModel(const char*, unsigned long*);
+glModel* glplatLoadModel(const char* filename, unsigned long* pNumModels);
 void glxLoadModelFromMemory(char*, int, unsigned long*, bool);
 void glx_MakeSkinMesh(nlChunk*, glModel*);
 void glSetIgnoreDuplicateModels(bool);
@@ -22,7 +22,6 @@ void glSetIgnoreDuplicateModels(bool);
 // public:
 //     void ~nlAVLTree();
 // };
-
 
 // class AVLTreeBase<unsigned long, unsigned long, NewAdapter<AVLTreeEntry<unsigned long, unsigned long>>, DefaultKeyCompare<unsigned long>>
 // {

@@ -17,8 +17,9 @@ void glplatBeginLoadModel(const char*, void (*)(void*, unsigned long, void*), vo
 /**
  * Offset/Address/Size: 0xCC | 0x801BFCEC | size: 0x104
  */
-void glplatLoadModel(const char*, unsigned long*)
+glModel* glplatLoadModel(const char* filename, unsigned long* pNumModels)
 {
+    return nullptr;
 }
 
 /**

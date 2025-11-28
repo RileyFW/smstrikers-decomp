@@ -3,10 +3,21 @@
 #include "string.h"
 
 #include "NL/nlString.h"
+#include "NL/nlPrint.h"
 #include "NL/nlDebug.h"
+#include "NL/gl/gl.h"
+#include "NL/gl/glModel.h"
+#include "NL/gl/glState.h"
+#include "NL/gl/glUserData.h"
+#include "NL/glx/glxTexture.h"
+#include "Game/Sys/debug.h"
+#include "Game/Drawable/DrawableObj.h"
 #include "types.h"
 
-u32 World::m_uCurrentFrameCount = 0;
+float g_fExponentScale = 128.0f;
+float g_fExponentBase = 8.0f;
+float g_fTransAdjustOccluded = 1.0f;
+float g_fTransAdjustNotOccluded = 0.125f;
 
 /**
  * Offset/Address/Size: 0x0 | 0x80194CC4 | size: 0x5C
@@ -36,27 +47,59 @@ void World::GetShadowLight(const nlVector3&, float)
 /**
  * Offset/Address/Size: 0x290 | 0x80194F54 | size: 0x8C
  */
-void World::AddDrawableObject(unsigned long, DrawableObject*)
+bool World::AddDrawableObject(unsigned long uHashID, DrawableObject* pDrawableObject)
 {
+    AVLTreeNode* pExistingNode;
+    AVLTreeNode** ppRoot = (AVLTreeNode**)&m_drawableMap.m_Root;
+
+    m_drawableMap.AddAVLNode(ppRoot, &uHashID, &pDrawableObject, &pExistingNode, m_drawableMap.m_NumElements);
+
+    DrawableObject** ppValue = nullptr;
+    if (pExistingNode == nullptr)
+    {
+        m_drawableMap.m_NumElements++;
+        ppValue = nullptr;
+    }
+    else
+    {
+        ppValue = (DrawableObject**)((u8*)pExistingNode + 0x10);
+    }
+
+    if (ppValue == nullptr)
+    {
+        pDrawableObject->m_pWorldContext = this;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x31C | 0x80194FE0 | size: 0x8C
  */
-HelperObject* World::FindHelperObject(unsigned long)
+HelperObject* World::FindHelperObject(unsigned long uHashID)
 {
-    return NULL;
+    AVLTreeEntry<unsigned long, HelperObject*>* pEntry = m_helperMap.Find(uHashID);
+    if (pEntry != nullptr)
+    {
+        return pEntry->value;
+    }
+    return nullptr;
 }
-
-// #include "Game/Drawable/DrawableObj.h"
 
 /**
  * Offset/Address/Size: 0x3A8 | 0x8019506C | size: 0x8C
  */
-DrawableObject* World::FindDrawableObject(u32 arg1)
+DrawableObject* World::FindDrawableObject(unsigned long uHashID)
 {
-    FORCE_DONT_INLINE;
-    return NULL;
+    AVLTreeEntry<unsigned long, DrawableObject*>* pEntry = m_drawableMap.Find(uHashID);
+    if (pEntry != nullptr)
+    {
+        return pEntry->value;
+    }
+    return nullptr;
 }
 
 /**
@@ -124,8 +167,9 @@ void World::CreateHelperObjFromChunk(nlChunk* chunk)
 /**
  * Offset/Address/Size: 0x1B7C | 0x80196840 | size: 0x12C
  */
-void World::GetCustomSpecularData(glModelPacket*, bool)
+void* World::GetCustomSpecularData(glModelPacket* pPacket, bool bPerm)
 {
+    return nullptr;
 }
 
 /**
@@ -146,8 +190,17 @@ bool World::LoadObjectData(const char*)
 /**
  * Offset/Address/Size: 0x3020 | 0x80197CE4 | size: 0x64
  */
-void World::AddToHyperSTSDrawables(unsigned long, DrawableModel*)
+void World::AddToHyperSTSDrawables(unsigned long key, DrawableModel* pDrawableModel)
 {
+    AVLTreeNode* pExistingNode;
+    AVLTreeNode** ppRoot = (AVLTreeNode**)&m_hyperSTSDrawableMap.m_Root;
+
+    m_hyperSTSDrawableMap.AddAVLNode(ppRoot, &key, &pDrawableModel, &pExistingNode, m_hyperSTSDrawableMap.m_NumElements);
+
+    if (pExistingNode == nullptr)
+    {
+        m_hyperSTSDrawableMap.m_NumElements++;
+    }
 }
 
 /**
@@ -162,15 +215,27 @@ void World::HandleObjectCreation(WorldObjectData*)
  */
 bool World::LoadGeometry(glModel*, unsigned long, bool, bool, unsigned long*, int*, bool)
 {
+    FORCE_DONT_INLINE;
     return false;
 }
 
 /**
  * Offset/Address/Size: 0x3694 | 0x80198358 | size: 0xD8
  */
-bool World::LoadGeometry(const char*, bool, bool, unsigned long*, int*)
+bool World::LoadGeometry(const char* szWorldName, bool bMakeDrawables, bool keepTransform, unsigned long* pDrawableObjectHashes, int* pNumObjectsLoaded)
 {
-    return false;
+    char buffer[256];
+
+    nlSNPrintf(buffer, 0xFF, "%s.glt", szWorldName);
+    tDebugPrintManager::Print(DC_RENDER, "Loading world texture file: %s\n", buffer);
+    glLoadTextureBundle(buffer);
+
+    nlSNPrintf(buffer, 0xFF, "%s.glg", szWorldName);
+    tDebugPrintManager::Print(DC_RENDER, "Loading world geometry file: %s\n", buffer);
+
+    m_pModels = glLoadModel(buffer, &m_uNumModels);
+
+    return LoadGeometry(m_pModels, m_uNumModels, bMakeDrawables, keepTransform, pDrawableObjectHashes, pNumObjectsLoaded, false);
 }
 
 /**

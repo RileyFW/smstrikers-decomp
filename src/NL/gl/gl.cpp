@@ -85,9 +85,9 @@ bool glLoadTextureBundle(const char* filename)
 /**
  * Offset/Address/Size: 0xB8 | 0x801D73F4 | size: 0x20
  */
-void glLoadModel(const char* arg0, unsigned long* arg1)
+glModel* glLoadModel(const char* filename, unsigned long* pNumModels)
 {
-    glplatLoadModel(arg0, arg1);
+    return glplatLoadModel(filename, pNumModels);
 }
 
 /**
@@ -101,11 +101,11 @@ void glFinish()
 /**
  * Offset/Address/Size: 0xF8 | 0x801D7434 | size: 0x14
  */
-void glDiscardFrame(int arg0)
+void glDiscardFrame(int nFrames)
 {
-    if (arg0 > (s32)gl_nDiscard)
+    if (nFrames > (s32)gl_nDiscard)
     {
-        gl_nDiscard = arg0;
+        gl_nDiscard = nFrames;
     }
 }
 

@@ -75,6 +75,8 @@ enum eGLViewSort
     GLVSort_Num = 5
 };
 
+class glModel;
+
 // General GL functions
 void glEndLoadTextureBundle(void*, unsigned long);
 void glBeginLoadTextureBundle(const char*, void (*)(void*, unsigned long, void*), void*);
@@ -84,7 +86,7 @@ u32* glGetClearColour();
 float glGetOrthographicHeight();
 float glGetOrthographicWidth();
 bool glLoadTextureBundle(const char* filename);
-void glLoadModel(const char*, unsigned long*);
+glModel* glLoadModel(const char* filename, unsigned long* pNumModels);
 void glFinish();
 void glDiscardFrame(int);
 void glSendFrame();

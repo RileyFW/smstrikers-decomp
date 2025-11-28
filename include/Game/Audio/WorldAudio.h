@@ -232,10 +232,11 @@ public:
     virtual ~cWorldSFX();
     virtual void Init();
     virtual void SetSFX(SoundPropAccessor*);
-    virtual int Play(Audio::SoundAttributes&);
-    virtual u32 GetClassType() const;
+    virtual unsigned long Play(Audio::SoundAttributes& attributes);
+    virtual eClassType GetClassType() const { return /*meClassType*/ WORLD; };
 
-    void Play(Audio::eWorldSFX, float, float, bool, float);
+    unsigned long Play(Audio::eWorldSFX, float, float, bool, float);
+
     void PlayRandomReaction(Audio::cWorldSFX::CrowdReactionType, float, float, int, float);
     void Stop(Audio::eWorldSFX, cGameSFX::StopFlag);
 };
