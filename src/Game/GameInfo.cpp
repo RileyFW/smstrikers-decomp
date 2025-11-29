@@ -5,6 +5,15 @@ extern bool g_e3_Build;
 
 bool isFreezingUnlocked = false;
 bool isShellsUnlocked = false;
+bool isSuperTeamUnlocked = false;
+bool isLegendUnlocked = false;
+bool isEnhanceUnlocked = false;
+bool isGiantUnlocked = false;
+bool isExplosiveUnlocked = false;
+bool isUnlimitedUnlocked = false;
+bool isGoalieUnlocked = false;
+bool isTiltUnlocked = false;
+bool isAllSTSUnlocked = false;
 
 /**
  * Offset/Address/Size: 0x9E90 | 0x8017F534 | size: 0xB84
@@ -576,11 +585,28 @@ void GameInfoManager::IsSuperStadiumUnlocked() const
 {
 }
 
+bool inline CheckUnlockStatus(const bool& globalFlag, const unsigned char& trophyValue, const unsigned int bit)
+{
+    if (!globalFlag)
+    {
+        if (GetConfigBool(Config::Global(), "givealltrophies", false))
+        {
+            return true;
+        }
+        else
+        {
+            return (trophyValue >> bit) & 0x01;
+        }
+    }
+    return globalFlag;
+}
+
 /**
  * Offset/Address/Size: 0xF48 | 0x801765EC | size: 0xEC
  */
-void GameInfoManager::IsSuperTeamUnlocked() const
+bool GameInfoManager::IsSuperTeamUnlocked() const
 {
+    return CheckUnlockStatus(isSuperTeamUnlocked, mUserInfo.mTrophies[0], 3);
 }
 
 /**
@@ -602,75 +628,65 @@ bool GameInfoManager::IsLegendSkillUnlocked() const
 /**
  * Offset/Address/Size: 0xE30 | 0x801764D4 | size: 0xEC
  */
-void GameInfoManager::IsAllSTSCheatUnlocked() const
+bool GameInfoManager::IsAllSTSCheatUnlocked() const
 {
+    return CheckUnlockStatus(isAllSTSUnlocked, mUserInfo.mTrophies[0], 4);
 }
 
 /**
  * Offset/Address/Size: 0xD44 | 0x801763E8 | size: 0xEC
  */
-void GameInfoManager::IsTiltCheatUnlocked() const
+bool GameInfoManager::IsTiltCheatUnlocked() const
 {
+    return CheckUnlockStatus(isTiltUnlocked, mUserInfo.mTrophies[0], 5);
 }
 
 /**
  * Offset/Address/Size: 0xC58 | 0x801762FC | size: 0xEC
  */
-void GameInfoManager::IsGlassJawGoalieUnlocked() const
+bool GameInfoManager::IsGlassJawGoalieUnlocked() const
 {
+    return CheckUnlockStatus(isGoalieUnlocked, mUserInfo.mTrophies[0], 6);
 }
 
 /**
  * Offset/Address/Size: 0xB6C | 0x80176210 | size: 0xEC
  */
-void GameInfoManager::IsUnlimtedPowerupsUnlocked() const
+bool GameInfoManager::IsUnlimtedPowerupsUnlocked() const
 {
+    return CheckUnlockStatus(isUnlimitedUnlocked, mUserInfo.mTrophies[0], 7);
 }
 
-bool inline IsBitSet(unsigned int flag, unsigned int bit)
-{
-    return ((flag >> bit) & 1) != 0;
-}
 /**
  * Offset/Address/Size: 0xA80 | 0x80176124 | size: 0xEC
  */
 bool GameInfoManager::IsCustomShellsUnlocked() const
 {
-    bool result = isShellsUnlocked;
-    if (!isShellsUnlocked)
-    {
-        if (GetConfigBool(Config::Global(), "givealltrophies", false))
-        {
-            result = true;
-        }
-        else
-        {
-            result = IsBitSet(mUserInfo.mTrophies[1], 0);
-        }
-        return result;
-    }
-    return result;
+    return CheckUnlockStatus(isShellsUnlocked, mUserInfo.mTrophies[1], 0);
 }
 
 /**
  * Offset/Address/Size: 0x994 | 0x80176038 | size: 0xEC
  */
-void GameInfoManager::IsCustomEnhanceUnlocked() const
+bool GameInfoManager::IsCustomEnhanceUnlocked() const
 {
+    return CheckUnlockStatus(isEnhanceUnlocked, mUserInfo.mTrophies[1], 1);
 }
 
 /**
  * Offset/Address/Size: 0x8A8 | 0x80175F4C | size: 0xEC
  */
-void GameInfoManager::IsCustomGiantUnlocked() const
+bool GameInfoManager::IsCustomGiantUnlocked() const
 {
+    return CheckUnlockStatus(isGiantUnlocked, mUserInfo.mTrophies[1], 4);
 }
 
 /**
  * Offset/Address/Size: 0x7BC | 0x80175E60 | size: 0xEC
  */
-void GameInfoManager::IsCustomExplosiveUnlocked() const
+bool GameInfoManager::IsCustomExplosiveUnlocked() const
 {
+    return CheckUnlockStatus(isExplosiveUnlocked, mUserInfo.mTrophies[1], 2);
 }
 
 /**
@@ -678,20 +694,7 @@ void GameInfoManager::IsCustomExplosiveUnlocked() const
  */
 bool GameInfoManager::IsCustomFreezingUnlocked() const
 {
-    bool result = isFreezingUnlocked;
-    if (!isFreezingUnlocked)
-    {
-        if (GetConfigBool(Config::Global(), "givealltrophies", false))
-        {
-            result = true;
-        }
-        else
-        {
-            result = IsBitSet(mUserInfo.mTrophies[1], 3);
-        }
-        return result;
-    }
-    return result;
+    return CheckUnlockStatus(isFreezingUnlocked, mUserInfo.mTrophies[1], 3);
 }
 
 /**

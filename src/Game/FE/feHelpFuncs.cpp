@@ -1,5 +1,77 @@
 #include "Game/FE/feHelpFuncs.h"
 
+#include "Game/GameInfo.h"
+
+unsigned long TrophyTypeToStringName[13] = {
+    0x3F93A700,
+    0x68141335,
+    0x7902D2A0,
+    0xE384D5B8,
+    0x88EAF9AE,
+    0xFC7AE263,
+    0x3D6FFE4E,
+    0x77EBA4E6,
+    0x51C47AC0,
+    0x09FB969C,
+    0xB520A8AF,
+    0x185EC17B,
+    0x99FCEA51,
+};
+
+unsigned long ModeToStandingsStringName[10] = {
+    0xF17CCCFC,
+    0x9B697E0A,
+    0x61949FBF,
+    0xF302B4AA,
+    0xDD056242,
+    0xDB4C7038,
+    0x6E192E6D,
+    0xE617BFD8,
+    0xE989F0F0,
+    0x14183216,
+};
+
+unsigned long ModeToStringName[10] = {
+    0xF17CCCFC,
+    0x3F93A700,
+    0x68141335,
+    0x7902D2A0,
+    0xE384D5B8,
+    0x88EAF9AE,
+    0xFC7AE263,
+    0x3D6FFE4E,
+    0x77EBA4E6,
+    0x1A97A58C,
+};
+
+unsigned long CCToStringName[13] = {
+    0x35D90F6F,
+    0x35F8B919,
+    0x11761DAE,
+    0x4298E9EF,
+    0x367F2AF9,
+    0x36947319,
+    0x369BBA97,
+    0x36D3EC80,
+    0x477D2527,
+    0x4DD51191,
+    0x3750AFA1,
+    0x377C920B,
+    0x848890BC,
+};
+
+long TeamID2CharacterClassTable[9][2] = {
+    { 0x00000000, 0x00000001 },
+    { 0x00000001, 0x00000002 },
+    { 0x00000002, 0x00000005 },
+    { 0x00000003, 0x00000006 },
+    { 0x00000004, 0x00000007 },
+    { 0x00000005, 0x00000009 },
+    { 0x00000006, 0x0000000A },
+    { 0x00000007, 0x0000000B },
+    { 0x00000008, 0x0000000C },
+};
+
 /**
  * Offset/Address/Size: 0x0 | 0x800A30BC | size: 0x58
  */
@@ -164,8 +236,9 @@ void GetSidekickName(eSidekickID)
 /**
  * Offset/Address/Size: 0x1020 | 0x800A40DC | size: 0x14
  */
-void GetTeamName(eTeamID)
+char* GetTeamName(eTeamID)
 {
+    return nullptr;
 }
 
 /**
@@ -192,50 +265,121 @@ void ConvertToCharacterClass(eTeamID)
 /**
  * Offset/Address/Size: 0x1148 | 0x800A4204 | size: 0x14
  */
-void GetLOCTrophyName(eTrophyType)
+unsigned long GetLOCTrophyName(eTrophyType trophyType)
 {
+    return TrophyTypeToStringName[trophyType];
 }
 
 /**
  * Offset/Address/Size: 0x115C | 0x800A4218 | size: 0x14
  */
-void GetLOCStandingsName(GameInfoManager::eGameModes)
+unsigned long GetLOCStandingsName(GameInfoManager::eGameModes mode)
 {
+    return ModeToStandingsStringName[mode];
 }
 
 /**
  * Offset/Address/Size: 0x1170 | 0x800A422C | size: 0x14
  */
-void GetLOCModeName(GameInfoManager::eGameModes)
+unsigned long GetLOCModeName(GameInfoManager::eGameModes mode)
 {
+    return ModeToStringName[mode];
 }
 
 /**
  * Offset/Address/Size: 0x1184 | 0x800A4240 | size: 0x70
  */
-void GetLOCTeamName(eTeamID)
+unsigned long GetLOCTeamName(eTeamID teamID)
 {
+    int i = 0;
+    do
+    {
+        if (teamID == TeamID2CharacterClassTable[i][0])
+        {
+            int characterClass = TeamID2CharacterClassTable[i][1];
+            return CCToStringName[characterClass];
+        }
+        i++;
+    } while (i < 9);
+    return 0x094D126F;
 }
 
 /**
  * Offset/Address/Size: 0x11F4 | 0x800A42B0 | size: 0x88
  */
-void GetLOCSidekickName(eSidekickID)
+unsigned long GetLOCSidekickName(eSidekickID sidekickid)
 {
+    s32 var_r0;
+
+    switch (sidekickid)
+    { /* irregular */
+    case 3:
+        var_r0 = 0;
+        break;
+    case 2:
+        var_r0 = 3;
+        break;
+    case 1:
+        var_r0 = 4;
+        break;
+    case 0:
+        var_r0 = 8;
+        break;
+    case -2:
+        var_r0 = 0xC;
+        break;
+    default:
+        var_r0 = -1;
+        break;
+    }
+    if (var_r0 != -1)
+    {
+        return CCToStringName[var_r0];
+    }
+    return 0x094D126F;
 }
 
 /**
  * Offset/Address/Size: 0x127C | 0x800A4338 | size: 0xDC
  */
-void GetLOCCharacterName(eTeamID, bool, bool)
+unsigned long GetLOCCharacterName(eTeamID teamid, bool useShortSuperTeam, bool useLockedSuperTeam)
 {
+    if ((useShortSuperTeam != 0) && (teamid == 8))
+    {
+        return 0xFA6F322B;
+    }
+    if ((useLockedSuperTeam != 0) && (teamid == 8) && (GameInfoManager::Instance()->IsSuperTeamUnlocked() == 0))
+    {
+        return 0x387952CD;
+    }
+
+    return 0x094D126F;
 }
 
 /**
  * Offset/Address/Size: 0x1358 | 0x800A4414 | size: 0x80
  */
-void GetStadiumStringID(eStadiumID)
+unsigned long GetStadiumStringID(eStadiumID stadiumID)
 {
+    switch (stadiumID)
+    {
+    case STAD_MARIO_STADIUM:
+        return 0x8FFCBC02;
+    case STAD_PEACH_TOAD_STADIUM:
+        return 0x9034EDEB;
+    case STAD_DK_DAISY:
+        return 0xBDD19EF9;
+    case STAD_WARIO_STADIUM:
+        return 0x90B1B10C;
+    case STAD_YOSHI_STADIUM:
+        return 0x90DD9376;
+    case STAD_SUPER_STADIUM:
+        return 0x90743D99;
+    case STAD_FORBIDDEN_DOME:
+        return 0xC7B104A1;
+    default:
+        return 0x094D126F;
+    }
 }
 
 // /**

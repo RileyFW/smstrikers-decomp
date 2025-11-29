@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "Game/GameInfo.h"
+#include "Game/Loader.h"
 
 // void GetSoundPropTableFromPlayerStadium(eStadiumID, eCharacterClass);
 // void 0x80149078..0x801490F4 | size: 0x7C;
@@ -11,9 +12,13 @@ class LoadingManager;
 class SoundStrToIDNode;
 class Bowser;
 
-class AudioLoader
+class AudioLoader : public Loader
 {
 public:
+    virtual bool StartLoad(LoadingManager*);
+    // virtual bool Update() { return false; };
+    virtual const char* GetName() { return "Audio Loader"; };
+
     void InitCrowdFromStateTransition();
     void ResetForRematch();
     void ResetForNewGame();
@@ -42,7 +47,6 @@ public:
     void StartFEStream(const char*, bool, const char*);
     static bool IsInited();
     void Initialize();
-    void StartLoad(LoadingManager*);
     void ActivateDPL2(bool, bool);
     void SetupSoundGroups();
     void GetWorldSFXTypeFromStr(const char*);

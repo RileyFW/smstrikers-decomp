@@ -3,17 +3,20 @@
 
 // void nlStrNICmp<char>(const char*, const char*, unsigned long);
 
-class Audio
+class PriorityStream;
+
+namespace Audio
 {
-public:
-    void InitStreaming();
-    void StopStreaming();
-    void TrackMgrFileNameParamLookup(const char*, char*, unsigned long);
-    void CreatePriorityStreams();
-    void DestroyPriorityStreams();
-    void GetPriorityStream();
-    void ConfigureStreamBuffers(unsigned long);
-};
+
+void InitStreaming();
+void StopStreaming();
+bool TrackMgrFileNameParamLookup(const char*, char*, unsigned long);
+void CreatePriorityStreams();
+void DestroyPriorityStreams();
+PriorityStream* GetPriorityStream();
+void ConfigureStreamBuffers(unsigned long);
+
+}; // namespace Audio
 
 // class Function0<void>
 // {

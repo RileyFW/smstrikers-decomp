@@ -1,4 +1,71 @@
 #include "Game/Audio/AudioStream.h"
+#include "Game/Sys/PlatStream.h"
+#include "Game/Audio/AudioLoader.h"
+#include "Game/Audio/PriorityStream.h"
+#include "NL/nlMemory.h"
+#include "NL/nlConfig.h"
+#include "NL/nlString.h"
+#include "NL/nlPrint.h"
+#include "NL/nlMath.h"
+#include "Game/GameInfo.h"
+#include "Game/Team.h"
+#include <stdlib.h>
+
+#include "Game/FE/feHelpFuncs.h"
+
+extern cTeam* g_pTeams[2];
+extern unsigned int nlDefaultSeed;
+
+// namespace AudioStreamTrack
+// {
+
+// class TrackManagerBase
+// {
+// public:
+//     virtual ~TrackManagerBase();
+//     virtual void StopAllTracks(unsigned long);
+
+//     // StreamFileLookup m_FileLookup;       // offset 0x4, size 0x14
+//     // FadeManager m_FadeMgr;               // offset 0x18, size 0x20
+//     // SlotPool m_StreamPool;               // offset 0x38, size 0x18
+//     // nlDLListSlotPool m_StreamDeleteList; // offset 0x50, size 0x1C
+// };
+
+// } // namespace AudioStreamTrack
+
+extern AudioStreamTrack::TrackManagerBase* g_pTrackManager;
+extern PriorityStream* g_pPriorityStream;
+
+// Structure for last scorer info
+struct LastScorerInfo
+{
+    /* 0x00 */ void* unk_0x0;
+    /* 0x04 */ u32 scorerID;
+};
+
+extern LastScorerInfo* g_pLastScorer__5Audio;
+
+// Team name strings
+static const char* s_TeamNames[] = {
+    "Daisy",      // TEAM_DAISY = 0
+    "DonkeyKong", // TEAM_DONKEYKONG = 1
+    "Luigi",      // TEAM_LUIGI = 2
+    "Mario",      // TEAM_MARIO = 3
+    "Peach",      // TEAM_PEACH = 4
+    "Waluigi",    // TEAM_WALUIGI = 5
+    "Wario",      // TEAM_WARIO = 6
+    "Yoshi",      // TEAM_YOSHI = 7
+    "Mystery"     // TEAM_MYSTERY = 8
+};
+
+// static const char* GetTeamNameString(eTeamID team)
+// {
+//     if (team >= 0 && team < NUM_TEAMS)
+//     {
+//         return s_TeamNames[team];
+//     }
+//     return "Unknown";
+// }
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8014C388 | size: 0x1C
@@ -49,51 +116,94 @@
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x69C | 0x8014BEB4 | size: 0x20
-//  */
-// void Audio::InitStreaming()
-// {
-// }
+/**
+ * Offset/Address/Size: 0x69C | 0x8014BEB4 | size: 0x20
+ */
+void Audio::InitStreaming()
+{
+    PlatAudio::InitStreaming();
+}
 
-// /**
-//  * Offset/Address/Size: 0x65C | 0x8014BE74 | size: 0x40
-//  */
-// void Audio::StopStreaming()
-// {
-// }
+/**
+ * Offset/Address/Size: 0x65C | 0x8014BE74 | size: 0x40
+ */
+void Audio::StopStreaming()
+{
+    if (AudioLoader::gbDisableAudio == false)
+    {
+        g_pTrackManager->StopAllTracks(0);
+    }
+}
 
-// /**
-//  * Offset/Address/Size: 0x2EC | 0x8014BB04 | size: 0x370
-//  */
-// void Audio::TrackMgrFileNameParamLookup(const char*, char*, unsigned long)
-// {
-// }
+// Stadium name strings (based on WorldLoader)
+static const char* s_StadiumNames[] = {
+    "Mario_Stadium", // 0
+    "The_Palace",    // 1
+    "DK_Daisy",      // 2
+    "Wario_Stadium", // 3
+    "Yoshi_Stadium", // 4
+    "Super_Stadium", // 5
+    "Forbidden_Dome" // 6
+};
 
-// /**
-//  * Offset/Address/Size: 0x27C | 0x8014BA94 | size: 0x70
-//  */
-// void Audio::CreatePriorityStreams()
-// {
-// }
+// Scorer name strings (character names)
+static const char* s_ScorerNames[] = {
+    "Mario",      // 0
+    "Luigi",      // 1
+    "Peach",      // 2
+    "Daisy",      // 3
+    "Yoshi",      // 4
+    "DonkeyKong", // 5
+    "Wario",      // 6
+    "Waluigi",    // 7
+    "Bowser",     // 8
+    "Toad",       // 9
+    "Koopa",      // 10
+    "ShyGuy",     // 11
+    "Birdo"       // 12
+};
 
-// /**
-//  * Offset/Address/Size: 0xDC | 0x8014B8F4 | size: 0x1A0
-//  */
-// void Audio::DestroyPriorityStreams()
-// {
-// }
+/**
+ * Offset/Address/Size: 0x2EC | 0x8014BB04 | size: 0x370
+ */
+bool Audio::TrackMgrFileNameParamLookup(const char* param, char* out, unsigned long size)
+{
+    u32 hash = nlStringLowerHash(param);
+    return false;
+}
 
-// /**
-//  * Offset/Address/Size: 0xD4 | 0x8014B8EC | size: 0x8
-//  */
-// void Audio::GetPriorityStream()
-// {
-// }
+/**
+ * Offset/Address/Size: 0x27C | 0x8014BA94 | size: 0x70
+ */
+void Audio::CreatePriorityStreams()
+{
+    PriorityStream* stream = (PriorityStream*)nlMalloc(0x78, 8, false);
+    stream = new (stream) PriorityStream(g_pTrackManager->CreateTrack("Priority", ::MasterVolume::VG_Special));
+    g_pPriorityStream = stream;
+}
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x8014B818 | size: 0xD4
-//  */
-// void Audio::ConfigureStreamBuffers(unsigned long)
-// {
-// }
+/**
+ * Offset/Address/Size: 0xDC | 0x8014B8F4 | size: 0x1A0
+ */
+void Audio::DestroyPriorityStreams()
+{
+}
+
+/**
+ * Offset/Address/Size: 0xD4 | 0x8014B8EC | size: 0x8
+ */
+PriorityStream* Audio::GetPriorityStream()
+{
+    return g_pPriorityStream;
+}
+
+/**
+ * Offset/Address/Size: 0x0 | 0x8014B818 | size: 0xD4
+ */
+void Audio::ConfigureStreamBuffers(unsigned long count)
+{
+    if (!GetConfigBool(Config::Global(), "no_stream", false))
+    {
+        PlatAudio::ConfigureStreamBuffers(count);
+    }
+}

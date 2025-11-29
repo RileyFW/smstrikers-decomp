@@ -1,39 +1,63 @@
 #ifndef _STREAMTRACK_H_
 #define _STREAMTRACK_H_
 
-// namespace AudioStreamTrack
-// {
-// class TrackManagerBase
-// {
-// public:
-//     void Update(float);
+namespace MasterVolume
+{
+enum VOLUME_GROUP
+{
+    VG_Special = 0,
+    VG_Music = 1,
+    VG_SFX = 2,
+    VG_Voice = 3,
+};
+}
 
-//     class FadeManager
-//     {
-//     public:
-//         void UpdateFade(STREAM_FADE_CTRL*);
-//     };
-// };
+namespace AudioStreamTrack
+{
 
-// class StreamTrack
-// {
-// public:
-//     void Update(float);
-//     void PlayStream(unsigned long, float, bool, unsigned long, unsigned long, const char*, Audio::MasterVolume::VOLUME_GROUP);
-//     void QueueStream(unsigned long, float, bool, unsigned long, const char*, Audio::MasterVolume::VOLUME_GROUP);
-//     void ProcessNewHeadStream();
-//     void StopHead(unsigned long);
-//     void Stop(unsigned long);
-//     void StopQStream(AudioStreamTrack::StreamTrack::QUEUED_STREAM*);
-//     void StopStream(GCAudioStreaming::StereoAudioStream*, bool);
-//     void FadeOutDone(AudioStreamTrack::StreamTrack::QUEUED_STREAM*);
-//     void FadeOutDoneStartNext(AudioStreamTrack::StreamTrack::QUEUED_STREAM*);
-//     void Pause(unsigned long, bool);
-//     void Resume();
-//     void AttachStream(GCAudioStreaming::StereoAudioStream*, Audio::MasterVolume::VOLUME_GROUP, unsigned long, unsigned long, bool, bool);
-// }
+class StreamTrack;
 
-// }; // namespace AudioStreamTrack
+class TrackManagerBase
+{
+public:
+    virtual ~TrackManagerBase();
+    /* 0x08 */ virtual void Update(float);
+    /* 0x10 */ virtual StreamTrack& CreateTrack(const char*, MasterVolume::VOLUME_GROUP);
+    /* 0x14 */ virtual void OnMasterVolumeChange(MasterVolume::VOLUME_GROUP);
+    /* 0x18 */ virtual void GetTrack(unsigned long);
+    /* 0x1C */ virtual void StopAllTracks(unsigned long);
+
+    // class FadeManager
+    // {
+    // public:
+    //     void UpdateFade(STREAM_FADE_CTRL*);
+    // };
+
+    // StreamFileLookup m_FileLookup;       // offset 0x4, size 0x14
+    // FadeManager m_FadeMgr;               // offset 0x18, size 0x20
+    // SlotPool m_StreamPool;               // offset 0x38, size 0x18
+    // nlDLListSlotPool m_StreamDeleteList; // offset 0x50, size 0x1C
+};
+
+class StreamTrack
+{
+public:
+    void Update(float);
+    // void PlayStream(unsigned long, float, bool, unsigned long, unsigned long, const char*, Audio::MasterVolume::VOLUME_GROUP);
+    // void QueueStream(unsigned long, float, bool, unsigned long, const char*, Audio::MasterVolume::VOLUME_GROUP);
+    // void ProcessNewHeadStream();
+    // void StopHead(unsigned long);
+    // void Stop(unsigned long);
+    // void StopQStream(AudioStreamTrack::StreamTrack::QUEUED_STREAM*);
+    // void StopStream(GCAudioStreaming::StereoAudioStream*, bool);
+    // void FadeOutDone(AudioStreamTrack::StreamTrack::QUEUED_STREAM*);
+    // void FadeOutDoneStartNext(AudioStreamTrack::StreamTrack::QUEUED_STREAM*);
+    // void Pause(unsigned long, bool);
+    // void Resume();
+    // void AttachStream(GCAudioStreaming::StereoAudioStream*, Audio::MasterVolume::VOLUME_GROUP, unsigned long, unsigned long, bool, bool);
+};
+
+} // namespace AudioStreamTrack
 
 // class Function0<void>
 // {

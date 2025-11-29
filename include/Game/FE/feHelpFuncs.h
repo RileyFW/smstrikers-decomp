@@ -19,14 +19,16 @@ void GetLOCRank(int);
 void ConvertToSidekickID(const char*);
 void ConvertToTeamID(const char*);
 void GetSidekickName(eSidekickID);
-void GetTeamName(eTeamID);
+char* GetTeamName(eTeamID);
 void ConvertToCharacterClass(eSidekickID);
 void ConvertToCharacterClass(eTeamID);
-void GetLOCTrophyName(eTrophyType);
-void GetLOCTeamName(eTeamID);
-void GetLOCSidekickName(eSidekickID);
-void GetLOCCharacterName(eTeamID, bool, bool);
-void GetStadiumStringID(eStadiumID);
+unsigned long GetLOCTrophyName(eTrophyType);
+unsigned long GetLOCStandingsName(GameInfoManager::eGameModes);
+unsigned long GetLOCModeName(GameInfoManager::eGameModes);
+unsigned long GetLOCTeamName(eTeamID);
+unsigned long GetLOCSidekickName(eSidekickID);
+unsigned long GetLOCCharacterName(eTeamID, bool, bool);
+unsigned long GetStadiumStringID(eStadiumID);
 
 // class TakeGameMemSnapshot
 // {
