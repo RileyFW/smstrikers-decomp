@@ -1,15 +1,16 @@
 #ifndef _PLATSTREAM_H_
 #define _PLATSTREAM_H_
 
-class PlatAudio
+namespace PlatAudio
 {
-public:
-    void InitStreaming();
-    void ShutdownStreaming();
-    void ConfigureStreamBuffers(unsigned long);
-    void IsStreamingInited();
-    void StopAllStreams();
-};
+
+static void InitStreaming();
+static void ShutdownStreaming();
+static void ConfigureStreamBuffers(unsigned long);
+static bool IsStreamingInited();
+static void StopAllStreams();
+
+}; // namespace PlatAudio
 
 // class GCAudioStreaming
 // {

@@ -2,6 +2,12 @@
 
 extern unsigned int nlDefaultSeed;
 
+Audio::eWorldSFX ohBigSFX[3] __attribute__((section(".rodata"))) = { Audio::CROWDSFX_EVENT_OH_SMALL4, Audio::CROWDSFX_EVENT_CLAP_BIG, Audio::CROWDSFX_EVENT_CLAP_SMALL };
+Audio::eWorldSFX ohSmallSFX[4] __attribute__((section(".rodata"))) = { Audio::CROWDSFX_EVENT_JEER_BIG, Audio::CROWDSFX_EVENT_JEER_SMALL, Audio::CROWDSFX_EVENT_BOO_SMALL1, Audio::CROWDSFX_EVENT_BOO_SMALL2 };
+Audio::eWorldSFX yeahSmallSFX[3] __attribute__((section(".rodata"))) = { Audio::CROWDSFX_EVENT_OH_BIG2, Audio::CROWDSFX_EVENT_OH_BIG3, Audio::CROWDSFX_EVENT_OH_SMALL1 };
+Audio::eWorldSFX booSmallSFX[3] __attribute__((section(".rodata"))) = { Audio::BALLSFX_HEADER, Audio::BALLSFX_CHEST, Audio::BALLSFX_KICK };
+Audio::eWorldSFX booBigSFX[3] __attribute__((section(".rodata"))) = { Audio::BALLSFX_KICK_ONETIMER, Audio::BALLSFX_KICK_S2S_CAPT, Audio::BALLSFX_PASS };
+
 namespace Audio
 {
 cWorldSFX gWorldSFX;
@@ -226,15 +232,8 @@ const char* gWorldSoundTable[212] = {
     "STADSFX_STRIKE_CAPT_SFX",
     "NUM_WORLDSFX"
 };
-
-eWorldSFX ohBigSFX[3] = { CROWDSFX_EVENT_OH_SMALL4, CROWDSFX_EVENT_CLAP_BIG, CROWDSFX_EVENT_CLAP_SMALL };
-eWorldSFX ohSmallSFX[4] = { CROWDSFX_EVENT_JEER_BIG, CROWDSFX_EVENT_JEER_SMALL, CROWDSFX_EVENT_BOO_SMALL1, CROWDSFX_EVENT_BOO_SMALL2 };
-eWorldSFX yeahSmallSFX[3] = { CROWDSFX_EVENT_OH_BIG2, CROWDSFX_EVENT_OH_BIG3, CROWDSFX_EVENT_OH_SMALL1 };
-eWorldSFX booSmallSFX[3] = { BALLSFX_HEADER, BALLSFX_CHEST, BALLSFX_KICK };
-eWorldSFX booBigSFX[3] = { BALLSFX_KICK_ONETIMER, BALLSFX_KICK_S2S_CAPT, BALLSFX_PASS };
-
-bool g_bWorldSFXInitialized = false;
-bool g_bAudioInitialized = false;
+// bool g_bWorldSFXInitialized = false;
+// bool g_bAudioInitialized = false;
 
 /**
  * Offset/Address/Size: 0x2B8 | 0x80154BFC | size: 0x60
@@ -291,11 +290,54 @@ void cWorldSFX::SetSFX(SoundPropAccessor* pSoundPropAccessor)
     cGameSFX::SetSFX(pSoundPropAccessor);
 }
 
+inline const eWorldSFX* GetRandomReactionSize(cWorldSFX::CrowdReactionType dType, unsigned int& tableSize)
+{
+    switch (dType)
+    {
+    case cWorldSFX::CROWD_REACTION_OH_BIG:
+        tableSize = 3;
+        return ohBigSFX;
+    case cWorldSFX::CROWD_REACTION_OH_SMALL:
+        tableSize = 4;
+        return ohSmallSFX;
+    case cWorldSFX::CROWD_REACTION_YEAH_SMALL:
+        tableSize = 3;
+        return yeahSmallSFX;
+    case cWorldSFX::CROWD_REACTION_BOO_SMALL:
+        tableSize = 3;
+        return booSmallSFX;
+    case cWorldSFX::CROWD_REACTION_BOO_BIG:
+        tableSize = 3;
+        return booBigSFX;
+    }
+    return nullptr;
+}
+
 /**
  * Offset/Address/Size: 0x20 | 0x80154964 | size: 0x15C
  */
-void cWorldSFX::PlayRandomReaction(Audio::cWorldSFX::CrowdReactionType, float, float, int, float)
+unsigned long cWorldSFX::PlayRandomReaction(Audio::cWorldSFX::CrowdReactionType dType, float volume, float delayTime, int groupPriority, float fDefaultVolAdjustment)
 {
+    const eWorldSFX* pSFXArray;
+    unsigned int tableSize;
+
+    if (!Audio::IsInited() || !Audio::IsWorldSFXLoaded())
+    {
+        return Audio::GetSndIDError();
+    }
+
+    pSFXArray = GetRandomReactionSize(dType, tableSize);
+
+    Audio::SoundAttributes attributes;
+    attributes.Init();
+
+    attributes.SetSoundType(pSFXArray[nlRandom(tableSize, &nlDefaultSeed)], false);
+    attributes.mi_GroupPriority = groupPriority;
+    attributes.mf_Volume = volume;
+    attributes.mf_VolAdjustment = fDefaultVolAdjustment;
+    attributes.mf_DelayTime = delayTime;
+
+    return Play(attributes);
 }
 
 /**

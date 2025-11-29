@@ -169,7 +169,7 @@ void Update3DSFXEmitters();
 void UpdateFades(float);
 void Update(float);
 int GetSndIDError();
-void IsSFXPlaying(unsigned long);
+bool IsSFXPlaying(unsigned long);
 void StopSFX(unsigned long);
 // void PlaySFXEventFromScript(const SoundEventData&, const char*, float, float);
 void StopCharSFXbyStr(const char* szSFXType, NisCharacterClass charIdentifier);
@@ -181,7 +181,7 @@ void PlayWorldSFXbyStr(const char* szSFXType, float fVol, float fDelay, bool bIs
 // void AddDelayedSFX(const Audio::SoundAttributes&, unsigned long, float, float, cGameSFX*);
 // void PlaySFXbyID(const Audio::SoundAttributes&, unsigned long, float, float, int);
 // void PlaySFX(const SFXStartInfo&);
-// void GetAudioTimer();
+float GetAudioTimer();
 void Shutdown();
 void Silence();
 void ResetForNewGame();

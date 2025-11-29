@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "Game/Sys/audio.h"
+#include "NL/plat/plataudio.h"
 
 #include "NL/nlMath.h"
 #include "NL/nlDLRing.h"
@@ -29,8 +30,17 @@ struct SoundAttributes;
 // void nlDLRingRemove<DLListEntry<SFXPlaySet*>>(DLListEntry<SFXPlaySet*>**, DLListEntry<SFXPlaySet*>*);
 // void nlDLRingAddStart<DLListEntry<SFXPlaySet*>>(DLListEntry<SFXPlaySet*>**, DLListEntry<SFXPlaySet*>*);
 
-class SFXPlaySet;
-class SFXEmitter;
+struct SFXPlaySet
+{
+    /* 0x00 */ unsigned long type;
+    /* 0x04 */ unsigned long voiceID;
+    /* 0x08 */ unsigned char bIs3D;
+    /* 0x0C */ SFXEmitter* emitter;
+    /* 0x10 */ float delay;
+    /* 0x14 */ float timeStamp;
+    /* 0x18 */ int sfxPriority;
+    /* 0x1C */ int groupPriority;
+}; // total size: 0x20
 
 class SoundPropAccessor
 {
@@ -64,13 +74,13 @@ public:
     float GetSFXVol(unsigned long) const;
     float GetSFXVolReverb(unsigned long) const;
     bool IsKeepingTrackOf(unsigned long, SFXPlaySet**);
-    void ActivateFilterOnAllTrackedSFX(bool);
+    bool ActivateFilterOnAllTrackedSFX(bool);
     void SetFilterFreqOnAllTrackedSFX(unsigned short);
     void SetPitchBendOnAllDialogueSFX(unsigned short);
     void KeepTrack(SFXEmitter*, const Audio::SoundAttributes&, unsigned long);
     void Stop(unsigned long, cGameSFX::StopFlag);
     void StopEmitter(SFXEmitter*, unsigned long);
-    void StopTrackedSFX(SFXPlaySet*);
+    bool StopTrackedSFX(SFXPlaySet*);
     void StopTrackedSFX(nlDLListIterator<SFXPlaySet*>*);
     void StopPlayingAllTrackedSFX();
     void UpdateAllTrackedSFX(float);

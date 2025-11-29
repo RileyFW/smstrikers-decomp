@@ -229,15 +229,19 @@ public:
         CROWD_REACTION_BOO_BIG = 4,
     };
 
+    cWorldSFX()
+        : cGameSFX()
+    {
+        cGameSFX::Init();
+    };
     virtual ~cWorldSFX();
     virtual void Init();
     virtual void SetSFX(SoundPropAccessor*);
     virtual unsigned long Play(Audio::SoundAttributes& attributes);
-    virtual eClassType GetClassType() const { return /*meClassType*/ WORLD; };
 
     unsigned long Play(Audio::eWorldSFX, float, float, bool, float);
+    unsigned long PlayRandomReaction(Audio::cWorldSFX::CrowdReactionType, float, float, int, float);
 
-    void PlayRandomReaction(Audio::cWorldSFX::CrowdReactionType, float, float, int, float);
     void Stop(Audio::eWorldSFX, cGameSFX::StopFlag);
 };
 

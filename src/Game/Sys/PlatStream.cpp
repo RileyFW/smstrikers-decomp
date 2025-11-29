@@ -1,4 +1,9 @@
 #include "Game/Sys/PlatStream.h"
+#include "Game/Sys/GCStream.h"
+
+extern GCAudioStreaming::AudioBufferMgr g_BufferMgr;
+
+static bool g_StreamingInitd;
 
 // /**
 //  * Offset/Address/Size: 0x30 | 0x801C778C | size: 0x24
@@ -47,6 +52,11 @@
  */
 void PlatAudio::InitStreaming()
 {
+    if (!g_StreamingInitd)
+    {
+        g_BufferMgr.Init(0x5DD80);
+        g_StreamingInitd = true;
+    }
 }
 
 /**
@@ -59,15 +69,18 @@ void PlatAudio::ShutdownStreaming()
 /**
  * Offset/Address/Size: 0x1C4 | 0x801C7288 | size: 0x44
  */
-void PlatAudio::ConfigureStreamBuffers(unsigned long)
+void PlatAudio::ConfigureStreamBuffers(unsigned long count)
 {
+    g_BufferMgr.DeleteBuffers();
+    g_BufferMgr.CreateBuffers(count);
 }
 
 /**
  * Offset/Address/Size: 0x1BC | 0x801C7280 | size: 0x8
  */
-void PlatAudio::IsStreamingInited()
+bool PlatAudio::IsStreamingInited()
 {
+    return g_StreamingInitd;
 }
 
 /**

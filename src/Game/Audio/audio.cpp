@@ -7,6 +7,10 @@
 #include "NL/nlTimer.h"
 #include "NL/plat/plataudio.h"
 
+// Include PlatStream.h after plataudio.h to get the PlatAudio class
+// The namespace PlatAudio and class PlatAudio can coexist
+#include "Game/Sys/PlatStream.h"
+
 struct FadeAudioData // TODO: this should be a ListEntry<T>
 {
     /* 0x00 */ char padding[0x28];
@@ -38,10 +42,11 @@ static f32 gfVolumeGroups[0x18];
 namespace Audio
 {
 
-DelayTimer gChantDelayTimer;
+float gChantDelayTimer;
 bool gbGameIsPaused = false;
 bool gbStartingGame = true;
 bool g_bHomeTeamHasJustScored = false;
+float g_fAudioTimer = 0.0f;
 
 /**
  * Offset/Address/Size: 0x0 | 0x8013C514 | size: 0x10
@@ -269,9 +274,14 @@ int GetSndIDError()
 /**
  * Offset/Address/Size: 0x2344 | 0x8013E858 | size: 0x34
  */
-// void IsSFXPlaying(unsigned long)
-// {
-// }
+bool IsSFXPlaying(unsigned long sfxID)
+{
+    if (g_bAudioInitialized)
+    {
+        return PlatAudio::IsSFXPlaying(sfxID);
+    }
+    return false;
+}
 
 /**
  * Offset/Address/Size: 0x2378 | 0x8013E88C | size: 0x34
@@ -353,15 +363,26 @@ int GetSndIDError()
 /**
  * Offset/Address/Size: 0x2FBC | 0x8013F4D0 | size: 0x8
  */
-// void GetAudioTimer()
-// {
-// }
+float GetAudioTimer()
+{
+    return g_fAudioTimer;
+}
 
 /**
  * Offset/Address/Size: 0x2FC4 | 0x8013F4D8 | size: 0x44
  */
 void Shutdown()
 {
+    if (g_bAudioInitialized)
+    {
+        if (PlatAudio::IsStreamingInited())
+        {
+            PlatAudio::ShutdownStreaming();
+        }
+
+        PlatAudio::Shutdown();
+        g_bAudioInitialized = false;
+    }
 }
 
 /**
@@ -369,6 +390,7 @@ void Shutdown()
  */
 void Silence()
 {
+    PlatAudio::StopAllSound();
 }
 
 /**
@@ -378,8 +400,8 @@ void ResetForNewGame()
 {
     gbGameIsPaused = false;
     gbStartingGame = true;
-    g_bHomeTeamHasJustScored = true;
-    gChantDelayTimer._unk_0x0 = 0.0f;
+    g_bHomeTeamHasJustScored = false;
+    gChantDelayTimer = 0.0f;
     nlDeleteList<FadeAudioData>(&g_pFadeList);
     g_pFadeList = NULL;
 }

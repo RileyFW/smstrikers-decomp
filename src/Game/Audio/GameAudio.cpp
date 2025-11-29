@@ -1,6 +1,12 @@
 #include "Game/GameAudio.h"
 #include "types.h"
 
+inline bool IsVolGrpInRange(unsigned long sfxID, cGameSFX* pGameSFX)
+{
+    const int volGrp = pGameSFX->mpSFX[sfxID].volGrp;
+    return (volGrp >= 5 && volGrp <= 19);
+}
+
 /**
  * Offset/Address/Size: 0x0 | 0x80151544 | size: 0x8D8
  */
@@ -22,13 +28,18 @@ void cGameSFX::StopPlayingAllTrackedSFX()
  */
 void cGameSFX::StopTrackedSFX(nlDLListIterator<SFXPlaySet*>*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0xBC0 | 0x80152104 | size: 0xC4
  */
-void cGameSFX::StopTrackedSFX(SFXPlaySet*)
+bool cGameSFX::StopTrackedSFX(SFXPlaySet* pPlaySet)
 {
+    FORCE_DONT_INLINE;
+
+    // Not found
+    return false;
 }
 
 /**
@@ -63,8 +74,23 @@ unsigned long cGameSFX::Play(Audio::SoundAttributes& attributes)
 /**
  * Offset/Address/Size: 0x1BD0 | 0x80153114 | size: 0xA8
  */
-void TrackedSFXPriorityCallback(SFXPlaySet*, unsigned long, cGameSFX*)
+bool TrackedSFXPriorityCallback(SFXPlaySet* pPlaySet, unsigned long priority, cGameSFX* pGameSFX)
 {
+    if (pPlaySet->bIs3D != 0)
+    {
+        if (Audio::IsEmitterActive(pPlaySet->emitter) && pPlaySet->sfxPriority > priority)
+        {
+            return pGameSFX->StopTrackedSFX(pPlaySet);
+        }
+    }
+    else
+    {
+        if (Audio::IsSFXPlaying(pPlaySet->voiceID) && pPlaySet->sfxPriority > priority)
+        {
+            return pGameSFX->StopTrackedSFX(pPlaySet);
+        }
+    }
+    return true;
 }
 
 /**
@@ -84,22 +110,35 @@ void cGameSFX::SetFilterFreqOnAllTrackedSFX(unsigned short)
 /**
  * Offset/Address/Size: 0x1F60 | 0x801534A4 | size: 0x12C
  */
-void cGameSFX::ActivateFilterOnAllTrackedSFX(bool)
+bool cGameSFX::ActivateFilterOnAllTrackedSFX(bool bActivate)
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x208C | 0x801535D0 | size: 0x9C
  */
-void TrackedSFXFilterFreqTypeCheckCallback(unsigned long, cGameSFX*)
+bool TrackedSFXFilterFreqTypeCheckCallback(unsigned long sfxID, cGameSFX* pGameSFX)
 {
+    if (pGameSFX->GetClassType() == WORLD && sfxID == 0xBB)
+    {
+        return false;
+    }
+
+    if (IsVolGrpInRange(sfxID, pGameSFX))
+    {
+        return false;
+    }
+    return true;
 }
 
 /**
  * Offset/Address/Size: 0x2128 | 0x8015366C | size: 0x30
  */
-void TrackedSFXPitchFreqTypeCheckCallback(unsigned long, cGameSFX*)
+bool TrackedSFXPitchFreqTypeCheckCallback(unsigned long sfxID, cGameSFX* pGameSFX)
 {
+    const int volGrp = pGameSFX->mpSFX[sfxID].volGrp;
+    return (bool)(volGrp >= 5 && volGrp <= 19);
 }
 
 /**
@@ -139,23 +178,11 @@ void cGameSFX::SetSFX(SoundPropAccessor* pSoundPropAccessor)
 void cGameSFX::ShutdownPlaySet()
 {
     FORCE_DONT_INLINE;
-
-    // s32 sp10;
-    // s32 spC;
-    // s32 sp8;
-
     mbCurPlaySetIsValid = false;
     StopPlayingAllTrackedSFX();
 
-    // sp8 = @565.unk0;
-    // spC = @565.unk4;
-    // sp10 = @565.unk8;
-
-    // nlWalkDLRing<26DLListEntry < P10SFXPlaySet>, 77DLListContainerBase < P10SFXPlaySet,
-    //     40NewAdapter < 26DLListEntry < P10SFXPlaySet >>>> __FP26DLListEntry<P10SFXPlaySet> P77DLListContainerBase < P10SFXPlaySet,
-    //     40NewAdapter < 26DLListEntry < P10SFXPlaySet >>> M77DLListContainerBase < P10SFXPlaySet,
-    //     40NewAdapter < 26DLListEntry < P10SFXPlaySet
-    //         >>> FPCvPvP26DLListEntry<P10SFXPlaySet> _v(this->unk18, &this->unk14, &sp8, @565.unk0, &@565);
+    nlWalkDLRing<DLListEntry<SFXPlaySet*>, nlDLListContainer<SFXPlaySet*> >(
+        mpCurPlaySet.m_Head, &mpCurPlaySet, &nlDLListContainer<SFXPlaySet*>::DeleteEntry);
 
     mpCurPlaySet.m_Head = NULL;
 }
@@ -188,6 +215,12 @@ void cGameSFX::Init()
  */
 cGameSFX::~cGameSFX()
 {
+    DeInit();
+    if (mpCurPlaySet.m_Head != NULL)
+    {
+        nlWalkDLRing<DLListEntry<SFXPlaySet*>, nlDLListContainer<SFXPlaySet*> >(mpCurPlaySet.m_Head, &mpCurPlaySet, &nlDLListContainer<SFXPlaySet*>::DeleteEntry);
+        mpCurPlaySet.m_Head = NULL;
+    }
 }
 
 /**
@@ -195,6 +228,18 @@ cGameSFX::~cGameSFX()
  */
 cGameSFX::cGameSFX()
 {
+    mbInited = false;
+    mNumSFX = 0;
+    mNumSFXTypes = 0;
+    mpSFX = NULL;
+    mpCurPlaySet.m_Head = NULL;
+    mbCurPlaySetIsValid = false;
+    mfTrackedSFXCheckInterval = 0.0f;
+    mpSoundStrTable = NULL;
+    meClassType = GAME;
+    mbGroupFilterOn = false;
+    muGroupFilterFreq = 0;
+    muGroupPitch = 0x2000;
 }
 
 // /**
