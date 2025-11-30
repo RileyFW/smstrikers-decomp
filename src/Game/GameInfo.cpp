@@ -14,6 +14,10 @@ bool isUnlimitedUnlocked = false;
 bool isGoalieUnlocked = false;
 bool isTiltUnlocked = false;
 bool isAllSTSUnlocked = false;
+bool isKongaUnlocked = false;
+bool isYoshiUnlocked = false;
+bool isForbiddenUnlocked = false;
+bool isSuperStadUnlocked = false;
 
 /**
  * Offset/Address/Size: 0x9E90 | 0x8017F534 | size: 0xB84
@@ -388,12 +392,24 @@ void GameInfoManager::GetMilestoneLevel(eTrophyType) const
 {
 }
 
+inline bool IsInRegCupMode(const GameInfoManager::eGameModes& mode)
+{
+    if (mode < GameInfoManager::GM_SUPER_MUSHROOM_CUP)
+    {
+        if (mode >= GameInfoManager::GM_MUSHROOM_CUP)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Offset/Address/Size: 0x5F38 | 0x8017B5DC | size: 0x28
  */
 bool GameInfoManager::IsInRegularCupMode() const
 {
-    return false;
+    return IsInRegCupMode(mCurrentMode);
 }
 
 /**
@@ -409,14 +425,16 @@ bool GameInfoManager::IsInSuperCupMode() const
  */
 bool GameInfoManager::IsInCupMode() const
 {
-    return false;
+    bool isInRegularCupMode = IsInRegCupMode(mCurrentMode);
+    return isInRegularCupMode;
 }
 
 /**
  * Offset/Address/Size: 0x5E5C | 0x8017B500 | size: 0x64
  */
-void GameInfoManager::IsInCupOrTournamentMode() const
+bool GameInfoManager::IsInCupOrTournamentMode() const
 {
+    return false;
 }
 
 /**
@@ -504,15 +522,47 @@ void GameInfoManager::ApplyDifficultySettings()
 /**
  * Offset/Address/Size: 0x4E14 | 0x8017A4B8 | size: 0x68
  */
-void GameInfoManager::GetTrophyTypeByCurrentMode() const
+eTrophyType GameInfoManager::GetTrophyTypeByCurrentMode() const
 {
+    eTrophyType mode = INVALID_TROPHY;
+
+    switch (mCurrentMode)
+    {
+    case GM_MUSHROOM_CUP:
+        mode = TROPHY_MUSHROOM_CUP;
+        break;
+    case GM_FLOWER_CUP:
+        mode = TROPHY_FLOWER_CUP;
+        break;
+    case GM_STAR_CUP:
+        mode = TROPHY_STAR_CUP;
+        break;
+    case GM_BOWSER_CUP:
+        mode = TROPHY_BOWSER_CUP;
+        break;
+    case GM_SUPER_MUSHROOM_CUP:
+        mode = TROPHY_SUPER_MUSHROOM_CUP;
+        break;
+    case GM_SUPER_FLOWER_CUP:
+        mode = TROPHY_SUPER_FLOWER_CUP;
+        break;
+    case GM_SUPER_STAR_CUP:
+        mode = TROPHY_SUPER_STAR_CUP;
+        break;
+    case GM_SUPER_BOWSER_CUP:
+        mode = TROPHY_SUPER_BOWSER_CUP;
+        break;
+    }
+
+    return mode;
 }
 
 /**
  * Offset/Address/Size: 0x4DFC | 0x8017A4A0 | size: 0x18
  */
-void GameInfoManager::IsPossibleCupMatch() const
+bool GameInfoManager::IsPossibleCupMatch() const
 {
+    return mCupMatchRequirement != RESULT_INVALID;
 }
 
 /**
@@ -557,34 +607,6 @@ void GameInfoManager::FindWinningTeam()
 {
 }
 
-/**
- * Offset/Address/Size: 0x12F8 | 0x8017699C | size: 0xEC
- */
-void GameInfoManager::IsKongaUnlocked() const
-{
-}
-
-/**
- * Offset/Address/Size: 0x120C | 0x801768B0 | size: 0xEC
- */
-void GameInfoManager::IsYoshiUnlocked() const
-{
-}
-
-/**
- * Offset/Address/Size: 0x1120 | 0x801767C4 | size: 0xEC
- */
-void GameInfoManager::IsForbiddenUnlocked() const
-{
-}
-
-/**
- * Offset/Address/Size: 0x1034 | 0x801766D8 | size: 0xEC
- */
-void GameInfoManager::IsSuperStadiumUnlocked() const
-{
-}
-
 bool inline CheckUnlockStatus(const bool& globalFlag, const unsigned char& trophyValue, const unsigned int bit)
 {
     if (!globalFlag)
@@ -599,6 +621,38 @@ bool inline CheckUnlockStatus(const bool& globalFlag, const unsigned char& troph
         }
     }
     return globalFlag;
+}
+
+/**
+ * Offset/Address/Size: 0x12F8 | 0x8017699C | size: 0xEC
+ */
+bool GameInfoManager::IsKongaUnlocked() const
+{
+    return CheckUnlockStatus(isKongaUnlocked, mUserInfo.mTrophies[0], 0);
+}
+
+/**
+ * Offset/Address/Size: 0x120C | 0x801768B0 | size: 0xEC
+ */
+bool GameInfoManager::IsYoshiUnlocked() const
+{
+    return CheckUnlockStatus(isYoshiUnlocked, mUserInfo.mTrophies[0], 1);
+}
+
+/**
+ * Offset/Address/Size: 0x1120 | 0x801767C4 | size: 0xEC
+ */
+bool GameInfoManager::IsForbiddenUnlocked() const
+{
+    return CheckUnlockStatus(isForbiddenUnlocked, mUserInfo.mTrophies[0], 2);
+}
+
+/**
+ * Offset/Address/Size: 0x1034 | 0x801766D8 | size: 0xEC
+ */
+bool GameInfoManager::IsSuperStadiumUnlocked() const
+{
+    return CheckUnlockStatus(isSuperStadUnlocked, mUserInfo.mTrophies[0], 3);
 }
 
 /**
