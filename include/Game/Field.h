@@ -54,6 +54,11 @@ public:
     static void FixOutOfBoundsPosition(nlVector3&, float);
     static void SetFieldDimensions(float, float, float);
 
+    static inline const nlVector3& GetFieldPosition()
+    {
+        return mv3FieldPosition;
+    }
+
     static nlVector3 mv3FieldPosition;
     static nlVector3 mSidelines[4];
     // static sCornerSegment mCorners[4];

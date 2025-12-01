@@ -171,14 +171,14 @@ void cField::FixOutOfBoundsPosition(nlVector3& v, float fMinDistanceFromWall)
     float min, max;
     float half;
 
-    half = mv3FieldPosition.f.x;
+    half = GetFieldPosition().f.x;
     float& x = v.f.x;
     min = -half + fMinDistanceFromWall;
     max = half - fMinDistanceFromWall;
     v.f.x = ClampMax(ClampMin(x, min), max);
 
     float& y = v.f.y;
-    half = mv3FieldPosition.f.y;
+    half = GetFieldPosition().f.y;
     min = -half + fMinDistanceFromWall;
     max = half - fMinDistanceFromWall;
     v.f.y = ClampMax(ClampMin(y, min), max);

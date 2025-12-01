@@ -1,4 +1,5 @@
 #include "Game/GameInfo.h"
+#include "Dolphin/types.h"
 #include "NL/nlMemory.h"
 
 extern bool g_e3_Build;
@@ -93,15 +94,43 @@ u16 GameInfoManager::GetNumRounds() const
 /**
  * Offset/Address/Size: 0x9AB8 | 0x8017F15C | size: 0x23C
  */
-void GameInfoManager::GetTeamStatsByIndex(unsigned short)
+TeamStats GameInfoManager::GetTeamStatsByIndex(unsigned short index)
 {
+    TeamStats stats;
+
+    if (mCurrentMode == GM_BOWSER_CUP)
+    {
+        stats = *mBowserCupSeries.GetTeamStats(index);
+    }
+    else if (mCurrentMode == GM_SUPER_BOWSER_CUP)
+    {
+        stats = *mSuperBowserCupSeries.GetTeamStats(index);
+    }
+    else
+    {
+        stats = *mCurrentCup->GetTeamStats(index);
+    }
+
+    return stats;
 }
 
 /**
  * Offset/Address/Size: 0x9A38 | 0x8017F0DC | size: 0x80
  */
-void GameInfoManager::pGetTeamStatsByIndex(unsigned short)
+TeamStats* GameInfoManager::pGetTeamStatsByIndex(unsigned short index)
 {
+    if (mCurrentMode == GM_BOWSER_CUP)
+    {
+        return mBowserCupSeries.GetTeamStats(index);
+    }
+    else if (mCurrentMode == GM_SUPER_BOWSER_CUP)
+    {
+        return mSuperBowserCupSeries.GetTeamStats(index);
+    }
+    else
+    {
+        return mCurrentCup->GetTeamStats(index);
+    }
 }
 
 /**
@@ -151,22 +180,25 @@ void GameInfoManager::SetUserSelectedCupSidekick(eSidekickID sidekick)
 /**
  * Offset/Address/Size: 0x951C | 0x8017EBC0 | size: 0x14
  */
-void GameInfoManager::GetResultsOfLastUserGame() const
+eUserGameResult GameInfoManager::GetResultsOfLastUserGame() const
 {
+    return mUserLastResults[mCurrentMode];
 }
 
 /**
  * Offset/Address/Size: 0x9508 | 0x8017EBAC | size: 0x14
  */
-void GameInfoManager::SetResultsOfLastUserGame(eUserGameResult)
+void GameInfoManager::SetResultsOfLastUserGame(eUserGameResult result)
 {
+    mUserLastResults[mCurrentMode] = result;
 }
 
 /**
  * Offset/Address/Size: 0x94FC | 0x8017EBA0 | size: 0xC
  */
-void GameInfoManager::GetCurrentRoundNumber() const
+s16 GameInfoManager::GetCurrentRoundNumber() const
 {
+    return mCurrentCup->mGameNumber;
 }
 
 /**
@@ -179,8 +211,52 @@ void GameInfoManager::GetNextRoundNumber(short) const
 /**
  * Offset/Address/Size: 0x91E8 | 0x8017E88C | size: 0x118
  */
-void GameInfoManager::GetPreviousRoundNumber(short) const
+s16 GameInfoManager::GetPreviousRoundNumber(short roundParam) const
 {
+    short temp;
+    short round;
+    eGameModes mode;
+
+    round = roundParam;
+    if (round == -7)
+    {
+        round = mCurrentCup->mGameNumber;
+    }
+
+    mode = mCurrentMode;
+
+    if ((round == -5) && (!mDoingKnockout))
+    {
+        temp = mCurrentCup->GetNumRounds() - 1;
+    }
+    else if ((round == -5) && (mDoingKnockout))
+    {
+        temp = -2;
+    }
+    else if ((round == -3) && (mode == GM_BOWSER_CUP || mode == GM_SUPER_BOWSER_CUP))
+    {
+        temp = mPreviousCup->GetNumRounds() - 1;
+    }
+    else
+    {
+        if ((round == -3) && (mode != GM_BOWSER_CUP && mode != GM_SUPER_BOWSER_CUP))
+        {
+            temp = -4;
+        }
+        else if (round == -2)
+        {
+            temp = -3;
+        }
+        else if (round == -1)
+        {
+            temp = -2;
+        }
+        else
+        {
+            temp = round - 1;
+        }
+    }
+    return temp;
 }
 
 /**
@@ -190,17 +266,14 @@ signed short GameInfoManager::GetFirstRoundNumber() const
 {
     if ((mCurrentMode == GM_TOURNAMENT) && (mCustomTournamentInfo.m_tournMode == TM_KNOCKOUT))
     {
-        signed short returnValue;
-        // BaseCup* currentCup = mCurrentCup;
-        if (mCurrentCup->GetNumRounds() == 2)
+        s16 result;
+        u16 numRounds = mCurrentCup->GetNumRounds();
+        result = -4;
+        if (numRounds == 2)
         {
-            returnValue = -3;
+            result = -3;
         }
-        else
-        {
-            returnValue = -4;
-        }
-        return returnValue;
+        return (s16)result;
     }
     return 0;
 }
@@ -208,10 +281,52 @@ signed short GameInfoManager::GetFirstRoundNumber() const
 /**
  * Offset/Address/Size: 0x90AC | 0x8017E750 | size: 0xD4
  */
-void GameInfoManager::GetNumGamesPerRound(int) const
+u16 GameInfoManager::GetNumGamesPerRound(int round) const
 {
-}
+    unsigned short returnValue;
 
+    if (round == -4)
+    {
+        return 4;
+    }
+
+    if (round == -3)
+    {
+        return 2;
+    }
+
+    if (round == -2 || round == -1)
+    {
+        return 1;
+    }
+
+    if (round == -5)
+    {
+        if (mDoingKnockout)
+        {
+            return 1;
+        }
+    }
+
+    if (mDoingKnockout)
+    {
+        returnValue = mPreviousCup->GetNumTeams() >> 1;
+    }
+    else
+    {
+        unsigned short temp;
+        if (mCurrentMode == GM_BOWSER_CUP || mCurrentMode == GM_SUPER_BOWSER_CUP)
+        {
+            temp = 8;
+        }
+        else
+        {
+            temp = mCurrentCup->GetNumTeams();
+        }
+        returnValue = temp >> 1;
+    }
+    return returnValue;
+}
 /**
  * Offset/Address/Size: 0x90A0 | 0x8017E744 | size: 0xC
  */
@@ -330,8 +445,9 @@ void GameInfoManager::GetNumHumanTeams()
 /**
  * Offset/Address/Size: 0x6D70 | 0x8017C414 | size: 0xB0
  */
-void GameInfoManager::GetCup(GameInfoManager::eGameModes)
+BaseCup* GameInfoManager::GetCup(GameInfoManager::eGameModes)
 {
+    return nullptr;
 }
 
 /**
@@ -392,24 +508,21 @@ void GameInfoManager::GetMilestoneLevel(eTrophyType) const
 {
 }
 
-inline bool IsInRegCupMode(const GameInfoManager::eGameModes& mode)
-{
-    if (mode < GameInfoManager::GM_SUPER_MUSHROOM_CUP)
-    {
-        if (mode >= GameInfoManager::GM_MUSHROOM_CUP)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
 /**
  * Offset/Address/Size: 0x5F38 | 0x8017B5DC | size: 0x28
  */
 bool GameInfoManager::IsInRegularCupMode() const
 {
-    return IsInRegCupMode(mCurrentMode);
+    switch (mCurrentMode)
+    {
+    case GM_MUSHROOM_CUP:
+    case GM_FLOWER_CUP:
+    case GM_STAR_CUP:
+    case GM_BOWSER_CUP:
+        return true;
+    default:
+        return false;
+    }
 }
 
 /**
@@ -417,7 +530,16 @@ bool GameInfoManager::IsInRegularCupMode() const
  */
 bool GameInfoManager::IsInSuperCupMode() const
 {
-    return false;
+    switch (mCurrentMode)
+    {
+    case GM_SUPER_MUSHROOM_CUP:
+    case GM_SUPER_FLOWER_CUP:
+    case GM_SUPER_STAR_CUP:
+    case GM_SUPER_BOWSER_CUP:
+        return true;
+    default:
+        return false;
+    }
 }
 
 /**
@@ -425,8 +547,10 @@ bool GameInfoManager::IsInSuperCupMode() const
  */
 bool GameInfoManager::IsInCupMode() const
 {
-    bool isInRegularCupMode = IsInRegCupMode(mCurrentMode);
-    return isInRegularCupMode;
+    bool result = IsInRegularCupMode();
+    if (result)
+        return result;
+    return IsInSuperCupMode();
 }
 
 /**
@@ -434,7 +558,10 @@ bool GameInfoManager::IsInCupMode() const
  */
 bool GameInfoManager::IsInCupOrTournamentMode() const
 {
-    return false;
+    bool result = this->IsInTournamentMode();
+    if (result)
+        return result;
+    return this->IsInCupMode();
 }
 
 /**

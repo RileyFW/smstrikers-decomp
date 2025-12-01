@@ -60,11 +60,17 @@ public:
     static SaveData* GetRandomSTSMissData(bool);
     static SaveData* GetSTSSpinMissData(bool);
     static SaveData* GetRandomSTSSaveData();
-    static void TriggerCallback(float, float, unsigned long, float, void*);
+    static bool TriggerCallback(float, float, unsigned long, float, void*);
     static void AddAreaToGrid(SaveData*);
     static void AddSegmentToGrid(SaveData*, SaveData*);
     static void AddChainToGrid(SaveData*, bool);
     static void AddToGrid(SaveData*);
+
+    static SaveData* mpSaveTable;
+    static int muSTSMissIndexStart;
+    static int muSTSGoalIndexStart;
+    static int muSTSGoalCount;
+    static int muMissChipIndexStart;
 };
 
 // class AVLTreeBase<int, SaveData*, NewAdapter<AVLTreeEntry<int, SaveData*>>, DefaultKeyCompare<int>>

@@ -222,9 +222,12 @@ void GoalieSave::GetClosestBlendedPos(SaveBlendInfo&, const nlVector3&, SaveData
 /**
  * Offset/Address/Size: 0xF4C | 0x8005436C | size: 0x44
  */
-SaveData* GoalieSave::GetMissChipSaveData(bool, bool)
+SaveData* GoalieSave::GetMissChipSaveData(bool bLeft, bool bFar)
 {
-    return NULL;
+    u32 v1 = (bFar != 0);
+    u32 v2 = (bLeft != 0);
+    int index = muMissChipIndexStart + (v1 ? 0 : 2) + v2;
+    return &mpSaveTable[index];
 }
 
 /**
@@ -238,9 +241,10 @@ SaveData* GoalieSave::GetRandomSTSMissData(bool)
 /**
  * Offset/Address/Size: 0xE98 | 0x800542B8 | size: 0x24
  */
-SaveData* GoalieSave::GetSTSSpinMissData(bool)
+SaveData* GoalieSave::GetSTSSpinMissData(bool bParam)
 {
-    return NULL;
+    u32 index = muSTSMissIndexStart + ((!bParam) ? 1 : 0);
+    return (SaveData*)((u8*)mpSaveTable + (index << 7));
 }
 
 /**
@@ -254,8 +258,28 @@ SaveData* GoalieSave::GetRandomSTSSaveData()
 /**
  * Offset/Address/Size: 0xDCC | 0x800541EC | size: 0x58
  */
-void GoalieSave::TriggerCallback(float, float, unsigned long, float, void*)
+bool GoalieSave::TriggerCallback(float fTime, float fDuration, unsigned long uEventID, float, void* pUserData)
 {
+    SaveData* pSaveData = (SaveData*)pUserData;
+
+    if ((uEventID + 0x307C0000) == 0xE7CD)
+    {
+        pSaveData->mfMilestonePercent[2] = fTime;
+        pSaveData->mfDuration = fDuration;
+    }
+    else if ((uEventID - 0x56260000) == 0x4BBE)
+    {
+        pSaveData->mfMilestonePercent[0] = fTime;
+    }
+    else if ((uEventID - 0x0F950000) == 0x24BA)
+    {
+        pSaveData->mfMilestonePercent[1] = fTime;
+    }
+    else if ((uEventID - 0x04540000) == 0x24B9)
+    {
+        pSaveData->mfMilestonePercent[3] = fTime;
+    }
+    return true;
 }
 
 /**

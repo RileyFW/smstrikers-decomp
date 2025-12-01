@@ -1,4 +1,7 @@
 #include "Game/Render/Nis.h"
+#include "Game/Sys/audio.h"
+#include "NL/nlList.h"
+
 #include "types.h"
 
 // /**
