@@ -1,18 +1,6 @@
 #include "Game/AI/Scripts/ScriptQuestions.h"
-
-// /**
-//  * Offset/Address/Size: 0x8 | 0x80084904 | size: 0x8
-//  */
-// void PositionOf<cPlayer*>(cPlayer*)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x0 | 0x800848FC | size: 0x8
-//  */
-// void PositionOf<cBall*>(cBall*)
-// {
-// }
+#include "Game/FormationDefines.h"
+#include "Game/AI/AiUtil.h"
 
 /**
  * Offset/Address/Size: 0x5E44 | 0x800848CC | size: 0x30
@@ -312,8 +300,9 @@ void FallenDown(cFielder*)
 /**
  * Offset/Address/Size: 0x3FA0 | 0x80082A28 | size: 0x268
  */
-void LikelyToScoreFromPosition(const nlVector3&, const nlVector3&, const cNet*, bool)
+float LikelyToScoreFromPosition(const nlVector3&, const nlVector3&, const cNet*, bool)
 {
+    return 0.0f;
 }
 
 /**
@@ -340,8 +329,9 @@ void GoalieOutOfPosition(cFielder*)
 /**
  * Offset/Address/Size: 0x3C18 | 0x800826A0 | size: 0x128
  */
-void PositionIsInFrontOfNet(const nlVector3&, const cNet*)
+float PositionIsInFrontOfNet(const nlVector3&, const cNet*)
 {
+    return 0.0f;
 }
 
 /**
@@ -361,22 +351,25 @@ void OnBreakaway(cFielder*)
 /**
  * Offset/Address/Size: 0x32DC | 0x80081D64 | size: 0x420
  */
-void OpenToPosition(const nlVector3&, const nlVector3&, const cTeam*, const cPlayer*, const cPlayer*, bool)
+float OpenToPosition(const nlVector3&, const nlVector3&, const cTeam*, const cPlayer*, const cPlayer*, bool)
 {
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x3030 | 0x80081AB8 | size: 0x2AC
  */
-void OpenPosition(const nlVector3&, cTeam*, cPlayer*, const nlVector2*)
+float OpenPosition(const nlVector3&, cTeam*, cPlayer*, const nlVector2*)
 {
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x2D84 | 0x8008180C | size: 0x2AC
  */
-void WideOpenPosition(const nlVector3&, cTeam*, cPlayer*)
+float WideOpenPosition(const nlVector3&, cTeam*, cPlayer*)
 {
+    return 0.0f;
 }
 
 /**
@@ -452,8 +445,9 @@ void FarTo(cPlayer*, cPlayer*)
 /**
  * Offset/Address/Size: 0x1FBC | 0x80080A44 | size: 0x5C
  */
-void NearToGoaliePosition(const nlVector3&, const nlVector3&)
+float NearToGoaliePosition(const nlVector3&, const nlVector3&)
 {
+    return 0.0f;
 }
 
 /**
@@ -480,15 +474,17 @@ void FarToTheirGoalie(cPlayer*)
 /**
  * Offset/Address/Size: 0x1D08 | 0x80080790 | size: 0x170
  */
-void CloseToSideline(const nlVector3&, const nlVector2*, bool)
+float CloseToSideline(const nlVector3&, const nlVector2*, bool)
 {
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x1BD4 | 0x8008065C | size: 0x134
  */
-void NearToSideline(const nlVector3&)
+float NearToSideline(const nlVector3&)
 {
+    return 0.0f;
 }
 
 /**
@@ -522,8 +518,9 @@ void AtIdealDistanceForTackling(cPlayer*, cPlayer*)
 /**
  * Offset/Address/Size: 0x1774 | 0x800801FC | size: 0x74
  */
-void PositionIsAtIdealDistanceForShooting(const nlVector3&, const nlVector3&)
+float PositionIsAtIdealDistanceForShooting(const nlVector3&, const nlVector3&)
 {
+    return 0.0f;
 }
 
 /**
@@ -809,34 +806,82 @@ void Difficult(cTeam*)
 /**
  * Offset/Address/Size: 0x1A0 | 0x8007EC28 | size: 0x40
  */
-void InOffensiveZone(const nlVector3&, eTeamSide)
+float InOffensiveZone(const nlVector3& position, eTeamSide teamSide)
 {
+    nlVector3 aiLoc;
+    FieldLocToAILoc(aiLoc, position, teamSide);
+
+    return NormalizeVal(aiLoc.f.x, g_pGame->m_pFuzzyTweaks->vOffensiveConfidenceDistances);
 }
 
 /**
  * Offset/Address/Size: 0x13C | 0x8007EBC4 | size: 0x64
  */
-void InDefensiveZone(cPlayer*)
+float InDefensiveZone(cPlayer* pPlayer)
 {
+    nlVector3 aiLoc;
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    eTeamSide teamSide = (eTeamSide)(pPlayer->m_pTeam->m_nSide);
+    nlVector3& playerPos = PositionOf(pPlayer);
+    FieldLocToAILoc(aiLoc, playerPos, teamSide);
+
+    return NormalizeVal(aiLoc.f.x, g_pGame->m_pFuzzyTweaks->vDefensiveConfidenceDistances);
 }
 
 /**
  * Offset/Address/Size: 0xD8 | 0x8007EB60 | size: 0x64
  */
-void InOffensiveZone(cPlayer*)
+float InOffensiveZone(cPlayer* pPlayer)
 {
+    nlVector3 aiLoc;
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    eTeamSide teamSide = (eTeamSide)(pPlayer->m_pTeam->m_nSide);
+    nlVector3& playerPos = PositionOf(pPlayer);
+    FieldLocToAILoc(aiLoc, playerPos, teamSide);
+
+    return NormalizeVal(aiLoc.f.x, g_pGame->m_pFuzzyTweaks->vOffensiveConfidenceDistances);
 }
 
 /**
  * Offset/Address/Size: 0x6C | 0x8007EAF4 | size: 0x6C
  */
-void InDefensiveZoneOfPlayer(cBall*, cPlayer*)
+float InDefensiveZoneOfPlayer(cBall* pBall, cPlayer* pPlayer)
 {
+    nlVector3 aiLoc;
+    if ((pBall == NULL) && (pPlayer != NULL))
+    {
+        return 0.0f;
+    }
+
+    eTeamSide teamSide = (eTeamSide)(pPlayer->m_pTeam->m_nSide);
+    nlVector3& ballPos = PositionOf(pBall);
+    FieldLocToAILoc(aiLoc, ballPos, teamSide);
+
+    return NormalizeVal(aiLoc.f.x, g_pGame->m_pFuzzyTweaks->vDefensiveConfidenceDistances);
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x8007EA88 | size: 0x6C
  */
-void InOffensiveZoneOfPlayer(cBall*, cPlayer*)
+float InOffensiveZoneOfPlayer(cBall* pBall, cPlayer* pPlayer)
 {
+    nlVector3 aiLoc;
+    if ((pBall == NULL) && (pPlayer != NULL))
+    {
+        return 0.0f;
+    }
+
+    eTeamSide teamSide = (eTeamSide)(pPlayer->m_pTeam->m_nSide);
+    nlVector3& ballPos = PositionOf(pBall);
+    FieldLocToAILoc(aiLoc, ballPos, teamSide);
+
+    return NormalizeVal(aiLoc.f.x, g_pGame->m_pFuzzyTweaks->vOffensiveConfidenceDistances);
 }

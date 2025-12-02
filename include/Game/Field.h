@@ -17,33 +17,10 @@ struct sCornerSegment
 
 struct sSideLinePlane
 {
-    nlVector2 vNormal; // offset 0x0, size 0x8
-    float fDistance;   // offset 0x8, size 0x4
+    /* 0x00 */ nlVector2 vNormal;
+    /* 0x08 */ float fDistance;
 }; // total size: 0xC
 #pragma pop
-
-struct Corner
-{
-    float unk0;
-    float unk1;
-    float unk2;
-    float unk3;
-    float unk4;
-    float unk5;
-    float unk6;
-    float unk7;
-    float unk8;
-    float unk9;
-    // float unk10;
-    void (*callback)();
-    // void (cBall::*callback)();
-    // void (*wallCollisionFunc)(); // Changed from member function pointer to regular function pointer
-    float unk11;
-    float unk12;
-    float unk13;
-    float unk14;
-    float unk15;
-};
 
 class cField
 {

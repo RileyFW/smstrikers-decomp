@@ -132,10 +132,10 @@ static inline float FixComponent(float component, float half, float fMinDistance
     component = (component <= max) ? component : max;
     return component;
 }
+
 /**
  * Offset/Address/Size: 0x2C | 0x80019110 | size: 0x90
  */
-
 void cField::FixOutOfBoundsPosition(nlVector3& v, float fMinDistanceFromWall)
 {
     v.f.x = FixComponent(v.f.x, GetFieldPosition().f.x, fMinDistanceFromWall);

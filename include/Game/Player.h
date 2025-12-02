@@ -86,8 +86,8 @@ public:
 
     s32 GetUniqueID(int) const;
     void SetNoPickUpTime(float);
-    void GetAIDefNetLocation(const nlVector3*);
-    void GetAIOffNetLocation(const nlVector3*);
+    nlVector3 GetAIDefNetLocation(const nlVector3*);
+    nlVector3 GetAIOffNetLocation(const nlVector3*);
     bool CanPickupBallFromPass(cBall*);
     virtual bool CanPickupBall(cBall*);
     virtual void PostPhysicsUpdate();

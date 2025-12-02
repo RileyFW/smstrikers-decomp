@@ -2,6 +2,7 @@
 #include "Game/Character.h"
 #include "Game/Ball.h"
 #include "Game/AnimInventory.h"
+#include "Game/Net.h"
 
 #include "Game/AI/Fielder.h"
 #include "Game/AI/SpaceSearch.h"
@@ -38,18 +39,57 @@ void cPlayer::SetNoPickUpTime(float NewNoPickUpTime)
     m_tNoPickupTimer.SetSeconds(NewNoPickUpTime);
 }
 
+inline float max_float(float a, float b)
+{
+    return (a >= b) ? a : b;
+}
+
+inline float min_float(float a, float b)
+{
+    return (a <= b) ? a : b;
+}
+
 /**
  * Offset/Address/Size: 0x68 | 0x800575B8 | size: 0xAC
  */
-void cPlayer::GetAIDefNetLocation(const nlVector3*)
+nlVector3 cPlayer::GetAIDefNetLocation(const nlVector3* v3ReferencePos)
 {
+    nlVector3 result = m_pTeam->m_pNet->m_baseLocation;
+
+    float yCoord;
+    if (v3ReferencePos != NULL)
+    {
+        yCoord = v3ReferencePos->f.y;
+    }
+    else
+    {
+        yCoord = m_v3Position.f.y;
+    }
+
+    float halfNetWidth = 0.5f * cNet::m_fNetWidth;
+
+    if (yCoord < 0.0f)
+    {
+        yCoord = max_float(yCoord, -1.0f * halfNetWidth);
+        result.f.y = yCoord;
+    }
+    else
+    {
+        yCoord = min_float(yCoord, halfNetWidth);
+    }
+
+    result.f.y = yCoord;
+    return result;
 }
 
 /**
  * Offset/Address/Size: 0x114 | 0x80057664 | size: 0xE0
  */
-void cPlayer::GetAIOffNetLocation(const nlVector3*)
+nlVector3 cPlayer::GetAIOffNetLocation(const nlVector3* v3ReferencePos)
 {
+    nlVector3 result = m_pTeam->m_pNet->m_baseLocation;
+    // todo
+    return result;
 }
 
 /**
