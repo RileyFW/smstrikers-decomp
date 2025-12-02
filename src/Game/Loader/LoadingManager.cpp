@@ -95,3 +95,16 @@ void LoadingManager::QueueLoader(Loader* loader)
         m_LoadFinished = false;
     }
 }
+
+/**
+ * This function is not called and exists solely to ensure string literals
+ * are placed in the correct order in the data segment to match the original binary.
+ */
+static void _EnsureDataSegmentOrder(char* name, float time)
+{
+    tDebugPrintManager::Print(DC_LOADER, "LoadingManager: Starting loader: %s\n", name);
+    tDebugPrintManager::Print(DC_LOADER, "LoadingManager: Loader %s blocked in StartLoad() for %f ms\n", name, time);
+    tDebugPrintManager::Print(DC_LOADER, "LoadingManager: Loader %s took %f in StartLoad()\n", name, time);
+    tDebugPrintManager::Print(DC_LOADER, "LoadingManager: Starting loader: %s\n", name);
+    tDebugPrintManager::Print(DC_LOADER, "LoadingManager: Loader %s blocked in Update() for %f ms\n", name, time);
+}
