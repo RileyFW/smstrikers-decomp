@@ -54,7 +54,7 @@ s32 cSHierarchy::GetNumChildren(int nodeIndex) const
  */
 u32 cSHierarchy::GetNodeID(int nodeIndex) const
 {
-    return this->m_nodeIDs[nodeIndex];
+    return m_nodeIDs[nodeIndex];
 }
 
 /**
@@ -62,31 +62,17 @@ u32 cSHierarchy::GetNodeID(int nodeIndex) const
  */
 s32 cSHierarchy::GetNodeIndexByID(unsigned int nodeID) const
 {
-    s32 totalNodes;
-    s32 searchCounter;
-    s32 currentIndex;
-    u32* nodeIDArray;
+    int i = 0;
+    u32* pNodeID = GetNodeIDs();
 
-    totalNodes = this->m_nodeCount;
-    currentIndex = 0;
-    nodeIDArray = this->m_nodeIDs;
-    searchCounter = totalNodes;
-    if (totalNodes > 0)
+    for (int count = GetNodeCount(); count > 0; count--)
     {
-    loop_1:
-        if (nodeID == *nodeIDArray)
+        if (nodeID == GetNodeID(i))
         {
-            return currentIndex;
+            return i;
         }
-        nodeIDArray += 4;
-        currentIndex += 1;
-        searchCounter -= 1;
-        if (searchCounter == 0)
-        {
-            /* Duplicate return node #4. Try simplifying control flow for better match */
-            return -1;
-        }
-        goto loop_1;
+        pNodeID++;
+        i++;
     }
     return -1;
 }
@@ -96,7 +82,6 @@ s32 cSHierarchy::GetNodeIndexByID(unsigned int nodeID) const
  */
 s32 cSHierarchy::GetChild(int parentIndex, int childIndex) const
 {
-    FORCE_DONT_INLINE;
     return *((s32*)((s32**)this->m_childArrays)[parentIndex] + childIndex);
 }
 
@@ -210,7 +195,8 @@ void cSHierarchy::BuildPushPopFlags(int nodeIndex, int currentDepth, int& stackD
                                 if (greatGreatGrandchildLoopCounter < greatGreatGrandchildChildCount)
                                 {
                                     BuildPushPopFlags(GetChild(greatGrandchildNodeIndex, greatGreatGrandchildLoopCounter),
-                                        greatGreatGrandchildStackDepth, stackDepth);
+                                        greatGreatGrandchildStackDepth,
+                                        stackDepth);
                                     greatGreatGrandchildLoopCounter += 1;
                                     goto loop_17;
                                 }

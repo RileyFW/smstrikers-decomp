@@ -4,47 +4,24 @@
 
 extern cBall* g_pBall;
 
-cNet* cField::mpNet[2]; // = { nullptr, nullptr };
+cNet* cField::mpNet[2];
+
+const float cornerRadius = 3.0f;
 
 nlVector3 cField::mv3FieldPosition = { 20.60211f, 12.0825f, 0.0f };
-nlVector3 cField::mSidelines[4] = { { 1.0f, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, -1.0f, 0.0f } };
+sSideLinePlane cField::mSidelines[4] = {
+    { { 1.0f, 0.0f }, cField::mv3FieldPosition.f.x },
+    { { -1.0f, 0.0f }, cField::mv3FieldPosition.f.x },
+    { { 0.0f, 1.0f }, cField::mv3FieldPosition.f.y },
+    { { 0.0f, -1.0f }, cField::mv3FieldPosition.f.y }
+};
 
-extern "C" void CollideWithWallCallback__5cBallFv(); // forward decl
-
-Corner cField::mCorners = { 0.0f, 0.0f, 0.000000000000000000000000000000000000000022959f, 3.0f, 0.0f, 0.0f, 2.0078125f, 3.0f, 0.0f, 0.0f, &CollideWithWallCallback__5cBallFv, 3.0f, 0.0f, 0.0f, -2.0f, 3.0f };
-// sCornerSegment cField::mCorners[4] = {
-//     // Corner 0
-//     {
-//         { 0.0f, 0.0f }, // vCenter
-//         0,              // thetaStart
-//         3,              // thetaEnd
-//         0.0f            // fRadius
-//     },
-
-//     // Corner 1
-//     {
-//         { 0.0f, 0.0f }, // vCenter
-//         0,              // thetaStart
-//         0,              // thetaEnd
-//         2.0078125f      // fRadius
-//     },
-
-//     // Corner 2
-//     {
-//         { 0.0f, 0.0f }, // vCenter (note: -0.0f in hex)
-//         0,              // thetaStart
-//         0,              // thetaEnd
-//         0.0f            // fRadius
-//     },
-
-//     // Corner 3
-//     {
-//         { 0.0f, 0.0f }, // vCenter
-//         0,              // thetaStart
-//         0,              // thetaEnd
-//         -2.0f           // fRadius
-//     }
-// };
+sCornerSegment cField::mCorners[4] = {
+    { { cField::mv3FieldPosition.f.x - cornerRadius, cField::mv3FieldPosition.f.y - cornerRadius }, 0x0000, 0x4000, cornerRadius },
+    { { cornerRadius - mv3FieldPosition.f.x, cField::mv3FieldPosition.f.y - cornerRadius }, 0x4000, 0x8000, cornerRadius },
+    { { cornerRadius - mv3FieldPosition.f.x, cornerRadius - mv3FieldPosition.f.y }, 0x8000, 0xC000, cornerRadius },
+    { { cField::mv3FieldPosition.f.x - cornerRadius, cornerRadius - mv3FieldPosition.f.y }, 0xC000, 0x0000, cornerRadius }
+};
 
 float cField::mfPenaltyBoxX = 13.5f;
 float cField::mfPenaltyBoxY = 4.5f;
@@ -147,41 +124,22 @@ bool cField::IsOnField(const nlVector3& location)
     return false;
 }
 
-static inline float ClampMin(float v, float min)
+static inline float FixComponent(float component, float half, float fMinDistanceFromWall)
 {
-    if (v >= min)
-        return v;
-    else
-        return min; // forces: fcmpo / cror eq,gt,eq / bne / b / fmr
+    float min = -half + fMinDistanceFromWall;
+    float max = half - fMinDistanceFromWall;
+    component = (component >= min) ? component : min;
+    component = (component <= max) ? component : max;
+    return component;
 }
-
-static inline float ClampMax(float v, float max)
-{
-    if (v <= max)
-        return v;
-    else
-        return max; // forces: fcmpo / cror eq,lt,eq / bne / b / fmr
-}
-
 /**
  * Offset/Address/Size: 0x2C | 0x80019110 | size: 0x90
  */
+
 void cField::FixOutOfBoundsPosition(nlVector3& v, float fMinDistanceFromWall)
 {
-    float min, max;
-    float half;
-
-    half = GetFieldPosition().f.x;
-    float& x = v.f.x;
-    min = -half + fMinDistanceFromWall;
-    max = half - fMinDistanceFromWall;
-    v.f.x = ClampMax(ClampMin(x, min), max);
-
-    float& y = v.f.y;
-    half = GetFieldPosition().f.y;
-    min = -half + fMinDistanceFromWall;
-    max = half - fMinDistanceFromWall;
-    v.f.y = ClampMax(ClampMin(y, min), max);
+    v.f.x = FixComponent(v.f.x, GetFieldPosition().f.x, fMinDistanceFromWall);
+    v.f.y = FixComponent(v.f.y, GetFieldPosition().f.y, fMinDistanceFromWall);
 }
 
 /**

@@ -21,6 +21,9 @@ public:
     void BuildPushPopFlags(int, int, int&);
     cSHierarchy* Initialize(nlChunk*);
 
+    inline u32* GetNodeIDs() const { return m_nodeIDs; }
+    inline s32 GetNodeCount() const { return m_nodeCount; }
+
     /* 0x00 */ void* m_hierarchyMetadata; // Pointer to hierarchy metadata or root node
     /* 0x04 */ char m_pad_0x04[4];
     /* 0x08 */ s32 m_nodeCount;             // Number of nodes in the hierarchy

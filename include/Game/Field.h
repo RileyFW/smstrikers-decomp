@@ -14,6 +14,12 @@ struct sCornerSegment
     /* 0xA */ u16 thetaEnd;
     /* 0xC */ f32 fRadius;
 }; // total size: 0x10
+
+struct sSideLinePlane
+{
+    nlVector2 vNormal; // offset 0x0, size 0x8
+    float fDistance;   // offset 0x8, size 0x4
+}; // total size: 0xC
 #pragma pop
 
 struct Corner
@@ -60,9 +66,9 @@ public:
     }
 
     static nlVector3 mv3FieldPosition;
-    static nlVector3 mSidelines[4];
-    // static sCornerSegment mCorners[4];
-    static Corner mCorners;
+    static sSideLinePlane mSidelines[4];
+    static sCornerSegment mCorners[4];
+    // static Corner mCorners;
     static float mfPenaltyBoxX;
     static float mfPenaltyBoxY;
     static cNet* mpNet[2];
