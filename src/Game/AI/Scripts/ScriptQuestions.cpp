@@ -1,6 +1,8 @@
 #include "Game/AI/Scripts/ScriptQuestions.h"
 #include "Game/FormationDefines.h"
 #include "Game/AI/AiUtil.h"
+#include "Game/Game.h"
+#include "Game/GameInfo.h"
 
 /**
  * Offset/Address/Size: 0x5E44 | 0x800848CC | size: 0x30
@@ -778,29 +780,80 @@ void PerfectPassCandidateFrom(cFielder*, cFielder*)
 /**
  * Offset/Address/Size: 0x310 | 0x8007ED98 | size: 0x4C
  */
-void TimeCloseToOver(cGame*)
+float TimeCloseToOver(cGame* pGame)
 {
+    if (!pGame)
+    {
+        return 0.0f;
+    }
+
+    FuzzyTweaks* pTweaks = g_pGame->m_pFuzzyTweaks;
+    float gameTime = pGame->GetNormalizedGameTime();
+    return NormalizeVal(gameTime, pTweaks->fGameTimeCloseToOver, 1.0f);
 }
 
 /**
  * Offset/Address/Size: 0x2C4 | 0x8007ED4C | size: 0x4C
  */
-void TimeNearlyOver(cGame*)
+float TimeNearlyOver(cGame* pGame)
 {
+    if (!pGame)
+    {
+        return 0.0f;
+    }
+
+    FuzzyTweaks* pTweaks = g_pGame->m_pFuzzyTweaks;
+    float gameTime = pGame->GetNormalizedGameTime();
+    return NormalizeVal(gameTime, pTweaks->fGameTimeNearlyOver, 1.0f);
 }
 
 /**
  * Offset/Address/Size: 0x278 | 0x8007ED00 | size: 0x4C
  */
-void TimeFarFromOver(cGame*)
+float TimeFarFromOver(cGame* pGame)
 {
+    if (!pGame)
+    {
+        return 0.0f;
+    }
+
+    FuzzyTweaks* pTweaks = g_pGame->m_pFuzzyTweaks;
+    float gameTime = pGame->GetNormalizedGameTime();
+    return NormalizeVal(gameTime, 1.0f, pTweaks->fGameTimeFarFromOver);
+}
+
+inline float max0(const float value)
+{
+    if (value >= 0.f)
+    {
+        return value;
+    }
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x1E0 | 0x8007EC68 | size: 0x98
  */
-void Difficult(cTeam*)
+float Difficult(cTeam* pTeam)
 {
+    eDifficultyID diff;
+    f32 fScore;
+
+    if (pTeam == NULL)
+    {
+        return 0.0f;
+    }
+
+    diff = nlSingleton<GameInfoManager>::Instance()->mCurrentDifficulty[(s16)pTeam->m_nSide];
+    if (diff == DIFF_HUMAN)
+    {
+        return 0.5f;
+    }
+
+    float fMul = 0.25f;
+    fScore = max0((float)diff * fMul);
+    fScore = (fScore <= 1.0f) ? fScore : 1.0f;
+    return fScore;
 }
 
 /**

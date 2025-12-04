@@ -32,7 +32,7 @@ void ClockManager::Update(float arg8)
 
     loop_2:
         temp_r30 = var_r31->m_next;
-        if (((s32)var_r31->m_unk_0x18 == 3) || !(var_r31->m_unk_0x14 & nlTaskManager::m_pInstance->m_CurrState))
+        if ((var_r31->m_clockState == CLOCK_PAUSED) || !(var_r31->m_uActiveStates & nlTaskManager::m_pInstance->m_CurrState))
         {
             if (var_r31 != m_activeList)
             {
@@ -42,17 +42,17 @@ void ClockManager::Update(float arg8)
         }
         else
         {
-            var_r31->m_unk_0x08 = (f32)((arg8 * var_r31->m_unk_0x04) + var_r31->m_unk_0x08);
-            if (var_r31->m_unk_0x04 >= 0.f)
+            var_r31->m_fTimer = (f32)((arg8 * var_r31->m_fTimeScale) + var_r31->m_fTimer);
+            if (var_r31->m_fTimeScale >= 0.f)
             {
-                if (var_r31->m_unk_0x08 >= var_r31->m_unk_0x0C)
+                if (var_r31->m_fTimer >= var_r31->m_fEndTime)
                 {
-                    var_r31->m_unk_0x18 = 2;
-                    var_r31->m_unk_0x08 = (f32)var_r31->m_unk_0x0C;
+                    var_r31->m_clockState = CLOCK_DONE;
+                    var_r31->m_fTimer = (f32)var_r31->m_fEndTime;
                     temp_r12 = var_r31->m_callback;
                     if (temp_r12 != NULL)
                     {
-                        temp_r12(var_r31->m_unk_0x1C, var_r31->m_unk_0x20);
+                        temp_r12(var_r31->m_uParam1, var_r31->m_uParam2);
                     }
                     nlDLRingRemove<Clock>(&m_activeList, var_r31);
                     nlDLRingAddEnd<Clock>(&m_inactiveList, var_r31);
@@ -60,14 +60,14 @@ void ClockManager::Update(float arg8)
             }
             else
             {
-                if (var_r31->m_unk_0x08 <= var_r31->m_unk_0x0C)
+                if (var_r31->m_fTimer <= var_r31->m_fEndTime)
                 {
-                    var_r31->m_unk_0x18 = 2;
-                    var_r31->m_unk_0x08 = (f32)var_r31->m_unk_0x0C;
+                    var_r31->m_clockState = CLOCK_DONE;
+                    var_r31->m_fTimer = (f32)var_r31->m_fEndTime;
                     temp_r12_2 = var_r31->m_callback;
                     if (temp_r12_2 != NULL)
                     {
-                        temp_r12_2(var_r31->m_unk_0x1C, var_r31->m_unk_0x20);
+                        temp_r12_2(var_r31->m_uParam1, var_r31->m_uParam2);
                     }
                     nlDLRingRemove<Clock>(&m_activeList, var_r31);
                     nlDLRingAddEnd<Clock>(&m_inactiveList, var_r31);
@@ -91,12 +91,12 @@ void ClockManager::Update(float arg8)
  */
 Clock::Clock(float param_1, float param_2, float param_3, unsigned long param_4, ClockCallback callback)
 {
-    m_unk_0x04 = param_3;
-    m_unk_0x08 = param_1;
-    m_unk_0x0C = param_2;
-    m_unk_0x18 = 0;
+    m_fTimeScale = param_3;
+    m_fTimer = param_1;
+    m_fEndTime = param_2;
+    m_clockState = CLOCK_OFF;
     m_callback = callback;
-    m_unk_0x14 = param_4;
+    m_uActiveStates = param_4;
     nlDLRingAddEnd<Clock>(&ClockManager::m_inactiveList, this);
 }
 
@@ -117,11 +117,11 @@ Clock::~Clock()
  */
 void Clock::Reset(float param_1, float param_2, float param_3)
 {
-    m_unk_0x04 = param_3;
-    m_unk_0x08 = param_1;
-    m_unk_0x0C = param_2;
+    m_fTimeScale = param_3;
+    m_fTimer = param_1;
+    m_fEndTime = param_2;
 
-    if (m_unk_0x18 == 1)
+    if (m_clockState == CLOCK_ON)
     {
         if (nlDLRingRemoveSafely<Clock>(&ClockManager::m_activeList, this) == 0)
         {
@@ -129,7 +129,7 @@ void Clock::Reset(float param_1, float param_2, float param_3)
         }
         nlDLRingAddEnd<Clock>(&ClockManager::m_inactiveList, this);
     }
-    m_unk_0x18 = 0;
+    m_clockState = CLOCK_OFF;
 }
 
 /**
@@ -137,7 +137,7 @@ void Clock::Reset(float param_1, float param_2, float param_3)
  */
 void Clock::Start()
 {
-    if (m_unk_0x18 != 1)
+    if (m_clockState != CLOCK_ON)
     {
         nlDLRingRemove<Clock>(&ClockManager::m_inactiveList, this);
         if (ClockManager::m_bUpdatingClocks != 0)
@@ -149,7 +149,7 @@ void Clock::Start()
             nlDLRingAddEnd<Clock>(&ClockManager::m_activeList, this);
         }
     }
-    m_unk_0x18 = 1;
+    m_clockState = CLOCK_ON;
 }
 
 /**
@@ -157,7 +157,7 @@ void Clock::Start()
  */
 void Clock::Stop()
 {
-    if (m_unk_0x18 == 1)
+    if (m_clockState == CLOCK_ON)
     {
         if (nlDLRingRemoveSafely<Clock>(&ClockManager::m_activeList, this) == 0)
         {
@@ -165,5 +165,5 @@ void Clock::Stop()
         }
         nlDLRingAddEnd<Clock>(&ClockManager::m_inactiveList, this);
     }
-    m_unk_0x18 = 0;
+    m_clockState = CLOCK_OFF;
 }

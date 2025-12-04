@@ -3,6 +3,14 @@
 
 #include "NL/nlDLRing.h"
 
+enum eClockState
+{
+    CLOCK_OFF = 0,
+    CLOCK_ON = 1,
+    CLOCK_DONE = 2,
+    CLOCK_PAUSED = 3,
+};
+
 typedef void (*ClockCallback)(unsigned long, unsigned long);
 
 class Clock
@@ -14,19 +22,19 @@ public:
     void Reset(float, float, float);
     void Stop();
 
-    /* 0x04 */ float m_unk_0x04;
-    /* 0x08 */ float m_unk_0x08;
-    /* 0x0C */ float m_unk_0x0C;
+    /* 0x04 */ float m_fTimeScale;
+    /* 0x08 */ float m_fTimer;
+    /* 0x0C */ float m_fEndTime;
     /* 0x10 */ ClockCallback m_callback;
-    /* 0x14 */ unsigned long m_unk_0x14;
-    /* 0x18 */ s32 m_unk_0x18;
+    /* 0x14 */ unsigned long m_uActiveStates;
+    /* 0x18 */ eClockState m_clockState;
 
-    /* 0x1C */ unsigned long m_unk_0x1C;
-    /* 0x20 */ unsigned long m_unk_0x20;
+    /* 0x1C */ unsigned long m_uParam1;
+    /* 0x20 */ unsigned long m_uParam2;
 
     /* 0x24 */ Clock* m_next;
     /* 0x28 */ Clock* m_prev;
-};
+}; // total size: 0x2C
 
 class ClockManager
 {

@@ -1,4 +1,5 @@
 #include "Game/Game.h"
+#include "Game/Sys/clock.h"
 
 // /**
 //  * Offset/Address/Size: 0x24 | 0x800401E8 | size: 0x4
@@ -262,8 +263,9 @@ void cGame::DoPerfectPassSlowDown()
 /**
  * Offset/Address/Size: 0x1B18 | 0x8003E08C | size: 0x14
  */
-void cGame::GetNormalizedGameTime()
+float cGame::GetNormalizedGameTime()
 {
+    return m_pGameClock->m_fTimer / m_fGameDuration;
 }
 
 /**
