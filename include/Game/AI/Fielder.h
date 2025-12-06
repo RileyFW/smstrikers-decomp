@@ -332,7 +332,7 @@ public:
     void ActionOneTimer(float);
     void InitActionOneTouchPassFromVolley(cPlayer*);
     void ActionOneTouchPassFromVolley(float);
-    void DoCalcCanDoPerfectPass(cFielder*, const nlVector3&);
+    bool DoCalcCanDoPerfectPass(cFielder*, const nlVector3&);
     void InitActionPass(cPlayer*, bool, bool);
     void ActionPass(float);
     void ActionPostWhistle(float);

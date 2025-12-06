@@ -252,8 +252,9 @@ void cFielder::ActionOneTouchPassFromVolley(float)
 /**
  * Offset/Address/Size: 0x530C | 0x8002BE44 | size: 0x1C8
  */
-void cFielder::DoCalcCanDoPerfectPass(cFielder*, const nlVector3&)
+bool cFielder::DoCalcCanDoPerfectPass(cFielder*, const nlVector3&)
 {
+    return false;
 }
 
 /**
