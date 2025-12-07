@@ -1,10 +1,13 @@
 #include "Game/AI/Scripts/ScriptQuestions.h"
 #include "Game/FormationDefines.h"
 #include "Game/AI/AiUtil.h"
+#include "Game/AI/AvoidController.h"
 #include "Game/AI/ShotMeter.h"
 #include "Game/Game.h"
 #include "Game/GameInfo.h"
 #include "Game/Goalie.h"
+#include "Game/CharacterTweaks.h"
+#include "types.h"
 
 extern cTeam* g_pCurrentlyUpdatingTeam;
 extern cBall* g_pScriptBall;
@@ -12,6 +15,8 @@ extern cBall* g_pBall;
 extern cFielder* g_pScriptCurrentFielder;
 extern nlVector2 g_vStallingConfidenceTime;
 extern nlVector2 g_vPassCloseToDoneConfidence;
+extern cTeam* g_pScriptOtherTeam;
+extern nlVector2 g_vOpenToAdjust;
 
 inline float max_float(float a, float b)
 {
@@ -36,99 +41,280 @@ static inline float IsPassInPlay(cBall* pBall)
 /**
  * Offset/Address/Size: 0x5E44 | 0x800848CC | size: 0x30
  */
-void CalcSelectChance(float, float)
+float CalcSelectChance(float fDifficultyChance, float fPlayerAttribute)
 {
+    float fScore = 0.0f;
+
+    if (fDifficultyChance > 0.0f)
+    {
+        float f3 = 1.0f;
+        float weight = g_pGame->m_pGameTweaks->fFielderAttributeWeight;
+        f3 = f3 - weight;
+        fScore = (fDifficultyChance * f3) + fPlayerAttribute * weight;
+    }
+
+    return fScore;
 }
 
 /**
  * Offset/Address/Size: 0x5E18 | 0x800848A0 | size: 0x2C
  */
-void BallOwner(cPlayer*)
+float BallOwner(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer->m_pBall != NULL)
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5DCC | 0x80084854 | size: 0x4C
  */
-void BallOwnerT(cTeam*)
+float BallOwnerT(cTeam* pTeam)
 {
+    if (pTeam == NULL)
+    {
+        return 0.0f;
+    }
+
+    u8 isOwnerOnTeam = 0;
+    cPlayer* pOwner = g_pBall->m_pOwner;
+    if (pOwner != NULL && pOwner->m_pTeam == pTeam)
+    {
+        isOwnerOnTeam = 1;
+    }
+
+    return isOwnerOnTeam ? 1.0f : 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5D9C | 0x80084824 | size: 0x30
  */
-void LastBallOwner(cPlayer*)
+float LastBallOwner(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (g_pScriptBall->m_pPrevOwner == pPlayer)
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5D58 | 0x800847E0 | size: 0x44
  */
-void Striker(cFielder*)
+float Striker(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pFielder->IsStriker())
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5D14 | 0x8008479C | size: 0x44
  */
-void Winger(cFielder*)
+float Winger(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pFielder->IsWinger())
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5CD0 | 0x80084758 | size: 0x44
  */
-void Midfield(cFielder*)
+float Midfield(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pFielder->IsMidField())
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5C8C | 0x80084714 | size: 0x44
  */
-void Defence(cFielder*)
+float Defence(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pFielder->IsDefense())
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5C48 | 0x800846D0 | size: 0x44
  */
-void Captain(cFielder*)
+float Captain(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pFielder->IsCaptain())
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5C1C | 0x800846A4 | size: 0x2C
  */
-void GoalieType(cPlayer*)
+float GoalieType(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer->m_eClassType == GOALIE)
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5BE0 | 0x80084668 | size: 0x3C
  */
-void Marking(cFielder*, cPlayer*)
+float Marking(cFielder* pFielder, cPlayer* pPlayer)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pFielder->m_pMark == pPlayer)
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5BB0 | 0x80084638 | size: 0x30
  */
-void OnTheirTeam(cFielder*)
+float OnTheirTeam(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (g_pScriptOtherTeam == pFielder->m_pTeam)
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5B20 | 0x800845A8 | size: 0x90
  */
-void OnScreen(cPlayer*)
+float OnScreen(cPlayer* pPlayer)
 {
+    u8 onScreenFlags[2];
+
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    onScreenFlags[1] = 0;
+    onScreenFlags[0] = onScreenFlags[1];
+
+    if ((float)fabs(pPlayer->m_v3ScreenPosition.f.x) <= 1.0f)
+    {
+        if ((float)fabs(pPlayer->m_v3ScreenPosition.f.y) <= 1.0f)
+        {
+            onScreenFlags[0] = 1;
+        }
+    }
+
+    if (onScreenFlags[0] != 0)
+    {
+        if ((float)fabs(pPlayer->m_v3ScreenPosition.f.z) <= 1.0f)
+        {
+            onScreenFlags[1] = 1;
+        }
+    }
+
+    if (onScreenFlags[1] != 0)
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5AD0 | 0x80084558 | size: 0x50
  */
-void OnTheGround(cPlayer*)
+float OnTheGround(cPlayer* pPlayer)
 {
+    if (pPlayer == nullptr)
+    {
+        return 0.0f;
+    }
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+    int jointIndex = pPlayer->m_nBip01JointIndex_0xA4;
+    const nlVector3& jointPos = pPlayer->GetJointPosition(jointIndex);
+
+    return NormalizeVal(jointPos.f.z, pFuzzyTweaks->vOnGroundConfidenceDistance);
 }
 
 /**
@@ -168,37 +354,76 @@ void InPassingLane(cFielder*)
 /**
  * Offset/Address/Size: 0x581C | 0x800842A4 | size: 0x1C
  */
-void Aggressive(cFielder*)
+float Aggressive(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    FielderTweaks* pTweaks = (FielderTweaks*)pFielder->m_pTweaks;
+    return pTweaks->fAggression;
 }
 
 /**
  * Offset/Address/Size: 0x5800 | 0x80084288 | size: 0x1C
  */
-void Shooter(cFielder*)
+float Shooter(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    FielderTweaks* pTweaks = (FielderTweaks*)pFielder->m_pTweaks;
+    return pTweaks->fShooting;
 }
 
 /**
  * Offset/Address/Size: 0x57E4 | 0x8008426C | size: 0x1C
  */
-void Passer(cFielder*)
+float Passer(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    FielderTweaks* pTweaks = (FielderTweaks*)pFielder->m_pTweaks;
+    return pTweaks->fPassing;
 }
 
 /**
  * Offset/Address/Size: 0x57C8 | 0x80084250 | size: 0x1C
  */
-void Deker(cFielder*)
+float Deker(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    FielderTweaks* pTweaks = (FielderTweaks*)pFielder->m_pTweaks;
+    return pTweaks->fDekeing;
 }
 
 /**
  * Offset/Address/Size: 0x579C | 0x80084224 | size: 0x2C
  */
-// void RepeatingLastDesire(cFielder*, eScriptFielderDesire)
-// {
-// }
+float RepeatingLastDesire(cFielder* pFielder, eScriptFielderDesire desire)
+{
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    if ((eFielderDesireState)desire == pFielder->m_ePrevFielderDesireState)
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
+}
 
 /**
  * Offset/Address/Size: 0x54B4 | 0x80083F3C | size: 0x2E8
@@ -218,8 +443,24 @@ void AbleToInterceptBallForSwapController(cFielder*)
 /**
  * Offset/Address/Size: 0x5228 | 0x80083CB0 | size: 0x88
  */
-void AbleToUsePowerup(cFielder*, int)
+float AbleToUsePowerup(cFielder* pFielder, int powerupType)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    bool canUse = false;
+    if (!pFielder->IsPlayingPowerupAnim())
+    {
+        const PowerUpTeamType& currentPowerup = pFielder->m_pTeam->GetCurrentPowerUp();
+        if (powerupType == currentPowerup.eType)
+        {
+            canUse = true;
+        }
+    }
+
+    return canUse ? 1.0f : 0.0f;
 }
 
 /**
@@ -232,64 +473,184 @@ void LikelyToUsePowerup(cFielder*, int)
 /**
  * Offset/Address/Size: 0x5080 | 0x80083B08 | size: 0x68
  */
-void CloseToBall(cPlayer*)
+float CloseToBall(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    float dx = g_pScriptBall->m_v3Position.f.x - pPlayer->m_v3Position.f.x;
+    float dy = g_pScriptBall->m_v3Position.f.y - pPlayer->m_v3Position.f.y;
+    float distance = nlSqrt(dx * dx + dy * dy, true);
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(distance, pFuzzyTweaks->vCloseBallConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x5018 | 0x80083AA0 | size: 0x68
  */
-void NearToBall(cPlayer*)
+float NearToBall(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    float dx = g_pScriptBall->m_v3Position.f.x - pPlayer->m_v3Position.f.x;
+    float dy = g_pScriptBall->m_v3Position.f.y - pPlayer->m_v3Position.f.y;
+    float distance = nlSqrt(dx * dx + dy * dy, true);
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(distance, pFuzzyTweaks->vNearBallConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x4FB0 | 0x80083A38 | size: 0x68
  */
-void FarToBall(cPlayer*)
+float FarToBall(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    float dx = g_pScriptBall->m_v3Position.f.x - pPlayer->m_v3Position.f.x;
+    float dy = g_pScriptBall->m_v3Position.f.y - pPlayer->m_v3Position.f.y;
+    float distance = nlSqrt(dx * dx + dy * dy, true);
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(distance, pFuzzyTweaks->vFarBallConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x4F34 | 0x800839BC | size: 0x7C
  */
-void CloseToMyNet(cPlayer*)
+float CloseToMyNet(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    const nlVector3& netLocation = pPlayer->GetAIDefNetLocation(NULL);
+
+    float dx = netLocation.f.x - pPlayer->m_v3Position.f.x;
+    float dy = netLocation.f.y - pPlayer->m_v3Position.f.y;
+    float distance = nlSqrt(dx * dx + dy * dy, true);
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(distance, pFuzzyTweaks->vCloseNetConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x4EB8 | 0x80083940 | size: 0x7C
  */
-void NearToMyNet(cPlayer*)
+float NearToMyNet(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    const nlVector3& netLocation = pPlayer->GetAIDefNetLocation(NULL);
+
+    float dx = netLocation.f.x - pPlayer->m_v3Position.f.x;
+    float dy = netLocation.f.y - pPlayer->m_v3Position.f.y;
+    float distance = nlSqrt(dx * dx + dy * dy, true);
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(distance, pFuzzyTweaks->vNearNetConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x4E3C | 0x800838C4 | size: 0x7C
  */
-void FarToMyNet(cPlayer*)
+float FarToMyNet(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    const nlVector3& netLocation = pPlayer->GetAIDefNetLocation(NULL);
+
+    float dx = netLocation.f.x - pPlayer->m_v3Position.f.x;
+    float dy = netLocation.f.y - pPlayer->m_v3Position.f.y;
+    float distance = nlSqrt(dx * dx + dy * dy, true);
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(distance, pFuzzyTweaks->vFarNetConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x4DC0 | 0x80083848 | size: 0x7C
  */
-void CloseToTheirNet(cPlayer*)
+float CloseToTheirNet(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    const nlVector3& netLocation = pPlayer->GetAIOffNetLocation(NULL);
+
+    float dx = netLocation.f.x - pPlayer->m_v3Position.f.x;
+    float dy = netLocation.f.y - pPlayer->m_v3Position.f.y;
+    float distance = nlSqrt(dx * dx + dy * dy, true);
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(distance, pFuzzyTweaks->vCloseNetConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x4D44 | 0x800837CC | size: 0x7C
  */
-void NearToTheirNet(cPlayer*)
+float NearToTheirNet(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    const nlVector3& netLocation = pPlayer->GetAIOffNetLocation(NULL);
+
+    float dx = netLocation.f.x - pPlayer->m_v3Position.f.x;
+    float dy = netLocation.f.y - pPlayer->m_v3Position.f.y;
+    float distance = nlSqrt(dx * dx + dy * dy, true);
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(distance, pFuzzyTweaks->vNearNetConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x4CC8 | 0x80083750 | size: 0x7C
  */
-void FarToTheirNet(cPlayer*)
+float FarToTheirNet(cPlayer* pPlayer)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    const nlVector3& netLocation = pPlayer->GetAIOffNetLocation(NULL);
+
+    float dx = netLocation.f.x - pPlayer->m_v3Position.f.x;
+    float dy = netLocation.f.y - pPlayer->m_v3Position.f.y;
+    float distance = nlSqrt(dx * dx + dy * dy, true);
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(distance, pFuzzyTweaks->vFarNetConfidenceDistance);
 }
 
 /**
@@ -309,36 +670,133 @@ void Attacked(cFielder*)
 /**
  * Offset/Address/Size: 0x440C | 0x80082E94 | size: 0x84
  */
-void AvoidingPowerups(cFielder*)
+float AvoidingPowerups(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    nlVector3 repulsionVec = pFielder->m_pAvoidance->GetLastRepulsionVector(AVOID_POWERUPS);
+
+    float magnitude = nlSqrt(repulsionVec.f.x * repulsionVec.f.x + repulsionVec.f.y * repulsionVec.f.y + repulsionVec.f.z * repulsionVec.f.z, true);
+
+    return NormalizeVal(magnitude, g_pGame->m_pFuzzyTweaks->vAvoidPowerupsRepulsionConfidence);
 }
 
 /**
  * Offset/Address/Size: 0x43C8 | 0x80082E50 | size: 0x44
  */
-void Invincible(cFielder*)
+float Invincible(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pFielder->IsInvincible())
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x4294 | 0x80082D1C | size: 0x134
  */
-void Incapacitated(cPlayer*)
+float Incapacitated(cPlayer* pPlayer)
 {
+    float fScore;
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    fScore = 0.0f;
+
+    if (pPlayer->m_eClassType == GOALIE)
+    {
+        bool var_r4 = false;
+        Goalie* pGoalie = (Goalie*)pPlayer;
+        eGoalieActionState actionState = pGoalie->mGoalieActionState;
+
+        float _fScore;
+
+        if ((actionState == GOALIEACTION_STS_RECOVER)
+            || ((pPlayer->m_pBall == NULL)
+                && (actionState != GOALIEACTION_PASS)
+                && (actionState != GOALIEACTION_PASS_INTERCEPT)
+                && (actionState != GOALIEACTION_MOVE)
+                && (actionState != GOALIEACTION_MOVE_WB)
+                && (actionState != GOALIEACTION_PASS_INTERCEPT)
+                && (actionState != GOALIEACTION_PURSUE_BALL_CARRIER)
+                && (actionState != GOALIEACTION_PURSUE_BALL_POUNCE)
+                && (actionState != GOALIEACTION_LOOSEBALL_SETUP)
+                && (actionState != GOALIEACTION_LOOSEBALL_CATCH)
+                && (actionState != GOALIEACTION_LOOSEBALL_PICKUP)
+                && (actionState != GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING)
+                && (actionState != GOALIEACTION_LOOSEBALL_PURSUE_ROLLING)))
+        {
+            var_r4 = true;
+        }
+
+        {
+            _fScore = var_r4 ? 1.0f : 0.0f;
+        }
+        fScore = _fScore;
+    }
+    else if (pPlayer->m_eClassType == FIELDER)
+    {
+        float _fScore = 0.f;
+        bool isIncapacitated = false;
+        cFielder* pFielder = (cFielder*)pPlayer;
+        if (pFielder->IsFrozen() || pFielder->IsFallenDown(25.0f))
+        {
+            isIncapacitated = true;
+        }
+
+        _fScore = isIncapacitated ? 1.0f : 0.0f;
+        fScore = _fScore;
+    }
+
+    return fScore;
 }
 
 /**
  * Offset/Address/Size: 0x4250 | 0x80082CD8 | size: 0x44
  */
-void Frozen(cFielder*)
+float Frozen(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pFielder->IsFrozen())
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x4208 | 0x80082C90 | size: 0x48
  */
-void FallenDown(cFielder*)
+float FallenDown(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pFielder->IsFallenDown(0.0f))
+    {
+        return 1.0f;
+    }
+
+    return 0.0f;
 }
 
 /**
@@ -397,6 +855,7 @@ void OnBreakaway(cFielder*)
  */
 float OpenToPosition(const nlVector3&, const nlVector3&, const cTeam*, const cPlayer*, const cPlayer*, bool)
 {
+    FORCE_DONT_INLINE;
     return 0.0f;
 }
 
@@ -405,6 +864,7 @@ float OpenToPosition(const nlVector3&, const nlVector3&, const cTeam*, const cPl
  */
 float OpenPosition(const nlVector3&, cTeam*, cPlayer*, const nlVector2*)
 {
+    FORCE_DONT_INLINE;
     return 0.0f;
 }
 
@@ -433,15 +893,30 @@ void WideOpen(cFielder*)
 /**
  * Offset/Address/Size: 0x27E0 | 0x80081268 | size: 0x74
  */
-void OpenToTheirNet(cFielder*)
+float OpenToTheirNet(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    cTeam* pOtherTeam = pFielder->m_pTeam->GetOtherTeam();
+    // nlVector3 netLocation = pFielder->GetAIOffNetLocation(NULL);
+
+    return OpenToPosition(pFielder->m_v3Position, pFielder->GetAIOffNetLocation(NULL), pOtherTeam, pFielder, NULL, true);
 }
 
 /**
  * Offset/Address/Size: 0x2780 | 0x80081208 | size: 0x60
  */
-void OpenToMyNet(cFielder*)
+float OpenToMyNet(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    return OpenToPosition(pFielder->m_v3Position, pFielder->GetAIDefNetLocation(NULL), NULL, pFielder, NULL, true);
 }
 
 /**
@@ -461,8 +936,20 @@ void InBetweenMyNetAnd(cFielder*, cBall*)
 /**
  * Offset/Address/Size: 0x23D8 | 0x80080E60 | size: 0x60
  */
-void OpenTo(cPlayer*, cPlayer*)
+float OpenTo(cPlayer* pPlayer1, cPlayer* pPlayer2)
 {
+    if (pPlayer1 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer2 == NULL)
+    {
+        return 0.0f;
+    }
+
+    float fResult = OpenToPosition(pPlayer1->m_v3Position, pPlayer2->m_v3Position, g_pScriptOtherTeam, pPlayer1, pPlayer2, false);
+    return NormalizeVal(fResult, g_vOpenToAdjust);
 }
 
 /**
@@ -489,30 +976,62 @@ void FarTo(cPlayer*, cPlayer*)
 /**
  * Offset/Address/Size: 0x1FBC | 0x80080A44 | size: 0x5C
  */
-float NearToGoaliePosition(const nlVector3&, const nlVector3&)
+float NearToGoaliePosition(const nlVector3& pos1, const nlVector3& pos2)
 {
-    return 0.0f;
+    float dx = pos1.f.x - pos2.f.x;
+    float dy = pos1.f.y - pos2.f.y;
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), pFuzzyTweaks->vNearGoalieConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x1F50 | 0x800809D8 | size: 0x6C
  */
-void CloseToTheirGoalie(cPlayer*)
+float CloseToTheirGoalie(cPlayer* pPlayer)
 {
+    cTeam* pOtherTeam = pPlayer->m_pTeam->GetOtherTeam();
+    cPlayer* pGoalie = pOtherTeam->GetGoalie();
+
+    float dx = pPlayer->m_v3Position.f.x - pGoalie->m_v3Position.f.x;
+    float dy = pPlayer->m_v3Position.f.y - pGoalie->m_v3Position.f.y;
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), pFuzzyTweaks->vCloseGoalieConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x1EE4 | 0x8008096C | size: 0x6C
  */
-void NearToTheirGoalie(cPlayer*)
+float NearToTheirGoalie(cPlayer* pPlayer)
 {
+    cTeam* pOtherTeam = pPlayer->m_pTeam->GetOtherTeam();
+    cPlayer* pGoalie = pOtherTeam->GetGoalie();
+
+    float dx = pPlayer->m_v3Position.f.x - pGoalie->m_v3Position.f.x;
+    float dy = pPlayer->m_v3Position.f.y - pGoalie->m_v3Position.f.y;
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), pFuzzyTweaks->vNearGoalieConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x1E78 | 0x80080900 | size: 0x6C
  */
-void FarToTheirGoalie(cPlayer*)
+float FarToTheirGoalie(cPlayer* pPlayer)
 {
+    cTeam* pOtherTeam = pPlayer->m_pTeam->GetOtherTeam();
+    cPlayer* pGoalie = pOtherTeam->GetGoalie();
+
+    float dx = pPlayer->m_v3Position.f.x - pGoalie->m_v3Position.f.x;
+    float dy = pPlayer->m_v3Position.f.y - pGoalie->m_v3Position.f.y;
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), pFuzzyTweaks->vFarGoalieConfidenceDistance);
 }
 
 /**
@@ -555,65 +1074,236 @@ void StuckOnSidelines(cFielder*)
 /**
  * Offset/Address/Size: 0x17E8 | 0x80080270 | size: 0x94
  */
-void AtIdealDistanceForTackling(cPlayer*, cPlayer*)
+float AtIdealDistanceForTackling(cPlayer* pPlayer1, cPlayer* pPlayer2)
 {
+    if (pPlayer1 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer2 == NULL)
+    {
+        return 0.0f;
+    }
+
+    float dx = pPlayer1->m_v3Position.f.x - pPlayer2->m_v3Position.f.x;
+    float dy = pPlayer1->m_v3Position.f.y - pPlayer2->m_v3Position.f.y;
+    float distance = nlSqrt(dx * dx + dy * dy, true);
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    float idealDistance = pFuzzyTweaks->vIdealTacklingDistance.f.x;
+    if (distance < idealDistance)
+    {
+        return NormalizeVal(distance, idealDistance - pFuzzyTweaks->vIdealTacklingDistance.f.y, idealDistance);
+    }
+    return NormalizeVal(distance, idealDistance + pFuzzyTweaks->vIdealTacklingDistance.f.y, idealDistance);
 }
 
 /**
  * Offset/Address/Size: 0x1774 | 0x800801FC | size: 0x74
  */
-float PositionIsAtIdealDistanceForShooting(const nlVector3&, const nlVector3&)
+float PositionIsAtIdealDistanceForShooting(const nlVector3& pos1, const nlVector3& pos2)
 {
-    return 0.0f;
+    float dx = pos1.f.x - pos2.f.x;
+    float dy = pos1.f.y - pos2.f.y;
+    float distance = nlSqrt(dx * dx + dy * dy, true);
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    float idealDistance = pFuzzyTweaks->vIdealDistanceForShooting.f.x;
+    if (distance < idealDistance)
+    {
+        return NormalizeVal(distance, idealDistance - pFuzzyTweaks->vIdealDistanceForShooting.f.y, idealDistance);
+    }
+    return NormalizeVal(distance, idealDistance + pFuzzyTweaks->vIdealDistanceForShooting.f.y, idealDistance);
 }
 
 /**
  * Offset/Address/Size: 0x1660 | 0x800800E8 | size: 0x114
  */
-void Facing(cPlayer*, cPlayer*)
+float Facing(cPlayer* pPlayer1, cPlayer* pPlayer2)
 {
+    nlVector3 v3Direction;
+    nlPolar polar;
+
+    if (pPlayer1 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer2 == NULL)
+    {
+        return 0.0f;
+    }
+
+    nlVec3Set(v3Direction, pPlayer2->m_v3Position.f.x - pPlayer1->m_v3Position.f.x, pPlayer2->m_v3Position.f.y - pPlayer1->m_v3Position.f.y, pPlayer2->m_v3Position.f.z - pPlayer1->m_v3Position.f.z);
+
+    u16 playerFacing = pPlayer1->m_aActualFacingDirection;
+    nlCartesianToPolar(polar, v3Direction);
+
+    s16 temp = playerFacing - polar.a;
+    s16 angleDiff = temp < 0 ? -temp : temp;
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+
+    s16 fullConf = pFuzzyTweaks->nFacingFullConfidenceAngle;
+    s16 angle_s = (u16)angleDiff;
+
+    if (angle_s < fullConf)
+    {
+        return 1.0f;
+    }
+
+    s16 noConf = pFuzzyTweaks->nFacingNoConfidenceAngle;
+    if (angle_s > noConf)
+    {
+        return 0.0f;
+    }
+
+    return 1.0f - ((float)(angle_s - fullConf) / (float)(noConf - fullConf));
 }
 
 /**
  * Offset/Address/Size: 0x15C0 | 0x80080048 | size: 0xA0
  */
-void UpfieldFrom(cPlayer*, cPlayer*)
+float UpfieldFrom(cPlayer* pPlayer1, cPlayer* pPlayer2)
 {
+    if (pPlayer1 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer2 == NULL)
+    {
+        return 0.0f;
+    }
+
+    nlVector3 v3FromPos = pPlayer1->m_v3Position;
+    nlVector3 v3DownfieldPos = pPlayer2->m_v3Position;
+    float delta = v3FromPos.f.x - v3DownfieldPos.f.x;
+    float score = delta * AIsgn(pPlayer1->m_pTeam->GetOtherNet()->m_baseLocation.f.x);
+
+    return NormalizeVal(score, 0.0f, g_pGame->m_pFuzzyTweaks->fUpfieldMaxDistance);
 }
 
 /**
  * Offset/Address/Size: 0x1520 | 0x8007FFA8 | size: 0xA0
  */
-void DownfieldFrom(cPlayer*, cPlayer*)
+float DownfieldFrom(cPlayer* pPlayer1, cPlayer* pPlayer2)
 {
+    if (pPlayer1 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer2 == NULL)
+    {
+        return 0.0f;
+    }
+
+    nlVector3 v3FromPos = pPlayer1->m_v3Position;
+    nlVector3 v3DownfieldPos = pPlayer2->m_v3Position;
+    float delta = v3DownfieldPos.f.x - v3FromPos.f.x;
+    float score = delta * AIsgn(pPlayer1->m_pTeam->GetOtherNet()->m_baseLocation.f.x);
+
+    return NormalizeVal(score, 0.0f, g_pGame->m_pFuzzyTweaks->fDownfieldMaxDistance);
 }
 
 /**
  * Offset/Address/Size: 0x14B8 | 0x8007FF40 | size: 0x68
  */
-void ClosingTo(cPlayer*, cPlayer*)
+float ClosingTo(cPlayer* pPlayer1, cPlayer* pPlayer2)
 {
+    if (pPlayer1 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer2 == NULL)
+    {
+        return 0.0f;
+    }
+
+    float closingSpeed = GetClosingSpeed2D(
+        pPlayer1->m_v3Position,
+        pPlayer1->m_v3Velocity,
+        pPlayer2->m_v3Position,
+        pPlayer2->m_v3Velocity);
+
+    float closingSpeedMax = g_pGame->m_pFuzzyTweaks->fClosingSpeedMax;
+
+    return NormalizeVal(closingSpeed, 0.0f, closingSpeedMax);
 }
 
 /**
  * Offset/Address/Size: 0x1450 | 0x8007FED8 | size: 0x68
  */
-void ClosingTo(cPlayer*, cBall*)
+float ClosingTo(cPlayer* pPlayer, cBall* pBall)
 {
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pBall == NULL)
+    {
+        return 0.0f;
+    }
+
+    float closingSpeed = GetClosingSpeed2D(
+        pPlayer->m_v3Position,
+        pPlayer->m_v3Velocity,
+        pBall->m_v3Position,
+        pBall->m_v3Velocity);
+
+    float closingSpeedMax = g_pGame->m_pFuzzyTweaks->fClosingSpeedMax;
+
+    return NormalizeVal(closingSpeed, 0.0f, closingSpeedMax);
 }
 
 /**
  * Offset/Address/Size: 0x13E4 | 0x8007FE6C | size: 0x6C
  */
-void SeparatingFrom(cPlayer*, cPlayer*)
+float SeparatingFrom(cPlayer* pPlayer1, cPlayer* pPlayer2)
 {
+    if (pPlayer1 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer2 == NULL)
+    {
+        return 0.0f;
+    }
+
+    float closingSpeed = GetClosingSpeed2D(
+        pPlayer1->m_v3Position,
+        pPlayer1->m_v3Velocity,
+        pPlayer2->m_v3Position,
+        pPlayer2->m_v3Velocity);
+
+    float separatingSpeedMax = g_pGame->m_pFuzzyTweaks->fSeparatingSpeedMax;
+
+    return NormalizeVal(closingSpeed, 0.0f, -separatingSpeedMax);
 }
 
 /**
  * Offset/Address/Size: 0x1350 | 0x8007FDD8 | size: 0x94
  */
-void OutOfNet(Goalie*)
+float OutOfNet(Goalie* pGoalie)
 {
+    if (pGoalie == NULL)
+    {
+        return 0.0f;
+    }
+
+    nlVector3 netLocation = pGoalie->GetAIDefNetLocation(NULL);
+
+    float dx = netLocation.f.x - pGoalie->m_v3Position.f.x;
+    float dy = netLocation.f.y - pGoalie->m_v3Position.f.y;
+
+    return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), g_pGame->m_pFuzzyTweaks->vOutOfNetConfidenceDistance);
 }
 
 /**

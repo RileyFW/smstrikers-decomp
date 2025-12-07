@@ -1,6 +1,7 @@
 #ifndef _AVOIDCONTROLLER_H_
 #define _AVOIDCONTROLLER_H_
 
+#include "NL/nlMath.h"
 #include "Game/AI/Fielder.h"
 #include "Game/Player.h"
 #include "Game/AI/Powerups.h"
@@ -25,7 +26,7 @@ public:
     AvoidController(cFielder*);
     void SetThingsToAvoid(int);
     void UseMinimumAvoidance(cPlayer*);
-    void GetLastRepulsionVector(eAvoidableThings);
+    nlVector3& GetLastRepulsionVector(eAvoidableThings);
     void Update(float);
     void CalcFielderRepulsionVector(nlVector3&);
     void CalcPowerupRepulsionVector(nlVector3&);
@@ -33,6 +34,18 @@ public:
     void CalcDesiredVelocityToAvoidCorner(nlVector2&, const sCornerSegment&, const nlVector2&, const nlVector2&);
     void AvoidSidelines();
     void ApplyRepulsionVector(nlVector3);
-};
+
+    /* 0x00 */ cFielder* m_pFielder;
+    /* 0x04 */ const FielderTweaks* m_pFTweaks;
+    /* 0x08 */ int m_ThingsToAvoid;
+    /* 0x0C */ int m_CurrentlyAvoiding;
+    /* 0x10 */ bool m_UseMinimumAvoidance;
+    /* 0x14 */ cPlayer* m_pIgnoreThisPlayer;
+    /* 0x18 */ bool m_VeryCloseToSideline;
+    /* 0x19 */ bool m_SidelineUnavoidable;
+    /* 0x1C */ nlVector2 m_SidelineNormal;
+    /* 0x24 */ nlVector2 m_SidelineDirection;
+    /* 0x2C */ nlVector3 m_LastRepulsionVector[6];
+}; // total size: 0x74
 
 #endif // _AVOIDCONTROLLER_H_

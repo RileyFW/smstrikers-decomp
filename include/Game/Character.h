@@ -193,7 +193,7 @@ public:
     /* 0x98 */ AnimRetargetList* m_pAnimRetargetList;
     /* 0x9C */ cHeadTrack* m_pHeadTrack;
     /* 0xA0 */ s32 m_nHeadJointIndex;
-    /* 0xA4 */ s32 m_nBip01JointIndex;
+    /* 0xA4 */ s32 m_nBip01JointIndex_0xA4; // strange, exists twice... (in character and player)
     /* 0xA8 */ s32 m_nPropJointIndex;
     /* 0xAC */ s32 m_nSpine1JointIndex;
     /* 0xB0 */ const char* m_szEffectsName;

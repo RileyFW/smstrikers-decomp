@@ -24,10 +24,45 @@ void AvoidController::UseMinimumAvoidance(cPlayer*)
 /**
  * Offset/Address/Size: 0x2188 | 0x800097DC | size: 0xB8
  */
-void AvoidController::GetLastRepulsionVector(eAvoidableThings)
+nlVector3& AvoidController::GetLastRepulsionVector(eAvoidableThings things)
 {
-}
+    int index;
 
+    if (things == AVOID_EVERYTHING) // 0x1F
+    {
+        index = 5;
+    }
+    else if ((AVOID_FIELDERS)&things) // 0x01
+    {
+        index = 0;
+    }
+    else if (AVOID_GOALIES & things) // 0x02
+    {
+        index = 1;
+    }
+    else if (AVOID_POWERUPS & things) // 0x04
+    {
+        index = 2;
+    }
+    else if (AVOID_SIDELINES & things) // 0x08
+    {
+        index = 3;
+    }
+    else if (AVOID_BOWSER & things) // 0x10
+    {
+        index = 4;
+    }
+    else if (0x20 & things) // bit 5 - also maps to index 5
+    {
+        index = 5;
+    }
+    else
+    {
+        index = -1;
+    }
+
+    return m_LastRepulsionVector[index];
+}
 /**
  * Offset/Address/Size: 0x12BC | 0x80008910 | size: 0xECC
  */

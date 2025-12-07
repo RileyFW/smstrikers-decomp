@@ -8,6 +8,37 @@
 #include "Game/Game.h"
 #include "Game/AI/Fielder.h"
 
+enum eScriptFielderDesire
+{
+    edNone = 0,
+    edCutAndBreak = 1,
+    edBlockPass = 6,
+    edBlockShot = 6,
+    edDeke = 2,
+    edGetInPosition = 3,
+    edGetOpen = 4,
+    edHeavyAttack = 5,
+    edInterceptBall = 6,
+    edMark = 7,
+    edProtectBall = 8,
+    edRunToNet = 9,
+    edRunUpfield = 10,
+    edRunDownfield = 11,
+    edRunToLocation = 12,
+    edPass = 13,
+    edShoot = 14,
+    edSlideAttack = 15,
+    edSupportBallDefensive = 16,
+    edSupportBallOffensive = 17,
+    edUsePowerup = 18,
+    edWindupPass = 19,
+    edWindupShot = 20,
+    edUserControl = 22,
+    edOneTimer = 24,
+    edPostWhistle = 25,
+    edWait = 28,
+};
+
 float InOffensiveZoneOfPlayer(cBall*, cPlayer*);
 float InDefensiveZoneOfPlayer(cBall*, cPlayer*);
 float InOffensiveZone(cPlayer*);
@@ -46,32 +77,32 @@ float InControlOfBall(cFielder*);
 float NearToPlayersNet(cBall*, cPlayer*);
 float FarToTheirNetB(cBall*);
 float Stunned(Goalie*);
-void OutOfNet(Goalie*);
-void SeparatingFrom(cPlayer*, cPlayer*);
-void ClosingTo(cPlayer*, cBall*);
-void ClosingTo(cPlayer*, cPlayer*);
-void DownfieldFrom(cPlayer*, cPlayer*);
-void UpfieldFrom(cPlayer*, cPlayer*);
-void Facing(cPlayer*, cPlayer*);
+float OutOfNet(Goalie*);
+float SeparatingFrom(cPlayer*, cPlayer*);
+float ClosingTo(cPlayer*, cBall*);
+float ClosingTo(cPlayer*, cPlayer*);
+float DownfieldFrom(cPlayer*, cPlayer*);
+float UpfieldFrom(cPlayer*, cPlayer*);
+float Facing(cPlayer*, cPlayer*);
 float PositionIsAtIdealDistanceForShooting(const nlVector3&, const nlVector3&);
-void AtIdealDistanceForTackling(cPlayer*, cPlayer*);
+float AtIdealDistanceForTackling(cPlayer*, cPlayer*);
 void StuckOnSidelines(cFielder*);
 void FacingSideline(cFielder*);
 void CloseToSideline(cFielder*);
 float NearToSideline(const nlVector3&);
 float CloseToSideline(const nlVector3&, const nlVector2*, bool);
-void FarToTheirGoalie(cPlayer*);
-void NearToTheirGoalie(cPlayer*);
-void CloseToTheirGoalie(cPlayer*);
+float FarToTheirGoalie(cPlayer*);
+float NearToTheirGoalie(cPlayer*);
+float CloseToTheirGoalie(cPlayer*);
 float NearToGoaliePosition(const nlVector3&, const nlVector3&);
 void FarTo(cPlayer*, cPlayer*);
 void NearTo(cPlayer*, cPlayer*);
 void CloseTo(cPlayer*, cPlayer*);
-void OpenTo(cPlayer*, cPlayer*);
+float OpenTo(cPlayer*, cPlayer*);
 void InBetweenMyNetAnd(cFielder*, cBall*);
 void InBetweenMyNetAnd(cFielder*, cFielder*);
-void OpenToMyNet(cFielder*);
-void OpenToTheirNet(cFielder*);
+float OpenToMyNet(cFielder*);
+float OpenToTheirNet(cFielder*);
 void WideOpen(cFielder*);
 void Open(cFielder*);
 float WideOpenPosition(const nlVector3&, cTeam*, cPlayer*);
@@ -84,49 +115,47 @@ void GoalieOutOfPosition(cFielder*);
 void LikelyToScore(cFielder*);
 void PlayerShotDistance(cFielder*);
 float LikelyToScoreFromPosition(const nlVector3&, const nlVector3&, const cNet*, bool);
-void FallenDown(cFielder*);
-void Frozen(cFielder*);
-void Incapacitated(cPlayer*);
-void Invincible(cFielder*);
-void AvoidingPowerups(cFielder*);
+float FallenDown(cFielder*);
+float Frozen(cFielder*);
+float Incapacitated(cPlayer*);
+float Invincible(cFielder*);
+float AvoidingPowerups(cFielder*);
 void Attacked(cFielder*);
 void Pressured(cFielder*);
-void FarToTheirNet(cPlayer*);
-void NearToTheirNet(cPlayer*);
-void CloseToTheirNet(cPlayer*);
-void FarToMyNet(cPlayer*);
-void NearToMyNet(cPlayer*);
-void CloseToMyNet(cPlayer*);
-void FarToBall(cPlayer*);
-void NearToBall(cPlayer*);
-void CloseToBall(cPlayer*);
+float FarToTheirNet(cPlayer*);
+float NearToTheirNet(cPlayer*);
+float CloseToTheirNet(cPlayer*);
+float FarToMyNet(cPlayer*);
+float NearToMyNet(cPlayer*);
+float CloseToMyNet(cPlayer*);
+float FarToBall(cPlayer*);
+float NearToBall(cPlayer*);
+float CloseToBall(cPlayer*);
 void LikelyToUsePowerup(cFielder*, int);
-void AbleToUsePowerup(cFielder*, int);
+float AbleToUsePowerup(cFielder*, int);
 void AbleToInterceptBallForSwapController(cFielder*);
 float AbleToInterceptBall(cPlayer*);
-// void RepeatingLastDesire(cFielder*, eScriptFielderDesire);
-void Deker(cFielder*);
-void Passer(cFielder*);
-void Shooter(cFielder*);
-void Aggressive(cFielder*);
+float RepeatingLastDesire(cFielder*, eScriptFielderDesire);
+float Deker(cFielder*);
+float Passer(cFielder*);
+float Shooter(cFielder*);
+float Aggressive(cFielder*);
 void InPassingLane(cFielder*);
 float UserControlled(cFielder*);
 void StrategicBallOwner(cFielder*);
-void OnTheGround(cPlayer*);
-void OnScreen(cPlayer*);
-void OnTheirTeam(cFielder*);
-void Marking(cFielder*, cPlayer*);
-void GoalieType(cPlayer*);
-void Captain(cFielder*);
-void Defence(cFielder*);
-void Midfield(cFielder*);
-void Winger(cFielder*);
-void Striker(cFielder*);
-void LastBallOwner(cPlayer*);
-void BallOwnerT(cTeam*);
-void BallOwner(cPlayer*);
-void CalcSelectChance(float, float);
-// void PositionOf<cBall*>(cBall*);
-// void PositionOf<cPlayer*>(cPlayer*);
+float OnTheGround(cPlayer*);
+float OnScreen(cPlayer*);
+float OnTheirTeam(cFielder*);
+float Marking(cFielder*, cPlayer*);
+float GoalieType(cPlayer*);
+float Captain(cFielder*);
+float Defence(cFielder*);
+float Midfield(cFielder*);
+float Winger(cFielder*);
+float Striker(cFielder*);
+float LastBallOwner(cPlayer*);
+float BallOwnerT(cTeam*);
+float BallOwner(cPlayer*);
+float CalcSelectChance(float, float);
 
 #endif // _SCRIPTQUESTIONS_H_
