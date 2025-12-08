@@ -12,7 +12,7 @@ nlVector3& PositionOf(T* pObject)
 void GetClosestPointOnSidelines(const nlVector3&);
 char* GetPowerupName(int powerup);
 void SortToMinOrMaxTotalSum(unsigned int*, float (*)[4], bool);
-void GetClosestPointOnLineABFromPointC(const nlVector3&, const nlVector3&, const nlVector3&);
+nlVector3 GetClosestPointOnLineABFromPointC(const nlVector3&, const nlVector3&, const nlVector3&);
 float AIsgn(float fValue);
 float NormalizeVal(float fromVal, float fromMin, float fromMax);
 float NormalizeVal(float fromVal, const nlVector2& fromExtrema);

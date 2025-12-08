@@ -313,8 +313,13 @@ float AIsgn(float fValue)
 /**
  * Offset/Address/Size: 0x2E4 | 0x80005D90 | size: 0x234
  */
-void GetClosestPointOnLineABFromPointC(const nlVector3&, const nlVector3&, const nlVector3&)
+nlVector3 GetClosestPointOnLineABFromPointC(const nlVector3& a, const nlVector3& b, const nlVector3& c)
 {
+    nlVector3 closestPoint;
+    closestPoint.f.x = (a.f.x + b.f.x) / 2.0f;
+    closestPoint.f.y = (a.f.y + b.f.y) / 2.0f;
+    closestPoint.f.z = (a.f.z + b.f.z) / 2.0f;
+    return closestPoint;
 }
 
 /**
