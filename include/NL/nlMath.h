@@ -110,6 +110,13 @@ struct nlVector3
         float dz = f.z - v.f.z;
         return dx * dx + dy * dy + dz * dz;
     }
+
+    inline float CalculateDistanceSquared2D(const nlVector3& v)
+    {
+        float dx = f.x - v.f.x;
+        float dy = f.y - v.f.y;
+        return dx * dx + dy * dy;
+    }
 };
 
 inline float nlGetLength2D(float x, float y)

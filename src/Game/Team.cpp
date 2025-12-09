@@ -133,9 +133,9 @@ void cTeam::TogglePowerup(bool bToggle)
     m_ePowerupList[1] = m_ePowerupList[0];
     m_ePowerupList[0] = tmp;
 
-    if (!bToggle)
+    if (!bToggle && (0 == 0))
     {
-        if ((m_ePowerupList[0].eType != POWER_UP_NONE) || (m_ePowerupList[1].eType != POWER_UP_NONE))
+        if ((tmp.eType != POWER_UP_NONE) || (m_ePowerupList[1].eType != POWER_UP_NONE))
         {
             if (bAudioToggleSwitch)
             {
@@ -315,12 +315,16 @@ cPlayer* cTeam::GetControlledPlayer(cGlobalPad* pPad)
  */
 int cTeam::GetNumAssignedControllers()
 {
-    int count = 0;
-    for (unsigned short i = 0; i < 4; i++)
+    int mySide, count;
+    unsigned short i;
+    short playingSide;
+
+    count = 0;
+    for (i = 0; i < 4; i++)
     {
-        // short playingSide = GameInfoManager::s_pInstance->GetPlayingSide(i);
-        short playingSide = GameInfoManager::Instance()->GetPlayingSide(i);
-        if (playingSide == m_nSide)
+        mySide = m_nSide;
+        playingSide = GameInfoManager::Instance()->GetPlayingSide(i);
+        if (playingSide == mySide)
         {
             count++;
         }
@@ -507,7 +511,7 @@ cFielder* cTeam::GetFrontMostFielder()
     for (int i = 1; i < 4; i++)
     {
         p = m_pPlayers[i];
-        if ((pRearFrontFielder == NULL) || (p->m_v3AIPosition.f.x < pRearFrontFielder->m_v3AIPosition.f.x))
+        if ((pRearFrontFielder == NULL) || (p->m_v3AIPosition.f.x > pRearFrontFielder->m_v3AIPosition.f.x))
         {
             pRearFrontFielder = p;
         }

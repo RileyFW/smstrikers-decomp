@@ -40,6 +40,16 @@ static inline float IsPassInPlay(cBall* pBall)
     return 0.0f;
 }
 
+static inline float check_goalie(const Goalie* pGoalie, const eGoalieActionState actionState)
+{
+    return (actionState == GOALIEACTION_STS_RECOVER) || ((pGoalie->m_pBall == NULL) && (actionState != GOALIEACTION_PASS) && (actionState != GOALIEACTION_PASS_INTERCEPT) && (actionState != GOALIEACTION_MOVE) && (actionState != GOALIEACTION_MOVE_WB) && (actionState != GOALIEACTION_PASS_INTERCEPT) && (actionState != GOALIEACTION_PURSUE_BALL_CARRIER) && (actionState != GOALIEACTION_PURSUE_BALL_POUNCE) && (actionState != GOALIEACTION_LOOSEBALL_SETUP) && (actionState != GOALIEACTION_LOOSEBALL_CATCH) && (actionState != GOALIEACTION_LOOSEBALL_PICKUP) && (actionState != GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING) && (actionState != GOALIEACTION_LOOSEBALL_PURSUE_ROLLING)) ? 1.0f : 0.0f;
+}
+
+static inline float check_fielder(cFielder* pFielder)
+{
+    return pFielder->IsFrozen() || pFielder->IsFallenDown(25.0f) ? 1.0f : 0.0f;
+}
+
 /**
  * Offset/Address/Size: 0x5E44 | 0x800848CC | size: 0x30
  */
@@ -521,11 +531,75 @@ float AbleToInterceptBall(cPlayer*)
     return 0.0f;
 }
 
+static inline bool check_goalie2(const Goalie* pGoalie, const eGoalieActionState actionState)
+{
+    bool result = true;
+    if (actionState == (int)GOALIEACTION_STS_RECOVER)
+    {
+        result = ((pGoalie->m_pBall == NULL) && (actionState != GOALIEACTION_PASS) && (actionState != GOALIEACTION_PASS_INTERCEPT) && (actionState != GOALIEACTION_MOVE) && (actionState != GOALIEACTION_MOVE_WB) && (actionState != GOALIEACTION_PASS_INTERCEPT) && (actionState != GOALIEACTION_PURSUE_BALL_CARRIER) && (actionState != GOALIEACTION_PURSUE_BALL_POUNCE) && (actionState != GOALIEACTION_LOOSEBALL_SETUP) && (actionState != GOALIEACTION_LOOSEBALL_CATCH) && (actionState != GOALIEACTION_LOOSEBALL_PICKUP) && (actionState != GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING) && (actionState != GOALIEACTION_LOOSEBALL_PURSUE_ROLLING));
+    }
+    return result;
+}
+
 /**
  * Offset/Address/Size: 0x52B0 | 0x80083D38 | size: 0x204
  */
-void AbleToInterceptBallForSwapController(cFielder*)
+float AbleToInterceptBallForSwapController(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    float fScore = 0.0f;
+
+    float var_f1;
+    if (pFielder == NULL)
+    {
+        var_f1 = 0.0f;
+    }
+    else
+    {
+        var_f1 = 0.0f;
+        if (pFielder->m_eClassType == 3)
+        {
+            Goalie* pGoalie = (Goalie*)pFielder;
+            var_f1 = !check_goalie2(pGoalie, pGoalie->mGoalieActionState) ? 1.0f : 0.0f;
+        }
+        else if (pFielder->m_eClassType == 2)
+        {
+            var_f1 = pFielder->IsFrozen() || pFielder->IsFallenDown(25.0f) ? 1.0f : 0.0f;
+            // var_f1 = check_fielder(pFielder);
+        }
+    }
+
+    if (var_f1 == 0.0f)
+    {
+        // If fielder has ball, return 1.0f
+        if (pFielder->m_pBall != NULL)
+        {
+            fScore = 1.0f;
+        }
+        else
+        {
+            float temp_f31 = NormalizeVal(pFielder->m_pTeam->mfBallInterceptTimes[pFielder->m_ID], g_pGame->m_pFuzzyTweaks->vInterceptBallConfidenceTime);
+
+            // float distance = pFielder->m_v3Position.CalculateDistanceSquared2D(g_pBall->m_v3Position);
+            float distance = nlSqrt(g_pBall->m_v3Position.CalculateDistanceSquared2D(pFielder->m_v3Position), true);
+            // nlVector3* pPosition = &g_pBall->m_v3Position;
+            // float dx = pPosition->f.x - pFielder->m_v3Position.f.x;
+            // float dy = pPosition->f.y - pFielder->m_v3Position.f.y;
+            const float temp_f2 = g_pGame->m_pFuzzyTweaks->fInterceptBallSwapControlerScoreWeight;
+            // const float distance = nlSqrt(dx * dx + dy * dy, true);
+
+            fScore = (temp_f31 * temp_f2);
+            fScore += (1.0f - g_pGame->m_pFuzzyTweaks->fInterceptBallSwapControlerScoreWeight) * NormalizeVal(distance, g_pGame->m_pFuzzyTweaks->vInterceptBallConfidenceDistance);
+
+            // fScore = (temp_f31 * temp_f2) + NormalizeVal(distance, g_pGame->m_pFuzzyTweaks->vInterceptBallConfidenceDistance) * (1.0f - g_pGame->m_pFuzzyTweaks->fInterceptBallSwapControlerScoreWeight);
+        }
+    }
+
+    return fScore;
 }
 
 /**
@@ -835,16 +909,6 @@ float Invincible(cFielder* pFielder)
     return 0.0f;
 }
 
-static inline float check_goalie(const Goalie* pGoalie, const eGoalieActionState actionState)
-{
-    return (actionState == GOALIEACTION_STS_RECOVER) || ((pGoalie->m_pBall == NULL) && (actionState != GOALIEACTION_PASS) && (actionState != GOALIEACTION_PASS_INTERCEPT) && (actionState != GOALIEACTION_MOVE) && (actionState != GOALIEACTION_MOVE_WB) && (actionState != GOALIEACTION_PASS_INTERCEPT) && (actionState != GOALIEACTION_PURSUE_BALL_CARRIER) && (actionState != GOALIEACTION_PURSUE_BALL_POUNCE) && (actionState != GOALIEACTION_LOOSEBALL_SETUP) && (actionState != GOALIEACTION_LOOSEBALL_CATCH) && (actionState != GOALIEACTION_LOOSEBALL_PICKUP) && (actionState != GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING) && (actionState != GOALIEACTION_LOOSEBALL_PURSUE_ROLLING)) ? 1.0f : 0.0f;
-}
-
-static inline float check_fielder(cFielder* pFielder)
-{
-    return pFielder->IsFrozen() || pFielder->IsFallenDown(25.0f) ? 1.0f : 0.0f;
-}
-
 /**
  * Offset/Address/Size: 0x4294 | 0x80082D1C | size: 0x134
  */
@@ -957,23 +1021,138 @@ float LikelyToScore(cFielder* pFielder)
 /**
  * Offset/Address/Size: 0x3D40 | 0x800827C8 | size: 0x15C
  */
-void GoalieOutOfPosition(cFielder*)
+float GoalieOutOfPosition(cFielder* pFielder)
 {
+    // float halfNetWidth;
+    nlVector3 goalieNetPos;
+    cPlayer* pGoalie;
+
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    pGoalie = pFielder->m_pTeam->GetOtherTeam()->GetGoalie();
+    const float halfNetWidth = 0.5f * cNet::m_fNetWidth;
+
+    goalieNetPos = pGoalie->m_v3Position;
+    goalieNetPos.f.x = pGoalie->m_pTeam->m_pNet->m_baseLocation.f.x;
+
+    if (goalieNetPos.f.y < -halfNetWidth)
+    {
+        goalieNetPos.f.y = -halfNetWidth;
+    }
+    else if (goalieNetPos.f.y > halfNetWidth)
+    {
+        goalieNetPos.f.y = halfNetWidth;
+    }
+
+    const nlVector3& offNetLocation = pFielder->GetAIOffNetLocation(NULL);
+
+    float dx1 = pFielder->m_v3Position.f.x - offNetLocation.f.x;
+    float dy1 = pFielder->m_v3Position.f.y - offNetLocation.f.y;
+    float fielderDistance = nlSqrt(dx1 * dx1 + dy1 * dy1, true);
+
+    float dx2 = pGoalie->m_v3Position.f.x - goalieNetPos.f.x;
+    float dy2 = pGoalie->m_v3Position.f.y - goalieNetPos.f.y;
+    float goalieDistance = nlSqrt(dx2 * dx2 + dy2 * dy2, true);
+
+    const double Epsilon = 0.0;
+    if ((double)fielderDistance <= Epsilon)
+    {
+        fielderDistance = 0.1f;
+    }
+    if ((double)goalieDistance <= Epsilon)
+    {
+        goalieDistance = 0.1f;
+    }
+
+    return NormalizeVal(goalieDistance / fielderDistance, g_pGame->m_pFuzzyTweaks->vGoalieOutOfPositionDistance);
 }
 
 /**
  * Offset/Address/Size: 0x3C18 | 0x800826A0 | size: 0x128
  */
-float PositionIsInFrontOfNet(const nlVector3&, const cNet*)
+float PositionIsInFrontOfNet(const nlVector3& position, const cNet* pNet)
 {
-    return 0.0f;
+    float sideSign;
+    nlVector3 diff;
+    nlVec3Set(diff,
+        position.f.x - pNet->m_baseLocation.f.x,
+        position.f.y - pNet->m_baseLocation.f.y,
+        position.f.z - pNet->m_baseLocation.f.z);
+    sideSign = pNet->m_sideSign;
+    nlVec3Scale(diff, diff, sideSign);
+
+    nlPolar polar;
+    nlCartesianToPolar(polar, diff);
+
+    float angleRad = 0.005493164f * (u16)(polar.a - 0x8000);
+    if (angleRad > 180.0f)
+    {
+        FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+        float complementaryMidAngle = 360.0f - pFuzzyTweaks->fFrontOfNetMidAngle;
+        if (angleRad < complementaryMidAngle)
+        {
+            return InterpolateRangeClamped(0.0f, pFuzzyTweaks->fFrontOfNetMidScore, 360.0f - pFuzzyTweaks->fFrontOfNetMaxAngle, complementaryMidAngle, angleRad);
+        }
+        return InterpolateRangeClamped(1.0f, pFuzzyTweaks->fFrontOfNetMidScore, 360.0f, complementaryMidAngle, angleRad);
+    }
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+    float midAngle = pFuzzyTweaks->fFrontOfNetMidAngle;
+    if (angleRad > midAngle)
+    {
+        return InterpolateRangeClamped(0.0f, pFuzzyTweaks->fFrontOfNetMidScore, pFuzzyTweaks->fFrontOfNetMaxAngle, midAngle, angleRad);
+    }
+    return InterpolateRangeClamped(1.0f, pFuzzyTweaks->fFrontOfNetMidScore, 0.0f, midAngle, angleRad);
 }
 
 /**
  * Offset/Address/Size: 0x3ACC | 0x80082554 | size: 0x14C
  */
-void InFrontOfTheirNet(cFielder*)
+float InFrontOfTheirNet(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    cTeam* pOtherTeam = pFielder->m_pTeam->GetOtherTeam();
+    cNet* pNet = pOtherTeam->m_pNet;
+
+    nlVector3 diff;
+    nlVec3Set(diff,
+        pFielder->m_v3Position.f.x - pNet->m_baseLocation.f.x,
+        pFielder->m_v3Position.f.y - pNet->m_baseLocation.f.y,
+        pFielder->m_v3Position.f.z - pNet->m_baseLocation.f.z);
+
+    float sideSign = pNet->m_sideSign;
+    nlVec3Scale(diff, diff, sideSign);
+
+    nlPolar polar;
+    nlCartesianToPolar(polar, diff);
+
+    float angleRad = 0.005493164f * (u16)(polar.a - 0x8000);
+
+    if (angleRad > 180.0f)
+    {
+        FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+        float complementaryMidAngle = 360.0f - pFuzzyTweaks->fFrontOfNetMidAngle;
+        if (angleRad < complementaryMidAngle)
+        {
+            return InterpolateRangeClamped(0.0f, pFuzzyTweaks->fFrontOfNetMidScore, 360.0f - pFuzzyTweaks->fFrontOfNetMaxAngle, complementaryMidAngle, angleRad);
+        }
+        return InterpolateRangeClamped(1.0f, pFuzzyTweaks->fFrontOfNetMidScore, 360.0f, complementaryMidAngle, angleRad);
+    }
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+    float midAngle = pFuzzyTweaks->fFrontOfNetMidAngle;
+    if (angleRad > midAngle)
+    {
+        return InterpolateRangeClamped(0.0f, pFuzzyTweaks->fFrontOfNetMidScore, pFuzzyTweaks->fFrontOfNetMaxAngle, midAngle, angleRad);
+    }
+    return InterpolateRangeClamped(1.0f, pFuzzyTweaks->fFrontOfNetMidScore, 0.0f, midAngle, angleRad);
 }
 
 /**
@@ -1088,22 +1267,148 @@ float OpenTo(cPlayer* pPlayer1, cPlayer* pPlayer2)
 /**
  * Offset/Address/Size: 0x2298 | 0x80080D20 | size: 0x140
  */
-void CloseTo(cPlayer*, cPlayer*)
+float CloseTo(cPlayer* pPlayer1, cPlayer* pPlayer2)
 {
+    if (pPlayer1 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer2 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer1->m_eClassType == GOALIE)
+    {
+        float dx = pPlayer2->m_v3Position.f.x - pPlayer1->m_v3Position.f.x;
+        float dy = pPlayer2->m_v3Position.f.y - pPlayer1->m_v3Position.f.y;
+
+        FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+        return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), pFuzzyTweaks->vCloseGoalieConfidenceDistance);
+    }
+
+    if (pPlayer2->m_eClassType == GOALIE)
+    {
+        float dx = pPlayer1->m_v3Position.f.x - pPlayer2->m_v3Position.f.x;
+        float dy = pPlayer1->m_v3Position.f.y - pPlayer2->m_v3Position.f.y;
+
+        FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+        return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), pFuzzyTweaks->vCloseGoalieConfidenceDistance);
+    }
+
+    nlVector2* pConfidenceDistance;
+    if (pPlayer1->IsOnSameTeam(pPlayer2))
+    {
+        pConfidenceDistance = &g_pGame->m_pFuzzyTweaks->vCloseTeammateConfidenceDistance;
+    }
+    else
+    {
+        pConfidenceDistance = &g_pGame->m_pFuzzyTweaks->vCloseOpponentConfidenceDistance;
+    }
+
+    float dx = pPlayer1->m_v3Position.f.x - pPlayer2->m_v3Position.f.x;
+    float dy = pPlayer1->m_v3Position.f.y - pPlayer2->m_v3Position.f.y;
+
+    return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), *pConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x2158 | 0x80080BE0 | size: 0x140
  */
-void NearTo(cPlayer*, cPlayer*)
+float NearTo(cPlayer* pPlayer1, cPlayer* pPlayer2)
 {
+    if (pPlayer1 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer2 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer1->m_eClassType == GOALIE)
+    {
+        float dx = pPlayer2->m_v3Position.f.x - pPlayer1->m_v3Position.f.x;
+        float dy = pPlayer2->m_v3Position.f.y - pPlayer1->m_v3Position.f.y;
+
+        FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+        return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), pFuzzyTweaks->vNearGoalieConfidenceDistance);
+    }
+
+    if (pPlayer2->m_eClassType == GOALIE)
+    {
+        float dx = pPlayer1->m_v3Position.f.x - pPlayer2->m_v3Position.f.x;
+        float dy = pPlayer1->m_v3Position.f.y - pPlayer2->m_v3Position.f.y;
+
+        FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+        return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), pFuzzyTweaks->vNearGoalieConfidenceDistance);
+    }
+
+    nlVector2* pConfidenceDistance;
+    if (pPlayer1->IsOnSameTeam(pPlayer2))
+    {
+        pConfidenceDistance = &g_pGame->m_pFuzzyTweaks->vNearTeammateConfidenceDistance;
+    }
+    else
+    {
+        pConfidenceDistance = &g_pGame->m_pFuzzyTweaks->vNearOpponentConfidenceDistance;
+    }
+
+    float dx = pPlayer1->m_v3Position.f.x - pPlayer2->m_v3Position.f.x;
+    float dy = pPlayer1->m_v3Position.f.y - pPlayer2->m_v3Position.f.y;
+
+    return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), *pConfidenceDistance);
 }
 
 /**
  * Offset/Address/Size: 0x2018 | 0x80080AA0 | size: 0x140
  */
-void FarTo(cPlayer*, cPlayer*)
+float FarTo(cPlayer* pPlayer1, cPlayer* pPlayer2)
 {
+    if (pPlayer1 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer2 == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (pPlayer1->m_eClassType == GOALIE)
+    {
+        float dx = pPlayer2->m_v3Position.f.x - pPlayer1->m_v3Position.f.x;
+        float dy = pPlayer2->m_v3Position.f.y - pPlayer1->m_v3Position.f.y;
+
+        FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+        return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), pFuzzyTweaks->vFarGoalieConfidenceDistance);
+    }
+
+    if (pPlayer2->m_eClassType == GOALIE)
+    {
+        float dx = pPlayer1->m_v3Position.f.x - pPlayer2->m_v3Position.f.x;
+        float dy = pPlayer1->m_v3Position.f.y - pPlayer2->m_v3Position.f.y;
+
+        FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+        return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), pFuzzyTweaks->vFarGoalieConfidenceDistance);
+    }
+
+    nlVector2* pConfidenceDistance;
+    if (pPlayer1->IsOnSameTeam(pPlayer2))
+    {
+        pConfidenceDistance = &g_pGame->m_pFuzzyTweaks->vFarTeammateConfidenceDistance;
+    }
+    else
+    {
+        pConfidenceDistance = &g_pGame->m_pFuzzyTweaks->vFarOpponentConfidenceDistance;
+    }
+
+    float dx = pPlayer1->m_v3Position.f.x - pPlayer2->m_v3Position.f.x;
+    float dy = pPlayer1->m_v3Position.f.y - pPlayer2->m_v3Position.f.y;
+
+    return NormalizeVal(nlSqrt(dx * dx + dy * dy, true), *pConfidenceDistance);
 }
 
 /**

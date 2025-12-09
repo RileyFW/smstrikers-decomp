@@ -8,28 +8,35 @@
 template <typename T, typename Key>
 T* nlBSearch(const Key& key, T* base, int count)
 {
-    int low = 0;
+    const Key keyVal = key;
+    int low = -1;
     int high = count - 1;
 
-    while (low <= high)
+    while ((high - low) > 1)
     {
         int mid = (low + high) / 2;
 
-        if (key < base[mid].hash)
+        if (base[mid].hash > keyVal)
         {
-            high = mid - 1;
-        }
-        else if (key > base[mid].hash)
-        {
-            low = mid + 1;
+            high = mid;
         }
         else
         {
-            return &base[mid]; // Found
+            low = mid;
         }
     }
 
-    return nullptr; // Not found
+    if (base[high].hash == keyVal)
+    {
+        return &base[high];
+    }
+
+    if (low != -1 && base[low].hash == keyVal)
+    {
+        return &base[low];
+    }
+
+    return nullptr;
 }
 
 #endif // _NLBSEARCH_H_
