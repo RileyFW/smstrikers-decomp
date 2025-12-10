@@ -56,8 +56,8 @@ enum eTeamID
     NUM_TEAMS = 9,
 };
 
-void MostDefensivePlayer(const void*, const void*);
-void MostOffensiveThreat(const void*, const void*);
+int MostDefensivePlayer(const void*, const void*);
+int MostOffensiveThreat(const void*, const void*);
 int BestAbleToInterceptBall(const void*, const void*);
 
 class cTeam

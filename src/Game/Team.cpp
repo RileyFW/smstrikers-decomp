@@ -445,15 +445,88 @@ void cTeam::UpdateTeamAI(float)
 /**
  * Offset/Address/Size: 0x598 | 0x80064944 | size: 0x158
  */
-void MostOffensiveThreat(const void*, const void*)
+int MostOffensiveThreat(const void* a, const void* b)
 {
+    cPlayer* playerA = *(cPlayer**)a;
+    cPlayer* playerB = *(cPlayer**)b;
+
+    const nlVector3& offNetLocA = playerA->GetAIOffNetLocation(NULL);
+
+    float dxA = offNetLocA.f.x - playerA->m_v3Position.f.x;
+    float dyA = offNetLocA.f.y - playerA->m_v3Position.f.y;
+    float distA = nlSqrt(dxA * dxA + dyA * dyA, true);
+
+    if (playerA->IsCaptain())
+    {
+        distA *= 0.96f;
+    }
+
+    float score_test = 0.0f;
+    float strategicScoreA = StrategicBallOwner((cFielder*)playerA);
+    if (strategicScoreA != score_test)
+    {
+        distA *= 0.92f;
+    }
+
+    const nlVector3& offNetLocB = playerB->GetAIOffNetLocation(NULL);
+
+    float dxB = offNetLocB.f.x - playerB->m_v3Position.f.x;
+    float dyB = offNetLocB.f.y - playerB->m_v3Position.f.y;
+    float distB = nlSqrt(dxB * dxB + dyB * dyB, true);
+
+    if (playerB->IsCaptain())
+    {
+        distB *= 0.96f;
+    }
+
+    float strategicScoreB = StrategicBallOwner((cFielder*)playerB);
+    if (strategicScoreB != score_test)
+    {
+        distB *= 0.92f;
+    }
+
+    if (distA == distB)
+    {
+        return 0;
+    }
+
+    if (distA < distB)
+    {
+        return -1;
+    }
+
+    return 1;
 }
 
 /**
  * Offset/Address/Size: 0x4D0 | 0x8006487C | size: 0xC8
  */
-void MostDefensivePlayer(const void*, const void*)
+int MostDefensivePlayer(const void* a, const void* b)
 {
+    cPlayer* playerA = *(cPlayer**)a;
+    cPlayer* playerB = *(cPlayer**)b;
+
+    const nlVector3& netLocA = playerA->GetAIDefNetLocation(NULL);
+    float dxA = netLocA.f.x - playerA->m_v3Position.f.x;
+    float dyA = netLocA.f.y - playerA->m_v3Position.f.y;
+    float distSqA = dxA * dxA + dyA * dyA;
+
+    const nlVector3& netLocB = playerB->GetAIDefNetLocation(NULL);
+    float dxB = netLocB.f.x - playerB->m_v3Position.f.x;
+    float dyB = netLocB.f.y - playerB->m_v3Position.f.y;
+    float distSqB = dxB * dxB + dyB * dyB;
+
+    if (distSqA == distSqB)
+    {
+        return 0;
+    }
+
+    if (distSqA > distSqB)
+    {
+        return -1;
+    }
+
+    return 1;
 }
 
 /**
@@ -503,14 +576,10 @@ cFielder* cTeam::GetFrontMostFielder()
 {
     cFielder* p;
     cFielder* pRearFrontFielder = NULL;
-    if (m_pPlayers[0] != NULL)
-    {
-        pRearFrontFielder = m_pPlayers[0];
-    }
 
-    for (int i = 1; i < 4; i++)
+    for (int i_fielder = 0; i_fielder < 4; i_fielder++)
     {
-        p = m_pPlayers[i];
+        p = m_pPlayers[i_fielder];
         if ((pRearFrontFielder == NULL) || (p->m_v3AIPosition.f.x > pRearFrontFielder->m_v3AIPosition.f.x))
         {
             pRearFrontFielder = p;
@@ -527,12 +596,8 @@ cFielder* cTeam::GetRearMostFielder()
 {
     cFielder* p;
     cFielder* pRearMostFielder = NULL;
-    if (m_pPlayers[0] != NULL)
-    {
-        pRearMostFielder = m_pPlayers[0];
-    }
 
-    for (int i = 1; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
         p = m_pPlayers[i];
         if ((pRearMostFielder == NULL) || (p->m_v3AIPosition.f.x < pRearMostFielder->m_v3AIPosition.f.x))
