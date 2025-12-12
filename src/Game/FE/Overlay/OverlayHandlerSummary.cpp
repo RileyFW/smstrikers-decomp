@@ -60,6 +60,7 @@
  * Offset/Address/Size: 0x1D88 | 0x800FE928 | size: 0xB08
  */
 SummaryOverlay::SummaryOverlay(SummaryOverlay::eSummaryContext)
+    : BaseOverlayHandler(0x00000000)
 {
 }
 

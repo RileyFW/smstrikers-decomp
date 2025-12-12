@@ -1,5 +1,7 @@
 #include "Game/FormationDefines.h"
 
+static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
+
 // /**
 //  * Offset/Address/Size: 0x334 | 0x8003C1B4 | size: 0xFC
 //  */
@@ -111,15 +113,27 @@ void FormationPos::GetLocationForTeam(nlVector2& dest, int teamId) const
 /**
  * Offset/Address/Size: 0xCF0 | 0x8003BB00 | size: 0x34
  */
-void FormationSpec::GetKeyLocation() const
+nlVector2& FormationSpec::GetKeyLocation() const
 {
+    if (m_iKeyIndex >= 0 && m_iKeyIndex < 4)
+    {
+        return const_cast<nlVector2&>(m_Positions[m_iKeyIndex].m_Location);
+    }
+    return *(nlVector2*)&const_cast<nlVector3&>(v3Zero);
 }
 
 /**
  * Offset/Address/Size: 0xC94 | 0x8003BAA4 | size: 0x5C
  */
-void FormationSpec::CalculateExtents(nlVector2&, nlVector2&, const nlVector2&) const
+void FormationSpec::CalculateExtents(nlVector2& minOut, nlVector2& maxOut, const nlVector2& input) const
 {
+    const float fieldHalfWidth = 18.541899f;
+    const float fieldHalfHeight = 10.87425f;
+
+    minOut.f.x = -fieldHalfWidth + (input.f.x - m_v2Min.f.x);
+    minOut.f.y = -fieldHalfHeight + (input.f.y - m_v2Min.f.y);
+    maxOut.f.x = fieldHalfWidth + (input.f.x - m_v2Max.f.x);
+    maxOut.f.y = fieldHalfHeight + (input.f.y - m_v2Max.f.y);
 }
 
 /**

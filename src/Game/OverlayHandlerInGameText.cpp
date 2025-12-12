@@ -7,6 +7,10 @@
 #include "NL/nlTask.h"
 #include "Game/FE/feInput.h"
 
+#include "Game/FE/Overlay/OverlayHandlerSummary.h"
+
+#include "types.h"
+
 extern FEInput* g_pFEInput;
 
 /**
@@ -120,11 +124,11 @@ void StatsTracker::Track(ePlayerStats, int, int, int, int, int, int)
  * Offset/Address/Size: 0xF44 | 0x800FBFF0 | size: 0xA8
  */
 InGameTextOverlay::InGameTextOverlay()
-    : BaseOverlayHandler(2)
+    : BaseOverlayHandler(2, POSITION_ALL)
 {
     mCurrentSlideName = SLIDE_NAME_INVALID;
     mPendingSlideName = SLIDE_NAME_INVALID;
-    this->SetVisible(true);
+    this->SetVisible(false);
 }
 
 /**
@@ -186,13 +190,13 @@ void InGameTextOverlay::Update(float fDeltaT)
         case SLIDE_NAME_TEXT_WINNER:
             DisplayFinalScore();
             break;
-        } // TODO: Fill in DisplayFinalScore();
+        }
     }
     if (this->mCurrentSlideName == SLIDE_NAME_TEXT_WINNER && g_pFEInput->JustPressed(FE_ALL_PADS, 0x100, false, NULL) && m_bVisible)
     {
         nlSingleton<OverlayManager>::s_pInstance->SetVisible(OVERLAY_TEXT, false, false);
-        BaseSceneHandler* handler = nlSingleton<OverlayManager>::s_pInstance->Push(OVERLAY_SUMMARY, SCREEN_NOTHING, false);
-        handler->m_bVisible = true; // TODO: Big Offset
+        SummaryOverlay* handler = (SummaryOverlay*)nlSingleton<OverlayManager>::s_pInstance->Push(OVERLAY_SUMMARY, SCREEN_NOTHING, false);
+        handler->mButtonState = ButtonComponent::BS_A_ONLY;
     }
 }
 
@@ -208,4 +212,5 @@ void InGameTextOverlay::SceneCreated()
  */
 void InGameTextOverlay::DisplayFinalScore()
 {
+    FORCE_DONT_INLINE;
 }

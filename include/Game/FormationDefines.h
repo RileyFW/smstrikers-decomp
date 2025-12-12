@@ -20,15 +20,15 @@ public:
     }
     void GetLocationForTeam(nlVector2&, int) const;
 
-    class nlVector2 m_Location; // offset 0x0, size 0x8
-    float m_CaptainPreference;  // offset 0x8, size 0x4
+    nlVector2 m_Location;      // offset 0x0, size 0x8
+    float m_CaptainPreference; // offset 0x8, size 0x4
 }; // total size: 0xC
 
 class FormationSpec
 {
 public:
     FormationSpec();
-    void GetKeyLocation() const;
+    nlVector2& GetKeyLocation() const;
     void CalculateExtents(nlVector2&, nlVector2&, const nlVector2&) const;
 
     /* 0x00 */ s32 m_ID;

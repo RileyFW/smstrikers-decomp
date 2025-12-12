@@ -48,11 +48,11 @@ public:
     void SetSlide(OverlaySlideName);
     void DisplayFinalScore();
 
-    OverlaySlideName mCurrentSlideName; // offset 0x28, size 0x4
-    OverlaySlideName mPendingSlideName; // offset 0x2C, size 0x4
-    u16 mScoresBuffer[32];              // offset 0x30, size 0x40
-    u16 mWinnerBuffer[32];              // offset 0x70, size 0x40
-};
+    /*  0x28 */ OverlaySlideName mCurrentSlideName;
+    /*  0x2C */ OverlaySlideName mPendingSlideName;
+    /*  0x30 */ u16 mScoresBuffer[32];
+    /*  0x70 */ u16 mWinnerBuffer[32];
+}; // total size: 0xB0
 
 /*
 class StatsTracker

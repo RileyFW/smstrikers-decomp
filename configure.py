@@ -151,8 +151,8 @@ if not config.non_matching:
 
 config.binutils_tag = "2.42-1"
 config.compilers_tag = "20250812"
-config.dtk_tag = "v1.6.2"
-config.objdiff_tag = "v3.4.4"
+config.dtk_tag = "v1.7.6"
+config.objdiff_tag = "v3.4.5"
 config.sjiswrap_tag = "v1.2.1"
 config.wibo_tag = "0.7.0"
 

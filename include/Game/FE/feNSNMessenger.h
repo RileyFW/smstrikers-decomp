@@ -75,6 +75,6 @@ public:
     /* 0x1C */ ScreenPosition mPosition;
     /* 0x20 */ u32 mVisibilityMask;
     /* 0x24 */ bool mWasLastVisible;
-};
+}; // total size: 0x28
 
 #endif // _FENSNMESSENGER_H_

@@ -9,6 +9,9 @@
 #include "Game/AI/Powerups.h"
 #include "Game/Ball.h"
 #include "Game/Game.h"
+#include "Game/BasicStadium.h"
+#include "Game/Effects/EmissionManager.h"
+#include "Game/Sys/audio.h"
 
 #include "Game/AI/Scripts/ScriptQuestions.h"
 
@@ -401,6 +404,38 @@ void cTeam::ResetCharacters()
  */
 void cTeam::StopGameplayEffectsAndSounds()
 {
+    int i_player;
+
+    Audio::ActivateFilterOnAllCurrentSFX(false);
+    Audio::SetPitchBendOnAllDialogueSFX(0x2000);
+    i_player = 0;
+    do
+    {
+        g_pTeams[m_nSide]->m_pPlayers[i_player]->StopPlayingAllTrackedSFX();
+        i_player++;
+    } while (i_player < 5);
+
+    Audio::gWorldSFX.Stop(Audio::WORLDSFX_FE_NINTENDO_PEACH, cGameSFX::SFX_STOP_FIRST);
+    Audio::gStadGenSFX.Stop((Audio::eWorldSFX)0xBD, cGameSFX::SFX_STOP_FIRST);
+    Audio::gStadGenSFX.Stop((Audio::eWorldSFX)0xCE, cGameSFX::SFX_STOP_ALL);
+    Audio::gStadGenSFX.Stop((Audio::eWorldSFX)0xCC, cGameSFX::SFX_STOP_FIRST);
+    Audio::gStadGenSFX.Stop((Audio::eWorldSFX)0xBA, cGameSFX::SFX_STOP_FIRST);
+    Audio::gPowerupSFX.Stop((Audio::eWorldSFX)0x88, cGameSFX::SFX_STOP_FIRST);
+    Audio::gPowerupSFX.Stop((Audio::eWorldSFX)0x78, cGameSFX::SFX_STOP_FIRST);
+    Audio::gPowerupSFX.Stop((Audio::eWorldSFX)0x72, cGameSFX::SFX_STOP_FIRST);
+    Audio::gPowerupSFX.Stop((Audio::eWorldSFX)0x6C, cGameSFX::SFX_STOP_FIRST);
+    Audio::gPowerupSFX.Stop((Audio::eWorldSFX)0x66, cGameSFX::SFX_STOP_FIRST);
+    Audio::gPowerupSFX.Stop((Audio::eWorldSFX)0x5E, cGameSFX::SFX_STOP_FIRST);
+    Audio::gPowerupSFX.Stop((Audio::eWorldSFX)0x8E, cGameSFX::SFX_STOP_FIRST);
+
+    BasicStadium::GetCurrentStadium()->mpNPCManager->mpBowser->m_pCharacterSFX->StopPlayingAllTrackedSFX();
+
+    int i = 0;
+    do
+    {
+        EmissionManager::Destroy((unsigned long)i, nullptr);
+        i++;
+    } while (i < 10);
 }
 
 /**

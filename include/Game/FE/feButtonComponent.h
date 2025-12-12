@@ -5,16 +5,22 @@
 
 #include "Game/FE/feRender.h"
 #include "Game/FE/tlComponentInstance.h"
+
 class ButtonComponent
 {
 public:
     enum ButtonState
     {
-        BUTTON_STATE_0 = 0,
+        BS_INVALID = -1,
+        BS_A_AND_B = 0,
+        BS_A_ONLY = 1,
+        BS_B_ONLY = 2,
+        BS_A_AND_B_AND_Y = 3,
     };
 
     void CentreButtons();
-    void SetState(ButtonComponent::ButtonState);
+    void SetState(ButtonComponent::ButtonState); // not sure if this is correct
+    // void SetState(ButtonState);
     ~ButtonComponent();
     ButtonComponent();
 
