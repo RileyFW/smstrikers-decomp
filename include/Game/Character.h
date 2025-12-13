@@ -20,6 +20,7 @@
 #include "Game/GL/gluSkinMesh.h"
 
 class Event;
+struct EventData;
 
 // Forward declarations
 class cSHierarchy;
@@ -32,6 +33,7 @@ class glModel;
 class EmissionController;
 class EffectsGroup;
 class cTeam;
+class cPlayer;
 
 enum eCharacterClass
 {
@@ -124,8 +126,8 @@ public:
     void SetVelocity(const nlVector3&);
     virtual void SetPosition(const nlVector3&);
     void SetFacingDirection(unsigned short);
-    void SetAnimState(int, bool, float, bool, bool);
-    float SeekSpeedExponential(float, float, float, float);
+    void SetAnimState(int animID, bool useBlendTime, float fNonDefaultBlendTime, bool bRestartCyclic, bool bForceMirrorSwap);
+    float SeekSpeedExponential(float currentValue, float targetValue, float responsiveness, float deltaTime);
     void ResetEffects();
     void CreateWorldMatrix();
     void PoseSkinMesh(cPoseAccumulator*);
@@ -212,6 +214,11 @@ public:
     /* 0x11C */ EffectsTexturing* m_pEffectsTexturing;
     /* 0x120 */ nlVector3 m_v3ScreenPosition;
 
+    inline cPoseNode* GetAILayer() const
+    {
+        return m_pAILayer[0];
+    }
+
     static eCharacterModelType m_ModelType;
 };
 
@@ -262,11 +269,13 @@ public:
     virtual u32 GetID();
 };
 
-class ShotAtGoalData
+struct ShotAtGoalData : public EventData
 {
-public:
+    ShotAtGoalData() { }
     virtual u32 GetID();
-};
+
+    /* 0x04 */ cPlayer* pShooter;
+}; // total size: 0x8
 
 class ReceiveBallData
 {

@@ -456,8 +456,8 @@ bool PhysicsNet::SweepTestForBallContact(const nlVector3& startPos, const nlVect
         if (velocitySquared > 25.0f)
         {
             Event* event = g_pEventManager->CreateValidEvent(0x2E, 0x34);
-            pEventData = new (event->m_data) CollisionBallGoalpostData();
-            // pEventData = new CollisionBallGoalpostData();
+            pEventData = new ((u8*)event + 0x10) CollisionBallGoalpostData();
+
             pEventData->v3CollisionVelocity = ballLinearVelocity;
             pEventData->v3CollisionPosition = contactPos;
             pEventData->uTeamIndex = (g_pBall->m_v3Position.f.x < 0.0f) ? 0 : 1;

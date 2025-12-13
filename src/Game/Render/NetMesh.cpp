@@ -378,11 +378,8 @@ void NetMesh::AddForcesToBall(const nlVector3& position, PhysicsSphere* sphere)
                 0.1f * ((invR * fz) - currentAngularVelocity.f.z));
         }
 
-        BallNetmeshEventData* eventData = (BallNetmeshEventData*)(g_pEventManager->CreateValidEvent(0x32, 0x28)->m_data);
-        if (eventData != NULL)
-        {
-            new (eventData) BallNetmeshEventData();
-        }
+        Event* pEvent = g_pEventManager->CreateValidEvent(0x32, 0x28);
+        BallNetmeshEventData* eventData = new ((u8*)pEvent + 0x10) BallNetmeshEventData();
 
         eventData->netMesh = this;
         eventData->v3CollisionVelocity = g_pBall->m_v3Velocity;

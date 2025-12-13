@@ -142,8 +142,10 @@ void cPlayer::PlayerHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulat
 /**
  * Offset/Address/Size: 0x718 | 0x80057C68 | size: 0x140
  */
-void cPlayer::CreateSingleAxisBlender(const int*, int, int, void (*)(unsigned int, cPN_SingleAxisBlender*), float, cPN_SAnimController*)
+cPN_SingleAxisBlender* cPlayer::CreateSingleAxisBlender(const int*, int, int, void (*)(unsigned int, cPN_SingleAxisBlender*), float, cPN_SAnimController*)
 {
+    FORCE_DONT_INLINE;
+    return nullptr;
 }
 
 /**
@@ -283,8 +285,9 @@ cGlobalPad* cPlayer::GetGlobalPad()
 /**
  * Offset/Address/Size: 0x1700 | 0x80058C50 | size: 0x230
  */
-void cPlayer::DoFindBestPassTarget(bool, bool)
+cPlayer* cPlayer::DoFindBestPassTarget(bool bIsVolleyPass, bool bIsPassingFromVolley)
 {
+    return nullptr;
 }
 
 /**

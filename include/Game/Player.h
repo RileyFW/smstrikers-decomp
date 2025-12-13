@@ -94,7 +94,7 @@ public:
     virtual void PreUpdate(float);
     virtual void PrePhysicsUpdate(float);
     void PlayerHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int);
-    void CreateSingleAxisBlender(const int*, int, int, void (*)(unsigned int, cPN_SingleAxisBlender*), float, cPN_SAnimController*);
+    cPN_SingleAxisBlender* CreateSingleAxisBlender(const int*, int, int, void (*)(unsigned int, cPN_SingleAxisBlender*), float, cPN_SAnimController*);
     virtual void CollideWithWallCallback(const CollisionPlayerWallData*);
     void SetPowerupAnimState(int);
     void ClearSwapControllerTimer();
@@ -103,7 +103,7 @@ public:
     void ResetUnPossessionTimer();
     void ReleaseBall();
     cGlobalPad* GetGlobalPad();
-    void DoFindBestPassTarget(bool, bool);
+    cPlayer* DoFindBestPassTarget(bool bAllowLeadPass, bool bIsPerfectPass);
     bool IsCaptain() const;
     bool IsOnSameTeam(cPlayer*);
     void SetAIPad(cAIPad*);
