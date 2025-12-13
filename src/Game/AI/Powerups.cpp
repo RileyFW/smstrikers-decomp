@@ -1,4 +1,29 @@
 #include "Game/AI/Powerups.h"
+#include "Game/Physics/PhysicsSphere.h"
+#include "Game/Effects/EmissionManager.h"
+#include "Game/Effects/EffectsGroup.h"
+#include "Game/Game.h"
+#include "Game/Sys/audio.h"
+#include "Game/Audio/WorldAudio.h"
+#include "NL/nlMath.h"
+#include "NL/nlSlotPool.h"
+
+int gBobombAnticipationVoiceID = -1;
+PowerupSounds powerupSounds[9]; // size: 0x120, address: 0x802B9C84
+PowerupBase* g_pPowerups[25];
+
+namespace
+{
+PowerupModelPool powerupModelPool;
+unsigned long uBOBOMB_MASTER_OBJECT;
+unsigned long uBANANA_MASTER_OBJECT;
+unsigned long uRED_SHELL_MASTER_OBJECT;
+unsigned long uGREEN_SHELL_MASTER_OBJECT;
+unsigned long uSPINY_SHELL_MASTER_OBJECT;
+unsigned long uFREEZE_SHELL_MASTER_OBJECT;
+} // namespace
+
+// extern Audio::cWorldSFX gPowerupSFX;
 
 // /**
 //  * Offset/Address/Size: 0x190 | 0x80061D50 | size: 0x64
@@ -82,7 +107,7 @@
  */
 cFielder* FindPowerupTarget(cFielder*, Bowser*)
 {
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -118,6 +143,13 @@ void FindPowerUp(unsigned long)
  */
 void InitializePowerups()
 {
+    powerupModelPool.mNum = 0;
+    powerupModelPool.Initialize(POWER_UP_FREEZE_SHELL, uFREEZE_SHELL_MASTER_OBJECT);
+    powerupModelPool.Initialize(POWER_UP_SPINY_SHELL, uSPINY_SHELL_MASTER_OBJECT);
+    powerupModelPool.Initialize(POWER_UP_GREEN_SHELL, uGREEN_SHELL_MASTER_OBJECT);
+    powerupModelPool.Initialize(POWER_UP_RED_SHELL, uRED_SHELL_MASTER_OBJECT);
+    powerupModelPool.Initialize(POWER_UP_BANANA, uBANANA_MASTER_OBJECT);
+    powerupModelPool.Initialize(POWER_UP_BOBOMB, uBOBOMB_MASTER_OBJECT);
 }
 
 /**
@@ -125,6 +157,12 @@ void InitializePowerups()
  */
 void CompactPowerups()
 {
+    SlotPoolBase::BaseFreeBlocks(&GreenShell::m_GreenShellSlotPool, sizeof(GreenShell));
+    SlotPoolBase::BaseFreeBlocks(&RedShell::m_RedShellSlotPool, sizeof(RedShell));
+    SlotPoolBase::BaseFreeBlocks(&SpinyShell::m_SpinyShellSlotPool, sizeof(SpinyShell));
+    SlotPoolBase::BaseFreeBlocks(&FreezeShell::m_FreezeShellSlotPool, sizeof(FreezeShell));
+    SlotPoolBase::BaseFreeBlocks(&Banana::m_BananaSlotPool, sizeof(Banana));
+    SlotPoolBase::BaseFreeBlocks(&Bobomb::m_BobombSlotPool, sizeof(Bobomb));
 }
 
 /**
@@ -144,15 +182,47 @@ PowerupBase::~PowerupBase()
 /**
  * Offset/Address/Size: 0x451C | 0x8005EE08 | size: 0x24
  */
-void PowerupBase::GetRadius() const
+float PowerupBase::GetRadius() const
 {
+    return ((PhysicsSphere*)m_pPhysicsObject)->GetRadius();
 }
 
 /**
  * Offset/Address/Size: 0x4404 | 0x8005ECF0 | size: 0x118
  */
-void PowerupBase::Update(float)
+void PowerupBase::Update(float dt)
 {
+    nlPolar polar;
+
+    m_v3PrevPosition = m_v3Position;
+    m_pPhysicsObject->GetPosition(&m_v3Position);
+    m_pPhysicsObject->GetLinearVelocity(&m_v3Velocity);
+
+    if (m_v3Position.f.z < ((PhysicsSphere*)m_pPhysicsObject)->GetRadius())
+    {
+        m_v3Position.f.z = ((PhysicsSphere*)m_pPhysicsObject)->GetRadius();
+        m_pPhysicsObject->SetPosition(m_v3Position, PhysicsObject::WORLD_COORDINATES);
+    }
+
+    if (m_pBlurHandler != nullptr)
+    {
+        m_pBlurHandler->AddViewOrientedPoint(m_v3Position, m_v3Velocity);
+    }
+
+    mtActiveTimer.Countdown(dt, 0.0f);
+    mtNoHitTimer.Countdown(dt, 0.0f);
+
+    UpdateTransform();
+
+    if (m_pBlurHandler != nullptr)
+    {
+        nlCartesianToPolar(polar, m_v3Velocity.f.x, m_v3Velocity.f.y);
+        if (polar.r < 0.5f)
+        {
+            m_pBlurHandler->Die(0.5f);
+            m_pBlurHandler = nullptr;
+        }
+    }
 }
 
 /**
@@ -181,6 +251,7 @@ void PowerupBase::ThrowAt(cFielder*, Bowser*)
  */
 void PowerupBase::Destroy(bool)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -195,6 +266,7 @@ void PowerupBase::PreThrow(cFielder*, Bowser*)
  */
 void PowerupBase::UpdateTransform()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -228,8 +300,9 @@ void PowerupBase::PlayPowerupSound(ePowerUpType, PowerupBase::PowerupSound, Phys
 /**
  * Offset/Address/Size: 0x1DD0 | 0x8005C6BC | size: 0x30
  */
-void PowerupBase::StopPowerupInEffectSound(SFXEmitter*)
+void PowerupBase::StopPowerupInEffectSound(SFXEmitter* pSFXEmitter)
 {
+    Audio::gPowerupSFX.StopEmitter(pSFXEmitter, 0);
 }
 
 /**
@@ -242,15 +315,108 @@ GreenShell::~GreenShell()
 /**
  * Offset/Address/Size: 0x1A80 | 0x8005C36C | size: 0x218
  */
-void GreenShell::Update(float)
+void GreenShell::Update(float dt)
 {
+    nlVector2 vel;
+    nlPolar polar;
+    // float radius;
+    // float velLenSq;
+    nlVector3 newVel;
+    // float recipSqrt;
+
+    m_v3PrevPosition = m_v3Position;
+    m_pPhysicsObject->GetPosition(&m_v3Position);
+    m_pPhysicsObject->GetLinearVelocity(&m_v3Velocity);
+
+    if (m_v3Position.f.z < ((PhysicsSphere*)m_pPhysicsObject)->GetRadius())
+    {
+        m_v3Position.f.z = ((PhysicsSphere*)m_pPhysicsObject)->GetRadius();
+        m_pPhysicsObject->SetPosition(m_v3Position, PhysicsObject::WORLD_COORDINATES);
+    }
+
+    if (m_pBlurHandler != nullptr)
+    {
+        m_pBlurHandler->AddViewOrientedPoint(m_v3Position, m_v3Velocity);
+    }
+
+    mtActiveTimer.Countdown(dt, 0.0f);
+    mtNoHitTimer.Countdown(dt, 0.0f);
+
+    UpdateTransform();
+
+    if (m_pBlurHandler != nullptr)
+    {
+        nlCartesianToPolar(polar, m_v3Velocity.f.x, m_v3Velocity.f.y);
+        if (polar.r < 0.5f)
+        {
+            m_pBlurHandler->Die(0.5f);
+            m_pBlurHandler = nullptr;
+        }
+    }
+
+    if (mtNoHitTimer.m_uPackedTime == 0)
+    {
+        nlCartesianToPolar(polar, m_v3Velocity.f.x, m_v3Velocity.f.y);
+
+        if (polar.r < 3.0f)
+        {
+            m_bShouldDestroy = true;
+        }
+        else if (polar.r > 20.0f)
+        {
+            nlVector2 vel = (*(nlVector2*)&m_v3Velocity);
+            float xx = vel.f.x * vel.f.x;
+            float yy = vel.f.y * vel.f.y;
+            // float velLenSq = xx + yy;
+            // velLenSq = m_v3Velocity.f.x * m_v3Velocity.f.x + m_v3Velocity.f.y * m_v3Velocity.f.y;
+            // newVel = m_v3Velocity;
+            // // float velLenSq = vel.f.x * vel.f.x + vel.f.y * vel.f.y;
+            float recipSqrt = nlRecipSqrt(xx + yy, true);
+
+            // nlVec3Set(newVel, 19.0f * (recipSqrt * m_v3Velocity.f.x), 19.0f * (recipSqrt * m_v3Velocity.f.y), m_v3Velocity.f.z);
+
+            newVel.f.x = 19.0f * (recipSqrt * m_v3Velocity.f.x);
+            newVel.f.y = 19.0f * (recipSqrt * m_v3Velocity.f.y);
+            newVel.f.z = m_v3Velocity.f.z;
+            m_v3Velocity = newVel;
+
+            m_pPhysicsObject->SetLinearVelocity(m_v3Velocity);
+        }
+    }
+
+    if (m_bShouldDestroy)
+    {
+        m_pDrawableObj->m_uObjectFlags &= ~1;
+        Destroy(false);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x19AC | 0x8005C298 | size: 0xD4
  */
-void GreenShell::Destroy(bool)
+void GreenShell::Destroy(bool bSilent)
 {
+    if (!bSilent && !g_pGame->mbCaptainShotToScoreOn)
+    {
+        EffectsGroup* pEffectsGroup;
+        switch (meSize)
+        {
+        case POWERUPSIZE_LARGE:
+            pEffectsGroup = fxGetGroup("greenshell_explode_big");
+            break;
+        case POWERUPSIZE_MEDIUM:
+            pEffectsGroup = fxGetGroup("greenshell_explode_med");
+            break;
+        case POWERUPSIZE_SMALL:
+            pEffectsGroup = fxGetGroup("greenshell_explode");
+            break;
+        }
+
+        EmissionController* pController = EmissionManager::Create(pEffectsGroup, 0);
+        pController->SetPosition(m_pPhysicsObject->GetPosition());
+    }
+
+    PowerupBase::Destroy(bSilent);
 }
 
 /**
@@ -270,8 +436,29 @@ void RedShell::Update(float)
 /**
  * Offset/Address/Size: 0x1554 | 0x8005BE40 | size: 0xD4
  */
-void RedShell::Destroy(bool)
+void RedShell::Destroy(bool bSilent)
 {
+    if (!bSilent && !g_pGame->mbCaptainShotToScoreOn)
+    {
+        EffectsGroup* pEffectsGroup;
+        switch (meSize)
+        {
+        case POWERUPSIZE_LARGE:
+            pEffectsGroup = fxGetGroup("redshell_explode_big");
+            break;
+        case POWERUPSIZE_MEDIUM:
+            pEffectsGroup = fxGetGroup("redshell_explode_med");
+            break;
+        case POWERUPSIZE_SMALL:
+            pEffectsGroup = fxGetGroup("redshell_explode");
+            break;
+        }
+
+        EmissionController* pController = EmissionManager::Create(pEffectsGroup, 0);
+        pController->SetPosition(m_pPhysicsObject->GetPosition());
+    }
+
+    PowerupBase::Destroy(bSilent);
 }
 
 /**
@@ -291,15 +478,78 @@ Banana::~Banana()
 /**
  * Offset/Address/Size: 0x1130 | 0x8005BA1C | size: 0x160
  */
-void Banana::Update(float)
+void Banana::Update(float dt)
 {
+    nlPolar polar;
+
+    m_v3PrevPosition = m_v3Position;
+    m_pPhysicsObject->GetPosition(&m_v3Position);
+    m_pPhysicsObject->GetLinearVelocity(&m_v3Velocity);
+
+    if (m_v3Position.f.z < ((PhysicsSphere*)m_pPhysicsObject)->GetRadius())
+    {
+        m_v3Position.f.z = ((PhysicsSphere*)m_pPhysicsObject)->GetRadius();
+        m_pPhysicsObject->SetPosition(m_v3Position, PhysicsObject::WORLD_COORDINATES);
+    }
+
+    if (m_pBlurHandler != nullptr)
+    {
+        m_pBlurHandler->AddViewOrientedPoint(m_v3Position, m_v3Velocity);
+    }
+
+    mtActiveTimer.Countdown(dt, 0.0f);
+    mtNoHitTimer.Countdown(dt, 0.0f);
+
+    UpdateTransform();
+
+    if (m_pBlurHandler != nullptr)
+    {
+        nlCartesianToPolar(polar, m_v3Velocity.f.x, m_v3Velocity.f.y);
+        if (polar.r < 0.5f)
+        {
+            m_pBlurHandler->Die(0.5f);
+            m_pBlurHandler = nullptr;
+        }
+    }
+
+    if (mtActiveTimer.m_uPackedTime == 0)
+    {
+        m_bShouldDestroy = true;
+    }
+
+    if (m_bShouldDestroy)
+    {
+        m_pDrawableObj->m_uObjectFlags &= ~1;
+        Destroy(false);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x105C | 0x8005B948 | size: 0xD4
  */
-void Banana::Destroy(bool)
+void Banana::Destroy(bool bSilent)
 {
+    if (!bSilent && !g_pGame->mbCaptainShotToScoreOn)
+    {
+        EffectsGroup* pEffectsGroup;
+        switch (meSize)
+        {
+        case POWERUPSIZE_LARGE:
+            pEffectsGroup = fxGetGroup("banana_explode_big");
+            break;
+        case POWERUPSIZE_MEDIUM:
+            pEffectsGroup = fxGetGroup("banana_explode_med");
+            break;
+        case POWERUPSIZE_SMALL:
+            pEffectsGroup = fxGetGroup("banana_explode");
+            break;
+        }
+
+        EmissionController* pController = EmissionManager::Create(pEffectsGroup, 0);
+        pController->SetPosition(m_pPhysicsObject->GetPosition());
+    }
+
+    PowerupBase::Destroy(bSilent);
 }
 
 /**
@@ -319,8 +569,29 @@ void SpinyShell::Update(float)
 /**
  * Offset/Address/Size: 0xC38 | 0x8005B524 | size: 0xD4
  */
-void SpinyShell::Destroy(bool)
+void SpinyShell::Destroy(bool bSilent)
 {
+    if (!bSilent && !g_pGame->mbCaptainShotToScoreOn)
+    {
+        EffectsGroup* pEffectsGroup;
+        switch (meSize)
+        {
+        case POWERUPSIZE_LARGE:
+            pEffectsGroup = fxGetGroup("spiny_shell_explode_big");
+            break;
+        case POWERUPSIZE_MEDIUM:
+            pEffectsGroup = fxGetGroup("spiny_shell_explode_med");
+            break;
+        case POWERUPSIZE_SMALL:
+            pEffectsGroup = fxGetGroup("spiny_shell_explode");
+            break;
+        }
+
+        EmissionController* pController = EmissionManager::Create(pEffectsGroup, 0);
+        pController->SetPosition(m_pPhysicsObject->GetPosition());
+    }
+
+    PowerupBase::Destroy(bSilent);
 }
 
 /**
@@ -340,8 +611,29 @@ void FreezeShell::Update(float)
 /**
  * Offset/Address/Size: 0x814 | 0x8005B100 | size: 0xD4
  */
-void FreezeShell::Destroy(bool)
+void FreezeShell::Destroy(bool bSilent)
 {
+    if (!bSilent && !g_pGame->mbCaptainShotToScoreOn)
+    {
+        EffectsGroup* pEffectsGroup;
+        switch (meSize)
+        {
+        case POWERUPSIZE_LARGE:
+            pEffectsGroup = fxGetGroup("freeze_shell_explode_big");
+            break;
+        case POWERUPSIZE_MEDIUM:
+            pEffectsGroup = fxGetGroup("freeze_shell_explode_med");
+            break;
+        case POWERUPSIZE_SMALL:
+            pEffectsGroup = fxGetGroup("freeze_shell_explode");
+            break;
+        }
+
+        EmissionController* pController = EmissionManager::Create(pEffectsGroup, 0);
+        pController->SetPosition(m_pPhysicsObject->GetPosition());
+    }
+
+    PowerupBase::Destroy(bSilent);
 }
 
 /**
@@ -354,8 +646,106 @@ Bobomb::~Bobomb()
 /**
  * Offset/Address/Size: 0x428 | 0x8005AD14 | size: 0x2B4
  */
-void Bobomb::Update(float)
+void Bobomb::Update(float dt)
 {
+    // s32 soundID;
+    bool bShouldPlaySound;
+    nlPolar polar;
+    nlVector3 pos;
+    EmissionController* pController;
+    Audio::SoundAttributes attributes;
+    // PhysicsObject* pPhysObj;
+
+    m_v3PrevPosition = m_v3Position;
+    m_pPhysicsObject->GetPosition(&m_v3Position);
+    m_pPhysicsObject->GetLinearVelocity(&m_v3Velocity);
+
+    if (m_v3Position.f.z < ((PhysicsSphere*)m_pPhysicsObject)->GetRadius())
+    {
+        m_v3Position.f.z = ((PhysicsSphere*)m_pPhysicsObject)->GetRadius();
+        m_pPhysicsObject->SetPosition(m_v3Position, PhysicsObject::WORLD_COORDINATES);
+    }
+
+    if (m_pBlurHandler != nullptr)
+    {
+        m_pBlurHandler->AddViewOrientedPoint(m_v3Position, m_v3Velocity);
+    }
+
+    mtActiveTimer.Countdown(dt, 0.0f);
+    mtNoHitTimer.Countdown(dt, 0.0f);
+
+    UpdateTransform();
+
+    if (m_pBlurHandler != nullptr)
+    {
+        nlCartesianToPolar(polar, m_v3Velocity.f.x, m_v3Velocity.f.y);
+        if (polar.r < 0.5f)
+        {
+            m_pBlurHandler->Die(0.5f);
+            m_pBlurHandler = nullptr;
+        }
+    }
+
+    if ((m_uVoiceID == 0) && (!g_pGame->mbCaptainShotToScoreOn))
+    {
+        u32 errorCode;
+        PhysicsObject* pPhysObj = m_pPhysicsObject;
+        if (m_eType >= NUM_POWER_UPS)
+        {
+            errorCode = Audio::GetSndIDError();
+        }
+        else
+        {
+            if (!Audio::IsInited())
+            {
+                errorCode = Audio::GetSndIDError();
+            }
+            else
+            {
+                attributes.Init();
+                u32 soundID = powerupSounds[m_eType].sndInEffect;
+
+                if (soundID == 0xFFFFFFFF)
+                {
+                    errorCode = -1;
+                }
+                else
+                {
+                    attributes.SetSoundType(soundID, true);
+                    if (m_eType == POWER_UP_BOBOMB)
+                    {
+                        attributes.UsePhysObj(pPhysObj);
+                        m_bShouldDestroy = true;
+                    }
+                    else
+                    {
+                        attributes.UsePhysObj(pPhysObj);
+                        m_bShouldDestroy = true;
+                    }
+
+                    Audio::gPowerupSFX.GetSFXVol(soundID);
+                    errorCode = Audio::gPowerupSFX.Play(attributes);
+                }
+            }
+        }
+        m_uVoiceID = errorCode;
+    }
+
+    pController = EmissionManager::Create(fxGetGroup("bobomb_tick"), 0);
+    pos = m_pPhysicsObject->GetPosition();
+    pos.f.z += ((PhysicsSphere*)m_pPhysicsObject)->GetRadius();
+    pController->SetPosition(pos);
+
+    if (mtActiveTimer.m_uPackedTime == 0)
+    {
+        m_bShouldDestroy = true;
+    }
+
+    if (m_bShouldDestroy)
+    {
+        m_pDrawableObj->m_uObjectFlags &= ~1;
+        Destroy(false);
+    }
 }
 
 /**
@@ -368,6 +758,19 @@ void Bobomb::ThrowAt(cFielder*, Bowser*)
 /**
  * Offset/Address/Size: 0x0 | 0x8005A8EC | size: 0x80
  */
-void Bobomb::Destroy(bool)
+void Bobomb::Destroy(bool bSilent)
 {
+    if (gBobombAnticipationVoiceID != -1)
+    {
+        Audio::StopSFX(gBobombAnticipationVoiceID);
+        gBobombAnticipationVoiceID = -1;
+    }
+
+    if (pMovementEmitter != nullptr)
+    {
+        Audio::gPowerupSFX.StopEmitter(pMovementEmitter, 0);
+        pMovementEmitter = nullptr;
+    }
+
+    PowerupBase::Destroy(bSilent);
 }

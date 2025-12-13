@@ -19,7 +19,7 @@ public:
     void Update(float, bool);
     void Abort(cFielder*);
     void CalcOneTimerValue(cFielder*, bool);
-    void GetTotalDuration() const;
+    float GetTotalDuration() const;
     void Reset();
     void ShotReleased(cFielder*);
 

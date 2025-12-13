@@ -13,6 +13,27 @@ class BlurHandler;
 class SFXEmitter;
 class Bowser;
 
+struct PowerupSounds
+{
+    /* 0x00 */ unsigned long sndAcquire;
+    /* 0x04 */ unsigned long sndActivate;
+    /* 0x08 */ unsigned long sndInEffect;
+    /* 0x0C */ unsigned long sndHit;
+    /* 0x10 */ unsigned long sndBounceWall;
+    /* 0x14 */ unsigned long sndBounceGround;
+    /* 0x18 */ unsigned long sndExplode;
+    /* 0x1C */ unsigned long sndEnd;
+}; // total size: 0x20
+
+struct PowerupModelPool
+{
+    void Initialize(int type, unsigned long objHashName);
+
+    /* 0x000 */ int mNum;
+    /* 0x004 */ DrawableObject* mObjs[6][25];
+    /* 0x25C */ bool mFree[6][25];
+}; // total size: 0x2F4
+
 enum ePowerUpType
 {
     POWER_UP_NONE = -1,
@@ -52,56 +73,6 @@ enum eThrowStyle
     NUM_THROW_TYPES = 4,
 };
 
-class Bobomb
-{
-public:
-    ~Bobomb();
-    void Update(float);
-    void ThrowAt(cFielder*, Bowser*);
-    void Destroy(bool);
-};
-
-class FreezeShell
-{
-public:
-    ~FreezeShell();
-    void Update(float);
-    void Destroy(bool);
-};
-
-class SpinyShell
-{
-public:
-    ~SpinyShell();
-    void Update(float);
-    void Destroy(bool);
-};
-
-class Banana
-{
-public:
-    ~Banana();
-    void Update(float);
-    void Destroy(bool);
-};
-
-class RedShell
-{
-public:
-    ~RedShell();
-    void Update(float);
-    void Destroy(bool);
-    void SeekTarget();
-};
-
-class GreenShell
-{
-public:
-    ~GreenShell();
-    void Update(float);
-    void Destroy(bool);
-};
-
 class PowerupBase
 {
 public:
@@ -118,16 +89,17 @@ public:
     };
 
     PowerupBase(cFielder*, ePowerUpType, float, ePowerupSize, bool, int);
-    virtual ~PowerupBase();
-    void GetRadius() const;
-    void Update(float);
+    /* 0x08 */ virtual ~PowerupBase();
+    /* 0x0C */ virtual void Destroy(bool);
+    /* 0x10 */ virtual void PreThrow(cFielder*, Bowser*);
+    /* 0x14 */ virtual void Init(cFielder*, Bowser*);
+    /* 0x18 */ virtual void ThrowAt(cFielder*, Bowser*);
+    /* 0x1C */ virtual void Update(float);
+
+    float GetRadius() const;
     static void AwardPowerup(cTeam*);
     void CollisionCallback(PhysicsObject*, PhysicsObject*, const nlVector3&, void*);
-    void ThrowAt(cFielder*, Bowser*);
-    void Destroy(bool);
-    void PreThrow(cFielder*, Bowser*);
     void UpdateTransform();
-    void Init(cFielder*, Bowser*);
     void PlayPowerupSound(ePowerUpType, PowerupBase::PowerupSound, const nlVector3&, float);
     static void PlayPowerupSound(ePowerUpType, PowerupBase::PowerupSound, PhysicsObject*, float);
     static void StopPowerupInEffectSound(SFXEmitter*);
@@ -156,8 +128,73 @@ public:
     /* 0x70 */ bool mbExploder;
 }; // total size: 0x74
 
+class Bobomb : public PowerupBase
+{
+public:
+    virtual ~Bobomb();
+    virtual void Update(float);
+    virtual void ThrowAt(cFielder*, Bowser*);
+    void Destroy(bool);
+
+    /* 0x74 */ bool mbIsMine;
+    /* 0x78 */ SFXEmitter* pMovementEmitter;
+
+    static SlotPool<Bobomb> m_BobombSlotPool;
+}; // total size: 0x7C
+
+class FreezeShell : public PowerupBase
+{
+public:
+    virtual ~FreezeShell();
+    virtual void Update(float);
+    void Destroy(bool);
+
+    static SlotPool<FreezeShell> m_FreezeShellSlotPool;
+}; // total size: 0x74
+
+class SpinyShell : public PowerupBase
+{
+public:
+    virtual ~SpinyShell();
+    virtual void Update(float);
+    void Destroy(bool);
+
+    static SlotPool<SpinyShell> m_SpinyShellSlotPool;
+}; // total size: 0x74
+
+class Banana : public PowerupBase
+{
+public:
+    virtual ~Banana();
+    virtual void Update(float);
+    void Destroy(bool);
+
+    static SlotPool<Banana> m_BananaSlotPool;
+}; // total size: 0x74
+
+class RedShell : public PowerupBase
+{
+public:
+    virtual ~RedShell();
+    virtual void Update(float);
+    void Destroy(bool);
+    void SeekTarget();
+
+    static SlotPool<RedShell> m_RedShellSlotPool;
+}; // total size: 0x74
+
+class GreenShell : public PowerupBase
+{
+public:
+    virtual ~GreenShell();
+    virtual void Update(float);
+    void Destroy(bool);
+
+    static SlotPool<GreenShell> m_GreenShellSlotPool;
+}; // total size: 0x74
+
 void CompactPowerups();
-void InitializePowerups();
+static void InitializePowerups();
 void FindPowerUp(unsigned long);
 void PowerupCreateAndThrow(cFielder*, ePowerUpType, int, Bowser*);
 void PowerupThrowPosition(int, eThrowStyle, PowerupBase*, PowerupBase*);

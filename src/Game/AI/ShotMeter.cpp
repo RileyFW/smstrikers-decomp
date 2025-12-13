@@ -1,4 +1,9 @@
 #include "Game/AI/ShotMeter.h"
+#include "Game/Game.h"
+#include "Game/GameTweaks.h"
+#include "Game/CharacterTriggers.h"
+
+extern cTeam* g_pCurrentlyUpdatingTeam;
 
 /**
  * Offset/Address/Size: 0x6C4 | 0x800627E4 | size: 0x16C
@@ -10,8 +15,11 @@ void ShotMeter::Update(float, bool)
 /**
  * Offset/Address/Size: 0x684 | 0x800627A4 | size: 0x40
  */
-void ShotMeter::Abort(cFielder*)
+void ShotMeter::Abort(cFielder* pFielder)
 {
+    KillWindups(pFielder);
+    m_eShotMeterState = SHOT_METER_INACTIVE;
+    m_fTime = 0.0f;
 }
 
 /**
@@ -24,8 +32,14 @@ void ShotMeter::CalcOneTimerValue(cFielder*, bool)
 /**
  * Offset/Address/Size: 0x21C | 0x8006233C | size: 0x3C
  */
-void ShotMeter::GetTotalDuration() const
+float ShotMeter::GetTotalDuration() const
 {
+    float fShotWindupTime;
+    float fSTSWindupTime;
+    SkillTweaks* pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pCurrentlyUpdatingTeam->m_nSide);
+    fSTSWindupTime = pSkillTweaks->fSTSWindupTime;
+    fShotWindupTime = g_pGame->m_pGameTweaks->unk2D0;
+    return fShotWindupTime + fSTSWindupTime;
 }
 
 /**
