@@ -119,12 +119,22 @@ struct nlVector3
     }
 };
 
+inline float nlGetLengthSquared2D(float x, float y)
+{
+    return x * x + y * y;
+}
+
 inline float nlGetLength2D(float x, float y)
 {
     float xx = x * x;
     float yy = y * y;
     const float lengthSquared = xx + yy;
     return nlSqrt(lengthSquared, true);
+}
+
+inline float nlGetLengthSquared3D(float x, float y, float z)
+{
+    return x * x + y * y + z * z;
 }
 
 inline float nlGetLength3D(float x, float y, float z)

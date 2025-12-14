@@ -112,23 +112,30 @@ enum eSlideAttackState
 
 struct ActionShootToScoreVars
 {
-    float fFrameButtonDownTime2;         // offset 0x0, size 0x4
-    float fFrameButtonDownTime1;         // offset 0x4, size 0x4
-    float fGreenRegionWidth;             // offset 0x8, size 0x4
-    float fShootToScoreActiveTime;       // offset 0xC, size 0x4
-    float fMeterFractionTime;            // offset 0x10, size 0x4
-    class nlVector3 v3MeterPosition;     // offset 0x14, size 0xC
-    unsigned char bShootWasPressed;      // offset 0x20, size 0x1
-    unsigned char isCaptainSts;          // offset 0x21, size 0x1
-    unsigned char isCurrentlyInvincible; // offset 0x22, size 0x1
-    unsigned char isInUnbreakablePart;   // offset 0x23, size 0x1
-    class cAnimCamera* captainStsCamera; // offset 0x24, size 0x4
-    float preCaptainStsPlaybackSpeed;    // offset 0x28, size 0x4
-    float fCaptainYellowWidth;           // offset 0x2C, size 0x4
+    /* 0x00 */ float fFrameButtonDownTime2;
+    /* 0x04 */ float fFrameButtonDownTime1;
+    /* 0x08 */ float fGreenRegionWidth;
+    /* 0x0C */ float fShootToScoreActiveTime;
+    /* 0x10 */ float fMeterFractionTime;
+    /* 0x14 */ class nlVector3 v3MeterPosition;
+    /* 0x20 */ unsigned char bShootWasPressed;
+    /* 0x21 */ unsigned char isCaptainSts;
+    /* 0x22 */ unsigned char isCurrentlyInvincible;
+    /* 0x23 */ unsigned char isInUnbreakablePart;
+    /* 0x24 */ class cAnimCamera* captainStsCamera;
+    /* 0x28 */ float preCaptainStsPlaybackSpeed;
+    /* 0x2C */ float fCaptainYellowWidth;
 }; // total size: 0x30
 
+struct LooseBallContactAnimInfo
+{
+    /* 0x0 */ s32 nAnimID;
+    /* 0x4 */ float fAnimContactFrame;
+    /* 0x8 */ unsigned short aIncomingAngleMin;
+    /* 0xA */ unsigned short aIncomingAngleMax;
+}; // total size: 0xC
+
 class cBall;
-class LooseBallContactAnimInfo;
 class ChainChomp;
 class Bowser;
 class AIPlay;
@@ -168,7 +175,7 @@ public:
     void CollideWithChainCallback(ChainChomp*);
     void CollideWithBowserCallback(Bowser*);
     void ClearPassTargetIfAmThePassTarget();
-    void UsePerfectPass();
+    bool UsePerfectPass();
     bool IsPlayingPowerupAnim();
     bool IsCharacterInAir(bool) const;
     bool IsTurboing();
@@ -227,7 +234,7 @@ public:
     void CleanActionShootToScore();
     void SetAttemptOneTouchPass();
     void SetAttemptOneTouchShot();
-    void GetOneTouchShotDesire();
+    s16 GetOneTouchShotDesire();
     void SetStartAnimState(int);
     void SetWindupWBAnimState();
     void SetStartWBAnimState();

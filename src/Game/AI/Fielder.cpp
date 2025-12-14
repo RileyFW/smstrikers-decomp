@@ -1,6 +1,8 @@
 #include "Game/AI/Fielder.h"
 #include "Game/AI/AIPlay.h"
+#include "Game/AI/AiUtil.h"
 #include "Game/AI/ShotMeter.h"
+#include "Game/AI/Scripts/ScriptQuestions.h"
 #include "Game/CharacterTriggers.h"
 #include "Game/Game.h"
 #include "Game/RumbleActions.h"
@@ -10,6 +12,18 @@
 #include "NL/nlSlotPool.h"
 
 const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
+
+// Constants from .sdata2 for IsBallAwayFromCarrier
+// @4959 = .sdata2:0x80374EF0
+// @4960 = .sdata2:0x80374EF4
+// TODO: Extract actual float values from binary
+static const float fBallAwayFromCarrierMinTime = 0.0f; // @4959
+static const float fBallAwayFromCarrierMaxTime = 1.0f; // @4960
+
+static LooseBallContactAnimInfo gOneTimerIdleGroundContactAnims[4];
+static LooseBallContactAnimInfo gOneTimerIdleVolleyContactAnims[4];
+static LooseBallContactAnimInfo gOneTimerLeadGroundContactAnims[4];
+static LooseBallContactAnimInfo gOneTimerLeadVolleyContactAnims[4];
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80026B20 | size: 0x8
@@ -170,13 +184,22 @@ void cFielder::CollideWithWallCallback(const CollisionPlayerWallData*)
  */
 void cFielder::ClearPassTargetIfAmThePassTarget()
 {
+    cBall* pBall = g_pBall;
+    if (pBall->m_pPassTarget != nullptr)
+    {
+        if (pBall->m_pPassTarget == this)
+        {
+            pBall->ClearPassTarget();
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0xA6B8 | 0x800239F4 | size: 0x18
  */
-void cFielder::UsePerfectPass()
+bool cFielder::UsePerfectPass()
 {
+    return g_pBall->mbHyperSTS != 0;
 }
 
 /**
@@ -184,7 +207,7 @@ void cFielder::UsePerfectPass()
  */
 bool cFielder::IsPlayingPowerupAnim()
 {
-    return false;
+    return m_nPowerupAnimID >= 0;
 }
 
 /**
@@ -201,7 +224,7 @@ bool cFielder::IsCharacterInAir(bool) const
 bool cFielder::IsTurboing()
 {
     FORCE_DONT_INLINE;
-    return false;
+    return true;
 }
 
 /**
@@ -218,8 +241,14 @@ bool cFielder::IsRunning() const
  */
 bool cFielder::IsInvincible() const
 {
-    FORCE_DONT_INLINE;
-    return false;
+    bool result = false;
+
+    if (((m_ePowerup == POWER_UP_STAR) && (m_tPowerupEffectTime.m_uPackedTime != 0)) || (mActionShootToScoreVars.isCurrentlyInvincible != 0))
+    {
+        result = true;
+    }
+
+    return result;
 }
 
 /**
@@ -227,7 +256,13 @@ bool cFielder::IsInvincible() const
  */
 bool cFielder::IsBallAwayFromCarrier() const
 {
-    FORCE_DONT_INLINE;
+    if (m_eActionState == ACTION_RUNNING_WB_TURBO)
+    {
+        if ((m_pCurrentAnimController->m_fTime > 0.2f) && (m_pCurrentAnimController->m_fTime < 0.975f))
+        {
+            return true;
+        }
+    }
     return false;
 }
 
@@ -236,8 +271,19 @@ bool cFielder::IsBallAwayFromCarrier() const
  */
 bool cFielder::IsReceivingVolleyPass() const
 {
-    FORCE_DONT_INLINE;
-    return false;
+    eFielderDesireState desireState = m_eFielderDesireState;
+    bool result = false;
+
+    if (desireState == FIELDERDESIRE_RECEIVE_PASS_FROM_IDLE || desireState == FIELDERDESIRE_RECEIVE_PASS_FROM_RUN)
+    {
+        result = m_DesireReceivePassSharedVars.bVolleyPassReceive;
+    }
+    else if (desireState == FIELDERDESIRE_ONETIMER)
+    {
+        result = m_DesireOneTimerVars.bVolleyPassReceive;
+    }
+
+    return result;
 }
 
 /**
@@ -245,8 +291,12 @@ bool cFielder::IsReceivingVolleyPass() const
  */
 bool cFielder::IsPreparingForOneTimer() const
 {
-    FORCE_DONT_INLINE;
-    return false;
+    bool result = false;
+    if (m_eFielderDesireState == FIELDERDESIRE_ONETIMER)
+    {
+        result = m_eDesireSubState == 0;
+    }
+    return result;
 }
 
 /**
@@ -261,6 +311,25 @@ void cFielder::CleanUpAction()
  */
 void cFielder::CleanUpPowerupEffect()
 {
+    switch (m_ePowerup)
+    {
+    case POWER_UP_STAR:
+        KillStar(this);
+        m_ePowerup = POWER_UP_NONE;
+        mnNumPowerups = 0;
+        m_tPowerupEffectTime.m_uPackedTime = 0;
+        break;
+
+    case POWER_UP_MUSHROOM:
+        KillMushroom(this);
+        m_ePowerup = POWER_UP_NONE;
+        mnNumPowerups = 0;
+        m_tPowerupEffectTime.m_uPackedTime = 0;
+        break;
+
+    default:
+        break;
+    }
 }
 
 /**
@@ -329,8 +398,27 @@ void cFielder::ShootBallDueToContact(const nlVector3&)
 /**
  * Offset/Address/Size: 0x918C | 0x800224C8 | size: 0x90
  */
-void cFielder::ShootBallDueToContact(unsigned short)
+void cFielder::ShootBallDueToContact(unsigned short aAngle)
 {
+    bool bBallAwayFromCarrier;
+
+    if ((m_eActionState == ACTION_RUNNING_WB_TURBO) && ((m_pCurrentAnimController->m_fTime > 0.2f) && (m_pCurrentAnimController->m_fTime < 0.975f)))
+    {
+        bBallAwayFromCarrier = true;
+    }
+    else
+    {
+        bBallAwayFromCarrier = false;
+    }
+
+    if (!bBallAwayFromCarrier)
+    {
+        nlVector3 v3Direction;
+        nlPolarToCartesian(v3Direction.f.x, v3Direction.f.y, aAngle, 2.0f + m_fActualSpeed);
+        v3Direction.f.z = 0.5f;
+
+        g_pBall->ShootRelease(v3Direction, SPINTYPE_NONE);
+    }
 }
 
 /**
@@ -380,6 +468,48 @@ void cFielder::DoPenaltyCardBooking(cFielder*, ePenaltyType)
  */
 void cFielder::DoPositioningInterceptBall()
 {
+    int nInterceptResult;
+    float fInterceptTimes[2];
+    nlVector3* pPos = &m_v3Position;
+
+    if (nlGetLengthSquared2D(g_pBall->m_v3Position.f.x - pPos->f.x, g_pBall->m_v3Position.f.y - pPos->f.y) <= 4.0f)
+    {
+        CalcInterceptXY(*pPos, m_pTweaks->fRunningSpeed, 0.f, g_pBall->m_v3Position, g_pBall->m_v3Velocity, nInterceptResult, fInterceptTimes);
+
+        if (nInterceptResult != 0)
+        {
+            float fTime;
+
+            if (nInterceptResult == 2)
+            {
+                fTime = (fInterceptTimes[0] < fInterceptTimes[1]) ? fInterceptTimes[0] : fInterceptTimes[1];
+            }
+            else
+            {
+                fTime = fInterceptTimes[0];
+            }
+
+            float fInterceptX = g_pBall->m_v3Position.f.x + fTime * g_pBall->m_v3Velocity.f.x;
+            float fInterceptY = g_pBall->m_v3Position.f.y + fTime * g_pBall->m_v3Velocity.f.y;
+
+            float dyToIntercept = fInterceptY - m_v3Position.f.y;
+            float dxToIntercept = fInterceptX - m_v3Position.f.x;
+            float angleRad = nlATan2f(dyToIntercept, dxToIntercept);
+
+            float angle16 = 10430.378f * angleRad;
+            u16 targetAngle = (u16)(s32)angle16;
+
+            s16 angleDelta = (s16)(targetAngle - m_aDesiredFacingDirection);
+            angleDelta = (angleDelta < 0) ? -angleDelta : angleDelta;
+
+            if ((u16)angleDelta <= 0x3000)
+            {
+                m_aDesiredFacingDirection = targetAngle;
+                s16 tmp = m_aDesiredFacingDirection;
+                m_aDesiredMovementDirection = tmp;
+            }
+        }
+    }
 }
 
 /**
@@ -453,8 +583,9 @@ void cFielder::GetFormationPosition(nlVector3&, float)
 /**
  * Offset/Address/Size: 0x6D4C | 0x80020088 | size: 0xC
  */
-void GetOneTimerLeadGroundContactAnims()
+const LooseBallContactAnimInfo* GetOneTimerLeadGroundContactAnims()
 {
+    return gOneTimerLeadGroundContactAnims;
 }
 
 /**
@@ -663,6 +794,9 @@ void cFielder::CalcPointOnPerimeter(nlVector3&, const nlVector3&, float)
  */
 void cFielder::ClearTimers()
 {
+    m_tPowerupEffectTime.SetSeconds(0.0f);
+    mtBombImpactTime.SetSeconds(0.0f);
+    m_tFrozenTimer.SetSeconds(0.0f);
 }
 
 /**
@@ -696,8 +830,16 @@ void cFielder::SetAttemptOneTouchShot()
 /**
  * Offset/Address/Size: 0x595C | 0x8001EC98 | size: 0x64
  */
-void cFielder::GetOneTouchShotDesire()
+s16 cFielder::GetOneTouchShotDesire()
 {
+    float fZero = 0.f;
+    float fResult = ReceivingPass(this);
+    if (fResult != fZero)
+    {
+        return ((m_DesireReceivePassSharedVars.iAttemptOneTouchShot != 0) || (m_DesireReceivePassSharedVars.iAttemptOneTouchPass != 0));
+    }
+
+    return 0;
 }
 
 /**
