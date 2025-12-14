@@ -576,8 +576,14 @@ void cFielder::SetAction(eFielderActionState actionState)
 /**
  * Offset/Address/Size: 0x6D58 | 0x80020094 | size: 0x3C
  */
-void cFielder::GetFormationPosition(nlVector3&, float)
+void cFielder::GetFormationPosition(nlVector3& v3DestPosition, float fBallPosFormationWeight)
 {
+    if (fBallPosFormationWeight < 0.0f)
+    {
+        fBallPosFormationWeight = 1.0f;
+    }
+
+    m_pTeam->CalculateFormationPosition(v3DestPosition, this, m_DesireCommonVars.bInPosition, fBallPosFormationWeight);
 }
 
 /**
@@ -608,13 +614,84 @@ void cFielder::GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsig
 void cFielder::GetReceivePassBallContactOffset(nlVector3&, unsigned short, const LooseBallContactAnimInfo*)
 {
 }
-
 /**
  * Offset/Address/Size: 0x68F0 | 0x8001FC2C | size: 0x110
  */
-bool cFielder::IsFallenDown(float) const
+bool cFielder::IsFallenDown(float fThreshold) const
 {
-    return false;
+    s32 nAnimID = m_eAnimID;
+    u32 nIndex = (u32)(nAnimID - 0x5c);
+    float fThresholdValue = 0.0f;
+
+    switch (nIndex)
+    {
+    case 0:
+        fThresholdValue = 67.0f;
+        break;
+    case 1:
+        fThresholdValue = 64.0f;
+        break;
+    case 2:
+        fThresholdValue = 34.0f;
+        break;
+    case 3:
+        fThresholdValue = 32.0f;
+        break;
+    case 4:
+        fThresholdValue = 42.0f;
+        break;
+    case 5:
+        fThresholdValue = 46.0f;
+        break;
+    case 6:
+        fThresholdValue = 43.0f;
+        break;
+    case 7:
+        fThresholdValue = 30.0f;
+        break;
+    case 8:
+        fThresholdValue = 20.0f;
+        if (fThresholdValue < fThreshold)
+        {
+            return false;
+        }
+        break;
+    case 9:
+        fThresholdValue = 43.0f;
+        break;
+    case 10:
+        fThresholdValue = 46.0f;
+        break;
+    case 11:
+        fThresholdValue = 61.0f;
+        break;
+    case 12:
+        fThresholdValue = 108.0f;
+        break;
+    case 13:
+    {
+        fThresholdValue = (float)(m_pCurrentAnimController->m_pSAnim->m_nNumKeys);
+        break;
+    }
+    case 14:
+        fThresholdValue = 29.0f;
+        break;
+    case 15:
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 20:
+    case 21:
+    case 22:
+    case 23:
+    case 24:
+    case 25:
+    case 26:
+        break;
+    }
+
+    return m_pCurrentAnimController->m_fTime < (fThresholdValue / m_pCurrentAnimController->m_pSAnim->m_nNumKeys);
 }
 
 /**
