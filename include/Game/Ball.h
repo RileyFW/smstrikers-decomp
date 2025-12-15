@@ -123,8 +123,16 @@ public:
     /* 0xA0 */ bool mbIsPerfectShot;
     /* 0xA1 */ bool mbHyperSTS;
     /* 0xA2 */ bool mbCanDamage;
-    /* 0xA0 */ cPlayer* mpDamageTarget;
-    /* 0xA8 */ u32 m_unk_0xA8;
+
+    /* 0xA3 */ bool m_unk_0xA3;
+    /* 0xA4 */ bool m_unk_0xA4;
+    /* 0xA5 */ bool m_unk_0xA5;
+    /* 0xA6 */ bool m_unk_0xA6;
+
+    /* 0xA8 */ cPlayer* mpDamageTarget;
+
+    // /* 0xA4 */ cPlayer* mpDamageTarget;
+    // /* 0xA8 */ u32 m_unk_0xA8;
 
     // /* 0x00 */ u32 m_unk_0x00;
     // /* 0x04 */ u32 m_unk_0x04;

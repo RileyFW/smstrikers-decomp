@@ -40,4 +40,21 @@ inline cPN_Blender* AllocateBlender()
     return blender;
 }
 
+inline cPN_Blender* CreateAndAssignBlender(const cPoseNode* child0, const cPoseNode* child1, float blendDuration)
+{
+    cPN_Blender* blender = nullptr;
+
+    if (cPN_Blender::m_BlenderSlotPool.m_FreeList == nullptr)
+    {
+        SlotPoolBase::BaseAddNewBlock(&cPN_Blender::m_BlenderSlotPool, sizeof(cPN_Blender));
+    }
+
+    if (cPN_Blender::m_BlenderSlotPool.m_FreeList != nullptr)
+    {
+        blender = (cPN_Blender*)cPN_Blender::m_BlenderSlotPool.m_FreeList;
+        cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
+    }
+    return new ((u8*)blender) cPN_Blender((cPoseNode*)child0, (cPoseNode*)child1, blendDuration);
+}
+
 #endif // _PNBLENDER_H_

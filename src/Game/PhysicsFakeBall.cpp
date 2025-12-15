@@ -1,5 +1,9 @@
 #include "Game/Physics/PhysicsFakeBall.h"
 #include "Game/Physics/PhysicsPlane.h"
+#include "NL/nlDLRing.h"
+#include "NL/nlDLListSlotPool.h"
+
+struct BallCacheInfo;
 
 /**
  * Offset/Address/Size: 0x60 | 0x8013744C | size: 0x38

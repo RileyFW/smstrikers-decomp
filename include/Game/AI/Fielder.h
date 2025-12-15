@@ -117,12 +117,12 @@ struct ActionShootToScoreVars
     /* 0x08 */ float fGreenRegionWidth;
     /* 0x0C */ float fShootToScoreActiveTime;
     /* 0x10 */ float fMeterFractionTime;
-    /* 0x14 */ class nlVector3 v3MeterPosition;
-    /* 0x20 */ unsigned char bShootWasPressed;
-    /* 0x21 */ unsigned char isCaptainSts;
-    /* 0x22 */ unsigned char isCurrentlyInvincible;
-    /* 0x23 */ unsigned char isInUnbreakablePart;
-    /* 0x24 */ class cAnimCamera* captainStsCamera;
+    /* 0x14 */ nlVector3 v3MeterPosition;
+    /* 0x20 */ bool bShootWasPressed;
+    /* 0x21 */ bool isCaptainSts;
+    /* 0x22 */ bool isCurrentlyInvincible;
+    /* 0x23 */ bool isInUnbreakablePart;
+    /* 0x24 */ cAnimCamera* captainStsCamera;
     /* 0x28 */ float preCaptainStsPlaybackSpeed;
     /* 0x2C */ float fCaptainYellowWidth;
 }; // total size: 0x30
@@ -131,8 +131,8 @@ struct LooseBallContactAnimInfo
 {
     /* 0x0 */ s32 nAnimID;
     /* 0x4 */ float fAnimContactFrame;
-    /* 0x8 */ unsigned short aIncomingAngleMin;
-    /* 0xA */ unsigned short aIncomingAngleMax;
+    /* 0x8 */ u16 aIncomingAngleMin;
+    /* 0xA */ u16 aIncomingAngleMax;
 }; // total size: 0xC
 
 class cBall;
@@ -164,14 +164,14 @@ public:
     void AbortPlay();
     void AbortPendingThoughts();
     void CalculateNewDesire();
-    void CanDoCaptainShootToScore();
-    void CanLooseBallShoot();
+    bool CanDoCaptainShootToScore();
+    bool CanLooseBallShoot();
     void CanLooseBallPass();
-    void CanReceivePass();
+    bool CanReceivePass();
     void SetMark(cFielder*);
-    void CollideWithShellCallback(ePowerupSize, bool, const nlVector3&, const nlVector3&);
-    void CollideWithFreezeCallback();
-    void CollideWithBananaCallback(const nlVector3&);
+    bool CollideWithShellCallback(ePowerupSize, bool, const nlVector3&, const nlVector3&);
+    bool CollideWithFreezeCallback();
+    bool CollideWithBananaCallback(const nlVector3&);
     void CollideWithChainCallback(ChainChomp*);
     void CollideWithBowserCallback(Bowser*);
     void ClearPassTargetIfAmThePassTarget();
@@ -213,7 +213,7 @@ public:
     void InitActionSlideAttackReact(cPlayer*, bool);
     void GetFormationPosition(nlVector3&, float);
     void GetOneTimerBallContactAnimInfo(unsigned short, const nlVector3&, const nlVector3&, bool, bool);
-    void GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsigned short, bool, bool);
+    const LooseBallContactAnimInfo* GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsigned short, bool, bool);
     void GetReceivePassBallContactOffset(nlVector3&, unsigned short, const LooseBallContactAnimInfo*);
     bool IsFallenDown(float) const;
     bool IsHitting() const;

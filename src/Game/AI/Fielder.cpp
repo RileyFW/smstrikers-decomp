@@ -3,13 +3,24 @@
 #include "Game/AI/AiUtil.h"
 #include "Game/AI/ShotMeter.h"
 #include "Game/AI/Scripts/ScriptQuestions.h"
+#include "Game/AnimInventory.h"
+#include "Game/Ball.h"
 #include "Game/CharacterTriggers.h"
 #include "Game/Game.h"
+#include "Game/GameInfo.h"
+#include "Game/Render/Bowser.h"
+#include "Game/Render/ChainChomp.h"
+#include "Game/DB/StatsTracker.h"
 #include "Game/RumbleActions.h"
 #include "Game/SAnim/pnBlender.h"
 #include "Game/SAnim/pnSingleAxisBlender.h"
 #include "Game/SAnim/pnSAnimController.h"
+#include "Game/SAnim.h"
+#include "Game/Sys/eventman.h"
 #include "NL/nlSlotPool.h"
+#include "math.h"
+
+extern bool g_e3_Build;
 
 const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
@@ -24,6 +35,28 @@ static LooseBallContactAnimInfo gOneTimerIdleGroundContactAnims[4];
 static LooseBallContactAnimInfo gOneTimerIdleVolleyContactAnims[4];
 static LooseBallContactAnimInfo gOneTimerLeadGroundContactAnims[4];
 static LooseBallContactAnimInfo gOneTimerLeadVolleyContactAnims[4];
+
+// Static arrays for GetReceivePassBallContactAnimInfo
+static LooseBallContactAnimInfo IdleGroundContactAnims[1] = {
+    { 0x37, 3.0f, 0xFFFF, 0xFFFF }
+};
+
+static LooseBallContactAnimInfo IdleVolleyContactAnims[1] = {
+    { 0x38, 9.0f, 0xFFFF, 0xFFFF }
+};
+
+static LooseBallContactAnimInfo LeadGroundContactAnims[4] = {
+    { 0x39, 7.0f, 0xE000, 0x2000 },
+    { 0x3A, 7.0f, 0xA000, 0xE000 },
+    { 0x3C, 7.0f, 0x6000, 0xA000 },
+    { 0x3B, 7.0f, 0x2000, 0x6000 }
+};
+
+static LooseBallContactAnimInfo LeadVolleyContactAnims[3] = {
+    { 0x3D, 10.0f, 0xE000, 0x2000 },
+    { 0x3F, 9.0f, 0x2000, 0x8000 },
+    { 0x3E, 9.0f, 0x8000, 0xE000 }
+};
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80026B20 | size: 0x8
@@ -79,6 +112,7 @@ cFielder::~cFielder()
  */
 void cFielder::AbortPlay()
 {
+    m_pCurrentPlay->ClearPlay();
 }
 
 /**
@@ -86,6 +120,12 @@ void cFielder::AbortPlay()
  */
 void cFielder::AbortPendingThoughts()
 {
+    g_pGame->AbortPendingThought(mThoughtHashCalcDesire);
+    g_pGame->AbortPendingThought(mThoughtHashInitRunToNet);
+    g_pGame->AbortPendingThought(mThoughtHashInitGetOpen);
+    g_pGame->AbortPendingThought(mThoughtHashInitWindupPass);
+    g_pGame->AbortPendingThought(mThoughtHashInitCutAndBreak);
+    ClearQueuedDesire();
 }
 
 /**
@@ -98,15 +138,65 @@ void cFielder::CalculateNewDesire()
 /**
  * Offset/Address/Size: 0xC814 | 0x80025B50 | size: 0x7C
  */
-void cFielder::CanDoCaptainShootToScore()
+bool cFielder::CanDoCaptainShootToScore()
 {
+    if (nlSingleton<GameInfoManager>::Instance()->GetGameplayOptions().Shoot2Score
+        && (IsCaptain() || nlSingleton<GameInfoManager>::Instance()->GetTeam(g_pBall->m_pOwner->m_pTeam->m_nSide) == TEAM_MYSTERY))
+    {
+        return true;
+    }
+
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0xC648 | 0x80025984 | size: 0x1CC
  */
-void cFielder::CanLooseBallShoot()
+bool cFielder::CanLooseBallShoot()
 {
+    if ((g_pBall->m_pOwner == NULL)
+        && (g_pBall->m_pPassTarget == NULL)
+        && (g_pBall->m_tShotTimer.m_uPackedTime == 0)
+        && (g_pBall->m_unk_0xA6 == 0))
+    {
+
+        // Get animation from one timer lead ground contact anims
+        u32 nNumKeys = m_pAnimInventory->GetAnim(gOneTimerLeadGroundContactAnims[0].nAnimID)->m_nNumKeys;
+        float temp_f6 = ((float)nNumKeys / 30.0f) * (gOneTimerLeadGroundContactAnims[0].fAnimContactFrame / (float)nNumKeys);
+
+        // Calculate predicted ball position at contact frame
+        nlVector3 v3PredictedPos;
+        nlVec3Set(v3PredictedPos,
+            (temp_f6 * g_pBall->m_v3Velocity.f.x) + g_pBall->m_v3Position.f.x,
+            (temp_f6 * g_pBall->m_v3Velocity.f.y) + g_pBall->m_v3Position.f.y,
+            (temp_f6 * g_pBall->m_v3Velocity.f.z) + g_pBall->m_v3Position.f.z);
+
+        // Get facing delta to predicted position
+        s16 facingDelta = GetFacingDeltaToPosition(v3PredictedPos);
+        facingDelta = (facingDelta < 0) ? -facingDelta : facingDelta;
+
+        float fInterpolatedValue = InterpolateRangeClamped(1.75f, 2.75f, 32768.0f, 16384.0f, facingDelta);
+
+        if (v3PredictedPos.f.z < 1.0f)
+        {
+            // Check distance squared from fielder to predicted position
+            float fDeltaX = v3PredictedPos.f.x - m_v3Position.f.x;
+            float fDeltaY = v3PredictedPos.f.y - m_v3Position.f.y;
+            float fDistanceSquared = fDeltaX * fDeltaX + fDeltaY * fDeltaY;
+
+            if (fDistanceSquared < fInterpolatedValue * fInterpolatedValue)
+            {
+                float fMyInterceptAbility = AbleToInterceptBall(this);
+                float fOtherInterceptAbility = AbleToInterceptBall(m_pTeam->GetOtherTeam()->GetStriker());
+
+                if (((float)fabs(fOtherInterceptAbility - fMyInterceptAbility) > 0.03f) && (fMyInterceptAbility > fOtherInterceptAbility))
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 /**
@@ -119,15 +209,33 @@ void cFielder::CanLooseBallPass()
 /**
  * Offset/Address/Size: 0xC410 | 0x8002574C | size: 0x58
  */
-void cFielder::CanReceivePass()
+bool cFielder::CanReceivePass()
 {
+    bool bCanReceivePass = false;
+    if (!IsFallenDown(0.0f) && (m_tFrozenTimer.m_uPackedTime == 0))
+    {
+        bCanReceivePass = true;
+    }
+
+    return bCanReceivePass;
 }
 
 /**
  * Offset/Address/Size: 0xC3D8 | 0x80025714 | size: 0x38
  */
-void cFielder::SetMark(cFielder*)
+void cFielder::SetMark(cFielder* pMark)
 {
+    if (m_pMark != nullptr && m_pMark->m_pMarker == this)
+    {
+        m_pMark->m_pMarker = nullptr;
+    }
+
+    m_pMark = pMark;
+
+    if (m_pMark != nullptr)
+    {
+        pMark->m_pMarker = this;
+    }
 }
 
 /**
@@ -140,42 +248,289 @@ void cFielder::CollideWithCharacterCallback(CollisionPlayerPlayerData*)
 /**
  * Offset/Address/Size: 0xAD6C | 0x800240A8 | size: 0x150
  */
-void cFielder::CollideWithShellCallback(ePowerupSize, bool, const nlVector3&, const nlVector3&)
+bool cFielder::CollideWithShellCallback(ePowerupSize eSize, bool bUnknown, const nlVector3& rv3Pos1, const nlVector3& rv3Pos2)
 {
+    // Check if player is fallen down
+    if (!IsFallenDown(0.0f) && (m_eActionState != ACTION_POST_WHISTLE))
+    {
+        bool bShouldSkip = false;
+        if ((m_ePowerup == POWER_UP_STAR && m_tPowerupEffectTime.m_uPackedTime != 0) || (mActionShootToScoreVars.isCurrentlyInvincible != 0))
+        {
+            bShouldSkip = true;
+        }
+
+        if (!bShouldSkip)
+        {
+            if (eSize == POWERUPSIZE_LARGE)
+            {
+                InitActionSquishReact(rv3Pos2);
+            }
+            else
+            {
+                InitActionShellReact(rv3Pos1, rv3Pos2);
+
+                ePowerupSize eSoundSize = eSize;
+                if (bUnknown)
+                {
+                    eSoundSize = POWERUPSIZE_LARGE;
+                }
+
+                switch (eSoundSize)
+                {
+                case POWERUPSIZE_SMALL:
+                    PlayAttackReactionSounds(g_pGame->m_pGameTweaks->unk254);
+                    break;
+                case POWERUPSIZE_MEDIUM:
+                    PlayAttackReactionSounds(g_pGame->m_pGameTweaks->unk258);
+                    break;
+                case POWERUPSIZE_LARGE:
+                    PlayAttackReactionSounds(g_pGame->m_pGameTweaks->unk24C);
+                    break;
+                }
+            }
+
+            // Clear pass target if this fielder is the current pass target
+            if (g_pBall->m_pPassTarget != nullptr && g_pBall->m_pPassTarget == this)
+            {
+                g_pBall->ClearPassTarget();
+            }
+
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0xAB90 | 0x80023ECC | size: 0x1DC
  */
-void cFielder::CollideWithFreezeCallback()
+bool cFielder::CollideWithFreezeCallback()
 {
+    bool bShouldSkip = false;
+
+    if ((m_ePowerup == POWER_UP_STAR && m_tPowerupEffectTime.m_uPackedTime != 0) || mActionShootToScoreVars.isCurrentlyInvincible != 0)
+    {
+        bShouldSkip = true;
+    }
+
+    // If invincible, don't freeze
+    if ((!bShouldSkip) && (m_tFrozenTimer.m_uPackedTime == 0))
+    {
+        if (m_eAnimID != 0x74 && m_eAnimID != 0x75)
+        {
+
+            // If player has the ball, release it and shoot it
+            if (m_pBall != nullptr)
+            {
+                ReleaseBall();
+                ShootBallDueToContact(m_v3Velocity);
+
+                switch (m_eActionState)
+                {
+                case ACTION_SHOT:
+                    break;
+                case ACTION_RUNNING_WB:
+                case ACTION_RUNNING_WB_TURBO:
+                case ACTION_RUNNING_WB_TURBO_TURN:
+                case ACTION_SHOOT_TO_SCORE:
+                    InitActionRunning();
+                    break;
+                }
+
+                m_pShotMeter->Abort(this);
+            }
+
+            float fFreezeDuration = g_pGame->m_pGameTweaks->fFreezeShellFrozenTime;
+            m_tFrozenTimer.SetSeconds(fFreezeDuration);
+
+            m_fDesiredSpee = 0.0f;
+            m_fActualSpeed = m_fDesiredSpee;
+            SetVelocity(v3Zero);
+
+            if ((fFreezeDuration > 0.0f) && (m_eFielderDesireState != FIELDERDESIRE_FINISH_ACTION))
+            {
+                g_pGame->AbortPendingThought(mThoughtHashCalcDesire);
+                g_pGame->AbortPendingThought(mThoughtHashInitRunToNet);
+                g_pGame->AbortPendingThought(mThoughtHashInitGetOpen);
+                g_pGame->AbortPendingThought(mThoughtHashInitWindupPass);
+                g_pGame->AbortPendingThought(mThoughtHashInitCutAndBreak);
+                ClearQueuedDesire();
+                EndDesire(false);
+            }
+
+            SetVelocity(v3Zero);
+            m_fDesiredSpee = 0.0f;
+            m_fActualSpeed = m_fDesiredSpee;
+
+            KillDaze(this);
+            EmitFreeze(this);
+
+            if (g_pBall->m_pPassTarget != nullptr && g_pBall->m_pPassTarget == this)
+            {
+                g_pBall->ClearPassTarget();
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0xAACC | 0x80023E08 | size: 0xC4
  */
-void cFielder::CollideWithBananaCallback(const nlVector3&)
+bool cFielder::CollideWithBananaCallback(const nlVector3& rv3BananaPosition)
 {
+    if (!IsFallenDown(0.0f) && (m_eActionState != ACTION_POST_WHISTLE))
+    {
+        bool bShouldSkip = false;
+        if ((m_ePowerup == POWER_UP_STAR && m_tPowerupEffectTime.m_uPackedTime != 0) || mActionShootToScoreVars.isCurrentlyInvincible != 0)
+        {
+            bShouldSkip = true;
+        }
+
+        if ((!bShouldSkip) && (m_tFrozenTimer.m_uPackedTime == 0))
+        {
+            if ((g_pBall->m_pPassTarget != nullptr) && (g_pBall->m_pPassTarget == this))
+            {
+                g_pBall->ClearPassTarget();
+            }
+            InitActionBananaReact(rv3BananaPosition);
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool IsGameplayOrOvertime(eGameState state)
+{
+    bool result = false;
+    if (state == GS_GAMEPLAY || state == GS_OVERTIME)
+    {
+        result = true;
+    }
+    return result;
 }
 
 /**
  * Offset/Address/Size: 0xA910 | 0x80023C4C | size: 0x1BC
+ * TODO: one last regswap because of bIsGameplayOrOvertime....
  */
-void cFielder::CollideWithChainCallback(ChainChomp*)
+void cFielder::CollideWithChainCallback(ChainChomp* pChainChomp)
 {
+    if (mActionShootToScoreVars.isInUnbreakablePart == 0)
+    {
+        // Clear pass target if this fielder is the current pass target
+        if (g_pBall->m_pPassTarget != nullptr && g_pBall->m_pPassTarget == this)
+        {
+            g_pBall->ClearPassTarget();
+        }
+
+        // Play powerup sound if not fallen down
+        if (!IsFallenDown(0.0f))
+        {
+            PowerupBase::PlayPowerupSound(POWER_UP_CHAIN_CHOMP, PowerupBase::PWRUP_SOUND_HIT, pChainChomp->mpPhysObj, 100.0f);
+        }
+
+        float offsetZ = 0.0f;
+
+        float rightFootZ;
+        float leftFootZ;
+        float ballJointZ;
+
+        leftFootZ = offsetZ + GetJointPosition(m_nLeftFootJointIndex).f.z;
+        rightFootZ = offsetZ + GetJointPosition(m_nRightFootJointIndex).f.z;
+        ballJointZ = offsetZ + GetJointPosition(m_nHeadJointIndex).f.z;
+
+        // Determine if player is in air (all joints above ground)
+        bool bInAir;
+        if (leftFootZ > 1.0f && rightFootZ > 1.0f && ballJointZ > 1.0f)
+        {
+            bInAir = true;
+        }
+        else
+        {
+            bInAir = false;
+        }
+
+        if (bInAir)
+        {
+            // Player is in air - use bomb react
+            InitActionBombReact(m_v3Position, 0.0f);
+            EmitTackleImpact(this);
+        }
+        else
+        {
+            // Player is on ground - use squish react
+            InitActionSquishReact(pChainChomp->mv3Velocity);
+            EmitChainBite(this);
+        }
+
+        // Track stats if thrower exists and game is in gameplay/overtime
+        if (pChainChomp->mpThrower != nullptr)
+        {
+            // eGameState state = g_pGame->m_eGameState;
+            bool bIsGameplayOrOvertime = false;
+            if (GS_GAMEPLAY == g_pGame->m_eGameState || GS_OVERTIME == g_pGame->m_eGameState)
+            {
+                bIsGameplayOrOvertime = true;
+            }
+
+            if (bIsGameplayOrOvertime && !IsOnSameTeam(pChainChomp->mpThrower))
+            {
+                cFielder* pThrower = pChainChomp->mpThrower;
+                nlSingleton<StatsTracker>::Instance()->TrackStat(
+                    STATS_POWERUPS_HIT,
+                    pThrower->m_pTeam->m_nSide,
+                    pThrower->m_ID,
+                    pChainChomp->mnThrowerPadID,
+                    0,
+                    0,
+                    0);
+            }
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0xA804 | 0x80023B40 | size: 0x10C
  */
-void cFielder::CollideWithBowserCallback(Bowser*)
+void cFielder::CollideWithBowserCallback(Bowser* pBowser)
 {
+    if (mActionShootToScoreVars.isInUnbreakablePart == 0)
+    {
+        if (g_pBall->m_pPassTarget != nullptr && g_pBall->m_pPassTarget == this)
+        {
+            g_pBall->ClearPassTarget();
+        }
+
+        // If this fielder owns the ball, release and shoot it
+        if (g_pBall->m_pOwner == this)
+        {
+            ReleaseBall();
+
+            nlVector3 v3Direction;
+            nlVec3Set(v3Direction,
+                g_pBall->m_v3Position.f.x - pBowser->mv3Position.f.x,
+                g_pBall->m_v3Position.f.y - pBowser->mv3Position.f.y,
+                g_pBall->m_v3Position.f.z - pBowser->mv3Position.f.z);
+            nlVec3Scale(v3Direction, v3Direction, 2.0f);
+
+            v3Direction.f.z = 3.0f + nlRandomf(4.0f, &nlDefaultSeed);
+
+            g_pBall->ShootRelease(v3Direction, SPINTYPE_NONE);
+        }
+
+        if (!IsFallenDown(0.0f))
+        {
+            InitActionBombHitReact(pBowser->mv3Position);
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0xA70C | 0x80023A48 | size: 0xF8
  */
-void cFielder::CollideWithWallCallback(const CollisionPlayerWallData*)
+void cFielder::CollideWithWallCallback(const CollisionPlayerWallData* eventData)
 {
 }
 
@@ -391,8 +746,9 @@ void cFielder::SetDesireDuration(float, bool)
 /**
  * Offset/Address/Size: 0x921C | 0x80022558 | size: 0x1D8
  */
-void cFielder::ShootBallDueToContact(const nlVector3&)
+void cFielder::ShootBallDueToContact(const nlVector3& aShootDirection)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -459,8 +815,89 @@ void cFielder::DoLooseBallContactFromRunVolley(nlVector3&, float&, nlVector3&, f
 /**
  * Offset/Address/Size: 0x82B0 | 0x800215EC | size: 0x1FC
  */
-void cFielder::DoPenaltyCardBooking(cFielder*, ePenaltyType)
+void cFielder::DoPenaltyCardBooking(cFielder* pVictim, ePenaltyType ePenaltyType)
 {
+    float fMaxAmount;
+    float fMinAmount;
+
+    int ePenaltyTypeAdjusted = ePenaltyType;
+    if (pVictim->m_tBallUnPossessionTimer.GetSeconds() < 0.5f)
+    {
+        if (ePenaltyTypeAdjusted == 1)
+        {
+            ePenaltyTypeAdjusted = 0;
+        }
+        else if (ePenaltyTypeAdjusted == 3)
+        {
+            ePenaltyTypeAdjusted = 2;
+        }
+    }
+
+    // Update penalty card status
+    switch (m_ePenaltyCardStatus)
+    {
+    case PENALTY_CARD_NONE:
+        m_ePenaltyCardStatus = PENALTY_CARD_YELLOW_1;
+        break;
+    case PENALTY_CARD_YELLOW_1:
+        m_ePenaltyCardStatus = PENALTY_CARD_YELLOW_2;
+        break;
+    case PENALTY_CARD_RED: // ??
+        break;
+    case PENALTY_CARD_YELLOW_2:
+        m_ePenaltyCardStatus = PENALTY_CARD_RED;
+        break;
+    }
+    PenaltyData* pData;
+    if (ePenaltyTypeAdjusted == PEN_TYPE_HIT_NO_BALL)
+    {
+        Event* pEvent = g_pEventManager->CreateValidEvent(0x3D, 0x24);
+        pData = new ((u8*)pEvent + 0x10) PenaltyData();
+    }
+    else
+    {
+        Event* pEvent = g_pEventManager->CreateValidEvent(0x3C, 0x24);
+        pData = new ((u8*)pEvent + 0x10) PenaltyData();
+    }
+
+    fMinAmount = 0.0f;
+    fMaxAmount = 0.0f;
+
+    switch (ePenaltyTypeAdjusted)
+    {
+    case PEN_TYPE_HIT_WITH_BALL:
+    {
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        fMinAmount = pTweaks->fPowerupHitWithBallMinAmount;
+        fMaxAmount = pTweaks->fPowerupHitWithBallMaxAmount;
+        break;
+    }
+    case PEN_TYPE_HIT_NO_BALL:
+    {
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        fMinAmount = pTweaks->fPowerupHitNoBallMinAmount;
+        fMaxAmount = pTweaks->fPowerupHitNoBallMaxAmount;
+        break;
+    }
+    case PEN_TYPE_SLIDE_WITH_BALL:
+    {
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        fMinAmount = pTweaks->fPowerupSlideWithBallMinAmount;
+        fMaxAmount = pTweaks->fPowerupSlideWithBallMaxAmount;
+        break;
+    }
+    case PEN_TYPE_SLIDE_NO_BALL:
+    {
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        fMinAmount = pTweaks->fPowerupSlideNoBallMinAmount;
+        fMaxAmount = pTweaks->fPowerupSlideNoBallMaxAmount;
+        break;
+    }
+    }
+
+    pData->fPenaltyWorth = InterpolateRangeClamped(fMinAmount, fMaxAmount, 0.0f, 1.0f, nlRandomf(1.0f, &nlDefaultSeed));
+    pData->pFouler = this;
+    pData->pFoulee = pVictim;
 }
 
 /**
@@ -515,15 +952,109 @@ void cFielder::DoPositioningInterceptBall()
 /**
  * Offset/Address/Size: 0x8024 | 0x80021360 | size: 0x160
  */
-void cFielder::DoAwardPowerupStuff(eAwardPowerupType, float)
+void cFielder::DoAwardPowerupStuff(eAwardPowerupType ePowerupType, float fParam)
 {
+    Event* pEvent = g_pEventManager->CreateValidEvent(0x3E, 0x20);
+    PowerupData* pData = new ((u8*)pEvent + 0x10) PowerupData();
+
+    float fMinAmount = 0.0f;
+    float fMaxAmount = 0.0f;
+
+    switch (ePowerupType)
+    {
+    case AWARD_POWERUP_POWER_SHOT:
+    {
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        fMaxAmount = InterpolateRangeClamped(pTweaks->fPowerupPowerShotMinAmount, pTweaks->fPowerupPowerShotMaxAmount, 0.0f, 0.9f, fParam);
+        fMinAmount = fMaxAmount;
+        break;
+    }
+    case AWARD_POWERUP_INTERCEPT_PASS:
+    {
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        fMinAmount = pTweaks->fPowerupInterceptPassMinAmount;
+        fMaxAmount = pTweaks->fPowerupInterceptPassMaxAmount;
+        break;
+    }
+    case AWARD_POWERUP_PERFECT_PASS:
+    {
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        fMinAmount = pTweaks->fPowerupPerfectPassMinAmount;
+        fMaxAmount = pTweaks->fPowerupPerfectPassMaxAmount;
+        break;
+    }
+    case AWARD_POWERUP_CONTEXT_DEKE:
+    {
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        fMinAmount = pTweaks->fPowerupContextDekeMinAmount;
+        fMaxAmount = pTweaks->fPowerupContextDekeMaxAmount;
+        break;
+    }
+    }
+
+    pData->fAwardWorth = InterpolateRangeClamped(fMinAmount, fMaxAmount, 0.0f, 1.0f, nlRandomf(1.0f, &nlDefaultSeed));
+    pData->pFielder = this;
 }
 
 /**
  * Offset/Address/Size: 0x7E78 | 0x800211B4 | size: 0x1AC
  */
-void cFielder::DoCalcShootToScoreResult(float, float, float, float, float)
+void cFielder::DoCalcShootToScoreResult(float f1, float f2, float f3, float f4, float f5)
 {
+    eShootToScoreResult result = S2S_SAVED;
+    float fAbsDiff = (float)fabs(f2 - f4);
+
+    if (f1 == f3 && fAbsDiff < f5)
+    {
+        result = S2S_SUPER_SHOT;
+
+        Event* pEvent = g_pEventManager->CreateValidEvent(0x43, 0x1C);
+        ShotAtGoalData* pData = new ((u8*)pEvent + 0x10) ShotAtGoalData();
+        pData->pShooter = this;
+
+        if (g_e3_Build)
+        {
+            result = S2S_SCORE;
+        }
+    }
+    else
+    {
+        g_pEventManager->CreateValidEvent(0x44, 0x14);
+
+        GameInfoManager* pGameInfoManager = nlSingleton<GameInfoManager>::Instance();
+        if (pGameInfoManager->IsPerfectStrikesOn())
+        {
+            result = S2S_SUPER_SHOT;
+
+            Event* pEvent = g_pEventManager->CreateValidEvent(0x43, 0x1C);
+            ShotAtGoalData* pData = new ((u8*)pEvent + 0x10) ShotAtGoalData();
+            pData->pShooter = this;
+        }
+        else if (fAbsDiff < mActionShootToScoreVars.fCaptainYellowWidth)
+        {
+            if (fAbsDiff < f5 && f5 > 0.0f)
+            {
+                result = S2S_SCORE;
+            }
+            else
+            {
+                float fValue = (float)fabs(fAbsDiff - f5) / (mActionShootToScoreVars.fCaptainYellowWidth - f5);
+
+                if (f1 == f3)
+                {
+                    m_pShotMeter->m_fSTSValue = 0.01f;
+                }
+                else
+                {
+                    m_pShotMeter->m_fSTSValue = fValue;
+                }
+
+                result = S2S_SAVED_YELLOW;
+            }
+        }
+    }
+
+    meS2SResult = result;
 }
 
 /**
@@ -603,16 +1134,65 @@ void cFielder::GetOneTimerBallContactAnimInfo(unsigned short, const nlVector3&, 
 
 /**
  * Offset/Address/Size: 0x6AEC | 0x8001FE28 | size: 0x130
+ * TODO: there are some regswaps in the section with min/max angle checks, need to fix them
  */
-void cFielder::GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsigned short, bool, bool)
+const LooseBallContactAnimInfo* cFielder::GetReceivePassBallContactAnimInfo(cBall* pBall, const nlVector3& rv3Pos, unsigned short aAngle, bool bLeadPass, bool bVolleyPass)
 {
-}
+    const LooseBallContactAnimInfo* pBallContactAnimInfo;
+    int nNumContactAnims;
+    const LooseBallContactAnimInfo* pResult;
+    int i;
 
-/**
- * Offset/Address/Size: 0x6A00 | 0x8001FD3C | size: 0xEC
- */
-void cFielder::GetReceivePassBallContactOffset(nlVector3&, unsigned short, const LooseBallContactAnimInfo*)
-{
+    if (bLeadPass)
+    {
+        if (bVolleyPass)
+        {
+            nNumContactAnims = 3;
+            pBallContactAnimInfo = LeadVolleyContactAnims;
+        }
+        else
+        {
+            nNumContactAnims = 4;
+            pBallContactAnimInfo = LeadGroundContactAnims;
+        }
+    }
+    else
+    {
+        if (bVolleyPass)
+        {
+            nNumContactAnims = 1;
+            pBallContactAnimInfo = IdleVolleyContactAnims;
+        }
+        else
+        {
+            nNumContactAnims = 1;
+            pBallContactAnimInfo = IdleGroundContactAnims;
+        }
+    }
+
+    s32 angle32 = (s32)(10430.378f * nlATan2f(pBall->m_v3Position.f.y - rv3Pos.f.y, pBall->m_v3Position.f.x - rv3Pos.f.x));
+    u16 normalizedAngle = (u16)angle32 - aAngle;
+
+    pResult = nullptr;
+
+    for (i = 0; i < nNumContactAnims; i++)
+    {
+        const u16 minAngle = pBallContactAnimInfo[i].aIncomingAngleMin;
+        const u16 maxAngle = pBallContactAnimInfo[i].aIncomingAngleMax;
+
+        if (minAngle < maxAngle)
+        {
+            if ((normalizedAngle >= minAngle) && (normalizedAngle <= maxAngle))
+            {
+                pResult = &pBallContactAnimInfo[i];
+            }
+        }
+        else if ((normalizedAngle >= minAngle) || (normalizedAngle <= maxAngle))
+        {
+            pResult = &pBallContactAnimInfo[i];
+        }
+    }
+    return pResult;
 }
 /**
  * Offset/Address/Size: 0x68F0 | 0x8001FC2C | size: 0x110
@@ -1220,6 +1800,7 @@ void cFielder::SetRunningTurboAnimState()
 
 /**
  * Offset/Address/Size: 0x48F8 | 0x8001DC34 | size: 0x138
+ * TODO: regswap on r28/r29
  */
 void cFielder::SetRunningWBAnimState(float)
 {
@@ -1250,21 +1831,9 @@ void cFielder::SetRunningWBAnimState(float)
         }
     }
 
-    cPN_Blender* pBlender = nullptr;
-    if (cPN_Blender::m_BlenderSlotPool.m_FreeList == nullptr)
-    {
-        SlotPoolBase::BaseAddNewBlock(&cPN_Blender::m_BlenderSlotPool, sizeof(cPN_Blender));
-    }
+    *m_pAILayer = new (AllocateBlender()) cPN_Blender(*m_pAILayer, pSingleAxisBlender, 0.0f);
 
-    if (cPN_Blender::m_BlenderSlotPool.m_FreeList != nullptr)
-    {
-        pBlender = (cPN_Blender*)cPN_Blender::m_BlenderSlotPool.m_FreeList;
-        cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
-    }
-
-    *m_pAILayer = new (pBlender) cPN_Blender(GetAILayer(), pSingleAxisBlender, 0.0f);
-
-    FielderTweaks* pTweaks = (FielderTweaks*)m_pTweaks;
+    FielderTweaks* pTweaks = ((FielderTweaks*)m_pTweaks);
     InitMovementRunning(pTweaks->fRunningWBDirectionSeekSpeed, pTweaks->fRunningWBDirectionSeekFalloff, pTweaks->fRunningWBAccel, pTweaks->fRunningWBDecel);
 }
 

@@ -643,7 +643,7 @@ void Goalie::InitActionSTSSetup()
             mpShooter = NULL;
             cBall* pBall = g_pBall;
             pBall->mbCanDamage = false;
-            pBall->m_unk_0xA8 = 0;
+            pBall->mpDamageTarget = NULL;
             mfWaitTime = mfTimeTilSave - mBlendInfo.mfMilestoneTime[2];
 
             if (mbShouldMiss)

@@ -257,16 +257,25 @@ public:
     virtual u32 GetID();
 };
 
-class PowerupData
+class cFielder;
+
+struct PowerupData : public EventData
 {
-public:
+    PowerupData() { }
     virtual u32 GetID();
+
+    /* 0x04 */ cFielder* pFielder;
+    /* 0x08 */ float fAwardWorth;
 };
 
-class PenaltyData
+struct PenaltyData : public EventData
 {
-public:
+    PenaltyData() { }
     virtual u32 GetID();
+
+    /* 0x04 */ cFielder* pFouler;
+    /* 0x08 */ cFielder* pFoulee;
+    /* 0x0C */ float fPenaltyWorth;
 };
 
 struct ShotAtGoalData : public EventData
