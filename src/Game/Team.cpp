@@ -404,18 +404,18 @@ void cTeam::ResetCharacters()
  */
 void cTeam::StopGameplayEffectsAndSounds()
 {
-    int i_player;
-
     Audio::ActivateFilterOnAllCurrentSFX(false);
     Audio::SetPitchBendOnAllDialogueSFX(0x2000);
-    i_player = 0;
+
+    s32 side = m_nSide;
+    s32 playerIndex = 0;
     do
     {
-        g_pTeams[m_nSide]->m_pPlayers[i_player]->StopPlayingAllTrackedSFX();
-        i_player++;
-    } while (i_player < 5);
+        g_pTeams[side]->m_pPlayers[playerIndex]->StopPlayingAllTrackedSFX();
+        playerIndex++;
+    } while (playerIndex < 5);
 
-    Audio::gWorldSFX.Stop(Audio::WORLDSFX_FE_NINTENDO_PEACH, cGameSFX::SFX_STOP_FIRST);
+    Audio::gWorldSFX.Stop(Audio::REPLAYSFX_CAMERA_ZOOM_OUT, cGameSFX::SFX_STOP_FIRST);
     Audio::gStadGenSFX.Stop((Audio::eWorldSFX)0xBD, cGameSFX::SFX_STOP_FIRST);
     Audio::gStadGenSFX.Stop((Audio::eWorldSFX)0xCE, cGameSFX::SFX_STOP_ALL);
     Audio::gStadGenSFX.Stop((Audio::eWorldSFX)0xCC, cGameSFX::SFX_STOP_FIRST);
@@ -430,12 +430,12 @@ void cTeam::StopGameplayEffectsAndSounds()
 
     BasicStadium::GetCurrentStadium()->mpNPCManager->mpBowser->m_pCharacterSFX->StopPlayingAllTrackedSFX();
 
-    int i = 0;
+    s32 emissionIndex = 0;
     do
     {
-        EmissionManager::Destroy((unsigned long)i, nullptr);
-        i++;
-    } while (i < 10);
+        EmissionManager::Destroy((unsigned long)emissionIndex, nullptr);
+        emissionIndex++;
+    } while (emissionIndex < 10);
 }
 
 /**
