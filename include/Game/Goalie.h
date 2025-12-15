@@ -150,8 +150,8 @@ public:
     void HandleSTSContact(cBall*);
     void InitiatePickup();
     void InitiatePanicGrab(cPlayer*);
-    void IsCloseToPlane(const nlVector3&, const nlVector3&, float);
-    void IsInsideGoalieBox(const nlVector3&, float, float);
+    bool IsCloseToPlane(const nlVector3&, const nlVector3&, float);
+    bool IsInsideGoalieBox(const nlVector3&, float, float);
     float CheckForDelflectAwayFromNet();
     bool CheckForLooseBallShotInProgress();
     bool CheckForSTSAttack();
