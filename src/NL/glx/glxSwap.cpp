@@ -1,21 +1,99 @@
 #include "NL/glx/glxSwap.h"
 #include "NL/nlDebug.h"
+#include "NL/nlPrint.h"
+#include "NL/nlEndian.h"
+#include "NL/nlMemory.h"
 
 #include "Dolphin/GX.h"
 #include "Dolphin/VI.h"
+#include "Dolphin/os/OSThread.h"
+#include "NL/glx/glxGX.h"
+#include "NL/gl/glPlat.h"
+#include "NL/gl/glConstant.h"
+#include "Game/ResetTask.h"
+
+#include "direct_io.h"
 
 u32 count0 = 0;
 int glx_nBuffer = 0;
 int _shotno = 0;
 int glx_SwapMode = 0;
 u8 glx_ResetCaptureFrame = 0;
-bool glx_bLoadingIndicator = false;
+
+static u8 glx_bLoadingIndicator = 0;
+
+u8 glx_ScreenShot = 0;
+u8 glx_MovieOutput = 0;
+int nFirstFrame = 0;
+int glx_nLoadFrame = 0;
+int glx_nLoadWaitFrames = 0;
+
+void* glx_FrameBuffer[2];
+
+static u8 bSaved = 0;
+static u8 bSavedState = 0;
+
+bool glx_bLoadOtherPosition = false;
+int loadCounter = 0;
+int nSelected = 0;
+static int LoadWaitSeconds = 0;
+
+extern u8 bInRetrace;
 
 /**
  * Offset/Address/Size: 0x0 | 0x801BED50 | size: 0x118
  */
 void DrawLoadingIndicator()
 {
+    u32 targetFPS = glx_GetTargetFPS();
+    int xPos = 0x120; // 288
+    int yPos;
+    float scale = 1.0f;
+    int counterLimit;
+
+    if (targetFPS == 50)
+    {
+        yPos = 0x1B4; // 436
+        if (glx_bLoadOtherPosition)
+        {
+            yPos = 0x1A2; // 418
+        }
+        counterLimit = 0x10; // 16
+    }
+    else
+    {
+        yPos = 0x17E; // 382
+        if (glx_bLoadOtherPosition)
+        {
+            yPos = 0x16E; // 366
+        }
+        counterLimit = 0x13; // 19
+    }
+
+    float spacing = 24.0f * scale;
+    int spacingInt = (int)spacing;
+    if (spacingInt & 1)
+    {
+        spacingInt++;
+    }
+
+    for (int i = 0; i < 3; i++)
+    {
+        bool isSelected = (nSelected == i);
+        BlitImage(xPos, yPos, scale, scale, isSelected);
+        xPos += spacingInt;
+    }
+
+    loadCounter++;
+    if (loadCounter >= counterLimit)
+    {
+        loadCounter = 0;
+        nSelected++;
+        if (nSelected >= 3)
+        {
+            nSelected = 0;
+        }
+    }
 }
 
 /**
@@ -23,6 +101,7 @@ void DrawLoadingIndicator()
  */
 void BlitImage(int, int, float, float, bool)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -30,25 +109,26 @@ void BlitImage(int, int, float, float, bool)
  */
 void hitz_Post(bool arg0)
 {
-    s32 sp8;
-
     if ((u8)glx_ResetCaptureFrame != 0)
     {
         _shotno = 0;
     }
-    // if ((u8) glx_ScreenShot != 0) {
-    //     glx_ScreenCapture__Fb(0);
-    //     glx_ScreenShot = 0;
-    // }
-    // if ((u8) glx_MovieOutput != 0) {
-    //     glx_ScreenCapture__Fb(1);
-    // }
-    // sp8 = @626;
-    // GXSetCopyClear(&sp8, 0xFFFFFF);
-    // gxSetZMode__Fb10_GXCompareb(1, 3, 1);
-    // gxSetColourUpdate__Fb(1);
-    // gxSetAlphaUpdate__Fb(1);
-    // GXCopyDisp(*(&glx_FrameBuffer + (glx_nBuffer * 4)), 1);
+    if ((u8)glx_ScreenShot != 0)
+    {
+        glx_ScreenCapture(false);
+        glx_ScreenShot = 0;
+    }
+    if ((u8)glx_MovieOutput != 0)
+    {
+        glx_ScreenCapture(true);
+    }
+
+    GXColor clearColor = { 0, 0, 0, 0 };
+    GXSetCopyClear(clearColor, 0xFFFFFF);
+    gxSetZMode(true, GX_LEQUAL, true);
+    gxSetColourUpdate(true);
+    gxSetAlphaUpdate(true);
+    GXCopyDisp(glx_FrameBuffer[glx_nBuffer], true);
     GXSetDrawDone();
     GXFlush();
     count0 = VIGetRetraceCount();
@@ -59,6 +139,44 @@ void hitz_Post(bool arg0)
  */
 void hitz_Pre(bool)
 {
+    GXWaitDrawDone();
+    u32 retraceCount = VIGetRetraceCount();
+    float value = glConstantGet("glxswap/vwait").f.x;
+
+    if (value == 2.0f)
+    {
+        hitz_AdvanceFrame();
+        VIWaitForRetrace();
+        u32 newRetraceCount = VIGetRetraceCount();
+        if (newRetraceCount < count0 + 2)
+        {
+            VIWaitForRetrace();
+        }
+    }
+    else if (value == 1.0f)
+    {
+        hitz_AdvanceFrame();
+        VIWaitForRetrace();
+    }
+    else if (count0 == retraceCount)
+    {
+        hitz_AdvanceFrame();
+        VIWaitForRetrace();
+    }
+    else if (value == 0.5f)
+    {
+        while (bInRetrace != 0)
+        {
+            OSYieldThread();
+        }
+        hitz_AdvanceFrame();
+    }
+    else
+    {
+        hitz_AdvanceFrame();
+    }
+
+    hitz_SwapBuffers();
 }
 
 /**
@@ -66,6 +184,7 @@ void hitz_Pre(bool)
  */
 void hitz_SwapBuffers()
 {
+    glx_nBuffer ^= 1;
 }
 
 /**
@@ -73,6 +192,16 @@ void hitz_SwapBuffers()
  */
 void hitz_AdvanceFrame()
 {
+    VISetNextFrameBuffer(glx_FrameBuffer[glx_nBuffer]);
+    if (nFirstFrame > 0)
+    {
+        nFirstFrame--;
+        if (nFirstFrame == 0)
+        {
+            VISetBlack(false);
+        }
+    }
+    VIFlush();
 }
 
 /**
@@ -80,21 +209,20 @@ void hitz_AdvanceFrame()
  */
 void simple_Post(bool arg0)
 {
-    s32 temp_r0;
-
-    // gxSetZMode__Fb10_GXCompareb(1, 3, 1);
-    // gxSetColourUpdate__Fb(1);
-    // gxSetAlphaUpdate__Fb(1);
-    // GXCopyDisp(*(&glx_FrameBuffer + (glx_nBuffer * 4)), 1);
+    gxSetZMode(true, GX_LEQUAL, true);
+    gxSetColourUpdate(true);
+    gxSetAlphaUpdate(true);
+    GXCopyDisp(glx_FrameBuffer[glx_nBuffer], true);
     GXDrawDone();
-    // VISetNextFrameBuffer(*(&glx_FrameBuffer + (glx_nBuffer * 4)));
-    // if ((s32) nFirstFrame > 0) {
-    //     temp_r0 = nFirstFrame - 1;
-    //     nFirstFrame = temp_r0;
-    //     if (temp_r0 == 0) {
-    //         VISetBlack(0);
-    //     }
-    // }
+    VISetNextFrameBuffer(glx_FrameBuffer[glx_nBuffer]);
+    if (nFirstFrame > 0)
+    {
+        nFirstFrame--;
+        if (nFirstFrame == 0)
+        {
+            VISetBlack(false);
+        }
+    }
     VIFlush();
     VIWaitForRetrace();
     glx_nBuffer ^= 1;
@@ -111,17 +239,17 @@ void simple_Pre(bool)
 /**
  * Offset/Address/Size: 0x684 | 0x801BF3D4 | size: 0x58
  */
-void glxSwapPost(bool)
+void glxSwapPost(bool bSend)
 {
     if (glx_bLoadingIndicator == false)
     {
         switch ((s32)glx_SwapMode)
-        { /* irregular */
+        {
         case 0:
-            simple_Post(false);
+            simple_Post(bSend);
             return;
         case 1:
-            hitz_Post(false);
+            hitz_Post(bSend);
             return;
         default:
             nlBreak();
@@ -133,8 +261,23 @@ void glxSwapPost(bool)
 /**
  * Offset/Address/Size: 0x6DC | 0x801BF42C | size: 0x58
  */
-void glxSwapPre(bool)
+void glxSwapPre(bool bSend)
 {
+    if (glx_bLoadingIndicator == false)
+    {
+        switch ((s32)glx_SwapMode)
+        {
+        case 0:
+            simple_Pre(bSend);
+            return;
+        case 1:
+            hitz_Pre(bSend);
+            return;
+        default:
+            nlBreak();
+            break;
+        }
+    }
 }
 
 /**
@@ -149,6 +292,9 @@ void glxInitSwap(void*, void*)
  */
 void glxSwapWaitDrawDone()
 {
+    GXSetDrawDone();
+    GXFlush();
+    GXWaitDrawDone();
 }
 
 /**
@@ -156,6 +302,16 @@ void glxSwapWaitDrawDone()
  */
 void vi_post_cb(unsigned long)
 {
+    HandleSoftReset();
+    if (glx_bLoadingIndicator != false)
+    {
+        glx_nLoadFrame++;
+        if (glx_nLoadFrame >= glx_nLoadWaitFrames)
+        {
+            loading_indicator();
+        }
+    }
+    bInRetrace = 0;
 }
 
 /**
@@ -163,6 +319,7 @@ void vi_post_cb(unsigned long)
  */
 void vi_pre_cb(unsigned long)
 {
+    bInRetrace = 1;
 }
 
 /**
@@ -170,6 +327,25 @@ void vi_pre_cb(unsigned long)
  */
 void loading_indicator()
 {
+    if (nFirstFrame == 0)
+    {
+        DrawLoadingIndicator();
+        VISetNextFrameBuffer(glx_FrameBuffer[glx_nBuffer]);
+        VIFlush();
+        glx_nBuffer ^= 1;
+    }
+
+    if (nFirstFrame > 0)
+    {
+        nFirstFrame--;
+        if (nFirstFrame == 0)
+        {
+            glx_ClearXFB(glx_FrameBuffer[0]);
+            glx_ClearXFB(glx_FrameBuffer[1]);
+            VISetBlack(false);
+            VIFlush();
+        }
+    }
 }
 
 /**
@@ -177,6 +353,14 @@ void loading_indicator()
  */
 void glxLoadRestoreState()
 {
+    bSaved = 0;
+    glx_bLoadingIndicator = *(u8*)&bSavedState;
+    if (bSavedState)
+    {
+        glxSwapLoading(true, false);
+        glx_ClearXFB(glx_FrameBuffer[0]);
+        glx_ClearXFB(glx_FrameBuffer[1]);
+    }
 }
 
 /**
@@ -184,20 +368,41 @@ void glxLoadRestoreState()
  */
 void glxLoadSaveState()
 {
+    bSaved = 1;
+    bSavedState = glx_bLoadingIndicator;
+    if (glx_bLoadingIndicator)
+    {
+        glxSwapLoading(false, false);
+    }
 }
 
 /**
  * Offset/Address/Size: 0xB34 | 0x801BF884 | size: 0x4C
  */
-void glxSwapLoading(bool, bool)
+void glxSwapLoading(bool arg0, bool arg1)
 {
+    u32 loadWaitFrames;
+    u32 targetFPS;
+    u32 lws;
+
+    glx_bLoadOtherPosition = arg1;
+    glx_bLoadingIndicator = arg0;
+    glx_nLoadFrame = 0;
+    targetFPS = glx_GetTargetFPS();
+    lws = LoadWaitSeconds;
+    loadWaitFrames = lws * targetFPS;
+    loadCounter = 0;
+    nSelected = 0;
+    LoadWaitSeconds = 0;
+    glx_nLoadWaitFrames = loadWaitFrames;
 }
 
 /**
  * Offset/Address/Size: 0xB80 | 0x801BF8D0 | size: 0x14
  */
-void glxGetBackBuffer()
+void* glxGetBackBuffer()
 {
+    return glx_FrameBuffer[glx_nBuffer];
 }
 
 /**
@@ -205,21 +410,118 @@ void glxGetBackBuffer()
  */
 void* glxGetDisplayedBuffer()
 {
-    return nullptr;
+    return glx_FrameBuffer[glx_nBuffer ^ 1];
 }
+
+#pragma push
+#pragma pack(1)
+struct TargaHeader
+{
+    /* 0x00 */ unsigned char imageIDLength;
+    /* 0x01 */ unsigned char colorMapType;
+    /* 0x02 */ unsigned char imageType;
+    /* 0x03 */ unsigned short firstEntry;
+    /* 0x05 */ unsigned short mapLength;
+    /* 0x07 */ unsigned char paletteBitsPerPixel;
+    /* 0x08 */ unsigned short xOrigin;
+    /* 0x0A */ unsigned short yOrigin;
+    /* 0x0C */ unsigned short width;
+    /* 0x0E */ unsigned short height;
+    /* 0x10 */ unsigned char bitsPerPixel;
+    /* 0x11 */ unsigned char imageDescriptor;
+}; // total size: 0x12
+#pragma pop
 
 /**
  * Offset/Address/Size: 0xBAC | 0x801BF8FC | size: 0x1B0
  */
-void glx_ScreenCapture(bool)
+void glx_ScreenCapture(bool isMovie)
 {
+    char filename[0x40];
+    FILE* file;
+    TargaHeader header;
+    u8* imageData;
+    u32 argbColor;
+    u8 r, g, b;
+    s32 pixelOffset;
+    s32 rowPixelOffset;
+    s32 x, y;
+
+    if (isMovie != 0)
+    {
+        nlSNPrintf(filename, 0x40, "../shot%03d.tga", _shotno);
+    }
+    else
+    {
+        nlSNPrintf(filename, 0x40, "shot%03d.tga", _shotno);
+    }
+
+    _shotno++;
+    file = fopen(filename, "wb");
+
+    if (file != NULL)
+    {
+        header.imageIDLength = 0;
+        header.colorMapType = 0;
+        header.imageType = 2;
+        header.firstEntry = 0;
+        header.mapLength = 0;
+        header.paletteBitsPerPixel = 0;
+        header.xOrigin = 0;
+        header.yOrigin = 0;
+        header.width = 0x280;
+        header.height = 0x1C0;
+        header.bitsPerPixel = 0x18;
+        header.imageDescriptor = 0x20;
+
+        nlSwapEndian(header.width, &(header.width));
+        nlSwapEndian(header.height, &(header.height));
+
+        imageData = (u8*)nlMalloc(0xD2000, 8, false);
+        GXDrawDone();
+
+        rowPixelOffset = 0;
+        for (y = 0; y < 0x1C0; y++)
+        {
+            pixelOffset = rowPixelOffset * 3;
+            for (x = 0; x < 0x280; x++)
+            {
+                GXPeekARGB((u16)x, (u16)y, &argbColor);
+
+                r = argbColor >> 16;
+                g = argbColor >> 8;
+                b = argbColor;
+
+                imageData[pixelOffset] = r;
+                imageData[pixelOffset + 1] = g;
+                imageData[pixelOffset + 2] = b;
+                pixelOffset += 3;
+            }
+            rowPixelOffset += 0x280;
+        }
+
+        fwrite(&header, 1, sizeof(TargaHeader), file);
+        fwrite(imageData, 3, 0x46000, file);
+        fclose(file);
+        delete[] imageData;
+    }
 }
 
 /**
  * Offset/Address/Size: 0xD5C | 0x801BFAAC | size: 0x48
  */
-void glxSwapSetBlack(bool)
+void glxSwapSetBlack(bool black)
 {
+    if (black)
+    {
+        VISetBlack(1);
+        nFirstFrame = 3;
+    }
+    else
+    {
+        VISetBlack(0);
+        nFirstFrame = 0;
+    }
 }
 
 /**
