@@ -1,5 +1,17 @@
 #include "Game/Game.h"
 #include "Game/Sys/clock.h"
+#include "Game/Sys/eventman.h"
+#include "Game/Team.h"
+#include "Game/AI/Fielder.h"
+#include "Game/AI/ScriptAction.h"
+#include "Game/GameInfo.h"
+#include "Game/Camera/CameraMan.h"
+#include "Game/Camera/GameplayCam.h"
+#include "NL/nlConfig.h"
+#include "NL/nlLexicalCast.h"
+#include "NL/nlMath.h"
+
+extern cTeam* g_pTeams[2];
 
 // /**
 //  * Offset/Address/Size: 0x24 | 0x800401E8 | size: 0x4
@@ -271,8 +283,9 @@ float cGame::GetNormalizedGameTime()
 /**
  * Offset/Address/Size: 0x1B0C | 0x8003E080 | size: 0xC
  */
-void cGame::GetGameTime()
+float cGame::GetGameTime()
 {
+    return m_pGameClock->m_fTimer;
 }
 
 /**
@@ -280,6 +293,7 @@ void cGame::GetGameTime()
  */
 void cGame::ResetForKickOff()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -287,6 +301,12 @@ void cGame::ResetForKickOff()
  */
 void cGame::PostResetCallback(unsigned long, unsigned long)
 {
+    g_pEventManager->CreateValidEvent(0xa, 0x14);
+    GameplayCamera* pCamera = cCameraManager::GetCamera<GameplayCamera>(eCameraType_Gameplay);
+    if (pCamera != nullptr)
+    {
+        pCamera->m_ForceNeutralAndNearZoom = false;
+    }
 }
 
 /**
@@ -322,20 +342,78 @@ void cGame::ResetPowerups(bool)
  */
 void cGame::ResetBowser()
 {
+    if (GameInfoManager::s_pInstance->IsTiltingFieldOn() || GameInfoManager::s_pInstance->mIsInStrikers101Mode)
+    {
+        mBowserTimer.m_uPackedTime = 0;
+        return;
+    }
+
+    if (GetConfigBool(Config::Global(), "bowser_repeat", false))
+    {
+        g_pGame->m_pGameTweaks->unk308 = 1.0f;
+        g_pGame->m_pGameTweaks->unk30C = 4.0f;
+        g_pGame->m_pGameTweaks->unk310 = -1.0f;
+    }
+
+    GameTweaks* pTweaks_ = g_pGame->m_pGameTweaks;
+    if (nlRandomf(1.0f, &nlDefaultSeed) < pTweaks_->unk308)
+    {
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        float fMinTime = pTweaks->unk30C;
+        float fMaxTime = pTweaks->unk310;
+
+        if (fMinTime < 0.0f)
+        {
+            fMinTime = 0.0f;
+        }
+        else if (fMinTime > m_fGameDuration)
+        {
+            fMinTime = m_fGameDuration - 10.f;
+        }
+
+        float fThreshold = 0.0f;
+        float fTimeRange = fThreshold;
+
+        if (fMaxTime > fThreshold)
+        {
+            fTimeRange = m_fGameDuration - fMaxTime - fMinTime;
+        }
+
+        if (fTimeRange > fThreshold)
+        {
+            mBowserTimer.SetSeconds(fMinTime + nlRandomf(fTimeRange, &nlDefaultSeed));
+            return;
+        }
+
+        mBowserTimer.SetSeconds(fMinTime);
+        return;
+    }
+
+    mBowserTimer.m_uPackedTime = 0;
 }
 
 /**
  * Offset/Address/Size: 0xA80 | 0x8003CFF4 | size: 0x80
  */
-void cGame::ResetBowserTimer(float)
+void cGame::ResetBowserTimer(float seconds)
 {
+    if (seconds > 0.0f && !GameInfoManager::s_pInstance->IsTiltingFieldOn() && !GameInfoManager::s_pInstance->mIsInStrikers101Mode)
+    {
+        mBowserTimer.SetSeconds(seconds);
+        return;
+    }
+    mBowserTimer.m_uPackedTime = 0;
 }
 
 /**
  * Offset/Address/Size: 0xA20 | 0x8003CF94 | size: 0x60
  */
-void cGame::PreUpdate(float)
+void cGame::PreUpdate(float deltaTime)
 {
+    for (int i = 0; i < 2; i++)
+    {
+        g_pTeams[i]->PreUpdate(deltaTime);
+    }
 }
 
 /**
@@ -348,22 +426,109 @@ void cGame::Update(float)
 /**
  * Offset/Address/Size: 0x508 | 0x8003CA7C | size: 0x9C
  */
-void cGame::SetPotentialScorer(cPlayer*)
+void cGame::SetPotentialScorer(cPlayer* pPlayer)
 {
+    cPlayer* pOldScorer = m_pScorer;
+
+    if (pOldScorer != nullptr && pPlayer != nullptr && pOldScorer != pPlayer && pOldScorer->IsOnSameTeam(pPlayer))
+    {
+        m_pAssister = m_pScorer;
+    }
+    else
+    {
+        m_pAssister = nullptr;
+    }
+
+    m_pScorer = pPlayer;
+
+    if (pPlayer != nullptr && pPlayer->m_eClassType == FIELDER)
+    {
+        m_pTeamTouch[pPlayer->m_pTeam->m_nSide] = pPlayer;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x4DC | 0x8003CA50 | size: 0x2C
  */
-void cGame::ChangeGameState(eGameState)
+void cGame::ChangeGameState(eGameState state)
 {
+    if (state != m_eGameState)
+    {
+        InitGameState(state);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x374 | 0x8003C8E8 | size: 0x168
  */
-void cGame::InitGameState(eGameState)
+void cGame::InitGameState(eGameState state)
 {
+    // Check if transitioning from GS_GAMEPLAY to GS_OVERTIME
+    if (m_eGameState == GS_GAMEPLAY && state == GS_OVERTIME)
+    {
+        g_pEventManager->CreateValidEvent(0xC, 0x14);
+    }
+
+    // Update the game state
+    m_eGameState = state;
+
+    // Handle state-specific logic
+    switch (state)
+    {
+    case GS_PRE_GAME:
+        m_pGameClock->Stop();
+        break;
+
+    case GS_KICKOFF:
+        m_pGameClock->Stop();
+        ResetForKickOff();
+        break;
+
+    case GS_POST_GOAL:
+        m_pGameClock->Stop();
+        // Loop through all teams and fielders
+        for (int i = 0; i < 2; i++)
+        {
+            cTeam* pTeam = g_pTeams[i];
+            for (int j = 0; j < 4; j++)
+            {
+                cFielder* pFielder = pTeam->GetFielder(j);
+                pFielder->CleanUpPowerupEffect();
+                pFielder->EndBlur();
+            }
+        }
+        break;
+
+    case GS_END_GAME:
+        m_pPostGameDoneClock->Start();
+        m_pGameClock->Stop();
+        break;
+
+    case GS_GAMEPLAY:
+        m_pGameClock->Start();
+        // Loop through all teams and fielders
+        for (int i = 0; i < 2; i++)
+        {
+            cTeam* pTeam = g_pTeams[i];
+            for (int j = 0; j < 4; j++)
+            {
+                cFielder* pFielder = pTeam->GetFielder(j);
+                // End desire if fielder is in WAIT state
+                if (pFielder->m_eFielderDesireState == FIELDERDESIRE_WAIT)
+                {
+                    pFielder->EndDesire(false);
+                }
+            }
+        }
+        break;
+
+    case GS_OVERTIME:
+        // No specific action for overtime
+        break;
+
+    default:
+        break;
+    }
 }
 
 /**

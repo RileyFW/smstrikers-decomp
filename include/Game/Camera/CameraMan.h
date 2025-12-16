@@ -44,6 +44,25 @@ public:
     static void PushWorldUpVector();
     static void PopWorldUpVector();
 
+    template <typename T>
+    static T* GetCamera(eCameraType type);
+    // {
+    //     if (m_cameraStack == nullptr)
+    //     {
+    //         return nullptr;
+    //     }
+    //     cBaseCamera* pCamera = m_cameraStack;
+    //     do
+    //     {
+    //         pCamera = pCamera->m_next;
+    //         if (pCamera->GetType() == type)
+    //         {
+    //             return static_cast<T*>(pCamera);
+    //         }
+    //     } while (pCamera != m_cameraStack);
+    //     return nullptr;
+    // }
+
     static u16 m_aJoystickRemap;
     static cBaseCamera* m_cameraStack;
     static eCameraTransition m_transition;

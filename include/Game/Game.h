@@ -45,7 +45,7 @@ public:
     virtual ~cGame();
     void DoPerfectPassSlowDown();
     float GetNormalizedGameTime();
-    void GetGameTime();
+    float GetGameTime();
     void ResetForKickOff();
     void PostResetCallback(unsigned long, unsigned long);
     void BeginGame(bool, bool);
