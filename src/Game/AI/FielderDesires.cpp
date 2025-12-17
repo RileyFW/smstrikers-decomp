@@ -1,5 +1,11 @@
 #include "Game/AI/FielderDesires.h"
 
+#include "Game/AI/AiUtil.h"
+#include "Game/AI/FilteredRandom.h"
+#include "Game/AI/Fuzzy.h"
+
+CommonDesireData g_vDesireCommonData[NUM_FIELDERDESIRES];
+
 /**
  * Offset/Address/Size: 0x0 | 0x80037FD8 | size: 0x3C
  */
@@ -24,34 +30,41 @@ CommonDesireData::CommonDesireData(const CommonDesireData&)
 /**
  * Offset/Address/Size: 0x668C | 0x80037410 | size: 0x3C
  */
-float CommonDesireData::CalcFuzzyChance(float)
+float CommonDesireData::CalcFuzzyChance(float fChance)
 {
-    return 0.0f;
+    return FGREATER(fChance, m_RandomGenerator.genrand());
 }
 
 /**
  * Offset/Address/Size: 0x6668 | 0x800373EC | size: 0x24
  */
-bool CommonDesireData::CalcBoolChance(float)
+bool CommonDesireData::CalcBoolChance(float fChance)
 {
-    return false;
+    return m_RandomChanceGen.genrand(fChance);
 }
 
 /**
  * Offset/Address/Size: 0x660C | 0x80037390 | size: 0x5C
  */
-float CommonDesireData::NormalizeConfidence(float)
+float CommonDesireData::NormalizeConfidence(float fConfidence)
 {
-    return 0.0f;
+    if (m_ConfidenceExtrema.f.x > fConfidence)
+    {
+        m_ConfidenceExtrema.f.x = (0.5f * fConfidence) + (0.5f * m_ConfidenceExtrema.f.x);
+    }
+    if (m_ConfidenceExtrema.f.y < fConfidence)
+    {
+        m_ConfidenceExtrema.f.y = (0.5f * fConfidence) + (0.5f * m_ConfidenceExtrema.f.y);
+    }
+    return NormalizeVal(fConfidence, m_ConfidenceExtrema);
 }
 
 /**
  * Offset/Address/Size: 0x65F8 | 0x8003737C | size: 0x14
  */
-CommonDesireData& GetCommonDesireData(eFielderDesireState)
+CommonDesireData& GetCommonDesireData(eFielderDesireState desireType)
 {
-    static CommonDesireData commonDesireData;
-    return commonDesireData;
+    return g_vDesireCommonData[desireType];
 }
 
 // /**
