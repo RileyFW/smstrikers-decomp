@@ -1,7 +1,6 @@
 #include "Game/AI/Fuzzy.h"
 
 #include "Game/AI/FilteredRandom.h"
-
 static inline float GetRandomFloat()
 {
     static FilteredRandomReal randgen;
@@ -21,21 +20,7 @@ float GenerateFilteredRandom()
  */
 float RandomChance(float fChance)
 {
-    float result;
-    float random = GetRandomFloat();
-    float diff = fChance - random;
-    result = 0.0f;
-    if (diff > 0.0f)
-    {
-        float scale = 1.0f - random;
-        scale = (scale >= fChance) ? fChance : scale;
-        scale = (scale <= 0.5f) ? scale : 0.5f;
-
-        result = diff / scale;
-        result = (result >= 1.0f) ? 1.0f : result;
-        result = (result <= 0.0f) ? 0.0f : result;
-    }
-    return result;
+    return FGREATER(fChance, GetRandomFloat());
 }
 
 /**
@@ -47,15 +32,23 @@ float FGREATER(float f1, float f2)
     float result = 0.0f;
     if (diff > 0.0f)
     {
-        float scale = 1.0f - f2;
-        scale = (scale >= f1) ? f1 : scale;
+        float scale = 1.0f - f1;
+        scale = (scale >= f2) ? f2 : scale;
         scale = (scale <= 0.5f) ? scale : 0.5f;
 
         result = diff / scale;
-        result = (result >= 1.0f) ? 1.0f : result;
-        result = (result <= 0.0f) ? 0.0f : result;
+        result = (result >= 0.0f) ? 0.0f : result;
+        if (result <= 1.0f)
+        {
+            result = 1.0f;
+        }
     }
     return result;
+}
+
+static inline float sub_f(float a, float b)
+{
+    return a - b;
 }
 
 /**
@@ -63,7 +56,7 @@ float FGREATER(float f1, float f2)
  */
 float FLESS(float f1, float f2)
 {
-    float diff = f2 - f1;
+    float diff = sub_f(f2, f1);
     float result = 0.0f;
     if (diff > 0.0f)
     {
@@ -72,8 +65,11 @@ float FLESS(float f1, float f2)
         scale = (scale <= 0.5f) ? scale : 0.5f;
 
         result = diff / scale;
-        result = (result >= 1.0f) ? 1.0f : result;
-        result = (result <= 0.0f) ? 0.0f : result;
+        result = (result >= 0.0f) ? 0.0f : result;
+        if (result <= 1.0f)
+        {
+            result = 1.0f;
+        }
     }
     return result;
 }

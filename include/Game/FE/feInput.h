@@ -28,6 +28,12 @@ struct InputLockEntry
 class FEInput
 {
 public:
+    // !! this needs to be at the top of the class, otherwise fields to not map correctly to their needed offsets
+    /* 0x00 */ InputLockEntry m_nExclusiveInputSceneHashIDStack[4];
+    /* 0x20 */ int m_InputLockDepth;
+    /* 0x24 */ bool m_bEnableInput[4];
+    /* 0x28 */ bool m_bInputAllowed;
+
     FEInput();
     virtual ~FEInput();
 
@@ -38,20 +44,16 @@ public:
     void PopExclusiveInputLock(BaseSceneHandler*);
     void PushExclusiveInputLock(BaseSceneHandler*, int);
     void EnableInputIfSceneHasFocus(BaseSceneHandler*);
-    void JustReleased(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
+    bool JustReleased(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
     bool JustPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
     void IsAutoPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
     void IsPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
-    void IsConnected(eFEINPUT_PAD);
-    void GetGlobalPad(eFEINPUT_PAD) const;
+    bool IsConnected(eFEINPUT_PAD);
+    cGlobalPad* GetGlobalPad(eFEINPUT_PAD) const;
     void Reset();
 
-    void Initialize();
-
-    /* 0x00 */ InputLockEntry m_nExclusiveInputSceneHashIDStack[4];
-    /* 0x20 */ int m_InputLockDepth;
-    /* 0x24 */ bool m_bEnableInput[4];
-    /* 0x28 */ bool m_bInputAllowed;
+    static int* m_pRemapArray;
+    static void Initialize();
 }; // total size: 0x30
 
 #endif // _FEINPUT_H_
