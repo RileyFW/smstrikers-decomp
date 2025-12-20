@@ -38,8 +38,30 @@ void SpaceSearch::FindBestPosition(nlVector3&, const nlVector3&, eFieldDirection
  * Offset/Address/Size: 0x117C | 0x80063ACC | size: 0x108
  */
 SSearchOpenLane::SSearchOpenLane(cPlayer* pPlayer1, cPlayer* pPlayer2)
-    : SpaceSearch(pPlayer1)
+    : SpaceSearch(pPlayer1 != NULL ? pPlayer1->m_pTeam->m_pNet->m_sideSign : pPlayer2->m_pTeam->m_pNet->m_sideSign)
 {
+    if (pPlayer2 != NULL)
+    {
+        m_pBallOwner = pPlayer1;
+        m_pPassTarget = pPlayer2;
+        m_bOtherPosIsTarget = false;
+
+        if (m_pBallOwner != NULL)
+        {
+            m_v3OtherPos = pPlayer1->m_v3Position;
+        }
+        else
+        {
+            m_v3OtherPos = g_pBall->m_v3Position;
+        }
+    }
+    else
+    {
+        m_pBallOwner = pPlayer1;
+        m_pPassTarget = NULL;
+        m_v3OtherPos = pPlayer1->GetAIOffNetLocation(NULL);
+        m_bOtherPosIsTarget = true;
+    }
 }
 
 /**

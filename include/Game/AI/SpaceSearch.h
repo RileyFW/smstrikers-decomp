@@ -28,6 +28,12 @@ public:
         m_bDebugOn = false;
         m_bDrawSearchSpace = false;
     }
+    SpaceSearch(float fNetDirection)
+    {
+        m_fNetDirection = fNetDirection;
+        m_bDebugOn = false;
+        m_bDrawSearchSpace = false;
+    }
     virtual ~SpaceSearch();
     virtual float EvaluatePosition(const nlVector3&, const nlVector3&, eFieldDirection, unsigned short) = 0;
     void FindBestPosition(nlVector3&, const nlVector3&, eFieldDirection, const nlVector3*, float, unsigned short);

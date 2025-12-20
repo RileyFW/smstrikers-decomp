@@ -1,5 +1,6 @@
 #include "Game/Goalie.h"
 #include "Game/AI/AiUtil.h"
+#include "Game/AI/Fielder.h"
 #include "Game/Net.h"
 #include "Game/Team.h"
 #include "Game/Ball.h"
@@ -9,8 +10,13 @@
 #include "Game/CharacterTriggers.h"
 #include "NL/nlMath.h"
 
-extern cTeam* g_pCurrentlyUpdatingTeam;
-extern f32 mfGoalieStepDist__6Goalie;
+cTeam* g_pCurrentlyUpdatingTeam;
+extern cBall* g_pBall;
+f32 mfGoalieStepDist;
+f32 mfGoalieStrafeDist;
+f32 mfGoalieRunDist;
+f32 mfGoalieUrgentDist;
+f32 gfRepositionThreshold;
 
 static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
@@ -113,7 +119,7 @@ void Goalie::ActionLooseBallPickup(float)
  */
 void Goalie::ActionLooseBallPursueRolling(float deltaTime)
 {
-    DoNavigation(deltaTime, 0.2f + mfGoalieStepDist__6Goalie, NAVI_FACE_BALL);
+    DoNavigation(deltaTime, 0.2f + mfGoalieStepDist, NAVI_FACE_BALL);
 
     if ((mnOffplayPending)
         || (!IsLooseBallClose(SkillTweaks::GetSkillTweaks(g_pCurrentlyUpdatingTeam->m_nSide)->fLooseBallChaseDistance))
@@ -271,8 +277,51 @@ void Goalie::ActionSaveSetup(float deltaTime)
 /**
  * Offset/Address/Size: 0x25D8 | 0x80050B14 | size: 0x180
  */
-void Goalie::ActionSaveReposition(float)
+void Goalie::ActionSaveReposition(float deltaTime)
 {
+    if (mnOffplayPending != 0)
+    {
+        InitActionMove(true);
+        return;
+    }
+
+    mfWaitTime -= deltaTime;
+
+    float distSq = nlGetLengthSquared2D(m_v3Position.f.x - mv3NavTarget.f.x, m_v3Position.f.y - mv3NavTarget.f.y);
+
+    bool shouldReposition = false;
+    if ((distSq < gfRepositionThreshold * gfRepositionThreshold) || (distSq > mfTargetDist && distSq < 1.6899998f))
+    {
+        shouldReposition = true;
+    }
+
+    mfTargetDist = distSq;
+
+    float deflectResult = CheckForDelflectAwayFromNet();
+    if (deflectResult < 0.0f)
+    {
+        return;
+    }
+
+    if (mfWaitTime <= 0.02f || deflectResult > 0.0f || shouldReposition)
+    {
+        InitActionSaveSetup(false);
+        return;
+    }
+
+    if (mfWaitTime < 0.05f)
+    {
+        PlayNewAnim(10);
+        InitMovementFromAnimSeek(m_pTweaks->fRunningDirectionSeekSpeed, m_pTweaks->fRunningDirectionSeekFalloff);
+        return;
+    }
+
+    float ballDx = g_pBall->m_v3Position.f.x - m_v3Position.f.x;
+    float ballDy = g_pBall->m_v3Position.f.y - m_v3Position.f.y;
+    float angle = nlATan2f(ballDy, ballDx);
+    m_aDesiredFacingDirection = (u16)(s32)(10430.378f * angle); // @1734 constant
+
+    DoNavigation(deltaTime, gfRepositionThreshold, NAVI_FACE_DESIRED);
 }
 
 /**
@@ -337,9 +386,58 @@ void Goalie::ActionSTSRecover(float deltaTime)
 
 /**
  * Offset/Address/Size: 0x19A0 | 0x8004FEDC | size: 0x178
+ * TODO: regswaps still around nlATan2f....
  */
-void Goalie::ActionChipShotStumble(float)
+void Goalie::ActionChipShotStumble(float deltaTime)
 {
+    bool bShouldRecover = false;
+    if (m_pCurrentAnimController->m_ePlayMode == PM_HOLD && m_pCurrentAnimController->m_fTime == 1.0f)
+    {
+        bShouldRecover = true;
+    }
+
+    if (bShouldRecover)
+    {
+        if (m_eAnimID == 0x70)
+        {
+            InitActionMove(true);
+            return;
+        }
+        InitActionDiveRecover();
+        return;
+    }
+
+    if (m_pCurrentAnimController->m_fTime < mpSaveData->mfMilestonePercent[2])
+    {
+        float deflectResult = CheckForDelflectAwayFromNet();
+        if (deflectResult < 0.0f)
+        {
+            return;
+        }
+
+        if (deflectResult > 0.0f)
+        {
+            m_pPhysicsCharacter->m_CanCollidedWithGoalLine = true;
+            InitActionSaveSetup(false);
+            return;
+        }
+    }
+
+    float x = mv3NavTarget.f.x;
+
+    if ((float)fabs(x) > (0.5f + (float)fabs(m_v3Position.f.x)) && m_pCurrentAnimController->m_fTime < 0.5f)
+    {
+        m_aDesiredFacingDirection = (u16)(s32)(10430.378f * nlATan2f(m_v3Position.f.y - mv3NavTarget.f.y, m_v3Position.f.x - x));
+
+        GoalieTweaks* pTweaks = static_cast<GoalieTweaks*>(m_pTweaks);
+        u16 newFacing = SeekDirection(
+            m_aActualFacingDirection,
+            m_aDesiredFacingDirection,
+            pTweaks->fThrowingDirectionSeekSpeed,
+            pTweaks->fThrowingDirectionSeekFalloff,
+            deltaTime);
+        SetFacingDirection(newFacing);
+    }
 }
 
 /**
@@ -427,8 +525,71 @@ void Goalie::ActionPassIntercept(float)
 /**
  * Offset/Address/Size: 0x135C | 0x8004F898 | size: 0x1F8
  */
-void Goalie::ActionPreCrouch(float)
+void Goalie::ActionPreCrouch(float deltaTime)
 {
+    nlVector3 targetPos = g_pBall->m_v3Position;
+
+    if (!CheckForSTSAttack())
+    {
+        if (g_pBall->GetOwnerFielder() != NULL)
+        {
+            cFielder* pOwnerFielder = g_pBall->GetOwnerFielder();
+            if (IsOnSameTeam((cPlayer*)pOwnerFielder))
+            {
+                InitActionMove(false);
+            }
+            else if (IsWithinPounceRange())
+            {
+                InitActionPursueBallCarrier();
+                InitActionPursueBallPounce();
+            }
+            else
+            {
+                if (pOwnerFielder->m_eActionState != ACTION_SHOT && pOwnerFielder->m_eActionState != ACTION_SHOOT_TO_SCORE)
+                {
+                    InitActionMove(true);
+                }
+                else if (mCrouchType != GOALIECROUCH_SHOT)
+                {
+                    InitActionMove(true);
+                }
+            }
+        }
+        else if (g_pBall->m_pPassTarget == NULL)
+        {
+            if (mpShooter == NULL || (mpShooter->m_eActionState != ACTION_LOOSE_BALL_SHOT) || (mCrouchType != GOALIECROUCH_LOOSEBALL))
+            {
+                InitActionMove(true);
+            }
+        }
+        else
+        {
+            if (mCrouchType != GOALIECROUCH_PASS)
+            {
+                InitActionMove(true);
+            }
+
+            targetPos = g_pBall->m_pPassTarget->m_v3Position;
+        }
+
+        if (mGoalieActionState == GOALIEACTION_PRE_CROUCH)
+        {
+            float dy = targetPos.f.y - m_v3Position.f.y;
+            float dx = targetPos.f.x - m_v3Position.f.x;
+            float angle = nlATan2f(dy, dx);
+
+            m_aDesiredFacingDirection = (u16)(s32)(10430.378f * angle);
+
+            GoalieTweaks* pTweaks = static_cast<GoalieTweaks*>(m_pTweaks);
+            u16 newFacing = SeekDirection(
+                m_aActualFacingDirection,
+                m_aDesiredFacingDirection,
+                75000.0f,
+                4000.0f,
+                deltaTime);
+            SetFacingDirection(newFacing);
+        }
+    }
 }
 
 /**
@@ -485,4 +646,50 @@ void Goalie::ActionSnapBall(float)
  */
 void Goalie::ActionGrabBall(float)
 {
+    bool bShouldInitMove = false;
+    if (m_pCurrentAnimController->m_ePlayMode == PM_HOLD && m_pCurrentAnimController->m_fTime == 0.0f)
+    {
+        bShouldInitMove = true;
+    }
+
+    if (bShouldInitMove)
+    {
+        if (m_pBall == NULL)
+        {
+            InitActionMove(true);
+            return;
+        }
+        InitActionMoveWB();
+        return;
+    }
+
+    if (g_pBall->m_pOwner != this)
+    {
+        if (g_pBall->GetOwnerFielder() == NULL)
+        {
+            InitActionMove(false);
+            return;
+        }
+
+        float fTimeThreshold = 0.1f + mpLooseBallInfo->mfPickupTime;
+        if (m_pCurrentAnimController->m_fTime < fTimeThreshold)
+        {
+            float fInterpFactor = m_pCurrentAnimController->m_fTime / fTimeThreshold;
+            TrackTarget(g_pBall->m_v3Position, fInterpFactor);
+
+            const nlVector3& jointPos = GetJointPosition(m_nBallJointIndex);
+
+            nlVector3 delta;
+            nlVec3Set(delta, g_pBall->m_v3Position.f.x - jointPos.f.x, g_pBall->m_v3Position.f.y - jointPos.f.y, g_pBall->m_v3Position.f.z - jointPos.f.z);
+
+            if (nlGetLengthSquared3D(delta.f.x, delta.f.y, delta.f.z) < 0.25f)
+            {
+                StealBall(g_pBall->m_pOwner);
+                PickupBall(g_pBall);
+                mbPickedUp = true;
+                g_pBall->ClearShotInProgress();
+                EmitGoalieCatch(this, "goalie_catch", false);
+            }
+        }
+    }
 }

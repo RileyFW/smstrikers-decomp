@@ -47,7 +47,7 @@ public:
     // void QueueStream(unsigned long, float, bool, unsigned long, const char*, Audio::MasterVolume::VOLUME_GROUP);
     // void ProcessNewHeadStream();
     // void StopHead(unsigned long);
-    // void Stop(unsigned long);
+    void Stop(unsigned long);
     // void StopQStream(AudioStreamTrack::StreamTrack::QUEUED_STREAM*);
     // void StopStream(GCAudioStreaming::StereoAudioStream*, bool);
     // void FadeOutDone(AudioStreamTrack::StreamTrack::QUEUED_STREAM*);
