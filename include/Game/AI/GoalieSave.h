@@ -71,6 +71,7 @@ public:
     static int muSTSGoalIndexStart;
     static int muSTSGoalCount;
     static int muMissChipIndexStart;
+    static float mfCrouchDuration;
 };
 
 // class AVLTreeBase<int, SaveData*, NewAdapter<AVLTreeEntry<int, SaveData*>>, DefaultKeyCompare<int>>

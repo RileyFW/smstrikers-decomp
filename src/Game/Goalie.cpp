@@ -238,8 +238,10 @@ int Goalie::ChooseRunAnim(short nAngle, const nlVector3& rTargetPos, float fThre
 /**
  * Offset/Address/Size: 0x18C8 | 0x800443C4 | size: 0x4AC
  */
-void Goalie::CanInterceptPass()
+bool Goalie::CanInterceptPass()
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**

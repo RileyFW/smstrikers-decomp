@@ -518,8 +518,98 @@ void Goalie::ActionPass(float deltaTime)
 /**
  * Offset/Address/Size: 0x1554 | 0x8004FA90 | size: 0x2A8
  */
-void Goalie::ActionPassIntercept(float)
+void Goalie::ActionPassIntercept(float deltaTime)
 {
+    if (muBallDeflectCount != g_pBall->m_bBallDeflectCount)
+    {
+        InitActionMove(true);
+        return;
+    }
+
+    mfWaitTime -= deltaTime;
+
+    switch (mnSubstate)
+    {
+    case 1:
+    {
+        if (mfWaitTime <= 0.02f)
+        {
+            InitActionPassInterceptSave();
+        }
+        return;
+    }
+    case 4:
+    {
+        // Calculate angle to target position
+        float dy = mv3TargetPosition.f.y - m_v3Position.f.y;
+        float dx = mv3TargetPosition.f.x - m_v3Position.f.x;
+        float angleToTarget = nlATan2f(dy, dx);
+        u16 targetAngle = (u16)(s32)(10430.378f * angleToTarget);
+
+        // Calculate angle to ball position
+        dy = g_pBall->m_v3Position.f.y - m_v3Position.f.y;
+        dx = g_pBall->m_v3Position.f.x - m_v3Position.f.x;
+        float angleToBall = nlATan2f(dy, dx);
+        u16 ballAngle = (u16)(s32)(10430.378f * angleToBall);
+
+        // Choose run animation based on angle difference
+        s16 angleDiff = (s16)(targetAngle - m_aActualFacingDirection);
+        int animID = ChooseRunAnim(angleDiff, mv3TargetPosition, 1.0f);
+
+        // Check if we need to adjust the target angle
+        s16 ballAngleDiff = (s16)(ballAngle - targetAngle);
+        ballAngleDiff = ballAngleDiff < 0 ? -ballAngleDiff : ballAngleDiff;
+
+        u16 absBallAngleDiff = (u16)ballAngleDiff;
+
+        if ((absBallAngleDiff > 0x4000) && (animID != 8) && ((m_eAnimID == 8) || (m_eAnimID == 0x27)))
+        {
+            targetAngle += 0x8000;
+        }
+
+        if ((mfWaitTime > 0.25f) && (animID != 8))
+        {
+            PlayNewAnim(animID);
+            InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+            GoalieTweaks* pTweaks = static_cast<GoalieTweaks*>(m_pTweaks);
+            u16 newFacing = SeekDirection(
+                m_aActualFacingDirection,
+                targetAngle,
+                pTweaks->fRunningDirectionSeekSpeed,
+                pTweaks->fRunningDirectionSeekFalloff,
+                deltaTime);
+            SetFacingDirection(newFacing);
+            return;
+        }
+
+        if (CanInterceptPass())
+        {
+            if (mfWaitTime <= 0.02f)
+            {
+                InitActionPassInterceptSave();
+                return;
+            }
+
+            mnSubstate = 1;
+            PlayNewAnim(8);
+
+            GoalieTweaks* pTweaks = static_cast<GoalieTweaks*>(m_pTweaks);
+            InitMovementFromAnimSeek(pTweaks->fRunningDirectionSeekSpeed, pTweaks->fRunningDirectionSeekFalloff);
+            return;
+        }
+
+        float tmp = GoalieSave::mfCrouchDuration;
+        if ((g_pBall->m_tPassTargetTimer.GetSeconds() < tmp) && (IsCloseToPlane(mv3TargetPosition, m_v3Position, 1.2f)))
+        {
+            InitActionPreCrouch(GOALIECROUCH_PASS);
+            return;
+        }
+
+        mUrgency = URGENCY_HIGH;
+        InitActionMove(true);
+    }
+    }
 }
 
 /**
@@ -622,9 +712,52 @@ void Goalie::ActionLooseBallPursueBouncing(float)
 
 /**
  * Offset/Address/Size: 0x6CC | 0x8004EC08 | size: 0x194
+ * TODO: the math to define the angle for SetFacingDirection does not match yet
  */
-void Goalie::ActionSTSAttackSetup(float)
+void Goalie::ActionSTSAttackSetup(float deltaTime)
 {
+    if (!IsOpponentInSTS())
+    {
+        InitActionMove(true);
+        return;
+    }
+
+    mfWaitTime -= deltaTime;
+    if (mfWaitTime <= 0.0)
+    {
+        InitActionSTSAttack();
+        return;
+    }
+
+    cFielder* pOwnerFielder = g_pBall->GetOwnerFielder();
+
+    float dx = m_v3Position.f.x - pOwnerFielder->m_v3Position.f.x;
+    float dy = m_v3Position.f.y - pOwnerFielder->m_v3Position.f.y;
+    float distSq = dx * dx + dy * dy;
+    float pickupDistSq = mpLooseBallInfo->mfPickupDistance * mpLooseBallInfo->mfPickupDistance;
+
+    int animID = 8;
+    if (distSq > pickupDistSq)
+    {
+        animID = 0x1A;
+    }
+
+    PlayNewAnim(animID);
+    InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+    GetLocalPoint(mv3LocalContactPosition, pOwnerFielder->m_v3Position, m_v3Position, m_aActualFacingDirection);
+
+    float angle = 10430.378f * nlATan2f(mv3LocalContactPosition.f.y, mv3LocalContactPosition.f.x);
+    float progressRatio = (mfTargetTime - mfWaitTime) / mfTargetTime;
+
+    s32 angleDeltaInt = (s32)angle;
+    s32 multiplierInt = (s32)(1024.0f * (progressRatio * (progressRatio * ((-2.0f * progressRatio) + 3.0f))));
+    s32 adjustedDelta = (multiplierInt * angleDeltaInt) / 1024;
+
+    u16 newFacing = m_aActualFacingDirection + adjustedDelta;
+
+    SetFacingDirection(newFacing);
+    m_aDesiredFacingDirection = newFacing;
 }
 
 /**
@@ -639,6 +772,55 @@ void Goalie::ActionSTSAttack(float)
  */
 void Goalie::ActionSnapBall(float)
 {
+    unsigned short aRootRot;
+    float fTimeLeft;
+    nlVector3 v3TargetPos;
+    nlVector3 v3RootPos;
+
+    if (g_pBall->m_pOwner != this)
+    {
+        TacklePlayer(g_pBall->m_pOwner);
+
+        fTimeLeft = m_tNoPickupTimer.GetSeconds();
+
+        if (fTimeLeft > 0.0f)
+        {
+            GetCurrentAnimFuture(m_nBallJointIndex, m_pCurrentAnimController->m_fTime, v3TargetPos, v3RootPos, aRootRot);
+
+            float invInterpFactor;
+            float interpFactor;
+
+            interpFactor = (1.0f / mfWaitTime) * (mfWaitTime - fTimeLeft);
+            invInterpFactor = 1.0f - interpFactor;
+
+            v3TargetPos.f.x = (invInterpFactor * g_pBall->m_v3Position.f.x) + (interpFactor * v3TargetPos.f.x);
+            v3TargetPos.f.y = (invInterpFactor * g_pBall->m_v3Position.f.y) + (interpFactor * v3TargetPos.f.y);
+            v3TargetPos.f.z = (invInterpFactor * g_pBall->m_v3Position.f.z) + (interpFactor * v3TargetPos.f.z);
+
+            g_pBall->SetPosition(v3TargetPos);
+            return;
+        }
+        PickupBall(g_pBall);
+        mbPickedUp = true;
+        return;
+    }
+
+    if (m_pBall == NULL)
+    {
+        InitActionMove(true);
+        return;
+    }
+
+    bool shouldMoveWB = false;
+    if (m_pCurrentAnimController->m_ePlayMode == PM_HOLD && m_pCurrentAnimController->m_fTime == 1.0f)
+    {
+        shouldMoveWB = true;
+    }
+
+    if (shouldMoveWB)
+    {
+        InitActionMoveWB();
+    }
 }
 
 /**

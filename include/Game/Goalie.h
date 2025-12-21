@@ -185,7 +185,7 @@ public:
     unsigned short CalcBestSave(float, const nlVector3&, const nlVector3&, unsigned int, bool);
     float CalcSaveParameters(float, unsigned int, bool, bool);
     float CalcTimeToPlane();
-    void CanInterceptPass();
+    bool CanInterceptPass();
     int ChooseRunAnim(short, const nlVector3&, float);
     void ChooseSwatAnim(int);
     void DoPassRelease();
