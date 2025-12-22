@@ -4,7 +4,7 @@
 #include "NL/nlMath.h"
 #include "PowerPC_EABI_Support/Runtime/global_destructor_chain.h"
 
-    LooseBallInfo LooseBallAnims::mLooseBallKickInfo;
+LooseBallInfo LooseBallAnims::mLooseBallKickInfo;
 LooseBallInfo LooseBallAnims::mTrapBallInfo;
 LooseBallInfo LooseBallAnims::mAttackSTSInfo;
 LooseBallInfo LooseBallAnims::mSwatSTSInfo[2];
@@ -96,8 +96,8 @@ const LooseBallInfo* LooseBallAnims::FindLooseBallAnim(const nlVector3& rv3Pos, 
  */
 const LooseBallInfo* LooseBallAnims::GetSwatSTSInfo(int nSide)
 {
-    // static FilteredRandomRange randgenSwats;
-    static FilteredRandomRange randgenSwats = *((FilteredRandomRange*)__register_global_object(&randgenSwats, NULL, (void*)0x8030EC80));
+    static FilteredRandomRange randgenSwats;
+    // static FilteredRandomRange randgenSwats = *((FilteredRandomRange*)__register_global_object(&randgenSwats, NULL, (void*)0x8030EC80));
 
     if (nSide < 0)
     {

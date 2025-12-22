@@ -7,6 +7,7 @@ class FilteredRandomRange
 {
 public:
     FilteredRandomRange();
+    ~FilteredRandomRange() { };
     int genrand(int);
 
     /* 0x00 */ u32 m_repeatingRunLength; // size 0x4

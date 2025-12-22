@@ -8,6 +8,8 @@
 #include "Game/SAnim/pnSingleAxisBlender.h"
 #include "Game/Audio/WorldAudio.h"
 #include "Game/CharacterTriggers.h"
+#include "Game/AI/FilteredRandom.h"
+#include "Game/Field.h"
 #include "NL/nlMath.h"
 
 cTeam* g_pCurrentlyUpdatingTeam;
@@ -19,6 +21,8 @@ f32 mfGoalieUrgentDist;
 f32 gfRepositionThreshold;
 
 static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
+
+extern int gOffplayDejected[5];
 
 inline float CalculateDistanceSquared(const nlVector3& pos1, const nlVector3& pos2)
 {
@@ -793,6 +797,94 @@ void Goalie::ActionPursueBallPounce(float)
  */
 void Goalie::ActionOffplay(float)
 {
+    if (ShouldStartCrossBlend(0x90))
+    {
+        int animID;
+        int currentAnimID = m_eAnimID;
+        if (currentAnimID == 0x89 || currentAnimID == 0x8B || currentAnimID == 0x8D)
+        {
+            animID = 0x8D;
+        }
+        else if (currentAnimID == 0x88 || currentAnimID == 0x8A || currentAnimID == 0x8C)
+        {
+            animID = 0x8C;
+        }
+        else
+        {
+            static FilteredRandomRange randgenDejected;
+            int index = randgenDejected.genrand(5);
+            animID = gOffplayDejected[index];
+        }
+
+        SetAnimState(animID, true, 0.2f, false, false);
+        InitMovementFromAnim(0, v3Zero, 1.0f, false);
+    }
+
+    nlVector3 pos = m_v3Position;
+    float absX = (float)fabs(pos.f.x);
+    float absY = (float)fabs(pos.f.y);
+
+    float goalLineX = cField::GetGoalLineX(1U);
+    float adjustedGoalLineX = goalLineX - 0.8f;
+
+    if (absX > adjustedGoalLineX)
+    {
+        float halfNetWidth = 0.5f * cNet::m_fNetWidth;
+        float netWidthAdjusted = halfNetWidth - 0.8f;
+
+        if (absY < halfNetWidth)
+        {
+            if (absY > netWidthAdjusted)
+            {
+                if (absX < goalLineX)
+                {
+                    float newY;
+                    float adjustedX = netWidthAdjusted + goalLineX;
+                    float deltaX = adjustedX - absX;
+                    if (pos.f.y > 0.0f)
+                    {
+                        newY = deltaX;
+                    }
+                    else
+                    {
+                        newY = -deltaX;
+                    }
+                    pos.f.y = newY;
+                }
+                else
+                {
+                    float newY;
+                    if (pos.f.y > 0.0f)
+                    {
+                        newY = netWidthAdjusted;
+                    }
+                    else
+                    {
+                        newY = -netWidthAdjusted;
+                    }
+                    pos.f.y = newY;
+                }
+
+                SetPosition(pos);
+                SetVelocity(v3Zero);
+            }
+        }
+        else
+        {
+            float newX;
+            if (pos.f.x > 0.0f)
+            {
+                newX = adjustedGoalLineX;
+            }
+            else
+            {
+                newX = -adjustedGoalLineX;
+            }
+            pos.f.x = newX;
+            SetPosition(pos);
+            SetVelocity(v3Zero);
+        }
+    }
 }
 
 /**
