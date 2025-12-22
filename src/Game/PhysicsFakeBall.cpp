@@ -71,8 +71,9 @@ float FakeBallWorld::GetPredictedPlaneIntersectTime(const nlVector4& plane, nlVe
 /**
  * Offset/Address/Size: 0x1768 | 0x80138B54 | size: 0x6C0
  */
-void FakeBallWorld::GetPredictedBallPosition(float, nlVector3&, nlVector3&)
+bool FakeBallWorld::GetPredictedBallPosition(float, nlVector3&, nlVector3&)
 {
+    return false;
 }
 
 /**

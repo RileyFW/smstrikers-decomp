@@ -6,7 +6,16 @@
 #include "Game/Drawable/DrawableCharacter.h"
 #include "Game/FixedUpdateTask.h"
 #include "Game/ParticleUpdateTask.h"
+#include "Game/SAnim.h"
+#include "Game/Game.h"
+#include "Game/Ball.h"
+#include "Game/AI/Scripts/ScriptQuestions.h"
+#include "Game/AI/ShotMeter.h"
 #include "types.h"
+
+static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
+
+static u16 g_IdleTurnCompletionDelta = 0xB6;
 
 // /**
 //  * Offset/Address/Size: 0x13C | 0x80030010 | size: 0xD74
@@ -142,6 +151,14 @@ void cFielder::InitActionHit(cFielder*)
  */
 void cFielder::ActionHit(float)
 {
+    if (ShouldStartCrossBlend(7))
+    {
+        m_fActualSpeed = 0.0f;
+        m_fDesiredSpee = 0.0f;
+        SetVelocity(v3Zero);
+        InitMovementCoast();
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
@@ -156,13 +173,58 @@ void cFielder::InitActionHitReact(cPlayer*, unsigned short, bool)
  */
 void cFielder::ActionHitReact(float)
 {
+    m_pCurrentAnimController->TestFrameTrigger(2.0f);
+
+    if ((m_pCurrentAnimController->TestFrameTrigger(3.0f)) && (mActionHitReactActionVars.bDoFrameLock))
+    {
+        BeginRumbleAction(RUMBLE_SOLID_CONTACT, GetGlobalPad());
+        FireCameraRumbleFilter(0.0f, 0.2f);
+        mActionHitReactActionVars.bDoFrameLock = false;
+    }
+
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x653C | 0x8002D074 | size: 0x11C
  */
-void cFielder::InitActionIdleTurn(unsigned short)
+void cFielder::InitActionIdleTurn(unsigned short desiredFacingDirection)
 {
+    m_aDesiredFacingDirection = desiredFacingDirection;
+    u16 angleDiff = (desiredFacingDirection - m_aActualFacingDirection) + 0x2000;
+
+    if (angleDiff < 0x4000)
+    {
+        SetAnimState(0, true, 0.2f, false, false);
+        InitMovementNone(65000.0f, 0.0f);
+        m_aDesiredFacingDirection = desiredFacingDirection;
+    }
+    else
+    {
+        if (angleDiff < 0x8000)
+        {
+            SetAnimState(3, true, 0.2f, false, false);
+        }
+        else if (angleDiff < 0xC000)
+        {
+            SetAnimState(2, true, 0.2f, false, false);
+        }
+        else
+        {
+            SetAnimState(1, true, 0.2f, false, false);
+        }
+        InitMovementFromAnim(CalcAnimTurnAdjust(m_aActualFacingDirection, m_aDesiredFacingDirection, m_eAnimID), v3Zero, 1.0f, false);
+    }
+
+    SetAction(ACTION_IDLE_TURN);
+}
+
+static inline s16 abs_s16(s16 x)
+{
+    return (x < 0) ? -x : x;
 }
 
 /**
@@ -170,8 +232,31 @@ void cFielder::InitActionIdleTurn(unsigned short)
  */
 void cFielder::ActionIdleTurn(float)
 {
-}
+    if (m_eAnimID == 0)
+    {
+        s16 angleDiff = abs_s16(m_aDesiredFacingDirection - m_aActualFacingDirection);
 
+        if (angleDiff < g_IdleTurnCompletionDelta)
+        {
+            SetAction(ACTION_NEED_ACTION);
+        }
+    }
+    else
+    {
+        bool shouldSetAction = false;
+        cPN_SAnimController* ctrl = m_pCurrentAnimController;
+
+        if (ctrl->m_ePlayMode == PM_HOLD && ctrl->m_fTime == 1.0f)
+        {
+            shouldSetAction = true;
+        }
+
+        if (shouldSetAction)
+        {
+            SetAction(ACTION_NEED_ACTION);
+        }
+    }
+}
 /**
  * Offset/Address/Size: 0x61A0 | 0x8002CCD8 | size: 0x304
  */
@@ -184,6 +269,10 @@ void cFielder::InitActionLateOneTimerFromVolley()
  */
 void cFielder::ActionLateOneTimerFromVolley(float)
 {
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
@@ -205,6 +294,23 @@ void cFielder::InitActionLooseBallPass(cFielder*, bool)
  */
 void cFielder::ActionLooseBallPass(float)
 {
+    if (m_pCurrentAnimController->TestTrigger(mActionOneTimerVars.fOneTimerAnimTime))
+    {
+        if (CanPickupBallFromPass(g_pBall))
+        {
+            if (!IsOnSameTeam(g_pBall->m_pPassTarget))
+            {
+                g_pBall->ClearPassTarget();
+            }
+
+            DoRegularPassing(mActionLooseBallPassVars.passTarget, mActionLooseBallPassVars.bVolleyPass, true, false, false);
+        }
+    }
+
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
@@ -219,13 +325,42 @@ void cFielder::InitActionLooseBallShot(bool)
  */
 void cFielder::ActionLooseBallShot(float)
 {
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x57BC | 0x8002C2F4 | size: 0x124
  */
-void cFielder::InitActionOneTimer(int, nlVector3&, float, bool)
+void cFielder::InitActionOneTimer(int animID, nlVector3& targetPos, float fAdjustEndTime, bool bIsChipShot)
 {
+    g_pGame->DoPerfectPassSlowDown();
+
+    if (((u32)animID - 0x48) > 7)
+    {
+        mActionShotVars.bIsChipShot = bIsChipShot;
+    }
+    else
+    {
+        mActionShotVars.bIsChipShot = false;
+    }
+
+    SetAction(ACTION_ONETIMER);
+    mActionOneTimerVars.fOneTimerAnimTime = fAdjustEndTime;
+    SetAnimState(animID, true, 0.2f, false, false);
+
+    nlVector3 v3Direction;
+    nlVec3Set(v3Direction, targetPos.f.x - m_v3Position.f.x, targetPos.f.y - m_v3Position.f.y, targetPos.f.z - m_v3Position.f.z);
+
+    InitMovementFromAnim(0, v3Direction, fAdjustEndTime, false);
+    m_aDesiredFacingDirection = m_aActualFacingDirection;
+
+    if (m_eCharacterClass == DONKEYKONG && m_ePowerup == POWER_UP_NONE)
+    {
+        ClearPowerupAnimState(false);
+    }
 }
 
 /**
@@ -233,6 +368,10 @@ void cFielder::InitActionOneTimer(int, nlVector3&, float, bool)
  */
 void cFielder::ActionOneTimer(float)
 {
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
@@ -247,14 +386,51 @@ void cFielder::InitActionOneTouchPassFromVolley(cPlayer*)
  */
 void cFielder::ActionOneTouchPassFromVolley(float)
 {
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
+}
+
+inline float CalculateDistanceSquared(const nlVector3& pos1, const nlVector3& pos2)
+{
+    nlVector3 delta;
+    nlVec3Sub(delta, pos1, pos2);
+    return nlGetLengthSquared3D(delta.f.x, delta.f.y, delta.f.z);
+}
+
+inline float TestDistanceSquaredLessThan(const nlVector3& pos1, const nlVector3& pos2, float threshold)
+{
+    nlVector3 delta;
+    nlVec3Sub(delta, pos1, pos2);
+    return nlGetLengthSquared3D(delta.f.x, delta.f.y, delta.f.z) < (threshold * threshold);
 }
 
 /**
  * Offset/Address/Size: 0x530C | 0x8002BE44 | size: 0x1C8
+ * TODO: work in progress
  */
-bool cFielder::DoCalcCanDoPerfectPass(cFielder*, const nlVector3&)
+bool cFielder::DoCalcCanDoPerfectPass(cFielder* pReceiver, const nlVector3& v3Position)
 {
-    return false;
+    const nlVector3& v3OffNetLocPos = pReceiver->GetAIOffNetLocation(NULL);
+
+    float fDistSqPosToOffNet = CalculateDistanceSquared(v3Position, v3OffNetLocPos);
+
+    const nlVector3& v3OffNetLocThis = GetAIOffNetLocation(NULL);
+
+    float fDistSqThisToOffNet = CalculateDistanceSquared(m_v3Position, v3OffNetLocPos);
+    float fDistSqBallToPos = CalculateDistanceSquared(v3Position, g_pBall->m_v3Position);
+    float fOpenToNet = 0.66999996f * OpenToTheirNet(pReceiver);
+
+    bool result = false;
+    if (((fOpenToNet + (0.33f * Open(pReceiver))) > 0.72f)
+        && (fDistSqBallToPos > (4.0f * 4.0f))
+        && (fDistSqPosToOffNet < (14.f * 14.f))
+        && (fDistSqThisToOffNet < (14.f * 14.f)))
+    {
+        result = true;
+    }
+    return result;
 }
 
 /**
@@ -269,6 +445,18 @@ void cFielder::InitActionPass(cPlayer*, bool, bool)
  */
 void cFielder::ActionPass(float)
 {
+    if (m_pBall != nullptr)
+    {
+        if (m_pCurrentAnimController->TestTrigger(0.12f))
+        {
+            DoRegularPassing(mActionPassingVars.pPassTarget, mActionPassingVars.bVolleyPass, mActionPassingVars.bAllowLeadPass, false, false);
+        }
+    }
+
+    if (ShouldStartCrossBlend(7))
+    {
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
@@ -276,6 +464,13 @@ void cFielder::ActionPass(float)
  */
 void cFielder::InitActionPostWhistle()
 {
+    SetAction(ACTION_POST_WHISTLE);
+    SetAnimState(0, false, 0.0f, false, false);
+    InitMovementNone(0.0f, 0.0f);
+    m_aDesiredFacingDirection = m_aActualFacingDirection;
+    m_fActualSpeed = 0.0f;
+    SetVelocity(v3Zero);
+    m_pShotMeter->Abort(this);
 }
 
 /**
@@ -283,6 +478,7 @@ void cFielder::InitActionPostWhistle()
  */
 void cFielder::ActionPostWhistle(float)
 {
+    // EMPTY
 }
 
 /**
@@ -412,6 +608,51 @@ void cFielder::InitActionShot(bool)
  */
 void cFielder::ActionShot(float)
 {
+    if (m_pBall != nullptr && m_pCurrentAnimController->TestFrameTrigger(1.825f))
+    {
+        if (!ShouldIClearBall())
+        {
+            bool bIsChipShot = false;
+            if (mActionShotVars.bIsChipShot || mActionLooseBallShotVars.bIsChipShot)
+            {
+                bIsChipShot = true;
+            }
+
+            if (bIsChipShot)
+            {
+                EmitBallShot(this, BALL_EFFECT_CHIP_SHOT, nullptr, false);
+            }
+            else
+            {
+                if (m_pShotMeter->m_fSpeedValue >= 0.99f)
+                {
+                    EmitBallShot(this, BALL_EFFECT_PERFECT_SHOT, nullptr, false);
+                    FireCameraRumbleFilter(0.0f, 0.2f);
+                    Play3DSFX(Audio::eCharSFX(0x38), VECTORS, 100.0f);
+                }
+                else if (m_tBallPossessionTimer.GetSeconds() < 0.1f)
+                {
+                    EmitBallShot(this, BALL_EFFECT_ONETIMER_SHOT, nullptr, false);
+                }
+                else
+                {
+                    EmitBallShot(this, BALL_EFFECT_REGULAR_SHOT, nullptr, false);
+                }
+            }
+            DoRegularShooting();
+        }
+        else
+        {
+            DoClearBall();
+        }
+        InitMovementFromAnim(0, v3Zero, 1.0f, false);
+    }
+
+    if (ShouldStartCrossBlend(7))
+    {
+        m_pHeadTrack->m_bTrackOOI = false;
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**

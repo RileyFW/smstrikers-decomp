@@ -18,7 +18,7 @@ public:
     void GetPredictedPosAtDistance(float, nlVector3&, nlVector3&);
     void GetPredictedHeightLimitTime(float, float, nlVector3&, nlVector3&, bool);
     static float GetPredictedPlaneIntersectTime(const nlVector4&, nlVector3&, nlVector3&);
-    void GetPredictedBallPosition(float, nlVector3&, nlVector3&);
+    static bool GetPredictedBallPosition(float, nlVector3&, nlVector3&);
     static void InvalidateBallCache();
     void Destroy();
     static void Init(cBall*);

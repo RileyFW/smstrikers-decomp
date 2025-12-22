@@ -44,12 +44,6 @@ public:
     // }
 };
 
-inline void nlVec2Set(nlVector2& v0, float _x, float _y)
-{
-    v0.f.x = _x;
-    v0.f.y = _y;
-}
-
 // #define NL_VECTOR3_SET(v, xval, yval, zval) \
 //     do                                      \
 //     {                                       \
@@ -84,14 +78,6 @@ struct nlVector3
         u32 as_u32[3];
     };
 
-    // nlVector3() { }
-    // nlVector3(float x, float y, float z)
-    //     : x(x)
-    //     , y(y)
-    //     , z(z)
-    // {
-    // }
-
     void Set(float x, float y, float z)
     {
         FORCE_DONT_INLINE;
@@ -117,7 +103,28 @@ struct nlVector3
         float dy = f.y - v.f.y;
         return dx * dx + dy * dy;
     }
+
+    inline float GetLengthSq2D()
+    {
+        return f.x * f.x + f.y * f.y;
+    }
+
+    inline float GetLengthSq3D()
+    {
+        return f.x * f.x + f.y * f.y + f.z * f.z;
+    }
 };
+
+inline void nlVec2Set(nlVector2& v0, float _x, float _y)
+{
+    v0.f.x = _x;
+    v0.f.y = _y;
+}
+
+inline void nlVec2Sub(nlVector2& result, const nlVector2& a, const nlVector2& b)
+{
+    nlVec2Set(result, a.f.x - b.f.x, a.f.y - b.f.y);
+}
 
 inline float nlGetLengthSquared2D(float x, float y)
 {

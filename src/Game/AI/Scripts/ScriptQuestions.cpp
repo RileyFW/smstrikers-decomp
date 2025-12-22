@@ -1191,15 +1191,17 @@ float WideOpenPosition(const nlVector3&, cTeam*, cPlayer*)
 /**
  * Offset/Address/Size: 0x2B10 | 0x80081598 | size: 0x274
  */
-void Open(cFielder*)
+float Open(cFielder*)
 {
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x2854 | 0x800812DC | size: 0x2BC
  */
-void WideOpen(cFielder*)
+float WideOpen(cFielder*)
 {
+    return 0.0f;
 }
 
 /**

@@ -10,10 +10,12 @@
 #include "Game/CharacterTriggers.h"
 #include "Game/AI/FilteredRandom.h"
 #include "Game/Field.h"
+#include "Game/Physics/PhysicsFakeBall.h"
 #include "NL/nlMath.h"
 
 cTeam* g_pCurrentlyUpdatingTeam;
 extern cBall* g_pBall;
+extern FakeBallWorld* g_pFakeBallWorld;
 f32 mfGoalieStepDist;
 f32 mfGoalieStrafeDist;
 f32 mfGoalieRunDist;
@@ -29,6 +31,22 @@ inline float CalculateDistanceSquared(const nlVector3& pos1, const nlVector3& po
     nlVector3 delta;
     nlVec3Sub(delta, pos1, pos2);
     return nlGetLengthSquared3D(delta.f.x, delta.f.y, delta.f.z);
+}
+
+inline float CalculateDistanceSquared2D(const nlVector3& pos1, const nlVector3& pos2)
+{
+    nlVector3 delta;
+    nlVec3Sub(delta, pos1, pos2);
+
+    // float dx, dy;
+    // dx = pos1.f.x - pos2.f.x;
+    // dy = pos1.f.y - pos2.f.y;
+
+    // nlVector2 delta;
+    // nlVec2Set(delta, pos1.f.x - pos2.f.x, pos1.f.y - pos2.f.y);
+    // nlVec2Sub(delta, pos1, pos2);
+    // return nlGetLengthSquared2D(dx, dy);
+    return delta.GetLengthSq2D();
 }
 
 // /**
@@ -688,9 +706,110 @@ void Goalie::ActionPreCrouch(float deltaTime)
 
 /**
  * Offset/Address/Size: 0xF9C | 0x8004F4D8 | size: 0x3C0
+ * TODO: Work in progress
  */
 void Goalie::ActionPursueBallCarrier(float)
 {
+    if (!CheckForSTSAttack())
+    {
+
+        cFielder* pOwnerFielder = g_pBall->GetOwnerFielder();
+
+        if (mnOffplayPending != 0 || pOwnerFielder == NULL || IsOnSameTeam((cPlayer*)pOwnerFielder) || !IsOpponentBallCarrierInRange())
+        {
+            InitActionMove(true);
+            return;
+        }
+
+        nlVector3& ballPos = g_pBall->m_v3Position;
+        GetLocalPoint(mv3LocalContactPosition, ballPos, m_v3Position, m_aActualFacingDirection);
+
+        nlVector3 ballDelta;
+        nlVec3Set(ballDelta,
+            ballPos.f.x - m_v3Position.f.x,
+            ballPos.f.y - m_v3Position.f.y,
+            ballPos.f.z - m_v3Position.f.z);
+
+        nlVector3 desiredPos;
+        nlVector3 desiredDir;
+        nlVector3 desiredOffset;
+        unsigned short desiredAngle;
+        FindDesiredGoaliePosition(desiredPos, desiredDir, desiredOffset, desiredAngle, NULL);
+
+        float thresholdDist;
+        float ballDistSq = ballDelta.GetLengthSq3D();
+
+        float pickupDistance = mpLooseBallInfo->mfPickupDistance;
+        float pounceRange = 0.5f * pickupDistance;
+
+        if (ballDistSq > (pickupDistance * pickupDistance))
+        {
+            thresholdDist = pickupDistance;
+        }
+        else if (ballDistSq < (pounceRange * pounceRange))
+        {
+            thresholdDist = pounceRange;
+        }
+        else
+        {
+            thresholdDist = nlSqrt(ballDistSq, true);
+        }
+
+        float scale = -thresholdDist / nlSqrt(desiredDir.GetLengthSq3D(), true);
+
+        nlVector3 adjustedPos;
+        nlVec3Set(adjustedPos,
+            (scale * desiredDir.f.x) + desiredOffset.f.x,
+            (scale * desiredDir.f.y) + desiredOffset.f.y,
+            (scale * desiredDir.f.z) + desiredOffset.f.z);
+
+        nlVector3 moveDir;
+        nlVec3Sub(moveDir, adjustedPos, m_v3Position);
+
+        float dotProduct = (moveDir.f.x * ballDelta.f.x) + (moveDir.f.y * ballDelta.f.y) + (moveDir.f.z * ballDelta.f.z);
+
+        if (dotProduct > 0.0f)
+        {
+            ballDelta = moveDir;
+        }
+
+        float angle = nlATan2f(ballDelta.f.y, ballDelta.f.x);
+        m_aDesiredFacingDirection = (u16)(s32)(10430.378f * angle); // @1734 constant
+
+        float pickupDistanceSq = mpLooseBallInfo->mfPickupDistance * mpLooseBallInfo->mfPickupDistance;
+
+        nlVector3 opponentLocalPos;
+        GetLocalPoint(opponentLocalPos, pOwnerFielder->m_v3Position, m_v3Position, m_aActualFacingDirection);
+
+        float dist1Sq = CalculateDistanceSquared2D(mv3LocalContactPosition, mpLooseBallInfo->mv3PickupPos);
+        float dist2Sq = CalculateDistanceSquared2D(opponentLocalPos, mpLooseBallInfo->mv3PickupPos);
+        float dist3Sq = mv3LocalContactPosition.GetLengthSq2D();
+        float dist4Sq = CalculateDistanceSquared2D(pOwnerFielder->m_v3Position, m_v3Position);
+
+        if ((mv3LocalContactPosition.f.x < -0.35f) || (dist1Sq > 0.36f && dist2Sq > 0.36f && dist3Sq > pickupDistanceSq && dist4Sq > pickupDistanceSq))
+        {
+            s16 angleDiff = (s16)(m_aDesiredFacingDirection - m_aActualFacingDirection);
+            int animID = ChooseRunAnim(angleDiff, ballPos, 1.0f); // @1577 constant
+            PlayNewAnim(animID);
+
+            int opponentActionState = pOwnerFielder->m_eActionState;
+            float speedScale = 1.5f;
+
+            if (mbPlayMiss && (opponentActionState != 0xF) && (opponentActionState != 0x10))
+            {
+                speedScale = SkillTweaks::GetSkillTweaks(g_pCurrentlyUpdatingTeam->m_nSide)->fGoalieDekeSpeed;
+            }
+
+            if (speedScale != m_pCurrentAnimController->m_fPlaybackSpeedScale)
+            {
+                m_pCurrentAnimController->m_fPlaybackSpeedScale = speedScale;
+            }
+
+            InitMovementFromAnimSeek(m_pTweaks->fRunningDirectionSeekSpeed, m_pTweaks->fRunningDirectionSeekFalloff);
+            return;
+        }
+        InitActionPursueBallPounce();
+    }
 }
 
 static inline cPlayer* GetBallOwner(cBall* pBall, cBall** ppBall)
@@ -889,9 +1008,61 @@ void Goalie::ActionOffplay(float)
 
 /**
  * Offset/Address/Size: 0x860 | 0x8004ED9C | size: 0x21C
+ * TODO: there are still some register swaps caused by CalculateDistanceSquared2D
  */
-void Goalie::ActionLooseBallPursueBouncing(float)
+void Goalie::ActionLooseBallPursueBouncing(float deltaTime)
 {
+    if (IsPassThreat() || mnOffplayPending || !IsLooseBallClose(0.0f) || g_pBall->m_pOwner != NULL)
+    {
+        InitActionMove(true);
+        return;
+    }
+
+    if (muBallChangeCount != g_pBall->m_bBallPathChangeCount)
+    {
+        InitActionLooseBallSetup();
+        return;
+    }
+
+    mfTargetTime -= deltaTime;
+    if ((mfTargetTime < 0.1f) || (g_pBall->m_v3Position.f.z < 1.0f && g_pBall->m_v3Velocity.f.z < 3.0f))
+    {
+        InitActionLooseBallSetup();
+        return;
+    }
+
+    nlVector3 predictedPos;
+    nlVector3 predictedVel;
+    FakeBallWorld::GetPredictedBallPosition(mfTargetTime, predictedPos, predictedVel);
+
+    if (CalculateDistanceSquared2D(m_v3Position, predictedPos) < mfTargetDist)
+    {
+        PlayNewAnim(8);
+        InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+        GetLocalPoint(mv3LocalContactPosition, predictedPos, m_v3Position, m_aActualFacingDirection);
+        GetLocalPoint(mv3LocalContactVelocity, predictedVel, m_v3Position, m_aActualFacingDirection);
+
+        InitActionLooseBallCatch();
+        return;
+    }
+
+    // Calculate angle to predicted position and set facing direction
+    float angle = nlATan2f(predictedPos.f.y - m_v3Position.f.y, predictedPos.f.x - m_v3Position.f.x);
+    m_aDesiredFacingDirection = (u16)(s32)(10430.378f * angle);
+
+    if (CalculateDistanceSquared(predictedPos, mv3TargetPosition) > mfTargetDist)
+    {
+        InitActionLooseBallSetup();
+        return;
+    }
+
+    // Play animation if not already playing
+    if (m_eAnimID != 0x26)
+    {
+        PlayNewAnim(0x26);
+        InitMovementFromAnimSeek(m_pTweaks->fRunningDirectionSeekSpeed, m_pTweaks->fRunningDirectionSeekFalloff);
+    }
 }
 
 /**
