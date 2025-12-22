@@ -22,10 +22,9 @@ static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
 inline float CalculateDistanceSquared(const nlVector3& pos1, const nlVector3& pos2)
 {
-    float dx = pos1.f.x - pos2.f.x;
-    float dy = pos1.f.y - pos2.f.y;
-    float dz = pos1.f.z - pos2.f.z;
-    return dx * dx + dy * dy + dz * dz;
+    nlVector3 delta;
+    nlVec3Sub(delta, pos1, pos2);
+    return nlGetLengthSquared3D(delta.f.x, delta.f.y, delta.f.z);
 }
 
 // /**
@@ -82,8 +81,9 @@ void Goalie::ActionLooseBallCatch(float deltaTime)
         const nlVector3& rightHandPos = GetJointPosition(m_nRightHandJointIndex);
 
         float distSqLeft = g_pBall->m_v3Position.CalculateDistanceSquared(leftHandPos);
-
         if (distSqLeft < 1.0f || g_pBall->m_v3Position.CalculateDistanceSquared(rightHandPos) < 1.0f)
+        // if (_CalculateDistanceSquared(leftHandPos, g_pBall->m_v3Position) < 1.0f
+        //     || _CalculateDistanceSquared(rightHandPos, g_pBall->m_v3Position) < 1.0f)
         {
             Audio::SoundAttributes soundAttrs;
             soundAttrs.Init();
@@ -689,11 +689,103 @@ void Goalie::ActionPursueBallCarrier(float)
 {
 }
 
+static inline cPlayer* GetBallOwner(cBall* pBall, cBall** ppBall)
+{
+    *ppBall = pBall;
+    return pBall->m_pOwner;
+}
+
 /**
  * Offset/Address/Size: 0xCCC | 0x8004F208 | size: 0x2D0
  */
 void Goalie::ActionPursueBallPounce(float)
 {
+    float animTime = m_pCurrentAnimController->m_fTime;
+
+    if (m_pBall == NULL)
+    {
+        if (animTime < 0.2f && CheckForSTSAttack())
+        {
+            PlayNewAnim(8);
+            return;
+        }
+
+        cBall* pBall;
+        cPlayer* pOwner = GetBallOwner(g_pBall, &pBall); // wtf..
+
+        if (pOwner == NULL)
+        {
+            SetGoalieAction(GOALIEACTION_LOOSEBALL_PICKUP, 0);
+            mfTargetTime = 0.0f;
+            mfWaitTime = -1.0f;
+            return;
+        }
+
+        if (IsOnSameTeam(pOwner) || !IsOpponentBallCarrierInRange())
+        {
+            InitActionMove(true);
+            return;
+        }
+
+        if (CalculateDistanceSquared(GetJointPosition(m_nBallJointIndex), pBall->m_v3Position) < 0.16000001f
+            || CalculateDistanceSquared(GetJointPosition(m_nLeftHandJointIndex), pBall->m_v3Position) < 0.16000001f
+            || CalculateDistanceSquared(GetJointPosition(m_nRightHandJointIndex), pBall->m_v3Position) < 0.16000001f)
+        {
+            ExecutePounce(pOwner, true);
+            return;
+        }
+
+        float pickupTime = mpLooseBallInfo->mfPickupTime;
+        if ((animTime < pickupTime) && g_pBall->m_tShotTimer.m_uPackedTime == 0)
+        {
+            float ratio = animTime / pickupTime;
+            float interpValue = ratio * (ratio * ((-2.0f * ratio) + 3.0f));
+
+            if (interpValue < 0.99f && !mbPlayMiss)
+            {
+                TrackTarget(g_pBall->m_v3Position, interpValue);
+            }
+        }
+    }
+
+    if (animTime > 0.95f)
+    {
+        if (m_eAnimID != 0x7C)
+        {
+            if (m_pBall == NULL)
+            {
+                const GoalieTweaks* pTweaks = static_cast<const GoalieTweaks*>(m_pTweaks);
+                if (mFatigue.mfEnergyLevel < pTweaks->fGetupEnergyHigh)
+                {
+                    float speed = InterpolateRangeClamped(
+                        pTweaks->fGetupSpeedLow,
+                        0.0f,
+                        pTweaks->fGetupEnergyLow,
+                        pTweaks->fGetupEnergyHigh,
+                        mFatigue.mfEnergyLevel);
+                    m_pCurrentAnimController->m_fPlaybackSpeedScale = speed;
+                }
+
+                if (ShouldStartCrossBlend(8))
+                {
+                    InitActionMove(false);
+                    return;
+                }
+            }
+            else
+            {
+                if (ShouldStartCrossBlend(9))
+                {
+                    InitActionMoveWB();
+                    return;
+                }
+            }
+        }
+        else
+        {
+            InitActionPursueRecover();
+        }
+    }
 }
 
 /**

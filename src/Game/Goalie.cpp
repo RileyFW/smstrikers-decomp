@@ -1458,6 +1458,7 @@ void Goalie::InitActionPass(bool)
  */
 void Goalie::ExecutePounce(cPlayer*, bool)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
