@@ -8,9 +8,9 @@
 class FuzzyVariant : public Variant
 {
 public:
-    FuzzyVariant() { };
-    FuzzyVariant(const FuzzyVariant&) { };
-    virtual ~FuzzyVariant() { };
+    FuzzyVariant() { Reset(); };
+    // FuzzyVariant(const FuzzyVariant&) { };
+    // ~FuzzyVariant() { };
 
     float Confidence;      // offset 0x14, size 0x4
     float SelectionChance; // offset 0x18, size 0x4

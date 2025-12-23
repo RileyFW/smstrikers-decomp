@@ -1,4 +1,7 @@
 #include "Game/AI/Variant.h"
+#include "PowerPC_EABI_Support/Runtime/runtime.h"
+
+static Variant gvNotSet;
 
 // /**
 //  * Offset/Address/Size: 0x268 | 0x8006A194 | size: 0x3C
@@ -94,6 +97,48 @@ void Variant::ToString() const
 /**
  * Offset/Address/Size: 0x0 | 0x80066268 | size: 0xC4
  */
-void Variant::GetHash() const
+unsigned long Variant::GetHash() const
 {
+    unsigned long hash = 0;
+
+    switch (mType)
+    {
+    case FT_BOOL:
+        return mData.b;
+
+    case FT_CHAR:
+        hash = mData.c;
+        hash = (s8)hash;
+        return hash;
+
+    case FT_SHORT:
+        return (unsigned long)mData.s;
+
+    case FT_INT:
+        return (unsigned long)mData.i;
+
+    case FT_U32:
+        return mData.u;
+
+    case FT_FLOAT:
+        return __cvt_fp2unsigned((f64)mData.f);
+
+    case FT_PLAYER:
+        return (unsigned long)mData.pPlayer;
+
+    case FT_TEAM:
+        return (unsigned long)mData.pTeam;
+
+    case FT_VECTOR:
+    {
+        unsigned long hash1 = __cvt_fp2unsigned((f64)mData.vector.f.z);
+        unsigned long hash2 = __cvt_fp2unsigned((f64)mData.vector.f.y);
+        hash2 ^= hash1;
+        unsigned long hash3 = __cvt_fp2unsigned((f64)mData.vector.f.x);
+        hash = hash3 | hash2;
+        break;
+    }
+    }
+
+    return hash;
 }

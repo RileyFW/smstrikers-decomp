@@ -24,10 +24,11 @@ enum eVariantType
 class Variant
 {
 public:
-    virtual ~Variant();
+    Variant() { Reset(); };
 
-    void ToString() const;
-    void GetHash() const;
+    virtual void Reset() { };
+    virtual unsigned long GetHash() const;
+    virtual void ToString() const;
 
     /* 0x4 */ enum eVariantType mType;
     /* 0x8 */ union
