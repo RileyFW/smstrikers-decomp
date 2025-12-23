@@ -26,7 +26,14 @@ class Variant
 public:
     Variant() { Reset(); };
 
-    virtual void Reset() { };
+    virtual void Reset()
+    {
+        mType = FT_UNSPECIFIED;
+        mData.vector.f.x = 0.0f;
+        mData.vector.f.y = 0.0f;
+        mData.vector.f.z = 0.0f;
+    };
+
     virtual unsigned long GetHash() const;
     virtual void ToString() const;
 
@@ -39,9 +46,9 @@ public:
         float f;
         int i;
         unsigned long u;
-        class cPlayer* pPlayer;
-        class cTeam* pTeam;
-        class nlVector3 vector;
+        cPlayer* pPlayer;
+        cTeam* pTeam;
+        nlVector3 vector;
     } mData;
 }; // total size: 0x14
 

@@ -25,8 +25,9 @@ void ShotMeter::Abort(cFielder* pFielder)
 /**
  * Offset/Address/Size: 0x258 | 0x80062378 | size: 0x42C
  */
-void ShotMeter::CalcOneTimerValue(cFielder*, bool)
+void ShotMeter::CalcOneTimerValue(cFielder* pFielder, bool bWasPerfectPass)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

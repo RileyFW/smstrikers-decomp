@@ -9,8 +9,23 @@ class FuzzyVariant : public Variant
 {
 public:
     FuzzyVariant() { Reset(); };
-    // FuzzyVariant(const FuzzyVariant&) { };
-    // ~FuzzyVariant() { };
+    FuzzyVariant(const FuzzyVariant& other)
+    {
+        Reset();
+        *this = other;
+    }
+
+    virtual void Reset()
+    {
+        FORCE_DONT_INLINE;
+        mType = FT_UNSPECIFIED;
+        mData.vector.f.x = 0.0f;
+        mData.vector.f.y = 0.0f;
+        mData.vector.f.z = 0.0f;
+        ExtraData.Reset();
+        Confidence = 0.0f;
+        SelectionChance = 1.0f;
+    };
 
     float Confidence;      // offset 0x14, size 0x4
     float SelectionChance; // offset 0x18, size 0x4

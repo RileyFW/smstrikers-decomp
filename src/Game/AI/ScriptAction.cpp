@@ -1,9 +1,10 @@
 #include "Game/AI/ScriptAction.h"
 
 #include "Game/AI/Fuzzy.h"
+#include "Game/AI/FuzzyVariant.h"
 #include "Game/AI/FielderDesires.h"
 
-class FuzzyVariant fvNotSet;
+extern FuzzyVariant fvNotSet;
 
 // /**
 //  * Offset/Address/Size: 0x68 | 0x800620BC | size: 0x64

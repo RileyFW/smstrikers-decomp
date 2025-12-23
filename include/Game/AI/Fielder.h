@@ -293,8 +293,8 @@ public:
     // to be verified
     void QueueDesire(eFielderDesireState, float, FuzzyVariant, FuzzyVariant);
     void ClearQueuedDesire();
-    void InitDesire(const sDesireParams*, float);
-    void InitDesire(eFielderDesireState, float, float, FuzzyVariant, FuzzyVariant);
+    bool InitDesire(const sDesireParams*, float);
+    bool InitDesire(eFielderDesireState eDesire, float fConfidence, float fDuration, FuzzyVariant vOpt1, FuzzyVariant vOpt2);
     void UpdateDesireState(float);
     void EndDesire(bool);
     void CleanUpDesire(eFielderDesireState);

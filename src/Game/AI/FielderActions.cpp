@@ -11,7 +11,10 @@
 #include "Game/Ball.h"
 #include "Game/AI/Scripts/ScriptQuestions.h"
 #include "Game/AI/ShotMeter.h"
+#include "Game/AI/FuzzyVariant.h"
 #include "types.h"
+
+extern FuzzyVariant fvNotSet;
 
 static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
@@ -288,13 +291,34 @@ void cFielder::ActionLateOneTimerFromVolley(float)
  */
 void cFielder::DoCommonInitActionLooseBall(const nlVector3&)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x5BEC | 0x8002C724 | size: 0x204
  */
-void cFielder::InitActionLooseBallPass(cFielder*, bool)
+void cFielder::InitActionLooseBallPass(cFielder* pPassTarget, bool bVolleyPass)
 {
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_LOOSE_BALL_PASS);
+
+    cPlayer* finalPassTarget;
+    if (pPassTarget != NULL)
+    {
+        finalPassTarget = pPassTarget;
+    }
+    else
+    {
+        finalPassTarget = DoFindBestPassTarget(false, false);
+    }
+
+    mActionLooseBallPassVars.passTarget = finalPassTarget;
+    mActionLooseBallPassVars.bVolleyPass = bVolleyPass;
+
+    DoCommonInitActionLooseBall(mActionLooseBallPassVars.passTarget->m_v3Position);
+
+    m_bCanTestController = false;
+    SetNoPickUpTime(3.0f);
 }
 
 /**
@@ -324,8 +348,20 @@ void cFielder::ActionLooseBallPass(float)
 /**
  * Offset/Address/Size: 0x5924 | 0x8002C45C | size: 0x21C
  */
-void cFielder::InitActionLooseBallShot(bool)
+void cFielder::InitActionLooseBallShot(bool bIsChipShot)
 {
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_LOOSE_BALL_SHOT);
+
+    mActionLooseBallShotVars.bIsChipShot = bIsChipShot;
+
+    DoCommonInitActionLooseBall(m_pTeam->GetOtherNet()->m_baseLocation);
+
+    SetNoPickUpTime(3.0f);
+    DoResetShotMeter(0.0f);
+
+    ShotMeter* pShotMeter = m_pShotMeter;
+    pShotMeter->CalcOneTimerValue(this, UsePerfectPass());
 }
 
 /**

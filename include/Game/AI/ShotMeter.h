@@ -18,7 +18,7 @@ class ShotMeter
 public:
     void Update(float, bool);
     void Abort(cFielder*);
-    void CalcOneTimerValue(cFielder*, bool);
+    void CalcOneTimerValue(cFielder* pFielder, bool bWasPerfectPass);
     float GetTotalDuration() const;
     void Reset();
     void ShotReleased(cFielder*);
