@@ -222,9 +222,13 @@ void cFielder::InitActionIdleTurn(unsigned short desiredFacingDirection)
     SetAction(ACTION_IDLE_TURN);
 }
 
-static inline s16 abs_s16(s16 x)
+static inline s32 abs_s16(s16 x)
 {
-    return (x < 0) ? -x : x;
+    if (x < 0)
+    {
+        return -x;
+    }
+    return x;
 }
 
 /**
@@ -234,7 +238,7 @@ void cFielder::ActionIdleTurn(float)
 {
     if (m_eAnimID == 0)
     {
-        s16 angleDiff = abs_s16(m_aDesiredFacingDirection - m_aActualFacingDirection);
+        s16 angleDiff = (u16)abs_s16(m_aDesiredFacingDirection - m_aActualFacingDirection);
 
         if (angleDiff < g_IdleTurnCompletionDelta)
         {
@@ -246,9 +250,12 @@ void cFielder::ActionIdleTurn(float)
         bool shouldSetAction = false;
         cPN_SAnimController* ctrl = m_pCurrentAnimController;
 
-        if (ctrl->m_ePlayMode == PM_HOLD && ctrl->m_fTime == 1.0f)
+        if (ctrl->m_ePlayMode == PM_HOLD)
         {
-            shouldSetAction = true;
+            if (ctrl->m_fTime == 0.0f)
+            {
+                shouldSetAction = true;
+            }
         }
 
         if (shouldSetAction)
@@ -257,6 +264,7 @@ void cFielder::ActionIdleTurn(float)
         }
     }
 }
+
 /**
  * Offset/Address/Size: 0x61A0 | 0x8002CCD8 | size: 0x304
  */
