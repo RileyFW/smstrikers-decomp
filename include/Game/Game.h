@@ -63,6 +63,11 @@ public:
     void AbortPendingThought(unsigned long);
     void SetDifficulty(eDifficultyID, eDifficultyID, eDifficultyID);
 
+    inline bool IsGameplayOrOvertime()
+    {
+        return (m_eGameState == GS_GAMEPLAY || m_eGameState == GS_OVERTIME);
+    }
+
     /* 0x04 */ GameTweaks* m_pGameTweaks;
     /* 0x08 */ FuzzyTweaks* m_pFuzzyTweaks;
     /* 0x0C */ Clock* m_pGameClock;

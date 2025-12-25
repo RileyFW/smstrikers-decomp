@@ -413,7 +413,6 @@ static bool IsGameplayOrOvertime(eGameState state)
 
 /**
  * Offset/Address/Size: 0xA910 | 0x80023C4C | size: 0x1BC
- * TODO: one last regswap because of bIsGameplayOrOvertime....
  */
 void cFielder::CollideWithChainCallback(ChainChomp* pChainChomp)
 {
@@ -465,17 +464,9 @@ void cFielder::CollideWithChainCallback(ChainChomp* pChainChomp)
             EmitChainBite(this);
         }
 
-        // Track stats if thrower exists and game is in gameplay/overtime
         if (pChainChomp->mpThrower != nullptr)
         {
-            // eGameState state = g_pGame->m_eGameState;
-            bool bIsGameplayOrOvertime = false;
-            if (GS_GAMEPLAY == g_pGame->m_eGameState || GS_OVERTIME == g_pGame->m_eGameState)
-            {
-                bIsGameplayOrOvertime = true;
-            }
-
-            if (bIsGameplayOrOvertime && !IsOnSameTeam(pChainChomp->mpThrower))
+            if (g_pGame->IsGameplayOrOvertime() && !IsOnSameTeam(pChainChomp->mpThrower))
             {
                 cFielder* pThrower = pChainChomp->mpThrower;
                 nlSingleton<StatsTracker>::Instance()->TrackStat(

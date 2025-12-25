@@ -324,7 +324,7 @@ public:
     void ActionElectrocution(float);
     void InitActionHit(cFielder*);
     void ActionHit(float);
-    void InitActionHitReact(cPlayer*, unsigned short, bool);
+    bool InitActionHitReact(cPlayer*, unsigned short, bool);
     void ActionHitReact(float);
     void InitActionIdleTurn(unsigned short);
     void ActionIdleTurn(float);

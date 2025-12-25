@@ -15,16 +15,30 @@
 #include "Game/AI/FuzzyVariant.h"
 #include "Game/AI/AiUtil.h"
 #include "Game/MathHelpers.h"
+#include "Game/DB/StatsTracker.h"
 #include "NL/plat/plataudio.h"
 #include "types.h"
 
 extern FuzzyVariant fvNotSet;
 
+struct HitReactInfo
+{
+    /* 0x0 */ int nAnimID;
+    /* 0x4 */ u16 aFacingDirectionOffset;
+}; // total size: 0x8
+
+HitReactInfo g_HitReactInfo[4] = {
+    { 0x6F, 0x0 },
+    { 0x72, 0x0 },
+    { 0x71, 0x0 },
+    { 0x70, 0x0 },
+};
+
 static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
-static u16 g_IdleTurnCompletionDelta = 0xB6;
+u16 g_IdleTurnCompletionDelta = 0xB6;
 
-static const int SlideAttackReactAnims[4] = {
+int SlideAttackReactAnims[4] = {
     0x66,
     0x69,
     0x68,
@@ -284,8 +298,66 @@ void cFielder::ActionHit(float)
 /**
  * Offset/Address/Size: 0x66F4 | 0x8002D22C | size: 0x398
  */
-void cFielder::InitActionHitReact(cPlayer*, unsigned short, bool)
+bool cFielder::InitActionHitReact(cPlayer* pAttacker, unsigned short desiredFacingDirection, bool bDoFrameLock)
 {
+    CleanUpPowerupEffect();
+
+    if (IsFallenDown(0.0f))
+    {
+        return false;
+    }
+
+    if (IsFrozen())
+    {
+        m_tFrozenTimer.SetSeconds(0.0f);
+        EmitUnFreeze(this);
+    }
+
+    mActionHitReactActionVars.bDoFrameLock = bDoFrameLock;
+
+    if (m_pBall != nullptr)
+    {
+        ReleaseBall();
+        ShootBallDueToContact(pAttacker->m_v3Velocity);
+
+        if (!mActionHitReactActionVars.bDoFrameLock)
+        {
+            FireCameraRumbleFilter(0.0f, 0.2f);
+        }
+
+        if (pAttacker->m_eClassType == FIELDER && ((cFielder*)pAttacker)->IsHitting())
+        {
+            ((cFielder*)pAttacker)->DoPenaltyCardBooking(this, PEN_TYPE_HIT_WITH_BALL);
+        }
+    }
+    else if (pAttacker->m_eClassType == FIELDER && ((cFielder*)pAttacker)->IsHitting())
+    {
+        ((cFielder*)pAttacker)->DoPenaltyCardBooking(this, PEN_TYPE_HIT_NO_BALL);
+    }
+
+    if (!mActionHitReactActionVars.bDoFrameLock)
+    {
+        BeginRumbleAction(RUMBLE_SOLID_CONTACT, GetGlobalPad());
+    }
+
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_HIT_REACT);
+
+    s16 angleDiff = (s16)((u16)(desiredFacingDirection + 0x8000) - m_aActualFacingDirection) + 0x2000;
+    u32 index = ((angleDiff >> 14) & 3);
+
+    SetAnimState(g_HitReactInfo[index].nAnimID, true, 0.2f, false, false);
+    SetFacingDirection(desiredFacingDirection + g_HitReactInfo[index].aFacingDirectionOffset);
+
+    InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+    if (g_pGame->IsGameplayOrOvertime())
+    {
+        StatsTracker::Instance()->TrackStat(STATS_HITS_MADE, pAttacker->m_pTeam->m_nSide, pAttacker->m_ID, 0, 0, 0, 0);
+    }
+
+    m_fDesiredSpeed = 0.0f;
+    return true;
 }
 
 /**
