@@ -5,6 +5,7 @@
 
 #include "Game/Ball.h"
 #include "Game/Field.h"
+#include "Game/MathHelpers.h"
 
 // static bool init$541;
 // static f32 fDir;
@@ -35,11 +36,6 @@ GoalCamera::GoalCamera()
  */
 GoalCamera::~GoalCamera()
 {
-}
-
-static inline u16 RadToAng16(f32 r)
-{
-    return (u16)(f32)(10430.378f * r);
 }
 
 /**

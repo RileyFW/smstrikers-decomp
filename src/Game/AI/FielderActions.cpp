@@ -7,11 +7,15 @@
 #include "Game/FixedUpdateTask.h"
 #include "Game/ParticleUpdateTask.h"
 #include "Game/SAnim.h"
+#include "Game/AnimInventory.h"
 #include "Game/Game.h"
 #include "Game/Ball.h"
 #include "Game/AI/Scripts/ScriptQuestions.h"
 #include "Game/AI/ShotMeter.h"
 #include "Game/AI/FuzzyVariant.h"
+#include "Game/AI/AiUtil.h"
+#include "Game/MathHelpers.h"
+#include "NL/plat/plataudio.h"
 #include "types.h"
 
 extern FuzzyVariant fvNotSet;
@@ -26,17 +30,6 @@ static const int SlideAttackReactAnims[4] = {
     0x68,
     0x67,
 };
-
-/**
- * Converts a 2D direction vector to a u16 angle.
- * @param dir Direction vector (uses x and y components)
- * @param offset Angle offset to add (0x4000 = 90°, 0x8000 = 180°, etc.)
- * @return Angle in u16 format where 0x10000 represents 360°
- */
-static inline u16 nlVector3ToAngle(const nlVector3& dir, u16 offset = 0)
-{
-    return (u16)((u32)(u16)(s32)(10430.378f * nlATan2f(dir.f.y, dir.f.x)) + offset);
-}
 
 // /**
 //  * Offset/Address/Size: 0x13C | 0x80030010 | size: 0xD74
@@ -190,8 +183,87 @@ void cFielder::ActionElectrocution(float)
 /**
  * Offset/Address/Size: 0x6AF4 | 0x8002D62C | size: 0x478
  */
-void cFielder::InitActionHit(cFielder*)
+void cFielder::InitActionHit(cFielder* pTarget)
 {
+    if (IsFrozen())
+    {
+        return;
+    }
+
+    if (pTarget != nullptr)
+    {
+        cSAnim* pAnim = m_pAnimInventory->GetAnim(0x6E);
+        nlVector3 rootTransStart;
+        nlVector3 rootTransEnd;
+
+        pAnim->GetRootTrans(4.0f / (float)pAnim->m_nNumKeys, &rootTransStart);
+        pAnim->GetRootTrans(14.0f / (float)pAnim->m_nNumKeys, &rootTransEnd);
+
+        float distance = nlSqrt(CalculateDistanceSquared(rootTransEnd, rootTransStart), true) / 0.3333333f;
+
+        int nInterceptResult = 0;
+
+        nlVector3 targetVelocity = pTarget->m_v3Velocity;
+        if (pTarget->m_eActionState == 0)
+        {
+            targetVelocity = v3Zero;
+        }
+
+        // Calculate intercept
+        float fInterceptTimes[2];
+        float combinedRadius = 0.5f * (m_pTweaks->fPhysCapsuleRadius + pTarget->m_pTweaks->fPhysCapsuleRadius);
+        CalcInterceptXY(m_v3Position, distance, combinedRadius, pTarget->m_v3Position, targetVelocity, nInterceptResult, fInterceptTimes);
+
+        float fTime;
+
+        if (nInterceptResult != 0)
+        {
+            if (nInterceptResult == 2)
+            {
+                fTime = nlMinEquals(fInterceptTimes[0], fInterceptTimes[1]);
+            }
+            else
+            {
+                fTime = fInterceptTimes[0];
+            }
+        }
+        else
+        {
+            fTime = 0.3f;
+        }
+
+        nlVector3 interceptPos;
+        interceptPos.f.x = (fTime * pTarget->m_v3Velocity.f.x) + pTarget->m_v3Position.f.x;
+        interceptPos.f.y = (fTime * pTarget->m_v3Velocity.f.y) + pTarget->m_v3Position.f.y;
+
+        float angleRad = nlATan2f(interceptPos.f.y - m_v3Position.f.y, interceptPos.f.x - m_v3Position.f.x);
+        u16 targetAngle = (u16)(s32)(10430.378f * angleRad); // @5580 = 10430.378f
+
+        SetFacingDirection(targetAngle);
+
+        // Set facing direction fields
+        m_aDesiredFacingDirection = m_aActualFacingDirection;
+        m_aDesiredMovementDirection = m_aDesiredFacingDirection;
+        m_aActualMovementDirection = m_aDesiredMovementDirection;
+    }
+
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_HIT);
+    SetAnimState(0x6E, true, 0.2f, false, false);
+    InitMovementFromAnim(0, v3Zero, 1.0f, false);
+    PlayRandomCharDialogue(0, VECTORS, 100.0f, -1.0f);
+
+    // Create event
+    const Event* pEvent = g_pEventManager->CreateValidEvent(0x16, 0x28);
+    PlayerAttackData* pData = new ((u8*)pEvent + 0x10) PlayerAttackData();
+    pData->pAttacker = this;
+
+    bool bHasGlobalPad = GetGlobalPad() != nullptr;
+    pData->nAttackerPadID = bHasGlobalPad ? GetGlobalPad()->m_padIndex : -1;
+
+    pData->pTarget = pTarget;
+
+    m_pCurrentAnimController->m_fPlaybackSpeedScale = 1.5f;
 }
 
 /**
@@ -268,15 +340,6 @@ void cFielder::InitActionIdleTurn(unsigned short desiredFacingDirection)
     }
 
     SetAction(ACTION_IDLE_TURN);
-}
-
-static inline s32 abs_s16(s16 x)
-{
-    if (x < 0)
-    {
-        return -x;
-    }
-    return x;
 }
 
 /**
@@ -479,20 +542,6 @@ void cFielder::ActionOneTouchPassFromVolley(float)
     {
         SetAction(ACTION_NEED_ACTION);
     }
-}
-
-inline float CalculateDistanceSquared(const nlVector3& pos1, const nlVector3& pos2)
-{
-    nlVector3 delta;
-    nlVec3Sub(delta, pos1, pos2);
-    return nlGetLengthSquared3D(delta.f.x, delta.f.y, delta.f.z);
-}
-
-inline float TestDistanceSquaredLessThan(const nlVector3& pos1, const nlVector3& pos2, float threshold)
-{
-    nlVector3 delta;
-    nlVec3Sub(delta, pos1, pos2);
-    return nlGetLengthSquared3D(delta.f.x, delta.f.y, delta.f.z) < (threshold * threshold);
 }
 
 /**
