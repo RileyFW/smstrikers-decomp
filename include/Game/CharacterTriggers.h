@@ -37,7 +37,7 @@ void EmitWindupAtBall(cCharacter*, const char*);
 void EmitShootToScoreHyperStrike(cFielder*);
 void EmitGoalieCatch(cPlayer*, const char*, bool);
 void EmitBallWallHit(const char*);
-void CharacterElectrocutionEffect(cCharacter*, const nlVector3&, const nlVector3&);
+void CharacterElectrocutionEffect(cCharacter* pCharacter, const nlVector3& v3Position, const nlVector3& v3Normal);
 void ElectrocutionUpdateCallback(EmissionController&);
 void ElectrocutionFinishedCallback(EmissionController&);
 void EmitUnFreeze(cPlayer*);

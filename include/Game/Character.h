@@ -146,7 +146,7 @@ public:
     void InitBlur(int);
     nlVector3& GetPrevJointPosition(int jointIndex);
     void GetCurrentAnimFuture(int, float, nlVector3&, nlVector3&, unsigned short&);
-    nlVector3& GetJointPositionFuture(nlVector3*, int, int, float, bool, bool, bool);
+    nlVector3& GetJointPositionFuture(nlVector3* v3Out, int nAnimIndex, int nJointIndex, float fTime, bool bAddRootTrans, bool bAddRootRot, bool bUsePrevPosition);
     nlVector3& GetJointPosition(int) const;
     s16 GetFacingDeltaToPosition(const nlVector3&);
     s16 CalcAnimTurnAdjust(unsigned short, unsigned short, int);
@@ -181,7 +181,7 @@ public:
     /* 0x58 */ float m_fDirectionSeekFalloff;
     /* 0x5C */ float m_fAccel;
     /* 0x60 */ float m_fDecel;
-    /* 0x64 */ float m_fDesiredSpee;
+    /* 0x64 */ float m_fDesiredSpeed;
     /* 0x68 */ float m_fActualSpeed;
     /* 0x6C */ float m_fLeanAmount;
     /* 0x70 */ s16 m_nAnimTurnAdjust;

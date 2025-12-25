@@ -150,7 +150,7 @@ void ElectrocutionUpdateCallback(EmissionController&)
 /**
  * Offset/Address/Size: 0x1060 | 0x8019FE10 | size: 0x230
  */
-void CharacterElectrocutionEffect(cCharacter*, const nlVector3&, const nlVector3&)
+void CharacterElectrocutionEffect(cCharacter* pCharacter, const nlVector3& v3Position, const nlVector3& v3Normal)
 {
 }
 

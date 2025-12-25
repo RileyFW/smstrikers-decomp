@@ -673,7 +673,7 @@ void cCharacter::GetCurrentAnimFuture(int, float, nlVector3&, nlVector3&, unsign
 /**
  * Offset/Address/Size: 0x1AA8 | 0x8000F9F4 | size: 0x324
  */
-nlVector3& cCharacter::GetJointPositionFuture(nlVector3*, int, int, float, bool, bool, bool)
+nlVector3& cCharacter::GetJointPositionFuture(nlVector3* v3Out, int nAnimIndex, int nJointIndex, float fTime, bool bAddRootTrans, bool bAddRootRot, bool bUsePrevPosition)
 {
     FORCE_DONT_INLINE;
     return m_v3AnimMoveAdjust;

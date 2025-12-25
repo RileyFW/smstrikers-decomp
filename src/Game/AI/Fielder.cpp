@@ -343,8 +343,8 @@ bool cFielder::CollideWithFreezeCallback()
             float fFreezeDuration = g_pGame->m_pGameTweaks->fFreezeShellFrozenTime;
             m_tFrozenTimer.SetSeconds(fFreezeDuration);
 
-            m_fDesiredSpee = 0.0f;
-            m_fActualSpeed = m_fDesiredSpee;
+            m_fDesiredSpeed = 0.0f;
+            m_fActualSpeed = m_fDesiredSpeed;
             SetVelocity(v3Zero);
 
             if ((fFreezeDuration > 0.0f) && (m_eFielderDesireState != FIELDERDESIRE_FINISH_ACTION))
@@ -359,8 +359,8 @@ bool cFielder::CollideWithFreezeCallback()
             }
 
             SetVelocity(v3Zero);
-            m_fDesiredSpee = 0.0f;
-            m_fActualSpeed = m_fDesiredSpee;
+            m_fDesiredSpeed = 0.0f;
+            m_fActualSpeed = m_fDesiredSpeed;
 
             KillDaze(this);
             EmitFreeze(this);
@@ -1355,8 +1355,8 @@ void cFielder::SetFrozen(float seconds)
     static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
     m_tFrozenTimer.SetSeconds(seconds);
-    m_fDesiredSpee = 0.0f;
-    m_fActualSpeed = m_fDesiredSpee;
+    m_fDesiredSpeed = 0.0f;
+    m_fActualSpeed = m_fDesiredSpeed;
     SetVelocity(v3Zero);
 
     if (seconds > 0.0f)
@@ -1523,7 +1523,7 @@ void cFielder::SetWindupWBAnimState()
         SetAnimState(0x56, true, 0.2f, false, false);
     }
 
-    m_fDesiredSpee = 0.0f;
+    m_fDesiredSpeed = 0.0f;
     if (m_fActualSpeed > ((FielderTweaks*)m_pTweaks)->fRunningWBSpeed)
     {
         m_fActualSpeed = ((FielderTweaks*)m_pTweaks)->fRunningWBSpeed;
@@ -1689,7 +1689,7 @@ void cFielder::SetStopAnimState()
 {
     SetAnimState(0xb, true, 0.2f, false, false);
     InitMovementFromAnim(0, v3Zero, 1.0f, false);
-    m_fDesiredSpee = 0.0f;
+    m_fDesiredSpeed = 0.0f;
 }
 
 /**
@@ -1892,11 +1892,11 @@ void cFielder::SetDesiredSpeed(float fMinSpeed, float fMaxSpeed)
         float fMagnitude = m_pController->GetMovementStickMagnitude();
         if (fMagnitude > 0.0f)
         {
-            m_fDesiredSpee = (fMaxSpeed - fMinSpeed) * m_pController->GetMovementStickMagnitude() + fMinSpeed;
+            m_fDesiredSpeed = (fMaxSpeed - fMinSpeed) * m_pController->GetMovementStickMagnitude() + fMinSpeed;
         }
         else
         {
-            m_fDesiredSpee = 0.0f;
+            m_fDesiredSpeed = 0.0f;
         }
     }
 }

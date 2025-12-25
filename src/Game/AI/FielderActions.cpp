@@ -20,6 +20,24 @@ static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
 static u16 g_IdleTurnCompletionDelta = 0xB6;
 
+static const int SlideAttackReactAnims[4] = {
+    0x66,
+    0x69,
+    0x68,
+    0x67,
+};
+
+/**
+ * Converts a 2D direction vector to a u16 angle.
+ * @param dir Direction vector (uses x and y components)
+ * @param offset Angle offset to add (0x4000 = 90°, 0x8000 = 180°, etc.)
+ * @return Angle in u16 format where 0x10000 represents 360°
+ */
+static inline u16 nlVector3ToAngle(const nlVector3& dir, u16 offset = 0)
+{
+    return (u16)((u32)(u16)(s32)(10430.378f * nlATan2f(dir.f.y, dir.f.x)) + offset);
+}
+
 // /**
 //  * Offset/Address/Size: 0x13C | 0x80030010 | size: 0xD74
 //  */
@@ -131,8 +149,35 @@ void cFielder::ActionDeke(float)
 /**
  * Offset/Address/Size: 0x71BC | 0x8002DCF4 | size: 0x2EC
  */
-void cFielder::InitActionElectrocution(const nlVector3&, const nlVector3&)
+void cFielder::InitActionElectrocution(const nlVector3& wallPosition, const nlVector3& wallNormal)
 {
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_ELECTROCUTION);
+
+    SetFacingDirection(nlVector3ToAngle(wallNormal, 0x8000));
+
+    SetAnimState(0x74, true, 0.2f, false, false);
+    InitMovementNone(0.0f, 0.0f);
+
+    nlVector3 jointPos = GetJointPosition(m_nBip01JointIndex_0xA4);
+
+    nlVector3 futureJointPos;
+    GetJointPositionFuture(&futureJointPos, 0, m_nBip01JointIndex_0xA4, 0.0f, false, false, false);
+
+    futureJointPos.f.z += 0.1f;
+    jointPos.f.z = (jointPos.f.z >= futureJointPos.f.z) ? jointPos.f.z : futureJointPos.f.z;
+
+    SetPosition(jointPos);
+
+    mActionElectrocutionVars.electrocutionTime = 1.0f;
+
+    nlVector3 effectPos;
+    effectPos.f.x = wallPosition.f.x;
+    effectPos.f.y = wallPosition.f.y;
+    effectPos.f.z = jointPos.f.z;
+    CharacterElectrocutionEffect(this, effectPos, wallNormal);
+
+    BeginRumbleAction(RUMBLE_SOLID_CONTACT, GetGlobalPad());
 }
 
 /**
@@ -157,7 +202,7 @@ void cFielder::ActionHit(float)
     if (ShouldStartCrossBlend(7))
     {
         m_fActualSpeed = 0.0f;
-        m_fDesiredSpee = 0.0f;
+        m_fDesiredSpeed = 0.0f;
         SetVelocity(v3Zero);
         InitMovementCoast();
         SetAction(ACTION_NEED_ACTION);
@@ -566,7 +611,7 @@ void cFielder::InitActionRunning()
         m_aActualMovementDirection = m_aActualFacingDirection;
         m_aDesiredFacingDirection = m_aActualFacingDirection;
         m_aDesiredMovementDirection = m_aActualMovementDirection;
-        m_fDesiredSpee = m_fActualSpeed;
+        m_fDesiredSpeed = m_fActualSpeed;
         mActionRunningVars.bFirstCycleOfTurbo = false;
     }
 
@@ -776,6 +821,7 @@ void cFielder::InitActionSlideAttack(cFielder*, float)
  */
 void cFielder::ActionSlideAttack(float)
 {
+    m_fDesiredSpeed = 8.5f;
 }
 
 /**
@@ -783,6 +829,13 @@ void cFielder::ActionSlideAttack(float)
  */
 void cFielder::InitActionSlideAttackFailReact()
 {
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_SLIDE_FAIL_REACT);
+
+    SetAnimState(0x65, true, 0.2f, false, false);
+    InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+    m_fDesiredSpeed = 0.0f;
 }
 
 /**
@@ -799,8 +852,42 @@ void cFielder::ActionSlideAttackFailReact(float)
 /**
  * Offset/Address/Size: 0x93C | 0x80027474 | size: 0x2AC
  */
-void cFielder::InitActionSquishReact(const nlVector3&)
+void cFielder::InitActionSquishReact(const nlVector3& dir)
 {
+    CleanUpPowerupEffect();
+
+    if (IsFallenDown(0.0f))
+    {
+        return;
+    }
+
+    if (IsFrozen())
+    {
+        m_tFrozenTimer.SetSeconds(0.0f);
+        EmitUnFreeze(this);
+    }
+
+    if (g_pBall->m_pOwner == this)
+    {
+        ReleaseBall();
+        ShootBallDueToContact(dir);
+    }
+
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_SQUISH_REACT);
+
+    SetAnimState(0x5C, true, 0.2f, false, false);
+    InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+    nlPolar polar;
+    nlCartesianToPolar(polar, dir.f.x, dir.f.y);
+    SetFacingDirection(polar.a);
+    m_aActualMovementDirection = polar.a;
+
+    EmitTackleImpact(this);
+    PlayAttackReactionSounds(g_pGame->m_pGameTweaks->unk25C);
+
+    m_fDesiredSpeed = 0.0f;
 }
 
 /**
@@ -821,9 +908,50 @@ void cFielder::DoSlideAttackStats()
 
 /**
  * Offset/Address/Size: 0x5C0 | 0x800270F8 | size: 0x2E0
+ * TODO: Just one reg mismatch on SlideAttackReactAnims reference (r3 instead of r4), maybe an inline again..
  */
-void cFielder::InitActionSlideAttackReact(cPlayer*, bool)
+void cFielder::InitActionSlideAttackReact(cPlayer* pAttacker, bool bSkipEvent)
 {
+    CleanUpPowerupEffect();
+
+    if (!IsFallenDown(0.0f))
+    {
+        if (IsFrozen())
+        {
+            m_tFrozenTimer.SetSeconds(0.0f);
+            EmitUnFreeze(this);
+        }
+
+        if (m_pBall != nullptr)
+        {
+            ReleaseBall();
+            ShootBallDueToContact(pAttacker->m_v3Velocity);
+        }
+
+        InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+        SetAction(ACTION_SLIDE_ATTACK_REACT);
+
+        u16 facingDelta = (u16)(GetFacingDeltaToPosition(pAttacker->m_v3Position) + 0x2000);
+        // int animID = SlideAttackReactAnims[(facingDelta >> 14) & 3];
+        SetAnimState(SlideAttackReactAnims[(facingDelta >> 14) & 3], true, 0.2f, false, false);
+
+        InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+        if (!bSkipEvent)
+        {
+            const Event* pEvent = g_pEventManager->CreateValidEvent(0x1A, 0x28);
+            PlayerAttackData* pData = new ((u8*)pEvent + 0x10) PlayerAttackData();
+
+            pData->pAttacker = static_cast<const cFielder*>(pAttacker);
+
+            bool bHasGlobalPad = pAttacker->GetGlobalPad() != nullptr;
+            pData->nAttackerPadID = bHasGlobalPad ? pAttacker->GetGlobalPad()->m_padIndex : -1;
+
+            pData->pTarget = this;
+        }
+
+        m_fDesiredSpeed = 0.0f;
+    }
 }
 
 /**
@@ -831,6 +959,15 @@ void cFielder::InitActionSlideAttackReact(cPlayer*, bool)
  */
 void cFielder::InitActionSTSHitReact(cPlayer*)
 {
+    CleanUpPowerupEffect();
+
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_STS_HIT_REACT);
+
+    SetAnimState(0x73, false, 0.0333f, false, false);
+    InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+    m_fDesiredSpeed = 0.0f;
 }
 
 /**
