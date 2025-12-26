@@ -20,6 +20,7 @@
 #include "types.h"
 
 extern FuzzyVariant fvNotSet;
+extern cBall* g_pBall;
 
 struct HitReactInfo
 {
@@ -448,11 +449,59 @@ void cFielder::ActionIdleTurn(float)
     }
 }
 
+static inline void SetFacingAnim(cFielder* pFielder, u16 facingDelta, const int* animIDs)
+{
+    // facingDelta += 0x2000;
+    int animID = animIDs[(facingDelta >> 14) & 3];
+    pFielder->SetAnimState(animID, true, 0.2f, false, false);
+}
+
 /**
  * Offset/Address/Size: 0x61A0 | 0x8002CCD8 | size: 0x304
+ * TODO: Just one reg mismatch on SlideAttackReactAnims reference (r3 instead of r4), maybe an inline again..
  */
 void cFielder::InitActionLateOneTimerFromVolley()
 {
+    DoResetShotMeter(0.0f);
+
+    ShotMeter* pShotMeter = m_pShotMeter;
+    pShotMeter->CalcOneTimerValue(this, UsePerfectPass());
+
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_LATE_ONETIMER_FROM_VOLLEY);
+
+    int facingAnimIDs[4] = {
+        0x50, 0x51, 0x52, 0x51
+    };
+
+    u16 facingDelta = (u16)(GetFacingDeltaToPosition(m_pTeam->GetOtherNet()->m_baseLocation) + 0x2000);
+    SetFacingAnim(this, facingDelta, facingAnimIDs);
+
+    InitMovementFromAnim(0, v3Zero, 0.0f, false);
+
+    if (ShouldIClearBall())
+    {
+        DoClearBall();
+        return;
+    }
+
+    DoRegularShooting();
+
+    bool bIsOneTimerShot = false;
+    if (g_pBall->m_tShotTimer.m_uPackedTime != 0 && g_pBall->m_unk_0xA4 != 0)
+    {
+        bIsOneTimerShot = true;
+    }
+
+    if (bIsOneTimerShot)
+    {
+        EmitBallShot(this, BALL_EFFECT_PERFECT_SHOT, nullptr, false);
+        FireCameraRumbleFilter(0.0f, 0.2f);
+        Play3DSFX(Audio::eCharSFX(0x3D), VECTORS, 100.0f);
+        return;
+    }
+
+    EmitBallShot(this, BALL_EFFECT_ONETIMER_SHOT, nullptr, false);
 }
 
 /**
@@ -809,8 +858,93 @@ void cFielder::ActionRunningWBTurboTurn(float)
 /**
  * Offset/Address/Size: 0x383C | 0x8002A374 | size: 0x46C
  */
-void cFielder::InitActionShot(bool)
+void cFielder::InitActionShot(bool bIsChipShot)
 {
+    if (m_pBall == nullptr)
+    {
+        m_pHeadTrack->m_bTrackOOI = true;
+
+        if (m_eActionState != ACTION_RUNNING)
+        {
+            mActionRunningVars.eLastStrafeDirection = STRAFE_IDLE;
+            m_aActualMovementDirection = m_aActualFacingDirection;
+            m_aDesiredFacingDirection = m_aActualFacingDirection;
+            m_aDesiredMovementDirection = m_aActualMovementDirection;
+            m_fDesiredSpeed = m_fActualSpeed;
+            mActionRunningVars.bFirstCycleOfTurbo = false;
+        }
+
+        SetAction(ACTION_RUNNING);
+        return;
+    }
+
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_SHOT);
+
+    mActionShotVars.bIsChipShot = bIsChipShot;
+
+    switch (m_eAnimID)
+    {
+    case 0x56:
+    {
+        if (!(m_pShotMeter->m_fSpeedValue >= 0.99f))
+        {
+            SetAnimState(0x58, true, 0.2f, false, false);
+        }
+        else
+        {
+            SetAnimState(0x5A, true, 0.2f, false, false);
+        }
+        break;
+    }
+    case 0x57:
+    {
+        if (!(m_pShotMeter->m_fSpeedValue >= 0.99f))
+        {
+            SetAnimState(0x59, true, 0.2f, false, false);
+        }
+        else
+        {
+            SetAnimState(0x5B, true, 0.2f, false, false);
+        }
+        break;
+    }
+    default:
+    {
+        if (GetFacingDeltaToPosition(m_pTeam->GetOtherNet()->m_baseLocation) < 0)
+        {
+            if (!(m_pShotMeter->m_fSpeedValue >= 0.99f))
+            {
+                SetAnimState(0x59, true, 0.2f, false, false);
+            }
+            else
+            {
+                SetAnimState(0x5B, true, 0.2f, false, false);
+            }
+        }
+        else
+        {
+            if (!(m_pShotMeter->m_fSpeedValue >= 0.99f))
+            {
+                SetAnimState(0x58, true, 0.2f, false, false);
+            }
+            else
+            {
+                SetAnimState(0x5A, true, 0.2f, false, false);
+            }
+        }
+        break;
+    }
+    }
+    m_fDesiredSpeed = 0.0f;
+
+    static float shootingSeekSpeed = 300000.0f;
+    static float shootingSeekFalloff = 4000.0f;
+
+    InitMovementNone(shootingSeekSpeed, shootingSeekFalloff);
+
+    nlVector3 pos = m_pTeam->GetOtherNet()->m_baseLocation;
+    m_aDesiredFacingDirection = 10430.378f * nlATan2f(pos.f.y - m_v3Position.f.y, pos.f.x - m_v3Position.f.x);
 }
 
 /**
@@ -1054,7 +1188,8 @@ void cFielder::InitActionSlideAttackReact(cPlayer* pAttacker, bool bSkipEvent)
 
         u16 facingDelta = (u16)(GetFacingDeltaToPosition(pAttacker->m_v3Position) + 0x2000);
         // int animID = SlideAttackReactAnims[(facingDelta >> 14) & 3];
-        SetAnimState(SlideAttackReactAnims[(facingDelta >> 14) & 3], true, 0.2f, false, false);
+        // SetAnimState(SlideAttackReactAnims[(facingDelta >> 14) & 3], true, 0.2f, false, false);
+        SetFacingAnim(this, facingDelta, SlideAttackReactAnims);
 
         InitMovementFromAnim(0, v3Zero, 1.0f, false);
 

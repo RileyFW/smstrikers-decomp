@@ -377,6 +377,13 @@ public:
     void InitActionWait();
     void ActionWait(float);
 
+    inline void SetAnim(u16 facingDelta, const int* animIDs)
+    {
+        // u16 facingDelta = delta + 0x2000;
+        // int animID = animIDs[(facingDelta >> 14) & 3];
+        SetAnimState(animIDs[(facingDelta >> 14) & 3], true, 0.2f, false, false);
+    }
+
     bool m_bHasBeenUpdated;             // offset 0x1D4, size 0x1
     eFielderActionState m_eActionState; // offset 0x1D8, size 0x4
     float m_fShootToScoreActiveTime;    // offset 0x1DC, size 0x4
