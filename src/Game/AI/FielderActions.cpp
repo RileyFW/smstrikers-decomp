@@ -46,6 +46,13 @@ int SlideAttackReactAnims[4] = {
     0x67,
 };
 
+int ShellAttackReactAnims[4] = {
+    0x75,
+    0x78,
+    0x77,
+    0x76,
+};
+
 // /**
 //  * Offset/Address/Size: 0x13C | 0x80030010 | size: 0xD74
 //  */
@@ -449,7 +456,7 @@ void cFielder::ActionIdleTurn(float)
     }
 }
 
-static inline void SetFacingAnim(cFielder* pFielder, u16 facingDelta, const int* animIDs)
+static inline void SetFacingAnim(cFielder* pFielder, const u16& facingDelta, const int* animIDs)
 {
     // facingDelta += 0x2000;
     int animID = animIDs[(facingDelta >> 14) & 3];
@@ -759,13 +766,60 @@ void cFielder::InitActionBombHitReact(const nlVector3&)
  */
 void cFielder::InitActionBananaReact(const nlVector3&)
 {
+    CleanUpPowerupEffect();
+
+    u16 angleDiff = (u16)abs_s16(m_aActualFacingDirection - m_aActualMovementDirection);
+    if (angleDiff < 0x4000)
+    {
+        SetAnimState(0x6A, true, 0.2f, false, false);
+    }
+    else
+    {
+        SetAnimState(0x6B, true, 0.2f, false, false);
+    }
+
+    if (g_pBall->m_pOwner == this)
+    {
+        ReleaseBall();
+        ShootBallDueToContact(m_aActualFacingDirection);
+    }
+
+    BeginRumbleAction(RUMBLE_MEDIUM_CONTACT, GetGlobalPad());
+
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_BANANA_REACT);
+
+    InitMovementFromAnim(0, v3Zero, 1.0f, false);
+    PlayRandomCharDialogue(1, VECTORS, 100.0f, -1.0f);
+
+    m_fDesiredSpeed = 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x4468 | 0x8002AFA0 | size: 0x268
+ * TODO: Just one reg mismatch on SetFacingAnim
  */
-void cFielder::InitActionShellReact(const nlVector3&, const nlVector3&)
+void cFielder::InitActionShellReact(const nlVector3& v3CollisionLocation, const nlVector3& v3CollisionVelocity)
 {
+    CleanUpPowerupEffect();
+
+    if (g_pBall->m_pOwner == this)
+    {
+        ReleaseBall();
+        ShootBallDueToContact(v3CollisionVelocity);
+    }
+
+    BeginRumbleAction(RUMBLE_MEDIUM_CONTACT, GetGlobalPad());
+
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_SHELL_REACT);
+
+    u16 facingDelta = (u16)(GetFacingDeltaToPosition(v3CollisionLocation) + 0x2000);
+    SetFacingAnim(this, facingDelta, ShellAttackReactAnims);
+
+    InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+    m_fDesiredSpeed = 0.0f;
 }
 
 /**
@@ -1163,7 +1217,7 @@ void cFielder::DoSlideAttackStats()
 
 /**
  * Offset/Address/Size: 0x5C0 | 0x800270F8 | size: 0x2E0
- * TODO: Just one reg mismatch on SlideAttackReactAnims reference (r3 instead of r4), maybe an inline again..
+ * TODO: Just one reg mismatch on SetFacingAnim
  */
 void cFielder::InitActionSlideAttackReact(cPlayer* pAttacker, bool bSkipEvent)
 {

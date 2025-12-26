@@ -377,7 +377,7 @@ public:
     void InitActionWait();
     void ActionWait(float);
 
-    inline void SetAnim(u16 facingDelta, const int* animIDs)
+    inline void SetAnim(const u16 facingDelta, const int* animIDs)
     {
         // u16 facingDelta = delta + 0x2000;
         // int animID = animIDs[(facingDelta >> 14) & 3];
