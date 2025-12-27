@@ -34,6 +34,7 @@ HitReactInfo g_HitReactInfo[4] = {
     { 0x71, 0x0 },
     { 0x70, 0x0 },
 };
+// extern HitReactInfo g_HitReactInfo[4];
 
 static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
@@ -46,11 +47,25 @@ int SlideAttackReactAnims[4] = {
     0x67,
 };
 
-int ShellAttackReactAnims[4] = {
+// const int cFielder::SlideAttackReactAnims[4] = {
+//     0x66,
+//     0x69,
+//     0x68,
+//     0x67,
+// };
+
+const static int ShellAttackReactAnims[4] = {
     0x75,
     0x78,
     0x77,
     0x76,
+};
+
+int PassingAnims[4] = {
+    0x33,
+    0x36,
+    0x35,
+    0x34,
 };
 
 // /**
@@ -459,13 +474,12 @@ void cFielder::ActionIdleTurn(float)
 static inline void SetFacingAnim(cFielder* pFielder, const u16& facingDelta, const int* animIDs)
 {
     // facingDelta += 0x2000;
-    int animID = animIDs[(facingDelta >> 14) & 3];
+    int animID = animIDs[facingDelta >> 14];
     pFielder->SetAnimState(animID, true, 0.2f, false, false);
 }
 
 /**
  * Offset/Address/Size: 0x61A0 | 0x8002CCD8 | size: 0x304
- * TODO: Just one reg mismatch on SlideAttackReactAnims reference (r3 instead of r4), maybe an inline again..
  */
 void cFielder::InitActionLateOneTimerFromVolley()
 {
@@ -477,12 +491,15 @@ void cFielder::InitActionLateOneTimerFromVolley()
     InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
     SetAction(ACTION_LATE_ONETIMER_FROM_VOLLEY);
 
-    int facingAnimIDs[4] = {
-        0x50, 0x51, 0x52, 0x51
+    int LateOneTimerFromVolleyAnims[4] = {
+        0x50,
+        0x53,
+        0x52,
+        0x51,
     };
 
-    u16 facingDelta = (u16)(GetFacingDeltaToPosition(m_pTeam->GetOtherNet()->m_baseLocation) + 0x2000);
-    SetFacingAnim(this, facingDelta, facingAnimIDs);
+    s16 facingDelta = GetFacingDeltaToPosition(m_pTeam->GetOtherNet()->m_baseLocation);
+    SetAnimState(LateOneTimerFromVolleyAnims[(u16)(facingDelta + 0x2000) >> 14], true, 0.2f, false, false);
 
     InitMovementFromAnim(0, v3Zero, 0.0f, false);
 
@@ -657,8 +674,24 @@ void cFielder::ActionOneTimer(float)
 /**
  * Offset/Address/Size: 0x5518 | 0x8002C050 | size: 0x260
  */
-void cFielder::InitActionOneTouchPassFromVolley(cPlayer*)
+void cFielder::InitActionOneTouchPassFromVolley(cPlayer* pPlayer)
 {
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_ONETOUCH_PASS_FROM_VOLLEY);
+
+    int LateOneTimerFromVolleyAnims[4] = {
+        0x50,
+        0x53,
+        0x52,
+        0x51,
+    };
+
+    s16 facingDelta = GetFacingDeltaToPosition(pPlayer->m_v3Position);
+    SetAnimState(LateOneTimerFromVolleyAnims[(u16)(facingDelta + 0x2000) >> 14], true, 0.2f, false, false);
+
+    InitMovementFromAnim(0, v3Zero, 0.0f, false);
+
+    DoRegularPassing(pPlayer, false, true, true, true);
 }
 
 /**
@@ -701,9 +734,33 @@ bool cFielder::DoCalcCanDoPerfectPass(cFielder* pReceiver, const nlVector3& v3Po
 
 /**
  * Offset/Address/Size: 0x50A4 | 0x8002BBDC | size: 0x268
+ * TODO: Just one reg mismatch on SetFacingAnim
  */
-void cFielder::InitActionPass(cPlayer*, bool, bool)
+void cFielder::InitActionPass(cPlayer* pPassTarget, bool bVolleyPass, bool bAllowLeadPass)
 {
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_PASS);
+
+    s16 facingDelta = GetFacingDeltaToPosition(pPassTarget->m_v3Position);
+    SetAnimState(PassingAnims[(u16)(facingDelta + 0x2000) >> 14], true, 0.2f, false, false);
+
+    InitMovementCoast();
+
+    if (bVolleyPass)
+    {
+        nlVector3 delta;
+        nlVec3Sub(delta, m_v3Position, pPassTarget->m_v3Position);
+        float minDistSq = g_pGame->m_pGameTweaks->fVolleyPassMinDistance * g_pGame->m_pGameTweaks->fVolleyPassMinDistance;
+
+        if (minDistSq < delta.GetLengthSq3D())
+        {
+            bVolleyPass = false;
+        }
+    }
+
+    mActionPassingVars.bVolleyPass = bVolleyPass;
+    mActionPassingVars.pPassTarget = pPassTarget;
+    mActionPassingVars.bAllowLeadPass = !bAllowLeadPass;
 }
 
 /**
@@ -750,15 +807,93 @@ void cFielder::ActionPostWhistle(float)
 /**
  * Offset/Address/Size: 0x4C38 | 0x8002B770 | size: 0x35C
  */
-void cFielder::InitActionBombReact(const nlVector3&, float)
+void cFielder::InitActionBombReact(const nlVector3& v3BombPosition, float fRadius)
 {
+    CleanUpPowerupEffect();
+
+    if (g_pBall->m_pOwner == this)
+    {
+        ReleaseBall();
+        ShootBallDueToContact(m_aActualFacingDirection);
+    }
+
+    BeginRumbleAction(RUMBLE_MEDIUM_CONTACT, GetGlobalPad());
+
+    nlVector3 delta;
+    nlVec3Sub(delta, m_v3Position, v3BombPosition);
+    float fDistance = nlSqrt(delta.GetLengthSq3D(), true) - fRadius;
+
+    if (fDistance > 1.0f && !IsFallenDown(0.0f))
+    {
+        InitActionBombHitReact(v3BombPosition);
+        return;
+    }
+
+    if (!IsFallenDown(0.0f))
+    {
+        PlayAttackReactionSounds(g_pGame->m_pGameTweaks->unk24C);
+    }
+
+    if (IsFrozen())
+    {
+        m_tFrozenTimer.SetSeconds(0.0f);
+        EmitUnFreeze(this);
+    }
+
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_BOMB_REACT);
+
+    s16 facingDelta = GetFacingDeltaToPosition(v3BombPosition);
+    u16 absFacingDelta = (u16)abs_s16(facingDelta);
+
+    if (absFacingDelta < 0x4000)
+    {
+        SetAnimState(0x6C, true, 0.2f, false, false);
+    }
+    else
+    {
+        SetAnimState(0x6D, true, 0.2f, false, false);
+    }
+
+    InitMovementFromAnim(0, v3Zero, 1.0f, false);
+    m_fDesiredSpeed = 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x4968 | 0x8002B4A0 | size: 0x2D0
+ * TODO: Just one reg mismatch on SetFacingAnim
  */
-void cFielder::InitActionBombHitReact(const nlVector3&)
+void cFielder::InitActionBombHitReact(const nlVector3& v3BombPosition)
 {
+    FORCE_DONT_INLINE;
+    CleanUpPowerupEffect();
+
+    if (IsFrozen())
+    {
+        m_tFrozenTimer.SetSeconds(0.0f);
+        EmitUnFreeze(this);
+    }
+
+    mActionHitReactActionVars.bDoFrameLock = false;
+
+    if (!IsFallenDown(0.0f))
+    {
+        PlayAttackReactionSounds(g_pGame->m_pGameTweaks->unk250);
+    }
+
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_HIT_REACT);
+
+    u32 index = (((u16)((u16)GetFacingDeltaToPosition(v3BombPosition)) >> 14) & 3);
+    SetAnimState(g_HitReactInfo[index].nAnimID, true, 0.2f, false, false);
+
+    float angleRad = nlATan2f(m_v3Position.f.y - v3BombPosition.f.y, m_v3Position.f.x - v3BombPosition.f.x);
+    u16 targetAngle = (u16)(s32)(10430.378f * angleRad);
+    SetFacingDirection(targetAngle + g_HitReactInfo[index].aFacingDirectionOffset);
+
+    InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+    m_fDesiredSpeed = 0.0f;
 }
 
 /**
@@ -816,6 +951,9 @@ void cFielder::InitActionShellReact(const nlVector3& v3CollisionLocation, const 
 
     u16 facingDelta = (u16)(GetFacingDeltaToPosition(v3CollisionLocation) + 0x2000);
     SetFacingAnim(this, facingDelta, ShellAttackReactAnims);
+
+    // s16 facingDelta = GetFacingDeltaToPosition(v3CollisionLocation);
+    // SetAnimState(ShellAttackReactAnims[(u16)(facingDelta + 0x2000) >> 14], true, 0.2f, false, false);
 
     InitMovementFromAnim(0, v3Zero, 1.0f, false);
 
@@ -1240,10 +1378,10 @@ void cFielder::InitActionSlideAttackReact(cPlayer* pAttacker, bool bSkipEvent)
         InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
         SetAction(ACTION_SLIDE_ATTACK_REACT);
 
+        // u16 facingDelta = (u16)(GetFacingDeltaToPosition(pAttacker->m_v3Position) + 0x2000);
+        // SetFacingAnim(this, facingDelta, SlideAttackReactAnims);
         u16 facingDelta = (u16)(GetFacingDeltaToPosition(pAttacker->m_v3Position) + 0x2000);
-        // int animID = SlideAttackReactAnims[(facingDelta >> 14) & 3];
-        // SetAnimState(SlideAttackReactAnims[(facingDelta >> 14) & 3], true, 0.2f, false, false);
-        SetFacingAnim(this, facingDelta, SlideAttackReactAnims);
+        SetAnimState(SlideAttackReactAnims[facingDelta >> 14], true, 0.2f, false, false);
 
         InitMovementFromAnim(0, v3Zero, 1.0f, false);
 
