@@ -16,6 +16,7 @@
 #include "Game/AI/AiUtil.h"
 #include "Game/MathHelpers.h"
 #include "Game/DB/StatsTracker.h"
+#include "Game/Field.h"
 #include "NL/plat/plataudio.h"
 #include "types.h"
 
@@ -158,15 +159,218 @@ void cFielder::EndAction()
 /**
  * Offset/Address/Size: 0x7D0C | 0x8002E844 | size: 0x20C
  */
-void GetClosestWallPoint(const nlVector3&)
+nlVector3 GetClosestWallPoint(const nlVector3& pos)
 {
+    // Get the positive sideline Y coordinate
+    float sidelineY = cField::GetSidelineY(1U);
+
+    // Get both goal line X coordinates (positive and negative)
+    float goalLineXPos = cField::GetGoalLineX(1.0f);
+    float goalLineXNeg = cField::GetGoalLineX(-1.0f);
+
+    // Calculate the 4 potential wall points
+    nlVector3 topSideline = { pos.f.x, sidelineY, pos.f.z };
+    nlVector3 rightGoalLine = { goalLineXPos, pos.f.y, pos.f.z };
+    nlVector3 leftGoalLine = { goalLineXNeg, pos.f.y, pos.f.z };
+    nlVector3 bottomSideline = { pos.f.x, -sidelineY, pos.f.z };
+
+    // Calculate distances to each wall point
+    float distToTop = (float)fabs(pos.f.y - sidelineY);
+    float distToBottom = (float)fabs(pos.f.y - (-sidelineY));
+    float distToRight = (float)fabs(pos.f.x - goalLineXPos);
+    float distToLeft = (float)fabs(pos.f.x - goalLineXNeg);
+
+    // Find the closest wall point by comparing distances
+    if (distToTop < distToBottom)
+    {
+        if (distToRight < distToLeft)
+        {
+            // Compare top vs right
+            if (distToTop < distToRight)
+            {
+                return topSideline;
+            }
+            else
+            {
+                return rightGoalLine;
+            }
+        }
+        else
+        {
+            // Compare top vs left
+            if (distToTop < distToLeft)
+            {
+                return topSideline;
+            }
+            else
+            {
+                return leftGoalLine;
+            }
+        }
+    }
+    else
+    {
+        if (distToRight < distToLeft)
+        {
+            // Compare bottom vs right
+            if (distToBottom < distToRight)
+            {
+                return bottomSideline;
+            }
+            else
+            {
+                return rightGoalLine;
+            }
+        }
+        else
+        {
+            // Compare bottom vs left
+            if (distToBottom < distToLeft)
+            {
+                return bottomSideline;
+            }
+            else
+            {
+                return leftGoalLine;
+            }
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0x77D8 | 0x8002E310 | size: 0x534
+ * TODO: wrong register for pClosestOpponent -> r31 instead of r27
  */
-void cFielder::InitActionDeke(ePadActions)
+void cFielder::InitActionDeke(ePadActions padAction)
 {
+    m_pShotMeter->Abort(this);
+
+    InitDesire(FIELDERDESIRE_FINISH_ACTION, 0.5f, -1.0f, fvNotSet, fvNotSet);
+    SetAction(ACTION_DEKE);
+
+    mActionDekeVars.bStickWasReset = false;
+    mActionDekeVars.bPossibleSuccessfulDeke = false;
+    mActionDekeVars.bPossibleTurboMove = false;
+
+    if (padAction == PAD_DEKE)
+    {
+        if ((m_pController != nullptr) && (m_pController->GetCStickMovementStickMagnitude() > 0.0f))
+        {
+            u16 cStickDirection = m_pController->GetCStickMovementStickDirection();
+            s16 facingDelta = (s16)(cStickDirection - m_aActualFacingDirection);
+            if (facingDelta < 0)
+                SetAnimState(0x55, true, 0.2f, false, false);
+            else
+                SetAnimState(0x54, true, 0.2f, false, false);
+        }
+        else
+        {
+            nlVector3 wallPoint = GetClosestWallPoint(m_v3Position);
+            float dist = nlSqrt(CalculateDistanceSquared(wallPoint, m_v3Position), true);
+
+            if (dist < 2.25f)
+            {
+                if (GetFacingDeltaToPosition(wallPoint) < 0)
+                    SetAnimState(0x54, true, 0.2f, false, false);
+                else
+                    SetAnimState(0x55, true, 0.2f, false, false);
+            }
+            else
+            {
+                int i;
+                float fClosestDist;
+                cPlayer* pOpponent;
+                cPlayer* pClosestOpponent;
+
+                pClosestOpponent = nullptr;
+                fClosestDist = 99999.9f;
+                i = 0;
+
+                do
+                {
+                    pOpponent = m_pTeam->GetOtherTeam()->GetPlayer(i);
+                    float flashLightResult = DoFlashLight(
+                        pOpponent->m_v3Position,
+                        m_aActualFacingDirection,
+                        g_pGame->m_pGameTweaks->fDekeAngleWeighting,
+                        0.0f,
+                        9999.0f);
+
+                    if (flashLightResult < fClosestDist)
+                    {
+                        pClosestOpponent = pOpponent;
+                        fClosestDist = flashLightResult;
+                    }
+                    i++;
+                } while (i < 5);
+
+                if (GetFacingDeltaToPosition(pClosestOpponent->m_v3Position) < 0)
+                {
+                    SetAnimState(0x54, true, 0.2f, false, false);
+                }
+                else
+                {
+                    SetAnimState(0x55, true, 0.2f, false, false);
+                }
+            }
+        }
+    }
+    else
+    {
+        switch (padAction)
+        {
+        case PAD_DEKE_RIGHT:
+            SetAnimState(0x55, true, 0.2f, false, false);
+            break;
+        case PAD_DEKE_LEFT:
+            SetAnimState(0x54, true, 0.2f, false, false);
+            break;
+        }
+    }
+
+    InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+    int nSFX = 0;
+    switch (m_eAnimID)
+    {
+    case 0x54:
+        nSFX = 0xF;
+        break;
+    case 0x55:
+        nSFX = 0x10;
+        break;
+    }
+
+    Play3DSFX(Audio::eCharSFX(nSFX), VECTORS, 100.0f);
+
+    cFielder* pOpponent;
+    int j;
+    cTeam* pOtherTeam;
+    bool bHasNearbyThreat;
+
+    bHasNearbyThreat = false;
+    pOtherTeam = m_pTeam->GetOtherTeam();
+    j = 0;
+
+    do
+    {
+        if (!bHasNearbyThreat)
+        {
+            pOpponent = pOtherTeam->GetFielder(j);
+            if (pOpponent->IsSlideTackling() || pOpponent->IsHitting())
+            {
+                if (CalculateDistanceSquared(pOpponent->m_v3Position, m_v3Position) < 6.25f)
+                {
+                    u16 angleDiff = (u16)abs_s16(pOpponent->m_aActualFacingDirection - m_aActualFacingDirection);
+                    if (angleDiff > 0x2000)
+                        bHasNearbyThreat = true;
+                }
+            }
+        }
+        j++;
+    } while (j < 4);
+
+    mActionDekeVars.bPossibleSuccessfulDeke = bHasNearbyThreat;
 }
 
 /**

@@ -22,7 +22,7 @@ struct PlayerAttackData : public EventData
 void HyperStrikeEffectUpdate(EmissionController&);
 void OtherMatrixCamFinishedCallback(MatrixEffectCam*);
 void MatrixCamFinishedCallback(MatrixEffectCam*);
-void GetClosestWallPoint(const nlVector3&);
+nlVector3 GetClosestWallPoint(const nlVector3&);
 
 // class Function1<void, EmissionController&>
 // {

@@ -368,15 +368,17 @@ void cPlayer::CollideWithBallCallback(cBall* pBall)
 /**
  * Offset/Address/Size: 0x2438 | 0x80059988 | size: 0x134
  */
-void cPlayer::DoFlashLight(const nlVector3&, unsigned short, float, float, float)
+float cPlayer::DoFlashLight(const nlVector3&, unsigned short, float, float, float)
 {
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x256C | 0x80059ABC | size: 0x134
  */
-void cPlayer::DoFlashLight(const nlVector3&, const nlVector3&, unsigned short, float, float, float)
+float cPlayer::DoFlashLight(const nlVector3&, const nlVector3&, unsigned short, float, float, float)
 {
+    return 0.0f;
 }
 
 /**
