@@ -20,6 +20,7 @@
 #include "NL/plat/plataudio.h"
 #include "types.h"
 
+extern unsigned int nlDefaultSeed;
 extern FuzzyVariant fvNotSet;
 extern cBall* g_pBall;
 
@@ -372,12 +373,139 @@ void cFielder::InitActionDeke(ePadActions padAction)
 
     mActionDekeVars.bPossibleSuccessfulDeke = bHasNearbyThreat;
 }
-
 /**
  * Offset/Address/Size: 0x74A8 | 0x8002DFE0 | size: 0x330
  */
-void cFielder::ActionDeke(float)
+/**
+ * Offset/Address/Size: 0x74A8 | 0x8002DFE0 | size: 0x330
+ */
+void cFielder::ActionDeke(float dt)
 {
+    cGlobalPad* pGlobalPad = GetGlobalPad();
+    if (pGlobalPad != nullptr)
+    {
+        if (!mActionDekeVars.bStickWasReset)
+        {
+            float cStickMagnitude = m_pController->GetCStickMovementStickMagnitude();
+            if (cStickMagnitude < 0.0001f)
+            {
+                if (!GetGlobalPad()->IsPressed(0x1D, 0x1))
+                {
+                    mActionDekeVars.bStickWasReset = true;
+                }
+            }
+        }
+
+        if (mActionDekeVars.bStickWasReset)
+        {
+            TestButtonsToQueueActions(dt);
+        }
+
+        bool bTurboPressed = m_pController->IsTurboPressed();
+        if (bTurboPressed)
+        {
+            if (!mActionDekeVars.bTurboButtonDownLastUpdate)
+            {
+                mActionDekeVars.bPossibleTurboMove = true;
+            }
+            mActionDekeVars.bTurboButtonDownLastUpdate = true;
+        }
+        else
+        {
+            mActionDekeVars.bTurboButtonDownLastUpdate = false;
+        }
+    }
+
+    if (!mActionDekeVars.bPossibleSuccessfulDeke)
+    {
+        cFielder* pOpponent;
+        int i;
+        cTeam* pOtherTeam;
+        bool bHasThreat;
+
+        bHasThreat = false;
+        pOtherTeam = m_pTeam->GetOtherTeam();
+
+        for (i = 0; i < 4; i++)
+        {
+            if (!bHasThreat)
+            {
+                pOpponent = pOtherTeam->GetFielder(i);
+                if (pOpponent->IsSlideTackling() || pOpponent->IsHitting())
+                {
+                    float distSq = CalculateDistanceSquared(pOpponent->m_v3Position, m_v3Position);
+                    if (distSq < 6.25f)
+                    {
+                        u16 angleDiff = (u16)abs_s16(pOpponent->m_aActualFacingDirection - m_aActualFacingDirection);
+                        if (angleDiff > 0x2000)
+                        {
+                            bHasThreat = true;
+                        }
+                    }
+                }
+            }
+        }
+        mActionDekeVars.bPossibleSuccessfulDeke = bHasThreat;
+    }
+
+    if (ShouldStartCrossBlend(0x1A))
+    {
+        if (mActionDekeVars.bPossibleSuccessfulDeke)
+        {
+            const nlVector3& offNetLocation = GetAIOffNetLocation(nullptr);
+            nlPolar polar;
+            nlVector3 delta;
+            nlVec3Sub(delta, offNetLocation, m_v3Position);
+            nlCartesianToPolar(polar, delta.f.x, delta.f.y);
+
+            u16 absAngleDiff = (u16)abs_s16(m_aActualFacingDirection - polar.a);
+            if (absAngleDiff < 0x4000)
+            {
+                DoAwardPowerupStuff(AWARD_POWERUP_CONTEXT_DEKE, 0.0f);
+            }
+        }
+
+        if (m_pBall == nullptr)
+        {
+            SetAction(ACTION_NEED_ACTION);
+            m_eLastPadAction = (ePadActions)0x25;
+            return;
+        }
+
+        if (TestQueuedActions())
+        {
+            m_eLastPadAction = (ePadActions)0x25;
+            return;
+        }
+
+        if (mActionDekeVars.bPossibleSuccessfulDeke && GetGlobalPad() == nullptr)
+        {
+            float fRandomRange = 0.2f * ((FielderTweaks*)m_pTweaks)->fDekeing;
+            float factor = 0.5f;
+
+            bool turboTurn;
+            if ((nlRandomf(fRandomRange, &nlDefaultSeed) - (fRandomRange * factor)) > 0.0f)
+            {
+                turboTurn = true;
+            }
+            else
+            {
+                turboTurn = false;
+            }
+            mActionDekeVars.bPossibleTurboMove = turboTurn;
+        }
+
+        if (mActionDekeVars.bPossibleTurboMove && mActionDekeVars.bPossibleSuccessfulDeke && !IsInvincible())
+        {
+            m_ePowerup = (ePowerUpType)0x7;
+            mnNumPowerups = 1;
+            m_pPowerupTarget = nullptr;
+            ThrowPowerup();
+            m_tPowerupEffectTime.SetSeconds(0.5f);
+        }
+
+        SetAction(ACTION_NEED_ACTION);
+    }
 }
 
 /**
