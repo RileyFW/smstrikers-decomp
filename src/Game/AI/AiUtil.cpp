@@ -132,7 +132,34 @@ void TestCollision(float, const nlVector3&, const nlVector3&, float, const nlVec
  */
 float Exp(float x)
 {
-    return exp(-x);
+    float result = 1.0f;
+    float neg_x = -x;
+    float c0 = 0.24999869f;
+    float c1 = 0.031257585f;
+    float x_power;
+    float c2 = 0.0025913713f;
+    float c3 = 0.000171562f;
+    float c4 = 0.0000054302f;
+    float c5 = 0.0000006906f;
+    float temp;
+
+    result = c0 * neg_x + result;
+    x_power = neg_x * neg_x;
+    result = c1 * x_power + result;
+    x_power *= neg_x;
+    result = c2 * x_power + result;
+    x_power *= neg_x;
+    result = c3 * x_power + result;
+    x_power *= neg_x;
+    result = c4 * x_power + result;
+    x_power *= neg_x;
+    result = c5 * x_power + result;
+
+    temp = result * result;
+    temp = result * temp;
+    temp = result * temp;
+
+    return 1.0f / temp;
 }
 
 /**

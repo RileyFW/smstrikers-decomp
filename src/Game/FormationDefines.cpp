@@ -147,8 +147,38 @@ FormationSpec* FormationSet::GetFormationSpec(int index) const
 /**
  * Offset/Address/Size: 0xC08 | 0x8003BA18 | size: 0x7C
  */
-void FormationSet::GetFormationSpecFromID(int) const
+FormationSpec* FormationSet::GetFormationSpecFromID(int formationID) const
 {
+    if (formationID < 0)
+    {
+        return nullptr;
+    }
+    if (formationID >= m_NumFormationDefs)
+    {
+        // Fall through to linear search
+    }
+    else
+    {
+        // Try direct index access first
+        FormationSpec* spec = &m_FormationDefArray[formationID];
+        if (spec->m_ID == formationID)
+        {
+            return spec;
+        }
+    }
+
+    // Linear search through all formation defs
+    FormationSpec* array = m_FormationDefArray;
+    for (int i = 0; i < m_NumFormationDefs; i++)
+    {
+        if (array->m_ID == formationID)
+        {
+            return array;
+        }
+        array++;
+    }
+
+    return nullptr;
 }
 
 /**

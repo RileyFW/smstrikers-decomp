@@ -3,20 +3,26 @@
 /**
  * Offset/Address/Size: 0x1604 | 0x8007E640 | size: 0x320
  */
-void Fuzzy::GetBestDefensiveFormation(cTeam*)
+FuzzyVariant Fuzzy::GetBestDefensiveFormation(cTeam*)
 {
+    FuzzyVariant result;
+    return result;
 }
 
 /**
  * Offset/Address/Size: 0x12E4 | 0x8007E320 | size: 0x320
  */
-void Fuzzy::GetBestOffensiveFormation(cTeam*)
+FuzzyVariant Fuzzy::GetBestOffensiveFormation(cTeam*)
 {
+    FuzzyVariant result;
+    return result;
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x8007D03C | size: 0x12E4
  */
-void Fuzzy::GetBestBallFormationSet(cTeam*)
+FuzzyVariant Fuzzy::GetBestBallFormationSet(cTeam*)
 {
+    FuzzyVariant result;
+    return result;
 }

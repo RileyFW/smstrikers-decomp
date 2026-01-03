@@ -159,6 +159,26 @@ public:
         return m_nHeadJointIndex;
     }
 
+    inline bool IsTurboingAnimID()
+    {
+        bool result = false;
+        if (m_eAnimID == 0x1D || m_eAnimID == 0x1E || m_eAnimID == 0x1F || m_eAnimID == 0x20 || m_eAnimID == 0x21 || m_eAnimID == 0x22)
+        {
+            result = true;
+        }
+        return result;
+    }
+
+    inline bool IsTurboingWithoutBallAnimID()
+    {
+        bool result = false;
+        if (m_eAnimID == 0x10 || m_eAnimID == 0x0F || m_eAnimID == 0x11)
+        {
+            result = true;
+        }
+        return result;
+    }
+
     virtual void Update(float);
 
     /* 0x04 */ eCharacterClass m_eCharacterClass;

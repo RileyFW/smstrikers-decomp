@@ -59,7 +59,7 @@ public:
     };
 
     FormationSpec* GetFormationSpec(int) const;
-    void GetFormationSpecFromID(int) const;
+    FormationSpec* GetFormationSpecFromID(int) const;
     void LoadFormationSets(const char*, int&);
 
     /* 0x0 */ bool m_AutoDelete;

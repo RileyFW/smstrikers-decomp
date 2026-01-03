@@ -120,6 +120,9 @@ struct CachedPosition
     /* 0x4 */ nlVector3 vPosition;
 }; // total size: 0x10
 
+class FormationSet;
+class FormationSpec;
+
 class FormationManager
 {
 public:
@@ -127,7 +130,7 @@ public:
     ~FormationManager();
     void LoadFormationSets();
     void UnloadFormationSets();
-    void GetFormationSpec(eFormation);
+    FormationSpec* GetFormationSpec(eFormation);
     void Update(float);
     void ChooseNewFormations();
     void SetNewFormationEval(eFormationType, eFormation);
@@ -139,6 +142,9 @@ public:
     /* 0x10 */ nlVector2 m_v2AIFielderCenter;
     /* 0x18 */ Timer m_tSelectFormationsTimer;
     /* 0x1C */ CachedPosition m_CachedPositions[4];
+
+    static FormationSet* m_FormationSetArray;
+    static int m_NumFormationSets;
 }; // total size: 0x5C
 
 #endif // _FORMATION_H_

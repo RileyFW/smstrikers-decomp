@@ -1,7 +1,13 @@
 #include "Game/Formation.h"
 
 #include "Game/AI/Fielder.h"
+#include "Game/AI/FuzzyVariant.h"
+#include "Game/AI/Scripts/FormationScript.h"
 #include "Game/Team.h"
+#include "Game/FormationDefines.h"
+
+FormationSet* FormationManager::m_FormationSetArray = nullptr;
+int FormationManager::m_NumFormationSets = 0;
 
 /**
  * Offset/Address/Size: 0x5C | 0x8003ADB4 | size: 0x5C
@@ -77,8 +83,25 @@ void FormationManager::UnloadFormationSets()
 /**
  * Offset/Address/Size: 0x26E4 | 0x8003A934 | size: 0x78
  */
-void FormationManager::GetFormationSpec(eFormation)
+FormationSpec* FormationManager::GetFormationSpec(eFormation formation)
 {
+    FormationSpec* result = nullptr;
+    int offset = 0;
+    eFormation id = (eFormation)(int)this;
+    int i = 0;
+
+    while (i < m_NumFormationSets)
+    {
+        result = m_FormationSetArray[i].GetFormationSpecFromID(id);
+        if (result != nullptr)
+        {
+            break;
+        }
+        offset += 0x10;
+        i++;
+    }
+
+    return result;
 }
 
 /**
@@ -93,6 +116,17 @@ void FormationManager::Update(float)
  */
 void FormationManager::ChooseNewFormations()
 {
+    s32 defensiveFormation;
+    s32 offensiveFormation;
+    s32 ballFormationSet;
+
+    defensiveFormation = Fuzzy::GetBestDefensiveFormation(m_pTeam).mData.i;
+    offensiveFormation = Fuzzy::GetBestOffensiveFormation(m_pTeam).mData.i;
+    ballFormationSet = Fuzzy::GetBestBallFormationSet(m_pTeam).mData.i;
+
+    SetNewFormationEval(FTYPE_DEFENSIVE, (eFormation)defensiveFormation);
+    SetNewFormationEval(FTYPE_OFFENSIVE, (eFormation)offensiveFormation);
+    SetNewFormationEval(FTYPE_BALLPOSITION, (eFormationSet)ballFormationSet);
 }
 
 /**
@@ -100,6 +134,7 @@ void FormationManager::ChooseNewFormations()
  */
 void FormationManager::SetNewFormationEval(eFormationType, eFormation)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -107,6 +142,7 @@ void FormationManager::SetNewFormationEval(eFormationType, eFormation)
  */
 void FormationManager::SetNewFormationEval(eFormationType, eFormationSet)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

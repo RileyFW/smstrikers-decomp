@@ -58,6 +58,26 @@ static LooseBallContactAnimInfo LeadVolleyContactAnims[3] = {
     { 0x3E, 9.0f, 0x8000, 0xE000 }
 };
 
+// static inline bool IsTurboingAnimID(s32 animID)
+// {
+//     bool result = false;
+//     if (animID == 0x1D || animID == 0x1E || animID == 0x1F || animID == 0x20 || animID == 0x21 || animID == 0x22)
+//     {
+//         result = true;
+//     }
+//     return result;
+// }
+
+// static inline bool IsTurboingWithoutBallAnimID(s32 animID)
+// {
+//     bool result = false;
+//     if (animID == 0x0F || animID == 0x10 || animID == 0x11)
+//     {
+//         result = true;
+//     }
+//     return result;
+// }
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80026B20 | size: 0x8
 //  */
@@ -570,7 +590,39 @@ bool cFielder::IsCharacterInAir(bool) const
 bool cFielder::IsTurboing()
 {
     FORCE_DONT_INLINE;
-    return true;
+    bool bIsTurboing = false;
+
+    if (m_pBall != nullptr)
+    {
+        bIsTurboing = IsTurboingAnimID();
+        if (bIsTurboing == false)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        bIsTurboing = IsTurboingWithoutBallAnimID();
+        if (bIsTurboing == false)
+        {
+            return false;
+        }
+    }
+    return bIsTurboing;
+
+    // // Check if animation ID is one of the turbo animations without ball
+    // s32 animID = m_eAnimID;
+    // bIsTurboing = false;
+    // if (animID == 0x0F || animID == 0x10 || animID == 0x11)
+    // {
+    //     bIsTurboing = true;
+    // }
+    // if (bIsTurboing == false)
+    // {
+    //     return false;
+    // }
+
+    // return true;
 }
 
 /**

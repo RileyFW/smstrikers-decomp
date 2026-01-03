@@ -7,6 +7,7 @@
 #include "Game/Team.h"
 #include "Game/Game.h"
 #include "Game/AI/Fielder.h"
+#include "NL/nlSingleton.h"
 
 enum eScriptFielderDesire
 {
@@ -38,6 +39,18 @@ enum eScriptFielderDesire
     edPostWhistle = 25,
     edWait = 28,
 };
+
+class ScriptQuestionCache : public nlSingleton<ScriptQuestionCache>
+{
+public:
+    ~ScriptQuestionCache();
+    void Clear();
+
+    // nlAVLTreeSlotPool mQuestionCacheMap; // offset 0x0, size 0x28
+    // map mQuestionCacheMapSTD;            // offset 0x28, size 0x10
+    int mTotalLookups; // offset 0x38, size 0x4
+    int mCacheHits;    // offset 0x3C, size 0x4
+}; // total size: 0x40
 
 float InOffensiveZoneOfPlayer(cBall*, cPlayer*);
 float InDefensiveZoneOfPlayer(cBall*, cPlayer*);
