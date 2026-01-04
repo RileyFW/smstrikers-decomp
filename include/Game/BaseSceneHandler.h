@@ -42,12 +42,12 @@ public:
     virtual void SceneCreated();
     virtual void SetVisible(bool visible) { m_bVisible = visible; };
 
-    /* offset 0x04 */ unsigned long m_uHashID;                   // offset 0x4, size 0x4
-    /* offset 0x08 */ bool m_bVisible;                           // offset 0x8, size 0x1
-    /* offset 0x0C */ BaseScreenHandler* m_pScreenHandlerList;   // offset 0xC, size 0x4
-    /* offset 0x10 */ BaseScreenHandler* m_pActiveScreenHandler; // offset 0x10, size 0x4
-    /* offset 0x14 */ FEPresentation* m_pFEPresentation;         // offset 0x14, size 0x4
-    /* offset 0x18 */ FEScene* m_pFEScene;                       // offset 0x18, size 0x4
+    /* 0x04 */ unsigned long m_uHashID;
+    /* 0x08 */ bool m_bVisible; // is it 0x0C?
+    /* 0x0C */ BaseScreenHandler* m_pScreenHandlerList;
+    /* 0x10 */ BaseScreenHandler* m_pActiveScreenHandler;
+    /* 0x14 */ FEPresentation* m_pFEPresentation;
+    /* 0x18 */ FEScene* m_pFEScene;
 }; // total size: 0x1C
 
 #endif // _BASESCENEHANDLER_H_

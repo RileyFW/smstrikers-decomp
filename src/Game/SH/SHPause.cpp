@@ -1,4 +1,5 @@
 #include "Game/SH/SHPause.h"
+#include "Game/OverlayManager.h"
 
 // /**
 //  * Offset/Address/Size: 0x38 | 0x800B01B4 | size: 0x40
@@ -215,6 +216,7 @@ void PauseMenuScene::OnSelectAUDIOOPTIONS(TLComponentInstance*)
  */
 void PauseMenuScene::OnSelectVISUALOPTIONS(TLComponentInstance*)
 {
+    OverlayManager::s_pInstance->Push(IGSCENE_PAUSE_VISUAL, SCREEN_FORWARD, true);
 }
 
 /**

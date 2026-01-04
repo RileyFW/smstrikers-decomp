@@ -2,6 +2,7 @@
 #define _FESLIDEMENU_H_
 
 #include "Game/FE/tlComponentInstance.h"
+#include "NL/nlFunction.h"
 
 enum ItemStates
 {
@@ -11,46 +12,23 @@ enum ItemStates
     NUM_STATES = 2,
 };
 
-enum Tag
-{
-    EMPTY = 0,
-    FREE_FUNCTION = 1,
-    FUNCTOR = 2,
-};
-
-template <typename T>
-class Function1
-{
-    enum Tag mTag; // offset 0x0, size 0x4
-    union
-    {                                 // inferred
-        void (*mFreeFunction)(T*);    // offset 0x4, size 0x4
-        struct FunctorBase* mFunctor; // offset 0x4, size 0x4
-    };
-}; // total size: 0x8
-
-template <typename T>
-class Function : public Function1<T>
-{
-}; // total size: 0x8
-
 class SlideMenuItem
 {
 public:
     SlideMenuItem();
     virtual ~SlideMenuItem();
 
-    /* 0x4 */ unsigned long mSlideMenuHash;            // offset 0x4, size 0x4
-    /* 0x8 */ TLComponentInstance* mComponentInstance; // offset 0x8, size 0x4
-    /* 0xC */ int mUserEnumType;                       // offset 0xC, size 0x4
+    /* 0x4 */ unsigned long mSlideMenuHash;
+    /* 0x8 */ TLComponentInstance* mComponentInstance;
+    /* 0xC */ int mUserEnumType;
 }; // total size: 0x10
 
 struct MenuItem
 {
-    Function<SlideMenuItem*> mCallbacks[3]; // offset 0x0, size 0x18
-    SlideMenuItem* mType;                   // offset 0x18, size 0x4
-    bool mDisabled;                         // offset 0x1C, size 0x1
-    bool mLocked;                           // offset 0x1D, size 0x1
+    /*  0x00 */ Function<SlideMenuItem*> mCallbacks[3];
+    /*  0x18 */ SlideMenuItem* mType;
+    /*  0x1C */ bool mDisabled;
+    /*  0x1D */ bool mLocked;
 }; // total size: 0x20
 
 class MenuList
@@ -59,11 +37,11 @@ public:
     MenuList();
     virtual ~MenuList();
 
-    MenuItem mMenuItems[16]; // offset 0x4, size 0x200
-    int mCurrentIndex;       // offset 0x204, size 0x4
-    int mNumItemsAdded;      // offset 0x208, size 0x4
-    unsigned char mWrapList; // offset 0x20C, size 0x1
-    int mFlags;              // offset 0x210, size 0x4
+    /* 0x004 */ MenuItem mMenuItems[16];
+    /* 0x204 */ int mCurrentIndex;
+    /* 0x208 */ int mNumItemsAdded;
+    /* 0x20C */ unsigned char mWrapList;
+    /* 0x210 */ int mFlags;
 }; // total size: 0x214
 
 class SlideMenuList : public MenuList
@@ -78,8 +56,8 @@ public:
         mComponentInstance->SetActiveSlide(mSlideMenuHash);
     }
 
-    unsigned char mInputLocked;              // offset 0x214, size 0x1
-    TLComponentInstance* mComponentInstance; // offset 0x218, size 0x4
+    /* 0x214 */ unsigned char mInputLocked;
+    /* 0x218 */ TLComponentInstance* mComponentInstance;
 }; // total size: 0x21C
 
 class FESlideMenu
@@ -103,17 +81,17 @@ public:
     ~FESlideMenu();
     FESlideMenu(TLComponentInstance*);
 
-    /* 0x0,  */ MenuItem m_menuItems[16];         // offset 0x0, size 0x140
-    /* 0x140 */ unsigned char m_size;             // offset 0x140, size 0x1
-    /* 0x141 */ unsigned char m_currentSlide;     // offset 0x141, size 0x1
-    /* 0x142 */ unsigned char m_doWrapAround;     // offset 0x142, size 0x1
-    /* 0x144 */ TLComponentInstance* m_pMenuComp; // offset 0x144, size 0x4
-    /* 0x148 */ unsigned char m_lockInput;        // offset 0x148, size 0x1
-    /* 0x14C */ void* m_callbackParam;            // offset 0x14C, size 0x4
-    /* 0x150 */ long mLastChosenSlide;            // offset 0x150, size 0x4
-    /* 0x154 */ long mLastRandomSlide;            // offset 0x154, size 0x4
-    /* 0x158 */ long mNumCyclesRemaining;         // offset 0x158, size 0x4
-    /* 0x15C */ float mRandDeltaTime;             // offset 0x15C, size 0x4
+    /* 0x0,  */ MenuItem m_menuItems[16];
+    /* 0x140 */ unsigned char m_size;
+    /* 0x141 */ unsigned char m_currentSlide;
+    /* 0x142 */ unsigned char m_doWrapAround;
+    /* 0x144 */ TLComponentInstance* m_pMenuComp;
+    /* 0x148 */ unsigned char m_lockInput;
+    /* 0x14C */ void* m_callbackParam;
+    /* 0x150 */ long mLastChosenSlide;
+    /* 0x154 */ long mLastRandomSlide;
+    /* 0x158 */ long mNumCyclesRemaining;
+    /* 0x15C */ float mRandDeltaTime;
 }; // total size: 0x160
 
 #endif // _FESLIDEMENU_H_

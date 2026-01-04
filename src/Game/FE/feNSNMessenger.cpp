@@ -10,8 +10,9 @@ void NSNMessengerScene::EnableScrolling(bool)
 /**
  * Offset/Address/Size: 0x1C0 | 0x800A14DC | size: 0x8
  */
-void NSNMessengerScene::IsMessengerOpen() const
+bool NSNMessengerScene::IsMessengerOpen() const
 {
+    return m_bVisible;
 }
 
 /**
@@ -19,6 +20,8 @@ void NSNMessengerScene::IsMessengerOpen() const
  */
 void NSNMessengerScene::CloseMessengerNow()
 {
+    SetVisible(false);
+    m_curState = MS_CLOSED;
 }
 
 /**
@@ -26,6 +29,13 @@ void NSNMessengerScene::CloseMessengerNow()
  */
 void NSNMessengerScene::CloseMessenger()
 {
+    FEPresentation* presentation = m_pFEScene->m_pFEPackage->GetPresentation();
+
+    presentation->SetActiveSlide("Outro");
+    presentation->m_currentSlide->m_time = 0.0f;
+    presentation->m_currentSlide->Update(0.0f);
+
+    m_curState = MS_CLOSING;
 }
 
 /**
@@ -88,6 +98,7 @@ NSNMessengerScene::~NSNMessengerScene()
  * Offset/Address/Size: 0xAC0 | 0x800A1DDC | size: 0x84
  */
 NSNMessengerScene::NSNMessengerScene()
+    : BaseOverlayHandler(0, POSITION_TOP)
 {
 }
 

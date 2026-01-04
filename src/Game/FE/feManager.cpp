@@ -1,6 +1,8 @@
 #include "Game/FE/feManager.h"
 
 #include "Game/FE/feInput.h"
+#include "Game/Game.h"
+#include "Game/GameInfo.h"
 #include "NL/glx/glxSwap.h"
 #include "NL/nlTask.h"
 
@@ -61,6 +63,12 @@ void FrontEnd::ExitWinnerScreen()
  */
 void FrontEnd::EnterStartScreen(bool)
 {
+    bool isInStrikers101 = false;
+    if (GameInfoManager::s_pInstance->mIsInStrikers101Mode) {
+        isInStrikers101 = true;
+    }
+    g_pGame->BeginGame(false, isInStrikers101);
+    m_feStatePending = 6;
 }
 
 /**

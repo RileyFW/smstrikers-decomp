@@ -2195,45 +2195,10 @@ void cFielder::S2SShootWasPressed()
 
 /**
  * Offset/Address/Size: 0x11AC | 0x8001A4E8 | size: 0x78
- * TODO: mr/li difference and get rid of goto...
+ * TODO: 100% match, but I believe the goto in the class-inline is probably movable to another class-inline method.
  */
 void cFielder::StartRunning()
 {
-    // u8 shouldSkip;
-    // u8 isRunningWithBall;
-    // s32 state;
-
-    // shouldSkip = 0;
-    // state = m_eActionState;
-
-    // if (state != ACTION_RUNNING)
-    // {
-    //     isRunningWithBall = shouldSkip;
-    //     if (((u32)(state - ACTION_RUNNING_WB) <= 1) || (state == ACTION_RUNNING_WB_TURBO_TURN))
-    //     {
-    //         isRunningWithBall = 1;
-    //     }
-    //     if (isRunningWithBall != 0)
-    //     {
-    //         goto set_skip;
-    //     }
-    // }
-    // else
-    // {
-    // set_skip:
-    //     shouldSkip = 1;
-    // }
-
-    // if (shouldSkip == 0)
-    // {
-    //     if (m_pBall != 0)
-    //     {
-    //         InitActionRunningWB(false);
-    //         return;
-    //     }
-    //     InitActionRunning();
-    // }
-
     if (!IsRunningState())
     {
         if (m_pBall != 0)
