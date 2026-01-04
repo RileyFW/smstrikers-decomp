@@ -3,8 +3,10 @@
 #include "Game/AI/Fielder.h"
 #include "Game/AI/FuzzyVariant.h"
 #include "Game/AI/Scripts/FormationScript.h"
+#include "Game/Game.h"
 #include "Game/Team.h"
 #include "Game/FormationDefines.h"
+#include "NL/nlMath.h"
 
 FormationSet* FormationManager::m_FormationSetArray = nullptr;
 int FormationManager::m_NumFormationSets = 0;
@@ -59,11 +61,15 @@ FormationManager::FormationManager(cTeam* pTeam)
  */
 FormationManager::~FormationManager()
 {
-    for (int i = 0; i < 3; ++i)
-    {
-        delete m_pFormations[i];
-        m_pFormations[i] = nullptr;
-    }
+    s32 i = 0;
+    FormationEval** pp = (FormationEval**)this;
+    FormationEval* null = (FormationEval*)i;
+    do {
+        FormationEval* p = pp[1];
+        delete p;
+        i++;
+        *++pp = null;
+    } while (i < 3);
 }
 
 /**
@@ -85,6 +91,7 @@ void FormationManager::UnloadFormationSets()
  */
 FormationSpec* FormationManager::GetFormationSpec(eFormation formation)
 {
+    FORCE_DONT_INLINE;
     FormationSpec* result = nullptr;
     int offset = 0;
     eFormation id = (eFormation)(int)this;
@@ -107,8 +114,57 @@ FormationSpec* FormationManager::GetFormationSpec(eFormation formation)
 /**
  * Offset/Address/Size: 0x2558 | 0x8003A7A8 | size: 0x18C
  */
-void FormationManager::Update(float)
+void FormationManager::Update(float dt)
 {
+    if (!g_pGame->IsGameplayOrOvertime())
+    {
+        return;
+    }
+
+    m_tSelectFormationsTimer.Countdown(dt, 0.0f);
+
+    if (m_tSelectFormationsTimer.m_uPackedTime == 0)
+    {
+        ChooseNewFormations();
+        float randomTime = nlRandomf(0.2f, &nlDefaultSeed);
+        m_tSelectFormationsTimer.SetSeconds(10.0f + randomTime);
+    }
+
+    m_v2AIFielderCenter.f.x = 0.0f;
+    m_v2AIFielderCenter.f.y = 0.0f;
+
+    for (int i = 0; i < 4; i++)
+    {
+        cFielder* pFielder = m_pTeam->GetFielder(i);
+        float newX = m_v2AIFielderCenter.f.x + pFielder->m_v3Position.f.x;
+        float newY = m_v2AIFielderCenter.f.y + pFielder->m_v3Position.f.y;
+        m_v2AIFielderCenter.f.x = newX;
+        m_v2AIFielderCenter.f.y = newY;
+    }
+
+    float cx = m_v2AIFielderCenter.f.x * 0.25f;
+    float cy = m_v2AIFielderCenter.f.y * 0.25f;
+    m_v2AIFielderCenter.f.x = cx;
+    m_v2AIFielderCenter.f.y = cy;
+
+    if (m_pTeam->m_nSide == AWAY)
+    {
+        m_v2AIFielderCenter.f.x = -m_v2AIFielderCenter.f.x;
+        m_v2AIFielderCenter.f.y = -m_v2AIFielderCenter.f.y;
+    }
+
+    for (int i = 0; i < 3; i++)
+    {
+        if (m_pFormations[i] != nullptr)
+        {
+            m_pFormations[i]->Update(dt);
+        }
+    }
+
+    m_CachedPositions[0].bCacheIsValid = false;
+    m_CachedPositions[1].bCacheIsValid = false;
+    m_CachedPositions[2].bCacheIsValid = false;
+    m_CachedPositions[3].bCacheIsValid = false;
 }
 
 /**
@@ -116,6 +172,7 @@ void FormationManager::Update(float)
  */
 void FormationManager::ChooseNewFormations()
 {
+    FORCE_DONT_INLINE;
     s32 defensiveFormation;
     s32 offensiveFormation;
     s32 ballFormationSet;

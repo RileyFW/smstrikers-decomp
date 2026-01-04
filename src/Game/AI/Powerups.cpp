@@ -14,6 +14,7 @@ PowerupBase* g_pPowerups[25];
 
 namespace
 {
+
 PowerupModelPool powerupModelPool;
 unsigned long uBOBOMB_MASTER_OBJECT;
 unsigned long uBANANA_MASTER_OBJECT;
