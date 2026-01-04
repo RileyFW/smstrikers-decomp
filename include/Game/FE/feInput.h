@@ -56,4 +56,6 @@ public:
     static void Initialize();
 }; // total size: 0x30
 
+extern FEInput* g_pFEInput;
+
 #endif // _FEINPUT_H_

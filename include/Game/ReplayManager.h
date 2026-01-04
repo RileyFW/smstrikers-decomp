@@ -1,6 +1,8 @@
 #ifndef _REPLAYMANAGER_H_
 #define _REPLAYMANAGER_H_
 
+#define BASECAMERA_FOV_IMPL
+
 #include "Game/Sys/eventman.h"
 #include "Game/Camera/FollowCam.h"
 #include "Game/RenderSnapshot.h"

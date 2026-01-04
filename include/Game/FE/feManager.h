@@ -27,6 +27,15 @@ public:
     void FEEventHandler(Event*, void*);
 
     static int m_feStateCurrent;
+    static int m_feStatePending;
+    static void* m_pPauseMenuCamera;
+    static int m_hitStartPad;
+    static int m_menuType;
+    static unsigned char m_bGameOver;
+    static unsigned char m_bInPauseMenuState;
+    static float m_fDemoTimeElapsed;
+    static float m_pauseDelay;
+    static unsigned char m_ctrlConnectedState[4];
 };
 
 #endif // _FEMANAGER_H_

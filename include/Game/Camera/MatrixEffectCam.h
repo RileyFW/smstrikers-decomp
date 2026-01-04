@@ -3,6 +3,7 @@
 
 #include "NL/nlMath.h"
 #include "Game/Camera/BaseCamera.h"
+// class cBaseCamera;
 
 class MatrixEffectCam : public cBaseCamera
 {
@@ -11,8 +12,8 @@ public:
     /* 0x08 */ virtual ~MatrixEffectCam();
     /* 0x0C */ virtual eCameraType GetType() { return eCameraType_MatrixEffect; }
     /* 0x10 */ virtual void Update(float);
-    /* 0x14 */ virtual const nlMatrix4& GetViewMatrix() const { return mViewMatrix; };
     /* 0x18 */ virtual float GetFOV() const { return mfFOV; };
+    /* 0x14 */ virtual const nlMatrix4& GetViewMatrix() const { return mViewMatrix; };
     /* 0x20 */ virtual const nlVector3& GetTargetPosition() const;
     /* 0x24 */ virtual const nlVector3& GetCameraPosition() const;
 

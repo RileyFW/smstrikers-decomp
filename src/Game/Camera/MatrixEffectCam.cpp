@@ -10,6 +10,7 @@
 
 #include "Game/Camera/CameraMan.h"
 #include "Game/ReplayManager.h"
+#include "Game/Camera/BaseCamera.h"
 
 static nlVector3 cameraPosition;
 f32 sfDuration = 3.0f;
@@ -186,10 +187,13 @@ const nlVector3& MatrixEffectCam::GetTargetPosition() const
         alpha = 1.0f;
     }
 
+    nlVector3 diff;
+    nlVec3Sub(diff, mFinalTarget, mBeginTarget);
+
     nlVec3Set(mTargetPosition,
-        (alpha * (mFinalTarget.f.x - mBeginTarget.f.x)) + mBeginTarget.f.x,
-        (alpha * (mFinalTarget.f.y - mBeginTarget.f.y)) + mBeginTarget.f.y,
-        (alpha * (mFinalTarget.f.z - mBeginTarget.f.z)) + mBeginTarget.f.z);
+        (alpha * diff.f.x) + mBeginTarget.f.x,
+        (alpha * diff.f.y) + mBeginTarget.f.y,
+        (alpha * diff.f.z) + mBeginTarget.f.z);
 
     return mTargetPosition;
 }

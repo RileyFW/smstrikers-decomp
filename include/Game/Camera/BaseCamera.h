@@ -36,7 +36,11 @@ public:
     /* 0x0C */ virtual eCameraType GetType() = 0;
     /* 0x10 */ virtual void Update(float) = 0;
     /* 0x14 */ virtual const nlMatrix4& GetViewMatrix() const = 0;
-    /* 0x18 */ virtual float GetFOV() const { return 27.0f; };
+#ifdef BASECAMERA_FOV_IMPL
+    /* 0x18 */ virtual float GetFOV() const { return 27.0f; }; // needed, as this generates sdata2 errors otherwise (e.g. in MatrixEffectCam)
+#else
+    /* 0x18 */ virtual float GetFOV() const;
+#endif
     /* 0x1C */ virtual void Reactivate() { };
     /* 0x20 */ virtual const nlVector3& GetTargetPosition() const = 0;
     /* 0x24 */ virtual const nlVector3& GetCameraPosition() const = 0;

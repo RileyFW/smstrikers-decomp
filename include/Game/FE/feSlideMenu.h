@@ -90,16 +90,16 @@ public:
         MenuItem() { };
         ~MenuItem() { };
 
-        unsigned long ItemSlide;                     // offset 0x0, size 0x4
-        class Function<FESlideMenu*> ItemCBFuncs[2]; // offset 0x4, size 0x10
-    }; // total size: 0x14
+        /* 0x0 */ unsigned long ItemSlide;
+        /* 0x4 */ Function<FESlideMenu*> ItemCBFuncs[2];
+    }; // total size: 0x20
 
     void UpdatePresentation();
-    void PrevItem();
-    void NextItem();
+    bool PrevItem();
+    bool NextItem();
     void SetSlideByIndex(unsigned char);
     void ApplyFunction();
-    void AddMenuItem(const char*);
+    MenuItem* AddMenuItem(const char*);
     ~FESlideMenu();
     FESlideMenu(TLComponentInstance*);
 

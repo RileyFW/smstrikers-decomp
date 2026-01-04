@@ -290,6 +290,32 @@ public:
     void DoAIWindupActionSelection();
     void DoSpeedBoost();
 
+    inline bool IsRunningState()
+    {
+        bool isRunningWithBall;
+        bool result;
+
+        result = false;
+        if (m_eActionState != ACTION_RUNNING)
+        {
+            isRunningWithBall = result;
+            if (((u32)(m_eActionState - ACTION_RUNNING_WB) <= 1) || (m_eActionState == ACTION_RUNNING_WB_TURBO_TURN))
+            {
+                isRunningWithBall = true;
+            }
+            if (isRunningWithBall)
+            {
+                goto set_result; // ugly, but works. I suspect it is solvable with another class-inline method.
+            }
+        }
+        else
+        {
+        set_result:
+            result = true;
+        }
+        return result;
+    }
+
     // to be verified
     void QueueDesire(eFielderDesireState, float, FuzzyVariant, FuzzyVariant);
     void ClearQueuedDesire();

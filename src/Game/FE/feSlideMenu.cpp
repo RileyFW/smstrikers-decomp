@@ -1,30 +1,35 @@
 #include "Game/FE/feSlideMenu.h"
 
+#include "NL/nlString.h"
+
 /**
  * Offset/Address/Size: 0x0 | 0x80096C54 | size: 0x34
  */
 void FESlideMenu::UpdatePresentation()
 {
+    m_pMenuComp->SetActiveSlide(m_menuItems[m_currentSlide].ItemSlide);
 }
 
 /**
  * Offset/Address/Size: 0x34 | 0x80096C88 | size: 0xE4
  */
-void FESlideMenu::PrevItem()
+bool FESlideMenu::PrevItem()
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x118 | 0x80096D6C | size: 0xE8
  */
-void FESlideMenu::NextItem()
+bool FESlideMenu::NextItem()
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x200 | 0x80096E54 | size: 0xA4
  */
-void FESlideMenu::SetSlideByIndex(unsigned char)
+void FESlideMenu::SetSlideByIndex(unsigned char newslide)
 {
 }
 
@@ -38,8 +43,12 @@ void FESlideMenu::ApplyFunction()
 /**
  * Offset/Address/Size: 0x420 | 0x80097074 | size: 0x60
  */
-void FESlideMenu::AddMenuItem(const char*)
+FESlideMenu::MenuItem* FESlideMenu::AddMenuItem(const char* name)
 {
+    MenuItem* item = &m_menuItems[m_size];
+    m_menuItems[m_size].ItemSlide = nlStringLowerHash(name);
+    m_size++;
+    return item;
 }
 
 /**

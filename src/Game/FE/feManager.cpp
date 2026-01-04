@@ -1,10 +1,24 @@
 #include "Game/FE/feManager.h"
 
+#include "Game/FE/feInput.h"
+#include "NL/glx/glxSwap.h"
+#include "NL/nlTask.h"
+
+// Global variables
+static unsigned char AlreadyStartedStrikers101Menu;
+static unsigned char DontCheckForControllerRemovalHack;
+
 /**
  * Offset/Address/Size: 0x0 | 0x80094C84 | size: 0x44
  */
 void FrontEnd::ReturnToFE()
 {
+    glxSwapSetBlack(true);
+    if (nlTaskManager::m_pInstance->m_CurrState == 1)
+    {
+        nlTaskManager::m_pInstance->m_Locked = false;
+    }
+    nlTaskManager::SetNextState(4);
 }
 
 /**
@@ -54,6 +68,10 @@ void FrontEnd::EnterStartScreen(bool)
  */
 void FrontEnd::SetControllerState()
 {
+    for (int i = 0; i < 4; i++)
+    {
+        m_ctrlConnectedState[i] = g_pFEInput->IsConnected((eFEINPUT_PAD)i);
+    }
 }
 
 /**
@@ -61,6 +79,8 @@ void FrontEnd::SetControllerState()
  */
 void FrontEnd::Destroy()
 {
+    m_feStateCurrent = -1;
+    m_feStatePending = -1;
 }
 
 /**
@@ -68,6 +88,17 @@ void FrontEnd::Destroy()
  */
 bool FrontEnd::Initialize()
 {
+    m_feStateCurrent = -1;
+    m_feStatePending = -1;
+    m_pPauseMenuCamera = 0;
+    m_hitStartPad = 8;
+    m_menuType = -1;
+    m_bGameOver = 0;
+    m_bInPauseMenuState = 0;
+    m_fDemoTimeElapsed = 0.0f;
+    m_pauseDelay = 1.5f;
+    AlreadyStartedStrikers101Menu = 0;
+    DontCheckForControllerRemovalHack = 0;
     return true;
 }
 
