@@ -64,7 +64,8 @@ FormationManager::~FormationManager()
     s32 i = 0;
     FormationEval** pp = (FormationEval**)this;
     FormationEval* null = (FormationEval*)i;
-    do {
+    do
+    {
         FormationEval* p = pp[1];
         delete p;
         i++;

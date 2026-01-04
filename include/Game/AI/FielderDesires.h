@@ -8,8 +8,25 @@ class CommonDesireData
 {
 public:
     CommonDesireData();
-    ~CommonDesireData();
-    CommonDesireData(const CommonDesireData&);
+
+    /**
+     * Offset/Address/Size: 0xA84 | 0x80037F0C | size: 0xCC
+     */
+    CommonDesireData(const CommonDesireData& other)
+    {
+        m_DesireType = other.m_DesireType;
+        m_ConfidenceExtrema = other.m_ConfidenceExtrema;
+        m_RandomGenerator = other.m_RandomGenerator;
+        m_RandomChanceGen = other.m_RandomChanceGen;
+    }
+
+    /**
+     * Offset/Address/Size: 0x0 | 0x80037FD8 | size: 0x3C
+     */
+    ~CommonDesireData()
+    {
+    }
+
     float CalcFuzzyChance(float fChance);
     bool CalcBoolChance(float fChance);
     float NormalizeConfidence(float fConfidence);
@@ -21,11 +38,5 @@ public:
 }; // total size: 0x64
 
 CommonDesireData& GetCommonDesireData(eFielderDesireState desireType);
-
-// class FilteredRandomRange
-// {
-// public:
-//     ~FilteredRandomRange();
-// };
 
 #endif // _FIELDERDESIRES_H_

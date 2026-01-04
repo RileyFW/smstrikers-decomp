@@ -14,14 +14,27 @@ PowerupBase* g_pPowerups[25];
 
 namespace
 {
+struct Pair
+{
+    /* 0x0 */ unsigned long hashId;
+    /* 0x4 */ const PowerupBase* powerup;
+}; // total size: 0x8
 
+struct PowerupRegistry
+{
+    /* 0x0 */ Pair registry[25];
+}; // total size: 0xC8
+
+PowerupRegistry powerupRegistry;
 PowerupModelPool powerupModelPool;
+
 unsigned long uBOBOMB_MASTER_OBJECT;
 unsigned long uBANANA_MASTER_OBJECT;
 unsigned long uRED_SHELL_MASTER_OBJECT;
 unsigned long uGREEN_SHELL_MASTER_OBJECT;
 unsigned long uSPINY_SHELL_MASTER_OBJECT;
 unsigned long uFREEZE_SHELL_MASTER_OBJECT;
+
 } // namespace
 
 // extern Audio::cWorldSFX gPowerupSFX;
@@ -128,8 +141,18 @@ void PowerupCreateAndThrow(cFielder*, ePowerUpType, int, Bowser*)
 /**
  * Offset/Address/Size: 0x4EB4 | 0x8005F7A0 | size: 0x4C
  */
-void FindPowerUp(unsigned long)
+PowerupBase* FindPowerUp(unsigned long hashOfDrawable)
 {
+    int i = 0;
+    while (i < 25)
+    {
+        if (powerupRegistry.registry[i].hashId == hashOfDrawable)
+        {
+            return const_cast<PowerupBase*>(powerupRegistry.registry[i].powerup);
+        }
+        i++;
+    }
+    return nullptr;
 }
 
 // /**

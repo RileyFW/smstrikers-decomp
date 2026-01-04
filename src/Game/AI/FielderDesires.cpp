@@ -4,28 +4,11 @@
 #include "Game/AI/FilteredRandom.h"
 #include "Game/AI/Fuzzy.h"
 
+#include "Game/AI/Fielder.h"
+
+extern FuzzyVariant fvNotSet;
+
 CommonDesireData g_vDesireCommonData[NUM_FIELDERDESIRES];
-
-/**
- * Offset/Address/Size: 0x0 | 0x80037FD8 | size: 0x3C
- */
-CommonDesireData::~CommonDesireData()
-{
-}
-
-/**
- * Offset/Address/Size: 0xA84 | 0x80037F0C | size: 0xCC
- */
-CommonDesireData::CommonDesireData(const CommonDesireData&)
-{
-}
-
-// /**
-//  * Offset/Address/Size: 0x0 | 0x8003744C | size: 0x3C
-//  */
-// FilteredRandomRange::~FilteredRandomRange()
-// {
-// }
 
 /**
  * Offset/Address/Size: 0x668C | 0x80037410 | size: 0x3C
@@ -67,156 +50,226 @@ CommonDesireData& GetCommonDesireData(eFielderDesireState desireType)
     return g_vDesireCommonData[desireType];
 }
 
-// /**
-//  * Offset/Address/Size: 0x6484 | 0x80037208 | size: 0x174
-//  */
-// void cFielder::QueueDesire(eFielderDesireState, float, FuzzyVariant, FuzzyVariant)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x6484 | 0x80037208 | size: 0x174
+ */
+void cFielder::QueueDesire(eFielderDesireState eDesireType, float fDuration, FuzzyVariant opt1, FuzzyVariant opt2)
+{
+    ClearQueuedDesire();
 
-// /**
-//  * Offset/Address/Size: 0x63C8 | 0x8003714C | size: 0xBC
-//  */
-// void cFielder::ClearQueuedDesire()
-// {
-// }
+    // Set actual values
+    m_sQueuedDesireParams.eDesireType = eDesireType;
+    m_sQueuedDesireParams.fDuration = fDuration;
+    m_sQueuedDesireParams.opt1 = opt1;
+    m_sQueuedDesireParams.opt2 = opt2;
+}
 
-// /**
-//  * Offset/Address/Size: 0x620C | 0x80036F90 | size: 0x1BC
-//  */
-// void cFielder::InitDesire(const sDesireParams*, float)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x63C8 | 0x8003714C | size: 0xBC
+ */
+void cFielder::ClearQueuedDesire()
+{
+    m_sQueuedDesireParams.fDuration = 0.0f;
+    m_sQueuedDesireParams.eDesireType = FIELDERDESIRE_NEED_DESIRE;
+    m_sQueuedDesireParams.opt1 = fvNotSet;
+    m_sQueuedDesireParams.opt2 = fvNotSet;
+}
 
-// /**
-//  * Offset/Address/Size: 0x54DC | 0x80036260 | size: 0xD30
-//  */
-// void cFielder::InitDesire(eFielderDesireState, float, float, FuzzyVariant, FuzzyVariant)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x620C | 0x80036F90 | size: 0x1BC
+ */
+bool cFielder::InitDesire(const sDesireParams* pParams, float fConfidence)
+{
+    return InitDesire(pParams->eDesireType, fConfidence, pParams->fDuration, pParams->opt1, pParams->opt2);
+}
 
-// /**
-//  * Offset/Address/Size: 0x4700 | 0x80035484 | size: 0xDDC
-//  */
-// void cFielder::UpdateDesireState(float)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x54DC | 0x80036260 | size: 0xD30
+ */
+bool cFielder::InitDesire(eFielderDesireState, float, float, FuzzyVariant, FuzzyVariant)
+{
+    FORCE_DONT_INLINE;
+    return false;
+}
 
-// /**
-//  * Offset/Address/Size: 0x469C | 0x80035420 | size: 0x64
-//  */
-// void cFielder::EndDesire(bool)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x4700 | 0x80035484 | size: 0xDDC
+ */
+void cFielder::UpdateDesireState(float)
+{
+}
 
-// /**
-//  * Offset/Address/Size: 0x45C8 | 0x8003534C | size: 0xD4
-//  */
-// void cFielder::CleanUpDesire(eFielderDesireState)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x469C | 0x80035420 | size: 0x64
+ */
+void cFielder::EndDesire(bool bCheckTimer)
+{
+    bool bShouldSetDuration = true;
 
-// /**
-//  * Offset/Address/Size: 0x4204 | 0x80034F88 | size: 0x3C4
-//  */
-// void cFielder::DesireInterceptBall(float)
-// {
-// }
+    if (bCheckTimer)
+    {
+        bShouldSetDuration = m_DesireCommonVars.tAge.GetSeconds() > 0.5f;
+    }
 
-// /**
-//  * Offset/Address/Size: 0x39EC | 0x80034770 | size: 0x818
-//  */
-// void cFielder::DesireMark(float)
-// {
-// }
+    if (bShouldSetDuration)
+    {
+        SetDesireDuration(0.0f, true);
+    }
+}
 
-// /**
-//  * Offset/Address/Size: 0x35E4 | 0x80034368 | size: 0x408
-//  */
-// void cFielder::DesireSupportBall(float, bool)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x45C8 | 0x8003534C | size: 0xD4
+ */
+void cFielder::CleanUpDesire(eFielderDesireState eNewDesireState)
+{
+    switch (m_eFielderDesireState)
+    {
+    case FIELDERDESIRE_WINDUP_PASS:
+        AbortPendingThoughts();
+        break;
 
-// /**
-//  * Offset/Address/Size: 0x33A0 | 0x80034124 | size: 0x244
-//  */
-// void cFielder::InitDesireGetOpen()
-// {
-// }
+    case FIELDERDESIRE_USER_CONTROLLED:
+        SetNoPickUpTime(0.0f);
+        break;
 
-// /**
-//  * Offset/Address/Size: 0x30B4 | 0x80033E38 | size: 0x2EC
-//  */
-// void cFielder::InitDesireOneTimerFromRun(unsigned short, const nlVector3&, const nlVector3&, bool, bool)
-// {
-// }
+    case FIELDERDESIRE_ONETIMER:
+        SetNoPickUpTime(0.0f);
+        SetSpaceSearch(nullptr);
+        break;
 
-// /**
-//  * Offset/Address/Size: 0x2E60 | 0x80033BE4 | size: 0x254
-//  */
-// void cFielder::DesireOneTimer(float)
-// {
-// }
+    case FIELDERDESIRE_POST_WHISTLE:
+        SetNoPickUpTime(0.0f);
+        SetSpaceSearch(nullptr);
+        break;
 
-// /**
-//  * Offset/Address/Size: 0x2D08 | 0x80033A8C | size: 0x158
-//  */
-// void cFielder::InitDesireReceivePassFromIdle(const LooseBallContactAnimInfo*, unsigned short, bool)
-// {
-// }
+    case FIELDERDESIRE_CUT_AND_BREAK:
+    case FIELDERDESIRE_GET_OPEN:
+    case FIELDERDESIRE_RUN_TO_NET:
+    case FIELDERDESIRE_PASS:
+        if (eNewDesireState != FIELDERDESIRE_RECEIVE_PASS_FROM_RUN && eNewDesireState != FIELDERDESIRE_RECEIVE_PASS_FROM_IDLE)
+        {
+            SetSpaceSearch(nullptr);
+        }
+        break;
 
-// /**
-//  * Offset/Address/Size: 0x2080 | 0x80032E04 | size: 0xC88
-//  */
-// void cFielder::DesireReceivePassFromIdle(float)
-// {
-// }
+    case FIELDERDESIRE_SUPPORT_BALL_OFFENSIVE:
+    case FIELDERDESIRE_USE_POWERUP:
+        SetSpaceSearch(nullptr);
+        break;
 
-// /**
-//  * Offset/Address/Size: 0x1DE8 | 0x80032B6C | size: 0x298
-//  */
-// void cFielder::InitDesireReceivePassFromRun(const LooseBallContactAnimInfo*, const nlVector3&, bool, const nlVector3&)
-// {
-// }
+    case FIELDERDESIRE_RECEIVE_PASS_FROM_IDLE:
+    case FIELDERDESIRE_RECEIVE_PASS_FROM_RUN:
+        break;
 
-// /**
-//  * Offset/Address/Size: 0x130C | 0x80032090 | size: 0xADC
-//  */
-// void cFielder::DesireReceivePassFromRun(float)
-// {
-// }
+    default:
+        break;
+    }
 
-// /**
-//  * Offset/Address/Size: 0xEE4 | 0x80031C68 | size: 0x428
-//  */
-// void cFielder::InitDesireRunToNet()
-// {
-// }
+    SetDesireDuration(0.0f, true);
+    m_eFielderDesireState = FIELDERDESIRE_NEED_DESIRE;
+}
 
-// /**
-//  * Offset/Address/Size: 0xCA8 | 0x80031A2C | size: 0x23C
-//  */
-// void cFielder::DesireSlideAttack(float)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x4204 | 0x80034F88 | size: 0x3C4
+ */
+void cFielder::DesireInterceptBall(float)
+{
+}
 
-// /**
-//  * Offset/Address/Size: 0x794 | 0x80031518 | size: 0x514
-//  */
-// void cFielder::DesireUserControlled(float)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x39EC | 0x80034770 | size: 0x818
+ */
+void cFielder::DesireMark(float)
+{
+}
 
-// /**
-//  * Offset/Address/Size: 0x41C | 0x800311A0 | size: 0x378
-//  */
-// void cFielder::DesireUsePowerup(float)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x35E4 | 0x80034368 | size: 0x408
+ */
+void cFielder::DesireSupportBall(float, bool)
+{
+}
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x80030D84 | size: 0x41C
-//  */
-// void cFielder::DesireWindupShot(float)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x33A0 | 0x80034124 | size: 0x244
+ */
+void cFielder::InitDesireGetOpen()
+{
+}
+
+/**
+ * Offset/Address/Size: 0x30B4 | 0x80033E38 | size: 0x2EC
+ */
+void cFielder::InitDesireOneTimerFromRun(unsigned short, const nlVector3&, const nlVector3&, bool, bool)
+{
+}
+
+/**
+ * Offset/Address/Size: 0x2E60 | 0x80033BE4 | size: 0x254
+ */
+void cFielder::DesireOneTimer(float)
+{
+}
+
+/**
+ * Offset/Address/Size: 0x2D08 | 0x80033A8C | size: 0x158
+ */
+void cFielder::InitDesireReceivePassFromIdle(const LooseBallContactAnimInfo*, unsigned short, bool)
+{
+}
+
+/**
+ * Offset/Address/Size: 0x2080 | 0x80032E04 | size: 0xC88
+ */
+void cFielder::DesireReceivePassFromIdle(float)
+{
+}
+
+/**
+ * Offset/Address/Size: 0x1DE8 | 0x80032B6C | size: 0x298
+ */
+void cFielder::InitDesireReceivePassFromRun(const LooseBallContactAnimInfo*, const nlVector3&, bool, const nlVector3&)
+{
+}
+
+/**
+ * Offset/Address/Size: 0x130C | 0x80032090 | size: 0xADC
+ */
+void cFielder::DesireReceivePassFromRun(float)
+{
+}
+
+/**
+ * Offset/Address/Size: 0xEE4 | 0x80031C68 | size: 0x428
+ */
+void cFielder::InitDesireRunToNet()
+{
+}
+
+/**
+ * Offset/Address/Size: 0xCA8 | 0x80031A2C | size: 0x23C
+ */
+void cFielder::DesireSlideAttack(float)
+{
+}
+
+/**
+ * Offset/Address/Size: 0x794 | 0x80031518 | size: 0x514
+ */
+void cFielder::DesireUserControlled(float)
+{
+}
+
+/**
+ * Offset/Address/Size: 0x41C | 0x800311A0 | size: 0x378
+ */
+void cFielder::DesireUsePowerup(float)
+{
+}
+
+/**
+ * Offset/Address/Size: 0x0 | 0x80030D84 | size: 0x41C
+ */
+void cFielder::DesireWindupShot(float)
+{
+}

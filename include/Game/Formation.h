@@ -7,6 +7,8 @@
 class cTeam;
 class cFielder;
 class FormationManager;
+class FormationSpec;
+class cPlayer;
 
 enum eFormationType
 {
@@ -111,7 +113,14 @@ public:
     virtual void Update(float);
     void Create(FormationManager*, eFormationType, eFormationSet, eFormation);
     void AssignPositionsToFielders(unsigned int*, float (*)[4]);
-};
+
+    /* 0x04 */ eFormationType m_eFormationType;
+    /* 0x08 */ const FormationSpec* m_pFormationSpec;
+    /* 0x0C */ cPlayer* m_pKeyPlayer;
+    /* 0x10 */ FormationManager* m_pFormationManager;
+    /* 0x14 */ Timer m_SortTimer;
+    /* 0x18 */ unsigned int m_iFielderFormationPos[4];
+}; // total size: 0x28
 
 struct CachedPosition
 {
