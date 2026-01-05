@@ -1,6 +1,24 @@
 #include "Game/FE/feHelpFuncs.h"
 
+#include "Game/FE/FEAudio.h"
 #include "Game/GameInfo.h"
+#include "NL/nlMath.h"
+
+enum nlLanguage
+{
+    LangEnglish = 0,
+    LangFrench = 1,
+    LangGerman = 2,
+    LangSpanish = 3,
+    LangItalian = 4,
+    LangJapanese = 5,
+    LangUKEnglish = 6,
+    LangLongestStrings = 7,
+    LangBob = 8,
+    LangEnd = 9,
+};
+
+extern nlLanguage g_Language;
 
 unsigned long TrophyTypeToStringName[13] = {
     0x3F93A700,
@@ -75,29 +93,74 @@ long TeamID2CharacterClassTable[9][2] = {
 /**
  * Offset/Address/Size: 0x0 | 0x800A30BC | size: 0x58
  */
-void MakeTextBoxReallyWide(TLTextInstance&)
+void MakeTextBoxReallyWide(TLTextInstance& textInstance)
 {
+    nlVector2& boxSize = ((textInstance.m_OverloadFlags & 0x4) != 0) ? textInstance.m_OverloadedAttributes.BoxSize : textInstance.m_component->m_BoxSize;
+    nlVector2 bb = boxSize;
+    bb.f.x = 999.9f;
+    textInstance.m_OverloadedAttributes.BoxSize = bb;
+    textInstance.m_OverloadFlags |= 0x4;
 }
+
+static const char* TrophyStreamNames[8] = {
+    "FE_Cup_Win_Battle_Mush",
+    "FE_Cup_Win_Battle_Flow",
+    "FE_Cup_Win_Battle_Star",
+    "FE_Cup_Win_Battle_Bows",
+    "FE_Cup_Win_Super_Mush",
+    "FE_Cup_Win_Super_Flow",
+    "FE_Cup_Win_Super_Star",
+    "FE_Cup_Win_Super_Bows",
+};
 
 /**
  * Offset/Address/Size: 0x58 | 0x800A3114 | size: 0x14
  */
-void GetCupStreamName(eTrophyType)
+const char* GetCupStreamName(eTrophyType trophyType)
 {
+    return TrophyStreamNames[trophyType];
 }
 
 /**
  * Offset/Address/Size: 0x6C | 0x800A3128 | size: 0x84
  */
-void GetMemCardDescription()
+const char* GetMemCardDescription()
 {
+    switch (g_Language)
+    { /* irregular */
+    case LangEnglish:
+        return "Save File";
+    case LangFrench:
+        return "Fichier de Sauvegarde";
+    case LangGerman:
+        return "Spieldatei";
+    case LangSpanish:
+        return "Archivo Guardado";
+    case LangItalian:
+        return "File di Dati";
+    case LangJapanese:
+        return "\x83\x74\x83\x40\x83\x8B\x82\xF0\x8F\x9C\x82\xAF\x82\xCE"; // Japanese: "セーブファイル"
+    case LangUKEnglish:
+        return "Save File";
+    default:
+        return "Save File";
+    }
 }
 
 /**
  * Offset/Address/Size: 0xF0 | 0x800A31AC | size: 0x40
  */
-void GetMemCardTitle()
+const char* GetMemCardTitle()
 {
+    switch (g_Language)
+    {
+    case LangEnglish:
+        return "Super Mario Strikers";
+    case LangJapanese:
+        return "Super Mario Strikers";
+    default:
+        return "Mario Smash Football";
+    }
 }
 
 // /**
@@ -121,26 +184,61 @@ void GetMemCardTitle()
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x698 | 0x800A3754 | size: 0x34
-//  */
-// void FECharacterSound::PlayCaptainSlideIn(eTeamID)
-// {
-// }
+static const char* CAPTAIN_SLIDE_SOUNDS[] = {
+    "sfx_focus_daisy",
+    "sfx_focus_dk",
+    "sfx_focus_luigi",
+    "sfx_focus_mario",
+    "sfx_focus_peach",
+    "sfx_focus_waluigi",
+    "sfx_focus_wario",
+    "sfx_focus_yoshi",
+    "sfx_focus_mystery",
+};
 
-// /**
-//  * Offset/Address/Size: 0x6CC | 0x800A3788 | size: 0x34
-//  */
-// void FECharacterSound::PlaySidekickName(eSidekickID)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x698 | 0x800A3754 | size: 0x34
+ */
+void FECharacterSound::PlayCaptainSlideIn(eTeamID teamID)
+{
+    FEAudio::PlayAnimAudioEvent(CAPTAIN_SLIDE_SOUNDS[teamID], false);
+}
 
-// /**
-//  * Offset/Address/Size: 0x700 | 0x800A37BC | size: 0x48
-//  */
-// void FECharacterSound::PlayCaptainName(eTeamID)
-// {
-// }
+static const char* SIDEKICK_SOUNDS[] = {
+    "sfx_accept_toad",
+    "sfx_accept_koopa",
+    "sfx_accept_ham",
+    "sfx_accept_birdo",
+};
+
+/**
+ * Offset/Address/Size: 0x6CC | 0x800A3788 | size: 0x34
+ */
+void FECharacterSound::PlaySidekickName(eSidekickID sidekickID)
+{
+    FEAudio::PlayAnimAudioEvent(SIDEKICK_SOUNDS[sidekickID], false);
+}
+
+static const char* CHARACTER_ACCEPT_SOUNDS[] = {
+    "sfx_accept_daisy",
+    "sfx_accept_dk",
+    "sfx_accept_luigi",
+    "sfx_accept_mario",
+    "sfx_accept_peach",
+    "sfx_accept_waluigi",
+    "sfx_accept_wario",
+    "sfx_accept_yoshi",
+    "sfx_accept_mystery",
+};
+
+/**
+ * Offset/Address/Size: 0x700 | 0x800A37BC | size: 0x48
+ */
+const char* FECharacterSound::PlayCaptainName(eTeamID teamID)
+{
+    FEAudio::PlayAnimAudioEvent(CHARACTER_ACCEPT_SOUNDS[teamID], true);
+    return CHARACTER_ACCEPT_SOUNDS[teamID];
+}
 
 /**
  * Offset/Address/Size: 0x748 | 0x800A3804 | size: 0x94
@@ -154,6 +252,7 @@ void EnableAutoPressed()
     g_pFEInput->SetAutoRepeatParams(FE_ALL_PADS, 0xb, 0.7f, 0.3f);
     g_pFEInput->SetAutoRepeatParams(FE_ALL_PADS, 0xc, 0.7f, 0.3f);
 }
+
 // /**
 //  * Offset/Address/Size: 0x7DC | 0x800A3898 | size: 0x1B4
 //  */
@@ -314,32 +413,32 @@ unsigned long GetLOCTeamName(eTeamID teamID)
  */
 unsigned long GetLOCSidekickName(eSidekickID sidekickid)
 {
-    s32 var_r0;
+    s32 cc;
 
     switch (sidekickid)
-    { /* irregular */
+    {
     case 3:
-        var_r0 = 0;
+        cc = 0;
         break;
     case 2:
-        var_r0 = 3;
+        cc = 3;
         break;
     case 1:
-        var_r0 = 4;
+        cc = 4;
         break;
     case 0:
-        var_r0 = 8;
+        cc = 8;
         break;
     case -2:
-        var_r0 = 0xC;
+        cc = 0xC;
         break;
     default:
-        var_r0 = -1;
+        cc = -1;
         break;
     }
-    if (var_r0 != -1)
+    if (cc != -1)
     {
-        return CCToStringName[var_r0];
+        return CCToStringName[cc];
     }
     return 0x094D126F;
 }

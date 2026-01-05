@@ -17,6 +17,7 @@ extern bool gIgnoreMinWait;
 extern bool gContinueWithoutOperation;
 extern bool gSaveLoadEnabled;
 extern long gResult;
+extern float gRetryTimerDelay;
 
 class MemCard;
 
@@ -110,6 +111,93 @@ void ContinueLoadingCB()
  */
 void RetryCB()
 {
+    SaveLoadScene* instance = SaveLoadScene::mInstance;
+    gSceneTypeStackDepth = 0;
+
+    switch (instance->mSaveLoadMode)
+    {
+    case SaveLoadScene::SLM_AT_BOOT:
+        gSceneTypeStackDepth = 1;
+        gSceneTypeStack[0] = SCENE_CUP_CHEATER;
+        gSaveLoadStarted = false;
+        gSaveLoadFinished = false;
+        gCallbackMade = false;
+        gSceneTime = 0.0f;
+        ResetTask::s_resetPaused = false;
+        break;
+
+    case SaveLoadScene::SLM_SAVING:
+        gSaveLoadStarted = false;
+        gSceneTypeStackDepth = 1;
+        gSceneTypeStack[0] = SCENE_FRIENDLY_BACKGROUND;
+        gSaveLoadFinished = false;
+        gCallbackMade = false;
+        gSceneTime = 0.0f;
+        ResetTask::s_resetPaused = true;
+        gSceneTypeStackDepth = 2;
+        gSceneTypeStack[1] = SCENE_TITLE;
+        gSaveLoadStarted = false;
+        gSaveLoadFinished = false;
+        gCallbackMade = false;
+        gSceneTime = 0.0f;
+        ResetTask::s_resetPaused = false;
+        break;
+
+    case SaveLoadScene::SLM_ASK_BEFORE_SAVING:
+        gSceneTypeStackDepth = 1;
+        gSceneTypeStack[0] = SCENE_CHOOSE_SIDES_CUP;
+        gSaveLoadStarted = false;
+        gSaveLoadFinished = false;
+        gCallbackMade = false;
+        gSceneTime = 0.0f;
+        ResetTask::s_resetPaused = false;
+        break;
+
+    case SaveLoadScene::SLM_LOADING:
+        gSceneTypeStackDepth = 1;
+        gSceneTypeStack[0] = SCENE_MARIO_BACKGROUND;
+        gSaveLoadStarted = false;
+        gSaveLoadFinished = false;
+        gCallbackMade = false;
+        gSceneTime = 0.0f;
+        ResetTask::s_resetPaused = false;
+        break;
+
+    case SaveLoadScene::SLM_ASK_BEFORE_LOADING:
+        gSceneTypeStackDepth = 1;
+        gSceneTypeStack[0] = SCENE_CHOOSE_SIDES_SUPER_CUP;
+        gSaveLoadStarted = false;
+        gSaveLoadFinished = false;
+        gCallbackMade = false;
+        gSceneTime = 0.0f;
+        ResetTask::s_resetPaused = false;
+        break;
+
+    default:
+        break;
+    }
+
+    // Common code after switch
+    int stackIndex = gSceneTypeStackDepth;
+    gSceneTypeStackDepth = stackIndex + 1;
+    gSceneTypeStack[stackIndex] = SCENE_CHOOSE_SIDES_TOURNAMENT;
+    gCallbackMade = false;
+    ResetTask::s_resetPaused = false;
+    gSaveLoadStarted = true;
+    gSaveLoadFinished = true;
+    gIgnoreMinWait = false;
+    gSceneTime = 0.0f;
+    gContinueWithoutOperation = false;
+
+    if (instance->m_displayText != nullptr)
+    {
+        instance->m_displayText->m_bVisible = true;
+    }
+
+    gRetryTimerDelay = 0.5f; // @2262 float constant (exact value TBD)
+    // Virtual function call at vtable offset 0x24
+    // Likely SceneCreated() or another virtual function
+    instance->SceneCreated();
 }
 
 /**

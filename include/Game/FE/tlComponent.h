@@ -1,6 +1,7 @@
 #ifndef _TLCOMPONENT_H_
 #define _TLCOMPONENT_H_
 
+#include "NL/nlMath.h"
 #include "types.h"
 
 #include "Game/FE/feLibObject.h"
@@ -15,6 +16,7 @@ public:
 
     /* 0x68 */ TLSlide* pChildren;
     /* 0x6C */ TLSlide* m_pActiveSlide;
+    /* 0x70 */ nlVector2 m_BoxSize; // something is fishy here -> feHelpFuncs/MakeTextBoxReallyWide needs a nlVector2 here.
     /* 0x70 */ char m_szName[32];
     /* 0x90 */ unsigned long m_hashID;
 }; // total size: 0x94

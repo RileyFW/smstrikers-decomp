@@ -42,8 +42,8 @@ struct StringDrawInfo
 
 class FontCharString
 {
-    unsigned short* m_pString;      // offset 0x0, size 0x4
-    unsigned char m_InternalBuffer; // offset 0x4, size 0x1
+    /* 0x0 */ unsigned short* m_pString;
+    /* 0x4 */ unsigned char m_InternalBuffer;
 }; // total size: 0x8
 
 class TLTextInstance : public TLInstance
@@ -55,15 +55,15 @@ public:
     const unsigned short* GetString() const;
     void Render(eGLView, const nlColour&) const;
 
-    unsigned long m_LocStrId;                         // offset 0x80, size 0x4
-    FETextLibObjectAttributes m_OverloadedAttributes; // offset 0x84, size 0xC
-    unsigned long m_OverloadFlags;                    // offset 0x90, size 0x4
-    StringDrawInfo m_DrawInfo;                        // offset 0x94, size 0x58
-    FontCharString* m_pFontString;                    // offset 0xEC, size 0x4
-    unsigned long m_DrawOptions;                      // offset 0xF0, size 0x4
-    const unsigned short* m_wcUserString;             // offset 0xF4, size 0x4
-    bool m_UseScissorRect;                            // offset 0xF8, size 0x1
-    ScissorBox m_ScissorRect;                         // offset 0xFA, size 0x8
+    /* 0x80 */ unsigned long m_LocStrId;
+    /* 0x84 */ FETextLibObjectAttributes m_OverloadedAttributes;
+    /* 0x90 */ unsigned long m_OverloadFlags;
+    /* 0x94 */ StringDrawInfo m_DrawInfo;
+    /* 0xEC */ FontCharString* m_pFontString;
+    /* 0xF0 */ unsigned long m_DrawOptions;
+    /* 0xF4 */ const unsigned short* m_wcUserString;
+    /* 0xF8 */ bool m_UseScissorRect;
+    /* 0xFA */ ScissorBox m_ScissorRect;
 
 }; // total size: 0x104
 

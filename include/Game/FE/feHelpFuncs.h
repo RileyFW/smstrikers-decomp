@@ -10,9 +10,9 @@
 #include "Game/FE/tlTextInstance.h"
 
 void MakeTextBoxReallyWide(TLTextInstance&);
-void GetCupStreamName(eTrophyType);
-void GetMemCardDescription();
-void GetMemCardTitle();
+const char* GetCupStreamName(eTrophyType);
+const char* GetMemCardDescription();
+const char* GetMemCardTitle();
 void EnableAutoPressed();
 void FindComponent(TLSlide*, const char*);
 void GetLOCRank(int);
@@ -46,13 +46,13 @@ unsigned long GetStadiumStringID(eStadiumID);
 //     void Detail::LexicalCastImpl<BasicString<char, Detail::TempStringAllocator>, unsigned int>::Do(unsigned int);
 // };
 
-// class FECharacterSound
-// {
-// public:
-//     void PlayCaptainSlideIn(eTeamID);
-//     void PlaySidekickName(eSidekickID);
-//     void PlayCaptainName(eTeamID);
-// };
+class FECharacterSound
+{
+public:
+    static void PlayCaptainSlideIn(eTeamID);
+    static void PlaySidekickName(eSidekickID);
+    static const char* PlayCaptainName(eTeamID);
+};
 
 // class CaptainSidekickFilename
 // {
