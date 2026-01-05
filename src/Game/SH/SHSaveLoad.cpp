@@ -1,101 +1,36 @@
 #include "Game/SH/SHSaveLoad.h"
 
-// /**
-//  * Offset/Address/Size: 0x5F4 | 0x800B3460 | size: 0x15C
-//  */
-// void FEFinder<TLTextInstance, 3>::_Find<TLInstance>(TLInstance*, unsigned long, unsigned long, unsigned long, unsigned long, unsigned
-// long,
-//                                                     unsigned long)
-// {
-// }
+#include "Dolphin/card.h"
+#include "Game/BaseGameSceneManager.h"
+#include "Game/DB/SaveLoad.h"
+#include "Game/FE/tlTextInstance.h"
+#include "Game/ResetTask.h"
+#include "types.h"
 
-// /**
-//  * Offset/Address/Size: 0x570 | 0x800B33DC | size: 0x84
-//  */
-// void FEFinder<TLTextInstance, 3>::_Find<TLSlide>(TLSlide*, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long,
-//                                                  unsigned long)
-// {
-// }
+extern int gSceneTypeStackDepth;
+extern int gSceneTypeStack[];
+extern bool gSaveLoadStarted;
+extern bool gSaveLoadFinished;
+extern bool gCallbackMade;
+extern float gSceneTime;
+extern bool gIgnoreMinWait;
+extern bool gContinueWithoutOperation;
+extern bool gSaveLoadEnabled;
+extern long gResult;
 
-// /**
-//  * Offset/Address/Size: 0x4EC | 0x800B3358 | size: 0x84
-//  */
-// void FEFinder<TLTextInstance, 3>::_Find<FEPresentation>(FEPresentation*, unsigned long, unsigned long, unsigned long, unsigned long,
-//                                                         unsigned long, unsigned long)
-// {
-// }
+class MemCard;
 
-// /**
-//  * Offset/Address/Size: 0x4B4 | 0x800B3320 | size: 0x38
-//  */
-// void FEFinder<TLTextInstance, 3>::Find<FEPresentation>(FEPresentation*, InlineHasher, InlineHasher, InlineHasher, InlineHasher,
-//                                                        InlineHasher, InlineHasher)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x358 | 0x800B31C4 | size: 0x15C
-//  */
-// void FEFinder<TLSlide, 0>::_Find<TLInstance>(TLInstance*, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long,
-//                                              unsigned long)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x2D4 | 0x800B3140 | size: 0x84
-//  */
-// void FEFinder<TLSlide, 0>::_Find<TLSlide>(TLSlide*, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long,
-//                                           unsigned long)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x250 | 0x800B30BC | size: 0x84
-//  */
-// void FEFinder<TLSlide, 0>::_Find<FEPresentation>(FEPresentation*, unsigned long, unsigned long, unsigned long, unsigned long, unsigned
-// long,
-//                                                  unsigned long)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x218 | 0x800B3084 | size: 0x38
-//  */
-// void FEFinder<TLSlide, 0>::Find<FEPresentation>(FEPresentation*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher,
-//                                                 InlineHasher)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0xBC | 0x800B2F28 | size: 0x15C
-//  */
-// void FEFinder<TLComponentInstance, 4>::_Find<TLInstance>(TLInstance*, unsigned long, unsigned long, unsigned long, unsigned long,
-//                                                          unsigned long, unsigned long)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x38 | 0x800B2EA4 | size: 0x84
-//  */
-// void FEFinder<TLComponentInstance, 4>::_Find<TLSlide>(TLSlide*, unsigned long, unsigned long, unsigned long, unsigned long, unsigned
-// long,
-//                                                       unsigned long)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0x0 | 0x800B2E6C | size: 0x38
-//  */
-// void FEFinder<TLComponentInstance, 4>::Find<TLSlide>(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher,
-//                                                      InlineHasher)
-// {
-// }
+extern bool s_InitDone__7MemCard;
+extern MemCard** g_MemCards;
+extern u8 WasCardRemoved;
+extern u8 PreviousNoCardInSlotState;
 
 /**
  * Offset/Address/Size: 0x28D0 | 0x800B2E58 | size: 0x14
  */
-void DidContinueWithoutOperation()
+bool DidContinueWithoutOperation()
 {
+    return (gContinueWithoutOperation == true);
 }
 
 /**
@@ -103,13 +38,16 @@ void DidContinueWithoutOperation()
  */
 void ResetEnableSaveLoadFlag()
 {
+    gSaveLoadEnabled = true;
 }
 
 /**
  * Offset/Address/Size: 0x28B4 | 0x800B2E3C | size: 0x10
  */
-void SaveLoadCallback(long)
+void SaveLoadCallback(long result)
 {
+    gResult = result;
+    gCallbackMade = true;
 }
 
 /**
@@ -117,6 +55,18 @@ void SaveLoadCallback(long)
  */
 void ContinueWithoutSavingCB()
 {
+    gSceneTypeStackDepth = 1;
+    SaveLoadScene* instance = SaveLoadScene::mInstance;
+    gIgnoreMinWait = true;
+    gSaveLoadFinished = true;
+    gSaveLoadStarted = true;
+    gSaveLoadEnabled = false;
+    gContinueWithoutOperation = true;
+    SaveLoadScene::mLastSaveLoadSuccess = false;
+    if (instance->m_displayText != nullptr)
+    {
+        instance->m_displayText->m_bVisible = false;
+    }
 }
 
 /**
@@ -124,6 +74,17 @@ void ContinueWithoutSavingCB()
  */
 void ContinueWithoutLoadingCB()
 {
+    gSceneTypeStackDepth = 1;
+    SaveLoadScene* instance = SaveLoadScene::mInstance;
+    gIgnoreMinWait = true;
+    gSaveLoadFinished = true;
+    gSaveLoadStarted = true;
+    gContinueWithoutOperation = true;
+    SaveLoadScene::mLastSaveLoadSuccess = false;
+    if (instance->m_displayText != nullptr)
+    {
+        instance->m_displayText->m_bVisible = false;
+    }
 }
 
 /**
@@ -131,6 +92,17 @@ void ContinueWithoutLoadingCB()
  */
 void ContinueLoadingCB()
 {
+    gCallbackMade = false;
+    int stackIndex = --gSceneTypeStackDepth;
+    gSaveLoadStarted = false;
+    gSaveLoadFinished = false;
+    ResetTask::s_resetPaused = (gSceneTypeStack[stackIndex] == 0);
+    gSceneTypeStack[gSceneTypeStackDepth++] = 1;
+    gSaveLoadStarted = false;
+    gSaveLoadFinished = false;
+    gCallbackMade = false;
+    gSceneTime = 0.0f;
+    ResetTask::s_resetPaused = false;
 }
 
 /**
@@ -145,6 +117,12 @@ void RetryCB()
  */
 void DeleteFileCB()
 {
+    gSceneTypeStack[gSceneTypeStackDepth++] = SCENE_MAIN_MENU;
+    gSaveLoadStarted = false;
+    gSaveLoadFinished = false;
+    gCallbackMade = false;
+    gSceneTime = 0.0f;
+    ResetTask::s_resetPaused = false;
 }
 
 /**
@@ -152,6 +130,13 @@ void DeleteFileCB()
  */
 void FormatConfirmCB()
 {
+    SaveLoad::RememberCurrentMemCardSerialID(0);
+    gSceneTypeStack[gSceneTypeStackDepth++] = SCENE_STADIUM_SELECT;
+    gSaveLoadStarted = false;
+    gSaveLoadFinished = false;
+    gCallbackMade = false;
+    ResetTask::s_resetPaused = false;
+    gSceneTime = 999.9f;
 }
 
 /**
@@ -159,6 +144,12 @@ void FormatConfirmCB()
  */
 void FormatCB()
 {
+    gSceneTypeStack[gSceneTypeStackDepth++] = 4;
+    gSaveLoadStarted = false;
+    gSaveLoadFinished = false;
+    gCallbackMade = false;
+    gSceneTime = 0.0f;
+    ResetTask::s_resetPaused = false;
 }
 
 /**
@@ -166,6 +157,8 @@ void FormatCB()
  */
 void ManageMemCardCB()
 {
+    ResetTask::s_ResetMode = 1;
+    ResetTask::s_ResetState = (ResetTask::s_ResetState == RS_RUNNING) ? RS_STARTRESET : ResetTask::s_ResetState;
 }
 
 /**
@@ -173,6 +166,18 @@ void ManageMemCardCB()
  */
 void OverwriteFileAndContinueCB()
 {
+    gCallbackMade = false;
+    int stackIndex = --gSceneTypeStackDepth;
+    gSaveLoadStarted = false;
+    gSaveLoadFinished = false;
+    ResetTask::s_resetPaused = (gSceneTypeStack[stackIndex] == 0);
+    gSceneTypeStackDepth = stackIndex + 1;
+    gSceneTypeStack[stackIndex] = 0;
+    gSaveLoadStarted = false;
+    gSaveLoadFinished = false;
+    gCallbackMade = false;
+    gSceneTime = 0.0f;
+    ResetTask::s_resetPaused = true;
 }
 
 /**
@@ -180,6 +185,13 @@ void OverwriteFileAndContinueCB()
  */
 void CreateFileAndSaveCB()
 {
+    gCallbackMade = false;
+    int stackIndex = --gSceneTypeStackDepth;
+    SaveLoadScene* instance = SaveLoadScene::mInstance;
+    gSaveLoadStarted = false;
+    gSaveLoadFinished = false;
+    ResetTask::s_resetPaused = (gSceneTypeStack[stackIndex] == 0);
+    instance->SetupForAboutAutoSave();
 }
 
 /**
@@ -236,6 +248,7 @@ void SaveLoadScene::IsIOEnabled()
  */
 void SaveLoadScene::SetupForAboutAutoSave()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -264,4 +277,60 @@ void SaveLoadScene::StartSaveNow()
  */
 void SaveLoadScene::UpdateCardRemovedFlag()
 {
+    if (!s_InitDone__7MemCard)
+    {
+        return;
+    }
+
+    MemCard* memCard = g_MemCards[0];
+    if (memCard == nullptr)
+    {
+        return;
+    }
+
+    // Access MemCard fields via pointer arithmetic
+    // offset 0x0: status field 1
+    // offset 0x4: channel
+    // offset 0x8: status field 2
+    // offset 0xC: memSize
+    // offset 0x10: sectorSize
+    s32* channel = (s32*)((u8*)memCard + 0x4);
+    s32* memSize = (s32*)((u8*)memCard + 0xC);
+    s32* sectorSize = (s32*)((u8*)memCard + 0x10);
+    u32* status1 = (u32*)((u8*)memCard + 0x0);
+    u32* status2 = (u32*)((u8*)memCard + 0x8);
+
+    s32 result = CARDProbeEx(*channel, memSize, sectorSize);
+    if (result != 0)
+    {
+        *status1 = 0;
+        *status2 = 0;
+    }
+
+    if (result == CARD_RESULT_NOCARD)
+    {
+        // Reload pointer in case it changed
+        memCard = g_MemCards[0];
+        if (memCard != nullptr)
+        {
+            channel = (s32*)((u8*)memCard + 0x4);
+            memSize = (s32*)((u8*)memCard + 0xC);
+            sectorSize = (s32*)((u8*)memCard + 0x10);
+            status1 = (u32*)((u8*)memCard + 0x0);
+            status2 = (u32*)((u8*)memCard + 0x8);
+
+            result = CARDProbeEx(*channel, memSize, sectorSize);
+            if (result != 0)
+            {
+                *status1 = 0;
+                *status2 = 0;
+            }
+
+            u8 currentNoCardState = (result == CARD_RESULT_NOCARD) ? 1 : 0;
+            if (PreviousNoCardInSlotState != currentNoCardState)
+            {
+                WasCardRemoved = 1;
+            }
+        }
+    }
 }

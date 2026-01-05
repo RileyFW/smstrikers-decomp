@@ -1,6 +1,9 @@
 #ifndef _SHSAVELOAD_H_
 #define _SHSAVELOAD_H_
 
+#include "Game/BaseGameSceneManager.h"
+#include "Game/FE/feButtonComponent.h"
+
 void PushNoCardMessage();
 void CheckResults();
 void CreateFileAndSaveCB();
@@ -15,14 +18,19 @@ void ContinueWithoutLoadingCB();
 void ContinueWithoutSavingCB();
 void SaveLoadCallback(long);
 void ResetEnableSaveLoadFlag();
-void DidContinueWithoutOperation();
+bool DidContinueWithoutOperation();
 
-class SaveLoadScene
+class SaveLoadScene : public BaseSceneHandler
 {
 public:
     enum eSaveLoadMode
     {
-        eSaveLoadMode_0 = 0
+        SLM_INVALID = -1,
+        SLM_AT_BOOT = 0,
+        SLM_SAVING = 1,
+        SLM_ASK_BEFORE_SAVING = 2,
+        SLM_LOADING = 3,
+        SLM_ASK_BEFORE_LOADING = 4,
     };
 
     SaveLoadScene(SaveLoadScene::eSaveLoadMode);
@@ -36,7 +44,18 @@ public:
 
     static void StartSaveNow();
     static void UpdateCardRemovedFlag();
-};
+
+    /* 0x1C */ TLTextInstance* m_displayText;     // offset 0x1C, size 0x4
+    /* 0x20 */ SceneList mNextScene;              // offset 0x20, size 0x4
+    /* 0x24 */ bool mIsAutoSaving;                // offset 0x24, size 0x1
+    /* 0x25 */ bool mIsFirstTimeCreateFile;       // offset 0x25, size 0x1
+    /* 0x28 */ TLSlide* mAboutAutoSaveSlide;      // offset 0x28, size 0x4
+    /* 0x2C */ ButtonComponent* mButtonComponent; // offset 0x2C, size 0x4
+    /* 0x30 */ eSaveLoadMode mSaveLoadMode;       // offset 0x30, size 0x4
+
+    static SaveLoadScene* mInstance;
+    static bool mLastSaveLoadSuccess;
+}; // total size: 0x34
 
 // class FEFinder<TLComponentInstance, 4>
 // {

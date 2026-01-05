@@ -1018,7 +1018,7 @@ config.libs = [
             Object(NonMatching, "Game/SH/SHPausePostGame.cpp"),
             Object(NonMatching, "Game/SH/SHProgressiveScan.cpp"),
             Object(NonMatching, "Game/SH/SHQuickGameplayOptions.cpp"),
-            Object(NonMatching, "Game/SH/SHSaveLoad.cpp"),
+            Object(NonMatching, "Game/SH/SHSaveLoad.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/SH/SHSkillSelect.cpp"),
             Object(NonMatching, "Game/SH/SHSpoils.cpp"),
             Object(NonMatching, "Game/SH/SHStadiumSelect.cpp"),

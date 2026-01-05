@@ -1,10 +1,5 @@
 #include "Game/DB/SaveLoad.h"
-
-class MemCard
-{
-public:
-    int GetSerialID() const;
-};
+#include "Game/Sys/gcmemcard.h"
 
 bool InOperation = false;
 
