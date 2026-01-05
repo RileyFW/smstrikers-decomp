@@ -7,8 +7,24 @@
 #include "Game/ResetTask.h"
 #include "types.h"
 
+enum eSaveLoad
+{
+    ST_INVALID = -1,
+    ST_SAVE = 0,
+    ST_LOAD = 1,
+    ST_GAMESAVEIDTEST = 2,
+    ST_DELETE = 3,
+    ST_FORMAT = 4,
+    ST_ASK_SAVE = 5,
+    ST_ASK_LOAD = 6,
+    ST_CHECKING = 7,
+    ST_ABOUT_AUTOSAVE = 8,
+    ST_CONFIRM_FORMAT = 9,
+    ST_SHOULD_LOAD_OR_SAVE = 10,
+};
+
 extern int gSceneTypeStackDepth;
-extern int gSceneTypeStack[];
+extern enum eSaveLoad gSceneTypeStack[4];
 extern bool gSaveLoadStarted;
 extern bool gSaveLoadFinished;
 extern bool gCallbackMade;
@@ -98,7 +114,7 @@ void ContinueLoadingCB()
     gSaveLoadStarted = false;
     gSaveLoadFinished = false;
     ResetTask::s_resetPaused = (gSceneTypeStack[stackIndex] == 0);
-    gSceneTypeStack[gSceneTypeStackDepth++] = 1;
+    gSceneTypeStack[gSceneTypeStackDepth++] = ST_LOAD;
     gSaveLoadStarted = false;
     gSaveLoadFinished = false;
     gCallbackMade = false;
@@ -111,14 +127,12 @@ void ContinueLoadingCB()
  */
 void RetryCB()
 {
-    SaveLoadScene* instance = SaveLoadScene::mInstance;
     gSceneTypeStackDepth = 0;
 
-    switch (instance->mSaveLoadMode)
+    switch (SaveLoadScene::mInstance->mSaveLoadMode)
     {
     case SaveLoadScene::SLM_AT_BOOT:
-        gSceneTypeStackDepth = 1;
-        gSceneTypeStack[0] = SCENE_CUP_CHEATER;
+        gSceneTypeStack[gSceneTypeStackDepth++] = ST_SHOULD_LOAD_OR_SAVE;
         gSaveLoadStarted = false;
         gSaveLoadFinished = false;
         gCallbackMade = false;
@@ -128,24 +142,13 @@ void RetryCB()
 
     case SaveLoadScene::SLM_SAVING:
         gSaveLoadStarted = false;
-        gSceneTypeStackDepth = 1;
-        gSceneTypeStack[0] = SCENE_FRIENDLY_BACKGROUND;
+        gSceneTypeStack[gSceneTypeStackDepth++] = ST_SAVE;
         gSaveLoadFinished = false;
         gCallbackMade = false;
         gSceneTime = 0.0f;
         ResetTask::s_resetPaused = true;
-        gSceneTypeStackDepth = 2;
-        gSceneTypeStack[1] = SCENE_TITLE;
-        gSaveLoadStarted = false;
-        gSaveLoadFinished = false;
-        gCallbackMade = false;
-        gSceneTime = 0.0f;
-        ResetTask::s_resetPaused = false;
-        break;
 
-    case SaveLoadScene::SLM_ASK_BEFORE_SAVING:
-        gSceneTypeStackDepth = 1;
-        gSceneTypeStack[0] = SCENE_CHOOSE_SIDES_CUP;
+        gSceneTypeStack[gSceneTypeStackDepth++] = ST_GAMESAVEIDTEST;
         gSaveLoadStarted = false;
         gSaveLoadFinished = false;
         gCallbackMade = false;
@@ -154,8 +157,16 @@ void RetryCB()
         break;
 
     case SaveLoadScene::SLM_LOADING:
-        gSceneTypeStackDepth = 1;
-        gSceneTypeStack[0] = SCENE_MARIO_BACKGROUND;
+        gSceneTypeStack[gSceneTypeStackDepth++] = ST_LOAD;
+        gSaveLoadStarted = false;
+        gSaveLoadFinished = false;
+        gCallbackMade = false;
+        gSceneTime = 0.0f;
+        ResetTask::s_resetPaused = false;
+        break;
+
+    case SaveLoadScene::SLM_ASK_BEFORE_SAVING:
+        gSceneTypeStack[gSceneTypeStackDepth++] = ST_ASK_SAVE;
         gSaveLoadStarted = false;
         gSaveLoadFinished = false;
         gCallbackMade = false;
@@ -164,23 +175,16 @@ void RetryCB()
         break;
 
     case SaveLoadScene::SLM_ASK_BEFORE_LOADING:
-        gSceneTypeStackDepth = 1;
-        gSceneTypeStack[0] = SCENE_CHOOSE_SIDES_SUPER_CUP;
+        gSceneTypeStack[gSceneTypeStackDepth++] = ST_ASK_LOAD;
         gSaveLoadStarted = false;
         gSaveLoadFinished = false;
         gCallbackMade = false;
         gSceneTime = 0.0f;
         ResetTask::s_resetPaused = false;
         break;
-
-    default:
-        break;
     }
 
-    // Common code after switch
-    int stackIndex = gSceneTypeStackDepth;
-    gSceneTypeStackDepth = stackIndex + 1;
-    gSceneTypeStack[stackIndex] = SCENE_CHOOSE_SIDES_TOURNAMENT;
+    gSceneTypeStack[gSceneTypeStackDepth++] = ST_CHECKING;
     gCallbackMade = false;
     ResetTask::s_resetPaused = false;
     gSaveLoadStarted = true;
@@ -189,15 +193,13 @@ void RetryCB()
     gSceneTime = 0.0f;
     gContinueWithoutOperation = false;
 
-    if (instance->m_displayText != nullptr)
+    if (SaveLoadScene::mInstance->m_displayText != nullptr)
     {
-        instance->m_displayText->m_bVisible = true;
+        SaveLoadScene::mInstance->m_displayText->m_bVisible = true;
     }
 
-    gRetryTimerDelay = 0.5f; // @2262 float constant (exact value TBD)
-    // Virtual function call at vtable offset 0x24
-    // Likely SceneCreated() or another virtual function
-    instance->SceneCreated();
+    gRetryTimerDelay = 1.0f;
+    SaveLoadScene::mInstance->SceneCreated();
 }
 
 /**
@@ -205,7 +207,7 @@ void RetryCB()
  */
 void DeleteFileCB()
 {
-    gSceneTypeStack[gSceneTypeStackDepth++] = SCENE_MAIN_MENU;
+    gSceneTypeStack[gSceneTypeStackDepth++] = ST_DELETE;
     gSaveLoadStarted = false;
     gSaveLoadFinished = false;
     gCallbackMade = false;
@@ -219,7 +221,7 @@ void DeleteFileCB()
 void FormatConfirmCB()
 {
     SaveLoad::RememberCurrentMemCardSerialID(0);
-    gSceneTypeStack[gSceneTypeStackDepth++] = SCENE_STADIUM_SELECT;
+    gSceneTypeStack[gSceneTypeStackDepth++] = ST_CONFIRM_FORMAT;
     gSaveLoadStarted = false;
     gSaveLoadFinished = false;
     gCallbackMade = false;
@@ -232,7 +234,7 @@ void FormatConfirmCB()
  */
 void FormatCB()
 {
-    gSceneTypeStack[gSceneTypeStackDepth++] = 4;
+    gSceneTypeStack[gSceneTypeStackDepth++] = ST_FORMAT;
     gSaveLoadStarted = false;
     gSaveLoadFinished = false;
     gCallbackMade = false;
@@ -260,7 +262,7 @@ void OverwriteFileAndContinueCB()
     gSaveLoadFinished = false;
     ResetTask::s_resetPaused = (gSceneTypeStack[stackIndex] == 0);
     gSceneTypeStackDepth = stackIndex + 1;
-    gSceneTypeStack[stackIndex] = 0;
+    gSceneTypeStack[stackIndex] = ST_SAVE;
     gSaveLoadStarted = false;
     gSaveLoadFinished = false;
     gCallbackMade = false;
