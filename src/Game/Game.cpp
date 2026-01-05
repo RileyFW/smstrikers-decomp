@@ -4,6 +4,7 @@
 #include "Game/Team.h"
 #include "Game/AI/Fielder.h"
 #include "Game/AI/ScriptAction.h"
+#include "Game/AI/Powerups.h"
 #include "Game/GameInfo.h"
 #include "Game/Camera/CameraMan.h"
 #include "Game/Camera/GameplayCam.h"
@@ -12,6 +13,7 @@
 #include "NL/nlMath.h"
 
 extern cTeam* g_pTeams[2];
+extern PowerupBase* g_pPowerups[25];
 
 // /**
 //  * Offset/Address/Size: 0x24 | 0x800401E8 | size: 0x4
@@ -326,8 +328,28 @@ void cGame::CheckForGoal()
 /**
  * Offset/Address/Size: 0xDF0 | 0x8003D364 | size: 0x6C
  */
-void cGame::BlowUpPowerups(const nlVector3&, float)
+void cGame::BlowUpPowerups(const nlVector3& pos, float radius)
 {
+    float radiusSq = radius * radius;
+    float posZ = pos.f.z;
+    float posY = pos.f.y;
+    float posX = pos.f.x;
+
+    for (int i = 0; i < 25; i++)
+    {
+        PowerupBase* pPowerup = g_pPowerups[i];
+        if (pPowerup != nullptr)
+        {
+            float dx = posX - pPowerup->m_v3Position.f.x;
+            float dy = posY - pPowerup->m_v3Position.f.y;
+            float dz = posZ - pPowerup->m_v3Position.f.z;
+
+            if (dx * dx + dy * dy + dz * dz < radiusSq)
+            {
+                pPowerup->m_bShouldDestroy = true;
+            }
+        }
+    }
 }
 
 /**

@@ -1,4 +1,6 @@
 #include "Game/SH/SHMainMenu.h"
+#include "Game/GameInfo.h"
+#include "Game/GameSceneManager.h"
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800AC57C | size: 0x40
@@ -220,6 +222,9 @@ void newTourn()
  */
 void continueTourn()
 {
+    GameInfoManager::s_pInstance->SetMode(GameInfoManager::GM_TOURNAMENT);
+    GameSceneManager::s_pInstance->PopEntireStack();
+    GameSceneManager::s_pInstance->Push(SCENE_TOURNAMENT_STANDINGS, SCREEN_FORWARD, false);
 }
 
 /**

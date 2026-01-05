@@ -383,9 +383,7 @@ void PhysicsBall::PostUpdate()
     if (l > 2500.f)
     {
         const f32 f = 50.f / nlSqrt(l, true);
-        linVel.f.z = f * linVel.f.z;
-        linVel.f.y = f * linVel.f.y;
-        linVel.f.x = f * linVel.f.x;
+        nlVec3Set(linVel, f * linVel.f.x, f * linVel.f.y, f * linVel.f.z);
         SetLinearVelocity(linVel);
     }
 

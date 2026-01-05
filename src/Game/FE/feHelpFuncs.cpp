@@ -147,8 +147,13 @@ void GetMemCardTitle()
  */
 void EnableAutoPressed()
 {
+    g_pFEInput->Reset();
+    g_pFEInput->EnableAnalogToDPadMapping(FE_ALL_PADS, true);
+    g_pFEInput->SetAutoRepeatParams(FE_ALL_PADS, 0xe, 0.7f, 0.3f);
+    g_pFEInput->SetAutoRepeatParams(FE_ALL_PADS, 0xd, 0.7f, 0.3f);
+    g_pFEInput->SetAutoRepeatParams(FE_ALL_PADS, 0xb, 0.7f, 0.3f);
+    g_pFEInput->SetAutoRepeatParams(FE_ALL_PADS, 0xc, 0.7f, 0.3f);
 }
-
 // /**
 //  * Offset/Address/Size: 0x7DC | 0x800A3898 | size: 0x1B4
 //  */
