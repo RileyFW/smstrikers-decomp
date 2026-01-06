@@ -1,6 +1,6 @@
 #include "Game/SH/SHTitleScreen.h"
 #include "Game/GameSceneManager.h"
-#include "Game/FE/FESceneManager.h"
+#include "Game/FE/feSceneManager.h"
 
 // /**
 //  * Offset/Address/Size: 0x2D4 | 0x800AD39C | size: 0x15C

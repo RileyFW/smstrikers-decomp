@@ -1,6 +1,6 @@
 #include "Game/BaseGameSceneManager.h"
 #include "Game/SH/SHBackground.h"
-#include "Game/FE/FESceneManager.h"
+#include "Game/FE/feSceneManager.h"
 
 #include "NL/nlConfig.h"
 

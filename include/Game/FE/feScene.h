@@ -3,8 +3,8 @@
 
 #include "types.h"
 
-#include "Game/FE/FEPackage.h"
-#include "Game/FE/FEResourceManager.h"
+#include "Game/FE/fePackage.h"
+#include "Game/FE/feResourceManager.h"
 #include "Game/FE/feSceneResource.h"
 
 class FEScene

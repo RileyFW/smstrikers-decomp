@@ -2,13 +2,13 @@
 #include "Game/FE/tlInstance.h"
 #include "Game/FE/tlTextInstance.h"
 #include "Game/FE/feScene.h"
-#include "Game/FE/FEPackage.h"
+#include "Game/FE/fePackage.h"
 #include "Game/FE/fePresentation.h"
 #include "NL/gl/glMatrixStack.h"
 #include "NL/nlMemory.h"
 #include "NL/nlColour.h"
 #include "NL/platvmath.h"
-#include "NL/GL/gl.h"
+#include "NL/gl/gl.h"
 
 GLMatrixStack* FERender::m_pMatrixStack = nullptr;
 FEScene* FERender::m_pRenderScene = nullptr;

@@ -3,7 +3,7 @@
 
 #include "types.h"
 #include "NL/nlColour.h"
-#include "NL/GL/gl.h"
+#include "NL/gl/gl.h"
 #include "NL/nlFont.h"
 #include "NL/nlMath.h"
 

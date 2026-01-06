@@ -3,8 +3,8 @@
 
 #include "types.h"
 
-#include "Game/FE/FEPresentation.h"
-#include "Game/FE/FEScene.h"
+#include "Game/FE/fePresentation.h"
+#include "Game/FE/feScene.h"
 
 // Todo Figure this out? IDK Man.
 class BaseScreenHandler
