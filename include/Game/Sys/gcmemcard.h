@@ -121,6 +121,8 @@ public:
     unsigned long m_GameId;                      // offset 0x418, size 0x4
     unsigned short m_CompanyId;                  // offset 0x41C, size 0x2
     unsigned char m_CardWorkArea[41472];         // offset 0x41E, size 0xA200
+
+    static bool s_InitDone;
 }; // total size: 0xA620
 
 // class nlBSearch < nlSortedSlot < MemCard

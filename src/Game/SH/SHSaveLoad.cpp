@@ -5,6 +5,7 @@
 #include "Game/DB/SaveLoad.h"
 #include "Game/FE/tlTextInstance.h"
 #include "Game/ResetTask.h"
+#include "Game/Sys/gcmemcard.h"
 #include "types.h"
 
 enum eSaveLoad
@@ -35,9 +36,7 @@ extern bool gSaveLoadEnabled;
 extern long gResult;
 extern float gRetryTimerDelay;
 
-class MemCard;
-
-extern bool s_InitDone__7MemCard;
+// extern bool s_InitDone__7MemCard;
 extern MemCard** g_MemCards;
 extern u8 WasCardRemoved;
 extern u8 PreviousNoCardInSlotState;
@@ -367,60 +366,36 @@ void SaveLoadScene::StartSaveNow()
  */
 void SaveLoadScene::UpdateCardRemovedFlag()
 {
-    if (!s_InitDone__7MemCard)
+    if (!MemCard::s_InitDone)
     {
         return;
     }
 
     MemCard* memCard = g_MemCards[0];
-    if (memCard == nullptr)
-    {
-        return;
-    }
 
-    // Access MemCard fields via pointer arithmetic
-    // offset 0x0: status field 1
-    // offset 0x4: channel
-    // offset 0x8: status field 2
-    // offset 0xC: memSize
-    // offset 0x10: sectorSize
-    s32* channel = (s32*)((u8*)memCard + 0x4);
-    s32* memSize = (s32*)((u8*)memCard + 0xC);
-    s32* sectorSize = (s32*)((u8*)memCard + 0x10);
-    u32* status1 = (u32*)((u8*)memCard + 0x0);
-    u32* status2 = (u32*)((u8*)memCard + 0x8);
-
-    s32 result = CARDProbeEx(*channel, memSize, sectorSize);
+    s32 result = CARDProbeEx(memCard->m_Slot, &memCard->m_CardInfo.CardSize, &memCard->m_CardInfo.SectorSize);
     if (result != 0)
     {
-        *status1 = 0;
-        *status2 = 0;
+        memCard->m_State = IS_IDLE;
+        memCard->m_CardState = CS_IDLE;
     }
 
     if (result == CARD_RESULT_NOCARD)
     {
         // Reload pointer in case it changed
         memCard = g_MemCards[0];
-        if (memCard != nullptr)
+
+        result = CARDProbeEx(memCard->m_Slot, &memCard->m_CardInfo.CardSize, &memCard->m_CardInfo.SectorSize);
+        if (result != 0)
         {
-            channel = (s32*)((u8*)memCard + 0x4);
-            memSize = (s32*)((u8*)memCard + 0xC);
-            sectorSize = (s32*)((u8*)memCard + 0x10);
-            status1 = (u32*)((u8*)memCard + 0x0);
-            status2 = (u32*)((u8*)memCard + 0x8);
+            memCard->m_State = IS_IDLE;
+            memCard->m_CardState = CS_IDLE;
+        }
 
-            result = CARDProbeEx(*channel, memSize, sectorSize);
-            if (result != 0)
-            {
-                *status1 = 0;
-                *status2 = 0;
-            }
-
-            u8 currentNoCardState = (result == CARD_RESULT_NOCARD) ? 1 : 0;
-            if (PreviousNoCardInSlotState != currentNoCardState)
-            {
-                WasCardRemoved = 1;
-            }
+        u8 currentNoCardState = (result == CARD_RESULT_NOCARD) ? 1 : 0;
+        if (PreviousNoCardInSlotState != currentNoCardState)
+        {
+            WasCardRemoved = 1;
         }
     }
 }
