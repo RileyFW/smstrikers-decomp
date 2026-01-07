@@ -1,4 +1,5 @@
 #include "Game/AI/GoalieSave.h"
+#include "Game/AI/FilteredRandom.h"
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80056D60 | size: 0xA4
@@ -233,9 +234,16 @@ SaveData* GoalieSave::GetMissChipSaveData(bool bLeft, bool bFar)
 /**
  * Offset/Address/Size: 0xEBC | 0x800542DC | size: 0x90
  */
-SaveData* GoalieSave::GetRandomSTSMissData(bool)
+SaveData* GoalieSave::GetRandomSTSMissData(bool bParam)
 {
-    return NULL;
+    int index = muSTSGoalIndexStart;
+    if (!bParam) {
+        if ((u32)muSTSGoalCount > 1) {
+            static FilteredRandomRange randgen;
+            index += randgen.genrand(muSTSGoalCount);
+        }
+    }
+    return &mpSaveTable[index];
 }
 
 /**
@@ -244,7 +252,7 @@ SaveData* GoalieSave::GetRandomSTSMissData(bool)
 SaveData* GoalieSave::GetSTSSpinMissData(bool bParam)
 {
     u32 index = muSTSMissIndexStart + ((!bParam) ? 1 : 0);
-    return (SaveData*)((u8*)mpSaveTable + (index << 7));
+    return &mpSaveTable[index];
 }
 
 /**
@@ -252,7 +260,9 @@ SaveData* GoalieSave::GetSTSSpinMissData(bool bParam)
  */
 SaveData* GoalieSave::GetRandomSTSSaveData()
 {
-    return NULL;
+    static FilteredRandomRange randgen;
+    int index = muSTSSaveIndexStart + randgen.genrand(muSTSSaveCount);
+    return &mpSaveTable[index];
 }
 
 /**

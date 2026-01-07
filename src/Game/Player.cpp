@@ -6,6 +6,7 @@
 
 #include "Game/AI/Fielder.h"
 #include "Game/AI/SpaceSearch.h"
+#include "Game/AI/AiUtil.h"
 
 #include "Game/CharacterTemplate.h"
 #include "Game/SAnim/pnFeather.h"
@@ -95,9 +96,15 @@ nlVector3 cPlayer::GetAIOffNetLocation(const nlVector3* v3ReferencePos)
 /**
  * Offset/Address/Size: 0x1F4 | 0x80057744 | size: 0x90
  */
-bool cPlayer::CanPickupBallFromPass(cBall*)
+bool cPlayer::CanPickupBallFromPass(cBall* pBall)
 {
-    return false;
+    bool result = false;
+    if (pBall->m_pOwner == NULL)
+    {
+        int jointIdx = m_nBallJointIndex;
+        result = TestCollision(0.18f, GetPrevJointPosition(jointIdx), GetJointPosition(jointIdx), 0.18f, pBall->m_v3PrevPosition, pBall->m_v3Position);
+    }
+    return result;
 }
 
 /**

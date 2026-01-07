@@ -70,6 +70,8 @@ public:
     static int muSTSMissIndexStart;
     static int muSTSGoalIndexStart;
     static int muSTSGoalCount;
+    static int muSTSSaveIndexStart;
+    static int muSTSSaveCount;
     static int muMissChipIndexStart;
     static float mfCrouchDuration;
 };

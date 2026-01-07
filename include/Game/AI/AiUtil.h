@@ -27,7 +27,7 @@ void GetLocalPoint(nlVector3& v3LocalPointOut, const nlVector3& v3WorldPointIn, 
 float GetClosingSpeed(const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&);
 float GetClosingSpeed2D(const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&);
 float Exp(float);
-void TestCollision(float, const nlVector3&, const nlVector3&, float, const nlVector3&, const nlVector3&);
+bool TestCollision(float rp, const nlVector3& p1, const nlVector3& p2, float rq, const nlVector3& q1, const nlVector3& q2);
 bool ClipPositionToSidelines(nlVector3&, float);
 void CalcInterceptXY(const nlVector3&, float, float, const nlVector3&, const nlVector3&, int&, float*);
 float SeekSpeed(float fCurrent, float fDesired, float fSeekAccel, float fSeekDecel, float fDeltaT);

@@ -20,8 +20,19 @@ f32 CANT_COLLIDE = *(f32*)__float_max;
 /**
  * Offset/Address/Size: 0x1420 | 0x80006ECC | size: 0x90
  */
-void MakePerpendicularPlane(const nlVector3& v3Positione, unsigned short aNormalAngle, nlVector4& v4Plane, float fPlaneOffset)
+void MakePerpendicularPlane(const nlVector3& v3Position, unsigned short aNormalAngle, nlVector4& v4Plane, float fPlaneOffset)
 {
+    float fSin;
+    float fCos;
+    nlSinCos(&fSin, &fCos, aNormalAngle);
+
+    v4Plane.f.x = fCos;
+    v4Plane.f.y = fSin;
+    v4Plane.f.z = 0.0f;
+
+    float t0 = v3Position.f.y * fSin;
+    float t1 = v3Position.f.x * fCos + t0;
+    v4Plane.f.w = fPlaneOffset + t1;
 }
 
 /**
@@ -123,8 +134,9 @@ bool ClipPositionToSidelines(nlVector3& position, float margin)
 /**
  * Offset/Address/Size: 0xDF4 | 0x800068A0 | size: 0xDC
  */
-void TestCollision(float, const nlVector3&, const nlVector3&, float, const nlVector3&, const nlVector3&)
+bool TestCollision(float rp, const nlVector3& p1, const nlVector3& p2, float rq, const nlVector3& q1, const nlVector3& q2)
 {
+    return false;
 }
 
 /**
