@@ -1,16 +1,13 @@
 #include "types.h"
 
-#include "Dolphin/Amc/AmcExi2Stubs.h"
-
+#include "dolphin/Amc/AmcExi2Stubs.h"
 
 void EXI2_Init(vu8**, AmcEXICallback)
 {
-
 }
 
 void EXI2_EnableInterrupts(void)
 {
-
 }
 
 int EXI2_Poll(void)
@@ -30,12 +27,10 @@ AmcExiError EXI2_WriteN(const void*, u32)
 
 void EXI2_Reserve(void)
 {
-
 }
 
 void EXI2_Unreserve(void)
 {
-
 }
 
 BOOL AMC_IsStub(void)

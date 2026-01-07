@@ -1,6 +1,6 @@
 #include "PowerPC_EABI_Support/MetroTRK/trk.h"
-#include "Dolphin/PPCArch.h"
-#include "Dolphin/os.h"
+#include "dolphin/PPCArch.h"
+#include "dolphin/os.h"
 
 BOOL _MetroTRK_Has_Framing;
 u8 TRK_Use_BBA;

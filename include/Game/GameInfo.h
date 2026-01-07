@@ -2,7 +2,7 @@
 #define _GAMEINFO_H_
 
 #include "types.h"
-#include "Dolphin/os.h"
+#include "dolphin/os.h"
 
 #include "Game/FE/feInput.h"
 

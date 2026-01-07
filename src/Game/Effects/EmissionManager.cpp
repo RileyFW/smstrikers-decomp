@@ -1,5 +1,5 @@
 #include "Game/Effects/EmissionManager.h"
-#include "Dolphin/types.h"
+#include "dolphin/types.h"
 #include "NL/nlAVLTree.h"
 #include "Game/Sys/debug.h"
 #include "Game/ReplaySpecializations.h"

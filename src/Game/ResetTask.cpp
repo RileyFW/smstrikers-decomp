@@ -1,8 +1,8 @@
 #include "Game/ResetTask.h"
 
-#include "Dolphin/os.h"
-#include "Dolphin/vi.h"
-#include "Dolphin/dvd.h"
+#include "dolphin/os.h"
+#include "dolphin/vi.h"
+#include "dolphin/dvd.h"
 #include "NL/gl/glPlat.h"
 #include "NL/globalpad.h"
 

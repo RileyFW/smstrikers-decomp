@@ -1,5 +1,5 @@
 #include "NL/nlMath.h"
-#include "Dolphin/mtx.h"
+#include "dolphin/mtx.h"
 #include "types.h"
 
 #define qr0 0

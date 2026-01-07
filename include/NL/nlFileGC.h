@@ -2,7 +2,7 @@
 #define _NLFILEGC_H_
 
 #include "NL/nlFile.h"
-#include "Dolphin/dvd.h"
+#include "dolphin/dvd.h"
 #include "file_io.h"
 
 class GCFile;

@@ -1,5 +1,5 @@
 #include "Game/GL/GLSkinMesh.h"
-#include "Dolphin/mtx.h"
+#include "dolphin/mtx.h"
 #include "string.h"
 
 /**

@@ -1,6 +1,6 @@
 #include "Game/SH/SHSaveLoad.h"
 
-#include "Dolphin/card.h"
+#include "dolphin/card.h"
 #include "Game/BaseGameSceneManager.h"
 #include "Game/DB/SaveLoad.h"
 #include "Game/FE/tlTextInstance.h"

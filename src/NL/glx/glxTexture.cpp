@@ -9,7 +9,7 @@
 #include "NL/gl/glTexture.h"
 #include "NL/gl/glMemory.h"
 #include "NL/gc/gcSwizzler.h"
-#include "Dolphin/gx/GXTexture.h"
+#include "dolphin/gx/GXTexture.h"
 
 static glxTextureLoadCallback_t glxTextureLoad_cb;
 static int currentMarkerLevel = 0;

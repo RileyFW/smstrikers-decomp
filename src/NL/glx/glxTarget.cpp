@@ -1,10 +1,10 @@
 #include "NL/glx/glxTarget.h"
 #include "NL/glx/glxTexture.h"
-#include "Dolphin/gx.h"
+#include "dolphin/gx.h"
 #include "NL/nlDebug.h"
 
-#include "Dolphin/fake_tgmath.h"
-#include "Dolphin/mtx.h"
+#include "dolphin/fake_tgmath.h"
+#include "dolphin/mtx.h"
 
 #include "NL/gl/glConstant.h"
 

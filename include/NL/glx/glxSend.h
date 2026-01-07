@@ -1,7 +1,7 @@
 #ifndef _GLXSEND_H_
 #define _GLXSEND_H_
 
-#include "Dolphin/gx/GXEnum.h"
+#include "dolphin/gx/GXEnum.h"
 #include "NL/gl/glView.h"
 
 class GLLightUserData;

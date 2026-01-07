@@ -1,5 +1,5 @@
 #include "Game/SH/SHMoviePlayer.h"
-#include "Dolphin/dolphin.h"
+#include "dolphin/dolphin.h"
 #include "Game/BaseGameSceneManager.h"
 #include "Game/BaseSceneHandler.h"
 #include "Game/FE/FEAudio.h"

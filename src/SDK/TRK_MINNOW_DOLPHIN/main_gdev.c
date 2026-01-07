@@ -1,7 +1,7 @@
 #include "PowerPC_EABI_Support/MetroTRK/trk.h"
 #include "PowerPC_EABI_Support/MetroTRK/custconn/CircleBuffer.h"
-#include "Dolphin/Amc/AmcExi2Stubs.h"
-#include "Dolphin/db.h"
+#include "dolphin/Amc/AmcExi2Stubs.h"
+#include "dolphin/db.h"
 
 #define GDEV_BUF_SIZE (0x500)
 
@@ -15,18 +15,21 @@ static BOOL gIsInitialized;
  */
 int gdev_cc_initialize(void* flagOut, __OSInterruptHandler handler)
 {
-	MWTRACE(1, "CALLING EXI2_Init\n");
-	DBInitComm(flagOut, (int*)handler);
-	MWTRACE(1, "DONE CALLING EXI2_Init\n");
-	CircleBufferInitialize(&gRecvCB, gRecvBuf, GDEV_BUF_SIZE);
-	return 0;
+    MWTRACE(1, "CALLING EXI2_Init\n");
+    DBInitComm(flagOut, (int*)handler);
+    MWTRACE(1, "DONE CALLING EXI2_Init\n");
+    CircleBufferInitialize(&gRecvCB, gRecvBuf, GDEV_BUF_SIZE);
+    return 0;
 }
 
 /**
  * @note Address: 0x800C14B8
  * @note Size: 0x8
  */
-int gdev_cc_shutdown() { return 0; }
+int gdev_cc_shutdown()
+{
+    return 0;
+}
 
 /**
  * @note Address: 0x800C1494
@@ -34,19 +37,23 @@ int gdev_cc_shutdown() { return 0; }
  */
 int gdev_cc_open()
 {
-	if (gIsInitialized) {
-		return -0x2715;
-	}
+    if (gIsInitialized)
+    {
+        return -0x2715;
+    }
 
-	gIsInitialized = TRUE;
-	return 0;
+    gIsInitialized = TRUE;
+    return 0;
 }
 
 /**
  * @note Address: 0x800C148C
  * @note Size: 0x8
  */
-int gdev_cc_close() { return 0; }
+int gdev_cc_close()
+{
+    return 0;
+}
 
 /**
  * @note Address: 0x800C1398
@@ -54,38 +61,45 @@ int gdev_cc_close() { return 0; }
  */
 int gdev_cc_read(u8* data, int size)
 {
-	u8 buff[GDEV_BUF_SIZE];
-	int p1;
-	u32 retval;
-	int p2;
-	int poll;
-	retval = 0;
-	if (!gIsInitialized) {
-		return -0x2711;
-	}
+    u8 buff[GDEV_BUF_SIZE];
+    int p1;
+    u32 retval;
+    int p2;
+    int poll;
+    retval = 0;
+    if (!gIsInitialized)
+    {
+        return -0x2711;
+    }
 
-	MWTRACE(1, "Expected packet size : 0x%08x (%ld)\n", size, size);
+    MWTRACE(1, "Expected packet size : 0x%08x (%ld)\n", size, size);
 
-	p1 = size;
-	p2 = size;
-	while ((u32)CBGetBytesAvailableForRead(&gRecvCB) < p2) {
-		retval = 0;
-		poll   = DBQueryData();
-		if (poll != 0) {
-			retval = DBRead(buff, p2);
-			if (retval == 0) {
-				CircleBufferWriteBytes(&gRecvCB, buff, poll);
-			}
-		}
-	}
+    p1 = size;
+    p2 = size;
+    while ((u32)CBGetBytesAvailableForRead(&gRecvCB) < p2)
+    {
+        retval = 0;
+        poll = DBQueryData();
+        if (poll != 0)
+        {
+            retval = DBRead(buff, p2);
+            if (retval == 0)
+            {
+                CircleBufferWriteBytes(&gRecvCB, buff, poll);
+            }
+        }
+    }
 
-	if (retval == 0) {
-		CircleBufferReadBytes(&gRecvCB, data, p1);
-	} else {
-		MWTRACE(8, "cc_read : error reading bytes from EXI2 %ld\n", retval);
-	}
+    if (retval == 0)
+    {
+        CircleBufferReadBytes(&gRecvCB, data, p1);
+    }
+    else
+    {
+        MWTRACE(8, "cc_read : error reading bytes from EXI2 %ld\n", retval);
+    }
 
-	return retval;
+    return retval;
 }
 
 /**
@@ -94,31 +108,34 @@ int gdev_cc_read(u8* data, int size)
  */
 int gdev_cc_write(const u8* bytes, int length)
 {
-	int exi2Len;
-	int n_copy;
-	u32 hexCopy;
+    int exi2Len;
+    int n_copy;
+    u32 hexCopy;
 
-	hexCopy = (u32)bytes;
-	n_copy  = length;
+    hexCopy = (u32)bytes;
+    n_copy = length;
 
-	if (gIsInitialized == FALSE) {
-		MWTRACE(8, "cc not initialized\n");
-		return -0x2711;
-	}
+    if (gIsInitialized == FALSE)
+    {
+        MWTRACE(8, "cc not initialized\n");
+        return -0x2711;
+    }
 
-	MWTRACE(8, "cc_write : Output data 0x%08x %ld bytes\n", bytes, length);
+    MWTRACE(8, "cc_write : Output data 0x%08x %ld bytes\n", bytes, length);
 
-	while (n_copy > 0) {
-		MWTRACE(1, "cc_write sending %ld bytes\n", n_copy);
-		exi2Len = DBWrite((const void*)hexCopy, n_copy);
-		if (exi2Len == AMC_EXI_NO_ERROR) {
-			break;
-		}
-		hexCopy += exi2Len;
-		n_copy -= exi2Len;
-	}
+    while (n_copy > 0)
+    {
+        MWTRACE(1, "cc_write sending %ld bytes\n", n_copy);
+        exi2Len = DBWrite((const void*)hexCopy, n_copy);
+        if (exi2Len == AMC_EXI_NO_ERROR)
+        {
+            break;
+        }
+        hexCopy += exi2Len;
+        n_copy -= exi2Len;
+    }
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -127,8 +144,8 @@ int gdev_cc_write(const u8* bytes, int length)
  */
 int gdev_cc_pre_continue()
 {
-	DBClose();
-	return 0;
+    DBClose();
+    return 0;
 }
 
 /**
@@ -137,8 +154,8 @@ int gdev_cc_pre_continue()
  */
 int gdev_cc_post_stop()
 {
-	DBOpen();
-	return 0;
+    DBOpen();
+    return 0;
 }
 
 /**
@@ -147,21 +164,25 @@ int gdev_cc_post_stop()
  */
 int gdev_cc_peek()
 {
-	int poll;
-	u8 buff[GDEV_BUF_SIZE];
+    int poll;
+    u8 buff[GDEV_BUF_SIZE];
 
-	poll = DBQueryData();
-	if (poll <= 0) {
-		return 0;
-	}
+    poll = DBQueryData();
+    if (poll <= 0)
+    {
+        return 0;
+    }
 
-	if (DBRead(buff, poll) == 0) {
-		CircleBufferWriteBytes(&gRecvCB, buff, poll);
-	} else {
-		return -0x2719;
-	}
+    if (DBRead(buff, poll) == 0)
+    {
+        CircleBufferWriteBytes(&gRecvCB, buff, poll);
+    }
+    else
+    {
+        return -0x2719;
+    }
 
-	return poll;
+    return poll;
 }
 
 /**
@@ -170,6 +191,6 @@ int gdev_cc_peek()
  */
 int gdev_cc_initinterrupts()
 {
-	DBInitInterrupts();
-	return 0;
+    DBInitInterrupts();
+    return 0;
 }

@@ -2,8 +2,8 @@
 #define _GLXTEXTURE_H_
 
 #include "types.h"
-#include "Dolphin/gx/GXEnum.h"
-#include "Dolphin/gx/GXStruct.h"
+#include "dolphin/gx/GXEnum.h"
+#include "dolphin/gx/GXStruct.h"
 
 #include "NL/nlMemory.h"
 

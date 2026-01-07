@@ -1,5 +1,5 @@
 #include "PowerPC_EABI_Support/MetroTRK/trk.h"
-#include "Dolphin/ar.h"
+#include "dolphin/ar.h"
 
 extern u32 _db_stack_addr;
 
@@ -8,20 +8,20 @@ extern u32 _db_stack_addr;
 static u32 lc_base;
 
 static u32 TRK_ISR_OFFSETS[15] = { PPC_SystemReset,
-                                   PPC_MachineCheck,
-                                   PPC_DataStorage,
-                                   PPC_InstructionStorage,
-                                   PPC_ExternalInterrupt,
-                                   PPC_Alignment,
-                                   PPC_Program,
-                                   PPC_FloatingPointUnavaiable,
-                                   PPC_Decrementer,
-                                   PPC_SystemCall,
-                                   PPC_Trace,
-                                   PPC_PerformanceMonitor,
-                                   PPC_InstructionAddressBreakpoint,
-                                   PPC_SystemManagementInterrupt,
-                                   PPC_ThermalManagementInterrupt };
+    PPC_MachineCheck,
+    PPC_DataStorage,
+    PPC_InstructionStorage,
+    PPC_ExternalInterrupt,
+    PPC_Alignment,
+    PPC_Program,
+    PPC_FloatingPointUnavaiable,
+    PPC_Decrementer,
+    PPC_SystemCall,
+    PPC_Trace,
+    PPC_PerformanceMonitor,
+    PPC_InstructionAddressBreakpoint,
+    PPC_SystemManagementInterrupt,
+    PPC_ThermalManagementInterrupt };
 
 void __TRK_copy_vectors(void);
 __declspec(section ".init") void __TRK_reset(void)

@@ -1,7 +1,7 @@
 #include "Game/Sys/FloatingPointExceptions.h"
 
-#include "Dolphin/os.h"
-#include "Dolphin/os/OSError.h"
+#include "dolphin/os.h"
+#include "dolphin/os/OSError.h"
 
 enum
 {

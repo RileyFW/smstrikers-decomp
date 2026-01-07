@@ -1,10 +1,10 @@
-#include "Dolphin/types.h"
+#include "dolphin/types.h"
 #include "NL/nlMemory.h"
 #include "NL/glx/glxMemory.h"
 #include "NL/gl/glMatrix.h"
 #include "NL/gl/glConstant.h"
 #include "NL/nlDebug.h"
-#include "Dolphin/os.h"
+#include "dolphin/os.h"
 #include "Game/Sys/debug.h"
 #include "Game/GL/GLInventory.h"
 

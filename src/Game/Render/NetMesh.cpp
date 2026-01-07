@@ -1,6 +1,6 @@
 #include "Game/Render/NetMesh.h"
 
-#include "Dolphin/types.h"
+#include "dolphin/types.h"
 #include "NL/glx/glxTexture.h"
 #include "NL/nlMemory.h"
 

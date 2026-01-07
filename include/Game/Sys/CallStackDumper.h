@@ -1,7 +1,7 @@
 #ifndef _CALLSTACKDUMPER_H_
 #define _CALLSTACKDUMPER_H_
 
-#include "Dolphin/OS/OSContext.h"
+#include "dolphin/os/OSContext.h"
 
 void InstallCallStackDumper();
 void ErrorHandler(unsigned short, OSContext*, unsigned long, unsigned long);

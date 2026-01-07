@@ -4,9 +4,9 @@
 #include "NL/nlEndian.h"
 #include "NL/nlMemory.h"
 
-#include "Dolphin/GX.h"
-#include "Dolphin/VI.h"
-#include "Dolphin/os/OSThread.h"
+#include "dolphin/GX.h"
+#include "dolphin/VI.h"
+#include "dolphin/os/OSThread.h"
 #include "NL/glx/glxGX.h"
 #include "NL/gl/glPlat.h"
 #include "NL/gl/glConstant.h"

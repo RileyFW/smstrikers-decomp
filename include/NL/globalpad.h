@@ -2,7 +2,7 @@
 #define _GLOBALPAD_H_
 
 #include "types.h"
-#include "Dolphin/pad.h"
+#include "dolphin/pad.h"
 #include "NL/nlMath.h"
 
 class cGlobalPad

@@ -4,7 +4,7 @@
 #include "NL/nlMath.h"
 #include "NL/gl/glView.h"
 
-#include "Dolphin/gx/GXStruct.h"
+#include "dolphin/gx/GXStruct.h"
 
 enum eVideoMode
 {

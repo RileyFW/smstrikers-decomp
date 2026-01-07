@@ -8,7 +8,7 @@
 #include "NL/nlFileGC.h"
 #include "NL/gc/gcSwizzler.h"
 #include "NL/gl/glMemory.h"
-#include "Dolphin/os/OSThread.h"
+#include "dolphin/os/OSThread.h"
 
 extern bool g_e3_Build;
 

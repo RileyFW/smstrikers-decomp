@@ -1,7 +1,7 @@
 #ifndef _GLXGX_H_
 #define _GLXGX_H_
 
-#include "Dolphin/gx/GXEnum.h"
+#include "dolphin/gx/GXEnum.h"
 #include "NL/nlColour.h"
 
 bool gxSetCoPlanar(bool);

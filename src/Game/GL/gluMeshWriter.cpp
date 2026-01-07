@@ -1,7 +1,7 @@
 #include "Game/GL/gluMeshWriter.h"
 
-#include "Dolphin/PPCArch.h"
-#include "Dolphin/os/OSCache.h"
+#include "dolphin/PPCArch.h"
+#include "dolphin/os/OSCache.h"
 
 static const int gl_stream_stride[15] = {
     12, 3, 4, 4, 4, 4, 4, 4, 4, 12, 12, 12, 1, 16, 16

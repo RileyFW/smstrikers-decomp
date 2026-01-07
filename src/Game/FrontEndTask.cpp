@@ -14,7 +14,7 @@
 #include "NL/nlConfig.h"
 #include "NL/nlLexicalCast.h"
 #include "NL/gl/gl.h"
-#include "Dolphin/pad.h"
+#include "dolphin/pad.h"
 #include <math.h>
 
 float g_fUpTime;

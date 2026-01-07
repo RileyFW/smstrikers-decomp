@@ -2,7 +2,7 @@
 #define _NLMATH_H_
 
 #include "types.h"
-#include "Dolphin/mtx.h"
+#include "dolphin/mtx.h"
 
 float nlBezier(float*, int, float);
 float nlATan2f(float, float);

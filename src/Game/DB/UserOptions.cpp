@@ -3,7 +3,7 @@
 
 #include "Game/DB/UserOptions.h"
 
-#include "Dolphin/os.h"
+#include "dolphin/os.h"
 #include "NL/nlMemory.h"
 #include "NL/nlBasicString.h"
 

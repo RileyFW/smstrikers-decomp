@@ -8,6 +8,7 @@ struct ItemEntry
     /* 0x00 */ int ItemID;
     /* 0x04 */ TLInstance* Icon;
     /* 0x08 */ bool Active;
+    /* 0x09 */ char pad[3];
     /* 0x0C */ int Left;
     /* 0x10 */ int Right;
     /* 0x14 */ int Up;

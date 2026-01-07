@@ -1,5 +1,5 @@
 #include "Game/GameInfo.h"
-#include "Dolphin/types.h"
+#include "dolphin/types.h"
 #include "NL/nlMemory.h"
 
 extern bool g_e3_Build;

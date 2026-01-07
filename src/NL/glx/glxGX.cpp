@@ -1,5 +1,5 @@
 #include "NL/glx/glxGX.h"
-#include "Dolphin/GX.h"
+#include "dolphin/GX.h"
 
 GXTevAlphaArg gx_alphaArg[2][32];
 
@@ -300,8 +300,7 @@ uint gxSetTevAlphaIn(int stage, int arg1, _GXTevAlphaArg arg2)
     temp_r7 = ((u8*)&gx_alphaArg) + (stage * 0x10);
     temp_r31 = *(GXTevAlphaArg*)(temp_r7 + temp_r0);
     *(GXTevAlphaArg*)(temp_r7 + temp_r0) = arg2;
-    GXSetTevAlphaIn(*(GXTevStageID*)&stage, ((GXTevAlphaArg*)temp_r7)[0], ((GXTevAlphaArg*)temp_r7)[1], ((GXTevAlphaArg*)temp_r7)[2],
-                    ((GXTevAlphaArg*)temp_r7)[3]);
+    GXSetTevAlphaIn(*(GXTevStageID*)&stage, ((GXTevAlphaArg*)temp_r7)[0], ((GXTevAlphaArg*)temp_r7)[1], ((GXTevAlphaArg*)temp_r7)[2], ((GXTevAlphaArg*)temp_r7)[3]);
     return (uint)temp_r31;
 }
 

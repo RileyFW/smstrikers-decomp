@@ -1,8 +1,8 @@
 #include "NL/glx/glxSend.h"
 
 #include "NL/glx/glxSend.h"
-#include "Dolphin/gx/GXLighting.h"
-#include "Dolphin/gx/GXEnum.h"
+#include "dolphin/gx/GXLighting.h"
+#include "dolphin/gx/GXEnum.h"
 #include "NL/gl/glLightUserData.h"
 #include "types.h"
 
