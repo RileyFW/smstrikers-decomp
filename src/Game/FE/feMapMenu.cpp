@@ -32,68 +32,39 @@ FEMapMenu::~FEMapMenu()
 
 /**
  * Offset/Address/Size: 0xDA4 | 0x800980A4 | size: 0x1A0
- * TODO: r29/r30 register allocation + f3/f4 data label diff
+ * TODO: r29/r30 register allocation difference
  */
 void FEMapMenu::AddItem(int itemID, TLInstance* pIcon, int leftID, int rightID, int upID, int downID, bool active)
 {
-    s8 index = *(s8*)((char*)this + 0x384);
-    char* itemPtr = (char*)this;
-    itemPtr += index * 0x1c;
+    m_items[m_numItems].ItemID = itemID;
+    m_items[m_numItems].Icon = pIcon;
+    m_items[m_numItems].Active = active;
+    m_items[m_numItems].Left = leftID;
+    m_items[m_numItems].Right = rightID;
+    m_items[m_numItems].Up = upID;
+    m_items[m_numItems].Down = downID;
 
-    *(int*)(itemPtr + 0x4) = itemID;
+    FEMapMenu* pBase;
+    s32 offset;
 
-    index = *(s8*)((char*)this + 0x384);
-    itemPtr = (char*)this;
-    itemPtr += index * 0x1c;
-    *(TLInstance**)(itemPtr + 0x8) = pIcon;
+    offset = m_numItems * (s32)sizeof(ItemEntry);
+    pBase = (FEMapMenu*)((s32)this + offset);
 
-    index = *(s8*)((char*)this + 0x384);
-    itemPtr = (char*)this;
-    itemPtr += index * 0x1c;
-    *(u8*)(itemPtr + 0xc) = active;
+    nlColour color = pBase->m_items[0].Icon->m_component->GetColour();
 
-    index = *(s8*)((char*)this + 0x384);
-    itemPtr = (char*)this;
-    itemPtr += index * 0x1c;
-    *(int*)(itemPtr + 0x10) = leftID;
-
-    index = *(s8*)((char*)this + 0x384);
-    itemPtr = (char*)this;
-    itemPtr += index * 0x1c;
-    *(int*)(itemPtr + 0x14) = rightID;
-
-    index = *(s8*)((char*)this + 0x384);
-    itemPtr = (char*)this;
-    itemPtr += index * 0x1c;
-    *(int*)(itemPtr + 0x18) = upID;
-
-    index = *(s8*)((char*)this + 0x384);
-    itemPtr = (char*)this;
-    itemPtr += index * 0x1c;
-    *(int*)(itemPtr + 0x1c) = downID;
-
-    index = *(s8*)((char*)this + 0x384);
-    int idx = index * 0x1c;
-    char* finalPtr = (char*)this + idx;
-
-    nlColour color = (*(TLInstance**)(finalPtr + 0x8))->m_component->GetColour();
-
-    if (*(u8*)(finalPtr + 0xc) == 0)
+    if (!pBase->m_items[0].Active)
     {
-        float mult = *(float*)((char*)this + 0x390);
-        color.c[0] = (u8)(color.c[0] * mult);
-        color.c[1] = (u8)(color.c[1] * mult);
-        color.c[2] = (u8)(color.c[2] * mult);
-        (*(TLInstance**)(finalPtr + 0x8))->SetAssetColour(color);
+        color.c[0] = (u8)(color.c[0] * m_disabledMultColor);
+        color.c[1] = (u8)(color.c[1] * m_disabledMultColor);
+        color.c[2] = (u8)(color.c[2] * m_disabledMultColor);
+        pBase->m_items[0].Icon->SetAssetColour(color);
     }
     else
     {
-        (*(TLInstance**)(finalPtr + 0x8))->SetAssetColour(color);
+        pBase->m_items[0].Icon->SetAssetColour(color);
     }
 
-    s8 count = *(s8*)((char*)this + 0x384);
-    count++;
-    *(s8*)((char*)this + 0x384) = count;
+    m_numItems++;
 }
 
 /**
@@ -122,6 +93,7 @@ void FEMapMenu::UpdateAllItems()
 
 /**
  * Offset/Address/Size: 0x814 | 0x80097B14 | size: 0x474
+ * TODO: Implement...
  */
 void FEMapMenu::Update(float)
 {
@@ -132,30 +104,13 @@ void FEMapMenu::Update(float)
  */
 bool FEMapMenu::MoveRight(bool playSound)
 {
-    int i;
-    char* searchPtr;
     int rightItemID = m_items[m_currentSelectIndex].Right;
 
     if (rightItemID != -1)
     {
-        searchPtr = (char*)this;
-        i = 0;
-        int count = m_numItems;
+        SetCurrentSelectByID(rightItemID);
 
-        while (count > 0)
-        {
-            if (*(int*)(searchPtr + 0x4) == rightItemID)
-            {
-                m_currentSelectIndex = i;
-                break;
-            }
-            searchPtr += 0x1c;
-            i++;
-            count--;
-        }
-
-        TLInstance* pIcon = m_items[m_currentSelectIndex].Icon;
-        feVector3 pos = pIcon->GetPosition();
+        feVector3 pos = m_items[m_currentSelectIndex].Icon->GetPosition();
         m_highlighter->SetAssetPosition(pos.f.x, pos.f.y, pos.f.z);
 
         if (playSound && m_makeSounds)
@@ -173,30 +128,13 @@ bool FEMapMenu::MoveRight(bool playSound)
  */
 bool FEMapMenu::MoveLeft(bool playSound)
 {
-    int i;
-    char* searchPtr;
     int leftItemID = m_items[m_currentSelectIndex].Left;
 
     if (leftItemID != -1)
     {
-        searchPtr = (char*)this;
-        i = 0;
-        int count = m_numItems;
+        SetCurrentSelectByID(leftItemID);
 
-        while (count > 0)
-        {
-            if (*(int*)(searchPtr + 0x4) == leftItemID)
-            {
-                m_currentSelectIndex = i;
-                break;
-            }
-            searchPtr += 0x1c;
-            i++;
-            count--;
-        }
-
-        TLInstance* pIcon = m_items[m_currentSelectIndex].Icon;
-        feVector3 pos = pIcon->GetPosition();
+        feVector3 pos = m_items[m_currentSelectIndex].Icon->GetPosition();
         m_highlighter->SetAssetPosition(pos.f.x, pos.f.y, pos.f.z);
 
         if (playSound && m_makeSounds)
@@ -214,30 +152,13 @@ bool FEMapMenu::MoveLeft(bool playSound)
  */
 bool FEMapMenu::MoveDown(bool playSound)
 {
-    int i;
-    char* searchPtr;
     int downItemID = m_items[m_currentSelectIndex].Down;
 
     if (downItemID != -1)
     {
-        searchPtr = (char*)this;
-        i = 0;
-        int count = m_numItems;
+        SetCurrentSelectByID(downItemID);
 
-        while (count > 0)
-        {
-            if (*(int*)(searchPtr + 0x4) == downItemID)
-            {
-                m_currentSelectIndex = i;
-                break;
-            }
-            searchPtr += 0x1c;
-            i++;
-            count--;
-        }
-
-        TLInstance* pIcon = m_items[m_currentSelectIndex].Icon;
-        feVector3 pos = pIcon->GetPosition();
+        feVector3 pos = m_items[m_currentSelectIndex].Icon->GetPosition();
         m_highlighter->SetAssetPosition(pos.f.x, pos.f.y, pos.f.z);
 
         if (playSound && m_makeSounds)
@@ -255,30 +176,13 @@ bool FEMapMenu::MoveDown(bool playSound)
  */
 bool FEMapMenu::MoveUp(bool playSound)
 {
-    int i;
-    char* searchPtr;
     int upItemID = m_items[m_currentSelectIndex].Up;
 
     if (upItemID != -1)
     {
-        searchPtr = (char*)this;
-        i = 0;
-        int count = m_numItems;
+        SetCurrentSelectByID(upItemID);
 
-        while (count > 0)
-        {
-            if (*(int*)(searchPtr + 0x4) == upItemID)
-            {
-                m_currentSelectIndex = i;
-                break;
-            }
-            searchPtr += 0x1c;
-            i++;
-            count--;
-        }
-
-        TLInstance* pIcon = m_items[m_currentSelectIndex].Icon;
-        feVector3 pos = pIcon->GetPosition();
+        feVector3 pos = m_items[m_currentSelectIndex].Icon->GetPosition();
         m_highlighter->SetAssetPosition(pos.f.x, pos.f.y, pos.f.z);
 
         if (playSound && m_makeSounds)

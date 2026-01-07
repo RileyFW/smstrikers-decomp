@@ -36,6 +36,18 @@ public:
     void SetAllItemsActive();
     void ChangeItem(int, TLInstance*);
 
+    inline void SetCurrentSelectByID(int itemID)
+    {
+        for (int i = 0; i < m_numItems; i++)
+        {
+            if (m_items[i].ItemID == itemID)
+            {
+                m_currentSelectIndex = i;
+                break;
+            }
+        }
+    }
+
     /* 0x000 */ TLInstance* m_highlighter;
     /* 0x004 */ ItemEntry m_items[32];
     /* 0x384 */ signed char m_numItems;
