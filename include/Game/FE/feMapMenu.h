@@ -36,17 +36,8 @@ public:
     void SetAllItemsActive();
     void ChangeItem(int, TLInstance*);
 
-    inline void SetCurrentSelectByID(int itemID)
-    {
-        for (int i = 0; i < m_numItems; i++)
-        {
-            if (m_items[i].ItemID == itemID)
-            {
-                m_currentSelectIndex = i;
-                break;
-            }
-        }
-    }
+    inline void SetCurrentSelectByID(int itemID);
+    inline bool TryMoveRandom(int itemID, int soundIndex);
 
     /* 0x000 */ TLInstance* m_highlighter;
     /* 0x004 */ ItemEntry m_items[32];

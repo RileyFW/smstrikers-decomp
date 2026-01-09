@@ -7,6 +7,35 @@ static const char* NavDirection2SoundMap[4] = {
     "sfx_option_scroll_up"
 };
 
+inline void FEMapMenu::SetCurrentSelectByID(int itemID)
+{
+    for (int i = 0; i < m_numItems; i++)
+    {
+        if (m_items[i].ItemID == itemID)
+        {
+            m_currentSelectIndex = i;
+            break;
+        }
+    }
+}
+
+inline bool FEMapMenu::TryMoveRandom(int itemID, int soundIndex)
+{
+    if (itemID != -1)
+    {
+        SetCurrentSelectByID(itemID);
+
+        feVector3 pos = m_items[m_currentSelectIndex].Icon->GetPosition();
+        m_highlighter->SetAssetPosition(pos.f.x, pos.f.y, pos.f.z);
+        if (m_makeSounds)
+        {
+            FEAudio::PlayAnimAudioEvent(NavDirection2SoundMap[soundIndex], false);
+        }
+        return true;
+    }
+    return false;
+}
+
 /**
  * Offset/Address/Size: 0xF80 | 0x80098280 | size: 0x2C
  */
@@ -36,6 +65,7 @@ FEMapMenu::~FEMapMenu()
  */
 void FEMapMenu::AddItem(int itemID, TLInstance* pIcon, int leftID, int rightID, int upID, int downID, bool active)
 {
+
     m_items[m_numItems].ItemID = itemID;
     m_items[m_numItems].Icon = pIcon;
     m_items[m_numItems].Active = active;
@@ -93,10 +123,72 @@ void FEMapMenu::UpdateAllItems()
 
 /**
  * Offset/Address/Size: 0x814 | 0x80097B14 | size: 0x474
- * TODO: Implement...
  */
-void FEMapMenu::Update(float)
+void FEMapMenu::Update(float dt)
 {
+    feVector3 pos = m_items[m_currentSelectIndex].Icon->GetPosition();
+    m_highlighter->SetAssetPosition(pos.f.x, pos.f.y, pos.f.z);
+
+    if (!m_isRandomizing)
+    {
+        return;
+    }
+
+    m_randDeltaTime += dt;
+    if (!(m_randDeltaTime >= 0.05f))
+    {
+        return;
+    }
+
+    bool moved = false;
+    while (!moved)
+    {
+        u32 direction = nlRandom(4, &nlDefaultSeed);
+        int directionID;
+
+        switch (direction)
+        {
+        case 0:
+        {
+            directionID = m_items[m_currentSelectIndex].Right;
+            moved = TryMoveRandom(directionID, 0);
+            break;
+        }
+        case 1:
+        {
+            directionID = m_items[m_currentSelectIndex].Left;
+            moved = TryMoveRandom(directionID, 1);
+            break;
+        }
+        case 3:
+        {
+            directionID = m_items[m_currentSelectIndex].Down;
+            moved = TryMoveRandom(directionID, 2);
+            break;
+        }
+        case 2:
+        {
+            directionID = m_items[m_currentSelectIndex].Up;
+            moved = TryMoveRandom(directionID, 3);
+            break;
+        }
+        }
+    }
+
+    m_numCyclesRemaining--;
+    m_randDeltaTime = 0.0f;
+
+    if (m_numCyclesRemaining <= 0)
+    {
+        if (!m_items[m_currentSelectIndex].Active)
+        {
+            m_numCyclesRemaining++;
+            return;
+        }
+
+        m_isRandomizing = false;
+        m_hasRandomizeJustFinished = true;
+    }
 }
 
 /**
@@ -344,3 +436,30 @@ void FEMapMenu::ChangeItem(int itemID, TLInstance* pInstance)
 
     m_items[result].Icon = pInstance;
 }
+
+// /**
+//  * This function is not called and exists solely to ensure string literals
+//  * are placed in the correct order in the data segment to match the original binary.
+
+// # .sdata2:0x0 | 0x80375A68 | size: 0x8
+// .obj "@352", local
+//     .double 4503599627370496
+// .endobj "@352"
+
+// # .sdata2:0x8 | 0x80375A70 | size: 0x4
+// .obj "@421", local
+//     .float 0
+// .endobj "@421"
+
+// # .sdata2:0xC | 0x80375A74 | size: 0x4
+// .obj "@597", local
+//     .float 0.05
+// .endobj "@597"
+//  */
+
+// static void _EnsureDataSegmentOrder(float& avar1, float& avar2, float& avar3, float& avar4)
+// {
+//     avar2 = 0.0f;
+//     avar3 = (u8)avar4;
+//     avar1 = 0.05f;
+// }
