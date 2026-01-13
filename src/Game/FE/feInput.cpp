@@ -253,8 +253,9 @@ bool FEInput::JustPressed(eFEINPUT_PAD pad, int button, bool remap, eFEINPUT_PAD
 /**
  * Offset/Address/Size: 0x87C | 0x8020F288 | size: 0x36C
  */
-void FEInput::IsAutoPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*)
+bool FEInput::IsAutoPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*)
 {
+    return false;
 }
 
 /**

@@ -17,7 +17,10 @@ class SlideMenuItem
 {
 public:
     SlideMenuItem();
-    virtual ~SlideMenuItem();
+    virtual ~SlideMenuItem()
+    {
+        delete mComponentInstance;
+    };
 
     /* 0x4 */ unsigned long mSlideMenuHash;
     /* 0x8 */ TLComponentInstance* mComponentInstance;

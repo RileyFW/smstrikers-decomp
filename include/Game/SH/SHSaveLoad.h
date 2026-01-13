@@ -37,7 +37,7 @@ public:
     ~SaveLoadScene();
     void SceneCreated();
     void Update(float);
-    void IsIOEnabled();
+    static bool IsIOEnabled();
     void SetupForAboutAutoSave();
     void UpdateForAboutToSaveSlide();
     void HandleSaveLoadFinishedResult();

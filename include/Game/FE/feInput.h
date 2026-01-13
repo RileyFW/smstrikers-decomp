@@ -46,7 +46,7 @@ public:
     void EnableInputIfSceneHasFocus(BaseSceneHandler*);
     bool JustReleased(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
     bool JustPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
-    void IsAutoPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
+    bool IsAutoPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
     void IsPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
     bool IsConnected(eFEINPUT_PAD);
     cGlobalPad* GetGlobalPad(eFEINPUT_PAD) const;

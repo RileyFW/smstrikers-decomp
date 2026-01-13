@@ -328,8 +328,9 @@ void SaveLoadScene::Update(float)
 /**
  * Offset/Address/Size: 0x7D4 | 0x800B0D5C | size: 0xF4
  */
-void SaveLoadScene::IsIOEnabled()
+bool SaveLoadScene::IsIOEnabled()
 {
+    return true;
 }
 
 /**
