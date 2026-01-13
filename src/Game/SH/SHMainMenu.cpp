@@ -1,6 +1,7 @@
 #include "Game/SH/SHMainMenu.h"
 #include "Game/GameInfo.h"
 #include "Game/GameSceneManager.h"
+#include "Game/FE/feMusic.h"
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800AC57C | size: 0x40
@@ -217,6 +218,11 @@ void onSelect101(TLComponentInstance*)
  */
 void newTourn()
 {
+    GameSceneManager::s_pInstance->PopEntireStack();
+    GameSceneManager::s_pInstance->Push(SCENE_TOURN_SETPARAMS, SCREEN_FORWARD, false);
+    if (GameInfoManager::s_pInstance->mCustomTournamentInfo.m_cupConstructed) {
+        GameInfoManager::s_pInstance->mCustomTournamentInfo.m_cup->mCupStarted = false;
+    }
 }
 
 /**
@@ -248,6 +254,9 @@ void onSelectTournament(TLComponentInstance*)
  */
 void onSelectTrophies(TLComponentInstance*)
 {
+    GameSceneManager::s_pInstance->PopEntireStack();
+    GameSceneManager::s_pInstance->Push(SCENE_TROPHY_ROOM, SCREEN_FORWARD, false);
+    FEMusic::StartStreamIfDifferent(6);
 }
 
 /**
@@ -255,6 +264,9 @@ void onSelectTrophies(TLComponentInstance*)
  */
 void onSelectOptions(TLComponentInstance*)
 {
+    GameSceneManager::s_pInstance->PopEntireStack();
+    GameSceneManager::s_pInstance->Push(SCENE_OPTIONS, SCREEN_FORWARD, false);
+    FEMusic::StartStreamIfDifferent(7);
 }
 
 // /**

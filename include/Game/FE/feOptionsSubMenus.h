@@ -7,6 +7,7 @@
 #include "Game/FE/feButtonComponent.h"
 #include "Game/FE/feMenu.h"
 #include "Game/FE/feSlideMenu.h"
+#include "Game/FE/tlTextInstance.h"
 
 class FEPresentation;
 class TLComponentInstance;
@@ -37,7 +38,7 @@ public:
     /* 0x00C */ ButtonComponent::ButtonState m_currentButtonState; // offset 0xC, size 0x4
     /* 0x010 */ ButtonComponent mButtons;                          // offset 0x10, size 0x24
     /* 0x034 */ MenuList<SlideMenuItem> mMenuItems;                // offset 0x34, size 0x214
-    /* 0x248 */ MenuList<SlideMenuItem>* mSlideMenuLists[8];       // offset 0x248, size 0x20
+    /* 0x248 */ MenuList<SlideMenuList>* mSlideMenuLists[8];       // offset 0x248, size 0x20
     /* 0x268 */ unsigned long mSettingsCRC;                        // offset 0x268, size 0x4
 }; // total size: 0x26C
 

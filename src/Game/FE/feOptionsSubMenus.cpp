@@ -10,6 +10,7 @@
 #include "Game/SH/SHSaveLoad.h"
 #include "Game/GameSceneManager.h"
 #include "Game/BaseGameSceneManager.h"
+#include "Game/FE/feFinder.h"
 #include "types.h"
 
 static const char* MAIN_MENU_SLIDE = "Slide1";
@@ -22,6 +23,7 @@ static char* MENU_ITEMS_OSL[] = { "Item_Save", "Item_Load" };
  */
 void OptionsSaveLoad::Revert()
 {
+    // Empty
 }
 
 /**
@@ -29,6 +31,7 @@ void OptionsSaveLoad::Revert()
  */
 void OptionsSaveLoad::Save()
 {
+    // Empty
 }
 
 /**
@@ -81,20 +84,6 @@ void OpenItem(TLComponentInstance*);
 void CloseItem(TLComponentInstance*);
 void TempDisableSound();
 } // namespace DoubleHighlite
-
-struct InlineHasher
-{
-    unsigned long m_Hash;
-};
-
-template <typename T, int N>
-class FEFinder
-{
-public:
-    static T* Find(TLSlide* slide, InlineHasher& h1, InlineHasher& h2, InlineHasher& h3, InlineHasher& h4, InlineHasher& h5, InlineHasher& h6);
-};
-
-extern unsigned long nlStringLowerHash(const char*);
 
 /**
  * Offset/Address/Size: 0x210 | 0x800B5254 | size: 0x410
@@ -200,12 +189,12 @@ void OptionsGameplayMenuV2::Revert()
 void OptionsGameplayMenuV2::Save()
 {
     GameplaySettings localSettings;
-    MenuList<SlideMenuItem>* list;
+    SlideMenuList* list;
     int val;
     SlideMenuItem** pType;
 
     // Skill Level
-    list = mSlideMenuLists[0];
+    list = (SlideMenuList*)mSlideMenuLists[0];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -218,7 +207,7 @@ void OptionsGameplayMenuV2::Save()
     localSettings.SkillLevel = (eSkillLevel)val;
 
     // Game Time - convert from menu index to seconds
-    list = mSlideMenuLists[1];
+    list = (SlideMenuList*)mSlideMenuLists[1];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -254,7 +243,7 @@ void OptionsGameplayMenuV2::Save()
     }
 
     // Power Ups
-    list = mSlideMenuLists[2];
+    list = (SlideMenuList*)mSlideMenuLists[2];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -267,7 +256,7 @@ void OptionsGameplayMenuV2::Save()
     localSettings.PowerUps = (val == 0);
 
     // Shoot2Score
-    list = mSlideMenuLists[3];
+    list = (SlideMenuList*)mSlideMenuLists[3];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -280,7 +269,7 @@ void OptionsGameplayMenuV2::Save()
     localSettings.Shoot2Score = (val == 0);
 
     // RumbleEnabled (index 4 stores to offset 0xB)
-    list = mSlideMenuLists[4];
+    list = (SlideMenuList*)mSlideMenuLists[4];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -293,7 +282,7 @@ void OptionsGameplayMenuV2::Save()
     localSettings.RumbleEnabled = (val == 0);
 
     // BowserAttackEnabled (index 5 stores to offset 0xA)
-    list = mSlideMenuLists[5];
+    list = (SlideMenuList*)mSlideMenuLists[5];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -346,12 +335,12 @@ void OptionsVisualMenuV2::Revert()
  */
 void OptionsVisualMenuV2::Save()
 {
-    MenuList<SlideMenuItem>* list;
+    SlideMenuList* list;
     int val;
     SlideMenuItem** pType;
 
     // Auto zoom camera
-    list = mSlideMenuLists[0];
+    list = (SlideMenuList*)mSlideMenuLists[0];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -364,7 +353,7 @@ void OptionsVisualMenuV2::Save()
     mSettings.mIsAutoZoomCamera = (val == 0);
 
     // Camera zoom level
-    list = mSlideMenuLists[1];
+    list = (SlideMenuList*)mSlideMenuLists[1];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -377,7 +366,7 @@ void OptionsVisualMenuV2::Save()
     mSettings.mCameraZoomLevel = (float)val / 10.0f;
 
     // Widescreen
-    list = mSlideMenuLists[2];
+    list = (SlideMenuList*)mSlideMenuLists[2];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -402,7 +391,7 @@ void OptionsVisualMenuV2::Update(float dt)
         return;
 
     int userEnumType;
-    MenuList<SlideMenuItem>* list = mSlideMenuLists[0];
+    SlideMenuList* list = (SlideMenuList*)mSlideMenuLists[0];
     if (list != NULL)
     {
         int index = list->mCurrentIndex;
@@ -495,12 +484,12 @@ void OptionsAudioMenuV2::Revert()
  */
 void OptionsAudioMenuV2::Save()
 {
-    MenuList<SlideMenuItem>* list;
+    SlideMenuList* list;
     int val;
     SlideMenuItem** pType;
 
     // Music Volume
-    list = mSlideMenuLists[0];
+    list = (SlideMenuList*)mSlideMenuLists[0];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -513,7 +502,7 @@ void OptionsAudioMenuV2::Save()
     mSettings.MusicVolume = val;
 
     // SFX Volume
-    list = mSlideMenuLists[1];
+    list = (SlideMenuList*)mSlideMenuLists[1];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -526,7 +515,7 @@ void OptionsAudioMenuV2::Save()
     mSettings.SFXVolume = val;
 
     // Voice Volume
-    list = mSlideMenuLists[2];
+    list = (SlideMenuList*)mSlideMenuLists[2];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -539,7 +528,7 @@ void OptionsAudioMenuV2::Save()
     mSettings.VoiceVolume = val;
 
     // Audio Mode
-    list = mSlideMenuLists[3];
+    list = (SlideMenuList*)mSlideMenuLists[3];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -604,12 +593,12 @@ void OptionsCheatsMenu::Revert()
 void OptionsCheatsMenu::Save()
 {
     CheatSettings localSettings;
-    MenuList<SlideMenuItem>* list;
+    SlideMenuList* list;
     int val;
     SlideMenuItem** pType;
 
     // Custom Powerups
-    list = mSlideMenuLists[0];
+    list = (SlideMenuList*)mSlideMenuLists[0];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -622,7 +611,7 @@ void OptionsCheatsMenu::Save()
     localSettings.mCustomPowerups = (CustomPowerups)val;
 
     // Stunned Goalies
-    list = mSlideMenuLists[1];
+    list = (SlideMenuList*)mSlideMenuLists[1];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -635,7 +624,7 @@ void OptionsCheatsMenu::Save()
     localSettings.mStunnedGoalies = (val != 0);
 
     // Infinite Powerups
-    list = mSlideMenuLists[2];
+    list = (SlideMenuList*)mSlideMenuLists[2];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -648,7 +637,7 @@ void OptionsCheatsMenu::Save()
     localSettings.mInfinitePowerups = (val != 0);
 
     // Cheat TBD1
-    list = mSlideMenuLists[3];
+    list = (SlideMenuList*)mSlideMenuLists[3];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -661,7 +650,7 @@ void OptionsCheatsMenu::Save()
     localSettings.mCheatTBD1Enabled = (val != 0);
 
     // Cheat TBD2
-    list = mSlideMenuLists[4];
+    list = (SlideMenuList*)mSlideMenuLists[4];
     if (list != NULL)
     {
         pType = &list->mMenuItems[list->mCurrentIndex].mType;
@@ -694,9 +683,52 @@ OptionsCheatsMenu::OptionsCheatsMenu(FEPresentation*, ButtonComponent::ButtonSta
 
 /**
  * Offset/Address/Size: 0x4ECC | 0x800B9F10 | size: 0xB8
+ * TODO: this Find-Template is still a bit of a puzzle....
  */
-void OptionsSubMenu::SetAButtonLOC(unsigned long)
+void OptionsSubMenu::SetAButtonLOC(unsigned long locStrId)
 {
+    if (m_buttons == NULL)
+    {
+        return;
+    }
+
+    InlineHasher h7;
+    InlineHasher h6;
+    InlineHasher h5;
+    InlineHasher h4;
+    InlineHasher h3;
+    InlineHasher h2;
+    InlineHasher h1;
+    InlineHasher h0;
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+    // h8.m_Hash = 0;
+
+    unsigned long hash = nlStringLowerHash("accept");
+    h0.m_Hash = hash;
+    h1.m_Hash = hash;
+
+    TLTextInstance* textInstance = FEFinder<TLTextInstance, 3>::Find(
+        m_buttons->GetActiveSlide(),
+        h0,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5);
+
+    if (textInstance != NULL)
+    {
+        textInstance->m_LocStrId = locStrId;
+        textInstance->m_OverloadFlags |= 0x8u;
+    }
 }
 
 /**
@@ -726,10 +758,10 @@ void OptionsSubMenu::GoBack()
     TLComponentInstance* compInstance;
     u32 hash;
 
-    MenuList<SlideMenuItem>* slideMenuList = mSlideMenuLists[mMenuItems.mCurrentIndex];
+    SlideMenuList* slideMenuList = (SlideMenuList*)mSlideMenuLists[mMenuItems.mCurrentIndex];
     if (slideMenuList != NULL)
     {
-        compInstance = ((SlideMenuList*)slideMenuList)->mComponentInstance;
+        compInstance = slideMenuList->mComponentInstance;
         if (compInstance != NULL && compInstance->GetActiveSlide() != NULL)
         {
             startSlide = compInstance->GetActiveSlide();

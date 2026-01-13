@@ -32,7 +32,7 @@ class SlideMenuList : public MenuList<SlideMenuItem>
 public:
     SlideMenuList();
     virtual ~SlideMenuList();
-    void Update(float dt);
+    virtual void Update(float dt);
 
     void SetSlide()
     {

@@ -9,36 +9,106 @@ class TLInstance;
 class TLSlide;
 class InlineHasher;
 class FEPresentation;
+class AsyncImage;
+class ICaptainGridComponent;
+class ISidekickGridComponent;
+
+enum Phase
+{
+    PHASE_IDLE = 0,
+    PHASE_CHOOSING_CAPTAIN = 1,
+    PHASE_CHOOSING_SIDEKICK = 2,
+    PHASE_READY = 3,
+};
 
 class IChooseCaptain
 {
 public:
-    void SetupNameComponentToCurrentCaptain(int);
-    void MoveHighlightToCurrentCaptain(int);
-    void PushPlayerWithGameInfoDB();
-    void ResetPushPlayerData();
-    void PopPlayer(eFEINPUT_PAD);
-    void PushPlayer(eFEINPUT_PAD, int);
-    void SetupForLastPhase(eFEINPUT_PAD);
-    void FindAliveHumanPlayers();
-    void CheckForDisconnectedHumanPlayers();
-    void StartSidekickMiniHead(int, eSidekickID);
-    void SetupCaptainComponent(TLComponentInstance*, int);
-    void SceneCreated(FEPresentation*);
-    void UpdateAsyncImages();
-    void Update(float);
-    void UpdateSound(float);
-    void Initialize(const char*, const char*);
-    ~IChooseCaptain();
+    class NameComponent
+    {
+        void SetSidekickName(unsigned long);
+        void SetTextName(const char*, unsigned long);
+        void SetCaptainName(unsigned long);
+        void SetCaptainLogo(const char*);
+
+        /* 0x0 */ TLComponentInstance* mComponent;
+        /* 0x4 */ const char* mCaptainObjName;
+        /* 0x8 */ const char* mSidekickObjName;
+    }; // total size: 0xC
+
+    class ComponentState
+    {
+        static void GotoNextPhase();
+        static void GotoPreviousPhase();
+        static void SetCurrentPhase(Phase);
+
+        /* 0x0 */ Phase mCurrentPhase;
+        /* 0x4 */ IChooseCaptain* mParent;
+        /* 0x8 */ int mHomeAway;
+    }; // total size: 0xC
+
     IChooseCaptain();
-    // void NameComponent::SetCaptainLogo(const char*);
-    // void NameComponent::SetCaptainName(unsigned long);
-    // void NameComponent::SetTextName(const char*, unsigned long);
-    // void ComponentState::SetCurrentPhase(IChooseCaptain::ComponentState::Phase);
-    // void NameComponent::SetSidekickName(unsigned long);
-    // void ComponentState::GotoPreviousPhase();
-    // void ComponentState::GotoNextPhase();
-};
+    ~IChooseCaptain();
+    void Initialize(const char*, const char*);
+    void UpdateSound(float);
+    void Update(float);
+    void UpdateAsyncImages();
+    void SceneCreated(FEPresentation*);
+    void SetupCaptainComponent(TLComponentInstance*, int);
+    void StartSidekickMiniHead(int, eSidekickID);
+    void CheckForDisconnectedHumanPlayers();
+    void FindAliveHumanPlayers();
+    void SetupForLastPhase(eFEINPUT_PAD);
+    void PushPlayer(eFEINPUT_PAD, int);
+    void PopPlayer(eFEINPUT_PAD);
+    void ResetPushPlayerData();
+    void PushPlayerWithGameInfoDB();
+    void MoveHighlightToCurrentCaptain(int);
+    void SetupNameComponentToCurrentCaptain(int);
+
+    // IChooseCaptain_ComponentState mComponentState[2];    // 0x00, size 0x18
+    // unsigned char mIsSinglePlayerInput;                  // 0x18, size 0x1
+    // unsigned char pad19[3];                              // 0x19, padding
+    // eFEINPUT_PAD mAllPushedPlayers[4];                   // 0x1C, size 0x10
+    // int mAllPushedPlayerSides[4];                        // 0x2C, size 0x10
+    // int mNumTotalPushedPlayers;                          // 0x3C, size 0x4
+    // AsyncImage* mAsyncImage[2][3];                       // 0x40, size 0x18
+    // int mHomeAwayTeam[2];                                // 0x58, size 0x8
+    // int mHomeAwaySidekicks[2];                           // 0x60, size 0x8
+    // unsigned char mDidSwapCaptains[2];                   // 0x68, size 0x2
+    // unsigned char mDidSwapSidekicks[2];                  // 0x6A, size 0x2
+    // TLComponentInstance* mCaptainComponents[2];          // 0x6C, size 0x8
+    // TLComponentInstance* mSidekickComponents[2];         // 0x74, size 0x8
+    // TLComponentInstance* mSidekickMiniHeadComponents[2]; // 0x7C, size 0x8
+    // float mCaptainSlideDurations[2];                     // 0x84, size 0x8
+    // float mSidekickSlideDurations[2];                    // 0x8C, size 0x8
+    // float mCaptainSoundDelay[2];                         // 0x94, size 0x8
+    // ICaptainGridComponent* mCaptainGridComponents[2];    // 0x9C, size 0x8
+    // ISidekickGridComponent* mSidekickGridComponents[2];  // 0xA4, size 0x8
+    // char* mLastCaptainSelectSoundStrPlayed[2];           // 0xAC, size 0x8
+    // IChooseCaptain_NameComponent mNameComponents[2];     // 0xB4, size 0x18
+
+    /* 0x00 */ ComponentState mComponentState[2];                   // size 0x18
+    /* 0x18 */ bool mIsSinglePlayerInput;                           // size 0x1
+    /* 0x1C */ eFEINPUT_PAD mAllPushedPlayers[4];                   // size 0x10
+    /* 0x2C */ int mAllPushedPlayerSides[4];                        // size 0x10
+    /* 0x3C */ int mNumTotalPushedPlayers;                          // size 0x4
+    /* 0x40 */ AsyncImage* mAsyncImage[2][3];                       // size 0x18
+    /* 0x58 */ int mHomeAwayTeam[2];                                // size 0x8
+    /* 0x60 */ int mHomeAwaySidekicks[2];                           // size 0x8
+    /* 0x68 */ bool mDidSwapCaptains[2];                            // size 0x2
+    /* 0x6A */ bool mDidSwapSidekicks[2];                           // size 0x2
+    /* 0x6C */ TLComponentInstance* mCaptainComponents[2];          // size 0x8
+    /* 0x74 */ TLComponentInstance* mSidekickComponents[2];         // size 0x8
+    /* 0x7C */ TLComponentInstance* mSidekickMiniHeadComponents[2]; // size 0x8
+    /* 0x84 */ float mCaptainSlideDurations[2];                     // size 0x8
+    /* 0x8C */ float mSidekickSlideDurations[2];                    // size 0x8
+    /* 0x94 */ float mCaptainSoundDelay[2];                         // size 0x8
+    /* 0x9C */ ICaptainGridComponent* mCaptainGridComponents[2];    // size 0x8
+    /* 0xA4 */ ISidekickGridComponent* mSidekickGridComponents[2];  // size 0x8
+    /* 0xAC */ char* mLastCaptainSelectSoundStrPlayed[2];           // size 0x8
+    /* 0xB4 */ NameComponent mNameComponents[2];                    // size 0x18
+}; // total size: 0xCC
 
 // class FEFinder<TLComponentInstance, 4>
 // {
