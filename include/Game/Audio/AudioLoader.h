@@ -42,7 +42,7 @@ public:
     void StopPauseMenuMusic();
     void PlayPauseMenuMusic();
     void PlayLoadLoopMusic();
-    void PlayFEMenuMusic();
+    static void PlayFEMenuMusic();
     void PlayFETitleMusicWithFade();
     void StartFEStream(const char*, bool, const char*);
     static bool IsInited();

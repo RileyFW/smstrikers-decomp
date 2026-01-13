@@ -1,6 +1,8 @@
 #include "Game/FE/feOptionsSubMenus.h"
 
 #include "NL/platpad.h"
+#include "Game/Audio/AudioLoader.h"
+#include "Game/FE/feSlideMenu.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x800B5044 | size: 0x4
@@ -59,6 +61,116 @@ void OptionsGameplayMenuV2::Revert()
  */
 void OptionsGameplayMenuV2::Save()
 {
+    GameplaySettings localSettings;
+    MenuList<SlideMenuItem>* list;
+    int val;
+    SlideMenuItem** pType;
+
+    // Skill Level
+    list = mSlideMenuLists[0];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    localSettings.SkillLevel = (eSkillLevel)val;
+
+    // Game Time - convert from menu index to seconds
+    list = mSlideMenuLists[1];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    switch (val)
+    {
+    case 0:
+        localSettings.GameTime = 120;
+        break;
+    case 1:
+        localSettings.GameTime = 180;
+        break;
+    case 2:
+        localSettings.GameTime = 240;
+        break;
+    case 3:
+        localSettings.GameTime = 300;
+        break;
+    case 4:
+        localSettings.GameTime = 600;
+        break;
+    case 5:
+        localSettings.GameTime = 900;
+        break;
+    default:
+        localSettings.GameTime = 120;
+        break;
+    }
+
+    // Power Ups
+    list = mSlideMenuLists[2];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    localSettings.PowerUps = (val == 0);
+
+    // Shoot2Score
+    list = mSlideMenuLists[3];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    localSettings.Shoot2Score = (val == 0);
+
+    // RumbleEnabled (index 4 stores to offset 0xB)
+    list = mSlideMenuLists[4];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    localSettings.RumbleEnabled = (val == 0);
+
+    // BowserAttackEnabled (index 5 stores to offset 0xA)
+    list = mSlideMenuLists[5];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    localSettings.BowserAttackEnabled = (val == 0);
+
+    mSettings = localSettings;
+    mSettings.OnSettingsUpdated();
+
+    cPlatPad::m_bDisableRumble = !localSettings.RumbleEnabled;
 }
 
 /**
@@ -96,13 +208,100 @@ void OptionsVisualMenuV2::Revert()
  */
 void OptionsVisualMenuV2::Save()
 {
+    MenuList<SlideMenuItem>* list;
+    int val;
+    SlideMenuItem** pType;
+
+    // Auto zoom camera
+    list = mSlideMenuLists[0];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    mSettings.mIsAutoZoomCamera = (val == 0);
+
+    // Camera zoom level
+    list = mSlideMenuLists[1];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    mSettings.mCameraZoomLevel = (float)val / 10.0f;
+
+    // Widescreen
+    list = mSlideMenuLists[2];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    mSettings.mIsWidescreen = (val != 0);
 }
 
 /**
  * Offset/Address/Size: 0x1834 | 0x800B6878 | size: 0xC0
  */
-void OptionsVisualMenuV2::Update(float)
+void OptionsVisualMenuV2::Update(float dt)
 {
+    OptionsSubMenu::Update(dt);
+
+    MenuItem<SlideMenuItem>* menuItem = &mMenuItems.mMenuItems[1];
+    if (menuItem == NULL)
+        return;
+
+    int userEnumType;
+    MenuList<SlideMenuItem>* list = mSlideMenuLists[0];
+    if (list != NULL)
+    {
+        int index = list->mCurrentIndex;
+        SlideMenuItem** pType = &list->mMenuItems[index].mType;
+        userEnumType = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        userEnumType = -1;
+    }
+
+    if (userEnumType == 0)
+    {
+        TLComponentInstance* compInstance = (TLComponentInstance*)menuItem->mType;
+        if (compInstance->m_bVisible != false)
+        {
+            compInstance->m_bVisible = false;
+            menuItem->mDisabled = true;
+
+            SlideMenuList* list2 = (SlideMenuList*)mSlideMenuLists[1];
+            TLComponentInstance* compInstance2 = list2->mComponentInstance;
+            compInstance2->m_bVisible = false;
+        }
+    }
+    else
+    {
+        TLComponentInstance* compInstance = (TLComponentInstance*)menuItem->mType;
+        if (compInstance->m_bVisible == false)
+        {
+            compInstance->m_bVisible = true;
+            menuItem->mDisabled = false;
+
+            SlideMenuList* list2 = (SlideMenuList*)mSlideMenuLists[1];
+            TLComponentInstance* compInstance2 = list2->mComponentInstance;
+            compInstance2->m_bVisible = true;
+        }
+    }
 }
 
 /**
@@ -141,6 +340,68 @@ void OptionsAudioMenuV2::Revert()
  */
 void OptionsAudioMenuV2::Save()
 {
+    MenuList<SlideMenuItem>* list;
+    int val;
+    SlideMenuItem** pType;
+
+    // Music Volume
+    list = mSlideMenuLists[0];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    mSettings.MusicVolume = val;
+
+    // SFX Volume
+    list = mSlideMenuLists[1];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    mSettings.SFXVolume = val;
+
+    // Voice Volume
+    list = mSlideMenuLists[2];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    mSettings.VoiceVolume = val;
+
+    // Audio Mode
+    list = mSlideMenuLists[3];
+    if (list != NULL)
+    {
+        pType = &list->mMenuItems[list->mCurrentIndex].mType;
+        val = (*pType)->mUserEnumType;
+    }
+    else
+    {
+        val = -1;
+    }
+    mSettings.Mode = (eAudioMode)val;
+
+    mSettings.ApplySettings(mbUpdateMode, false);
+    if (mbUpdateMode)
+    {
+        AudioLoader::PlayFEMenuMusic();
+        mbUpdateMode = false;
+    }
 }
 
 /**
@@ -162,9 +423,9 @@ OptionsAudioMenuV2::OptionsAudioMenuV2(FEPresentation*, ButtonComponent::ButtonS
 /**
  * Offset/Address/Size: 0x34B0 | 0x800B84F4 | size: 0x88C
  */
-// void OptionsCheatsMenu::BuildCustomPowerupsList(TLComponentInstance*, CheatSettings::CustomPowerups, FEPresentation*)
-// {
-// }
+void OptionsCheatsMenu::BuildCustomPowerupsList(TLComponentInstance*, CustomPowerups, FEPresentation*)
+{
+}
 
 /**
  * Offset/Address/Size: 0x3D3C | 0x800B8D80 | size: 0x7D4
@@ -245,32 +506,6 @@ void OptionsSubMenu::Update(float)
 OptionsSubMenu::~OptionsSubMenu()
 {
 }
-
-// /**
-//  * Offset/Address/Size: 0x0 | 0x800BB0F4 | size: 0x8
-//  */
-// bool OptionsSaveLoad::ChangesMade()
-// {
-//     return false;
-// }
-
-// /**
-//  * Offset/Address/Size: 0x8 | 0x800BB0FC | size: 0x48
-//  */
-// bool OptionsGameplayMenuV2::ChangesMade()
-// {
-//     u32 checksum = nlChecksum32(&mSettings, sizeof(GameplaySettings));
-//     return mSettingsCRC != checksum;
-// }
-
-// /**
-//  * Offset/Address/Size: 0x50 | 0x800BB144 | size: 0x48
-//  */
-// bool OptionsVisualMenuV2::ChangesMade()
-// {
-//     u32 checksum = nlChecksum32(&mSettings, sizeof(GameplaySettings));
-//     return mSettingsCRC != checksum;
-// }
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800BB21C | size: 0x48

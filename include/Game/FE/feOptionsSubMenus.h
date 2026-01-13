@@ -109,7 +109,8 @@ public:
 
     /* 0x26C */ AudioSettings& mSettings;
     /* 0x270 */ AudioSettings mBackupSettings;
-}; // total size: 0x27C
+    /* 0x290 */ bool mbUpdateMode;
+}; // total size: 0x294
 
 class OptionsCheatsMenu : public OptionsSubMenu
 {
