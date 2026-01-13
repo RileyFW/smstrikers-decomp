@@ -194,6 +194,8 @@ void onSelectFriendly(TLComponentInstance*)
  */
 void onSelectCup(TLComponentInstance*)
 {
+    GameSceneManager::s_pInstance->PopEntireStack();
+    GameSceneManager::s_pInstance->Push(SCENE_CUP_CHOOSE_CUP, SCREEN_FORWARD, false);
 }
 
 /**

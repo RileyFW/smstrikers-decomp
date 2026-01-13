@@ -41,6 +41,11 @@ public:
 template <typename T>
 class Function : public Function1<void, T>
 {
+public:
+    // Function() { };
+    // ~Function() {
+    // delete mFunctor;
+    // };
 }; // total size: 0x8
 
 #endif // _FEFUNCTION_H_

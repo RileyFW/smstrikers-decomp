@@ -1,6 +1,13 @@
 #include "Game/SH/SHPause.h"
 #include "Game/OverlayManager.h"
 
+#include "Game/FE/Overlay/OverlayHandlerSummary.h"
+#include "Game/FE/FEAudio.h"
+
+extern FEInput* g_pFEInput;
+
+// extern s32 mControllingInput__14PauseMenuScene;
+
 // /**
 //  * Offset/Address/Size: 0x38 | 0x800B01B4 | size: 0x40
 //  */
@@ -188,6 +195,11 @@ PauseMenuScene::~PauseMenuScene()
  */
 void PauseMenuScene::OnSelectRESUME(TLComponentInstance*)
 {
+    TransitionOut(TT_OUT);
+    g_pFEInput->Reset();
+    FEAudio::PlayAnimAudioEvent("sfx_screen_back", false);
+    FEAudio::PlayAnimAudioEvent("sfx_pause_resume", false);
+    mLastSelectedIndex = 0;
 }
 
 /**
@@ -202,6 +214,7 @@ void PauseMenuScene::OnSelectQUIT(TLComponentInstance*)
  */
 void PauseMenuScene::OnSelectCHOOSESIDES(TLComponentInstance*)
 {
+    OverlayManager::s_pInstance->Push(IGSCENE_CHOOSE_SIDES, SCREEN_FORWARD, true);
 }
 
 /**
@@ -209,6 +222,7 @@ void PauseMenuScene::OnSelectCHOOSESIDES(TLComponentInstance*)
  */
 void PauseMenuScene::OnSelectAUDIOOPTIONS(TLComponentInstance*)
 {
+    OverlayManager::s_pInstance->Push(IGSCENE_PAUSE_AUDIO, SCREEN_FORWARD, true);
 }
 
 /**
@@ -224,6 +238,9 @@ void PauseMenuScene::OnSelectVISUALOPTIONS(TLComponentInstance*)
  */
 void PauseMenuScene::OnSelectSTATISTICS(TLComponentInstance*)
 {
+    SummaryOverlay* scene = (SummaryOverlay*)OverlayManager::s_pInstance->Push(OVERLAY_SUMMARY_PAUSE, SCREEN_FORWARD, true);
+    scene->m_controllingInput = mControllingInput;
+    scene->mButtonState = ButtonComponent::BS_B_ONLY;
 }
 
 /**
@@ -242,9 +259,12 @@ void PauseMenuScene::OnSelectPopupYESFORFEIT()
 
 /**
  * Offset/Address/Size: 0x1640 | 0x800AEB38 | size: 0x44
+ * Todo: Figure out how to what scene this is connecting...
  */
 void PauseMenuScene::OnSelectLESSONS(TLComponentInstance*)
 {
+    BaseSceneHandler* scene = OverlayManager::s_pInstance->Push(IGSCENE_LESSON_SELECT, SCREEN_FORWARD, true);
+    ((u8*)scene)[0x2b2] = 1;
 }
 
 /**

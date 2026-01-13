@@ -1,5 +1,7 @@
 #include "Game/FE/feOptionsSubMenus.h"
 
+#include "NL/platpad.h"
+
 /**
  * Offset/Address/Size: 0x0 | 0x800B5044 | size: 0x4
  */
@@ -47,6 +49,9 @@ void OptionsGameplayMenuV2::CloseItem(TLComponentInstance*)
  */
 void OptionsGameplayMenuV2::Revert()
 {
+    memcpy(&mSettings, &mBackupSettings, sizeof(GameplaySettings));
+    mSettings.OnSettingsUpdated();
+    cPlatPad::m_bDisableRumble = !mSettings.RumbleEnabled;
 }
 
 /**
@@ -73,7 +78,8 @@ void OptionsGameplayMenuV2::BuildSkillLevelMenu(TLComponentInstance*, int, int)
 /**
  * Offset/Address/Size: 0xEE0 | 0x800B5F24 | size: 0x850
  */
-OptionsGameplayMenuV2::OptionsGameplayMenuV2(FEPresentation*, ButtonComponent::ButtonState, GameplaySettings&, int)
+OptionsGameplayMenuV2::OptionsGameplayMenuV2(FEPresentation*, ButtonComponent::ButtonState, GameplaySettings& settings, int)
+    : mSettings(settings)
 {
 }
 
@@ -82,6 +88,7 @@ OptionsGameplayMenuV2::OptionsGameplayMenuV2(FEPresentation*, ButtonComponent::B
  */
 void OptionsVisualMenuV2::Revert()
 {
+    memcpy(&mSettings, &mBackupSettings, sizeof(VisualSettings));
 }
 
 /**
@@ -108,7 +115,8 @@ OptionsVisualMenuV2::~OptionsVisualMenuV2()
 /**
  * Offset/Address/Size: 0x19E0 | 0x800B6A24 | size: 0x6E8
  */
-OptionsVisualMenuV2::OptionsVisualMenuV2(FEPresentation*, ButtonComponent::ButtonState, VisualSettings&)
+OptionsVisualMenuV2::OptionsVisualMenuV2(FEPresentation*, ButtonComponent::ButtonState, VisualSettings& settings)
+    : mSettings(settings)
 {
 }
 
@@ -124,6 +132,8 @@ void OptionsAudioMenuV2::Update(float)
  */
 void OptionsAudioMenuV2::Revert()
 {
+    memcpy(&mSettings, &mBackupSettings, sizeof(AudioSettings));
+    mSettings.ForceApplySettings(false);
 }
 
 /**
@@ -143,7 +153,9 @@ OptionsAudioMenuV2::~OptionsAudioMenuV2()
 /**
  * Offset/Address/Size: 0x2D44 | 0x800B7D88 | size: 0x76C
  */
-OptionsAudioMenuV2::OptionsAudioMenuV2(FEPresentation*, ButtonComponent::ButtonState, AudioSettings&)
+OptionsAudioMenuV2::OptionsAudioMenuV2(FEPresentation*, ButtonComponent::ButtonState, AudioSettings& settings)
+    : mSettings(settings)
+
 {
 }
 
@@ -166,6 +178,8 @@ void OptionsCheatsMenu::BuildLockableSubMenuList(int, TLComponentInstance*, FEPr
  */
 void OptionsCheatsMenu::Revert()
 {
+    memcpy(&mSettings, &mBackupSettings, sizeof(CheatSettings));
+    mSettings.OnSettingsUpdated();
 }
 
 /**
@@ -185,7 +199,8 @@ OptionsCheatsMenu::~OptionsCheatsMenu()
 /**
  * Offset/Address/Size: 0x47AC | 0x800B97F0 | size: 0x720
  */
-OptionsCheatsMenu::OptionsCheatsMenu(FEPresentation*, ButtonComponent::ButtonState, CheatSettings&)
+OptionsCheatsMenu::OptionsCheatsMenu(FEPresentation*, ButtonComponent::ButtonState, CheatSettings& settings)
+    : mSettings(settings)
 {
 }
 
@@ -231,40 +246,31 @@ OptionsSubMenu::~OptionsSubMenu()
 {
 }
 
-/**
- * Offset/Address/Size: 0x0 | 0x800BB0F4 | size: 0x8
- */
-void OptionsSaveLoad::ChangesMade()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x0 | 0x800BB0F4 | size: 0x8
+//  */
+// bool OptionsSaveLoad::ChangesMade()
+// {
+//     return false;
+// }
 
-/**
- * Offset/Address/Size: 0x8 | 0x800BB0FC | size: 0x48
- */
-void OptionsGameplayMenuV2::ChangesMade()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x8 | 0x800BB0FC | size: 0x48
+//  */
+// bool OptionsGameplayMenuV2::ChangesMade()
+// {
+//     u32 checksum = nlChecksum32(&mSettings, sizeof(GameplaySettings));
+//     return mSettingsCRC != checksum;
+// }
 
-/**
- * Offset/Address/Size: 0x50 | 0x800BB144 | size: 0x48
- */
-void OptionsVisualMenuV2::ChangesMade()
-{
-}
-
-/**
- * Offset/Address/Size: 0x98 | 0x800BB18C | size: 0x48
- */
-void OptionsAudioMenuV2::ChangesMade()
-{
-}
-
-/**
- * Offset/Address/Size: 0xE0 | 0x800BB1D4 | size: 0x48
- */
-void OptionsCheatsMenu::ChangesMade()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x50 | 0x800BB144 | size: 0x48
+//  */
+// bool OptionsVisualMenuV2::ChangesMade()
+// {
+//     u32 checksum = nlChecksum32(&mSettings, sizeof(GameplaySettings));
+//     return mSettingsCRC != checksum;
+// }
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800BB21C | size: 0x48

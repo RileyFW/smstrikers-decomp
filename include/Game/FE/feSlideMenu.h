@@ -2,7 +2,8 @@
 #define _FESLIDEMENU_H_
 
 #include "Game/FE/tlComponentInstance.h"
-#include "NL/nlFunction.h"
+// #include "NL/nlFunction.h"
+#include "Game/FE/feMenu.h"
 
 enum ItemStates
 {
@@ -23,32 +24,12 @@ public:
     /* 0xC */ int mUserEnumType;
 }; // total size: 0x10
 
-struct MenuItem
-{
-    /*  0x00 */ Function<SlideMenuItem*> mCallbacks[3];
-    /*  0x18 */ SlideMenuItem* mType;
-    /*  0x1C */ bool mDisabled;
-    /*  0x1D */ bool mLocked;
-}; // total size: 0x20
-
-class MenuList
-{
-public:
-    MenuList();
-    virtual ~MenuList();
-
-    /* 0x004 */ MenuItem mMenuItems[16];
-    /* 0x204 */ int mCurrentIndex;
-    /* 0x208 */ int mNumItemsAdded;
-    /* 0x20C */ unsigned char mWrapList;
-    /* 0x210 */ int mFlags;
-}; // total size: 0x214
-
-class SlideMenuList : public MenuList
+class SlideMenuList : public MenuList<SlideMenuItem>
 {
 public:
     SlideMenuList();
     virtual ~SlideMenuList();
+    void Update(float dt);
 
     void SetSlide()
     {

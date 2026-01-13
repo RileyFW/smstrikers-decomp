@@ -3,9 +3,13 @@
 
 #include "types.h"
 
+#include "Game/FE/feInput.h"
+#include "Game/BaseSceneHandler.h"
 #include "Game/FE/tlComponentInstance.h"
+#include "Game/FE/feButtonComponent.h"
+#include "Game/FE/feMenu.h"
 
-class PauseMenuScene
+class PauseMenuScene : public BaseSceneHandler
 {
 public:
     class ScreenContext
@@ -17,7 +21,9 @@ public:
 
     enum TransitionType
     {
-        TransitionType_0 = 0
+        TT_INVALID = -1,
+        TT_IN = 0,
+        TT_OUT = 1,
     };
 
     PauseMenuScene(PauseMenuScene::ScreenContext);
@@ -35,7 +41,21 @@ public:
     void Update(float);
     void TransitionOut(PauseMenuScene::TransitionType);
     void OpenItem(TLComponentInstance*);
-};
+
+    /* 0x01C */ ScreenContext mContext;
+    /* 0x020 */ bool mGameIsOver;
+    /* 0x024 */ float mQuitDelay;
+    /* 0x028 */ eFEINPUT_PAD mQuittingController;
+    /* 0x02C */ MenuList<TLComponentInstance> mMenuItems;
+    /* 0x240 */ TransitionType mTransitionTo;
+    /* 0x244 */ bool mIsInTransition;
+    /* 0x245 */ bool mStartAnimAtEnd;
+    /* 0x248 */ ButtonComponent mButtons;
+    /* 0x26C */ ButtonComponent mButtons2;
+
+    static eFEINPUT_PAD mControllingInput;
+    static s32 mLastSelectedIndex;
+}; // total size: 0x290
 
 // class FEFinder<TLTextInstance, 3>
 // {

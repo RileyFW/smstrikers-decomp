@@ -1,8 +1,12 @@
 #ifndef _FEOPTIONSSUBMENUS_H_
 #define _FEOPTIONSSUBMENUS_H_
 
+#include "NL/nlMain.h"
+
 #include "Game/DB/UserOptions.h"
 #include "Game/FE/feButtonComponent.h"
+#include "Game/FE/feMenu.h"
+#include "Game/FE/feSlideMenu.h"
 
 class FEPresentation;
 class TLComponentInstance;
@@ -14,73 +18,118 @@ class VisualSettings;
 class AudioSettings;
 class CheatSettings;
 
-class OptionsSaveLoad
-{
-public:
-    void Revert();
-    void Save();
-    void Update(float);
-    ~OptionsSaveLoad();
-    OptionsSaveLoad(FEPresentation*, ButtonComponent::ButtonState);
-    void ChangesMade();
-};
-
-class OptionsGameplayMenuV2
-{
-public:
-    void CloseItem(TLComponentInstance*);
-    void Revert();
-    void Save();
-    ~OptionsGameplayMenuV2();
-    void BuildSkillLevelMenu(TLComponentInstance*, int, int);
-    OptionsGameplayMenuV2(FEPresentation*, ButtonComponent::ButtonState, GameplaySettings&, int);
-    void ChangesMade();
-};
-
-class OptionsVisualMenuV2
-{
-public:
-    void Revert();
-    void Save();
-    void Update(float);
-    ~OptionsVisualMenuV2();
-    OptionsVisualMenuV2(FEPresentation*, ButtonComponent::ButtonState, VisualSettings&);
-    void ChangesMade();
-};
-
-class OptionsAudioMenuV2
-{
-public:
-    void Update(float);
-    void Revert();
-    void Save();
-    ~OptionsAudioMenuV2();
-    OptionsAudioMenuV2(FEPresentation*, ButtonComponent::ButtonState, AudioSettings&);
-    void ChangesMade();
-};
-
-class OptionsCheatsMenu
-{
-public:
-    // void BuildCustomPowerupsList(TLComponentInstance*, CheatSettings::CustomPowerups, FEPresentation*);
-    void BuildLockableSubMenuList(int, TLComponentInstance*, FEPresentation*, bool, int);
-    void Revert();
-    void Save();
-    ~OptionsCheatsMenu();
-    OptionsCheatsMenu(FEPresentation*, ButtonComponent::ButtonState, CheatSettings&);
-    void ChangesMade();
-};
-
 class OptionsSubMenu
 {
 public:
+    virtual ~OptionsSubMenu();
+    virtual void Update(float);
+    virtual void Save() = 0;
+    virtual void Revert() = 0;
+    virtual bool ChangesMade() = 0;
+    virtual void GoBack();
+
     void SetAButtonLOC(unsigned long);
     void SetButtonState(ButtonComponent::ButtonState);
     void BuildSubMenuList(int, TLComponentInstance*, bool, int);
-    void GoBack();
-    void Update(float);
-    ~OptionsSubMenu();
-};
+
+    /* 0x004 */ FEPresentation* m_pres;                            // offset 0x4, size 0x4
+    /* 0x008 */ TLComponentInstance* m_buttons;                    // offset 0x8, size 0x4
+    /* 0x00C */ ButtonComponent::ButtonState m_currentButtonState; // offset 0xC, size 0x4
+    /* 0x010 */ ButtonComponent mButtons;                          // offset 0x10, size 0x24
+    /* 0x034 */ MenuList<SlideMenuItem> mMenuItems;                // offset 0x34, size 0x214
+    /* 0x248 */ MenuList<SlideMenuItem>* mSlideMenuLists[8];       // offset 0x248, size 0x20
+    /* 0x268 */ unsigned long mSettingsCRC;                        // offset 0x268, size 0x4
+}; // total size: 0x26C
+
+class OptionsSaveLoad : public OptionsSubMenu
+{
+public:
+    OptionsSaveLoad(FEPresentation*, ButtonComponent::ButtonState);
+    virtual ~OptionsSaveLoad();
+    virtual void Update(float);
+    virtual void Save();
+    virtual void Revert();
+    virtual bool ChangesMade()
+    {
+        return false;
+    }
+}; // total size: 0x26C
+
+class OptionsGameplayMenuV2 : public OptionsSubMenu
+{
+public:
+    OptionsGameplayMenuV2(FEPresentation*, ButtonComponent::ButtonState, GameplaySettings&, int);
+    virtual ~OptionsGameplayMenuV2();
+    virtual void Save();
+    virtual void Revert();
+    virtual bool ChangesMade()
+    {
+        u32 checksum = nlChecksum32(&mSettings, sizeof(GameplaySettings));
+        return mSettingsCRC != checksum;
+    }
+
+    void BuildSkillLevelMenu(TLComponentInstance*, int, int);
+    void CloseItem(TLComponentInstance*);
+
+    /* 0x26C */ GameplaySettings& mSettings;
+    /* 0x270 */ GameplaySettings mBackupSettings;
+}; // total size: 0x27C
+
+class OptionsVisualMenuV2 : public OptionsSubMenu
+{
+public:
+    OptionsVisualMenuV2(FEPresentation*, ButtonComponent::ButtonState, VisualSettings&);
+    virtual ~OptionsVisualMenuV2();
+    virtual void Update(float);
+    virtual void Save();
+    virtual void Revert();
+    virtual bool ChangesMade()
+    {
+        u32 checksum = nlChecksum32(&mSettings, sizeof(VisualSettings));
+        return mSettingsCRC != checksum;
+    }
+
+    /* 0x26C */ VisualSettings& mSettings;
+    /* 0x270 */ VisualSettings mBackupSettings;
+}; // total size: 0x27C
+
+class OptionsAudioMenuV2 : public OptionsSubMenu
+{
+public:
+    OptionsAudioMenuV2(FEPresentation*, ButtonComponent::ButtonState, AudioSettings&);
+    virtual ~OptionsAudioMenuV2();
+    virtual void Update(float);
+    virtual void Save();
+    virtual void Revert();
+    virtual bool ChangesMade()
+    {
+        u32 checksum = nlChecksum32(&mSettings, sizeof(AudioSettings));
+        return mSettingsCRC != checksum;
+    }
+
+    /* 0x26C */ AudioSettings& mSettings;
+    /* 0x270 */ AudioSettings mBackupSettings;
+}; // total size: 0x27C
+
+class OptionsCheatsMenu : public OptionsSubMenu
+{
+public:
+    OptionsCheatsMenu(FEPresentation*, ButtonComponent::ButtonState, CheatSettings&);
+    virtual ~OptionsCheatsMenu();
+    virtual void Save();
+    virtual void Revert();
+    virtual bool ChangesMade()
+    {
+        u32 checksum = nlChecksum32(&mSettings, sizeof(CheatSettings));
+        return mSettingsCRC != checksum;
+    }
+
+    void BuildCustomPowerupsList(TLComponentInstance*, CustomPowerups, FEPresentation*);
+    void BuildLockableSubMenuList(int, TLComponentInstance*, FEPresentation*, bool, int);
+
+    /* 0x26C */ CheatSettings& mSettings;
+    /* 0x270 */ CheatSettings mBackupSettings;
+}; // total size: 0x278
 
 // class Function1<void, SlideMenuItem*>
 // {
