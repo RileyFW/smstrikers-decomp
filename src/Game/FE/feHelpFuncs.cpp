@@ -1,6 +1,7 @@
 #include "Game/FE/feHelpFuncs.h"
 
 #include "Game/FE/FEAudio.h"
+#include "Game/FE/tlSlide.h"
 #include "Game/GameInfo.h"
 #include "NL/nlMath.h"
 
@@ -305,58 +306,122 @@ void EnableAutoPressed()
 /**
  * Offset/Address/Size: 0xE70 | 0x800A3F2C | size: 0x6C
  */
-void FindComponent(TLSlide*, const char*)
+TLInstance* FindComponent(TLSlide* slide, const char* name)
 {
+    TLInstance* head = slide->m_instances;
+    TLInstance* inst = head;
+    unsigned long hash = nlStringLowerHash(name);
+    while (inst)
+    {
+        if (hash == inst->m_hashID)
+        {
+            break;
+        }
+        inst = inst->m_next;
+        if (inst == head)
+        {
+            inst = NULL;
+            break;
+        }
+    }
+    return inst;
 }
+
+static unsigned long RankToRankString[14] = {
+    0x006AF952, 0x2BCC86A6, 0x01679D85, 0x0E3857E2, 0x006AC65B, 0x0156517A, 0xA6AFB3A7, 0x0B6EC463, 0x00FBAC6B, 0x01660DED, 0x856B1465, 0x1C76DFC8, 0x969F5329, 0xA08874EE
+};
 
 /**
  * Offset/Address/Size: 0xEDC | 0x800A3F98 | size: 0x14
  */
-void GetLOCRank(int)
+unsigned long GetLOCRank(int rank)
 {
+    return RankToRankString[rank];
 }
 
 /**
  * Offset/Address/Size: 0xEF0 | 0x800A3FAC | size: 0x84
  */
-void ConvertToSidekickID(const char*)
+eSidekickID ConvertToSidekickID(const char* name)
 {
+    for (int i = 0; i < 4; i++)
+    {
+        if (nlStrICmp(NameSidekickTable[i].name, name) == 0)
+        {
+            return NameSidekickTable[i].id;
+        }
+    }
+    return SK_INVALID;
 }
 
 /**
  * Offset/Address/Size: 0xF74 | 0x800A4030 | size: 0x84
  */
-void ConvertToTeamID(const char*)
+eTeamID ConvertToTeamID(const char* name)
 {
+    for (int i = 0; i < 9; i++)
+    {
+        if (nlStrICmp(NameTeamTable[i].name, name) == 0)
+        {
+            return NameTeamTable[i].id;
+        }
+    }
+    return TEAM_INVALID;
 }
 
 /**
  * Offset/Address/Size: 0xFF8 | 0x800A40B4 | size: 0x28
  */
-void GetSidekickName(eSidekickID)
+const char* GetSidekickName(eSidekickID sidekickID)
 {
+    if (sidekickID == SK_MYSTERY)
+    {
+        return "myst_sidekick";
+    }
+    return NameSidekickTable[sidekickID].name;
 }
 
 /**
  * Offset/Address/Size: 0x1020 | 0x800A40DC | size: 0x14
  */
-char* GetTeamName(eTeamID)
+char* GetTeamName(eTeamID teamID)
 {
-    return nullptr;
+    return (char*)NameTeamTable[teamID].name;
 }
 
 /**
  * Offset/Address/Size: 0x1034 | 0x800A40F0 | size: 0x64
  */
-void ConvertToCharacterClass(eSidekickID)
+NisCharacterClass ConvertToCharacterClass(eSidekickID sidekickID)
 {
+    switch (sidekickID)
+    {
+    case SK_BIRDO:
+        return NIS_CHAR_CLASS_BIRDO;
+    case SK_HAMMERBROS:
+        return NIS_CHAR_CLASS_HAMMERBROS;
+    case SK_KOOPA:
+        return NIS_CHAR_CLASS_KOOPA;
+    case SK_TOAD:
+        return NIS_CHAR_CLASS_TOAD;
+    case SK_MYSTERY:
+        return NIS_CHAR_CLASS_MYSTERY;
+    default:
+        return NIS_CHAR_CLASS_INVALID;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x1098 | 0x800A4154 | size: 0x4C
  */
-void ConvertToCharacterClass(eTeamID)
+NisCharacterClass ConvertToCharacterClass(eTeamID teamID)
 {
+    for (int i = 0; i < 9; i++) {
+        if (teamID == TeamID2CharacterClassTable[i][0]) {
+            return (NisCharacterClass)TeamID2CharacterClassTable[i][1];
+        }
+    }
+    return NIS_CHAR_CLASS_INVALID;
 }
 
 /**
@@ -392,19 +457,30 @@ unsigned long GetLOCModeName(GameInfoManager::eGameModes mode)
 
 /**
  * Offset/Address/Size: 0x1184 | 0x800A4240 | size: 0x70
+ * TODO: 98.57% match - r4/r5 register swap, MWCC allocator quirk
  */
 unsigned long GetLOCTeamName(eTeamID teamID)
 {
-    int i = 0;
-    do
+    u32* table;
+    s32 i;
+    s32 characterClass;
+
+    table = (u32*)TeamID2CharacterClassTable;
+    for (i = 0; i < 9; i++)
     {
-        if (teamID == TeamID2CharacterClassTable[i][0])
+        if ((s32)teamID == (s32)*table)
         {
-            int characterClass = TeamID2CharacterClassTable[i][1];
-            return CCToStringName[characterClass];
+            characterClass = TeamID2CharacterClassTable[i][1];
+            goto found;
         }
-        i++;
-    } while (i < 9);
+        table += 2;
+    }
+    characterClass = -1;
+found:
+    if (characterClass != -1)
+    {
+        return CCToStringName[characterClass];
+    }
     return 0x094D126F;
 }
 
@@ -448,16 +524,16 @@ unsigned long GetLOCSidekickName(eSidekickID sidekickid)
  */
 unsigned long GetLOCCharacterName(eTeamID teamid, bool useShortSuperTeam, bool useLockedSuperTeam)
 {
-    if ((useShortSuperTeam != 0) && (teamid == 8))
+    if (useShortSuperTeam && teamid == 8)
     {
         return 0xFA6F322B;
     }
-    if ((useLockedSuperTeam != 0) && (teamid == 8) && (GameInfoManager::Instance()->IsSuperTeamUnlocked() == 0))
+    if (useLockedSuperTeam && teamid == 8 && !GameInfoManager::Instance()->IsSuperTeamUnlocked())
     {
         return 0x387952CD;
     }
 
-    return 0x094D126F;
+    return GetLOCTeamName(teamid);
 }
 
 /**

@@ -8,20 +8,35 @@
 #include "Game/DB/UserOptions.h"
 
 #include "Game/FE/tlTextInstance.h"
+#include "Game/Render/Nis.h"
+
+struct NameTeamEntry {
+    const char* name;
+    eTeamID id;
+};
+
+extern NameTeamEntry NameTeamTable[9];
+
+struct NameSidekickEntry {
+    const char* name;
+    eSidekickID id;
+};
+
+extern NameSidekickEntry NameSidekickTable[4];
 
 void MakeTextBoxReallyWide(TLTextInstance&);
 const char* GetCupStreamName(eTrophyType);
 const char* GetMemCardDescription();
 const char* GetMemCardTitle();
 void EnableAutoPressed();
-void FindComponent(TLSlide*, const char*);
-void GetLOCRank(int);
-void ConvertToSidekickID(const char*);
-void ConvertToTeamID(const char*);
-void GetSidekickName(eSidekickID);
+TLInstance* FindComponent(TLSlide*, const char*);
+unsigned long GetLOCRank(int);
+eSidekickID ConvertToSidekickID(const char*);
+eTeamID ConvertToTeamID(const char*);
+const char* GetSidekickName(eSidekickID);
 char* GetTeamName(eTeamID);
-void ConvertToCharacterClass(eSidekickID);
-void ConvertToCharacterClass(eTeamID);
+NisCharacterClass ConvertToCharacterClass(eSidekickID);
+NisCharacterClass ConvertToCharacterClass(eTeamID);
 unsigned long GetLOCTrophyName(eTrophyType);
 unsigned long GetLOCStandingsName(GameInfoManager::eGameModes);
 unsigned long GetLOCModeName(GameInfoManager::eGameModes);
