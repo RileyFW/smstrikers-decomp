@@ -10,14 +10,16 @@
 #include "Game/FE/tlTextInstance.h"
 #include "Game/Render/Nis.h"
 
-struct NameTeamEntry {
+struct NameTeamEntry
+{
     const char* name;
     eTeamID id;
 };
 
 extern NameTeamEntry NameTeamTable[9];
 
-struct NameSidekickEntry {
+struct NameSidekickEntry
+{
     const char* name;
     eSidekickID id;
 };

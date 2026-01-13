@@ -44,7 +44,7 @@ struct CupRecord
     /* 0x00 */ OSCalendarTime mDate;
     /* 0x28 */ signed char mPlace;
     /* 0x2C */ eTeamID mTeam;
-    /* 0x30 */ eSkillLevel mDifficulty;
+    /* 0x30 */ GameplaySettings::eSkillLevel mDifficulty;
 }; // total size: 0x34
 
 struct BaseCup

@@ -15,15 +15,6 @@ enum CustomPowerups
     CP_LAST = 6,
 };
 
-enum eSkillLevel
-{
-    TRAINING = 0,
-    ROOKIE = 1,
-    PROFESSIONAL = 2,
-    SUPERSTAR = 3,
-    LEGEND = 4,
-};
-
 enum eAudioMode
 {
     INVALID = -1,
@@ -77,6 +68,15 @@ public:
 class GameplaySettings
 {
 public:
+    enum eSkillLevel
+    {
+        TRAINING = 0,
+        ROOKIE = 1,
+        PROFESSIONAL = 2,
+        SUPERSTAR = 3,
+        LEGEND = 4,
+    };
+
     GameplaySettings();
     void InitializeDefaults();
     void OnSettingsUpdated() const;

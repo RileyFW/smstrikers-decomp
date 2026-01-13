@@ -1029,12 +1029,12 @@ bool GameInfoManager::IsBowserAttackEnabled() const
 /**
  * Offset/Address/Size: 0xF8 | 0x8017579C | size: 0x54
  */
-eSkillLevel GameInfoManager::GetSkillLevel()
+GameplaySettings::eSkillLevel GameInfoManager::GetSkillLevel()
 {
     if (mIsInStrikers101Mode)
-        return TRAINING;
+        return GameplaySettings::TRAINING;
 
-    const eSkillLevel* p;
+    const GameplaySettings::eSkillLevel* p;
 
     if (mUseCurGameSettings)
     {

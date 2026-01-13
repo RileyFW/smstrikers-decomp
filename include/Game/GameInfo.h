@@ -161,7 +161,7 @@ public:
     bool IsTiltingFieldOn() const;
     bool IsPerfectStrikesOn() const;
     bool IsBowserAttackEnabled() const;
-    eSkillLevel GetSkillLevel();
+    GameplaySettings::eSkillLevel GetSkillLevel();
     void GetSkillLevelAsDifficultyID();
     CustomPowerups GetCustomPowerups() const;
 

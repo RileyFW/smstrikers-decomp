@@ -204,7 +204,7 @@ void OptionsGameplayMenuV2::Save()
     {
         val = -1;
     }
-    localSettings.SkillLevel = (eSkillLevel)val;
+    localSettings.SkillLevel = (GameplaySettings::eSkillLevel)val;
 
     // Game Time - convert from menu index to seconds
     list = (SlideMenuList*)mSlideMenuLists[1];
