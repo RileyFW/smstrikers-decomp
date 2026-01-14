@@ -467,6 +467,50 @@ void cBall::CollideWithCharacterCallback(cPlayer*, const nlVector3&)
  */
 void cBall::ClearBallEffects()
 {
+    if (mbHyperSTS)
+    {
+        Audio::gWorldSFX.Stop(Audio::eWorldSFX(0x57), cGameSFX::SFX_STOP_FIRST);
+    }
+    Audio::FadeFilterFromCurrentToZero();
+
+    FixedUpdateTask::mTimeScale = 1.0f;
+    ParticleUpdateTask::SetTimeScale(1.0f);
+
+    if (m_pBlurHandler != 0)
+    {
+        m_pBlurHandler->Die(0.5f);
+        m_pBlurHandler = 0;
+    }
+
+    KillBallShot("ball_shot_perfect_glow", true);
+    KillBallShot("ball_pass_perfect_glow", true);
+    KillBallShot("shoot_to_score_shot", false);
+    KillBallShot("ball_shot_onetimer", false);
+
+    Audio::gStadGenSFX.Stop(Audio::eWorldSFX(0xB9), cGameSFX::SFX_STOP_FIRST);
+    Audio::gStadGenSFX.Stop(Audio::eWorldSFX(0xBA), cGameSFX::SFX_STOP_FIRST);
+    Audio::gStadGenSFX.Stop(Audio::eWorldSFX(0xBD), cGameSFX::SFX_STOP_FIRST);
+
+    if (mbHyperSTS)
+    {
+        void* data = (u8*)g_pEventManager->CreateValidEvent(0x47, 0x24) + 0x10;
+        PassBallData* eventdata = new (data) PassBallData();
+        eventdata->pPasser = m_pPrevOwner;
+        eventdata->pTarget = NULL;
+
+        bool pad = eventdata->pPasser->GetGlobalPad();
+        eventdata->mPasserControllerID = pad ? eventdata->pPasser->GetGlobalPad()->m_padIndex : -1;
+    }
+
+    mbHyperSTS = false;
+    mbIsPerfectShot = false;
+
+    gbCanFadeOutPerfectPassSFX = true;
+
+    if (AudioLoader::IsInited())
+    {
+        gfPerfectPassSFXVol = Audio::gStadGenSFX.GetSFXVol(0xBA);
+    }
 }
 
 /**

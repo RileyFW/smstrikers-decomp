@@ -7,6 +7,8 @@
 #include "Game/DB/Cup.h"
 #include "Game/DB/UserOptions.h"
 
+#include "Game/FE/tlComponentInstance.h"
+
 #include "Game/FE/tlTextInstance.h"
 #include "Game/Render/Nis.h"
 
@@ -77,13 +79,15 @@ public:
 //     void Build(CaptainSidekickFilename::Type, char*, int, int, int);
 // };
 
-// class SingleHighlite
-// {
-// public:
-//     void CloseItem(TLComponentInstance*);
-//     void OpenItem(TLComponentInstance*);
-//     void TempDisableSound();
-// };
+class SingleHighlite
+{
+public:
+    void CloseItem(TLComponentInstance*);
+    void OpenItem(TLComponentInstance*);
+    void TempDisableSound();
+
+    static bool TEMPDISABLESOUND;
+};
 
 // class DoubleHighlite
 // {

@@ -1,12 +1,21 @@
 #include "Game/FE/feHelpFuncs.h"
 
 #include "Game/FE/FEAudio.h"
+#include "Game/FE/feAsyncImage.h"
+#include "Game/FE/feFinder.h"
 #include "Game/FE/feInput.h"
+#include "Game/FE/tlInstance.h"
 #include "Game/FE/tlSlide.h"
 #include "Game/FE/tlTextInstance.h"
 #include "Game/GameInfo.h"
 #include "Game/DB/UserOptions.h"
+#include "NL/nlColour.h"
 #include "NL/nlMath.h"
+#include "NL/nlString.h"
+
+extern nlColour MenuHighliteColour;
+
+bool SingleHighlite::TEMPDISABLESOUND = true;
 
 enum nlLanguage
 {
@@ -529,26 +538,89 @@ TLInstance* FindComponent(TLSlide* slide, const char* name)
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0xBF4 | 0x800A3CB0 | size: 0xC
-//  */
-// void SingleHighlite::TempDisableSound()
-// {
-// }
+/**
+ * Offset/Address/Size: 0xBF4 | 0x800A3CB0 | size: 0xC
+ */
+void SingleHighlite::TempDisableSound()
+{
+    TEMPDISABLESOUND = true;
+}
 
-// /**
-//  * Offset/Address/Size: 0xAB0 | 0x800A3B6C | size: 0x144
-//  */
-// void SingleHighlite::OpenItem(TLComponentInstance*)
-// {
-// }
+/**
+ * Offset/Address/Size: 0xAB0 | 0x800A3B6C | size: 0x144
+ */
+void SingleHighlite::OpenItem(TLComponentInstance* component)
+{
+    TLComponentInstance* foundComponent;
+    TLImageInstance* imageInstance;
+    TLSlide* slide;
+    InlineHasher hashers[6];
+    unsigned long hash;
 
-// /**
-//  * Offset/Address/Size: 0x990 | 0x800A3A4C | size: 0x120
-//  */
-// void SingleHighlite::CloseItem(TLComponentInstance*)
-// {
-// }
+    component->SetActiveSlide("high");
+    component->Update(0.0f);
+
+    // Initialize hashers to 0
+    for (int i = 0; i < 6; i++)
+    {
+        hashers[i].m_Hash = 0;
+    }
+
+    // Set hash for "@1522"
+    hash = nlStringLowerHash("in");
+    hashers[0].m_Hash = hash;
+
+    // Find TLSlide using FEFinder<TLComponentInstance, 4>
+    slide = component->GetActiveSlide();
+    foundComponent = FEFinder<TLComponentInstance, 4>::Find(
+        slide,
+        hashers[0],
+        hashers[1],
+        hashers[2],
+        hashers[3],
+        hashers[4],
+        hashers[5]);
+
+    foundComponent->SetActiveSlide("in");
+    foundComponent->Update(0.0f);
+
+    // Initialize hashers to 0 again
+    for (int i = 0; i < 6; i++)
+    {
+        hashers[i].m_Hash = 0;
+    }
+
+    // Set hash for "@1523"
+    hash = nlStringLowerHash("may_highlite");
+    hashers[0].m_Hash = hash;
+
+    // Find TLImageInstance using FEFinder<TLImageInstance, 2>
+    slide = foundComponent->GetActiveSlide();
+    imageInstance = FEFinder<TLImageInstance, 2>::Find(
+        slide,
+        hashers[0],
+        hashers[1],
+        hashers[2],
+        hashers[3],
+        hashers[4],
+        hashers[5]);
+
+    imageInstance->SetAssetColour(MenuHighliteColour);
+
+    if (TEMPDISABLESOUND == false)
+    {
+        FEAudio::PlayAnimAudioEvent("sfx_menu_highlight_open", false);
+    }
+
+    TEMPDISABLESOUND = false;
+}
+
+/**
+ * Offset/Address/Size: 0x990 | 0x800A3A4C | size: 0x120
+ */
+void SingleHighlite::CloseItem(TLComponentInstance*)
+{
+}
 
 // /**
 //  * Offset/Address/Size: 0x7DC | 0x800A3898 | size: 0x1B4

@@ -94,8 +94,9 @@ void IChooseCaptain::ComponentState::GotoPreviousPhase()
 /**
  * Offset/Address/Size: 0xA20 | 0x800C01C4 | size: 0x28
  */
-void IChooseCaptain::NameComponent::SetSidekickName(unsigned long)
+void IChooseCaptain::NameComponent::SetSidekickName(unsigned long id)
 {
+    SetTextName(mSidekickObjName, id);
 }
 
 /**

@@ -73,23 +73,23 @@ void glud_Light(void* pUserData)
 
     if (lightData->numLights != 0)
     {
+        pLight = (GLLightUserData*)((u8*)pUserData + 4);
         light_id = 0;
-        pLight = lightData->lights;
         lightMask = 0;
-        pEndLight = (GLLightUserData*)((u8*)pLight + (lightData->numLights * 0x28)); // r27
+        pEndLight = &pLight[lightData->numLights];
         while (pLight < pEndLight)
         {
-            if (light_id < 4)
+            if (light_id >= 4)
             {
-                // temp_r4 = *var_r31;
-                lightMask |= gxLights[light_id];
-                if (glx_ReloadPointLights != 0)
-                {
-                    glx_LoadLight(pLight, (GXLightID)gxLights[light_id]);
-                }
-                pLight++;
-                light_id += 1;
+                break;
             }
+            lightMask |= gxLights[light_id];
+            if (glx_ReloadPointLights != 0)
+            {
+                glx_LoadLight(pLight, (GXLightID)gxLights[light_id]);
+            }
+            pLight++;
+            light_id += 1;
         }
 
         glx_ReloadPointLights = 0;

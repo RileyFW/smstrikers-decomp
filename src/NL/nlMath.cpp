@@ -22,7 +22,6 @@ const struct coeffs coeffs1 = { 0, 7, 26, 98, 223, 400, 649, 1024 };
 const struct coeffs coeffs2 = { 65408, 63104, 59680, 55008, 49536, 43680, 38016, 34112 };
 
 extern void seedMT(u32 p);
-extern double tan(u16, f32, f32);
 
 /**
  * Offset/Address/Size: 0x0 | 0x801D1474 | size: 0x1D4
@@ -192,9 +191,9 @@ float nlATan2f(float arg0, float arg1)
 /**
  * Offset/Address/Size: 0x418 | 0x801D188C | size: 0x48
  */
-float nlTan(unsigned short arg0)
+float nlTan(unsigned short angle)
 {
-    return tan(arg0, 0.0000958738f * arg0, 0.0000958738f);
+    return (float)tan(angle * 0.0000958738f);
 }
 
 /**

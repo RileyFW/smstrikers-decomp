@@ -249,8 +249,8 @@ void ReplayManager::PrepareForRecording()
 {
     cCameraManager::Remove(mDebugCamera);
     mTime = mReplay->EndTime();
-    mCurrent->Invalidate();
     mPrevious->Invalidate();
+    mCurrent->Invalidate();
     mRender = nullptr;
 }
 
