@@ -1,7 +1,7 @@
 #ifndef _MOVIE_H_
 #define _MOVIE_H_
 
-void IsMoviePlayingInStrikers101();
+bool IsMoviePlayingInStrikers101();
 void MoviePlay();
 void MovieStop();
 void MovieStart(const char*, bool, bool);

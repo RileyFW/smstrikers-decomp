@@ -2,10 +2,14 @@
 #define _REPLAYCHOREO_H_
 
 #include "types.h"
+#include "Game/InterpreterCore.h"
 #include "Game/Replay.h"
+#include "Game/ReplayManager.h"
+#include "Game/Camera/ReplayCamera.h"
+#include "Game/Goalie.h"
 #include "Game/Sys/eventman.h"
 
-class ReplayChoreo
+class ReplayChoreo : public InterpreterCore
 {
 public:
     enum HighlightQuality
@@ -32,10 +36,21 @@ public:
     void StartAutoReplay(ReplayType);
     void FlushHighlights();
     void Update(float);
-    void Done() const;
+    bool Done() const;
     void SaveHighlight(ReplayChoreo::HighlightQuality);
     void NumHighlights() const;
     ~ReplayChoreo();
-};
+
+    int mNumScripts[3][3][9];       // offset 0x24, size 0x144
+    ReplayManager* mReplayManager;  // offset 0x168, size 0x4
+    Replay* mReplay;                // offset 0x16C, size 0x4
+    ReplayCamera mCamera;           // offset 0x170, size 0x8C
+    float mRunForTimeLeft;          // offset 0x1FC, size 0x4
+    unsigned char mRunningFor;      // offset 0x200, size 0x1
+    void* mByteCode;                // offset 0x204, size 0x4
+    GoalScoredData mGoalScoredData; // offset 0x208, size 0x24
+    Highlight mHighlights[4];       // offset 0x22C, size 0xA0
+    int mHighlightIndex;            // offset 0x2CC, size 0x4
+}; // total size: 0x2D0
 
 #endif // _REPLAYCHOREO_H_

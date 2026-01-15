@@ -24,6 +24,7 @@ void MoviePlay()
 /**
  * Offset/Address/Size: 0x0 | 0x801CB7BC | size: 0x3C
  */
-void IsMoviePlayingInStrikers101()
+bool IsMoviePlayingInStrikers101()
 {
+    return false;
 }

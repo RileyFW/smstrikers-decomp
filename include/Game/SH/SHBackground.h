@@ -22,8 +22,6 @@ public:
     virtual void Update(float);
     virtual void SceneCreated();
 
-    inline bool IsStopped() const { return mPlayMode == PM_STOPPED; }
-
     /* 0x1C */ PlayMode mPlayMode;
     /* 0x20 */ PlayMode mDesiredPlayMode;
 }; // total size: 0x24

@@ -171,6 +171,8 @@ void CupHubScene::EndCup()
  */
 void CupHubScene::ReturnToMainMenu()
 {
+    nlSingleton<GameSceneManager>::s_pInstance->PopEntireStack();
+    nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_MAIN_MENU, SCREEN_FORWARD, false);
 }
 
 /**

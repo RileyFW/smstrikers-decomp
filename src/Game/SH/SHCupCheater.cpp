@@ -126,6 +126,9 @@ void CupCheaterScene::Update(float)
  */
 void CupCheaterScene::OnSelectGameplay()
 {
+    // TODO: Check if this is correct, could also be another interface
+    CupCheaterScene* scene = (CupCheaterScene*)nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_SUPER_LOADING, SCREEN_NOTHING, true);
+    scene->m_SlideMenu = NULL;
 }
 
 /**

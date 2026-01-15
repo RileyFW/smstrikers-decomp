@@ -1,4 +1,5 @@
 #include "Game/CharacterTriggers.h"
+#include "Game/Player.h"
 
 /**
  * Offset/Address/Size: 0x5190 | 0x801A3F40 | size: 0x94
@@ -115,8 +116,9 @@ void EmitDaze(cPlayer*)
 /**
  * Offset/Address/Size: 0x16FC | 0x801A04AC | size: 0x3C
  */
-void KillDaze(cPlayer*)
+void KillDaze(cPlayer* player)
 {
+    player->KillEffect(fxGetGroup("dazed"));
 }
 
 /**

@@ -2,6 +2,7 @@
 #define _SHCUPHUB_H_
 
 #include "types.h"
+#include "Game/GameSceneManager.h"
 
 enum eHubColour
 {

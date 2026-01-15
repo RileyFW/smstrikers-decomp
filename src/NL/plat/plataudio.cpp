@@ -257,8 +257,16 @@ void SetSFXVolume(unsigned long, float)
 /**
  * Offset/Address/Size: 0xCD0 | 0x801C54CC | size: 0x48
  */
-void StopSFX(unsigned long)
+bool StopSFX(unsigned long handle)
 {
+    if (handle == 0xFFFFFFFF) {
+        return false;
+    }
+    bool result = sndFXKeyOff(handle);
+    if (result) {
+        return true;
+    }
+    return result;
 }
 
 /**

@@ -2,6 +2,8 @@
 #define _CHARACTERTRIGGERS_H_
 
 #include "NL/nlMath.h"
+#include "Game/Character.h"
+#include "Game/Effects/EffectsGroup.h"
 
 enum eBallShotEffectType
 {

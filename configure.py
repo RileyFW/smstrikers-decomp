@@ -993,7 +993,7 @@ config.libs = [
             Object(Matching, "Game/FE/tlTextInstance.cpp"),
             Object(NonMatching, "Game/FE/tlTextInstance_runtime.cpp"),
 
-            Object(NonMatching, "Game/SH/SHBackground.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/SH/SHBackground.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/SH/SHChooseCaptains.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/SH/SHChooseCup.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/SH/SHChooseSides.cpp", extra_cflags=["-inline deferred"]),

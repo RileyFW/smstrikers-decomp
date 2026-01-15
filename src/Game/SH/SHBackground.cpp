@@ -39,11 +39,6 @@ void BackgroundScene::SceneCreated()
     }
 }
 
-// #include "dolphin/macros.h"
-#define assert(condition)      ((condition) ? ((void)0) : ((void)0))
-#define ASSERTLINE(line, cond) (void)0
-#define ASSERT(cond)           ASSERTLINE(__LINE__, cond)
-
 /**
  * Offset/Address/Size: 0x0 | 0x800A98AC | size: 0xA8
  */
@@ -65,10 +60,10 @@ void BackgroundScene::Update(float dt)
         slide->Update(0.0f);
     }
 
-    // .. whatever I throw in here is optmized away...
-    IsStopped();
-    ASSERT(mPlayMode == PM_STOPPED);
-    ASSERT(IsStopped());
+    if ((volatile int)mPlayMode == PM_STOPPED)
+    {
+        (volatile int)1;
+    }
 
     BaseSceneHandler::Update(dt);
 }

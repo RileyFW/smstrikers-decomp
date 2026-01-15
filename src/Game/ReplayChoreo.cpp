@@ -1,4 +1,5 @@
 #include "Game/ReplayChoreo.h"
+#include "NL/nlTask.h"
 
 // /**
 //  * Offset/Address/Size: 0xEC4 | 0x80129A38 | size: 0xD74
@@ -101,8 +102,17 @@ void ReplayChoreo::Update(float)
 /**
  * Offset/Address/Size: 0x344 | 0x801279B0 | size: 0x4C
  */
-void ReplayChoreo::Done() const
+bool ReplayChoreo::Done() const
 {
+    bool result = false;
+    if (IsFinished())
+    {
+        if (nlTaskManager::m_pInstance->m_CurrState == 0x10)
+        {
+            result = true;
+        }
+    }
+    return result;
 }
 
 /**

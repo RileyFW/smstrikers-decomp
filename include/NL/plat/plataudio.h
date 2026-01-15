@@ -197,7 +197,7 @@ void SetVolGroupVolume(u8 volGroup, float volume, u16 time);
 bool SetSFXVolumeGroup(u32 fid, u8 vGroup);
 bool SetSFXReverbVol(unsigned long, float);
 void SetSFXVolume(unsigned long, float);
-void StopSFX(unsigned long);
+bool StopSFX(unsigned long);
 void PlaySFX(const SFXStartInfo&);
 void UnloadAllSoundGroupsOnStack(AudioFileData&, unsigned long);
 void UnloadAllSoundGroups(AudioFileData&);
