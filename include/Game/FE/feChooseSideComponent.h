@@ -12,23 +12,30 @@ enum Context
     CONTEXT_PAUSE = 1,
 };
 
+enum UpdateResult
+{
+    UPDATE_OK = 0,
+    UPDATE_GO_BACK = 1,
+    UPDATE_GO_FORWARD = 2,
+};
+
 class IChooseSide
 {
 public:
     IChooseSide();
     ~IChooseSide();
-    void Update(float, eFEINPUT_PAD*, int);
-    void UpdateForFE(float, eFEINPUT_PAD*);
-    void UpdateForPause(float, eFEINPUT_PAD*);
+    UpdateResult Update(float, eFEINPUT_PAD*, int);
+    UpdateResult UpdateForFE(float, eFEINPUT_PAD*);
+    UpdateResult UpdateForPause(float, eFEINPUT_PAD*);
     void CheckControllers(int);
     void ResetAndPositionControllers(bool);
     void SetReady(int, bool);
     void PositionController(int, bool, bool);
-    void AllPlayersReady() const;
-    void AllPluggedInAreReady() const;
-    void AtLeastOnePlayerReady() const;
-    void AllControllersAreCentred() const;
-    void TweenSetPosCallback(void*, const float*);
+    bool AllPlayersReady() const;
+    bool AllPluggedInAreReady() const;
+    bool AtLeastOnePlayerReady() const;
+    bool AllControllersAreCentred() const;
+    static void TweenSetPosCallback(void*, const float*);
     void SaveChanges();
 
     /* 0x00 */ int mPlayingSides[4];           // size 0x10

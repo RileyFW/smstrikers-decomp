@@ -52,7 +52,7 @@ void TLComponentInstance::Update(float dt)
     const float total = slide->m_start + slide->m_duration;
     if (m_fCurrentTime > total)
     {
-        switch (slide->m_wrapMode)
+        switch (slide->m_uPlayMode)
         {
         case 1: // loop
             m_fCurrentTime = m_fCurrentTime - total;

@@ -6,6 +6,12 @@
 #include "Game/FE/tlInstance.h"
 #include "Game/FE/feAnimation.h"
 
+enum eTimeLinePlayMode
+{
+    TLPM_STOP_AT_END = 0,
+    TLPM_LOOPING = 1,
+};
+
 class TLSlide
 {
 public:
@@ -19,8 +25,8 @@ public:
     /* 0x10 */ f32 m_start;
     /* 0x14 */ f32 m_duration;
     /* 0x18 */ f32 m_time;
-    /* 0x1C */ s32 m_wrapMode;
-    /* 0x20 */ char pad20[0x20];
+    /* 0x1C */ eTimeLinePlayMode m_uPlayMode;
+    /* 0x20 */ char m_szName[32];
     /* 0x40 */ u32 m_hash;
 };
 

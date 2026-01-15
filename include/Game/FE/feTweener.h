@@ -39,7 +39,7 @@ class FETweenManager
 public:
     FETweenManager();
     ~FETweenManager();
-    void createTween(float*, float*, float, float, unsigned char, float (*)(float, float, float, float), void*, void (*)(void*, const float*));
+    FETweener* createTween(float*, float*, float, float, unsigned char, float (*)(float, float, float, float), void*, void (*)(void*, const float*));
     void Update(float);
     void clearTweens();
     void clearTweensOnObj(void*);

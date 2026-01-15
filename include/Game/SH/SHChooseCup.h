@@ -1,19 +1,19 @@
 #ifndef _SHCHOOSECUP_H_
 #define _SHCHOOSECUP_H_
 
-#include "types.h"
+#include "Game/BaseSceneHandler.h"
 #include "Game/FE/TLComponentInstance.h"
+#include "Game/FE/feAsyncImage.h"
+#include "Game/FE/feButtonComponent.h"
+#include "Game/FE/feScrollText.h"
+#include "Game/Team.h"
+#include "Game/TrophyInfo.h"
 
 void continueCup(bool);
 void startNewCup(bool);
 void confirmedNewCup(bool);
 
-enum eTeamID
-{
-    eTeamID_0 = 0
-};
-
-class ChooseCupSceneV2
+class ChooseCupSceneV2 : public BaseSceneHandler
 {
 public:
     ChooseCupSceneV2(bool);
@@ -23,7 +23,20 @@ public:
     void DisplayCup();
     void SetCurrentChamp(eTeamID, bool, TLComponentInstance*);
     void Proceed();
-};
+
+    /* 0x1C, */ bool mIsSuperCup;                      // size 0x1
+    /* 0x20, */ AsyncImage* mCupImage;                 // size 0x4
+    /* 0x24, */ eTrophyType mCupToDisplay;             // size 0x4
+    /* 0x28, */ eTrophyType mMinCup;                   // size 0x4
+    /* 0x2C, */ eTrophyType mMaxCup;                   // size 0x4
+    /* 0x30, */ bool mUpdateSlide;                     // size 0x1
+    /* 0x31, */ bool mIsFirstSlide;                    // size 0x1
+    /* 0x32, */ unsigned short mDescriptorBuffer[256]; // size 0x200
+    /* 0x232 */ unsigned short mChampBuffer[256];      // size 0x200
+    /* 0x434 */ FEScrollText* mTicker;                 // size 0x4
+    /* 0x438 */ ButtonComponent mButtons;              // size 0x24
+    /* 0x45C */ ButtonComponent mButtons2;             // size 0x24
+}; // total size: 0x480
 
 // class FEFinder<TLComponentInstance, 4>
 // {

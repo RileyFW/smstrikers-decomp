@@ -31,9 +31,10 @@ void FETweenManager::Update(float)
 /**
  * Offset/Address/Size: 0x6F0 | 0x800A2944 | size: 0x160
  */
-void FETweenManager::createTween(float*, float*, float, float, unsigned char, float (*)(float, float, float, float), void*,
+FETweener* FETweenManager::createTween(float*, float*, float, float, unsigned char, float (*)(float, float, float, float), void*,
     void (*)(void*, const float*))
 {
+    return NULL;
 }
 
 /**

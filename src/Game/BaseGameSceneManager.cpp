@@ -243,5 +243,5 @@ void BaseGameSceneManager::PushLoadingScene(bool clearStack)
     }
 
     BackgroundScene* handler = (BackgroundScene*)Push((SceneList)0x2B, SCREEN_FORWARD, false);
-    handler->m_unk_0x1C = 0; // ??
+    handler->mPlayMode = PM_STOPPED;
 }

@@ -1,14 +1,23 @@
 #ifndef _SHCHOOSESIDES_H_
 #define _SHCHOOSESIDES_H_
 
-#include "types.h"
+#include "Game/BaseSceneHandler.h"
+#include "Game/BaseGameSceneManager.h"
+#include "Game/FE/feAsyncImage.h"
+#include "Game/FE/feButtonComponent.h"
+#include "Game/FE/feChooseSideComponent.h"
+#include "Game/FE/feScrollText.h"
 
-class SHChooseSides2
+class SHChooseSides2 : public BaseSceneHandler
 {
 public:
     enum eCSContext
     {
-        eCSContext_0 = 0
+        FRIENDLY = 0,
+        CUP = 1,
+        SUPERCUP = 2,
+        TOURNAMENT = 3,
+        PAUSE = 4,
     };
 
     SHChooseSides2(SHChooseSides2::eCSContext);
@@ -17,7 +26,17 @@ public:
     void UpdateChooseSideComponent(float);
     void BindChooseSideInstances();
     void Update(float);
-};
+
+    /* 0x1C */ eCSContext mContext;           // size 0x4
+    /* 0x20 */ FEScrollText* m_pTicker;       // size 0x4
+    /* 0x24 */ float mSoundDelay;             // size 0x4
+    /* 0x28 */ SceneList mNextScene;          // size 0x4
+    /* 0x2C */ SceneList mBackScene;          // size 0x4
+    /* 0x30 */ AsyncImage* mAsyncImage[2][3]; // size 0x18
+    /* 0x48 */ IChooseSide mChooseSide;       // size 0xA0
+    /* 0xE8 */ int mProceedDelay;             // size 0x4
+    /* 0xEC */ ButtonComponent mButtons;      // size 0x24
+}; // total size: 0x110
 
 // class FEFinder<TLInstance, 2>
 // {

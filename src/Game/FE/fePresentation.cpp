@@ -23,7 +23,7 @@ void FEPresentation::Update(float deltaTime)
         temp_f0 = temp_r3->m_start + temp_r3->m_duration;
         if (temp_f2 > temp_f0)
         {
-            temp_r0 = temp_r3->m_wrapMode;
+            temp_r0 = temp_r3->m_uPlayMode;
             switch (temp_r0)
             { /* irregular */
             case 1:

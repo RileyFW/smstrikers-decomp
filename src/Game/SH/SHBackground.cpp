@@ -6,8 +6,8 @@
 BackgroundScene::BackgroundScene()
     : BaseSceneHandler()
 {
-    m_unk_0x1C = 3;
-    m_unk_0x20 = 3;
+    mPlayMode = PM_USE_SLIDE_DEFAULT;
+    mDesiredPlayMode = PM_USE_SLIDE_DEFAULT;
 }
 
 /**
@@ -22,16 +22,16 @@ BackgroundScene::~BackgroundScene()
  */
 void BackgroundScene::SceneCreated()
 {
-    if (m_unk_0x1C != 3)
+    if (mPlayMode != 3)
     {
         TLSlide* slide = m_pFEPresentation->m_currentSlide;
-        switch (m_unk_0x1C)
+        switch (mPlayMode)
         {
         case 1:
-            slide->m_wrapMode = 1;
+            slide->m_uPlayMode = TLPM_LOOPING;
             break;
         case 2:
-            slide->m_wrapMode = 0;
+            slide->m_uPlayMode = TLPM_STOP_AT_END;
             break;
         }
         slide->m_time = 0.0f;
@@ -39,46 +39,36 @@ void BackgroundScene::SceneCreated()
     }
 }
 
-#define assert(condition) ((condition) ? ((void)0) : ((void)0))
-#define _ASSERT(cond)
-
-// #define ASSERT(cond) ((cond) || (OSPanic(__FILE__, __LINE__, "Failed assertion " #cond), 0))
-// #define _ASSERT(cond) ((cond) || (OSPanic(__FILE__, __LINE__, "Assertion failed: " #cond), 0))
-
-#define ASSERTLINE(line, cond)                      (void)0
-#define ASSERTMSGLINE(line, cond, msg)              (void)0
-#define ASSERTMSG1LINE(line, cond, msg, arg1)       (void)0
-#define ASSERTMSG2LINE(line, cond, msg, arg1, arg2) (void)0
-#define ASSERTMSGLINEV(line, cond, ...)             (void)0
-// #endif
-
-#define ASSERT(cond) ASSERTLINE(__LINE__, cond)
+// #include "dolphin/macros.h"
+#define assert(condition)      ((condition) ? ((void)0) : ((void)0))
+#define ASSERTLINE(line, cond) (void)0
+#define ASSERT(cond)           ASSERTLINE(__LINE__, cond)
 
 /**
  * Offset/Address/Size: 0x0 | 0x800A98AC | size: 0xA8
  */
 void BackgroundScene::Update(float dt)
 {
-    if ((m_unk_0x20 != m_unk_0x1C) && (m_unk_0x1C != 3))
+    if ((mDesiredPlayMode != mPlayMode) && (mPlayMode != PM_USE_SLIDE_DEFAULT))
     {
         TLSlide* slide = m_pFEPresentation->m_currentSlide;
-        switch (m_unk_0x1C)
+        switch (mPlayMode)
         {
-        case 1:
-            slide->m_wrapMode = 1;
+        case PM_LOOPING:
+            slide->m_uPlayMode = TLPM_LOOPING;
             break;
-        case 2:
-            slide->m_wrapMode = 0;
+        case PM_STOP_AT_END:
+            slide->m_uPlayMode = TLPM_STOP_AT_END;
             break;
         }
         slide->m_time = 0.0f;
         slide->Update(0.0f);
     }
 
-    ASSERT(m_unk_0x1C == 0);
-
-    // assert(m_unk_0x1C == 0);
-    // (m_unk_0x1C == 0) ? m_unk_0x1C : m_unk_0x1C; // just to produce "cmplwi r3, 0x0"
+    // .. whatever I throw in here is optmized away...
+    IsStopped();
+    ASSERT(mPlayMode == PM_STOPPED);
+    ASSERT(IsStopped());
 
     BaseSceneHandler::Update(dt);
 }
