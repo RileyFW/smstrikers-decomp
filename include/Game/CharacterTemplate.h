@@ -44,7 +44,7 @@ s32 SidekickTexture_cb(unsigned long);
 void CreateCharacter(int, int, eCharacterClass, bool);
 void CharacterLoadingGuts(tCharacterTemplate*, const tCharacterTemplateInfo&, eCharacterClass, bool);
 bool IsCaptain(eCharacterClass);
-char* GetCharacterName(eCharacterClass);
+char* GetCharacterName(eCharacterClass cc);
 
 // void LexicalCast<bool, const char*>(const char* const&);
 // void LexicalCast<bool, float>(const float&);

@@ -153,13 +153,13 @@ bool IsCaptain(eCharacterClass cc)
 /**
  * Offset/Address/Size: 0x2128 | 0x80014410 | size: 0x34
  */
-char* GetCharacterName(eCharacterClass arg0)
+char* GetCharacterName(eCharacterClass cc)
 {
-    if (arg0 < 0xD)
+    if (cc < 13)
     {
-        return (char*)g_aCharacterTemplateInfo[arg0].szCharName;
+        return (char*)g_aCharacterTemplateInfo[cc].szCharName;
     }
-    return (char*)g_GoalieTextureInfo[arg0].szCharName;
+    return (char*)g_GoalieTextureInfo[cc - 13].szCharName;
 }
 
 // /**

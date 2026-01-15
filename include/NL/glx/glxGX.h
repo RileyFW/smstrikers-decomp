@@ -15,7 +15,7 @@ u32 gxSetNumTevStages(unsigned long);
 u32 gxSetNumChans(unsigned long);
 _GXCullMode gxSetCullMode(_GXCullMode);
 void gxSetBlendMode(bool, _GXBlendFactor, _GXBlendFactor, bool);
-void gxSetAlphaCompare(_GXCompare, unsigned char);
+void gxSetAlphaCompare(_GXCompare func, unsigned char ref);
 void gxRestoreZMode();
 void gxSaveZMode();
 void gxSetZMode(bool, _GXCompare, bool);

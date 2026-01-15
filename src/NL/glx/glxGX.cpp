@@ -8,14 +8,12 @@ bool gx_colourupdate;
 bool gx_alphaupdate;
 bool gx_zcomploc;
 bool gx_ztest;
+bool save_ztest;
 GXCompare gx_zfunc;
+GXCompare save_zfunc;
 bool gx_zwrite;
-
-bool save_ztest = gx_ztest;
-GXCompare save_zfunc = gx_zfunc;
-bool save_zwrite = gx_zwrite;
-
-u8 /*GXCompare*/ gx_alphafunc;
+bool save_zwrite;
+s32 /*GXCompare*/ gx_alphafunc;
 u8 gx_alpharef;
 u8 /*GXBlendMode*/ gx_blend;
 u8 /*GXLogicOp*/ gx_blendSubtract;
@@ -26,8 +24,8 @@ u32 gx_currentmtx;
 u32 gx_numChans;
 u32 gx_numTEV;
 u32 gx_numGens;
-u32 gx_matColour[2];
-u32 gx_ambColour[2];
+nlColour gx_matColour[2];
+nlColour gx_ambColour[2];
 bool gx_coplanar = false;
 
 /**
@@ -46,32 +44,38 @@ bool gxSetCoPlanar(bool coplanar)
 
 /**
  * Offset/Address/Size: 0x48 | 0x801C1530 | size: 0x54
+ * TODO: 98% match. Register swap r5/r6 and stack offset swap 0x8/0xc.
  */
 nlColour gxSetChanAmbColour(int chan, const nlColour& color)
 {
-    u32 local_14 = *(u32*)&color;
-    u32 local_10 = *(u32*)((u8*)&gx_ambColour + chan * 4);
-    if (local_10 != local_14)
+    nlColour* pMat = &gx_ambColour[chan];
+    nlColour prev = *pMat;
+    nlColour temp;
+    if (prev != color)
     {
-        *(int*)((u8*)&gx_ambColour + chan * 4) = *(u32*)&color;
-        GXSetChanAmbColor(*(GXChannelID*)&chan, *(GXColor*)&color);
+        temp = color;
+        *(volatile u32*)pMat = *(volatile u32*)&color;
+        GXSetChanAmbColor((GXChannelID)chan, *(GXColor*)&temp);
     }
-    return *(nlColour*)&local_10;
+    return prev;
 }
 
 /**
  * Offset/Address/Size: 0x9C | 0x801C1584 | size: 0x54
+ * TODO: 97% match. Register swap r5/r6 and stack offset swap 0x8/0xc.
  */
 nlColour gxSetChanMatColour(int chan, const nlColour& color)
 {
-    u32 local_14 = *(u32*)&color;
-    u32 local_10 = *(u32*)((u8*)&gx_matColour + chan * 4);
-    if (local_10 != local_14)
+    nlColour* pMat = &gx_matColour[chan];
+    nlColour prev = *pMat;
+    nlColour temp;
+    if (prev != color)
     {
-        *(int*)((u8*)&gx_matColour + chan * 4) = *(u32*)&color;
-        GXSetChanMatColor(*(GXChannelID*)&chan, *(GXColor*)&color);
+        temp = color;
+        *(volatile u32*)pMat = *(volatile u32*)&color;
+        GXSetChanMatColor((GXChannelID)chan, *(GXColor*)&temp);
     }
-    return *(nlColour*)&local_10;
+    return prev;
 }
 
 /**
@@ -81,7 +85,7 @@ nlColour gxSetChanMatColour(int chan, const nlColour& color)
 
 void gxSetTexCoordGen(int dst_coord, _GXTexGenType func, _GXTexGenSrc src_param, unsigned long arg)
 {
-    GXSetTexCoordGen2(*(GXTexCoordID*)&dst_coord, func, src_param, arg, false, 125);
+    GXSetTexCoordGen2((GXTexCoordID)dst_coord, func, src_param, arg, false, 125);
 }
 
 /**
@@ -90,7 +94,7 @@ void gxSetTexCoordGen(int dst_coord, _GXTexGenType func, _GXTexGenSrc src_param,
 //  void GXSetTevAlphaOp(GXTevStageID stage, GXTevOp op, GXTevBias bias, GXTevScale scale, GXBool clamp, GXTevRegID out_reg)
 void gxSetTevAlphaOp(int stage, _GXTevOp op, _GXTevBias bias, _GXTevScale scale, bool clamp, _GXTevRegID out_reg)
 {
-    GXSetTevAlphaOp(*(GXTevStageID*)&stage, op, bias, scale, (u32)(-clamp | clamp) >> 0x1FU, out_reg);
+    GXSetTevAlphaOp((GXTevStageID)stage, op, bias, scale, (u32)(-clamp | clamp) >> 0x1FU, out_reg);
 }
 
 /**
@@ -98,7 +102,7 @@ void gxSetTevAlphaOp(int stage, _GXTevOp op, _GXTevBias bias, _GXTevScale scale,
  */
 void gxSetTevColourOp(int stage, _GXTevOp op, _GXTevBias bias, _GXTevScale scale, bool clamp, _GXTevRegID out_reg)
 {
-    GXSetTevColorOp(*(GXTevStageID*)&stage, op, bias, scale, (u32)(-clamp | clamp) >> 0x1FU, out_reg);
+    GXSetTevColorOp((GXTevStageID)stage, op, bias, scale, (u32)(-clamp | clamp) >> 0x1FU, out_reg);
 }
 
 /**
@@ -160,35 +164,35 @@ _GXCullMode gxSetCullMode(_GXCullMode mode)
 /**
  * Offset/Address/Size: 0x2B0 | 0x801C1798 | size: 0xDC
  */
-void gxSetBlendMode(bool arg0, _GXBlendFactor arg1, _GXBlendFactor arg2, bool arg3)
+void gxSetBlendMode(bool bBlend, _GXBlendFactor src_factor, _GXBlendFactor dst_factor, bool bSubtract)
 {
-    if ((arg0 != (u8)gx_blend) || (arg1 != (s32)gx_srcfactor) || (arg2 != (s32)gx_dstfactor) || (arg3 != (u8)gx_blendSubtract))
+    if ((bBlend != (u8)gx_blend) || (src_factor != (s32)gx_srcfactor) || (dst_factor != (s32)gx_dstfactor) || (bSubtract != (u8)gx_blendSubtract))
     {
-        if ((arg3 != 0) && (arg0 != 0))
+        if ((bSubtract != 0) && (bBlend != 0))
         {
-            GXSetBlendMode(GX_BM_LOGIC, arg1, arg2, GX_LO_CLEAR);
+            GXSetBlendMode(GX_BM_SUBTRACT, src_factor, dst_factor, GX_LO_CLEAR);
         }
         else
         {
-            GXSetBlendMode((GXBlendMode)((u32)(-(s32)arg0 | arg0) >> 0x1FU), arg1, arg2, GX_LO_CLEAR);
+            GXSetBlendMode((GXBlendMode)((u32)(-(s32)bBlend | bBlend) >> 0x1FU), src_factor, dst_factor, GX_LO_CLEAR);
         }
-        gx_blend = (GXBlendMode)arg0;
-        gx_blendSubtract = (GXLogicOp)arg3;
-        gx_srcfactor = arg1;
-        gx_dstfactor = arg2;
+        gx_blend = (GXBlendMode)bBlend;
+        gx_blendSubtract = (GXLogicOp)bSubtract;
+        gx_srcfactor = src_factor;
+        gx_dstfactor = dst_factor;
     }
 }
 
 /**
  * Offset/Address/Size: 0x38C | 0x801C1874 | size: 0x70
  */
-void gxSetAlphaCompare(_GXCompare arg0, u8 arg1)
+void gxSetAlphaCompare(_GXCompare func, u8 ref)
 {
-    if (((s32)gx_alphafunc != arg0) || ((u8)gx_alpharef != arg1))
+    if (gx_alphafunc != func || gx_alpharef != ref)
     {
-        GXSetAlphaCompare(arg0, arg1, GX_AOP_AND, arg0, arg1);
-        gx_alphafunc = arg0;
-        gx_alpharef = arg1;
+        GXSetAlphaCompare(func, ref, GX_AOP_AND, func, ref);
+        gx_alphafunc = func;
+        gx_alpharef = ref;
     }
 }
 
@@ -200,7 +204,7 @@ void gxRestoreZMode()
     gx_ztest = save_ztest;
     gx_zfunc = save_zfunc;
     gx_zwrite = save_zwrite;
-    GXSetZMode(save_ztest, save_zfunc, save_zwrite);
+    GXSetZMode((GXBool)gx_ztest, gx_zfunc, (GXBool)gx_zwrite);
 }
 
 /**
@@ -246,15 +250,13 @@ bool gxSetZCompLoc(bool arg0)
  */
 bool gxSetAlphaUpdate(bool arg0)
 {
-    u8 temp_r31;
-
-    temp_r31 = gx_alphaupdate;
-    if (arg0 != (u8)gx_alphaupdate)
+    bool prev = gx_alphaupdate;
+    if (arg0 != gx_alphaupdate)
     {
-        GXSetAlphaUpdate((u32)(-(s32)arg0 | arg0) >> 0x1FU);
+        GXSetAlphaUpdate(arg0 != 0);
         gx_alphaupdate = arg0;
     }
-    return temp_r31;
+    return prev;
 }
 
 /**
@@ -262,15 +264,13 @@ bool gxSetAlphaUpdate(bool arg0)
  */
 bool gxSetColourUpdate(bool arg0)
 {
-    u8 temp_r31;
-
-    temp_r31 = gx_colourupdate;
-    if (arg0 != (u8)gx_colourupdate)
+    bool prev = gx_colourupdate;
+    if (arg0 != gx_colourupdate)
     {
-        GXSetColorUpdate((u32)(-(s32)arg0 | arg0) >> 0x1FU);
+        GXSetColorUpdate(arg0 != 0);
         gx_colourupdate = arg0;
     }
-    return temp_r31;
+    return prev;
 }
 
 /**
@@ -278,13 +278,14 @@ bool gxSetColourUpdate(bool arg0)
  */
 uint gxSetDither(bool dither)
 {
-    u8 prev_dither = (uint)gx_dither;
-    if (dither != gx_dither)
+    u8 cur = gx_dither;
+    uint prev = cur;
+    if (dither != cur)
     {
-        GXSetDither((-(uint)dither | dither) >> 0x1f);
+        GXSetDither(dither != 0);
         gx_dither = dither;
     }
-    return prev_dither;
+    return prev;
 }
 
 /**
@@ -292,15 +293,11 @@ uint gxSetDither(bool dither)
  */
 uint gxSetTevAlphaIn(int stage, int arg1, _GXTevAlphaArg arg2)
 {
-    s32 temp_r0;
-    s32 temp_r31;
-    u8* temp_r7;
-
-    temp_r0 = arg1 * 4;
-    temp_r7 = ((u8*)&gx_alphaArg) + (stage * 0x10);
-    temp_r31 = *(GXTevAlphaArg*)(temp_r7 + temp_r0);
+    s32 temp_r0 = arg1 * 4;
+    u8* temp_r7 = ((u8*)&gx_alphaArg) + (stage * 0x10);
+    s32 temp_r31 = *(GXTevAlphaArg*)(temp_r7 + temp_r0);
     *(GXTevAlphaArg*)(temp_r7 + temp_r0) = arg2;
-    GXSetTevAlphaIn(*(GXTevStageID*)&stage, ((GXTevAlphaArg*)temp_r7)[0], ((GXTevAlphaArg*)temp_r7)[1], ((GXTevAlphaArg*)temp_r7)[2], ((GXTevAlphaArg*)temp_r7)[3]);
+    GXSetTevAlphaIn((GXTevStageID)stage, ((GXTevAlphaArg*)temp_r7)[0], ((GXTevAlphaArg*)temp_r7)[1], ((GXTevAlphaArg*)temp_r7)[2], ((GXTevAlphaArg*)temp_r7)[3]);
     return (uint)temp_r31;
 }
 
@@ -309,14 +306,12 @@ uint gxSetTevAlphaIn(int stage, int arg1, _GXTevAlphaArg arg2)
  */
 void gxSetTevAlphaIn(int arg0, _GXTevAlphaArg arg1, _GXTevAlphaArg arg2, _GXTevAlphaArg arg3, _GXTevAlphaArg arg4)
 {
-    GXSetTevAlphaIn(*(GXTevStageID*)&arg0, arg1, arg2, arg3, arg4);
-    s32 temp_r0 = arg0 * 0x10;
-
-    GXTevAlphaArg* alphaArg = (GXTevAlphaArg*)(((u8*)&gx_alphaArg) + temp_r0);
-    alphaArg[0] = arg1;
-    alphaArg[1] = arg2;
-    alphaArg[2] = arg3;
-    alphaArg[3] = arg4;
+    GXSetTevAlphaIn((GXTevStageID)arg0, arg1, arg2, arg3, arg4);
+    u32 idx = arg0 * 4;
+    gx_alphaArg[0][idx] = arg1;
+    gx_alphaArg[0][idx + 1] = arg2;
+    gx_alphaArg[0][idx + 2] = arg3;
+    gx_alphaArg[0][idx + 3] = arg4;
 }
 
 /**
@@ -384,31 +379,43 @@ void gxInit()
     gx_srcfactor = GX_BL_ONE;
     gx_dstfactor = GX_BL_ZERO;
 
-    GXSetCullMode(GX_CULL_FRONT);
-    gx_cullmode = GX_CULL_FRONT;
+    GXSetCullMode(GX_CULL_BACK);
+    gx_cullmode = GX_CULL_BACK;
 
     GXSetCurrentMtx(0);
     gx_currentmtx = 0;
 
     GXSetNumChans(1);
     gx_numChans = 1;
+
     GXSetNumTevStages(1);
     gx_numTEV = 1;
+
     GXSetNumTexGens(0);
     gx_numGens = 0;
 
-    GXColor color;
-    *(u32*)&color = 0xffffffff;
-    GXSetChanMatColor(GX_COLOR0, color);
-    GXSetChanMatColor(GX_COLOR1, color);
-    *(u32*)&color = 0x000000ff;
-    GXSetChanAmbColor(GX_COLOR0, color);
-    GXSetChanAmbColor(GX_COLOR1, color);
-    gx_matColour[0] = 0xffffffff;
-    gx_ambColour[0] = 0xff;
-    gx_matColour[1] = 0xffffffff;
-    gx_ambColour[1] = 0xff;
+    // White color (RGBA 255,255,255,255)
+    GXColor white = { 255, 255, 255, 255 };
+    // Black with full alpha (RGBA 0,0,0,255)
+    GXColor black = { 0, 0, 0, 255 };
+
+    GXSetChanMatColor(GX_COLOR0, white);
+    GXSetChanMatColor(GX_COLOR1, white);
+    GXSetChanAmbColor(GX_COLOR0, black);
+    GXSetChanAmbColor(GX_COLOR1, black);
+
+    gx_matColour[0].c[0] = 255;
+    gx_matColour[0].c[1] = 255;
+    gx_matColour[0].c[2] = 255;
+    gx_matColour[0].c[3] = 255;
+    gx_matColour[1] = gx_matColour[0];
+
+    gx_ambColour[0].c[0] = 0;
+    gx_ambColour[0].c[1] = 0;
+    gx_ambColour[0].c[2] = 0;
+    gx_ambColour[0].c[3] = 255;
+    gx_ambColour[1] = gx_ambColour[0];
 
     GXSetCoPlanar(false);
-    gx_coplanar = 0;
+    gx_coplanar = false;
 }

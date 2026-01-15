@@ -197,7 +197,10 @@ void nlMultPosVectorMatrix(register nlVector3& result, register const nlVector3&
  */
 void nlMultVectorMatrix(nlVector2& v_out, const nlVector2& v_in, const nlMatrix3& m)
 {
-    v_out = m * v_in;
+    nlVector2 t;
+    t.f.x = m.m[0]*v_in.f.x + m.m[3]*v_in.f.y + m.m[6];
+    t.f.y = m.m[1]*v_in.f.x + m.m[4]*v_in.f.y + m.m[7];
+    v_out = t;
 }
 
 /**
