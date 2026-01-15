@@ -1,5 +1,10 @@
 #include "Game/SH/SHPausePostGame.h"
 
+#include "Game/BaseGameSceneManager.h"
+#include "Game/FE/feManager.h"
+#include "Game/GameInfo.h"
+#include "Game/OverlayManager.h"
+
 // /**
 //  * Offset/Address/Size: 0x118 | 0x801097BC | size: 0xCF0
 //  */
@@ -152,13 +157,27 @@ void PausePostGameScene::OnSelectRematch()
  */
 void PausePostGameScene::OnSelectQuit()
 {
+    if (GameInfoManager::Instance()->GetNumPlayers() > 1) {
+        OverlayManager::Instance()->Push(OVERLAY_BRAG, SCREEN_NOTHING, true);
+    } else {
+        FrontEnd::ReturnToFE();
+    }
 }
+
+static int gPadThatQuit;
 
 /**
  * Offset/Address/Size: 0x88 | 0x8010718C | size: 0x70
  */
 void PausePostGameScene::OnSelectChangeTeams()
 {
+    GameInfoManager::Instance()->mGoToChooseCaptains = true;
+    GameInfoManager::Instance()->mMainUserPadNumber = (eFEINPUT_PAD)gPadThatQuit;
+    if (GameInfoManager::Instance()->GetNumPlayers() > 1) {
+        OverlayManager::Instance()->Push(OVERLAY_BRAG, SCREEN_NOTHING, true);
+    } else {
+        FrontEnd::ReturnToFE();
+    }
 }
 
 /**

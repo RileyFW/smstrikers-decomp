@@ -186,8 +186,14 @@
 /**
  * Offset/Address/Size: 0x1B14 | 0x800AB570 | size: 0x78
  */
-void onSelectFriendly(TLComponentInstance*)
+static void onSelectFriendly(TLComponentInstance*)
 {
+    GameInfoManager::Instance()->SetMode(GameInfoManager::GM_FRIENDLY);
+    GameInfoManager::Instance()->SetTeam(0, (eTeamID)3);
+    GameInfoManager::Instance()->SetTeam(1, (eTeamID)3);
+    GameSceneManager::Instance()->PopEntireStack();
+    GameInfoManager::Instance()->ResetPlayingSides();
+    GameSceneManager::Instance()->Push(SCENE_CHOOSE_CAPTAINS, SCREEN_FORWARD, false);
 }
 
 /**
@@ -199,11 +205,31 @@ void onSelectCup(TLComponentInstance*)
     GameSceneManager::s_pInstance->Push(SCENE_CUP_CHOOSE_CUP, SCREEN_FORWARD, false);
 }
 
+enum ePopupMenu {
+    POPUP_MENU_0 = 0,
+    POPUP_MENU_1 = 1,
+    POPUP_MENU_2 = 2,
+    POPUP_MENU_3 = 3,
+    POPUP_MENU_4 = 4,
+};
+
+class FEPopupMenu {
+public:
+    void Create(ePopupMenu);
+};
+
 /**
  * Offset/Address/Size: 0x1A50 | 0x800AB4AC | size: 0x80
  */
 void onSelectSuperCup(TLComponentInstance*)
 {
+    if (!GameInfoManager::Instance()->IsSuperCupModeUnlocked()) {
+        FEPopupMenu* menu = (FEPopupMenu*)GameSceneManager::Instance()->Push(SCENE_POPUP_MENU, SCREEN_FORWARD, false);
+        menu->Create(POPUP_MENU_4);
+    } else {
+        GameSceneManager::Instance()->PopEntireStack();
+        GameSceneManager::Instance()->Push(SCENE_SUPER_CUP_CHOOSE_CUP, SCREEN_FORWARD, false);
+    }
 }
 
 /**
@@ -211,6 +237,14 @@ void onSelectSuperCup(TLComponentInstance*)
  */
 void onSelect101(TLComponentInstance*)
 {
+    GameInfoManager::Instance()->SetMode(GameInfoManager::GM_FRIENDLY);
+    GameInfoManager::Instance()->SetTeam(0, (eTeamID)3);
+    GameInfoManager::Instance()->SetTeam(1, (eTeamID)3);
+    GameSceneManager::Instance()->PopEntireStack();
+    GameInfoManager::Instance()->ResetPlayingSides();
+    GameSceneManager::Instance()->Push(SCENE_CHOOSE_CAPTAINS, SCREEN_FORWARD, false);
+    GameInfoManager::Instance()->mIsInStrikers101Mode = true;
+    FEMusic::StartStreamIfDifferent(5);
 }
 
 /**

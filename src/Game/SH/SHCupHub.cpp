@@ -1,5 +1,8 @@
 #include "Game/SH/SHCupHub.h"
 
+#include "Game/GameSceneManager.h"
+#include "Game/BaseGameSceneManager.h"
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800F1F90 | size: 0x38
 //  */

@@ -1,15 +1,31 @@
 #ifndef _SHCUPHUB_H_
 #define _SHCUPHUB_H_
 
-#include "types.h"
-#include "Game/GameSceneManager.h"
+#include "Game/BaseSceneHandler.h"
+#include "Game/DB/StatsTracker.h"
+#include "Game/FE/Cup/CupTickerManager.h"
+#include "Game/FE/feAsyncImage.h"
+#include "Game/FE/feButtonComponent.h"
+#include "Game/FE/tlComponentInstance.h"
+#include "NL/nlColour.h"
 
 enum eHubColour
 {
     eHubColour_0 = 0
 };
 
-class CupHubScene
+enum eHubState
+{
+    HUB_INVALID = -1,
+    HUB_LEAGUE = 0,
+    HUB_BOWSER_TRANSITION = 1,
+    HUB_KNOCKOUT2 = 2,
+    HUB_KNOCKOUT4 = 3,
+    HUB_KNOCKOUT8 = 4,
+    NUM_HUB_STATES = 5,
+};
+
+class CupHubScene : public BaseSceneHandler
 {
 public:
     CupHubScene(bool, bool);
@@ -32,7 +48,34 @@ public:
     void SetRoundColours(eHubColour*, int);
     void UpdateRoundMessage(bool);
     void LoadCaptainImage();
-};
+
+    /* 0x001C */ TeamStats mAllTeamStats[8];                     // size 0x200
+    /* 0x021C */ nlColour mTextColour;                           // size 0x4
+    /* 0x0220 */ bool mDoAnimations;                             // size 0x1
+    /* 0x0221 */ bool mUpdatingStats;                            // size 0x1
+    /* 0x0222 */ bool mKnockoutLoserAnimations;                  // size 0x1
+    /* 0x0223 */ bool mAllKnockoutAnimations;                    // size 0x1
+    /* 0x0224 */ bool mSuperTeamAnimation;                       // size 0x1
+    /* 0x0225 */ bool mHasHumanTeamPlayed;                       // size 0x1
+    /* 0x0226 */ bool mDoAutoSave;                               // size 0x1
+    /* 0x0227 */ bool mPlayPopSound;                             // size 0x1
+    /* 0x0228 */ float mRowMovement[8];                          // size 0x20
+    /* 0x0248 */ unsigned short mColumnsByRowsBuffers[5][8][32]; // size 0xA00
+    /* 0x0C48 */ unsigned short mProgressBuffer[128];            // size 0x100
+    /* 0x0D48 */ TLComponentInstance* mAnimComponents[8];        // size 0x20
+    /* 0x0D68 */ int mOldRanks[9];                               // size 0x24
+    /* 0x0D8C */ int mNewRanks[9];                               // size 0x24
+    /* 0x0DB0 */ int mStandingsIndices[8];                       // size 0x20
+    /* 0x0DD0 */ int mAnimatingKnockoutTeams[4];                 // size 0x10
+    /* 0x0DE0 */ int mCurrentKnockoutAnimationRound;             // size 0x4
+    /* 0x0DE4 */ unsigned short mOldStats[8][4];                 // size 0x40
+    /* 0x0E24 */ float mStatUpdateDelay;                         // size 0x4
+    /* 0x0E28 */ float mSlideSwitchDelay;                        // size 0x4
+    /* 0x0E2C */ eHubState mHubState;                            // size 0x4
+    /* 0x0E30 */ CupTickerManager mTickerManager;                // size 0x408
+    /* 0x1238 */ AsyncImage* mCaptainImage;                      // size 0x4
+    /* 0x123C */ ButtonComponent mButtons;                       // size 0x24
+}; // total size: 0x1260
 
 // class FEFinder<TLImageInstance, 2>
 // {

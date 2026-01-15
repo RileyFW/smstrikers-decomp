@@ -14,17 +14,17 @@ public:
         MET_END = 2,
     };
 
-    void ReturnToFE();
-    void UpdateForGame(float);
+    static void ReturnToFE();
+    static void UpdateForGame(float);
     static void Update(float);
     static void ExitMenuState();
-    void EnterMenuState(FrontEnd::MenuEnterType);
-    void ExitWinnerScreen();
-    void EnterStartScreen(bool);
-    void SetControllerState();
-    void Destroy();
+    static void EnterMenuState(FrontEnd::MenuEnterType);
+    static void ExitWinnerScreen();
+    static void EnterStartScreen(bool);
+    static void SetControllerState();
+    static void Destroy();
     static bool Initialize();
-    void FEEventHandler(Event*, void*);
+    static void FEEventHandler(Event*, void*);
 
     static int m_feStateCurrent;
     static int m_feStatePending;
