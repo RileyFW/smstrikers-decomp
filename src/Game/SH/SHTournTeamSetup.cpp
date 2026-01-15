@@ -1,4 +1,8 @@
 #include "Game/SH/SHTournTeamSetup.h"
+#include "types.h"
+
+// Temporary dummy object for reference member initialization
+static CustomTournament s_dummyTourn;
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800E7710 | size: 0x40
@@ -138,6 +142,7 @@
  * Offset/Address/Size: 0x4DBC | 0x800E6C60 | size: 0x124
  */
 TournTeamSetupSceneV2::TournTeamSetupSceneV2()
+    : mTournInfo(s_dummyTourn)
 {
 }
 
@@ -181,13 +186,22 @@ void TournTeamSetupSceneV2::UpdateRow(int)
  */
 void TournTeamSetupSceneV2::ChangeState(TournTeamSetupSceneV2::eTeamChooserState, TournTeamSetupSceneV2::eTeamChooserState)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x1EC4 | 0x800E3D68 | size: 0x6C
  */
-void TournTeamSetupSceneV2::StartChooseCaptain(int)
+void TournTeamSetupSceneV2::StartChooseCaptain(int arg)
 {
+    mCurrentRow = arg + mRowOffset;
+
+    if (!mTeamData[mCurrentRow].isEmpty)
+    {
+        mCaptainGrid->SetValid(mTeamData[mCurrentRow].captain, true);
+    }
+
+    ChangeState(STATE_SCROLLING, STATE_CAPTAIN);
 }
 
 /**

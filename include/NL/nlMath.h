@@ -38,9 +38,9 @@ public:
 
     // nlVector2() { }
     // nlVector2(float _x, float _y)
-    //     : x(_x)
-    //     , y(_y)
     // {
+    //     e[0] = _x;
+    //     e[1] = _y;
     // }
 };
 

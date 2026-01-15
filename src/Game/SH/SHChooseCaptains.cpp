@@ -164,8 +164,18 @@ void ChooseCaptainsSceneV2::SceneCreated()
 /**
  * Offset/Address/Size: 0xBE0 | 0x800D7628 | size: 0x48
  */
-void ChooseCaptainsSceneV2::ChangeSceneType(ChooseCaptainsSceneV2::SceneType)
+void ChooseCaptainsSceneV2::ChangeSceneType(ChooseCaptainsSceneV2::SceneType sceneType)
 {
+    mSceneType = sceneType;
+    switch (mSceneType)
+    {
+    case 0:
+        ResetForCHOOSECAPTAINS();
+        break;
+    case 1:
+        ResetForCHOOSESIDES();
+        break;
+    }
 }
 
 /**

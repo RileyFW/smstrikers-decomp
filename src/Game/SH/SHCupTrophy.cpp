@@ -219,8 +219,27 @@ void CupTrophyScene::Update(float)
 /**
  * Offset/Address/Size: 0x191C | 0x800CAFD0 | size: 0x54
  */
-void CupTrophyScene::CreateTrophyScene(eTrophyType, ButtonComponent::ButtonState, bool)
+void CupTrophyScene::CreateTrophyScene(eTrophyType trophy, ButtonComponent::ButtonState buttonState, bool isNew)
 {
+    mTrophy = trophy;
+    mIsNew = isNew;
+    mCreated = 1;
+
+    if (!mIsNew)
+    {
+        if (mTrophy < 4)
+        {
+            mFirstTrophy = TROPHY_MUSHROOM_CUP;
+            mLastTrophy = TROPHY_BOWSER_CUP;
+        }
+        else
+        {
+            mFirstTrophy = TROPHY_SUPER_MUSHROOM_CUP;
+            mLastTrophy = TROPHY_SUPER_BOWSER_CUP;
+        }
+    }
+
+    mButtonState = buttonState;
 }
 
 /**

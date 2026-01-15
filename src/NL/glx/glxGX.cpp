@@ -62,7 +62,7 @@ nlColour gxSetChanAmbColour(int chan, const nlColour& color)
 
 /**
  * Offset/Address/Size: 0x9C | 0x801C1584 | size: 0x54
- * TODO: 97% match. Register swap r5/r6 and stack offset swap 0x8/0xc.
+ * TODO: 98% match. Register swap r5/r6 and stack offset swap 0x8/0xc.
  */
 nlColour gxSetChanMatColour(int chan, const nlColour& color)
 {

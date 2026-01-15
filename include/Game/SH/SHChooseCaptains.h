@@ -1,9 +1,15 @@
 #ifndef _SHCHOOSECAPTAINS_H_
 #define _SHCHOOSECAPTAINS_H_
 
-#include "types.h"
+#include "Game/BaseSceneHandler.h"
+#include "Game/FE/feButtonComponent.h"
+#include "Game/FE/feCaptainComponent.h"
+#include "Game/FE/feChooseSideComponent.h"
+#include "Game/FE/feScrollText.h"
+#include "Game/FE/tlComponentInstance.h"
+// #include "types.h"
 
-class ChooseCaptainsSceneV2
+class ChooseCaptainsSceneV2 : public BaseSceneHandler
 {
 public:
     enum SceneType
@@ -20,7 +26,16 @@ public:
     void Update(float);
     void BindChooseSideInstances();
     void CreateTicker();
-};
+
+    /* 0x01C */ IChooseCaptain mChooseCaptain; // size 0xCC
+    /* 0x0E8 */ IChooseSide mChooseSide;       // size 0xA0
+    /* 0x188 */ TLComponentInstance* mChooseSideComponent;
+    /* 0x18C */ ButtonComponent mButtons;
+    /* 0x1B0 */ SceneType mSceneType;
+    /* 0x1B4 */ SceneType mDesiredSceneType;
+    /* 0x1B8 */ FEScrollText* mTicker;
+    /* 0x1BC */ int mMoveForwardFrameDelay;
+}; // total size: 0x1C0
 
 // class FEFinder<TLTextInstance, 3>
 // {
