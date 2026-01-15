@@ -81,15 +81,15 @@ void nlLoadEntireFileAsyncCallback(nlFile* file, void* arg2, unsigned int arg3, 
 }
 
 /**
- * Offset/Address/Size: 0x160 | 0x801CEB90 | size: 0xDC
+ * Offset/Address/Size: 0x160 | 0x801CEB90 | size: 0xDC\
+ * TODO: 99.3% match - r29/r31 swapped
  */
 void* nlLoadEntireFile(const char* filename, unsigned long* outSize, unsigned int alignment, eAllocType type)
 {
-    unsigned int filesize;
-    unsigned long datasize;
-    nlFile* file;
-    AsyncFileLoadData* _asyncData;
     void* alloc_data = NULL;
+    nlFile* file;
+    unsigned int datasize;
+    unsigned int filesize;
 
     file = nlOpen(filename);
     if (file != NULL)
@@ -106,8 +106,8 @@ void* nlLoadEntireFile(const char* filename, unsigned long* outSize, unsigned in
             {
                 tmp = nlMalloc(filesize, alignment, false);
             }
-            alloc_data = tmp;
             file->Read(tmp, datasize);
+            alloc_data = tmp;
         }
 
         delete file;

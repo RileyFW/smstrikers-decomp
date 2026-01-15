@@ -2,6 +2,7 @@
 #define _NLFILE_H_
 
 #include "types.h"
+#include "file_io.h"
 
 class nlFile;
 
@@ -23,14 +24,11 @@ public:
 class nlFile
 {
 public:
-    virtual ~nlFile();
     nlFile();
+    virtual ~nlFile();
 
     /* 0x0C */ virtual u32 FileSize(unsigned int* size) = 0;
     /* 0x10 */ virtual void Read(void* buffer, unsigned int size) = 0;
-
-    /* 0x04 */ Counter PendingAsync;
-    /* 0x08 */ u32 m_Position;
 }; // total size: 0xC
 
 bool nlLoadEntireFileAsync(const char*, LoadAsyncCallback callback, void* userData, unsigned int size, eAllocType type);

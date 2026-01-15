@@ -1,5 +1,9 @@
 #include "Game/Drawable/DrawableModel.h"
 
+static float sfCoPlanarZ;
+static float sfCoPlanar0Z;
+static float sfPlanarShadowOpacity;
+
 /**
  * Offset/Address/Size: 0x0 | 0x8011FE0C | size: 0x3C
  */
@@ -17,36 +21,41 @@ void RenderBoundingBox(const glModel*, const nlMatrix4&)
 /**
  * Offset/Address/Size: 0x2A8 | 0x801200B4 | size: 0x8
  */
-void GetCoPlanar0Z()
+float GetCoPlanar0Z()
 {
+    return sfCoPlanar0Z;
 }
 
 /**
  * Offset/Address/Size: 0x2B0 | 0x801200BC | size: 0x8
  */
-void SetCoPlanarZ(float)
+void SetCoPlanarZ(float z)
 {
+    sfCoPlanarZ = z;
 }
 
 /**
  * Offset/Address/Size: 0x2B8 | 0x801200C4 | size: 0x8
  */
-void GetCoPlanarZ()
+float GetCoPlanarZ()
 {
+    return sfCoPlanarZ;
 }
 
 /**
  * Offset/Address/Size: 0x2C0 | 0x801200CC | size: 0x8
  */
-void SetPlanarShadowOpacity(float)
+void SetPlanarShadowOpacity(float opacity)
 {
+    sfPlanarShadowOpacity = opacity;
 }
 
 /**
  * Offset/Address/Size: 0x2C8 | 0x801200D4 | size: 0x8
  */
-void GetPlanarShadowOpacity()
+float GetPlanarShadowOpacity()
 {
+    return sfPlanarShadowOpacity;
 }
 
 /**

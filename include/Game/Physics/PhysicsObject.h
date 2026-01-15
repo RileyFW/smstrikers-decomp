@@ -64,6 +64,8 @@ public:
     void SetCollide(unsigned int);
     void SetDefaultCollideBits();
 
+    inline bool IsObjectType(int type) const { return GetObjectType() == type; }
+
     /* 0x04 */ dBodyID m_bodyID;
     /* 0x08 */ dGeomID m_geomID;
     /* 0x0c */ PhysicsObject* m_parentObject;

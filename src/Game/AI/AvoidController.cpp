@@ -17,8 +17,10 @@ void AvoidController::SetThingsToAvoid(int)
 /**
  * Offset/Address/Size: 0x2240 | 0x80009894 | size: 0x10
  */
-void AvoidController::UseMinimumAvoidance(cPlayer*)
+void AvoidController::UseMinimumAvoidance(cPlayer* player)
 {
+    m_UseMinimumAvoidance = true;
+    m_pIgnoreThisPlayer = player;
 }
 
 /**

@@ -227,8 +227,12 @@ void FormationEval::Update(float)
 /**
  * Offset/Address/Size: 0x1D24 | 0x80039F74 | size: 0x1C
  */
-void FormationEval::GetWeight()
+float FormationEval::GetWeight()
 {
+    if (m_pFormationSpec != NULL) {
+        return 1.0f;
+    }
+    return 0.0f;
 }
 
 /**
@@ -283,8 +287,9 @@ void FormationDefensive::IsFielderInPosition(cFielder*, nlVector3, bool)
 /**
  * Offset/Address/Size: 0xE40 | 0x80039090 | size: 0x30
  */
-void FormationDefensive::GetWeight()
+float FormationDefensive::GetWeight()
 {
+    return 0.0f;
 }
 
 /**
@@ -297,8 +302,9 @@ void FormationOffensive::IsFielderInPosition(cFielder*, nlVector3, bool)
 /**
  * Offset/Address/Size: 0xB30 | 0x80038D80 | size: 0x30
  */
-void FormationOffensive::GetWeight()
+float FormationOffensive::GetWeight()
 {
+    return 0.0f;
 }
 
 /**
@@ -332,6 +338,7 @@ void FormationBallPosition::CalculateDesiredLocation(nlVector3&, cFielder*, bool
 /**
  * Offset/Address/Size: 0x0 | 0x80038250 | size: 0x2C0
  */
-void FormationBallPosition::GetWeight()
+float FormationBallPosition::GetWeight()
 {
+    return 0.0f;
 }

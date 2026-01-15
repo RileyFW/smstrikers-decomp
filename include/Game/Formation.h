@@ -81,7 +81,7 @@ public:
     void Update(float);
     void SelectClosestBallFormations(const nlVector2&);
     void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
-    void GetWeight();
+    float GetWeight();
 };
 
 class FormationOffensive
@@ -89,7 +89,7 @@ class FormationOffensive
 public:
     ~FormationOffensive();
     void IsFielderInPosition(cFielder*, nlVector3, bool);
-    void GetWeight();
+    float GetWeight();
 };
 
 class FormationDefensive
@@ -97,7 +97,7 @@ class FormationDefensive
 public:
     ~FormationDefensive();
     void IsFielderInPosition(cFielder*, nlVector3, bool);
-    void GetWeight();
+    float GetWeight();
 };
 
 class FormationEval
@@ -107,7 +107,7 @@ public:
     virtual void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
     virtual void GetKeyPlayer();
     virtual void GetKeyPositions(cFielder*, nlVector3&, nlVector3*, bool);
-    virtual void GetWeight();
+    virtual float GetWeight();
     virtual void IsFielderInPosition(cFielder*, nlVector3, bool);
     virtual void SortPlayers(const nlVector2*);
     virtual void Update(float);

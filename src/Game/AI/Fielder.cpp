@@ -1135,7 +1135,7 @@ void cFielder::DoResetShotMeter(float fTime)
  */
 bool cFielder::IsActionDone() const
 {
-    return (m_eActionState == ACTION_NEED_ACTION) ? true : false;
+    return (u8)(m_eActionState == ACTION_NEED_ACTION);
 }
 
 /**

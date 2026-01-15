@@ -1,7 +1,7 @@
 #ifndef _FEFINDER_H_
 #define _FEFINDER_H_
 
-extern unsigned long nlStringLowerHash(const char*);
+#include "NL/nlString.h"
 
 class TLSlide;
 

@@ -3,6 +3,8 @@
 
 #include "Game/Physics/PhysicsCompositeObject.h"
 #include "Game/Physics/CollisionSpace.h"
+#include "Game/Physics/PhysicsSphere.h"
+#include "Game/Physics/PhysicsCapsule.h"
 
 #include "NL/nlList.h"
 
@@ -45,6 +47,7 @@ enum PhysicsBoneID
 
 class PhysicsBoneVolume
 {
+public:
     /* 0x00 */ PhysicsObject* m_pObject;
     /* 0x04 */ unsigned int m_BoneIndex;
     /* 0x08 */ nlMatrix4 m_Transform;
@@ -56,26 +59,40 @@ class PhysicsBoneVolume
 class PhysicsCharacterBase : public PhysicsCompositeObject
 {
 public:
-    virtual ~PhysicsCharacterBase();
+    class PhysicsSphereBone : public PhysicsSphere
+    {
+    public:
+        virtual ~PhysicsSphereBone();
+        virtual int GetObjectType() const { return 0xD; };
+
+        /* 0x2C */ PhysicsBoneVolume* m_boneVolume;
+    }; // total size: 0x30
+
+    class PhysicsCapsuleBone : public PhysicsCapsule
+    {
+    public:
+        virtual ~PhysicsCapsuleBone();
+        virtual int GetObjectType() const { return 0xE; };
+
+        /* 0x2C */ PhysicsBoneVolume* m_boneVolume;
+    }; // total size: 0x30
+
     PhysicsCharacterBase(CollisionSpace*, PhysicsWorld*, float);
-
-    void GetBoneIDForSubObject(const PhysicsObject*) const;
-    void AddBoneVolumes(PhysicsWorld*, CollisionSpace*, cPoseAccumulator*, const CharacterPhysicsData*, unsigned long, unsigned long);
+    virtual ~PhysicsCharacterBase();
+    virtual int GetObjectType() const { return 0x08; };
     virtual void UpdatePose(cPoseAccumulator*, float);
-    void SetFacingDirection(unsigned short);
-    void ReleaseObject();
-    void ContainObject(PhysicsObject*);
-    void BasePreCollide();
-    void BaseSetContactInfo(dContact*, PhysicsObject*, bool);
-    void SetCharacterPosition(const nlVector3&);
-    void GetBoneVolumePoints(nlVector3*, bool);
-    void GetNumBoneVolumePoints(bool) const;
+    virtual void ResolvePhysicsBoneIDFromName(const char*) = 0;
 
-    virtual int GetObjectType() const;
-    // void PhysicsCapsuleBone::GetObjectType() const;
-    // void PhysicsSphereBone::~PhysicsSphereBone();
-    // void PhysicsSphereBone::GetObjectType() const;
-    // void PhysicsCapsuleBone::~PhysicsCapsuleBone();
+    int GetNumBoneVolumePoints(bool includeEndpoints) const;
+    void GetBoneVolumePoints(nlVector3*, bool);
+    void SetCharacterPosition(const nlVector3&);
+    bool BaseSetContactInfo(dContact*, PhysicsObject*, bool);
+    void BasePreCollide();
+    void ContainObject(PhysicsObject*);
+    void ReleaseObject();
+    void SetFacingDirection(unsigned short);
+    void AddBoneVolumes(PhysicsWorld*, CollisionSpace*, cPoseAccumulator*, const CharacterPhysicsData*, unsigned long, unsigned long);
+    PhysicsBoneID GetBoneIDForSubObject(const PhysicsObject* obj) const;
 
     /* 0x38 */ unsigned char m_IsSupported;                             // offset 0x38, size 0x1
     /* 0x3C */ float m_CentreOfMassHeight;                              // offset 0x3C, size 0x4
@@ -83,6 +100,55 @@ public:
     /* 0x44 */ class PhysicsTransform m_SubObject;                      // offset 0x44, size 0x30
     /* 0x74 */ class nlListContainer<PhysicsBoneVolume*> m_BoneVolumes; // offset 0x74, size 0xC
 }; // total size: 0x80
+
+// class ListContainerBase < PhysicsCharacterBase
+// {
+// public:
+//     void PhysicsBoneVolume*, NewAdapter < ListEntry < PhysicsCharacterBase::PhysicsBoneVolume* >>> ::DeleteEntry(ListEntry<PhysicsCharacterBase::PhysicsBoneVolume*>*);
+// };
+
+// class nlWalkList < ListEntry < PhysicsCharacterBase
+// {
+// public:
+//     void PhysicsBoneVolume* >, ListContainerBase < PhysicsCharacterBase::PhysicsBoneVolume*, NewAdapter < ListEntry < PhysicsCharacterBase::PhysicsBoneVolume* >>>> (ListEntry<PhysicsCharacterBase::PhysicsBoneVolume*>*, ListContainerBase<PhysicsCharacterBase::PhysicsBoneVolume*, NewAdapter<ListEntry<PhysicsCharacterBase::PhysicsBoneVolume*> > >*, void (ListContainerBase<PhysicsCharacterBase::PhysicsBoneVolume*, NewAdapter<ListEntry<PhysicsCharacterBase::PhysicsBoneVolume*> > >::*)(ListEntry<PhysicsCharacterBase::PhysicsBoneVolume*>*));
+// };
+
+// class nlListAddStart < ListEntry < PhysicsCharacterBase
+// {
+// public:
+//     void PhysicsBoneVolume* >> (ListEntry<PhysicsCharacterBase::PhysicsBoneVolume*>**, ListEntry<PhysicsCharacterBase::PhysicsBoneVolume*>*, ListEntry<PhysicsCharacterBase::PhysicsBoneVolume*>**);
+// };
+
+// class PhysicsCharacterBase : public PhysicsCompositeObject
+// {
+// public:
+//     virtual ~PhysicsCharacterBase();
+//     PhysicsCharacterBase(CollisionSpace*, PhysicsWorld*, float);
+
+//     void GetBoneIDForSubObject(const PhysicsObject*) const;
+//     void AddBoneVolumes(PhysicsWorld*, CollisionSpace*, cPoseAccumulator*, const CharacterPhysicsData*, unsigned long, unsigned long);
+//     virtual void UpdatePose(cPoseAccumulator*, float);
+//     void SetFacingDirection(unsigned short);
+//     void ReleaseObject();
+//     void ContainObject(PhysicsObject*);
+//     void BasePreCollide();
+//     bool BaseSetContactInfo(dContact*, PhysicsObject*, bool);
+//     void SetCharacterPosition(const nlVector3&);
+//     void GetBoneVolumePoints(nlVector3*, bool);
+//     void GetNumBoneVolumePoints(bool) const;
+
+//     virtual int GetObjectType() const { return 0x08; };
+//     // void PhysicsCapsuleBone::GetObjectType() const;
+//     // void PhysicsSphereBone::~PhysicsSphereBone();
+//     // void PhysicsSphereBone::GetObjectType() const;
+//     // void PhysicsCapsuleBone::~PhysicsCapsuleBone();
+
+//     /* 0x38 */ unsigned char m_IsSupported;                             // offset 0x38, size 0x1
+//     /* 0x3C */ float m_CentreOfMassHeight;                              // offset 0x3C, size 0x4
+//     /* 0x40 */ struct dxJoint* m_CharMoveJoint;                         // offset 0x40, size 0x4
+//     /* 0x44 */ class PhysicsTransform m_SubObject;                      // offset 0x44, size 0x30
+//     /* 0x74 */ class nlListContainer<PhysicsBoneVolume*> m_BoneVolumes; // offset 0x74, size 0xC
+// }; // total size: 0x80
 
 // class ListContainerBase<PhysicsCharacterBase
 // {

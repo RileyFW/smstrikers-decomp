@@ -1,11 +1,18 @@
 #include "NL/nlFileGC.h"
+#include "NL/nlFile.h"
+#include "NL/nlMemory.h"
 #include "FILE_POS.h"
 #include "direct_io.h"
+#include "types.h"
+#include <string.h>
+
+static AsyncManager* s_pAsyncManager;
 
 namespace nlFileGC
 {
+AsyncToVirMemBufferLoad asyncToVirMemBufferLoad[4];
 u8 asyncToVirMemBuffer[0x4000];
-}
+} // namespace nlFileGC
 
 /**
  * Offset/Address/Size: 0x0 | 0x801CED54 | size: 0xEC
@@ -13,47 +20,6 @@ u8 asyncToVirMemBuffer[0x4000];
 void nlReadAsyncToVirtualMemory(nlFile* file, void* buffer, int size, ReadAsyncCallback callback, unsigned long alignment,
     unsigned long length, void* userData)
 {
-    s32 var_r11 = 0;
-    nlReadAsync(file, buffer, size, &nlFileGC::AsyncToVirMemBufferCallback, var_r11);
-
-    //     s32 *var_r10;
-    //     s32 temp_r10;
-    //     s32 var_ctr;
-    //     s32 var_r11;
-    //     s32 var_r23;
-    //     u32 temp_r28;
-    //     void *temp_r3;
-
-    //     var_r11 = 0;
-    //     var_r10 = &asyncToVirMemBufferLoad__22@unnamed@nlFileGC_cpp@;
-    //     var_ctr = 4;
-    // loop_1:
-    //     if ((s32) *var_r10 == 0) {
-    //         temp_r28 = arg2 / arg5;
-    //         temp_r10 = var_r11 * 0x14;
-    //         *(&asyncToVirMemBufferLoad__22@unnamed@nlFileGC_cpp@ + temp_r10) = temp_r28 + 1;
-    //         temp_r3 = &asyncToVirMemBufferLoad__22@unnamed@nlFileGC_cpp@ + temp_r10;
-    //         var_r23 = 0;
-    //         temp_r3->unk4 = arg4;
-    //         temp_r3->unk8 = arg3;
-    //         temp_r3->unk10 = arg2;
-    //         temp_r3->unkC = arg1;
-    // loop_4:
-    //         if (var_r23 < (s32) temp_r28) {
-    //             nlReadAsync(arg0, arg6, arg5, &AsyncToVirMemBufferCallback__22@unnamed@nlFileGC_cpp@FP6nlFilePvUiUl, var_r11);
-    //             var_r23 += 1;
-    //             goto loop_4;
-    //         }
-    //         nlReadAsync(arg0, arg6, arg2 % arg5, &AsyncToVirMemBufferCallback__22@unnamed@nlFileGC_cpp@FP6nlFilePvUiUl, var_r11);
-    //         return;
-    //     }
-    //     var_r10 += 0x14;
-    //     var_r11 += 1;
-    //     var_ctr -= 1;
-    //     if (var_ctr == 0) {nin
-    //         return;
-    //     }
-    //     goto loop_1;
 }
 
 /**
@@ -85,9 +51,13 @@ void nlCancelPendingAsyncReads(nlFile*)
 /**
  * Offset/Address/Size: 0x2C4 | 0x801CF018 | size: 0x34
  */
-bool nlAsyncReadsPending(nlFile*)
+bool nlAsyncReadsPending(nlFile* file)
 {
-    return false;
+    if (file != NULL)
+    {
+        return ((GCFile*)file)->PendingAsync.m_Count != 0;
+    }
+    return s_pAsyncManager->m_activeEntryList != nullptr;
 }
 
 /**
@@ -101,8 +71,29 @@ void* nlLoadEntireFileToVirtualMemory(const char*, int*, unsigned int, void*, eA
 /**
  * Offset/Address/Size: 0x5C8 | 0x801CF31C | size: 0x9C
  */
-void nlReadToVirtualMemory(nlFile*, void*, unsigned int, unsigned int)
+void* nlReadToVirtualMemory(nlFile* file, void* buffer, unsigned int size, unsigned int chunkSize)
 {
+    unsigned int readSize;
+    void* tempBuffer;
+    unsigned int offset;
+
+    tempBuffer = nlMalloc(chunkSize, 0x20, false);
+    offset = 0;
+
+    while (offset < size)
+    {
+        readSize = chunkSize;
+        if (size - offset <= chunkSize)
+        {
+            readSize = size - offset;
+        }
+        nlRead(file, tempBuffer, readSize);
+        memcpy((u8*)buffer + offset, tempBuffer, readSize);
+        offset += readSize;
+    }
+
+    nlFree(tempBuffer);
+    return buffer;
 }
 
 /**
@@ -110,7 +101,7 @@ void nlReadToVirtualMemory(nlFile*, void*, unsigned int, unsigned int)
  */
 u32 nlGetFilePosition(nlFile* file)
 {
-    return file->m_Position;
+    return ((GCFile*)file)->m_Position;
 }
 
 /**
@@ -118,16 +109,17 @@ u32 nlGetFilePosition(nlFile* file)
  */
 void nlSeek(nlFile* file, unsigned int offset, unsigned long origin)
 {
+    GCFile* gcFile = (GCFile*)file;
     switch (origin)
     { /* irregular */
     case 0:
-        file->m_Position = offset;
+        gcFile->m_Position = offset;
         return;
     case 1:
-        file->m_Position = (s32)(file->m_Position + offset);
+        gcFile->m_Position = (s32)(gcFile->m_Position + offset);
         return;
     case 2:
-        file->m_Position = (s32)(file->FileSize(NULL) - offset);
+        gcFile->m_Position = (s32)(gcFile->FileSize(NULL) - offset);
         return;
     }
 }
@@ -159,6 +151,7 @@ void nlInitFileSystem()
  */
 void GameCubeReadBlocking(GCFile*, void*, unsigned long)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -193,23 +186,28 @@ nlFile* nlOpen(const char*)
 
 /**
  * Offset/Address/Size: 0x1B78 | 0x801D08CC | size: 0xB0
+ * TODO: 88.9% match - register allocation differs (r4/r7 swap for amountRead, r0/r4 swap)
  */
-BOOL TDEVChunkFile::GetReadStatus()
+s32 TDEVChunkFile::GetReadStatus()
 {
-    s8 isComplete;
-    u32 remainingBytes;
-    u32 readSize;
+    fseek(m_pFile, m_CurrentRead.Pos + m_CurrentRead.AmountRead, 0);
 
-    fseek(m_file, m_readOffset + m_bytesRead, 0);
-    readSize = 0x3000U; // Default chunk size (12KB)
-    remainingBytes = m_readLength - m_bytesRead;
+    u32 amountRead = m_CurrentRead.AmountRead;
+    u32 length = m_CurrentRead.Length;
+    u32 readSize = 0x3000U;
+    u8* buffer = m_CurrentRead.Buffer;
+    u32 remainingBytes = length - amountRead;
+    u8* dest = buffer + amountRead;
     if (remainingBytes <= 0x3000U)
     {
         readSize = remainingBytes;
     }
-    isComplete = 0;
-    m_bytesRead = (u32)(m_bytesRead + fread((void*)((u8*)m_buffer + m_bytesRead), 1, readSize, m_file));
-    if ((m_bytesRead == m_readLength) || ((m_readLength == 0x20U) && (m_bytesRead != 0U)))
+
+    u32 bytesRead = fread(dest, 1, readSize, m_pFile);
+    u8 isComplete = 0;
+    m_CurrentRead.AmountRead = m_CurrentRead.AmountRead + bytesRead;
+
+    if ((m_CurrentRead.AmountRead == m_CurrentRead.Length) || ((m_CurrentRead.Length == 0x20U) && (m_CurrentRead.AmountRead != 0U)))
     {
         isComplete = 1;
     }
@@ -219,13 +217,13 @@ BOOL TDEVChunkFile::GetReadStatus()
 /**
  * Offset/Address/Size: 0x1C28 | 0x801D097C | size: 0x40
  */
-BOOL TDEVChunkFile::ReadAsync(void* buffer, unsigned long length, unsigned long offset)
+void TDEVChunkFile::ReadAsync(void* buffer, unsigned long length, unsigned long offset)
 {
-    m_buffer = buffer;
-    m_readOffset = offset;
-    m_readLength = length;
-    m_bytesRead = 0;
-    return GetReadStatus();
+    m_CurrentRead.Buffer = (u8*)buffer;
+    m_CurrentRead.Pos = offset;
+    m_CurrentRead.Length = length;
+    m_CurrentRead.AmountRead = 0;
+    GetReadStatus();
 }
 
 /**
@@ -233,7 +231,7 @@ BOOL TDEVChunkFile::ReadAsync(void* buffer, unsigned long length, unsigned long 
  */
 void GCFile::Read(void* buffer, unsigned int size)
 {
-    GameCubeReadBlocking(NULL, buffer, size);
+    GameCubeReadBlocking(this, buffer, size);
 }
 
 namespace nlFileGC
@@ -251,25 +249,24 @@ void AsyncToVirMemBufferLoad()
  */
 TDEVChunkFile::~TDEVChunkFile()
 {
-    fclose(m_file);
-    m_file = NULL;
+    fclose(m_pFile);
+    m_pFile = NULL;
 }
 
 /**
  * Offset/Address/Size: 0x90 | 0x801D0C64 | size: 0x8C
+ * TODO: 84.4% match - uses 3 registers (r29-r31) instead of 4 (r28-r31)
  */
-u32 TDEVChunkFile::FileSize(unsigned int* size)
+u32 TDEVChunkFile::FileSize(unsigned int* pSize)
 {
-    u32 currentPosition;
-    u32 fileSize;
-
-    currentPosition = ftell(m_file);
-    fseek(m_file, 0, 2);
-    fileSize = ftell(m_file);
-    fseek(m_file, currentPosition, 0);
-    if (size != NULL)
+    _FILE* file = m_pFile;
+    u32 currentPosition = ftell(file);
+    fseek(file, 0, 2);
+    u32 fileSize = ftell(file);
+    fseek(file, currentPosition, 0);
+    if (pSize != NULL)
     {
-        *size = fileSize;
+        *pSize = fileSize;
     }
     return fileSize;
 }
@@ -314,7 +311,7 @@ u32 DolphinFile::FileSize(unsigned int* size)
 /**
  * Offset/Address/Size: 0x220 | 0x801D0DF4 | size: 0x24
  */
-BOOL DolphinFile::GetReadStatus()
+s32 DolphinFile::GetReadStatus()
 {
     return DVDGetCommandBlockStatus(&m_fileInfo.cb);
 }
@@ -322,9 +319,9 @@ BOOL DolphinFile::GetReadStatus()
 /**
  * Offset/Address/Size: 0x244 | 0x801D0E18 | size: 0x2C
  */
-BOOL DolphinFile::ReadAsync(void* addr, unsigned long length, unsigned long offset)
+void DolphinFile::ReadAsync(void* addr, unsigned long length, unsigned long offset)
 {
-    return DVDReadAsyncPrio(&m_fileInfo, addr, (s32)length, (s32)offset, 0, 2);
+    DVDReadAsyncPrio(&m_fileInfo, addr, (s32)length, (s32)offset, 0, 2);
 }
 
 /**
