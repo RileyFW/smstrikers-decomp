@@ -3,7 +3,12 @@
 
 #include "types.h"
 
+#include "Game/BaseSceneHandler.h"
+#include "Game/FE/feButtonComponent.h"
+#include "Game/FE/feMenu.h"
+#include "Game/FE/feScrollText.h"
 #include "Game/FE/tlComponentInstance.h"
+#include "NL/nlColour.h"
 
 // void onSelectOptions(TLComponentInstance*);
 // void onSelectTrophies(TLComponentInstance*);
@@ -17,16 +22,21 @@
 // void onSelectFriendly(TLComponentInstance*);
 // void 0x800AC504..0x800AC560 | size: 0x5C;
 
-class SHMainMenu
+class SHMainMenu : public BaseSceneHandler
 {
 public:
     SHMainMenu();
-    ~SHMainMenu();
-    void SceneCreated();
+    virtual ~SHMainMenu();
+    virtual void SceneCreated();
+    virtual void Update(float);
     void OpenItem(TLComponentInstance*);
     void CloseItem(TLComponentInstance*);
-    void Update(float);
-};
+
+    /* 0x01C */ FEScrollText* m_itemDescriptions;
+    /* 0x020 */ nlColour mHighlightColour;
+    /* 0x024 */ MenuList<TLComponentInstance> mMenuItems;
+    /* 0x238 */ ButtonComponent mButtons;
+}; // total size: 0x25C
 
 // class MenuItem<TLComponentInstance>
 // {

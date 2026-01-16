@@ -35,9 +35,10 @@ public:
     };
 
     TournTeamSetupSceneV2();
-    ~TournTeamSetupSceneV2();
-    void SceneCreated();
-    void Update(float);
+    virtual ~TournTeamSetupSceneV2();
+    virtual void SceneCreated();
+    virtual void Update(float);
+
     void UpdateControllerIcon(int);
     void UpdateRow(int);
     void ChangeState(TournTeamSetupSceneV2::eTeamChooserState, TournTeamSetupSceneV2::eTeamChooserState);

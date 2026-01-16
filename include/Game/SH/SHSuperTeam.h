@@ -1,13 +1,18 @@
 #ifndef _SHSUPERTEAM_H_
 #define _SHSUPERTEAM_H_
 
-class SuperTeamScene
+#include "Game/BaseSceneHandler.h"
+#include "Game/FE/feButtonComponent.h"
+
+class SuperTeamScene : public BaseSceneHandler
 {
 public:
-    ~SuperTeamScene();
-    void Update(float);
-    void SceneCreated();
-};
+    virtual ~SuperTeamScene();
+    virtual void Update(float);
+    virtual void SceneCreated();
+
+    /* 0x1C */ ButtonComponent mButtons;
+}; // total size: 0x40
 
 // class FEFinder<TLComponentInstance, 4>
 // {

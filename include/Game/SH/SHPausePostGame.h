@@ -1,23 +1,31 @@
 #ifndef _SHPAUSEPOSTGAME_H_
 #define _SHPAUSEPOSTGAME_H_
 
-// void nlStrNCpy<unsigned short>(unsigned short*, const unsigned short*, unsigned long);
-
-#include "types.h"
+#include "Game/BaseSceneHandler.h"
+#include "Game/FE/feButtonComponent.h"
+#include "Game/FE/feMenu.h"
+#include "Game/FE/tlComponentInstance.h"
 #include "Game/FE/tlTextInstance.h"
+#include "NL/nlBasicString.h"
 
-class PausePostGameScene
+class PausePostGameScene : public BaseSceneHandler
 {
 public:
     PausePostGameScene();
-    ~PausePostGameScene();
-    void SceneCreated();
-    void Update(float);
+    virtual ~PausePostGameScene();
+    virtual void SceneCreated();
+    virtual void Update(float);
+
     void OnSelectRematch();
     void OnSelectQuit();
     void OnSelectChangeTeams();
-    // void SetText(TLTextInstance&, const BasicString<unsigned short, Detail::TempStringAllocator>&);
-};
+    void SetText(TLTextInstance&, const BasicString<unsigned short, Detail::TempStringAllocator>&);
+
+    /* 0x01C */ MenuList<TLComponentInstance> mMenuItems; // size 0x214
+    /* 0x230 */ unsigned short mScoreBuffer[2][8];        // size 0x20
+    /* 0x250 */ unsigned short mRematchTextBuffer[128];   // size 0x100
+    /* 0x350 */ ButtonComponent mButtons;                 // size 0x24
+}; // total size: 0x374
 
 // class FEFinder<TLTextInstance, 3>
 // {

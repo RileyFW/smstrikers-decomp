@@ -110,7 +110,15 @@
  * Offset/Address/Size: 0x19A4 | 0x800A8114 | size: 0x5C
  */
 SuperLoadingScene::SuperLoadingScene()
+    : BaseSceneHandler()
 {
+    mType = TT_INVALID;
+    mElapsedTime = 0.0f;
+    mAlreadySwappedTextures = false;
+    mImageInstances[0][0] = NULL;
+    mImageInstances[1][0] = NULL;
+    mTextureHandles[0][0] = -1;
+    mTextureHandles[1][0] = -1;
 }
 
 /**

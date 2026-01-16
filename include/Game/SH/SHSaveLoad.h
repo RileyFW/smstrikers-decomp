@@ -45,13 +45,13 @@ public:
     static void StartSaveNow();
     static void UpdateCardRemovedFlag();
 
-    /* 0x1C */ TLTextInstance* m_displayText;     // offset 0x1C, size 0x4
-    /* 0x20 */ SceneList mNextScene;              // offset 0x20, size 0x4
-    /* 0x24 */ bool mIsAutoSaving;                // offset 0x24, size 0x1
-    /* 0x25 */ bool mIsFirstTimeCreateFile;       // offset 0x25, size 0x1
-    /* 0x28 */ TLSlide* mAboutAutoSaveSlide;      // offset 0x28, size 0x4
-    /* 0x2C */ ButtonComponent* mButtonComponent; // offset 0x2C, size 0x4
-    /* 0x30 */ eSaveLoadMode mSaveLoadMode;       // offset 0x30, size 0x4
+    /* 0x1C */ TLTextInstance* m_displayText;
+    /* 0x20 */ SceneList mNextScene;
+    /* 0x24 */ bool mIsAutoSaving;
+    /* 0x25 */ bool mIsFirstTimeCreateFile;
+    /* 0x28 */ TLSlide* mAboutAutoSaveSlide;
+    /* 0x2C */ ButtonComponent* mButtonComponent;
+    /* 0x30 */ eSaveLoadMode mSaveLoadMode;
 
     static SaveLoadScene* mInstance;
     static bool mLastSaveLoadSuccess;

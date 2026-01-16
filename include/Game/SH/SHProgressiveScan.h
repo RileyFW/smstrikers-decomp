@@ -1,15 +1,29 @@
 #ifndef _SHPROGRESSIVESCAN_H_
 #define _SHPROGRESSIVESCAN_H_
 
-class ProgressiveScanScene
+#include "Game/BaseSceneHandler.h"
+#include "Game/FE/feAsyncImage.h"
+#include "Game/FE/tlComponentInstance.h"
+
+class ProgressiveScanScene : public BaseSceneHandler
 {
 public:
     ProgressiveScanScene(bool);
-    ~ProgressiveScanScene();
-    void SceneCreated();
-    void Update(float);
+    virtual ~ProgressiveScanScene();
+    virtual void SceneCreated();
+    virtual void Update(float);
     void SwitchMessageImage();
-};
+
+    /* 0x1C */ AsyncImage* mUseProgressiveImage[2];
+    /* 0x24 */ AsyncImage* mConfirmationImage;
+    /* 0x28 */ bool mHasChoiceBeenMade;
+    /* 0x29 */ bool mUseProgressiveMode;
+    /* 0x2A */ bool mCanProceed;
+    /* 0x2B */ bool mFadingOut;
+    /* 0x2C */ bool mDoRGB60Instead;
+    /* 0x30 */ TLComponentInstance* mSelectorComponent;
+    /* 0x34 */ float mElapsedTime;
+}; // total size: 0x38
 
 // class FEFinder<TLImageInstance, 2>
 // {

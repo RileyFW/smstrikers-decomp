@@ -13,6 +13,7 @@ public:
     virtual ~TournSetParamsScene();
     virtual void Update(float);
     virtual void SceneCreated();
+
     void BuildSubMenuList(int, TLComponentInstance*, bool, int);
     void SetInitialParams(bool, int, int);
     void ApplyMenuDefaults();

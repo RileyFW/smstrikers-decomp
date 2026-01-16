@@ -19,9 +19,9 @@ public:
     };
 
     SpoilsScene();
-    ~SpoilsScene();
-    void Update(float);
-    void SceneCreated();
+    virtual ~SpoilsScene();
+    virtual void Update(float);
+    virtual void SceneCreated();
     void ShowSpoils(SpoilsScene::eSpoils);
 
     /* 0x01C */ MenuList<TLComponentInstance> mMenuItems; // size 0x214

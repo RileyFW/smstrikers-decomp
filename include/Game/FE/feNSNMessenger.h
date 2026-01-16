@@ -40,6 +40,7 @@ class BaseOverlayHandler : public BaseSceneHandler
 {
 public:
     BaseOverlayHandler(u32 VisibilityMask, ScreenPosition position = POSITION_TOP)
+        : BaseSceneHandler()
     {
         mPosition = position;
         mVisibilityMask = VisibilityMask;

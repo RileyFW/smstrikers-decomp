@@ -1,14 +1,19 @@
 #ifndef _SHQUICKGAMEPLAYOPTIONS_H_
 #define _SHQUICKGAMEPLAYOPTIONS_H_
 
+#include "Game/BaseSceneHandler.h"
 
-class QuickGameplayOptionsScene
+class OptionsGameplayMenuV2;
+
+class QuickGameplayOptionsScene : public BaseSceneHandler
 {
 public:
     QuickGameplayOptionsScene();
-    ~QuickGameplayOptionsScene();
-    void SceneCreated();
-    void Update(float);
-};
+    virtual ~QuickGameplayOptionsScene();
+    virtual void Update(float);
+    virtual void SceneCreated();
+
+    /* 0x1C */ OptionsGameplayMenuV2* m_pOptionsMenu;
+}; // size: 0x20
 
 #endif // _SHQUICKGAMEPLAYOPTIONS_H_
