@@ -15,12 +15,8 @@ extern FEInput* g_pFEInput;
  * Offset/Address/Size: 0x278 | 0x8010D0BC | size: 0x74
  */
 QuickGameplayOptionsScene::QuickGameplayOptionsScene()
+    : BaseSceneHandler()
 {
-    m_bVisible = true;
-    m_pScreenHandlerList = NULL;
-    m_pActiveScreenHandler = NULL;
-    m_pFEPresentation = NULL;
-    m_pFEScene = NULL;
     m_pOptionsMenu = NULL;
     g_pFEInput->PushExclusiveInputLock(this, SCENE_QUICK_GAMEPLAY_OPTIONS);
 }
@@ -57,18 +53,10 @@ void QuickGameplayOptionsScene::SceneCreated()
 
     FEPresentation* pPresentation = m_pFEScene->m_pFEPackage->GetPresentation();
 
-    int maxSkillLevel = 4;
-    if (GameInfoManager::GetInstance()->IsLegendSkillUnlocked())
-    {
-        maxSkillLevel = -1;
-    }
+    int maxSkillLevel = GameInfoManager::GetInstance()->IsLegendSkillUnlocked() ? -1 : 4;
 
     OptionsGameplayMenuV2* pMem = (OptionsGameplayMenuV2*)nlMalloc(0x27C, 8, false);
-    if (pMem != NULL)
-    {
-        pMem = new (pMem) OptionsGameplayMenuV2(pPresentation, (ButtonComponent::ButtonState)2,
-            GameInfoManager::GetInstance()->mCurGameGameplayOptions, maxSkillLevel);
-    }
+    pMem = new (pMem) OptionsGameplayMenuV2(pPresentation, ButtonComponent::BS_B_ONLY, GameInfoManager::GetInstance()->mCurGameGameplayOptions, maxSkillLevel);
     m_pOptionsMenu = pMem;
 }
 
@@ -83,7 +71,7 @@ void QuickGameplayOptionsScene::Update(float dt)
     {
         if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x200, false, NULL))
         {
-            m_pOptionsMenu->Revert();
+            m_pOptionsMenu->Save();
 
             GameInfoManager* pGameInfo = GameInfoManager::GetInstance();
             pGameInfo->mUserInfo.mGameplayOptions.SkillLevel = pGameInfo->mCurGameGameplayOptions.SkillLevel;
