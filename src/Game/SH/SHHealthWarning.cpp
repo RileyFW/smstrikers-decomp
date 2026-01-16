@@ -1,5 +1,7 @@
 #include "Game/SH/SHHealthWarning.h"
 
+#include "NL/nlMemory.h"
+
 // /**
 //  * Offset/Address/Size: 0x2D4 | 0x8010DAA8 | size: 0x15C
 //  */
@@ -52,7 +54,19 @@
  * Offset/Address/Size: 0x5C8 | 0x8010D6F8 | size: 0xDC
  */
 HealthWarningSceneV2::HealthWarningSceneV2()
+    : BaseSceneHandler()
 {
+    const char* messageImageFilename = "art/fe/HealthSafetyUI.res";
+
+    mMessageImage = NULL;
+    mPressButtonImage = NULL;
+    mElapsedTime = 0.0f;
+
+    AsyncImage* messageImage = new (nlMalloc(0x1C, 0x20, 1)) AsyncImage(messageImageFilename, NULL);
+    mMessageImage = messageImage;
+
+    AsyncImage* pressButtonImage = new (nlMalloc(0x1C, 0x20, 1)) AsyncImage(messageImageFilename, NULL);
+    mPressButtonImage = pressButtonImage;
 }
 
 /**
@@ -60,14 +74,14 @@ HealthWarningSceneV2::HealthWarningSceneV2()
  */
 HealthWarningSceneV2::~HealthWarningSceneV2()
 {
-    if (m_unk_0x1C != NULL)
+    if (mMessageImage != NULL)
     {
-        delete m_unk_0x1C;
+        delete mMessageImage;
     }
 
-    if (m_unk_0x20 != NULL)
+    if (mPressButtonImage != NULL)
     {
-        delete m_unk_0x20;
+        delete mPressButtonImage;
     }
 }
 

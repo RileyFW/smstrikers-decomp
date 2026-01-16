@@ -1,22 +1,21 @@
 #ifndef _SHCUPOPTIONS_H_
 #define _SHCUPOPTIONS_H_
 
-#include "types.h"
+#include "Game/BaseSceneHandler.h"
+#include "Game/BaseGameSceneManager.h"
+#include "Game/FE/feOptionsSubMenus.h"
 
-class SceneList
-{
-public:
-    SceneList();
-    ~SceneList();
-};
-
-class CupOptionsScene
+class CupOptionsScene : public BaseSceneHandler
 {
 public:
     CupOptionsScene(SceneList, SceneList);
-    ~CupOptionsScene();
-    void SceneCreated();
-    void Update(float);
-};
+    virtual ~CupOptionsScene();
+    virtual void Update(float);
+    virtual void SceneCreated();
+
+    /* 0x1C */ OptionsGameplayMenuV2* m_gameplayMenu;
+    /* 0x20 */ SceneList m_backScene;
+    /* 0x24 */ SceneList m_forwardScene;
+}; // total size: 0x28
 
 #endif // _SHCUPOPTIONS_H_
