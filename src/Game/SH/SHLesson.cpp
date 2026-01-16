@@ -1,4 +1,5 @@
 #include "Game/SH/SHLesson.h"
+#include "Game/SH/SHLessonSelect.h"
 #include "Game/BaseGameSceneManager.h"
 #include "Game/FE/FEAudio.h"
 #include "Game/FE/feInput.h"
@@ -68,8 +69,9 @@ int LessonScene::mLessonIndex = -1;
  * Offset/Address/Size: 0x508 | 0x8010A9B4 | size: 0x6C
  */
 LessonScene::LessonScene()
-    : mHudScene(nullptr)
+    : mHUDScene(nullptr)
 {
+    // EMPTY
 }
 
 /**
@@ -77,6 +79,21 @@ LessonScene::LessonScene()
  */
 LessonScene::~LessonScene()
 {
+    // EMPTY
+}
+
+/**
+ * Offset/Address/Size: 0x1DC | 0x8010A688 | size: 0x2B4
+ */
+void LessonScene::SceneCreated()
+{
+    char title[64];
+    char body[64];
+    TLTextInstance* titletextinstance;
+    TLTextInstance* bodytextinstance;
+    TLComponentInstance* buttonComponent;
+    nlSNPrintf("LOC_TUTORIAL_INSTRUCTION_TITLE_%d", mLessonIndex, title, 0x40);
+    nlSNPrintf("LOC_TUTORIAL_INSTRUCTION_BODY_%d", mLessonIndex, body, 0x40);
 }
 
 /**
@@ -84,8 +101,8 @@ LessonScene::~LessonScene()
  */
 void LessonScene::Update(float fDeltaT)
 {
-    MoviePlayerScene* scene; // r31
-    char filename[128];      // r1+0x8
+    MoviePlayerScene* scene;
+    char filename[128];
 
     BaseSceneHandler::Update(fDeltaT);
     this->mButtons.CentreButtons();
@@ -114,19 +131,19 @@ void LessonScene::Update(float fDeltaT)
     }
     if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x100, false, nullptr))
     {
-        scene = (MoviePlayerScene*)nlSingleton<OverlayManager>::s_pInstance->Push(IGSCENE_LESSON_MOVIE_PLAYER, SCREEN_FORWARD, false);
+        MoviePlayerScene* movieScene = (MoviePlayerScene*)nlSingleton<OverlayManager>::s_pInstance->Push(IGSCENE_LESSON_MOVIE_PLAYER, SCREEN_FORWARD, false);
         nlSNPrintf(filename, 0x80, "movies/lesson%d.thp", mLessonIndex);
-        scene->SetMovieDetails(filename, true, false);
-        scene->mNextScene = IGSCENE_LESSON;
-        scene->mPushWithPop = false;
-        g_pFEInput->PushExclusiveInputLock(scene, -1);
+        movieScene->SetMovieDetails(filename, true, false);
+        movieScene->mNextScene = IGSCENE_LESSON;
+        movieScene->mPushWithPop = false;
+        g_pFEInput->PushExclusiveInputLock(movieScene, -1);
         FEAudio::PlayAnimAudioEvent("sfx_accept", NULL);
         return;
     }
     if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x200, false, nullptr))
     {
-        scene = (MoviePlayerScene*)nlSingleton<OverlayManager>::s_pInstance->Push(IGSCENE_LESSON_SELECT, SCREEN_BACK, true);
-        scene->m_bVisible = true; // Todo: Find offset 0x2b2 :pray:
+        LessonSelectScene* lessonScene = (LessonSelectScene*)nlSingleton<OverlayManager>::s_pInstance->Push(IGSCENE_LESSON_SELECT, SCREEN_BACK, true);
+        lessonScene->mStartAnimAtEnd = true;
         FEAudio::PlayAnimAudioEvent("sfx_back", NULL);
         return;
     }
@@ -136,20 +153,6 @@ void LessonScene::Update(float fDeltaT)
         FEAudio::PlayAnimAudioEvent("sfx_back", NULL);
         FEAudio::PlayAnimAudioEvent("sfx_screen_back", NULL);
     }
-}
-
-/**
- * Offset/Address/Size: 0x1DC | 0x8010A688 | size: 0x2B4
- */
-void LessonScene::SceneCreated()
-{
-    char title[64];                       // r1+0xC0
-    char body[64];                        // r1+0x80
-    TLTextInstance* titletextinstance;    // r28
-    TLTextInstance* bodytextinstance;     // r31
-    TLComponentInstance* buttonComponent; // r0
-    nlSNPrintf("LOC_TUTORIAL_INSTRUCTION_TITLE_%d", mLessonIndex, title, 0x40);
-    nlSNPrintf("LOC_TUTORIAL_INSTRUCTION_BODY_%d", mLessonIndex, body, 0x40);
 }
 
 /**

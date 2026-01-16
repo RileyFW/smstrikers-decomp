@@ -3,7 +3,7 @@
 
 #include "Game/BaseSceneHandler.h"
 #include "Game/FE/feButtonComponent.h"
-#include "types.h"
+
 class LessonScene : public BaseSceneHandler
 {
 public:
@@ -11,12 +11,15 @@ public:
     virtual ~LessonScene();
     virtual void SceneCreated();
     virtual void Update(float);
+
     static void SetLesson(int);
+
+    /* 0x1C */ bool mHUDWasVisible;
+    /* 0x20 */ BaseSceneHandler* mHUDScene;
+    /* 0x24 */ ButtonComponent mButtons;
+
     static int mLessonIndex;
-    bool mHUDWasVisible;
-    class BaseSceneHandler* mHudScene;
-    class ButtonComponent mButtons;
-};
+}; // total size: 0x48
 
 // class FEFinder<TLComponentInstance, 4>
 // {

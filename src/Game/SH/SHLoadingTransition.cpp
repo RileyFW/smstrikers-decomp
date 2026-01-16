@@ -1,10 +1,18 @@
 #include "Game/SH/SHLoadingTransition.h"
+#include "Game/GameSceneManager.h"
+#include "Game/GameInfo.h"
+#include "Game/FE/feInput.h"
+#include "Game/SH/SHLoading.h"
+
+extern bool g_e3_Build;
+extern FEInput* g_pFEInput;
 
 /**
  * Offset/Address/Size: 0x158 | 0x800DA214 | size: 0x70
  */
 LoadingTransitionScene::LoadingTransitionScene()
 {
+    g_pFEInput->PushExclusiveInputLock(this, SCENE_LOADING_TRANSITION);
 }
 
 /**
@@ -12,6 +20,7 @@ LoadingTransitionScene::LoadingTransitionScene()
  */
 LoadingTransitionScene::~LoadingTransitionScene()
 {
+    g_pFEInput->PopExclusiveInputLock(this);
 }
 
 /**
@@ -19,11 +28,34 @@ LoadingTransitionScene::~LoadingTransitionScene()
  */
 void LoadingTransitionScene::SceneCreated()
 {
+    m_pFEPresentation->m_currentSlide->m_uPlayMode = TLPM_STOP_AT_END;
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x800DA0BC | size: 0xCC
  */
-void LoadingTransitionScene::Update(float)
+void LoadingTransitionScene::Update(float dt)
 {
+    BaseSceneHandler::Update(dt);
+
+    TLSlide* slide = m_pFEPresentation->m_currentSlide;
+
+    if (slide->m_time >= slide->m_start + slide->m_duration)
+    {
+        GameSceneManager::GetInstance()->Pop();
+
+        if (!g_e3_Build)
+        {
+            if (!GameInfoManager::GetInstance()->IsInCupOrTournamentMode())
+            {
+                if (!GameInfoManager::GetInstance()->mIsInStrikers101Mode)
+                {
+                    GameSceneManager::GetInstance()->Pop();
+                }
+            }
+        }
+
+        SuperLoadingScene* scene = (SuperLoadingScene*)GameSceneManager::GetInstance()->Push(SCENE_SUPER_LOADING, SCREEN_NOTHING, false);
+        scene->mType = SuperLoadingScene::TT_IN;
+    }
 }
