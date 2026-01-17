@@ -44,7 +44,7 @@ public:
     void PlayLoadLoopMusic();
     static void PlayFEMenuMusic();
     void PlayFETitleMusicWithFade();
-    void StartFEStream(const char*, bool, const char*);
+    static void StartFEStream(const char*, bool, const char*);
     static bool IsInited();
     void Initialize();
     void ActivateDPL2(bool, bool);

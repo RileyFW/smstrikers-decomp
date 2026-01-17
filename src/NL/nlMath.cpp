@@ -263,10 +263,22 @@ float nlSin(unsigned short arg0)
 
 /**
  * Offset/Address/Size: 0x790 | 0x801D1C04 | size: 0x70
+ * TODO: 96.79% match - register allocation diffs in Newton-Raphson iterations
  */
-float nlRecipSqrt(float, bool)
+float nlRecipSqrt(float x, bool)
 {
-    return 0.f;
+    if (x > 0.0f) {
+        // Newton-Raphson reciprocal square root
+        float y = __frsqrte(x);
+        y = 0.5f * y * (3.0f - x * y * y);
+        y = 0.5f * y * (3.0f - x * y * y);
+        y = 0.5f * y * (3.0f - x * y * y);
+        return y;
+    } else if (x != 0.0f) {
+        return NAN;
+    } else {
+        return INFINITY;
+    }
 }
 
 /**

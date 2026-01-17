@@ -3,9 +3,8 @@
 
 #include "types.h"
 #include "NL/nlMath.h"
-// #include "Game/Drawable/SkinAnimatedNPC.h"
-
-class SkinAnimatedNPC;
+#include "Game/Render/SidelineExplodable.h"
+#include "Game/Render/SkinAnimatedNPC.h"
 
 enum AnimatedModelExplodableCategory
 {
@@ -18,16 +17,19 @@ enum AnimatedModelExplodableCategory
 // void nlListAddEnd<SidelineExplodableNode>(SidelineExplodableNode**, SidelineExplodableNode**, SidelineExplodableNode*);
 // void 0x8028D2FC..0x8028D300 | size: 0x4;
 
-class AnimatedModelExplodable
+class AnimatedModelExplodable : public SidelineExplodable
 {
 public:
     void CleanUp();
     AnimatedModelExplodable(AnimatedModelExplodableCategory, SkinAnimatedNPC*);
     ~AnimatedModelExplodable();
     void GetCategoryData() const;
-    void GetWorldMatrix() const;
+    const nlMatrix4& GetWorldMatrix() const;
     void SetUnexplodedModelVisibility(bool);
     static bool LoadGeometry();
-};
+
+    /* 0x2C */ SkinAnimatedNPC* mpAnimatedNPC;
+    /* 0x30 */ AnimatedModelExplodableCategory mCategory;
+}; // total size: 0x34
 
 #endif // _ANIMATEDMODELEXPLODABLE_H_

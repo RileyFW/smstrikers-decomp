@@ -3,8 +3,9 @@
 /**
  * Offset/Address/Size: 0x0 | 0x80171594 | size: 0xC
  */
-void GameRenderTask::GetName()
+const char* GameRenderTask::GetName()
 {
+    return "Game Render";
 }
 
 /**

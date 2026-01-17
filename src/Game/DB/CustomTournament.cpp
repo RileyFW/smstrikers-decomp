@@ -423,8 +423,9 @@ void CustomTournament::ConstructCup()
 /**
  * Offset/Address/Size: 0x150 | 0x8018D600 | size: 0xC
  */
-void CustomTournament::GetSaveDataSize() const
+int CustomTournament::GetSaveDataSize() const
 {
+    return m_largestCupSize + 7;
 }
 
 /**

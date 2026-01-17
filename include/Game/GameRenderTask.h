@@ -5,7 +5,7 @@
 class GameRenderTask
 {
 public:
-    void GetName();
+    const char* GetName();
     void Run(float);
 };
 

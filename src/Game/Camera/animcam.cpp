@@ -61,6 +61,7 @@ void cAnimCamera::BuildAnimViewMatrix(nlMatrix4&)
  */
 void cAnimCamera::UnselectCameraAnimation()
 {
+    m_pActiveCameraData = 0;
 }
 
 /**

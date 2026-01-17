@@ -21,7 +21,7 @@ public:
     CustomTournament();
     ~CustomTournament();
     void ConstructCup();
-    void GetSaveDataSize() const;
+    int GetSaveDataSize() const;
     void SerializeData(void*) const;
     void DeserializeData(void*);
 

@@ -24,7 +24,7 @@ public:
     /* 0x08 */ virtual void Update(float);
     /* 0x10 */ virtual StreamTrack& CreateTrack(const char*, MasterVolume::VOLUME_GROUP);
     /* 0x14 */ virtual void OnMasterVolumeChange(MasterVolume::VOLUME_GROUP);
-    /* 0x18 */ virtual void GetTrack(unsigned long);
+    /* 0x18 */ virtual StreamTrack* GetTrack(unsigned long);
     /* 0x1C */ virtual void StopAllTracks(unsigned long);
 
     // class FadeManager

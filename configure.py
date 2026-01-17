@@ -976,7 +976,7 @@ config.libs = [
             Object(NonMatching, "Game/FE/feCaptainGridComponent.cpp"),
             Object(NonMatching, "Game/FE/feInput.cpp"),
             Object(NonMatching, "Game/FE/feScrollingTicker.cpp"),
-            Object(NonMatching, "Game/FE/feMusic.cpp"),
+            Object(Matching, "Game/FE/feMusic.cpp"),
             Object(NonMatching, "Game/FE/feInGameMessengerManager.cpp"),
             Object(NonMatching, "Game/FE/feHelpFuncs.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/FE/feSlideMenu.cpp"),

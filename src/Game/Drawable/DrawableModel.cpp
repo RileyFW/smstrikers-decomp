@@ -1,4 +1,8 @@
 #include "Game/Drawable/DrawableModel.h"
+#include "Game/Render/RenderShadow.h"
+#include "NL/gl/glMatrix.h"
+
+extern bool g_bShadowVolumes;
 
 static float sfCoPlanarZ;
 static float sfCoPlanar0Z;
@@ -91,6 +95,15 @@ void DrawableModel::DrawPlanarShadow()
  */
 void DrawableShadow::Draw()
 {
+    if (g_bShadowVolumes) {
+        u32 mtx;
+        nlMatrix4& worldMtx = GetWorldMatrix();
+        mtx = glAllocMatrix();
+        if (mtx + 0x10000 != 0xFFFF) {
+            glSetMatrix(mtx, worldMtx);
+        }
+        RenderShadowModel(2, m_pModel, mtx);
+    }
 }
 
 /**

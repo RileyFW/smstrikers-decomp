@@ -56,8 +56,10 @@ void ShaderSkinMesh::StitchModel()
 /**
  * Offset/Address/Size: 0x4F0 | 0x801B6034 | size: 0x60
  */
-void TempMatrixCopier::CopyMatrix(const unsigned long&, unsigned long*)
+void TempMatrixCopier::CopyMatrix(const unsigned long& boneId, unsigned long* outValue)
 {
+    SkinMatrix& matrix = (SkinMatrix&)m_Mesh->GetPoseMatrix(boneId);
+    matrix.Get(m_TempMatrices[*outValue]);
 }
 
 /**

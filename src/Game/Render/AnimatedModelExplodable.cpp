@@ -52,8 +52,9 @@ void AnimatedModelExplodable::GetCategoryData() const
 /**
  * Offset/Address/Size: 0x24 | 0x80158990 | size: 0xC
  */
-void AnimatedModelExplodable::GetWorldMatrix() const
+const nlMatrix4& AnimatedModelExplodable::GetWorldMatrix() const
 {
+    return mpAnimatedNPC->mWorldMatrix;
 }
 
 /**
