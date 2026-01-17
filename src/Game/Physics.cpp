@@ -1,5 +1,7 @@
 #include "Game/Physics/Physics.h"
 
+#include "NL/nlMemory.h"
+
 /**
  * Offset/Address/Size: 0x0 | 0x80132B10 | size: 0x14C
  */
@@ -38,22 +40,31 @@ void PhysicsLoader::StartLoad(LoadingManager*)
 /**
  * Offset/Address/Size: 0x9E8 | 0x801334F8 | size: 0x20
  */
-void ODEFree(void*, unsigned long)
+void ODEFree(void* ptr, unsigned long size)
 {
+    nlFree(ptr);
 }
 
 /**
  * Offset/Address/Size: 0xA08 | 0x80133518 | size: 0x70
  */
-void ODERealloc(void*, unsigned long, unsigned long)
+void* ODERealloc(void* oldPtr, unsigned long oldSize, unsigned long newSize)
 {
+    void* newPtr = nlMalloc(newSize, 8, false);
+    if (oldSize != 0)
+    {
+        memcpy(newPtr, oldPtr, oldSize);
+    }
+    nlFree(oldPtr);
+    return newPtr;
 }
 
 /**
  * Offset/Address/Size: 0xA78 | 0x80133588 | size: 0x28
  */
-void ODEAlloc(unsigned long)
+void* ODEAlloc(unsigned long size)
 {
+    return nlMalloc(size, 8, false);
 }
 
 // /**

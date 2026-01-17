@@ -4,37 +4,25 @@
 /**
  * Offset/Address/Size: 0x0 | 0x801D2638 | size: 0x48
  */
-void nlStrToWcs(const char* arg0, unsigned short* arg1, unsigned long arg2)
+void nlStrToWcs(const char* str, unsigned short* wstr, unsigned long maxLen)
 {
-    char* var_r3;
-    s16* var_r7;
-    u8 temp_cr0_eq;
-    u32 var_r8;
-    u8 temp_r0;
+    unsigned short* dest;
+    unsigned long remaining;
 
-    var_r3 = (char*)arg0;
-    var_r8 = arg2;
-    var_r7 = (s16*)arg1;
-loop_2:
-    // temp_cr0_eq = var_r8 == 0;
-    // var_r8 -= 1;
-    // if (temp_cr0_eq != 0) {
-    if (var_r8-- != 0)
+    remaining = maxLen;
+    dest = wstr;
+
+    while (remaining-- != 0 && (*dest = (s16)*str) != 0)
     {
-        temp_r0 = *var_r3;
-        *var_r7 = (s16)temp_r0;
-        if (temp_r0 != 0)
-        {
-            var_r7++;
-            var_r3++;
-            goto loop_2;
-        }
+        dest++;
+        str++;
     }
-    arg1[arg2 - 1] = 0;
+    wstr[maxLen - 1] = 0;
 }
 
 /**
  * Offset/Address/Size: 0x48 | 0x801D2680 | size: 0x140
+ * TODO: implement without memset
  */
 void nlZeroMemory(void* buffer, unsigned long size)
 {
@@ -43,14 +31,15 @@ void nlZeroMemory(void* buffer, unsigned long size)
 
 /**
  * Offset/Address/Size: 0x188 | 0x801D27C0 | size: 0x64
+ * TODO: 97.4% match - lbz/slwi instruction scheduling diff (compiler hoists load)
  */
 u32 nlStringLowerHash(const char* str)
 {
-    u32 h = -1;
+    unsigned long h = -1;
     while (*str)
     {
-        h += (h << 5);
-        h += (u32)nlToLower<unsigned char>(*str++);
+        h = h + (h << 5);
+        h = h + nlToLower<unsigned char>(*(++str));
     }
     return h;
 }

@@ -1,11 +1,11 @@
 #ifndef _SHPAUSEOPTIONS_H_
 #define _SHPAUSEOPTIONS_H_
 
-#include "Game/BaseSceneHandler.h"
 #include "Game/FE/feInput.h"
+#include "Game/FE/feNSNMessenger.h"
 #include "Game/FE/feOptionsSubMenus.h"
 
-class PauseOptionsScene : public BaseSceneHandler
+class PauseOptionsScene : public BaseOverlayHandler
 {
 public:
     enum Mode

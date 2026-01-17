@@ -1,5 +1,7 @@
 #include "Game/Audio/CrowdMood.h"
 
+static bool g_DoDecay;
+
 /**
  * Offset/Address/Size: 0x0 | 0x8014D714 | size: 0xFC
  */
@@ -9,9 +11,11 @@ void CrowdMood::RestartLoops()
 
 /**
  * Offset/Address/Size: 0xFC | 0x8014D810 | size: 0x8
+ * TODO: 97.5% match - register mismatch (r3 vs r4) due to unused 'this'
  */
-void CrowdMood::EnableCrowdDecay(bool)
+void CrowdMood::EnableCrowdDecay(bool enable)
 {
+    g_DoDecay = enable;
 }
 
 /**

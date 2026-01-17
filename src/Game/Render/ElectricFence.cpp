@@ -1,5 +1,14 @@
 #include "Game/Render/ElectricFence.h"
 
+static f32 sfStartAngle;
+static f32 sfElectricFenceDisplayAngle;
+static bool sbIsElectricFenceBeingDisplayed;
+
+class EmissionManager {
+public:
+    static void DestroyAll(bool);
+};
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8016C898 | size: 0x64
 //  */
@@ -89,6 +98,8 @@ ElectricFenceData::ElectricFenceData(EmissionController*)
  */
 void DisplayElectricFence()
 {
+    sbIsElectricFenceBeingDisplayed = true;
+    sfElectricFenceDisplayAngle = sfStartAngle;
 }
 
 /**
@@ -96,6 +107,8 @@ void DisplayElectricFence()
  */
 void StopDisplayingElectricFence()
 {
+    sbIsElectricFenceBeingDisplayed = false;
+    EmissionManager::DestroyAll(true);
 }
 
 /**

@@ -12,8 +12,8 @@ class LoadablePhysicsMesh;
 
 void PhysicsUpdate(PhysicsWorld*, float);
 void ODEFree(void*, unsigned long);
-void ODERealloc(void*, unsigned long, unsigned long);
-void ODEAlloc(unsigned long);
+void* ODERealloc(void*, unsigned long, unsigned long);
+void* ODEAlloc(unsigned long);
 
 // void nlListAddEnd<ListEntry<PhysicsObject*>>(ListEntry<PhysicsObject*>**, ListEntry<PhysicsObject*>**, ListEntry<PhysicsObject*>*);
 

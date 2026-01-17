@@ -124,24 +124,23 @@ struct SoundAttributes
     void Init();
 }; // total size: 0x7C
 
-class MasterVolume
+namespace MasterVolume
 {
-public:
-    enum VOLUME_GROUP
-    {
-        VOLUME_GROUP_0 = 0,
-    };
 
-    float GetVoiceVolume();
-    void SetVoiceVolume(float, int);
-    void SetVolume(VOLUME_GROUP, float);
-    void GetVolume(VOLUME_GROUP);
+enum VOLUME_GROUP
+{
+    VG_Special = 0,
+    VG_Music = 1,
+    VG_SFX = 2,
+    VG_Voice = 3,
 };
 
-// void MasterVolume::GetVoiceVolume();
-// void MasterVolume::SetVoiceVolume(float, int);
-// void MasterVolume::SetVolume(Audio::MasterVolume::VOLUME_GROUP, float);
-// void MasterVolume::GetVolume(Audio::MasterVolume::VOLUME_GROUP);
+float GetVoiceVolume();
+void SetVoiceVolume(float, int);
+void SetVolume(VOLUME_GROUP, float);
+float GetVolume(VOLUME_GROUP);
+
+}; // namespace MasterVolume
 
 void FadeFilterFromCurrentToZero();
 // void FadeFilterToFullStrength();

@@ -209,8 +209,10 @@ void characterGetInfo2(dxJointCharacter*, dxJoint::Info2*)
 /**
  * Offset/Address/Size: 0x57C | 0x80224844 | size: 0x14
  */
-void characterGetInfo1(dxJointCharacter*, dxJoint::Info1*)
+static void characterGetInfo1(dxJointCharacter* joint, dxJoint::Info1* info)
 {
+    info->m = 4;
+    info->nub = 0;
 }
 
 /**

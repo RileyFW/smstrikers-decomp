@@ -5,6 +5,7 @@
 class Event;
 
 static bool mIsEnabled = true;
+static void* gpLastSoundFromPlayer;
 
 /**
  * Offset/Address/Size: 0x0 | 0x8009EDAC | size: 0x8
@@ -26,6 +27,7 @@ void FEAudioEventHandler(Event*, void*)
  */
 void FEAudio::ResetRandomVoiceToggleSFX()
 {
+    gpLastSoundFromPlayer = nullptr;
 }
 
 /**

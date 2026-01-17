@@ -12,11 +12,12 @@
 class PauseMenuScene : public BaseSceneHandler
 {
 public:
-    class ScreenContext
+    enum ScreenContext
     {
-    public:
-        ScreenContext();
-        ~ScreenContext();
+        SC_UNKNOWN = -1,
+        SC_REGULAR_PAUSE = 0,
+        SC_101_PAUSE = 1,
+        SC_LAST = 2,
     };
 
     enum TransitionType

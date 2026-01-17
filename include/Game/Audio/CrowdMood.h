@@ -35,35 +35,36 @@ void ChangeCrowdVolume(float);
 
 // void nlStrNCmp<char>(const char*, const char*, unsigned long);
 
-class CrowdMood
+namespace CrowdMood // I suspect this is a namespace, not a class
 {
-public:
-    enum CROWD_MOOD
-    {
-        CM_Positive = 0,
-        CM_Negative = 1,
-        CM_Bored = 2,
-        CM_Frustrated = 3,
-        CM_Neutral = 4,
-        CM_END = 5,
-    };
 
-    void RestartLoops();
-    void EnableCrowdDecay(bool);
-    void UnlockStream();
-    void LockStream();
-    void SetLPF(unsigned short);
-    void ActivateLPF(bool);
-    void SetCrowdVolume(unsigned long, unsigned long);
-    void InitiateFastCrowdTransition();
-    void SetMood(CrowdMood::CROWD_MOOD, unsigned long);
-    void AdjustMood(CrowdMood::CROWD_MOOD, unsigned long);
-    void Update(float);
-    void Purge(bool);
-    void Init();
-    void ReadConfig();
-    void IsStreamLocked();
+enum CROWD_MOOD
+{
+    CM_Positive = 0,
+    CM_Negative = 1,
+    CM_Bored = 2,
+    CM_Frustrated = 3,
+    CM_Neutral = 4,
+    CM_END = 5,
 };
+
+void RestartLoops();
+void EnableCrowdDecay(bool);
+void UnlockStream();
+void LockStream();
+void SetLPF(unsigned short);
+void ActivateLPF(bool);
+void SetCrowdVolume(unsigned long, unsigned long);
+void InitiateFastCrowdTransition();
+void SetMood(CrowdMood::CROWD_MOOD, unsigned long);
+void AdjustMood(CrowdMood::CROWD_MOOD, unsigned long);
+void Update(float);
+void Purge(bool);
+void Init();
+void ReadConfig();
+void IsStreamLocked();
+
+}; // namespace CrowdMood
 
 // class PlayVocal(const CROWD_VOCAL_DEFINITION&, CROWD_STATE
 // {

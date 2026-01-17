@@ -95,9 +95,9 @@ enum SceneList
 
 enum ScreenMovement
 {
-    SCREEN_NOTHING,
-    SCREEN_FORWARD,
-    SCREEN_BACK,
+    SCREEN_NOTHING = 0,
+    SCREEN_FORWARD = 1,
+    SCREEN_BACK = 2,
 };
 
 class BaseGameSceneManager

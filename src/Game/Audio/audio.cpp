@@ -72,16 +72,20 @@ void MasterVolume::SetVoiceVolume(float, int)
 
 /**
  * Offset/Address/Size: 0x218 | 0x8013C72C | size: 0x14
+ * TODO: 97% match - register allocation (r3/r4 swap)
  */
-void MasterVolume::SetVolume(MasterVolume::VOLUME_GROUP, float)
+void MasterVolume::SetVolume(MasterVolume::VOLUME_GROUP group, float volume)
 {
+    gfVolumeGroups[group] = volume;
 }
 
 /**
  * Offset/Address/Size: 0x22C | 0x8013C740 | size: 0x14
+ * TODO: 97% match - register allocation (r3/r4 swap)
  */
-void MasterVolume::GetVolume(MasterVolume::VOLUME_GROUP)
+float MasterVolume::GetVolume(MasterVolume::VOLUME_GROUP group)
 {
+    return gfVolumeGroups[group];
 }
 
 /**

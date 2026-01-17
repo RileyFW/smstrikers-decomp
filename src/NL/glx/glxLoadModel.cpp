@@ -1,5 +1,7 @@
 #include "NL/glx/glxLoadModel.h"
 
+static bool glIgnoreDuplicateModels;
+
 /**
  * Offset/Address/Size: 0x0 | 0x801BFC20 | size: 0x24
  */
@@ -46,8 +48,9 @@ void glx_MakeSkinMesh(nlChunk*, glModel*)
 /**
  * Offset/Address/Size: 0xF08 | 0x801C0B28 | size: 0x8
  */
-void glSetIgnoreDuplicateModels(bool)
+void glSetIgnoreDuplicateModels(bool ignore)
 {
+    glIgnoreDuplicateModels = ignore;
 }
 
 // /**
