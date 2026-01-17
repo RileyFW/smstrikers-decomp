@@ -44,8 +44,18 @@ ExplosionFragment::~ExplosionFragment()
 /**
  * Offset/Address/Size: 0x2134 | 0x80169494 | size: 0x54
  */
-void UpdateEmissionControllerPosition(EmissionController&, ExplosionFragment*)
+void UpdateEmissionControllerPosition(EmissionController& ec, ExplosionFragment* pFragment)
 {
+    const nlVector3* pPos;
+    if (pFragment->mpPhysicsObject != NULL)
+    {
+        pPos = &pFragment->mpPhysicsObject->GetPosition();
+    }
+    else
+    {
+        pPos = (const nlVector3*)&(pFragment->mStationaryTransform->f.m41);
+    }
+    ec.SetPosition(*pPos);
 }
 
 /**

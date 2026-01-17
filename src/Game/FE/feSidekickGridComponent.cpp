@@ -1,4 +1,5 @@
 #include "Game/FE/feSidekickGridComponent.h"
+#include "Game/FE/feMapMenu.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x800C2810 | size: 0x34
@@ -10,8 +11,27 @@ void ISidekickGridComponent::SetVisibleInstanceTable(bool)
 /**
  * Offset/Address/Size: 0x34 | 0x800C2844 | size: 0x70
  */
-void ISidekickGridComponent::MoveHighlightToTarget(eSidekickID)
+void ISidekickGridComponent::MoveHighlightToTarget(eSidekickID id)
 {
+    int item;
+    switch (id) {
+        case SK_TOAD:
+            item = 0;
+            break;
+        case SK_HAMMERBROS:
+            item = 1;
+            break;
+        case SK_BIRDO:
+            item = 2;
+            break;
+        case SK_KOOPA:
+            item = 3;
+            break;
+        default:
+            item = 0;
+            break;
+    }
+    mMapMenu->SetSelectedItem(item);
 }
 
 /**

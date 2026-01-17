@@ -53,6 +53,8 @@ void PhysicsAIBall::PostUpdate()
  */
 void PhysicsAIBall::PreUpdate()
 {
+    PhysicsBall::PreUpdate();
+    m_unk_0x44 = GetPosition();
 }
 
 /**

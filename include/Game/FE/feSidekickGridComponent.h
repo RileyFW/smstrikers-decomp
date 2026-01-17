@@ -9,7 +9,24 @@ class TLInstance;
 class TLSlide;
 class InlineHasher;
 
-class ISidekickGridComponent
+class FEMapMenu;
+
+class IGridComponent
+{
+public:
+    virtual ~IGridComponent() { }
+
+    /* 0x00 */ // vtable
+    /* 0x04 */ TLInstance** mInstanceTable;
+    /* 0x08 */ FEMapMenu* mMapMenu;
+    /* 0x0C */ bool mHighliteVisibilityAtAnimEnd;
+    /* 0x10 */ TLComponentInstance* mParentComponent;
+    /* 0x14 */ TLComponentInstance* mHighliteComponent;
+    /* 0x18 */ bool mIsMirrored;
+    /* 0x19 */ bool mHasChangedSinceLastUpdate;
+}; // total size: 0x1C
+
+class ISidekickGridComponent : public IGridComponent
 {
 public:
     void SetVisibleInstanceTable(bool);

@@ -39,8 +39,15 @@ bool g_bWorldSFXInitialized = false;
 
 static f32 gfVolumeGroups[0x18];
 
+extern Audio::SoundAttributes gDelayedSFX[15];
+
 namespace Audio
 {
+
+cGameSFX gWorldSFX;
+cGameSFX gPowerupSFX;
+cGameSFX gStadGenSFX;
+cGameSFX gCrowdSFX;
 
 float gChantDelayTimer;
 bool gbGameIsPaused = false;
@@ -419,6 +426,15 @@ void ResetPauseStatus()
  */
 void UnloadWorldSFX()
 {
+    if (!g_bWorldSFXInitialized)
+        return;
+
+    gWorldSFX.ShutdownPlaySet();
+    gPowerupSFX.ShutdownPlaySet();
+    gStadGenSFX.ShutdownPlaySet();
+    gCrowdSFX.ShutdownPlaySet();
+    gbGameIsPaused = false;
+    g_bWorldSFXInitialized = false;
 }
 
 /**
@@ -448,6 +464,17 @@ void UnloadInGameSFX()
  */
 void LoadInGameSFX()
 {
+    for (int i = 0; i < 64; i++) {
+        PlatAudio::InitEmitter((unsigned long)i);
+    }
+
+    for (int j = 0; j < 15; j++) {
+        gDelayedSFX[j].Init();
+    }
+
+    g_bHomeTeamHasJustScored = false;
+    g_fAudioTimer = 0.0f;
+    g_bAudioInGameLoaded = true;
 }
 
 /**

@@ -28,6 +28,8 @@ public:
 
     static int m_feStateCurrent;
     static int m_feStatePending;
+    static int m_feStatePrevious;
+    static int m_lastTaskState;
     static void* m_pPauseMenuCamera;
     static int m_hitStartPad;
     static int m_menuType;

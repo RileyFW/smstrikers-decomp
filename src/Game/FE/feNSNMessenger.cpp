@@ -1,5 +1,7 @@
 #include "Game/FE/feNSNMessenger.h"
 
+#include "NL/nlTask.h"
+
 /**
  * Offset/Address/Size: 0x0 | 0x800A131C | size: 0x1C0
  */
@@ -57,6 +59,10 @@ void NSNMessengerScene::SetDisplayMessage(const char*)
  */
 void NSNMessengerScene::ForceMessengerVisibleNow()
 {
+    FEPresentation* presentation = m_pFEScene->m_pFEPackage->GetPresentation();
+    SetVisible(true);
+    presentation->SetActiveSlide("Visible");
+    m_curState = MS_OPEN;
 }
 
 /**
@@ -64,6 +70,14 @@ void NSNMessengerScene::ForceMessengerVisibleNow()
  */
 void NSNMessengerScene::OpenMessengerNow()
 {
+    FEPresentation* presentation = m_pFEScene->m_pFEPackage->GetPresentation();
+
+    if (mVisibilityMask & nlTaskManager::m_pInstance->m_CurrState) {
+        SetVisible(true);
+    }
+
+    presentation->SetActiveSlide("Visible");
+    m_curState = MS_OPEN;
 }
 
 /**
@@ -71,6 +85,15 @@ void NSNMessengerScene::OpenMessengerNow()
  */
 void NSNMessengerScene::OpenMessenger()
 {
+    FEPresentation* presentation = m_pFEScene->m_pFEPackage->GetPresentation();
+
+    if (mVisibilityMask & nlTaskManager::m_pInstance->m_CurrState) {
+        SetVisible(true);
+    }
+
+    presentation->SetActiveSlide("Intro");
+    presentation->m_currentSlide->Update(0.0f);
+    m_curState = MS_OPENING;
 }
 
 /**

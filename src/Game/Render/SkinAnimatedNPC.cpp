@@ -18,8 +18,11 @@ SkinAnimatedNPC::~SkinAnimatedNPC()
 /**
  * Offset/Address/Size: 0x474 | 0x80164E18 | size: 0x64
  */
-void SkinAnimatedNPC::Update(float)
+void SkinAnimatedNPC::Update(float dt)
 {
+    mpPoseTree = mpPoseTree->Update(dt);
+    mpPoseAccumulator->InitAccumulators();
+    mpPoseTree->Evaluate(1.0f, mpPoseAccumulator);
 }
 
 /**
@@ -27,6 +30,8 @@ void SkinAnimatedNPC::Update(float)
  */
 void SkinAnimatedNPC::Render()
 {
+    mpPoseAccumulator->BuildNodeMatrices(mWorldMatrix);
+    RenderFromReplay(*mpPoseAccumulator, &mWorldMatrix);
 }
 
 /**

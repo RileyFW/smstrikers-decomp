@@ -1,8 +1,11 @@
 #include "Game/FE/feManager.h"
 
 #include "Game/FE/feInput.h"
+#include "Game/FE/feSceneManager.h"
 #include "Game/Game.h"
 #include "Game/GameInfo.h"
+#include "Game/OverlayManager.h"
+#include "Game/Sys/eventman.h"
 #include "NL/glx/glxSwap.h"
 #include "NL/nlTask.h"
 
@@ -42,6 +45,18 @@ void FrontEnd::Update(float)
  */
 void FrontEnd::ExitMenuState()
 {
+    if (!FESceneManager::s_pInstance->AreAllScenesValid())
+        return;
+
+    m_bInPauseMenuState = false;
+    m_menuType = -1;
+    m_feStatePending = m_feStatePrevious;
+    nlTaskManager::m_pInstance->m_Locked = false;
+    nlTaskManager::SetNextState(m_lastTaskState);
+    OverlayManager::s_pInstance->Pop();
+    g_pEventManager->CreateValidEvent(1, 0x14);
+    g_pFEInput->EnableAnalogToDPadMapping(FE_ALL_PADS, false);
+    m_pauseDelay = 1.5f;
 }
 
 /**
