@@ -32,9 +32,17 @@ void nlPolarToCartesian(nlVector3& result, const nlPolar& polar)
 }
 /**
  * Offset/Address/Size: 0x3EC | 0x801F06E8 | size: 0x80
+ * TODO: 95.3% match - stack slot offsets differ for sin/cos variables
  */
-void nlAddPolarToCartesian(nlVector3&, const nlPolar&)
+void nlAddPolarToCartesian(nlVector3& result, const nlPolar& polar)
 {
+    float radius = polar.r;
+    float sin_val, cos_val;
+    nlSinCos(&sin_val, &cos_val, polar.a);
+    cos_val *= radius;
+    sin_val *= radius;
+    result.f.x += cos_val;
+    result.f.y += sin_val;
 }
 
 /**

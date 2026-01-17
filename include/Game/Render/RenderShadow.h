@@ -3,7 +3,9 @@
 
 #include "types.h"
 #include "NL/nlMath.h"
+#include "NL/nlPrint.h"
 #include "NL/gl/gl.h"
+#include "NL/gl/glConstant.h"
 
 class ProjectedShadowParams;
 class nlColour;

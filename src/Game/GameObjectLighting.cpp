@@ -1,16 +1,22 @@
 #include "Game/GameObjectLighting.h"
 
+#include "Game/GameInfo.h"
 #include "NL/gl/glState.h"
 #include "types.h"
 
-u32 gStadiumGameObjectLightingParams[7] = {
-    glGetTexture("MarioStadiumPlayerLightRamp"),
-    glGetTexture("PeachToadStadiumPlayerLightRamp"),
-    glGetTexture("DKDaisyStadiumPlayerLightRamp"),
-    glGetTexture("WarioStadiumPlayerLightRamp"),
-    glGetTexture("YoshiStadiumPlayerLightRamp"),
-    glGetTexture("SuperStadiumPlayerLightRamp"),
-    glGetTexture("ForbiddenDomePlayerLightRamp")
+struct StadiumLightingParams {
+    u32 lightRamp;
+    u8 pad[0x38];
+};
+
+StadiumLightingParams gStadiumGameObjectLightingParams[7] = {
+    { glGetTexture("MarioStadiumPlayerLightRamp") },
+    { glGetTexture("PeachToadStadiumPlayerLightRamp") },
+    { glGetTexture("DKDaisyStadiumPlayerLightRamp") },
+    { glGetTexture("WarioStadiumPlayerLightRamp") },
+    { glGetTexture("YoshiStadiumPlayerLightRamp") },
+    { glGetTexture("SuperStadiumPlayerLightRamp") },
+    { glGetTexture("ForbiddenDomePlayerLightRamp") }
 };
 
 /**
@@ -57,6 +63,5 @@ void UpdateGameObjectLighting()
  */
 u32 GetGameObjectLightRamp()
 {
-    FORCE_DONT_INLINE;
-    return 0;
+    return gStadiumGameObjectLightingParams[nlSingleton<GameInfoManager>::s_pInstance->GetStadium()].lightRamp;
 }

@@ -95,8 +95,17 @@ void ReplayChoreo::FlushHighlights()
 /**
  * Offset/Address/Size: 0x390 | 0x801279FC | size: 0x78
  */
-void ReplayChoreo::Update(float)
+void ReplayChoreo::Update(float dt)
 {
+    if (nlTaskManager::m_pInstance->m_CurrState == 0x10)
+    {
+        if (mRunningFor)
+        {
+            mRunForTimeLeft -= dt;
+        }
+        Run();
+        mCamera.ManualUpdate(dt);
+    }
 }
 
 /**

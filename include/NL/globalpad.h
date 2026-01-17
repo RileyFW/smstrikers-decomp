@@ -5,6 +5,25 @@
 #include "dolphin/pad.h"
 #include "NL/nlMath.h"
 
+class cGlobalPad;
+
+class cPadManager
+{
+public:
+    static void Update(float);
+
+    static cGlobalPad* GetPad(int idx);
+    // static s32* GetRemapArray(); // { return m_pRemapArray; };
+    static s32* GetRemapArray()
+    {
+        return m_pRemapArray;
+    }
+
+    static s32* m_pRemapArray;
+    static cGlobalPad* m_aPads[PAD_MAX_CONTROLLERS];
+    static float m_DeltaT;
+};
+
 class cGlobalPad
 {
 public:
@@ -34,8 +53,21 @@ public:
     bool JustReleased(int, bool);
     bool JustPressed(int, bool);
 
-    void DisableLeftAnalogToDPadMap();
-    void EnableLeftAnalogToDPadMap();
+    /**
+     * Offset/Address/Size: 0x0 | 0x8020FB00 | size: 0xC
+     */
+    void DisableLeftAnalogToDPadMap()
+    {
+        m_isLeftAnalogToDPadMapEnabled = false;
+    }
+
+    /**
+     * Offset/Address/Size: 0xC | 0x8020FB0C | size: 0xC
+     */
+    void EnableLeftAnalogToDPadMap()
+    {
+        m_isLeftAnalogToDPadMapEnabled = true;
+    }
 
     /* 0x04 */ s32 m_padIndex;
     /* 0x08 */ nlPolar m_polarAnalogLeft;
@@ -54,19 +86,6 @@ public:
     /* 0x94 */ float m_unk_0x94; // ?? analog left y
     /* 0x98 */ float m_unk_0x98; // ?? analog right x
     /* 0x9C */ float m_unk_0x9C; // ?? analog right y
-};
-
-class cPadManager
-{
-public:
-    static void Update(float);
-
-    static cGlobalPad* GetPad(int idx);
-    static s32* GetRemapArray(); // { return m_pRemapArray; };
-
-    static s32* m_pRemapArray;
-    static cGlobalPad* m_aPads[PAD_MAX_CONTROLLERS];
-    static float m_DeltaT;
 };
 
 #endif // _GLOBALPAD_H_

@@ -25,9 +25,8 @@ struct InputLockEntry
     /* 0x04 */ int m_customID;
 }; // total size: 0x8
 
-class FEInput
+struct FEInput
 {
-public:
     // !! this needs to be at the top of the class, otherwise fields to not map correctly to their needed offsets
     /* 0x00 */ InputLockEntry m_nExclusiveInputSceneHashIDStack[4];
     /* 0x20 */ int m_InputLockDepth;
@@ -35,7 +34,10 @@ public:
     /* 0x28 */ bool m_bInputAllowed;
 
     FEInput();
-    virtual ~FEInput();
+    /**
+     * Offset/Address/Size: 0x0 | 0x8020FB20 | size: 0x48
+     */
+    virtual ~FEInput() { };
 
     void EnableAnalogToDPadMapping(eFEINPUT_PAD, bool);
     void SetAutoRepeatParams(eFEINPUT_PAD, int, float, float);
@@ -47,14 +49,14 @@ public:
     bool JustReleased(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
     bool JustPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
     bool IsAutoPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
-    void IsPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
+    bool IsPressed(eFEINPUT_PAD, int, bool, eFEINPUT_PAD*);
     bool IsConnected(eFEINPUT_PAD);
     cGlobalPad* GetGlobalPad(eFEINPUT_PAD) const;
     void Reset();
 
     static int* m_pRemapArray;
     static void Initialize();
-}; // total size: 0x30
+}; // namespace FEInput
 
 extern FEInput* g_pFEInput;
 

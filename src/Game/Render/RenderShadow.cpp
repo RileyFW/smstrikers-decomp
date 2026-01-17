@@ -26,6 +26,17 @@ void RenderShadowModel(unsigned long, glModel*, unsigned long)
  */
 void GetShadowPartitionIndex()
 {
+    static s32 index = 0;
+    static s32 prevFrame = 0;
+
+    s32 currentFrame = glGetCurrentFrame();
+    if ((u32)prevFrame != (u32)currentFrame)
+    {
+        prevFrame = currentFrame;
+        index = 0;
+    }
+
+    index++;
 }
 
 /**
@@ -45,8 +56,18 @@ void RenderCharacterIntoTexture(const ProjectedShadowParams&)
 /**
  * Offset/Address/Size: 0xF24 | 0x80123F58 | size: 0x78
  */
-void SetCharacterShadowUpdated(int, bool)
+void SetCharacterShadowUpdated(int index, bool updated)
 {
+    char buffer[32];
+    nlSNPrintf(buffer, 32, "target/pshadow_updated%02d", index);
+
+    nlVector4 v;
+    v.f.x = updated ? 1.0f : 0.0f;
+    v.f.y = 0.0f;
+    v.f.z = 0.0f;
+    v.f.w = 0.0f;
+
+    glConstantSet(buffer, v);
 }
 
 /**
