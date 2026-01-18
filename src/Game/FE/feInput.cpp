@@ -293,6 +293,7 @@ void FEInput::PushExclusiveInputLock(BaseSceneHandler* pRequestingSceneHandler, 
     m_nExclusiveInputSceneHashIDStack[m_InputLockDepth].m_customID = customID;
     m_InputLockDepth++;
 }
+
 /**
  * Offset/Address/Size: 0x64C | 0x8020F058 | size: 0x2C
  */
@@ -320,30 +321,29 @@ bool FEInput::HasInputLock(BaseSceneHandler* pRequestingSceneHandler) const
 
 /**
  * Offset/Address/Size: 0x494 | 0x8020EEA0 | size: 0x188
- * TODO: work in progress
+ * TODO: 98.6% match - register allocation differences (r28/r30, r29/r31 swapped)
  */
 void FEInput::Update(float dt)
 {
     for (int padIndex = 0; padIndex < 4; padIndex++)
     {
         FEPadData* padData = &g_aFEPadData[padIndex];
-        char* pByte = (char*)&padData->fButtonInitialDelay[0];
-        float* pFloat = &padData->fButtonInitialDelay[0];
-        int buttonMask = 1;
+        char* pByte = (char*)padData;
+        float* pFloat = (float*)padData;
 
-        for (int buttonIndex = 0; buttonIndex < 12; buttonIndex++)
+        for (int buttonMask = 1, buttonIndex = 0; buttonIndex < 12; buttonIndex++, buttonMask <<= 1, pByte++, pFloat++)
         {
-            pByte[0x90] = false; // bIsPressed
+            pByte[0x90] = false;
 
             if (cPadManager::GetPad(padIndex)->IsPressed(buttonMask, false))
             {
-                if (pFloat[0x60 / 4] != 0.0f) // fButtonTimeSinceLastRepeat
+                if (pFloat[0x60 / 4] != 0.0f)
                 {
                     float buttonStateTime = cPadManager::GetPad(padIndex)->GetButtonStateTime(buttonMask, false);
-                    float diff = buttonStateTime - pFloat[0]; // fButtonInitialDelay
+                    float diff = buttonStateTime - pFloat[0];
                     bool bShouldRepeat = true;
-                    float timeSinceRepeat = pFloat[0x60 / 4]; // fButtonTimeSinceLastRepeat
-                    float repeatRate = pFloat[0x30 / 4];      // fButtonRepeatRate
+                    float timeSinceRepeat = pFloat[0x60 / 4];
+                    float repeatRate = pFloat[0x30 / 4];
 
                     if (!(diff > 0.0001f) && !((float)fabs(diff) <= 0.0001f))
                     {
@@ -362,32 +362,28 @@ void FEInput::Update(float dt)
 
                         if (bShouldRepeat2)
                         {
-                            pFloat[0x60 / 4] = buttonStateTime; // fButtonTimeSinceLastRepeat
-                            pByte[0x90] = true;                 // bIsPressed
+                            pFloat[0x60 / 4] = buttonStateTime;
+                            pByte[0x90] = true;
                         }
                     }
                 }
                 else
                 {
                     pFloat[0x60 / 4] = cPadManager::GetPad(padIndex)->GetButtonStateTime(buttonMask, false);
-                    pByte[0x90] = true; // bIsPressed
+                    pByte[0x90] = true;
                 }
             }
             else
             {
-                pFloat[0x60 / 4] = 0.0f; // fButtonTimeSinceLastRepeat
+                pFloat[0x60 / 4] = 0.0f;
             }
-
-            buttonMask <<= 1;
-            pByte++;
-            pFloat++;
         }
     }
 }
 
 /**
  * Offset/Address/Size: 0x274 | 0x8020EC80 | size: 0x220
- * TODO: Recursion still has some reg issues
+ * TODO: 94.0% match - recursive call inlining causes register allocation differences
  */
 void FEInput::SetAutoRepeatParams(eFEINPUT_PAD pad, int button, float initialdelay, float repeatrate)
 {

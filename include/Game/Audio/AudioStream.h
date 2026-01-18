@@ -1,9 +1,9 @@
 #ifndef _AUDIOSTREAM_H_
 #define _AUDIOSTREAM_H_
 
-// void nlStrNICmp<char>(const char*, const char*, unsigned long);
+#include "Game/Audio/PriorityStream.h"
 
-class PriorityStream;
+// void nlStrNICmp<char>(const char*, const char*, unsigned long);
 
 namespace Audio
 {

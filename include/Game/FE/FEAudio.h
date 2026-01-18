@@ -1,6 +1,8 @@
 #ifndef _FEAUDIO_H_
 #define _FEAUDIO_H_
 
+#include "Game/Sys/audio.h"
+
 // void FEAudioEventHandler(Event*, void*);
 // void nlQSort<AnimAudioEventLookup>(AnimAudioEventLookup*, int, int (*)(const AnimAudioEventLookup*, const AnimAudioEventLookup*));
 // void nlDefaultQSortComparer<AnimAudioEventLookup>(const AnimAudioEventLookup*, const AnimAudioEventLookup*);
@@ -8,6 +10,21 @@
 // void nlListAddEnd<ListEntry<AnimAudioEventLookup>>(ListEntry<AnimAudioEventLookup>**, ListEntry<AnimAudioEventLookup>**,
 // ListEntry<AnimAudioEventLookup>*); void nlStrICmp<char>(const char*, const char*); void nlStrCmp<char>(const char*, const char*); void
 // nlToUpper<char>(char);
+
+struct AnimAudioEventLookup
+{
+    /* 0x00 */ unsigned long hash; // eventNameHash
+    /* 0x04 */ char szSFXType[50];
+}; // total size: 0x38
+
+extern AnimAudioEventLookup* gp_AnimAudioEventTable;
+extern unsigned long gNumAnimAudioEvents;
+
+template <typename T, typename U>
+T* nlBSearch(const U& key, T* table, int count);
+
+template <typename T>
+int nlStrCmp(const T* a, const T* b);
 
 class FEAudio
 {
@@ -18,7 +35,7 @@ public:
     static void PlayAnimAudioEvent(unsigned long, bool);
     static void StopAnimAudioEvent(const char*);
     static void PlayAnimAudioEvent(const char*, bool);
-    void BuildAnimAudioEventLookup();
+    static void BuildAnimAudioEventLookup();
 };
 
 // class ListContainerBase<AnimAudioEventLookup, BasicSlotPoolHigh<ListEntry<AnimAudioEventLookup>>>

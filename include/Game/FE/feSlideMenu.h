@@ -60,7 +60,7 @@ public:
     bool PrevItem();
     bool NextItem();
     void SetSlideByIndex(unsigned char);
-    void ApplyFunction();
+    bool ApplyFunction();
     MenuItem* AddMenuItem(const char*);
     ~FESlideMenu();
     FESlideMenu(TLComponentInstance*);

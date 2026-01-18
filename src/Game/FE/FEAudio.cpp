@@ -1,5 +1,6 @@
 #include "Game/FE/FEAudio.h"
 
+#include "Game/Audio/AudioLoader.h"
 #include "NL/nlString.h"
 
 class Event;
@@ -47,8 +48,36 @@ void FEAudio::PlayAnimAudioEvent(unsigned long, bool)
 /**
  * Offset/Address/Size: 0x6A8 | 0x8009F454 | size: 0x90
  */
-void FEAudio::StopAnimAudioEvent(const char*)
+void FEAudio::StopAnimAudioEvent(const char* eventName)
 {
+    if (!AudioLoader::IsInited())
+    {
+        return;
+    }
+
+    unsigned long hash = nlStringLowerHash(eventName);
+
+    if (!AudioLoader::IsInited())
+    {
+        return;
+    }
+
+    unsigned long stackHash = hash;
+    AnimAudioEventLookup* result = nlBSearch<AnimAudioEventLookup, unsigned long>(stackHash, gp_AnimAudioEventTable, gNumAnimAudioEvents);
+    AnimAudioEventLookup* event;
+    if (result)
+    {
+        event = result;
+    }
+    else
+    {
+        event = NULL;
+    }
+
+    if (nlStrCmp<char>(event->szSFXType, "") != 0)
+    {
+        Audio::StopWorldSFXbyStr(event->szSFXType);
+    }
 }
 
 /**

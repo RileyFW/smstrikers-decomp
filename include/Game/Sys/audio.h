@@ -143,9 +143,9 @@ float GetVolume(VOLUME_GROUP);
 }; // namespace MasterVolume
 
 void FadeFilterFromCurrentToZero();
-// void FadeFilterToFullStrength();
-// void PitchBend(float, float, float, float);
-// void FadeFilter(float, float, float, float);
+void FadeFilterToFullStrength();
+void PitchBend(float, float, float, float);
+void FadeFilter(float, float, float, float);
 void ClearFadeData();
 bool IsEmitterActive(SFXEmitter*);
 u32 GetEmitterVoiceID(SFXEmitter*);
@@ -191,9 +191,9 @@ void LoadWorldSFX();
 void UnloadInGameSFX();
 void LoadInGameSFX();
 bool IsInited();
+void Initialize(bool);
 // void ShutdownReverb();
 // void InitializeReverb(eStadiumID, unsigned char);
-// void Initialize(bool);
 // void CreateTrackMgr<3>();
 
 // eCharSFX enum is defined in CharacterAudio.h

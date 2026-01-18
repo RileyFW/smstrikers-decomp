@@ -8,6 +8,7 @@
 #include "NL/nlMath.h"
 #include "NL/nlDLRing.h"
 #include "NL/nlDLListContainer.h"
+#include "NL/nlSlotPool.h"
 
 enum eClassType
 {
@@ -40,6 +41,8 @@ struct SFXPlaySet
     /* 0x14 */ float timeStamp;
     /* 0x18 */ int sfxPriority;
     /* 0x1C */ int groupPriority;
+
+    static SlotPoolBase m_TrackedSFXSlotPool;
 }; // total size: 0x20
 
 class SoundPropAccessor

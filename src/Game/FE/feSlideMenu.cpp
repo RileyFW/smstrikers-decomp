@@ -35,9 +35,32 @@ void FESlideMenu::SetSlideByIndex(unsigned char newslide)
 
 /**
  * Offset/Address/Size: 0x2A4 | 0x80096EF8 | size: 0x84
+ * TODO: 85.6% match - double beq pattern from switch/enum optimization not reproducible
  */
-void FESlideMenu::ApplyFunction()
+bool FESlideMenu::ApplyFunction()
 {
+    if (m_lockInput) {
+        return false;
+    }
+
+    FESlideMenu* item = (FESlideMenu*)((char*)this + m_currentSlide * 0x14);
+    int tag = *(int*)((char*)item + 4);
+
+    if (tag == EMPTY) {
+        return false;
+    }
+
+    if (tag != EMPTY) {
+        if (tag == FREE_FUNCTION) {
+            void (*func)(FESlideMenu*) = *(void (**)(FESlideMenu*))((char*)item + 8);
+            func(item);
+        } else {
+            FunctorBase* fobj = *(FunctorBase**)((char*)item + 8);
+            fobj->fnc_0x8();
+        }
+    }
+
+    return true;
 }
 
 /**

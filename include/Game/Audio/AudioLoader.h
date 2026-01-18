@@ -2,11 +2,56 @@
 #define _AUDIOLOADER_H_
 
 #include "types.h"
+#include "Game/Audio/AudioStream.h"
+#include "Game/Audio/CrowdMood.h"
+#include "Game/Audio/WorldAudio.h"
+#include "Game/FE/FEAudio.h"
+#include "Game/GameAudio.h"
 #include "Game/GameInfo.h"
 #include "Game/Loader.h"
+#include "Game/Render/Bowser.h"
+#include "Game/Sys/audio.h"
+#include "Game/Sys/GCStream.h"
+#include "NL/nlConfig.h"
 
-// void GetSoundPropTableFromPlayerStadium(eStadiumID, eCharacterClass);
+extern Config g_FEStreamConfig;
+extern AudioStreamTrack::TrackManagerBase* g_pTrackManager;
+
+class SoundPropAccessor;
+SoundPropAccessor* GetSoundPropTableFromPlayerStadium(eStadiumID, eCharacterClass);
 // void 0x80149078..0x801490F4 | size: 0x7C;
+
+enum LoadType
+{
+    SND_GROUP_LOAD_NOT_LOADED = 0,
+    SND_GROUP_LOAD_FROM_SAMPLE_FILE_IN_MEM = 1,
+    SND_GROUP_LOAD_FROM_DISC = 2,
+};
+
+struct SndGroupData
+{
+    /* 0x00 */ const char* szGroupName;
+    /* 0x04 */ unsigned short groupID;
+    /* 0x08 */ int stackEnum;
+    /* 0x0C */ int uLoadOrder;
+    /* 0x10 */ LoadType loadType;
+}; // total size: 0x14
+
+extern SndGroupData sebringAudioGroups[47];
+
+struct AudioFileData
+{
+    /* 0x00 */ char* szPoolFile;
+    /* 0x04 */ char* szSampleFile;
+    /* 0x08 */ char* szProjectFile;
+    /* 0x0C */ char* szDirFile;
+    /* 0x10 */ unsigned char* pool_buffer;
+    /* 0x14 */ unsigned char* proj_buffer;
+    /* 0x18 */ unsigned char* sdir_buffer;
+    /* 0x1C */ unsigned char* samp_buffer;
+    /* 0x20 */ SndGroupData* soundGroups;
+    /* 0x24 */ int numSoundGroups;
+}; // total size: 0x28
 
 class LoadingManager;
 class SoundStrToIDNode;
@@ -46,7 +91,7 @@ public:
     void PlayFETitleMusicWithFade();
     static void StartFEStream(const char*, bool, const char*);
     static bool IsInited();
-    void Initialize();
+    bool Initialize();
     void ActivateDPL2(bool, bool);
     void SetupSoundGroups();
     void GetWorldSFXTypeFromStr(const char*);
@@ -57,6 +102,9 @@ public:
     void SetupSoundDefinesAVLTree();
 
     static bool gbDisableAudio;
+    static bool gbDisableCrowd;
+    static bool gbAsyncLoadEntireSampleFileIntoMemRequestMade;
+    static AudioFileData sebringAudioFileData;
 };
 
 // class GCAudioStreaming

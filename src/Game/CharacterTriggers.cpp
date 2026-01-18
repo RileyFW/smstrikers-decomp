@@ -1,11 +1,24 @@
 #include "Game/CharacterTriggers.h"
 #include "Game/Player.h"
+#include "Game/Ball.h"
+#include "Game/ReplayManager.h"
 
 /**
  * Offset/Address/Size: 0x5190 | 0x801A3F40 | size: 0x94
  */
-void UpdateEmitterFromCharacterIdxWithoutAnimController(EmissionController&, int)
+void UpdateEmitterFromCharacterIdxWithoutAnimController(EmissionController& emitter, int index)
 {
+    if (ReplayManager::Instance()->mRender != NULL) {
+        ReplayManager* mgr1 = ReplayManager::Instance();
+        DrawableCharacter* pChar = &mgr1->mRender->mCharacters[index];
+        emitter.SetPosition(pChar->mPosition);
+        ReplayManager* mgr2 = ReplayManager::Instance();
+        pChar = &mgr2->mRender->mCharacters[index];
+        emitter.SetVelocity(pChar->mVelocity);
+        ReplayManager* mgr3 = ReplayManager::Instance();
+        pChar = &mgr3->mRender->mCharacters[index];
+        emitter.SetPoseAccumulator(*pChar->mPoseAccumulator);
+    }
 }
 
 /**
@@ -25,15 +38,30 @@ void UpdateEmitterFromCharacter(EmissionController&)
 /**
  * Offset/Address/Size: 0x4F34 | 0x801A3CE4 | size: 0x84
  */
-void UpdateEmitterPoseFromCharacter(EmissionController&)
+void UpdateEmitterPoseFromCharacter(EmissionController& emitter)
 {
+    if (ReplayManager::Instance()->mRender != NULL) {
+        int index = emitter.m_uUserData;
+        ReplayManager* mgr1 = ReplayManager::Instance();
+        DrawableCharacter* pChar = &mgr1->mRender->mCharacters[index];
+        emitter.SetPoseAccumulator(*pChar->mPoseAccumulator);
+        ReplayManager* mgr2 = ReplayManager::Instance();
+        pChar = &mgr2->mRender->mCharacters[index];
+        emitter.SetAnimController(pChar->GetAnimController());
+    }
 }
 
 /**
  * Offset/Address/Size: 0x4ECC | 0x801A3C7C | size: 0x68
  */
-void UpdateEmitterFromBall(EmissionController&)
+void UpdateEmitterFromBall(EmissionController& emitter)
 {
+    if (ReplayManager::Instance()->mRender != NULL) {
+        ReplayManager* mgr1 = ReplayManager::Instance();
+        emitter.SetPosition(mgr1->mRender->mBall.mPosition);
+        ReplayManager* mgr2 = ReplayManager::Instance();
+        emitter.SetVelocity(mgr2->mRender->mBall.mVelocity);
+    }
 }
 
 /**

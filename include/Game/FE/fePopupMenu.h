@@ -8,6 +8,40 @@
 // void FindItemByHashID<TLInstance>(TLInstance*, unsigned long);
 // void FindItemByHashID<TLSlide>(TLSlide*, unsigned long);
 
+enum ePopupMenu
+{
+    INVALID_TYPE = -1,
+    POPUP_END_CUP = 0,
+    POPUP_FLOWER_CUP_LOCKED = 1,
+    POPUP_STAR_CUP_LOCKED = 2,
+    POPUP_BOWSER_CUP_LOCKED = 3,
+    POPUP_SUPER_CUPS_LOCKED = 4,
+    POPUP_INGAME_FORFEIT_MATCH = 5,
+    POPUP_INGAME_QUIT_MATCH = 6,
+    POPUP_INGAME_QUIT_STRIKERS_101 = 7,
+    POPUP_NO_SIDES_CHOSEN = 8,
+    POPUP_NO_HUMAN_TOURNAMENT = 9,
+    POPUP_START_NEW_CUP = 10,
+    POPUP_START_NEW_TOURNAMENT = 11,
+    POPUP_FILLALLSLOTS = 12,
+    POPUP_REVERT_OPTION_CHANGES = 13,
+    POPUP_TOURNEY_OVER = 14,
+    POPUP_NO_FORFEIT = 15,
+    POPUP_REALLY_OVERWRITE = 16,
+    POPUP_APPLYING_AUDIO = 17,
+    POPUP_NO_MEMCARD = 18,
+    POPUP_MEMCARD_CORRUPTED = 19,
+    POPUP_MEMCARD_WRONGFORMAT = 20,
+    POPUP_FILE_CORRUPTED = 21,
+    POPUP_MEMCARD_DAMAGED = 22,
+    POPUP_WRONG_DEVICE = 23,
+    POPUP_NOT_ENOUGH_SPACE = 24,
+    POPUP_NOT_ENOUGH_SPACE_CANMANAGE = 25,
+    POPUP_ABOUTTOSAVE = 26,
+    POPUP_NOTSAMECARD = 27,
+    POPUP_MEMCARD_ASK_SAVE_OVERWRITE = 28,
+};
+
 class FEPopupMenu
 {
 public:
@@ -19,6 +53,7 @@ public:
     void SceneCreated();
     ~FEPopupMenu();
     FEPopupMenu();
+    static void Create(ePopupMenu);
 
     /* 0x0 */ TLSlide* m_slides;
 };

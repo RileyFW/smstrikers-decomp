@@ -1,40 +1,14 @@
 #ifndef _GCSTREAM_H_
 #define _GCSTREAM_H_
 
-// void ___blank(const char*, ...);
-// void 0x8028D52C..0x8028D530 | size: 0x4;
-
-// class GCAudioStreaming
-// {
-// public:
-//     void MonoAudioStream::_AsyncCancelCB(nlFile*, void*, unsigned int, unsigned long, void (*)(nlFile*, void*, unsigned int, unsigned long));
-//     void MonoAudioStream::CancelPendingReads();
-//     void MonoAudioStream::GetUpdateReadLength();
-//     void AudioStreamBuffer::_UpdateHandler(void*, unsigned long, void*, unsigned long, unsigned long);
-//     void StereoAudioStream::GetUpdateReadLength();
-//     void StereoAudioStream::_InterleavedHdrReadCB(nlFile*, void*, unsigned int, unsigned long);
-//     void StereoAudioStream::_AsyncCancelCB(nlFile*, void*, unsigned int, unsigned long, void (*)(nlFile*, void*, unsigned int, unsigned long));
-//     void StereoAudioStream::CancelPendingReads();
-//     void AudioStream::Stop();
-//     void AudioStream::_HdrReadCB(nlFile*, void*, unsigned int, unsigned long);
-//     void AudioStream::_WarmReadCB(nlFile*, void*, unsigned int, unsigned long);
-//     void AudioStream::_UpdateReadCB(nlFile*, void*, unsigned int, unsigned long);
-//     void MonoAudioStream::Warm(bool);
-//     void MonoAudioStream::DoUpdateRead(unsigned long, unsigned long, unsigned long, unsigned long, GCAudioStreaming::AudioStreamBuffer*);
-//     void StereoAudioStream::Warm(bool);
-//     void StereoAudioStream::InterleavedHdrReadCB(nlFile*, void*, unsigned int);
-//     void StereoAudioStream::DoUpdateRead(unsigned long, unsigned long, unsigned long, unsigned long, GCAudioStreaming::AudioStreamBuffer*);
-//     void AudioBufferMgr::Init(unsigned long);
-//     void AudioBufferMgr::CreateBuffers(unsigned long);
-//     void AudioBufferMgr::DeleteBuffers();
-//     void AudioBufferMgr::FreeBuffer(GCAudioStreaming::AudioStreamBuffer*);
-// };
+#include "NL/nlFile.h"
 
 namespace GCAudioStreaming
 {
 
 class AudioStreamBuffer
 {
+    void _UpdateHandler(void*, unsigned long, void*, unsigned long, unsigned long);
 
     /* 0x00 */ unsigned char* m_MRAMBuffer;   // offset 0x0, size 0x4
     /* 0x04 */ unsigned long m_BufferSize;    // offset 0x4, size 0x4
@@ -65,6 +39,71 @@ public:
     /* 0x18C */ unsigned long m_BufferCount;      // offset 0x18C, size 0x4
     /* 0x190 */ unsigned long m_BufferSize;       // offset 0x190, size 0x4
 }; // total size: 0x194
+
+enum STREAM_STATE
+{
+    SS_New = 0,
+    SS_Initd = 1,
+    SS_Warming = 2,
+    SS_Warm = 3,
+    SS_Playing = 4,
+};
+
+class AudioStream
+{
+public:
+    virtual ~AudioStream() { };
+    void WarmReadDone(AudioStreamBuffer*) { };
+    void Purge() { };
+    void Destructor() { };
+    void Stop();
+    void _HdrReadCB(nlFile*, void*, unsigned int, unsigned long);
+    void _WarmReadCB(nlFile*, void*, unsigned int, unsigned long);
+    void _UpdateReadCB(nlFile*, void*, unsigned int, unsigned long);
+
+    /* 0x04 */ bool m_FlagAtDelete;
+    /* 0x08 */ STREAM_STATE m_State;
+    /* 0x0C */ unsigned long m_StreamLength;
+    /* 0x10 */ unsigned long m_StreamPos;
+    /* 0x14 */ AudioStreamBuffer* m_Buffers[2];
+    /* 0x1C */ unsigned long m_LastPlayable;
+    /* 0x20 */ unsigned long m_Volume;
+    /* 0x24 */ bool m_LPFOn;
+    /* 0x26 */ unsigned short m_LPFFreq;
+    /* 0x28 */ unsigned long m_OldLength;
+    /* 0x2C */ AudioBufferMgr& m_BuffMgr;
+    /* 0x30 */ unsigned long m_Flags;
+    /* 0x34 */ unsigned long m_BufferCount;
+}; // total size: 0x38
+
+class MonoAudioStream : public AudioStream
+{
+public:
+    void _AsyncCancelCB(nlFile*, void*, unsigned int, unsigned long, void (*)(nlFile*, void*, unsigned int, unsigned long));
+    void CancelPendingReads();
+    void GetUpdateReadLength();
+    void Warm(bool);
+    void DoUpdateRead(unsigned long, unsigned long, unsigned long, unsigned long, GCAudioStreaming::AudioStreamBuffer*);
+
+    /* 0x38 */ class nlFile* m_pFile;
+    /* 0x3C */ unsigned long m_UpdateLen;
+}; // total size: 0x40
+
+class StereoAudioStream : public AudioStream
+{
+public:
+    virtual ~StereoAudioStream() { };
+    void GetUpdateReadLength();
+    void _InterleavedHdrReadCB(nlFile*, void*, unsigned int, unsigned long);
+    void _AsyncCancelCB(nlFile*, void*, unsigned int, unsigned long, void (*)(nlFile*, void*, unsigned int, unsigned long));
+    void CancelPendingReads();
+    void Warm(bool);
+    void InterleavedHdrReadCB(nlFile*, void*, unsigned int);
+    void DoUpdateRead(unsigned long, unsigned long, unsigned long, unsigned long, GCAudioStreaming::AudioStreamBuffer*);
+
+    /* 0x38 */ nlFile* m_pFile;
+    /* 0x3C */ unsigned long m_Interleave;
+}; // total size: 0x40
 
 } // namespace GCAudioStreaming
 

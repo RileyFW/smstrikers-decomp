@@ -5,6 +5,7 @@
 
 #include "NL/nlMath.h"
 #include "NL/gl/glView.h"
+#include "NL/gl/glModel.h"
 
 class glModel;
 class glModelPacket;

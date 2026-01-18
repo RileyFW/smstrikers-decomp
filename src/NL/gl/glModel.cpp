@@ -138,6 +138,13 @@ glModel* glModelDup(const glModel* src, bool arg1)
  */
 glModelPacket* glModelPacketDup(const glModelPacket* pPacket, bool bUserDup)
 {
-    FORCE_DONT_INLINE;
-    return NULL;
+    glModelPacket* pResult = (glModelPacket*)glFrameAlloc(sizeof(glModelPacket), GLM_Header);
+    if (pResult != NULL) {
+        memcpy(pResult, pPacket, sizeof(glModelPacket));
+        if (bUserDup && pPacket->userData != 0) {
+            pResult->userData = 0;
+            glUserDup(pResult, pPacket, false);
+        }
+    }
+    return pResult;
 }

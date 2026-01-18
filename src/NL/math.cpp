@@ -3,8 +3,12 @@
 /**
  * Offset/Address/Size: 0x540 | 0x801F083C | size: 0x88
  */
-void nlCartesianToPolar(nlPolar&, float, float)
+void nlCartesianToPolar(nlPolar& out, float x, float y)
 {
+    float lenSq = x * x + y * y;
+    out.r = nlSqrt(lenSq, true);
+    float angle = nlATan2f(y, x);
+    out.a = (u16)(s32)(angle * 10430.378f);
 }
 
 /**
@@ -50,6 +54,12 @@ void nlAddPolarToCartesian(nlVector3& result, const nlPolar& polar)
  */
 void nlCartesianToPolar(nlPolar& out, const nlVector3& in)
 {
+    float x = in.f.x;
+    float y = in.f.y;
+    float lenSq = x * x + y * y;
+    out.r = nlSqrt(lenSq, true);
+    float angle = nlATan2f(y, x);
+    out.a = (u16)(s32)(angle * 10430.378f);
 }
 
 /**

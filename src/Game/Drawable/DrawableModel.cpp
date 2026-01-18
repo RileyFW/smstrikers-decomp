@@ -88,6 +88,10 @@ void GetShadowBoundingSquare(const glModel*, const nlMatrix4&, float&, float&, f
  */
 void DrawableModel::DrawPlanarShadow()
 {
+    glModel* model = glModelDupNoStreams(m_pModel, true, false);
+    f32 opacity = sfPlanarShadowOpacity;
+    const nlMatrix4& worldMtx = GetWorldMatrix();
+    ::DrawPlanarShadow(model, worldMtx, opacity * m_translucency, true, false, true, (unsigned long)this);
 }
 
 /**

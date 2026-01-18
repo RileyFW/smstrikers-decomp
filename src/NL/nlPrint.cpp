@@ -12,7 +12,13 @@ int nlVSNPrintf(char* s, unsigned long n, const char* format, va_list arg)
 
 /**
  * Offset/Address/Size: 0x48 | 0x801D2340 | size: 0xB8
+ * TODO: 99.78% match - r4/r3 register diff in final pointer calculation
  */
-void nlSNPrintf(char*, unsigned long, const char*, ...)
+void nlSNPrintf(char* buffer, unsigned long size, const char* format, ...)
 {
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, size - 1, format, args);
+    va_end(args);
+    buffer[size - 1] = '\0';
 }

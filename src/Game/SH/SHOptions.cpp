@@ -89,9 +89,24 @@
 
 /**
  * Offset/Address/Size: 0x1460 | 0x800B4A1C | size: 0x8C
+ * TODO: 99.9% match - FEPopupMenu::Create calling convention uses r4 for arg, ours uses r3
  */
 void ApplyChangesCB()
 {
+    OptionsScene* scene = (OptionsScene*)nlSingleton<GameSceneManager>::s_pInstance->GetScene(SCENE_OPTIONS);
+
+    if (scene->m_curMenuState == (eMenuState)1) {
+        // Check if audio submenu has pending changes
+        u8* subMenuBytes = (u8*)scene->m_subMenu;
+        if (subMenuBytes[0x290] != 0) {
+            nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_POPUP_MENU, SCREEN_NOTHING, false);
+            FEPopupMenu::Create(POPUP_APPLYING_AUDIO);
+            scene->mPopupResult = PR_APPLY_DELAYED_AUDIO_CHANGES;
+            return;
+        }
+    }
+
+    scene->mPopupResult = PR_APPLY_CHANGES;
 }
 
 /**

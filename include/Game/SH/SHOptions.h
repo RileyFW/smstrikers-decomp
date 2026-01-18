@@ -2,10 +2,14 @@
 #define _SHOPTIONS_H_
 
 #include "Game/BaseSceneHandler.h"
+#include "Game/BaseGameSceneManager.h"
+#include "Game/GameSceneManager.h"
 #include "Game/FE/feButtonComponent.h"
 #include "Game/FE/feMenu.h"
 #include "Game/FE/feOptionsSubMenus.h"
+#include "Game/FE/fePopupMenu.h"
 #include "Game/FE/tlComponentInstance.h"
+#include "NL/nlSingleton.h"
 
 void RevertChangesCB();
 void ApplyChangesCB();
