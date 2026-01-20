@@ -243,13 +243,13 @@ bool World::LoadGeometry(const char* szWorldName, bool bMakeDrawables, bool keep
  */
 bool World::Load(bool forfe)
 {
-    DoLoad();
+    bool ret = DoLoad();
     if (forfe == 0)
     {
-        DoInitialize();
+        ret = DoInitialize();
     }
     m_Locked = 1;
-    // TODO: return value will break match - but mathod signature needs bool, e.g. WorldManager needs it for chaining return status
+    return ret;
 }
 
 /**

@@ -18,7 +18,7 @@ public:
     /* 0x18 */ virtual void Update(float);
     /* 0x1C */ virtual void UpdateInReplay(float);
     /* 0x2C */ virtual bool DoLoad();
-    /* 0x30 */ virtual void DoInitialize();
+    /* 0x30 */ virtual bool DoInitialize();
 
     static void BasicStadiumEventHandler(Event*, void*);
     static BasicStadium* GetCurrentStadium();

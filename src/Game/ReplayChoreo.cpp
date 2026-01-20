@@ -1,4 +1,5 @@
 #include "Game/ReplayChoreo.h"
+#include "Game/Camera/CameraMan.h"
 #include "NL/nlTask.h"
 
 // /**
@@ -69,6 +70,7 @@ void ReplayChoreo::EventHandler(Event*)
  */
 void ReplayChoreo::Reset()
 {
+    cCameraManager::Remove(mCamera);
 }
 
 /**
@@ -87,9 +89,21 @@ void ReplayChoreo::StartAutoReplay(ReplayType)
 
 /**
  * Offset/Address/Size: 0x408 | 0x80127A74 | size: 0x20
+ * TODO: unclear struct
  */
 void ReplayChoreo::FlushHighlights()
 {
+    mHighlightIndex = -1;
+    mHighlights[4].mSideOfInterest = 0;
+    mHighlights[4].mGoalScoredData.uTeamIndex = 0;
+    mHighlights[0].mGoalScoredData.uTeamIndex = 0;
+    mHighlights[1].mGoalScoredData.uTeamIndex = 0;
+    mHighlights[2].mGoalScoredData.uTeamIndex = 0;
+    // mHighlights[1].mSideOfInterest = 0;
+    // mHighlights[2].mSideOfInterest = 0;
+    // mHighlights[3].mSideOfInterest = 0;
+
+    // mHighlightIndex = sizeof(InterpreterCore);
 }
 
 /**
@@ -134,8 +148,20 @@ void ReplayChoreo::SaveHighlight(ReplayChoreo::HighlightQuality)
 /**
  * Offset/Address/Size: 0x8C | 0x801276F8 | size: 0x7C
  */
-void ReplayChoreo::NumHighlights() const
+int ReplayChoreo::NumHighlights() const
 {
+    ReplayChoreo* self = const_cast<ReplayChoreo*>(this);
+    self->mReplayManager = ReplayManager::Instance();
+    int count = 0;
+    self->mReplay = mReplayManager->mReplay;
+    for (int i = 0; i < 3; i++)
+    {
+        if (mReplay->IsReelValid(i + 1))
+        {
+            count++;
+        }
+    }
+    return count;
 }
 
 /**

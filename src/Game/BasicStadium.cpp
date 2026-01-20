@@ -185,7 +185,7 @@ bool BasicStadium::DoLoad()
 /**
  * Offset/Address/Size: 0x2E8 | 0x8019C068 | size: 0x2608
  */
-void BasicStadium::DoInitialize()
+bool BasicStadium::DoInitialize()
 {
     DrawableObject* pObject;
     char szTemp1[256];
@@ -752,6 +752,8 @@ loop_11:
         cField::SetFieldDimensions(pFieldHelper->m_worldMatrix.f.m41, pFieldHelper->m_worldMatrix.f.m42, 0.0f);
         // cField::SetFieldDimensions(pFieldHelper->m_worldMatrix.m[3][0], pFieldHelper->m_worldMatrix.m[3][1], 0.0f);
     }
+
+    return true;
 }
 /**
  * Offset/Address/Size: 0x8C | 0x8019BE0C | size: 0x25C

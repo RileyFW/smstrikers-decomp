@@ -22,10 +22,11 @@ public:
         NUM_QUALITY_LEVELS = 5,
     };
 
-    class Highlight
+    struct Highlight
     {
-        Highlight() { };
-    };
+        int mSideOfInterest;            // offset 0x0, size 0x4
+        GoalScoredData mGoalScoredData; // offset 0x4, size 0x24
+    }; // total size: 0x28
 
     void DoFunctionCall(unsigned int);
     void Instance();
@@ -38,7 +39,7 @@ public:
     void Update(float);
     bool Done() const;
     void SaveHighlight(ReplayChoreo::HighlightQuality);
-    void NumHighlights() const;
+    int NumHighlights() const;
     ~ReplayChoreo();
 
     int mNumScripts[3][3][9];       // offset 0x24, size 0x144
@@ -46,7 +47,7 @@ public:
     Replay* mReplay;                // offset 0x16C, size 0x4
     ReplayCamera mCamera;           // offset 0x170, size 0x8C
     float mRunForTimeLeft;          // offset 0x1FC, size 0x4
-    unsigned char mRunningFor;      // offset 0x200, size 0x1
+    bool mRunningFor;               // offset 0x200, size 0x1
     void* mByteCode;                // offset 0x204, size 0x4
     GoalScoredData mGoalScoredData; // offset 0x208, size 0x24
     Highlight mHighlights[4];       // offset 0x22C, size 0xA0

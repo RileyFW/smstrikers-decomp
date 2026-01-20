@@ -73,8 +73,9 @@ void RemoveEmitter(SFXEmitter* emitter)
 /**
  * Offset/Address/Size: 0x118 | 0x801C4914 | size: 0x30
  */
-void RemoveEmitter(unsigned long)
+void RemoveEmitter(unsigned long idx)
 {
+    sndRemoveEmitter((SND_EMITTER*)&gEmitters[idx]);
 }
 
 /**

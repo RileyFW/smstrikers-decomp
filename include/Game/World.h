@@ -56,7 +56,7 @@ public:
     /* 0x24 */ virtual void HandleEvent(Event*, void*);
     /* 0x28 */ virtual void CreateHelperObjFromChunk(nlChunk*);
     /* 0x2C */ virtual bool DoLoad() = 0;
-    /* 0x30 */ virtual void DoInitialize() = 0;
+    /* 0x30 */ virtual bool DoInitialize() = 0;
 
     int CompareNameToGenericName(const char*, const char*);
     void GetHashIdForGenericName(const char*) const;

@@ -74,32 +74,6 @@ enum eFormation
     NUM_FORMATIONS = 41,
 };
 
-class FormationBallPosition
-{
-public:
-    ~FormationBallPosition();
-    void Update(float);
-    void SelectClosestBallFormations(const nlVector2&);
-    void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
-    float GetWeight();
-};
-
-class FormationOffensive
-{
-public:
-    ~FormationOffensive();
-    void IsFielderInPosition(cFielder*, nlVector3, bool);
-    float GetWeight();
-};
-
-class FormationDefensive
-{
-public:
-    ~FormationDefensive();
-    void IsFielderInPosition(cFielder*, nlVector3, bool);
-    float GetWeight();
-};
-
 class FormationEval
 {
 public:
@@ -121,6 +95,32 @@ public:
     /* 0x14 */ Timer m_SortTimer;
     /* 0x18 */ unsigned int m_iFielderFormationPos[4];
 }; // total size: 0x28
+
+class FormationBallPosition
+{
+public:
+    ~FormationBallPosition();
+    void Update(float);
+    void SelectClosestBallFormations(const nlVector2&);
+    void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
+    float GetWeight();
+};
+
+class FormationOffensive : public FormationEval
+{
+public:
+    ~FormationOffensive();
+    void IsFielderInPosition(cFielder*, nlVector3, bool);
+    float GetWeight();
+};
+
+class FormationDefensive : public FormationEval
+{
+public:
+    ~FormationDefensive();
+    void IsFielderInPosition(cFielder*, nlVector3, bool);
+    float GetWeight();
+};
 
 struct CachedPosition
 {

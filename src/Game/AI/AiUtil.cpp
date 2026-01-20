@@ -296,13 +296,15 @@ float Interpolate(float fMin, float fMax, float fPercent)
  */
 float InterpolateRangeClamped(float, float, float, float, float)
 {
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x5D0 | 0x8000607C | size: 0xA0
  */
-void InterpolateRangeClamped(const nlVector2&, const nlVector2&, float)
+float InterpolateRangeClamped(const nlVector2&, const nlVector2&, float)
 {
+    return 0.0f;
 }
 
 /**

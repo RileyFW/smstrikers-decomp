@@ -2,6 +2,7 @@
 #define _FECAPTAINCOMPONENT_H_
 
 #include "Game/FE/feInput.h"
+#include "Game/FE/feHelpFuncs.h"
 #include "Game/GameInfo.h"
 
 class TLComponentInstance;
@@ -26,6 +27,7 @@ class IChooseCaptain
 public:
     class NameComponent
     {
+    public:
         void SetSidekickName(unsigned long);
         void SetTextName(const char*, unsigned long);
         void SetCaptainName(unsigned long);

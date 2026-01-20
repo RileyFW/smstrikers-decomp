@@ -16,7 +16,7 @@ nlVector3 GetClosestPointOnLineABFromPointC(const nlVector3&, const nlVector3&, 
 float AIsgn(float fValue);
 float NormalizeVal(float fromVal, float fromMin, float fromMax);
 float NormalizeVal(float fromVal, const nlVector2& fromExtrema);
-void InterpolateRangeClamped(const nlVector2&, const nlVector2&, float);
+float InterpolateRangeClamped(const nlVector2&, const nlVector2&, float);
 float InterpolateRangeClamped(float, float, float, float, float);
 float Interpolate(float fMin, float fMax, float fPercent);
 void RotateVector(nlVector3&, const nlVector3&, nlQuaternion&);

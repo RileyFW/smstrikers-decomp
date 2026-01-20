@@ -39,9 +39,13 @@ void GLMeshWriter::Normal(const nlVector3& n)
         s8* p = (s8*)(stream[GLStream_Normal].address + (currentIndex * 3));
         const float len = nlRecipSqrt((n.f.x * n.f.x) + (n.f.y * n.f.y) + (n.f.z * n.f.z), false);
 
-        p[0] = (s8)(64.0f * (len * n.f.x));
-        p[1] = (s8)(64.0f * (len * n.f.y));
-        p[2] = (s8)(64.0f * (len * n.f.z));
+        float nx = len * n.f.x;
+        float ny = len * n.f.y;
+        float nz = len * n.f.z;
+
+        p[0] = (s8)(64.0f * nx);
+        p[1] = (s8)(64.0f * ny);
+        p[2] = (s8)(64.0f * nz);
     }
     else
     {

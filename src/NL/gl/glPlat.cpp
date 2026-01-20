@@ -744,51 +744,52 @@ u32 glx_GetResetCode()
     return glx_bProgressiveMode ? 0x17 : 0;
 }
 
+static inline void glx_SetVIWidth(const s32 currentWidth, const s32 maxWidth)
+{
+    const s32 diff = maxWidth - currentWidth;
+    glx_rmode.viWidth = (s16)currentWidth;
+    glx_rmode.viXOrigin = (s16)(((s32)((u32)diff >> 31) + diff) >> 1);
+}
+
 /**
  * Offset/Address/Size: 0x1008 | 0x801B55FC | size: 0x18C
  */
 void glx_SwitchVideoMode(_GXRenderModeObj* rmode, eVideoMode mode)
 {
-    s32 var_r31;
-    u32 temp_r4;
-
     glx_VideoMode = mode;
     GXAdjustForOverscan(rmode, &glx_rmode, 0, 0x10);
     if (mode == 1)
     {
-        glx_rmode.efbHeight = 0x1C0U;
-        glx_CopyDispScaleFactor = GXGetYScaleFactor(0x1C0, glx_rmode.xfbHeight);
-        glx_TargetFPS = 0x32;
+        glx_rmode.efbHeight = 448;
+        glx_CopyDispScaleFactor = GXGetYScaleFactor(448, glx_rmode.xfbHeight);
+        glx_TargetFPS = 50;
     }
     else
     {
-        glx_TargetFPS = 0x3C;
+        glx_TargetFPS = 60;
         glx_CopyDispScaleFactor = 1.f;
     }
     VISetBlack(1);
     VIFlush();
     VIWaitForRetrace();
-    temp_r4 = 0x2D0 - glx_VIWidth;
-    glx_rmode.viWidth = (s16)glx_VIWidth;
-    glx_rmode.viXOrigin = (s16)((s32)((temp_r4 >> 0x1FU) + temp_r4) >> 1);
+
+    glx_SetVIWidth(glx_VIWidth, 720);
+
     VIConfigure(&glx_rmode);
     VIFlush();
     VIConfigure(&glx_rmode);
     VIFlush();
     VIWaitForRetrace();
 
-    var_r31 = 0;
-    do
+    for (int i = 0; i < 60; i++)
     {
         OSYieldThread();
         VIWaitForRetrace();
-        var_r31 += 1;
-    } while (var_r31 < 0x3C);
+    }
 
     VISetBlack(0);
     VIFlush();
     VIWaitForRetrace();
-    // void GXSetViewport(f32 left, f32 top, f32 wd, f32 ht, f32 nearz, f32 farz)
 
     GXSetViewport(0.f, 0.f, (f32)glx_rmode.fbWidth, (f32)glx_rmode.efbHeight, 0.f, 1.f);
     GXSetScissor(0, 0, glx_rmode.fbWidth, glx_rmode.efbHeight);

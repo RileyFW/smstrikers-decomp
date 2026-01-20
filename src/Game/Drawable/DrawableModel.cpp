@@ -249,7 +249,7 @@ DrawableShadow::~DrawableShadow()
  */
 bool DrawableModel::IsDrawableModel()
 {
-    return false;
+    return true;
 }
 
 /**

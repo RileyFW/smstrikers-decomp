@@ -1228,7 +1228,7 @@ config.libs = [
             Object(NonMatching, "NL/nlMath.cpp"),
             Object(NonMatching, "NL/MemAlloc.cpp"),
             Object(NonMatching, "NL/nlMemory.cpp"),
-            Object(NonMatching, "NL/nlPrint.cpp"),
+            Object(NonMatching, "NL/nlPrint.cpp"), # problem with stdarg.h .. but should otherwise be linkable
             Object(Matching, "NL/nlSlotPool.cpp"),
             Object(NonMatching, "NL/nlString.cpp"),
             Object(Matching, "NL/nlTask.cpp"),

@@ -166,8 +166,12 @@ void MilestoneTrophyScene::Update(float)
 /**
  * Offset/Address/Size: 0x170 | 0x800CDC70 | size: 0x18
  */
-void MilestoneTrophyScene::CreateTrophyScene(eTrophyType, ButtonComponent::ButtonState, bool)
+void MilestoneTrophyScene::CreateTrophyScene(eTrophyType trophy, ButtonComponent::ButtonState state, bool isNew)
 {
+    mTrophy = trophy;
+    mIsNew = isNew;
+    mCreated = true;
+    mButtonState = state;
 }
 
 /**

@@ -5,15 +5,16 @@
 #include "stdarg.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-int fprintf(FILE* stream, const char* format, ...);
-int printf(const char* format, ...);
-int sprintf(char* s, const char* format, ...);
-int snprintf(char* s, size_t n, const char* format, ...);
-int vsnprintf(char* s, size_t n, const char* format, va_list arg);
-int vprintf(const char* format, va_list arg);
+    int fprintf(FILE* stream, const char* format, ...);
+    int printf(const char* format, ...);
+    int sprintf(char* s, const char* format, ...);
+    int snprintf(char* s, size_t n, const char* format, ...);
+    int vsnprintf(char* s, size_t n, const char* format, va_list arg);
+    int vprintf(const char* format, va_list arg);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,6 @@
 #include "Game/Formation.h"
 
+#include "Game/AI/AiUtil.h"
 #include "Game/AI/Fielder.h"
 #include "Game/AI/FuzzyVariant.h"
 #include "Game/AI/Scripts/FormationScript.h"
@@ -289,7 +290,7 @@ void FormationDefensive::IsFielderInPosition(cFielder*, nlVector3, bool)
  */
 float FormationDefensive::GetWeight()
 {
-    return 0.0f;
+    return NormalizeVal(m_pFormationManager->m_v2AIFielderCenter.f.x, 25.0f, -25.0f);
 }
 
 /**
@@ -304,7 +305,7 @@ void FormationOffensive::IsFielderInPosition(cFielder*, nlVector3, bool)
  */
 float FormationOffensive::GetWeight()
 {
-    return 0.0f;
+    return NormalizeVal(m_pFormationManager->m_v2AIFielderCenter.f.x, -25.0f, 25.0f);
 }
 
 /**

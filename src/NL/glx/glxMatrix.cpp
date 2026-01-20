@@ -110,7 +110,8 @@ void glplatMatrixLookAt(nlMatrix4& arg0, const nlVector3& arg1, const nlVector3&
 void glplatMatrixPerspective(nlMatrix4& matrix, float fovY, float aspect, float near, float far)
 {
     f32 temp_f2 = tan(0.5f * fovY);
-    C_MTXPerspective(matrix.m, (180.0f * (2.f * (f32)atan((1.0 / aspect) / (1.0f / temp_f2)))) / 3.1415927f, aspect, near, far);
+    f32 atanVal = (f32)atan((1.0f / aspect) / (1.0f / temp_f2));
+    C_MTXPerspective(matrix.m, (2.f * atanVal * 180.0f) / 3.1415927f, aspect, near, far);
 }
 
 /**
