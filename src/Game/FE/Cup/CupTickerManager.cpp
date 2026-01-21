@@ -1,4 +1,5 @@
 #include "Game/FE/Cup/CupTickerManager.h"
+#include "Game/FE/feScrollText.h"
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800F5EBC | size: 0x38
@@ -115,8 +116,11 @@ void CupTickerManager::CreateNewMessage()
 /**
  * Offset/Address/Size: 0x654 | 0x800F261C | size: 0x2C
  */
-void CupTickerManager::Update(float)
+void CupTickerManager::Update(float dt)
 {
+    if (m_pScrollText != NULL) {
+        m_pScrollText->Update(dt);
+    }
 }
 
 // /**

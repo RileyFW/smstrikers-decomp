@@ -81,8 +81,36 @@ nlVector3& ExplosionFragment::GetPosition() const
 /**
  * Offset/Address/Size: 0x2048 | 0x801693A8 | size: 0xA4
  */
-void ExplosionFragment::GetRotation(nlMatrix4*) const
+void ExplosionFragment::GetRotation(nlMatrix4* dest) const
 {
+    if (mpPhysicsObject != NULL) {
+        mpPhysicsObject->GetRotation(dest);
+        return;
+    }
+
+    nlMatrix4* src = mStationaryTransform;
+
+    // Copy 3x3 rotation with 4th column as zeros
+    ((f32*)dest)[0] = ((f32*)src)[0];
+    ((f32*)dest)[1] = ((f32*)src)[1];
+    ((f32*)dest)[2] = ((f32*)src)[2];
+    ((f32*)dest)[3] = 0.0f;
+
+    ((f32*)dest)[4] = ((f32*)src)[4];
+    ((f32*)dest)[5] = ((f32*)src)[5];
+    ((f32*)dest)[6] = ((f32*)src)[6];
+    ((f32*)dest)[7] = 0.0f;
+
+    ((f32*)dest)[8] = ((f32*)src)[8];
+    ((f32*)dest)[9] = ((f32*)src)[9];
+    ((f32*)dest)[10] = ((f32*)src)[10];
+    ((f32*)dest)[11] = 0.0f;
+
+    // 4th row is 0, 0, 0, 1
+    ((f32*)dest)[12] = 0.0f;
+    ((f32*)dest)[13] = 0.0f;
+    ((f32*)dest)[14] = 0.0f;
+    ((f32*)dest)[15] = 1.0f;
 }
 
 /**

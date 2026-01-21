@@ -1,4 +1,5 @@
 #include "Game/Render/StaticModelExplodable.h"
+#include "Game/Drawable/DrawableObj.h"
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80165D2C | size: 0x138
@@ -52,8 +53,14 @@ void StaticModelExplodable::GetWorldMatrix() const
 /**
  * Offset/Address/Size: 0x18 | 0x801654DC | size: 0x2C
  */
-void StaticModelExplodable::SetUnexplodedModelVisibility(bool)
+void StaticModelExplodable::SetUnexplodedModelVisibility(bool visible)
 {
+    DrawableObject* obj = m_pUnexplodedModel;
+    if (visible) {
+        obj->m_uObjectFlags |= 1;
+    } else {
+        obj->m_uObjectFlags &= ~1;
+    }
 }
 
 /**

@@ -48,14 +48,17 @@ DrawableObject::~DrawableObject()
  */
 nlMatrix4& DrawableObject::GetWorldMatrix() const
 {
+    nlMatrix4 rot_mtx;
     if (!m_worldMatrixUpToDate)
     {
-        nlMatrix4 rot_mtx;
         nlQuatToMatrix(rot_mtx, m_orientation);
+
+        // rot_mtx.SetRow4_(3, m_translation.f.x, m_translation.f.y, m_translation.f.z, 1.f);
 
         rot_mtx.m[3][0] = m_translation.f.x;
         rot_mtx.m[3][1] = m_translation.f.y;
         rot_mtx.m[3][2] = m_translation.f.z;
+        // rot_mtx.SetRow_(3, m_translation);
         rot_mtx.m[3][3] = 1.f;
 
         nlMatrix4 scale_mtx;

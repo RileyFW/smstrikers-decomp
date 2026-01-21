@@ -99,11 +99,13 @@ void DrawableModel::DrawPlanarShadow()
  */
 void DrawableShadow::Draw()
 {
-    if (g_bShadowVolumes) {
+    if (g_bShadowVolumes)
+    {
         u32 mtx;
         nlMatrix4& worldMtx = GetWorldMatrix();
         mtx = glAllocMatrix();
-        if (mtx + 0x10000 != 0xFFFF) {
+        if (mtx + 0x10000 != 0xFFFF)
+        {
             glSetMatrix(mtx, worldMtx);
         }
         RenderShadowModel(2, m_pModel, mtx);
@@ -127,9 +129,9 @@ void GetAABBDimensions(const glModel*, AABBDimensions&, unsigned long)
 /**
  * Offset/Address/Size: 0x10A4 | 0x80120EB0 | size: 0x1C8
  */
-bool DrawableModel::Clone() const
+DrawableObject* DrawableModel::Clone() const
 {
-    return false;
+    return NULL;
 }
 
 /**
@@ -160,12 +162,12 @@ void DrawBallShadow(const nlVector3&, const BallShadowParams&, bool)
 {
 }
 
-/**
- * Offset/Address/Size: 0x1FE8 | 0x80121DF4 | size: 0x60
- */
-DrawableModel::~DrawableModel()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x1FE8 | 0x80121DF4 | size: 0x60
+//  */
+// DrawableModel::~DrawableModel()
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x0 | 0x80121E54 | size: 0x60

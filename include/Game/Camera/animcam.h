@@ -4,6 +4,7 @@
 #include "Game/Camera/BaseCamera.h"
 #include "Game/SAnim.h"
 #include "NL/nlList.h"
+#include "NL/nlString.h"
 
 class cCameraData
 {
@@ -44,6 +45,8 @@ public:
     void FreeCameraAnimation(const char*);
     void Update(float);
     void ManualUpdate(float);
+
+    static cCameraData* m_cameraDataList;
 
     /* 0x1C */ bool m_bCyclic;
     /* 0x1D */ bool m_bUseSimulationTime;

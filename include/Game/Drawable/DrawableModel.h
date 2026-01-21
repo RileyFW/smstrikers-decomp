@@ -29,8 +29,15 @@ void DrawBallShadow(const nlVector3&, const BallShadowParams&, bool);
 class DrawableModel : public DrawableObject
 {
 public:
-    /* 0x04 */ virtual ~DrawableModel();
-    /* 0x08 */ virtual bool Clone() const;
+    DrawableModel(const DrawableModel& other)
+        : DrawableObject(other)
+        , m_pModel(other.m_pModel)
+        , m_pShadowVolume(other.m_pShadowVolume)
+        , m_bVertexAnimated(other.m_bVertexAnimated)
+        , pAABBDimensions(other.pAABBDimensions) {
+        };
+    /* 0x04 */ virtual ~DrawableModel() { };
+    /* 0x08 */ virtual DrawableObject* Clone() const;
     /* 0x0C */ virtual void Draw();
     /* 0x10 */ virtual void DrawPlanarShadow();
     /* 0x14 */ virtual bool IsDrawableModel();

@@ -361,7 +361,7 @@ void Goalie::InitActionGrabBall()
     CleanGoalieAction();
 
     mPrevGoalieActionState = mGoalieActionState;
-    mGoalieActionState = NUM_GOALIE_ACTIONS;
+    mGoalieActionState = GOALIEACTION_GRAB_BALL;
     mnSubstate = 0;
 
     GetLocalPoint(mv3LocalContactPosition, g_pBall->m_v3Position, m_v3Position, m_aActualFacingDirection);

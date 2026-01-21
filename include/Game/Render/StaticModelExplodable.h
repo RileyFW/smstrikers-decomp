@@ -13,6 +13,8 @@ enum StaticModelExplodableCategory
     NUM_STATIC_MODEL_EXPLODABLE_CATEGORIES = 2,
 };
 
+class DrawableObject;
+
 class StaticModelExplodable
 {
 public:
@@ -25,6 +27,9 @@ public:
 
     static bool LoadGeometry();
     static void CreateExplodablesFromHelperObjects();
+
+    /* 0x00 */ char pad[0x2C];
+    /* 0x2C */ DrawableObject* m_pUnexplodedModel;
 };
 
 #endif // _STATICMODELEXPLODABLE_H_

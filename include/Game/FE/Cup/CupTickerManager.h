@@ -3,6 +3,8 @@
 
 #include "Game/FE/tlTextInstance.h"
 
+class FEScrollText;
+
 class CupTickerManager
 {
 public:
@@ -12,6 +14,8 @@ public:
     void CreateNewMessage();
     void Update(float);
     // void BuildGoalTotalTickerMessage(BasicString<unsigned short, Detail::TempStringAllocator>&, bool);
+
+    /* 0x00 */ FEScrollText* m_pScrollText;
 };
 
 // class BasicString<unsigned short, Detail

@@ -114,6 +114,8 @@ void ApplyChangesCB()
  */
 void RevertChangesCB()
 {
+    OptionsScene* scene = (OptionsScene*)nlSingleton<GameSceneManager>::s_pInstance->GetScene(SCENE_OPTIONS);
+    scene->mPopupResult = PR_REVERT_CHANGES;
 }
 
 /**

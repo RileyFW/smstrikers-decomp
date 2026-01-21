@@ -1,10 +1,17 @@
 #include "Game/Camera/animcam.h"
 
+#include "Game/Render/depthoffield.h"
+
 /**
  * Offset/Address/Size: 0x113C | 0x801A5D30 | size: 0x2C
  */
 void EnableDofDebug()
 {
+    if (DepthOfFieldManager::instance.m_bDebugView) {
+        DepthOfFieldManager::instance.m_bDebugView = 0;
+    } else {
+        DepthOfFieldManager::instance.m_bDebugView = 1;
+    }
 }
 
 /**
@@ -33,6 +40,8 @@ void cAnimCamera::LoadCameraAnimation(const char*, const char*, bool)
  */
 void cAnimCamera::FreeCameraAnimations()
 {
+    nlDeleteList(&m_cameraDataList);
+    m_cameraDataList = NULL;
 }
 
 /**
@@ -54,6 +63,7 @@ cAnimCamera::~cAnimCamera()
  */
 void cAnimCamera::BuildAnimViewMatrix(nlMatrix4&)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -67,8 +77,24 @@ void cAnimCamera::UnselectCameraAnimation()
 /**
  * Offset/Address/Size: 0x39C | 0x801A4F90 | size: 0x74
  */
-void cAnimCamera::SelectCameraAnimation(const char*)
+void cAnimCamera::SelectCameraAnimation(const char* name)
 {
+    m_fLastSimulationTime = -1.0f;
+    u32 hash = nlStringLowerHash(name);
+
+    cCameraData* pData = m_cameraDataList;
+    while (pData != nullptr)
+    {
+        if (pData->m_uHashID == hash)
+        {
+            m_pActiveCameraData = pData;
+            return;
+        }
+        pData = pData->next;
+    }
+
+    m_fAnimationTime = 0.0f;
+    BuildAnimViewMatrix(m_matView);
 }
 
 /**

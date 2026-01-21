@@ -89,7 +89,7 @@ void FlareHandler::AddGlow(const nlMatrix4& mat)
 
     p->worldPosition = *(nlVector3*)&mat.f.m41;
 
-    halos.Insert(p);
+    glows.Insert(p);
 }
 
 /**

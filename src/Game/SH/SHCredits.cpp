@@ -120,6 +120,8 @@ void CreditScene::SetupForPhase()
  */
 void CreditScene::GotoNextPhase()
 {
+    mCreditParser.mFileData++;
+    SetupForPhase();
 }
 
 /**
@@ -127,6 +129,7 @@ void CreditScene::GotoNextPhase()
  */
 void CreditScene::SetupForCredits()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

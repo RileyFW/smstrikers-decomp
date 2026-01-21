@@ -2,6 +2,7 @@
 #include "Game/Player.h"
 #include "Game/Ball.h"
 #include "Game/ReplayManager.h"
+#include "Game/RumbleActions.h"
 
 /**
  * Offset/Address/Size: 0x5190 | 0x801A3F40 | size: 0x94
@@ -123,8 +124,9 @@ void KillBallShot(const char*, bool)
 /**
  * Offset/Address/Size: 0x1A18 | 0x801A07C8 | size: 0x2C
  */
-void EmitSolidRumble(cPlayer*)
+void EmitSolidRumble(cPlayer* player)
 {
+    BeginRumbleAction(RUMBLE_SHOT_CONTACT, player->GetGlobalPad());
 }
 
 /**

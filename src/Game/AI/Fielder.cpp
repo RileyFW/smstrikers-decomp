@@ -1525,6 +1525,20 @@ void cFielder::SetAttemptOneTouchPass()
  */
 void cFielder::SetAttemptOneTouchShot()
 {
+    bool shouldAttempt = false;
+
+    cGlobalPad* pad = GetGlobalPad();
+    if (pad != NULL) {
+        GameTweaks* tweaks = g_pGame->m_pGameTweaks;
+        float pressure = GetGlobalPad()->GetPressure(0x15, true);
+        if (pressure > tweaks->unk2B0) {
+            shouldAttempt = true;
+        }
+    }
+
+    m_DesireReceivePassSharedVars.iAttemptOneTouchShot = shouldAttempt ? 2 : 1;
+    m_DesireReceivePassSharedVars.iAttemptOneTouchPass = 0;
+    m_DesireReceivePassSharedVars.pOneTouchPassTarget = NULL;
 }
 
 /**
