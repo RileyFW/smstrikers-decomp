@@ -25,8 +25,9 @@ void SkinAnimatedMovableNPC::SetPosition(const nlVector3&)
 /**
  * Offset/Address/Size: 0x284 | 0x801652F4 | size: 0x20
  */
-void SkinAnimatedMovableNPC::Update(float)
+void SkinAnimatedMovableNPC::Update(float dt)
 {
+    SkinAnimatedNPC::Update(dt);
 }
 
 /**
@@ -34,13 +35,20 @@ void SkinAnimatedMovableNPC::Update(float)
  */
 void SkinAnimatedMovableNPC::Render()
 {
+    nlMakeRotationMatrixZ(mWorldMatrix, maFacingDirection * (6.28318530718f / 65536.0f));
+    mWorldMatrix.m[3][0] = mv3Position.f.x;
+    mWorldMatrix.m[3][1] = mv3Position.f.y;
+    mWorldMatrix.m[3][2] = mv3Position.f.z;
+    mWorldMatrix.m[3][3] = 1.0f;
+    SkinAnimatedNPC::Render();
 }
 
 /**
  * Offset/Address/Size: 0x1E8 | 0x80165258 | size: 0x20
  */
-void SkinAnimatedMovableNPC::RenderFromReplay(const cPoseAccumulator&, const nlMatrix4*)
+void SkinAnimatedMovableNPC::RenderFromReplay(const cPoseAccumulator& poseAcc, const nlMatrix4* pMatrix)
 {
+    SkinAnimatedNPC::RenderFromReplay(poseAcc, pMatrix);
 }
 
 /**

@@ -5,34 +5,145 @@
  */
 void ICaptainGridComponent::SetAllItemsActive()
 {
+    mMapMenu->SetAllItemsActive();
 }
 
 /**
  * Offset/Address/Size: 0x24 | 0x800C1718 | size: 0x90
  */
-void ICaptainGridComponent::MoveHighlightToTarget(eTeamID)
+void ICaptainGridComponent::MoveHighlightToTarget(eTeamID teamID)
 {
+    int position;
+
+    switch (teamID) {
+    case TEAM_DAISY:
+        position = 4;
+        break;
+    case TEAM_DONKEYKONG:
+        position = 1;
+        break;
+    case TEAM_LUIGI:
+        position = 5;
+        break;
+    case TEAM_MARIO:
+        position = 0;
+        break;
+    case TEAM_PEACH:
+        position = 3;
+        break;
+    case TEAM_WALUIGI:
+        position = 2;
+        break;
+    case TEAM_WARIO:
+        position = 6;
+        break;
+    case TEAM_YOSHI:
+        position = 7;
+        break;
+    case TEAM_MYSTERY:
+        position = 8;
+        break;
+    default:
+        position = 0;
+        break;
+    }
+
+    mMapMenu->SetSelectedItem(position);
 }
 
 /**
  * Offset/Address/Size: 0xB4 | 0x800C17A8 | size: 0xC8
  */
-void ICaptainGridComponent::GetSelectedItem() const
+eTeamID ICaptainGridComponent::GetSelectedItem() const
 {
+    // TODO: Implement using CaptainCellItems array
+    return TEAM_INVALID;
 }
 
 /**
  * Offset/Address/Size: 0x17C | 0x800C1870 | size: 0x90
  */
-void ICaptainGridComponent::IsValid(eTeamID)
+void ICaptainGridComponent::IsValid(eTeamID teamID)
 {
+    int position;
+
+    switch (teamID) {
+    case TEAM_DAISY:
+        position = 4;
+        break;
+    case TEAM_DONKEYKONG:
+        position = 1;
+        break;
+    case TEAM_LUIGI:
+        position = 5;
+        break;
+    case TEAM_MARIO:
+        position = 0;
+        break;
+    case TEAM_PEACH:
+        position = 3;
+        break;
+    case TEAM_WALUIGI:
+        position = 2;
+        break;
+    case TEAM_WARIO:
+        position = 6;
+        break;
+    case TEAM_YOSHI:
+        position = 7;
+        break;
+    case TEAM_MYSTERY:
+        position = 8;
+        break;
+    default:
+        position = 0;
+        break;
+    }
+
+    mMapMenu->IsItemActive(position);
 }
 
 /**
  * Offset/Address/Size: 0x20C | 0x800C1900 | size: 0x90
  */
-void ICaptainGridComponent::SetValid(eTeamID, bool)
+void ICaptainGridComponent::SetValid(eTeamID teamID, bool valid)
 {
+    int position;
+
+    switch (teamID) {
+    case TEAM_DAISY:
+        position = 4;
+        break;
+    case TEAM_DONKEYKONG:
+        position = 1;
+        break;
+    case TEAM_LUIGI:
+        position = 5;
+        break;
+    case TEAM_MARIO:
+        position = 0;
+        break;
+    case TEAM_PEACH:
+        position = 3;
+        break;
+    case TEAM_WALUIGI:
+        position = 2;
+        break;
+    case TEAM_WARIO:
+        position = 6;
+        break;
+    case TEAM_YOSHI:
+        position = 7;
+        break;
+    case TEAM_MYSTERY:
+        position = 8;
+        break;
+    default:
+        position = 0;
+        break;
+    }
+
+    mMapMenu->SetItemActive(position, valid);
 }
 
 /**

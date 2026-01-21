@@ -4,8 +4,12 @@
 /**
  * Offset/Address/Size: 0x0 | 0x800C2810 | size: 0x34
  */
-void ISidekickGridComponent::SetVisibleInstanceTable(bool)
+void ISidekickGridComponent::SetVisibleInstanceTable(bool visible)
 {
+    mInstanceTable[0]->m_bVisible = visible;
+    mInstanceTable[1]->m_bVisible = visible;
+    mInstanceTable[2]->m_bVisible = visible;
+    mInstanceTable[3]->m_bVisible = visible;
 }
 
 /**
@@ -37,8 +41,22 @@ void ISidekickGridComponent::MoveHighlightToTarget(eSidekickID id)
 /**
  * Offset/Address/Size: 0xA4 | 0x800C28B4 | size: 0x70
  */
-void ISidekickGridComponent::GetSelectedItem() const
+eSidekickID ISidekickGridComponent::GetSelectedItem() const
 {
+    int position = mMapMenu->GetSelectedItem();
+
+    switch (position) {
+    case 0:
+        return SK_TOAD;
+    case 1:
+        return SK_HAMMERBROS;
+    case 2:
+        return SK_BIRDO;
+    case 3:
+        return SK_KOOPA;
+    default:
+        return SK_TOAD;
+    }
 }
 
 /**

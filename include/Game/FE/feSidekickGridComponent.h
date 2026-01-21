@@ -31,7 +31,7 @@ class ISidekickGridComponent : public IGridComponent
 public:
     void SetVisibleInstanceTable(bool);
     void MoveHighlightToTarget(eSidekickID);
-    void GetSelectedItem() const;
+    eSidekickID GetSelectedItem() const;
     void Update(eFEINPUT_PAD);
     void RebuildInstanceTable();
     void BuildMapMenu();

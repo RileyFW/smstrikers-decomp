@@ -1,6 +1,8 @@
 #ifndef _FECAPTAINGRIDCOMPONENT_H_
 #define _FECAPTAINGRIDCOMPONENT_H_
 #include "Game/FE/feInput.h"
+#include "Game/FE/feSidekickGridComponent.h"
+#include "Game/FE/feMapMenu.h"
 
 #include "Game/Team.h"
 
@@ -9,12 +11,12 @@ class TLInstance;
 class TLSlide;
 class InlineHasher;
 
-class ICaptainGridComponent
+class ICaptainGridComponent : public IGridComponent
 {
 public:
     void SetAllItemsActive();
     void MoveHighlightToTarget(eTeamID);
-    void GetSelectedItem() const;
+    eTeamID GetSelectedItem() const;
     void IsValid(eTeamID);
     void SetValid(eTeamID, bool);
     void UpdateSuperTeamIconState();
