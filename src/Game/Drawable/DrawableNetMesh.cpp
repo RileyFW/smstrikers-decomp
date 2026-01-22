@@ -1,10 +1,13 @@
 #include "Game/Drawable/DrawableNetMesh.h"
+#include "Game/Replay.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x80113F5C | size: 0x38
  */
-void DrawableNetMesh::Replay(SaveFrame&)
+void DrawableNetMesh::Replay(SaveFrame& frame)
 {
+    mJoltCache = mpNetMesh->mJolt;
+    Replayable<0, SaveFrame, float>(frame, mJoltCache);
 }
 
 /**

@@ -217,8 +217,25 @@ GLMaterialList* GLInventory::GetMaterialList(unsigned long key)
 /**
  * Offset/Address/Size: 0x4D4 | 0x801E276C | size: 0x74
  */
-void GLInventory::AddSkinData(unsigned long, nlChunk*)
+void GLInventory::AddSkinData(unsigned long key, nlChunk* skinData)
 {
+    unsigned long key2 = key;
+    nlChunk* skinData2 = skinData;
+    AVLTreeNode* existingNode;
+    freeing_GLInventory<nlChunk>* pSkinData = m_pSkinData[m_nLevel];
+    nlAVLTree<unsigned long, nlChunk*, DefaultKeyCompare<unsigned long> >* tree = pSkinData->m_pItems;
+
+    tree->AddAVLNode(
+        (AVLTreeNode**)&tree->m_Root,
+        &key2,
+        &skinData2,
+        &existingNode,
+        tree->m_NumElements);
+
+    if (existingNode == nullptr)
+    {
+        tree->m_NumElements++;
+    }
 }
 
 /**

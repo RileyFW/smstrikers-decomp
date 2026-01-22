@@ -3,10 +3,10 @@
 
 #include "Game/FE/Overlay/OverlayHandlerSummary.h"
 #include "Game/FE/FEAudio.h"
+#include "Game/GameInfo.h"
+#include "Game/Game.h"
 
 extern FEInput* g_pFEInput;
-
-// extern s32 mControllingInput__14PauseMenuScene;
 
 // /**
 //  * Offset/Address/Size: 0x38 | 0x800B01B4 | size: 0x40
@@ -248,6 +248,7 @@ void PauseMenuScene::OnSelectSTATISTICS(TLComponentInstance*)
  */
 void PauseMenuScene::OnSelectPopupNOFORFEIT()
 {
+    // EMPTY
 }
 
 /**
@@ -255,6 +256,55 @@ void PauseMenuScene::OnSelectPopupNOFORFEIT()
  */
 void PauseMenuScene::OnSelectPopupYESFORFEIT()
 {
+    GameInfoManager* gim;
+    s32 quittingSide;
+
+    gim = nlSingleton<GameInfoManager>::s_pInstance;
+
+    if (gim->mIsInStrikers101Mode)
+    {
+        mQuitDelay = 1.0f;
+        return;
+    }
+
+    if (g_pGame->m_eGameState != GS_END_GAME)
+    {
+        gim = nlSingleton<GameInfoManager>::s_pInstance;
+        quittingSide = -1;
+
+        if (gim->IsInCupMode())
+        {
+            eTeamID userTeam = gim->GetUserSelectedCupTeam();
+            if (userTeam == gim->GetTeam(0))
+            {
+                quittingSide = 0;
+            }
+            else if (userTeam == gim->GetTeam(1))
+            {
+                quittingSide = 1;
+            }
+        }
+        else if (gim->IsInTournamentMode())
+        {
+            quittingSide = gim->GetPlayingSide(mQuittingController);
+        }
+
+        if (gim->IsInCupOrTournamentMode())
+        {
+            if (quittingSide == 0)
+            {
+                nlSingleton<StatsTracker>::s_pInstance->TrackWinner(0);
+                gim->SetResultsOfLastUserGame((eUserGameResult)0xD);
+            }
+            else if (quittingSide == 1)
+            {
+                nlSingleton<StatsTracker>::s_pInstance->TrackWinner(1);
+                gim->SetResultsOfLastUserGame((eUserGameResult)0xE);
+            }
+        }
+    }
+
+    mQuitDelay = 1.0f;
 }
 
 /**
@@ -286,6 +336,7 @@ void PauseMenuScene::Update(float)
  */
 void PauseMenuScene::TransitionOut(PauseMenuScene::TransitionType)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

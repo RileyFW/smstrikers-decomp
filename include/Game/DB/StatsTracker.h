@@ -123,7 +123,7 @@ public:
     void ResetCurrentStats();
     void CreateEventHandler();
     void DestroyEventHandler();
-    void eventHandler(Event*, void*);
+    static void eventHandler(Event*, void*);
     void TrackStat(ePlayerStats, int, int, int, int, int, int);
     void GetSortedStats(PlayerStats*, int, int*, int, ePlayerStats, eSortOrder);
     void GetSortedTeamStats(TeamStats*, int, int*, int);

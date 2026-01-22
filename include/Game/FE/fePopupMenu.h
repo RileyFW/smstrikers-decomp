@@ -53,7 +53,8 @@ public:
     void SceneCreated();
     ~FEPopupMenu();
     FEPopupMenu();
-    static void Create(ePopupMenu);
+
+    void Create(ePopupMenu);
 
     /* 0x0 */ TLSlide* m_slides;
 };

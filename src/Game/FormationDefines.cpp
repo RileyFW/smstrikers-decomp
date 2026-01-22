@@ -131,8 +131,8 @@ void FormationSpec::CalculateExtents(nlVector2& minOut, nlVector2& maxOut, const
     const float fieldHalfHeight = 10.87425f;
 
     minOut.f.x = -fieldHalfWidth + (input.f.x - m_v2Min.f.x);
-    minOut.f.y = -fieldHalfHeight + (input.f.y - m_v2Min.f.y);
     maxOut.f.x = fieldHalfWidth + (input.f.x - m_v2Max.f.x);
+    minOut.f.y = -fieldHalfHeight + (input.f.y - m_v2Min.f.y);
     maxOut.f.y = fieldHalfHeight + (input.f.y - m_v2Max.f.y);
 }
 

@@ -85,6 +85,11 @@ void Replayable<1, LoadFrame, int>(LoadFrame& frame, int& value);
 template <>
 void Replayable<1, SaveFrame, int>(SaveFrame& frame, int& value);
 
+template <>
+void Replayable<0, SaveFrame, float>(SaveFrame& frame, float& value);
+template <>
+void Replayable<0, LoadFrame, float>(LoadFrame& frame, float& value);
+
 template <int N, typename FrameType, typename T>
 void Replayable(FrameType& frame, T& drawable)
 {

@@ -191,12 +191,14 @@ void dJointSetCharacterNoMotionDirection(dxJoint* joint, nlVector3* v3)
     // joint->node[0].
 }
 
+extern dxJoint::Vtable __dcharacter_vtable;
+
 /**
  * Offset/Address/Size: 0x3F4 | 0x802246BC | size: 0x28
  */
 dxJoint* dJointCreateCharacter(dxWorld* world, dxJointGroup* jointGroup)
 {
-    return createJoint(world, jointGroup, NULL);
+    return createJoint(world, jointGroup, &__dcharacter_vtable);
 }
 
 /**

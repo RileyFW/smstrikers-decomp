@@ -109,15 +109,17 @@ unsigned long glGetTextureState(eGLTextureState)
 /**
  * Offset/Address/Size: 0x548 | 0x801DC18C | size: 0xBC
  */
-void glSetRasterState(unsigned long&, eGLState, unsigned long)
+u32 glSetRasterState(unsigned long&, eGLState, unsigned long)
 {
+    return 0;
 }
 
 /**
  * Offset/Address/Size: 0x604 | 0x801DC248 | size: 0xB4
  */
-void glSetRasterState(eGLState, unsigned long)
+u32 glSetRasterState(eGLState, unsigned long)
 {
+    return 0;
 }
 
 /**

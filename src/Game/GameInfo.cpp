@@ -445,9 +445,60 @@ void GameInfoManager::GetNumHumanTeams()
 /**
  * Offset/Address/Size: 0x6D70 | 0x8017C414 | size: 0xB0
  */
-BaseCup* GameInfoManager::GetCup(GameInfoManager::eGameModes)
+BaseCup* GameInfoManager::GetCup(GameInfoManager::eGameModes mode)
 {
-    return nullptr;
+    BaseCup* result = NULL;
+
+    switch (mode)
+    {
+    case GM_FRIENDLY:
+        result = &mMushroomCupSeries;
+        break;
+    case GM_MUSHROOM_CUP:
+        result = &mFlowerCupSeries;
+        break;
+    case GM_FLOWER_CUP:
+        result = &mStarCupSeries;
+        break;
+    case GM_STAR_CUP:
+        if (mBowserCupSeries.mGameNumber == -5 &&
+            mBowserCupKnockout.mGameNumber != -5)
+        {
+            result = &mBowserCupKnockout;
+        }
+        else
+        {
+            result = &mBowserCupSeries;
+        }
+        break;
+    case GM_BOWSER_CUP:
+        result = &mSuperMushroomCupSeries;
+        break;
+    case GM_SUPER_MUSHROOM_CUP:
+        result = &mSuperFlowerCupSeries;
+        break;
+    case GM_SUPER_FLOWER_CUP:
+        result = &mSuperStarCupSeries;
+        break;
+    case GM_SUPER_STAR_CUP:
+        if (mSuperBowserCupSeries.mGameNumber == -5 &&
+            mSuperBowserCupKnockout.mGameNumber != -5)
+        {
+            result = &mSuperBowserCupKnockout;
+        }
+        else
+        {
+            result = &mSuperBowserCupSeries;
+        }
+        break;
+    case GM_TOURNAMENT:
+        result = mCustomTournamentInfo.m_cup;
+        break;
+    default:
+        break;
+    }
+
+    return result;
 }
 
 /**
