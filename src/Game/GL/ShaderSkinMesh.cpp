@@ -227,8 +227,28 @@ void ShaderSkinMesh::PrepareToRender(unsigned long, const nlMatrix4*)
 /**
  * Offset/Address/Size: 0x500 | 0x801E0B44 | size: 0x8C
  */
-void ShaderSkinMesh::AppendSkinPairList(int, const SkinPair*)
+void ShaderSkinMesh::AppendSkinPairList(int numPairs, const SkinPair* pairs)
 {
+    SkinPairList* node = (SkinPairList*)nlMalloc(sizeof(SkinPairList), 8, false);
+
+    if (node != nullptr)
+    {
+        node->pairs = nullptr;
+        node->m_next = nullptr;
+    }
+
+    node->num = numPairs;
+
+    if (numPairs == 0)
+    {
+        node->pairs = nullptr;
+    }
+    else
+    {
+        node->pairs = (SkinPair*)pairs;
+    }
+
+    nlRingAddEnd<SkinPairList>(&skinPairs, node);
 }
 
 /**

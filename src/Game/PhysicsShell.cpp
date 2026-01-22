@@ -25,6 +25,17 @@ bool PhysicsShell::SetContactInfo(dContact* contact, PhysicsObject* other, bool 
  */
 void PhysicsShell::PostUpdate()
 {
+    PhysicsObject::PostUpdate();
+
+    nlVector3 velocity;
+    GetLinearVelocity(&velocity);
+
+    nlVector3& pos = GetPosition();
+    if (pos.f.z > 20.0f && velocity.f.z > 0.0f)
+    {
+        velocity.f.z *= 0.9f;
+        SetLinearVelocity(velocity);
+    }
 }
 
 /**

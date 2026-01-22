@@ -236,6 +236,35 @@ void nlDeleteDLRing(T** head)
     nlDeleteRing<T>(head);
 }
 
+/**
+ * (EXAMPLE: SkinPairList) Offset/Address/Size: 0xAC | 0x801E21A0 | size: 0x2C
+ */
+template <typename T>
+void nlRingAddStart(T** list, T* item)
+{
+    T* head = *list;
+    if (head == nullptr)
+    {
+        *list = item;
+        item->m_next = item;
+        return;
+    }
+
+    item->m_next = head->m_next;
+    head = *list;
+    head->m_next = item;
+}
+
+/**
+ * (EXAMPLE: SkinPairList) Offset/Address/Size: 0x70 | 0x801E2164 | size: 0x3C
+ */
+template <typename T>
+void nlRingAddEnd(T** list, T* item)
+{
+    nlRingAddStart(list, item);
+    *list = item;
+}
+
 template <typename T, typename CallbackType>
 void nlWalkDLRing(T* head, CallbackType* callback, void (CallbackType::*callbackFunc)(T*))
 {

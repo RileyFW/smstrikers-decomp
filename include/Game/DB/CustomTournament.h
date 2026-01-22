@@ -47,7 +47,7 @@ public:
     /* 0x938 */ eTournamentMode m_tournMode;     // offset 0x938, size 0x4
     /* 0x93C */ unsigned char m_numTeams;        // offset 0x93C, size 0x1
     /* 0x93D */ unsigned char m_numGamesPerTeam; // offset 0x93D, size 0x1
-    /* 0x93E */ unsigned char m_cupConstructed;  // offset 0x93E, size 0x1
+    /* 0x93E */ bool m_cupConstructed;           // offset 0x93E, size 0x1
     /* 0x940 */ int m_largestCupSize;            // offset 0x940, size 0x4
 }; // total size: 0x944
 

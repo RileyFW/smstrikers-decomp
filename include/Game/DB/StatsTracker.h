@@ -2,6 +2,7 @@
 #define _STATSTRACKER_H_
 
 #include "Game/Team.h"
+#include "Game/DB/Simmer.h"
 #include "NL/nlSingleton.h"
 
 enum eType
@@ -139,19 +140,19 @@ public:
     void WriteCurrentlyPlaying() const;
     void MoveTeamBUp(TeamStats, TeamStats);
 
-    /* 0x000 */ struct BasicGameInfo* mBasicGameInfo;
-    /* 0x004 */ class EventHandler* mEventHandler;
-    /* 0x008 */ struct TeamStats mCurrentTeamStats[2];
-    /* 0x088 */ struct TeamStats mCumulativeTeamStats[2];
-    /* 0x108 */ struct PlayerStats mCurrentPlayerStats[2][5];
-    /* 0x310 */ struct PlayerStats mCurrentUserStats[4];
-    /* 0x3E0 */ struct PlayerStats mCumulativeUserStats[4];
+    /* 0x000 */ BasicGameInfo* mBasicGameInfo;
+    /* 0x004 */ EventHandler* mEventHandler;
+    /* 0x008 */ TeamStats mCurrentTeamStats[2];
+    /* 0x088 */ TeamStats mCumulativeTeamStats[2];
+    /* 0x108 */ PlayerStats mCurrentPlayerStats[2][5];
+    /* 0x310 */ PlayerStats mCurrentUserStats[4];
+    /* 0x3E0 */ PlayerStats mCumulativeUserStats[4];
     /* 0x4B0 */ unsigned short mNumConsecutiveGamesPlayed;
     /* 0x4B4 */ int mNumGamesWon[2];
-    /* 0x4BC */ class Simulator* m_pSimulator;
-    /* 0x4C0 */ unsigned char mIsUserCupWinner;
-    /* 0x4C1 */ unsigned char mIsOvertime;
-    /* 0x4C2 */ unsigned char mHasGameEnded;
+    /* 0x4BC */ Simulator* m_pSimulator;
+    /* 0x4C0 */ bool mIsUserCupWinner;
+    /* 0x4C1 */ bool mIsOvertime;
+    /* 0x4C2 */ bool mHasGameEnded;
 }; // total size: 0x4C4
 
 // class BasicString < char, Detail

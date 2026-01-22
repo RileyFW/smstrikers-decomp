@@ -39,7 +39,7 @@ public:
     virtual void RemoveScreenHandler(BaseScreenHandler*);
     virtual void SetPresentation(FEPresentation* presentation) { m_pFEPresentation = presentation; };
     virtual void OnActivate();
-    virtual void SceneCreated();
+    virtual void SceneCreated() { };
     virtual void SetVisible(bool visible) { m_bVisible = visible; };
 
     /* 0x04 */ unsigned long m_uHashID;

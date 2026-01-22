@@ -72,7 +72,8 @@ void NSNMessengerScene::OpenMessengerNow()
 {
     FEPresentation* presentation = m_pFEScene->m_pFEPackage->GetPresentation();
 
-    if (mVisibilityMask & nlTaskManager::m_pInstance->m_CurrState) {
+    if (mVisibilityMask & nlTaskManager::m_pInstance->m_CurrState)
+    {
         SetVisible(true);
     }
 
@@ -87,7 +88,8 @@ void NSNMessengerScene::OpenMessenger()
 {
     FEPresentation* presentation = m_pFEScene->m_pFEPackage->GetPresentation();
 
-    if (mVisibilityMask & nlTaskManager::m_pInstance->m_CurrState) {
+    if (mVisibilityMask & nlTaskManager::m_pInstance->m_CurrState)
+    {
         SetVisible(true);
     }
 
@@ -105,9 +107,11 @@ void NSNMessengerScene::Update(float)
 
 /**
  * Offset/Address/Size: 0x914 | 0x800A1C30 | size: 0x2C
+ * TODO: 99.55% match - vtable offset 0x3C instead of 0x1C (multiple inheritance layout difference)
  */
 void NSNMessengerScene::SceneCreated()
 {
+    SceneCreated();
 }
 
 /**

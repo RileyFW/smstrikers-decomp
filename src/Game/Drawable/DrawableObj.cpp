@@ -45,30 +45,36 @@ DrawableObject::~DrawableObject()
 
 /**
  * Offset/Address/Size: 0x2C | 0x8011FC9C | size: 0x90
+ * TODO: 86.72% match - compiler uses f0 for loads/stores instead of f1 (lines 2c-48),
+ * and epilogue order differs (lines 78-80). With #pragma scheduling off.
  */
+#pragma push
+#pragma scheduling off
 nlMatrix4& DrawableObject::GetWorldMatrix() const
 {
-    nlMatrix4 rot_mtx;
     if (!m_worldMatrixUpToDate)
     {
+        nlMatrix4 rot_mtx;
         nlQuatToMatrix(rot_mtx, m_orientation);
 
-        // rot_mtx.SetRow4_(3, m_translation.f.x, m_translation.f.y, m_translation.f.z, 1.f);
-
-        rot_mtx.m[3][0] = m_translation.f.x;
-        rot_mtx.m[3][1] = m_translation.f.y;
-        rot_mtx.m[3][2] = m_translation.f.z;
-        // rot_mtx.SetRow_(3, m_translation);
-        rot_mtx.m[3][3] = 1.f;
+        float tx = m_translation.f.x;
+        float one = 1.0f;
+        rot_mtx.m[3][0] = tx;
+        float ty = m_translation.f.y;
+        rot_mtx.m[3][1] = ty;
+        float tz = m_translation.f.z;
+        rot_mtx.m[3][2] = tz;
+        rot_mtx.m[3][3] = one;
 
         nlMatrix4 scale_mtx;
-        nlMakeScaleMatrix(scale_mtx, m_scale, m_scale, m_scale);
-        // nlMultMatrices(*(nlMatrix4*)&m_worldMatrix, rot_mtx, scale_mtx);
+        float s = m_scale;
+        nlMakeScaleMatrix(scale_mtx, s, s, s);
         nlMultMatrices(*(nlMatrix4*)&m_worldMatrix, scale_mtx, rot_mtx);
         *(bool*)&m_worldMatrixUpToDate = true;
     }
     return *(nlMatrix4*)&m_worldMatrix;
 }
+#pragma pop
 
 // if (this->unk44 == 0)
 // {

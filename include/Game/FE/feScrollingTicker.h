@@ -1,10 +1,25 @@
 #ifndef _FESCROLLINGTICKER_H_
 #define _FESCROLLINGTICKER_H_
 
+#include "Game/BaseSceneHandler.h"
+#include "Game/FE/feTweener.h"
+#include "Game/FE/feScrollText.h"
+
+// Forward declarations
+class TLTextInstance;
+class TLInstance;
+class feVector3;
+
 // void 0x800A0DCC..0x800A1304 | size: 0x538;
 // void 0x802A9880..0x802A9938 | size: 0xB8;
 
-class ScrollingTickerScene
+class FEIMessenger
+{
+public:
+    virtual ~FEIMessenger();
+}; // total size: 0x4
+
+class ScrollingTickerScene : public FEIMessenger, public BaseSceneHandler
 {
 public:
     void IsMessengerOpen() const;
@@ -17,13 +32,30 @@ public:
     void SceneCreated();
     ~ScrollingTickerScene();
     ScrollingTickerScene();
+
     void tickerClosed(void*);
     void tickerOpened(void*);
     void setScaleTweenCallback(void*, const float*);
     void setSizeTweenCallback(void*, const float*);
     // void @4@SceneCreated();
     // void @4@Update(float);
-};
+
+    /* 0x020 */ unsigned char m_active;
+    /* 0x024 */ feVector3 m_leftBallClosedPos;
+    /* 0x030 */ feVector3 m_rightBallClosedPos;
+    /* 0x03C */ feVector3 m_leftBallOpenPos;
+    /* 0x048 */ feVector3 m_rightBallOpenPos;
+    /* 0x054 */ feVector3 m_ballClosedScale;
+    /* 0x060 */ feVector3 m_grayClosedScale;
+    /* 0x06C */ feVector3 m_grayOpenScale;
+    /* 0x078 */ TLTextInstance* m_textBox;
+    /* 0x07C */ TLInstance* m_leftBall;
+    /* 0x080 */ TLInstance* m_rightBall;
+    /* 0x084 */ TLInstance* m_backRectangle;
+    /* 0x088 */ Function<void*> m_cbFunc;
+    /* 0x090 */ FEScrollText* m_textScroller;
+    /* 0x094 */ FETweenManager m_pFETweenManager;
+}; // total size: 0xCC
 
 // class FEFinder<TLInstance, 3>
 // {

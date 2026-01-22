@@ -418,6 +418,7 @@ CustomTournament::~CustomTournament()
  */
 void CustomTournament::ConstructCup()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -431,13 +432,50 @@ int CustomTournament::GetSaveDataSize() const
 /**
  * Offset/Address/Size: 0xAC | 0x8018D55C | size: 0xA4
  */
-void CustomTournament::SerializeData(void*) const
+void CustomTournament::SerializeData(void* buffer) const
 {
+    void* ptr = buffer;
+
+    memcpy(ptr, &m_tournMode, 4);
+    ptr = (char*)ptr + 4;
+
+    memcpy(ptr, &m_numTeams, 1);
+    ptr = (char*)ptr + 1;
+
+    memcpy(ptr, &m_numGamesPerTeam, 1);
+    ptr = (char*)ptr + 1;
+
+    memcpy(ptr, &m_cupConstructed, 1);
+    ptr = (char*)ptr + 1;
+
+    if (m_cupConstructed)
+    {
+        m_cup->SerializeData(ptr);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x8018D4B0 | size: 0xAC
  */
-void CustomTournament::DeserializeData(void*)
+void CustomTournament::DeserializeData(void* buffer)
 {
+    void* ptr = buffer;
+
+    memcpy(&m_tournMode, ptr, 4);
+    ptr = (char*)ptr + 4;
+
+    memcpy(&m_numTeams, ptr, 1);
+    ptr = (char*)ptr + 1;
+
+    memcpy(&m_numGamesPerTeam, ptr, 1);
+    ptr = (char*)ptr + 1;
+
+    memcpy(&m_cupConstructed, ptr, 1);
+    ptr = (char*)ptr + 1;
+
+    if (m_cupConstructed)
+    {
+        ConstructCup();
+        m_cup->DeserializeData(ptr);
+    }
 }

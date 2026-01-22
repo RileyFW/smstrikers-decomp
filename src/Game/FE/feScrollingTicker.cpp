@@ -38,8 +38,14 @@ void ScrollingTickerScene::OpenMessenger()
 /**
  * Offset/Address/Size: 0x5D0 | 0x800A0228 | size: 0x60
  */
-void ScrollingTickerScene::Update(float)
+void ScrollingTickerScene::Update(float fDeltaT)
 {
+    BaseSceneHandler::Update(fDeltaT);
+    m_pFETweenManager.Update(fDeltaT);
+    if (m_active)
+    {
+        m_textScroller->Update(fDeltaT);
+    }
 }
 
 /**

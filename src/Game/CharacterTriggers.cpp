@@ -238,8 +238,10 @@ void KillWindup(cCharacter*, const char*, bool)
 /**
  * Offset/Address/Size: 0x838 | 0x8019F5E8 | size: 0x44
  */
-void EmitTurbo(cPlayer*, const char*)
+void EmitTurbo(cPlayer* player, const char* unused)
 {
+    player->InitBlur(12);
+    BeginRumbleAction((eRumbleActionPreset)0, player->GetGlobalPad());
 }
 
 /**

@@ -96,6 +96,11 @@ void StatsTracker::CreateEventHandler()
  */
 void StatsTracker::DestroyEventHandler()
 {
+    if (mEventHandler)
+    {
+        g_pEventManager->RemoveEventHandler(mEventHandler);
+        mEventHandler = NULL;
+    }
 }
 
 /**

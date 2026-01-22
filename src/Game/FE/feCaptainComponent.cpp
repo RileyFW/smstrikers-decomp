@@ -111,6 +111,7 @@ void IChooseCaptain::ComponentState::SetCurrentPhase(Phase phase)
  */
 void IChooseCaptain::NameComponent::SetTextName(const char*, unsigned long)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

@@ -26,20 +26,37 @@ public:
 
 typedef void (*EventCallback)(Event*, void*);
 
-class EventHandler /* size >= 0x2C */
+// class EventHandler /* size >= 0x2C */
+// {
+// public:
+//     /* 0x00 */ EventHandler* m_next;
+//     /* 0x04 */ EventHandler* m_prev;
+//     /* 0x08 */ EventCallback callback;
+//     /* 0x0C */ void* param;
+//     /* 0x10 */ u32 mask;
+//     /* 0x14 */ s32 unk14;
+//     /* 0x18 */ s32 unk18;
+//     /* 0x1C */ Event* m_event;
+//     /* 0x20 */ EventManager* m_manager;
+//     /* 0x24 */ u32 unk24;
+// };
+
+class EventHandler
 {
 public:
+    inline void set(EventCallback pEventHandlerFunc, unsigned long uDestinationMask, void* pParam)
+    {
+        m_pCBFunction = pEventHandlerFunc;
+        m_uDestinationMask = uDestinationMask;
+        m_pCBParam = pParam;
+    }
+
     /* 0x00 */ EventHandler* m_next;
     /* 0x04 */ EventHandler* m_prev;
-    /* 0x08 */ EventCallback callback;
-    /* 0x0C */ void* unkC;
-    /* 0x10 */ u32 mask;
-    /* 0x14 */ s32 unk14;
-    /* 0x18 */ s32 unk18;
-    /* 0x1C */ Event* m_event;
-    /* 0x20 */ EventManager* m_manager;
-    /* 0x24 */ u32 unk24;
-};
+    /* 0x08 */ void (*m_pCBFunction)(class Event*, void*);
+    /* 0x0C */ void* m_pCBParam;
+    /* 0x10 */ unsigned long m_uDestinationMask;
+}; // total size: 0x14
 
 class EventManager
 {

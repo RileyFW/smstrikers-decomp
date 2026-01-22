@@ -78,14 +78,12 @@ void EventManager::Create(unsigned long count, unsigned long size)
 #pragma push
 #pragma optimization_level 1
 #pragma optimize_for_size on
-EventHandler* EventManager::AddEventHandler(EventCallback callback, void* arg1, unsigned long arg2)
+EventHandler* EventManager::AddEventHandler(EventCallback pEventHandlerFunc, void* pParam, unsigned long uDestinationMask)
 {
-    EventHandler* temp_r3 = (EventHandler*)nlMalloc(0x14, 8, 0);
-    temp_r3->callback = callback;
-    temp_r3->mask = arg2;
-    temp_r3->unkC = arg1;
-    nlDLRingAddEnd<EventHandler>(&this->m_handlers, temp_r3);
-    return temp_r3;
+    EventHandler* eventHandler = (EventHandler*)nlMalloc(0x14, 8, 0);
+    eventHandler->set(pEventHandlerFunc, uDestinationMask, pParam);
+    nlDLRingAddEnd<EventHandler>(&m_handlers, eventHandler);
+    return eventHandler;
 }
 #pragma pop
 
@@ -166,10 +164,10 @@ void EventManager::DispatchEvents()
             do
             {
                 u32 mask = m_dest[e->m_uEventID]; // dest[type]
-                if ((it->mask & mask) != 0)
+                if ((it->m_uDestinationMask & mask) != 0)
                 {
-                    void (*fn)(Event*, void*) = it->callback;
-                    void* ud = it->unkC;
+                    void (*fn)(Event*, void*) = it->m_pCBFunction;
+                    void* ud = it->m_pCBParam;
                     (*fn)(e, ud); // bctrl
                 }
 

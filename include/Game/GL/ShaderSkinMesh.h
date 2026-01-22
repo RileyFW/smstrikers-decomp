@@ -7,11 +7,6 @@
 #include "Game/Drawable/DrawableObj.h"
 #include "Game/GL/GLSkinMesh.h"
 
-// void nlDeleteRing<SkinPairList>(SkinPairList**);
-// void nlRingAddEnd<SkinPairList>(SkinPairList**, SkinPairList*);
-// void nlRingAddStart<SkinPairList>(SkinPairList**, SkinPairList*);
-// void nlDeleteRing<BoneMapList>(BoneMapList**);
-
 class BoneMapList
 {
 public:
