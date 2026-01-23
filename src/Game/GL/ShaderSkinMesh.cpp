@@ -28,12 +28,6 @@
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x70 | 0x801E2164 | size: 0x3C
-//  */
-// void nlRingAddEnd<SkinPairList>(SkinPairList**, SkinPairList*)
-// {
-// }
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x801E20F4 | size: 0x70

@@ -3,6 +3,7 @@
 
 #include "Game/FE/feInput.h"
 #include "Game/FE/feHelpFuncs.h"
+#include "Game/FE/feCaptainGridComponent.h"
 #include "Game/GameInfo.h"
 
 class TLComponentInstance;
@@ -11,7 +12,6 @@ class TLSlide;
 class InlineHasher;
 class FEPresentation;
 class AsyncImage;
-class ICaptainGridComponent;
 class ISidekickGridComponent;
 
 enum Phase

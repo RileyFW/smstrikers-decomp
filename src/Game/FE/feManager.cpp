@@ -1,5 +1,6 @@
 #include "Game/FE/feManager.h"
 
+#include "Game/Camera/CameraMan.h"
 #include "Game/FE/feInput.h"
 #include "Game/FE/feSceneManager.h"
 #include "Game/Game.h"
@@ -12,6 +13,8 @@
 // Global variables
 static unsigned char AlreadyStartedStrikers101Menu;
 static unsigned char DontCheckForControllerRemovalHack;
+extern float g_AllActorsHidden;
+extern unsigned char g_JaapAndJacksNastyHackBecauseWeDoNotKnowDifferenceBetweenPausePauseAndPostGamePause;
 
 /**
  * Offset/Address/Size: 0x0 | 0x80094C84 | size: 0x44
@@ -66,11 +69,28 @@ void FrontEnd::EnterMenuState(FrontEnd::MenuEnterType)
 {
 }
 
+// Helper class to work around MWCC codegen for virtual destructor calls
+class CameraDeleter {
+public:
+    virtual void DestroyWith(int);
+};
+
 /**
  * Offset/Address/Size: 0x738 | 0x800953BC | size: 0x70
  */
 void FrontEnd::ExitWinnerScreen()
 {
+    CameraDeleter* cam;
+    cCameraManager::PopCameraWithTransition(1.0f, eCT_EASE_IN, 0);
+    cam = (CameraDeleter*)m_pPauseMenuCamera;
+    if (cam) {
+        cam->DestroyWith(1);
+    }
+    m_pPauseMenuCamera = 0;
+    g_AllActorsHidden = 0.5f;
+    g_JaapAndJacksNastyHackBecauseWeDoNotKnowDifferenceBetweenPausePauseAndPostGamePause = 1;
+    DontCheckForControllerRemovalHack = 0;
+    nlTaskManager::SetNextState(2);
 }
 
 /**

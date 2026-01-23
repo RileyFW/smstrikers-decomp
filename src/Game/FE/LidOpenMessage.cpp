@@ -1,10 +1,23 @@
 #include "Game/FE/LidOpenMessage.h"
+#include "types.h"
+
+extern int g_Language;
+
+struct LoadingTextEntry {
+    int x;
+    int y;
+    unsigned long param;
+    const unsigned char* text;
+};
+
+extern LoadingTextEntry LOADING_TEXT_DATA[];
 
 /**
  * Offset/Address/Size: 0x624 | 0x80094540 | size: 0x26C
  */
 void DisplayMessage(int, int, const unsigned char*, int, unsigned long, bool)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -26,4 +39,17 @@ void DVDAllClearSebring(int)
  */
 void DisplayLoadingMessageFast()
 {
+    int lang = g_Language;
+    if (lang > 6) {
+        lang = 0;
+    }
+
+    DisplayMessage(
+        LOADING_TEXT_DATA[lang].x,
+        LOADING_TEXT_DATA[lang].y,
+        LOADING_TEXT_DATA[lang].text,
+        LOADING_TEXT_DATA[lang].param,
+        0xFFFFA800,
+        true
+    );
 }

@@ -8,8 +8,8 @@ LoadCallbacks LoadSystem;
 MemCard** g_MemCards = nullptr;
 struct MemCardIDInfo
 {
-    u32 serialID;
-    u32 cardID;
+    s64 serialID;
+    // u32 cardID;
 };
 MemCardIDInfo mLastKnownMemCardID;
 
@@ -259,5 +259,4 @@ void SaveLoad::FreeAllCallbackMemory()
 void SaveLoad::RememberCurrentMemCardSerialID(int id)
 {
     mLastKnownMemCardID.serialID = g_MemCards[id]->GetSerialID();
-    // mLastKnownMemCardID.cardID = id;
 }

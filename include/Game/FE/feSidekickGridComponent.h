@@ -15,6 +15,10 @@ class IGridComponent
 {
 public:
     virtual ~IGridComponent() { }
+    virtual void vfunc_0C() { }
+    virtual void vfunc_10() { }
+    virtual void vfunc_14() { }
+    virtual void MoveHighlightToTarget(eTeamID target) { }
 
     /* 0x00 */ // vtable
     /* 0x04 */ TLInstance** mInstanceTable;

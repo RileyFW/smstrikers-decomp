@@ -117,8 +117,9 @@ void IChooseCaptain::NameComponent::SetTextName(const char*, unsigned long)
 /**
  * Offset/Address/Size: 0xC4 | 0x800BF868 | size: 0x28
  */
-void IChooseCaptain::NameComponent::SetCaptainName(unsigned long)
+void IChooseCaptain::NameComponent::SetCaptainName(unsigned long captainID)
 {
+    SetTextName(mCaptainObjName, captainID);
 }
 
 /**
@@ -262,8 +263,11 @@ void IChooseCaptain::PushPlayerWithGameInfoDB()
 /**
  * Offset/Address/Size: 0x8C | 0x800BDA28 | size: 0x4C
  */
-void IChooseCaptain::MoveHighlightToCurrentCaptain(int)
+void IChooseCaptain::MoveHighlightToCurrentCaptain(int which)
 {
+    if (which == 0 || which == 1) {
+        mCaptainGridComponents[which]->MoveHighlightToTarget((eTeamID)mHomeAwayTeam[which]);
+    }
 }
 
 /**

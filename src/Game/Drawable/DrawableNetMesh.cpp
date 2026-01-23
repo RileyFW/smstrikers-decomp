@@ -13,8 +13,19 @@ void DrawableNetMesh::Replay(SaveFrame& frame)
 /**
  * Offset/Address/Size: 0x38 | 0x80113F94 | size: 0x74
  */
-void DrawableNetMesh::Replay(LoadFrame&)
+void DrawableNetMesh::Replay(LoadFrame& frame)
 {
+    float joltValue = 0.0f;
+    Replayable<0, LoadFrame, float>(frame, joltValue);
+
+    if (joltValue != mJoltCache) {
+        mJoltCache = joltValue;
+        if (mpNetMesh != nullptr) {
+            if (mJoltCache > 0.0f) {
+                mpNetMesh->JoltNet(mJoltCache);
+            }
+        }
+    }
 }
 
 /**

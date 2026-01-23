@@ -179,7 +179,7 @@ void cCameraManager::PushCameraWithTransition(cBaseCamera*, float, eCameraTransi
 /**
  * Offset/Address/Size: 0x590 | 0x801A6C18 | size: 0x268
  */
-void cCameraManager::PopCameraWithTransition(float, eCameraTransition, void (*)(eCameraMessage))
+/* static */ void cCameraManager::PopCameraWithTransition(float, eCameraTransition, void (*)(eCameraMessage))
 {
 }
 

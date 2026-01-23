@@ -15,7 +15,7 @@ class ICaptainGridComponent : public IGridComponent
 {
 public:
     void SetAllItemsActive();
-    void MoveHighlightToTarget(eTeamID);
+    virtual void MoveHighlightToTarget(eTeamID);
     eTeamID GetSelectedItem() const;
     void IsValid(eTeamID);
     void SetValid(eTeamID, bool);

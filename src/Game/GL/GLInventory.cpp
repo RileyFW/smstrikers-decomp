@@ -128,7 +128,7 @@ void GLInventory::GetShadowVolume(unsigned long)
 /**
  * Offset/Address/Size: 0x888 | 0x801E2B20 | size: 0x74
  */
-void GLInventory::AddTextureAnim(unsigned long, GLTextureAnim*)
+void GLInventory::AddTextureAnim(unsigned long hashID, GLTextureAnim* pAnim)
 {
 }
 

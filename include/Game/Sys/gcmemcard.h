@@ -104,16 +104,20 @@ public:
     void CloseFile(MemCard::MC_FILE*);
     void FileExists(const char*);
     void WriteFileIconData(MemCard::MC_FILE*, void*, const MemCardFunctor&);
-    void AlignBytesToSectorSize(unsigned long);
+    unsigned long AlignBytesToSectorSize(unsigned long);
 
-    int GetSerialID() const { return 0; };
+    s64 GetSerialID() const;
 
-    INTERNAL_STATE m_State;                      // offset 0x0, size 0x4
-    unsigned long m_Slot;                        // offset 0x4, size 0x4
-    CARD_STATE m_CardState;                      // offset 0x8, size 0x4
-    CARD_INFO m_CardInfo;                        // offset 0xC, size 0x10
-    unsigned long m_LastTransferSize;            // offset 0x1C, size 0x4
-    unsigned long m_TargetTransferSize;          // offset 0x20, size 0x4
+    INTERNAL_STATE m_State;             // offset 0x0, size 0x4
+    unsigned long m_Slot;               // offset 0x4, size 0x4
+    CARD_STATE m_CardState;             // offset 0x8, size 0x4
+    CARD_INFO m_CardInfo;               // offset 0xC, size 0x10
+    unsigned long m_LastTransferSize;   // offset 0x1C, size 0x4
+    unsigned long m_TargetTransferSize; // offset 0x20, size 0x4
+
+    s32 unk_24;
+    /* 0x28 */ s64 m_SerialID; // not sure about this struct yet
+
     MemCardFunctor m_CB[9];                      // offset 0x24, size 0xD8
     nlStaticSortedSlot<MC_FILE, 16> m_OpenFiles; // offset 0xFC, size 0x314
     MC_FILE* m_pFileCB;                          // offset 0x410, size 0x4
