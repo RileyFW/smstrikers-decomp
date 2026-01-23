@@ -153,6 +153,22 @@ CupHubScene::~CupHubScene()
  */
 void CupHubScene::SceneCreated()
 {
+    LoadCaptainImage();
+    eHubState state = mHubState;
+    switch (state)
+    {
+    case HUB_LEAGUE:
+    case HUB_BOWSER_TRANSITION:
+        CreateLeague();
+        break;
+    case HUB_KNOCKOUT2:
+    case HUB_KNOCKOUT4:
+    case HUB_KNOCKOUT8:
+        CreateKnockout();
+        break;
+    default:
+        break;
+    }
 }
 
 /**
@@ -190,6 +206,7 @@ void CupHubScene::UpdateDisplayedStat()
  */
 void CupHubScene::CreateLeague()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -204,6 +221,7 @@ void CupHubScene::CreateBowserLeague()
  */
 void CupHubScene::CreateKnockout()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -274,4 +292,5 @@ void CupHubScene::UpdateRoundMessage(bool)
  */
 void CupHubScene::LoadCaptainImage()
 {
+    FORCE_DONT_INLINE;
 }

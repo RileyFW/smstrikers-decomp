@@ -120,6 +120,7 @@ void CreditScene::SetupForPhase()
  */
 void CreditScene::GotoNextPhase()
 {
+    FORCE_DONT_INLINE;
     mCreditParser.mFileData++;
     SetupForPhase();
 }
@@ -165,6 +166,23 @@ void CreditScene::UpdateForNintendoLogo(float)
  */
 void CreditScene::UpdateForNLGMovie(float)
 {
+    if (FESceneManager::GetInstance()->AreAllScenesValid())
+    {
+        GameSceneManager* pGameSceneMgr = GameSceneManager::GetInstance();
+        BaseSceneHandler* pCurrentScene;
+        if (pGameSceneMgr->mCurrentStackDepth != 0)
+        {
+            pCurrentScene = pGameSceneMgr->mBaseSceneHandlerStack[pGameSceneMgr->mCurrentStackDepth - 1];
+        }
+        else
+        {
+            pCurrentScene = NULL;
+        }
+        if (pCurrentScene == this)
+        {
+            GotoNextPhase();
+        }
+    }
 }
 
 /**

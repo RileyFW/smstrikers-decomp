@@ -40,11 +40,13 @@ public:
     /* 0x08 */ virtual DrawableObject* Clone() const;
     /* 0x0C */ virtual void Draw();
     /* 0x10 */ virtual void DrawPlanarShadow();
-    /* 0x14 */ virtual bool IsDrawableModel();
-    /* 0x18 */ virtual DrawableModel* AsDrawableModel();
+    /* 0x14 */ virtual bool IsDrawableModel() { return true; };
+    /* 0x18 */ virtual DrawableModel* AsDrawableModel() { return NULL; };
     /* 0x1C */ virtual void GetAABBDimensions(AABBDimensions&, bool) const;
 
     void DrawModel(const nlMatrix4&);
+
+    inline glModel* GetModel() const { return m_pModel; }
 
     /* 0x9C */ glModel* m_pModel;
     /* 0xA0 */ GLShadowVolume* m_pShadowVolume;
@@ -55,7 +57,7 @@ public:
 class DrawableShadow : public DrawableObject
 {
 public:
-    /* 0x04 */ virtual ~DrawableShadow();
+    /* 0x04 */ virtual ~DrawableShadow() { };
     /* 0x0C */ virtual void Draw();
 
     /* 0x9C */ glModel* m_pModel;

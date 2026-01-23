@@ -119,6 +119,7 @@ void IChooseCaptain::NameComponent::SetTextName(const char*, unsigned long)
  */
 void IChooseCaptain::NameComponent::SetCaptainName(unsigned long captainID)
 {
+    FORCE_DONT_INLINE;
     SetTextName(mCaptainObjName, captainID);
 }
 
@@ -127,6 +128,7 @@ void IChooseCaptain::NameComponent::SetCaptainName(unsigned long captainID)
  */
 void IChooseCaptain::NameComponent::SetCaptainLogo(const char*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -265,7 +267,8 @@ void IChooseCaptain::PushPlayerWithGameInfoDB()
  */
 void IChooseCaptain::MoveHighlightToCurrentCaptain(int which)
 {
-    if (which == 0 || which == 1) {
+    if (which == 0 || which == 1)
+    {
         mCaptainGridComponents[which]->MoveHighlightToTarget((eTeamID)mHomeAwayTeam[which]);
     }
 }
@@ -273,6 +276,11 @@ void IChooseCaptain::MoveHighlightToCurrentCaptain(int which)
 /**
  * Offset/Address/Size: 0x0 | 0x800BD99C | size: 0x8C
  */
-void IChooseCaptain::SetupNameComponentToCurrentCaptain(int)
+void IChooseCaptain::SetupNameComponentToCurrentCaptain(int slot)
 {
+    if (slot == 0 || slot == 1)
+    {
+        mNameComponents[slot].SetCaptainName(GetLOCCharacterName((eTeamID)mHomeAwayTeam[slot], false, false));
+        mNameComponents[slot].SetCaptainLogo(GetTeamName((eTeamID)mHomeAwayTeam[slot]));
+    }
 }

@@ -81,6 +81,7 @@ ScrollingTickerScene::ScrollingTickerScene()
  */
 void ScrollingTickerScene::tickerClosed(void*)
 {
+    SetVisible(false);
 }
 
 /**

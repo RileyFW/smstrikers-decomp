@@ -18,10 +18,13 @@ void DrawableNetMesh::Replay(LoadFrame& frame)
     float joltValue = 0.0f;
     Replayable<0, LoadFrame, float>(frame, joltValue);
 
-    if (joltValue != mJoltCache) {
+    if (joltValue != mJoltCache)
+    {
         mJoltCache = joltValue;
-        if (mpNetMesh != nullptr) {
-            if (mJoltCache > 0.0f) {
+        if (mpNetMesh != nullptr)
+        {
+            if (mJoltCache > 0.0f)
+            {
                 mpNetMesh->JoltNet(mJoltCache);
             }
         }

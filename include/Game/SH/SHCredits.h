@@ -4,6 +4,8 @@
 #include "Game/BaseSceneHandler.h"
 #include "Game/Sys/simpleparser.h"
 #include "Game/FE/tlTextInstance.h"
+#include "Game/FE/feSceneManager.h"
+#include "Game/GameSceneManager.h"
 
 struct CreditParser
 {
