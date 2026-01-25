@@ -60,7 +60,7 @@ public:
 
     FormationSpec* GetFormationSpec(int) const;
     FormationSpec* GetFormationSpecFromID(int) const;
-    void LoadFormationSets(const char*, int&);
+    static FormationSet* LoadFormationSets(const char*, int&);
 
     /* 0x0 */ bool m_AutoDelete;
     /* 0x4 */ int m_ID;

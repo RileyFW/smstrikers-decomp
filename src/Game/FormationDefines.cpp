@@ -184,6 +184,7 @@ FormationSpec* FormationSet::GetFormationSpecFromID(int formationID) const
 /**
  * Offset/Address/Size: 0x0 | 0x8003AE10 | size: 0xC08
  */
-void FormationSet::LoadFormationSets(const char*, int&)
+FormationSet* FormationSet::LoadFormationSets(const char*, int&)
 {
+    return nullptr;
 }

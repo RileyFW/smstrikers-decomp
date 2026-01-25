@@ -267,11 +267,33 @@ cGame::~cGame()
 {
 }
 
+#include "Game/FixedUpdateTask.h"
+#include "Game/ParticleUpdateTask.h"
+#include "Game/Audio/WorldAudio.h"
+
+namespace Audio
+{
+extern cWorldSFX gWorldSFX;
+}
+
 /**
  * Offset/Address/Size: 0x1B2C | 0x8003E0A0 | size: 0x7C
  */
 void cGame::DoPerfectPassSlowDown()
 {
+    if (g_pBall->mbHyperSTS == 0)
+    {
+        return;
+    }
+
+    GameTweaks* pTweaks;
+    pTweaks = g_pGame->m_pGameTweaks;
+    FixedUpdateTask::mTimeScale = pTweaks->unk1E4;
+    pTweaks = g_pGame->m_pGameTweaks;
+    ParticleUpdateTask::SetTimeScale(pTweaks->unk1E4);
+    g_pEventManager->CreateValidEvent(0x46, 0x14);
+    Audio::gWorldSFX.Play(Audio::REPLAYSFX_CAMERA_ZOOM_OUT, 100.0f, -1.0f, true, 100.0f);
+    Audio::FadeFilterToFullStrength();
 }
 
 /**

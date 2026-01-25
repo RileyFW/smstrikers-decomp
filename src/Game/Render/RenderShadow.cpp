@@ -1,5 +1,14 @@
 #include "Game/Render/RenderShadow.h"
 
+#include "Game/GL/GLInventory.h"
+#include "NL/nlString.h"
+
+extern GLInventory glInventory;
+
+static glModel* pCylinder;
+static glModel* pBox;
+int MaxProjectedShadows;
+
 // /**
 //  * Offset/Address/Size: 0x1734 | 0x80124768 | size: 0x7C
 //  */
@@ -12,6 +21,10 @@
  */
 void ShadowStartup()
 {
+    pCylinder = glInventory.GetModel(nlStringHash("debug/cylinder"));
+    pBox = glInventory.GetModel(nlStringHash("debug/box"));
+    const nlVector4& result = glConstantGet("target/pshadow_num");
+    MaxProjectedShadows = (int)result.f.x;
 }
 
 /**

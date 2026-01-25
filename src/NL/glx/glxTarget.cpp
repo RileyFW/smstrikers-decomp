@@ -173,6 +173,8 @@ void glx_ShadowGrab()
  */
 void glxPostInitTargets()
 {
+    nlVector4 vec = { 10.f, 0.f, 0.f, 0.f };
+    glConstantSet("target/pshadow_num", vec);
 }
 
 /**

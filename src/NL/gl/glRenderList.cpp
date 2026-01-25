@@ -38,8 +38,9 @@ void PacketCallbackManager::DepthCallback(const DepthPacketPair&, unsigned int*)
 /**
  * Offset/Address/Size: 0x720 | 0x801D99E0 | size: 0x28
  */
-void PacketCallbackManager::TexCallback(const glModelPacket* const&, unsigned int*)
+void PacketCallbackManager::TexCallback(const glModelPacket* const& key, unsigned int* count)
 {
+    DoCallback(key, *count);
 }
 
 /**
@@ -47,6 +48,7 @@ void PacketCallbackManager::TexCallback(const glModelPacket* const&, unsigned in
  */
 void PacketCallbackManager::DoCallback(const glModelPacket*, unsigned int)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

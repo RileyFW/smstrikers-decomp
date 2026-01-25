@@ -3,9 +3,10 @@
 
 #include "NL/nlSlotPool.h"
 #include "Game/Inventory.h"
+#include "Game/InterpreterCore.h"
 #include "Game/SAnim.h"
 
-class AnimTagScriptInterpreter
+class AnimTagScriptInterpreter : private InterpreterCore
 {
 public:
     void AnimControllerCB(unsigned int);

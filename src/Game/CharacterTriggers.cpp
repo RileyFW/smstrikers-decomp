@@ -9,7 +9,8 @@
  */
 void UpdateEmitterFromCharacterIdxWithoutAnimController(EmissionController& emitter, int index)
 {
-    if (ReplayManager::Instance()->mRender != NULL) {
+    if (ReplayManager::Instance()->mRender != NULL)
+    {
         ReplayManager* mgr1 = ReplayManager::Instance();
         DrawableCharacter* pChar = &mgr1->mRender->mCharacters[index];
         emitter.SetPosition(pChar->mPosition);
@@ -41,7 +42,8 @@ void UpdateEmitterFromCharacter(EmissionController&)
  */
 void UpdateEmitterPoseFromCharacter(EmissionController& emitter)
 {
-    if (ReplayManager::Instance()->mRender != NULL) {
+    if (ReplayManager::Instance()->mRender != NULL)
+    {
         int index = emitter.m_uUserData;
         ReplayManager* mgr1 = ReplayManager::Instance();
         DrawableCharacter* pChar = &mgr1->mRender->mCharacters[index];
@@ -57,7 +59,8 @@ void UpdateEmitterPoseFromCharacter(EmissionController& emitter)
  */
 void UpdateEmitterFromBall(EmissionController& emitter)
 {
-    if (ReplayManager::Instance()->mRender != NULL) {
+    if (ReplayManager::Instance()->mRender != NULL)
+    {
         ReplayManager* mgr1 = ReplayManager::Instance();
         emitter.SetPosition(mgr1->mRender->mBall.mPosition);
         ReplayManager* mgr2 = ReplayManager::Instance();
@@ -75,7 +78,7 @@ void EmitGeneric(cCharacter*, const char*, const char*)
 /**
  * Offset/Address/Size: 0x2B1C | 0x801A18CC | size: 0x21FC
  */
-void CharacterTriggerHandler(unsigned int)
+void CharacterTriggerHandler(unsigned int uParam)
 {
 }
 
@@ -303,6 +306,8 @@ void EmitSlideTackleTrail(cCharacter*)
 /**
  * Offset/Address/Size: 0x0 | 0x8019EDB0 | size: 0x44
  */
-void KillSlideTackleTrail(cCharacter*)
+void KillSlideTackleTrail(cCharacter* pCharacter)
 {
+    const EffectsGroup* pGroup = fxGetGroup("SLIDE_TRAIL");
+    pCharacter->EndEffect(pGroup);
 }

@@ -105,12 +105,13 @@ struct SoundProperties;
 struct SFXEmitter
 {
     /* 0x00 */ SND_EMITTER emitter;
-    /* 0x50 */ unsigned char bKeepTrack;
+    /* 0x50 */ bool bKeepTrack;
     /* 0x54 */ unsigned long soundType;
     /* 0x58 */ float fTimeStamp;
-    /* 0x5C */ unsigned char bIsStopping;
-    /* 0x5D */ unsigned char bInUse;
-    /* 0x5E */ unsigned char bIsFilterOn;
+    /* 0x5C */ bool bIsStopping;
+    /* 0x5D */ bool bInUse;
+    /* 0x5E */ bool bIsFilterOn;
+    /* 0x5F */ bool m_unk_0x5F;
     /* 0x60 */ PhysicsObject* pPhysObj;
     /* 0x64 */ void* pOwner;
     union
@@ -125,6 +126,21 @@ struct SFXEmitter
     } dir;                      // offset 0x74, size 0xC
     /* 0x80 */ PosUpdateMethod posUpdateMethod;
     /* 0x84 */ SND_PARAMETER_INFO* pMIDIControllerInfo;
+
+    inline void Init()
+    {
+        soundType = (unsigned long)-1;
+        fTimeStamp = -1.0f;
+        bIsStopping = 0;
+        bInUse = 0;
+        bIsFilterOn = 0;
+        m_unk_0x5F = 0;
+        pPhysObj = NULL;
+        pOwner = NULL;
+        pos.pvPos = NULL;
+        dir.pvDir = NULL;
+    }
+
 }; // total size: 0x88
 
 struct SoundStrToIDNode
@@ -177,7 +193,7 @@ namespace PlatAudio
 // public:
 u32 GetSndIDError();
 bool IsSFXPlaying(unsigned long);
-void InitEmitter(unsigned long);
+static void InitEmitter(unsigned long);
 void RemoveEmitter(SFXEmitter*);
 void RemoveEmitter(unsigned long);
 SFXEmitter* GetSFXEmitter(unsigned long);

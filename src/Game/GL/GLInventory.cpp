@@ -145,6 +145,15 @@ GLTextureAnim* GLInventory::GetTextureAnim(unsigned long)
  */
 void GLInventory::AddVertexAnim(unsigned long key, GLVertexAnim* vertexAnim)
 {
+    unsigned long k = key;
+    GLVertexAnim* value = vertexAnim;
+    nlAVLTree<unsigned long, GLVertexAnim*, DefaultKeyCompare<unsigned long> >* pTree = m_pVertexAnims[m_nLevel]->m_pItems;
+    AVLTreeNode* existingNode;
+    pTree->AddAVLNode((AVLTreeNode**)&pTree->m_Root, &k, &value, &existingNode, pTree->m_NumElements);
+    if (existingNode == nullptr)
+    {
+        pTree->m_NumElements++;
+    }
 }
 
 /**

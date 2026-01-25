@@ -56,9 +56,46 @@ bool IsSFXPlaying(unsigned long id)
 
 /**
  * Offset/Address/Size: 0x38 | 0x801C4834 | size: 0xC0
+ * TODO: 94.17% match - init procedure needs to be checked
  */
-void InitEmitter(unsigned long)
+void PlatAudio::InitEmitter(unsigned long idx)
 {
+    SFXEmitter* emitter = &gEmitters[idx];
+
+    emitter->bKeepTrack = true;
+    SND_PARAMETER_INFO** ppInfo = &emitter->pMIDIControllerInfo;
+
+    // emitter->Init();
+    emitter->soundType = (unsigned long)-1;
+    emitter->fTimeStamp = -1.0f;
+    emitter->bIsStopping = 0;
+    emitter->bInUse = 0;
+    emitter->bIsFilterOn = 0;
+    emitter->m_unk_0x5F = 0;
+    emitter->pPhysObj = NULL;
+    emitter->pOwner = NULL;
+    emitter->pos.pvPos = NULL;
+    emitter->dir.pvDir = NULL;
+
+    emitter->pos.vPos.f.x = 0.0f;
+    emitter->pos.vPos.f.y = 0.0f;
+    emitter->pos.vPos.f.z = 0.0f;
+    emitter->dir.vDir.f.x = 0.0f;
+    emitter->dir.vDir.f.y = 0.0f;
+    emitter->dir.vDir.f.z = 0.0f;
+    emitter->posUpdateMethod = NONE;
+
+    SND_PARAMETER_INFO* pInfo = *ppInfo;
+    if (pInfo != NULL)
+    {
+        void* arr = *(void**)((char*)pInfo + 0x4);
+        if (arr != NULL)
+        {
+            delete[] (char*)arr;
+        }
+        delete *ppInfo;
+    }
+    *ppInfo = NULL;
 }
 
 /**
@@ -260,11 +297,13 @@ void SetSFXVolume(unsigned long, float)
  */
 bool StopSFX(unsigned long handle)
 {
-    if (handle == 0xFFFFFFFF) {
+    if (handle == 0xFFFFFFFF)
+    {
         return false;
     }
     bool result = sndFXKeyOff(handle);
-    if (result) {
+    if (result)
+    {
         return true;
     }
     return result;

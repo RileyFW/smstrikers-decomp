@@ -294,17 +294,59 @@ float Interpolate(float fMin, float fMax, float fPercent)
 /**
  * Offset/Address/Size: 0x670 | 0x8000611C | size: 0x90
  */
-float InterpolateRangeClamped(float, float, float, float, float)
+float InterpolateRangeClamped(float fResultMin, float fResultMax, float fInputMin, float fInputMax, float fInput)
 {
-    return 0.0f;
+    float range;
+
+    if (fInputMin < fInputMax)
+    {
+        fInput = (fInput >= fInputMin) ? fInput : fInputMin;
+        fInput = (fInput <= fInputMax) ? fInput : fInputMax;
+    }
+    else
+    {
+        fInput = (fInput >= fInputMax) ? fInput : fInputMax;
+        fInput = (fInput <= fInputMin) ? fInput : fInputMin;
+    }
+
+    range = fInputMax - fInputMin;
+    if (fabsf(range) < 0.001f)
+    {
+        return fResultMax;
+    }
+
+    return fResultMin + ((fInput - fInputMin) / range) * (fResultMax - fResultMin);
 }
 
 /**
  * Offset/Address/Size: 0x5D0 | 0x8000607C | size: 0xA0
  */
-float InterpolateRangeClamped(const nlVector2&, const nlVector2&, float)
+float InterpolateRangeClamped(const nlVector2& outputRange, const nlVector2& inputRange, float value)
 {
-    return 0.0f;
+    float maxVal = inputRange.f.y;
+    float minVal = inputRange.f.x;
+    float outMax = outputRange.f.y;
+    float outMin = outputRange.f.x;
+
+    // Clamp value to input range
+    if (minVal < maxVal)
+    {
+        value = (value >= minVal) ? value : minVal;
+        value = (value <= maxVal) ? value : maxVal;
+    }
+    else
+    {
+        value = (value >= maxVal) ? value : maxVal;
+        value = (value <= minVal) ? value : minVal;
+    }
+
+    float range = maxVal - minVal;
+    if ((float)__fabs((double)range) < 0.00001f)
+    {
+        return outMax;
+    }
+
+    return (value - minVal) / range * (outMax - outMin) + outMin;
 }
 
 /**

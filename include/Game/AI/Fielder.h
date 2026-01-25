@@ -266,7 +266,7 @@ public:
     void SetDesiredSpeed(float, float);
     float GetSpeedPowerupAdjusted(float);
     float GetSlideAttackSpeed();
-    void SetDesire(eFielderDesireState, float);
+    bool SetDesire(eFielderDesireState, float);
     void ShouldIStrafe();
     void ShouldITurboWithoutBall();
     void ShouldIWave();

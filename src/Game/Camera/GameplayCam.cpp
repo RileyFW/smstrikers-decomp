@@ -44,6 +44,7 @@ void GameplayCamera::Reactivate()
  */
 void GameplayCameraZoomLevel::CalcDesiredTarget()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

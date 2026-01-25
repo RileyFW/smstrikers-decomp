@@ -1,6 +1,7 @@
 #include "Game/AI/Fielder.h"
 #include "Game/AI/AIPlay.h"
 #include "Game/AI/AiUtil.h"
+#include "Game/AI/FielderDesires.h"
 #include "Game/AI/ShotMeter.h"
 #include "Game/AI/Scripts/ScriptQuestions.h"
 #include "Game/AnimInventory.h"
@@ -2021,8 +2022,26 @@ float cFielder::GetSlideAttackSpeed()
 /**
  * Offset/Address/Size: 0x3D5C | 0x8001D098 | size: 0xB0
  */
-void cFielder::SetDesire(eFielderDesireState, float)
+bool cFielder::SetDesire(eFielderDesireState eNewDesire, float fConfidence)
 {
+    GetCommonDesireData(eNewDesire).NormalizeConfidence(fConfidence);
+    m_fDesireConfidence = fConfidence;
+
+    eFielderDesireState currentDesire = m_eFielderDesireState;
+    if (currentDesire != eNewDesire) {
+        // Don't save certain desires as previous
+        if (currentDesire != 0x17 && currentDesire != 0x0 && currentDesire != 0x15) {
+            m_ePrevFielderDesireState = currentDesire;
+        }
+
+        float fDuration = m_tDesireDuration.GetSeconds();
+        CleanUpDesire(eNewDesire);
+        m_tDesireDuration.SetSeconds(fDuration);
+        m_eFielderDesireState = eNewDesire;
+
+        return true;
+    }
+    return false;
 }
 
 /**

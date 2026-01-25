@@ -4,6 +4,7 @@
 #include "types.h"
 #include "NL/nlTask.h"
 #include "NL/nlSingleton.h"
+#include "NL/nlBundleFile.h"
 
 // void nlDLRingRemoveStart<DLListEntry<FEResourceHandle*>>(DLListEntry<FEResourceHandle*>**);
 // void nlDLRingGetStart<DLListEntry<FEResourceHandle*>>(DLListEntry<FEResourceHandle*>*);
@@ -43,7 +44,7 @@ public:
 
     void Cleanup();
     void LoadPermanentResourceBundle(const char*);
-    void OpenOnDemandResourceBundle(const char*);
+    bool OpenOnDemandResourceBundle(const char*);
     void Initialize();
     void Update(float);
     void QueueResourceLoad(FEResourceHandle*);
@@ -52,7 +53,11 @@ public:
     void TextureResourceLoadComplete(void*, unsigned long, unsigned long);
 
     // static nlSingleton<FEResourceManager> s_pInstance;
-};
+
+protected:
+    /* 0x18 */ char m_szPermanentBundleFileName[32];
+    /* 0x38 */ char m_szOnDemandBundleFileName[32];
+}; // total size: 0x58
 
 // class AVLTreeBase<unsigned long, FEResourceHandle*, BasicSlotPool<AVLTreeEntry<unsigned long, FEResourceHandle*>>,
 // DefaultKeyCompare<unsigned long>>

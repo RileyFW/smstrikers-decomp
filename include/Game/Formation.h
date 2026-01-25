@@ -7,7 +7,6 @@
 class cTeam;
 class cFielder;
 class FormationManager;
-class FormationSpec;
 class cPlayer;
 
 enum eFormationType
@@ -74,6 +73,9 @@ enum eFormation
     NUM_FORMATIONS = 41,
 };
 
+class FormationSet;
+class FormationSpec;
+
 class FormationEval
 {
 public:
@@ -82,10 +84,10 @@ public:
     virtual void GetKeyPlayer();
     virtual void GetKeyPositions(cFielder*, nlVector3&, nlVector3*, bool);
     virtual float GetWeight();
-    virtual void IsFielderInPosition(cFielder*, nlVector3, bool);
+    virtual float IsFielderInPosition(cFielder*, nlVector3, bool);
     virtual void SortPlayers(const nlVector2*);
     virtual void Update(float);
-    void Create(FormationManager*, eFormationType, eFormationSet, eFormation);
+    static FormationEval* Create(FormationManager*, eFormationType, eFormationSet, eFormation);
     void AssignPositionsToFielders(unsigned int*, float (*)[4]);
 
     /* 0x04 */ eFormationType m_eFormationType;
@@ -110,7 +112,7 @@ class FormationOffensive : public FormationEval
 {
 public:
     ~FormationOffensive();
-    void IsFielderInPosition(cFielder*, nlVector3, bool);
+    float IsFielderInPosition(cFielder*, nlVector3, bool);
     float GetWeight();
 };
 
@@ -118,7 +120,7 @@ class FormationDefensive : public FormationEval
 {
 public:
     ~FormationDefensive();
-    void IsFielderInPosition(cFielder*, nlVector3, bool);
+    float IsFielderInPosition(cFielder*, nlVector3, bool);
     float GetWeight();
 };
 
@@ -128,9 +130,6 @@ struct CachedPosition
     /* 0x1 */ bool bInPosition;
     /* 0x4 */ nlVector3 vPosition;
 }; // total size: 0x10
-
-class FormationSet;
-class FormationSpec;
 
 class FormationManager
 {
@@ -144,7 +143,7 @@ public:
     void ChooseNewFormations();
     void SetNewFormationEval(eFormationType, eFormation);
     void SetNewFormationEval(eFormationType, eFormationSet);
-    void CalculateFielderPosition(nlVector3&, cFielder*, bool, float);
+    bool CalculateFielderPosition(nlVector3&, cFielder*, bool, float);
 
     /* 0x00 */ cTeam* m_pTeam;
     /* 0x04 */ FormationEval* m_pFormations[3];

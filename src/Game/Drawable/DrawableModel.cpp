@@ -409,16 +409,13 @@ void GetAABBDimensions(const glModel* model, AABBDimensions& dimensions, unsigne
 
 /**
  * Offset/Address/Size: 0xCF0 | 0x80120AFC | size: 0x28
+ * TODO: ~94% match - instruction scheduling differs: target has li r5,0 before stw r0/lwz r3,
+ *       but compiler generates lwz r3 first regardless of pragmas or code ordering
  */
-#pragma push
-#pragma scheduling off
 void DrawableModel::GetAABBDimensions(AABBDimensions& dims, bool param) const
 {
-    glModel* model = GetModel();
-    int boundingBoxCacheKey = 0;
-    ::GetAABBDimensions(model, dims, boundingBoxCacheKey);
+    ::GetAABBDimensions(m_pModel, dims, 0);
 }
-#pragma pop
 
 /**
  * Offset/Address/Size: 0xC78 | 0x80120A84 | size: 0x78

@@ -1,4 +1,8 @@
 #include "Game/FE/FEResourceManager.h"
+#include "NL/nlMemory.h"
+#include "NL/nlString.h"
+
+static BundleFile* s_pOnDemandBundle;
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8020D5A8 | size: 0x60
@@ -194,8 +198,17 @@ void FEResourceManager::LoadPermanentResourceBundle(const char*)
 /**
  * Offset/Address/Size: 0x7D0 | 0x8020C310 | size: 0x78
  */
-void FEResourceManager::OpenOnDemandResourceBundle(const char*)
+bool FEResourceManager::OpenOnDemandResourceBundle(const char* szBundleFileName)
 {
+    nlStrNCpy(m_szOnDemandBundleFileName, szBundleFileName, 0x20);
+
+    BundleFile* pBundle = new (nlMalloc(sizeof(BundleFile), 8, false)) BundleFile();
+    s_pOnDemandBundle = pBundle;
+
+    if (!pBundle->Open(szBundleFileName)) {
+        return false;
+    }
+    return true;
 }
 
 /**
