@@ -140,10 +140,7 @@ static float sfPlanarShadowOpacity;
 // /**
 //  * Offset/Address/Size: 0x126C | 0x80121078 | size: 0x38
 //  */
-// void DrawableModel::Draw()
-// {
-// }
-
+// "art/effects/templates.fx"
 // /**
 //  * Offset/Address/Size: 0x12A4 | 0x801210B0 | size: 0x598
 //  */
@@ -382,6 +379,7 @@ void Fresnelify(glModelPacket*, eGLView)
  */
 void DrawableModel::DrawModel(const nlMatrix4&)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -389,6 +387,7 @@ void DrawableModel::DrawModel(const nlMatrix4&)
  */
 void DrawableModel::Draw()
 {
+    DrawModel(GetWorldMatrix());
 }
 
 /**

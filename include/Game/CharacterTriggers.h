@@ -56,7 +56,7 @@ void KillBallShot(const char*, bool);
 void EmitBallShot(cPlayer*, eBallShotEffectType, cPlayer*, bool);
 void EmitBallPass(cPlayer*);
 void EmitBallImpact(cPlayer*, bool);
-void GetCurrentAnimTriggerTime(cCharacter*, unsigned long, unsigned int);
+float GetCurrentAnimTriggerTime(cCharacter*, unsigned long, unsigned int);
 void GetAnimTriggerInfo(cCharacter*, int, bool (*)(float, float, unsigned long, float, void*), void*);
 void CharacterTriggerHandler(unsigned int);
 void EmitGeneric(cCharacter*, const char*, const char*);

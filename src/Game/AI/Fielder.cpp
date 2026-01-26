@@ -628,11 +628,29 @@ bool cFielder::IsTurboing()
 
 /**
  * Offset/Address/Size: 0xA50C | 0x80023848 | size: 0x3C
+ * TODO: 71% match - register allocation (r5 vs r4) and branch scheduling differ
  */
 bool cFielder::IsRunning() const
 {
-    FORCE_DONT_INLINE;
-    return false;
+    int state = m_eActionState;
+    bool result = false;
+
+    if (state == ACTION_RUNNING)
+    {
+        return true;
+    }
+
+    bool b = false;
+    if ((unsigned int)(state - ACTION_RUNNING_WB) <= 1 || state == ACTION_RUNNING_WB_TURBO_TURN)
+    {
+        b = true;
+    }
+
+    if ((unsigned char)b)
+    {
+        result = true;
+    }
+    return result;
 }
 
 /**

@@ -37,6 +37,13 @@ void GameplayCamera::Update(float)
  */
 void GameplayCamera::Reactivate()
 {
+    m_nearZoom.CalcDesiredTarget();
+    m_nearZoom.m_fDampenedTargetX = m_nearZoom.m_fDesiredTargetX;
+    m_nearZoom.m_fDampenedTargetY = m_nearZoom.m_fDesiredTargetY;
+
+    m_farZoom.CalcDesiredTarget();
+    m_farZoom.m_fDampenedTargetX = m_farZoom.m_fDesiredTargetX;
+    m_farZoom.m_fDampenedTargetY = m_farZoom.m_fDesiredTargetY;
 }
 
 /**
