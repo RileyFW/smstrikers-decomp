@@ -1,8 +1,10 @@
 #include "NL/plat/plataudio.h"
 #include "NL/nlMemory.h"
+#include "Game/Sys/debug.h"
 #include "types.h"
 
 extern void nlPrintf(const char*, ...);
+extern u32 sndStackGetAvailableSampleMemory(unsigned long id);
 
 #include <dolphin/ai.h>
 #include <dolphin/arq.h>
@@ -11,15 +13,15 @@ SFXEmitter gEmitters[16];
 
 struct _struct_stack_list_0x10
 {
-    /* 0x00 */ u32* unk0; /* inferred */
-    /* 0x04 */ s8* unk4;  /* inferred */
-    /* 0x08 */ s32 unk8;  /* inferred */
-    /* 0x0C */ u32 unkC;  /* inferred */
+    /* 0x00 */ u32* unk0;       /* inferred */
+    /* 0x04 */ unsigned long id;  /* stack id for sndStack functions */
+    /* 0x08 */ s32 unk8;       /* inferred */
+    /* 0x0C */ u32 unkC;       /* inferred */
 };
 
 static struct _struct_stack_list_0x10 stack_list[2] = {
-    { NULL, (s8*)0xFFFFFFFEU, 0, 0U },
-    { NULL, (s8*)0xFFFFFFFFU, 0x2B4000, 0U },
+    { NULL, 0xFFFFFFFEU, 0, 0U },
+    { NULL, 0xFFFFFFFFU, 0x2B4000, 0U },
 };
 
 struct EffectSettings
@@ -570,6 +572,11 @@ void PrintSoundStackInfo()
  */
 void PrintAvailableARAMMemory()
 {
+    for (int i = 0; i < 2; i++)
+    {
+        u32 available = sndStackGetAvailableSampleMemory(stack_list[i].id);
+        tDebugPrintManager::Print(DC_MEMORY, "Available ARAM: %d\n", available);
+    }
 }
 
 /**

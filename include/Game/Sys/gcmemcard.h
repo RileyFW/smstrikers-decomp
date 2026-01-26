@@ -115,16 +115,15 @@ public:
     unsigned long m_LastTransferSize;   // offset 0x1C, size 0x4
     unsigned long m_TargetTransferSize; // offset 0x20, size 0x4
 
-    s32 unk_24;
-    /* 0x28 */ s64 m_SerialID; // not sure about this struct yet
-
-    MemCardFunctor m_CB[9];                      // offset 0x24, size 0xD8
-    nlStaticSortedSlot<MC_FILE, 16> m_OpenFiles; // offset 0xFC, size 0x314
-    MC_FILE* m_pFileCB;                          // offset 0x410, size 0x4
-    void* m_pDataCB;                             // offset 0x414, size 0x4
-    unsigned long m_GameId;                      // offset 0x418, size 0x4
-    unsigned short m_CompanyId;                  // offset 0x41C, size 0x2
-    unsigned char m_CardWorkArea[41472];         // offset 0x41E, size 0xA200
+    s32 unk_24;                                  // offset 0x24, size 0x4
+    s64 m_SerialID;                              // offset 0x28, size 0x8
+    MemCardFunctor m_CB[9];                      // offset 0x30, size 0xD8
+    nlStaticSortedSlot<MC_FILE, 16> m_OpenFiles; // offset 0x108, size 0x314
+    MC_FILE* m_pFileCB;                          // offset 0x41C, size 0x4
+    void* m_pDataCB;                             // offset 0x420, size 0x4
+    unsigned long m_GameId;                      // offset 0x424, size 0x4
+    unsigned short m_CompanyId;                  // offset 0x428, size 0x2
+    unsigned char m_CardWorkArea[41472];         // offset 0x42A, size 0xA200
 
     static bool s_InitDone;
 }; // total size: 0xA620

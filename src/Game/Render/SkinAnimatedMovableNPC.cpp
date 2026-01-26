@@ -1,4 +1,6 @@
 #include "Game/Render/SkinAnimatedMovableNPC.h"
+#include "Game/AI/AiUtil.h"
+#include "Game/SAnim/pnSAnimController.h"
 
 /**
  * Offset/Address/Size: 0x3A4 | 0x80165414 | size: 0xA8
@@ -61,13 +63,20 @@ void SkinAnimatedMovableNPC::AnimTranslate(float, bool)
 /**
  * Offset/Address/Size: 0x84 | 0x801650F4 | size: 0x78
  */
-void SkinAnimatedMovableNPC::AnimMove(float, bool)
+void SkinAnimatedMovableNPC::AnimMove(float speed, bool applyPhysics)
 {
+    u16 rootRot;
+    mpAnimController->GetRootRot(&rootRot);
+    AnimTranslate(speed, applyPhysics);
+    maFacingDirection += rootRot;
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x80165070 | size: 0x84
  */
-void SkinAnimatedMovableNPC::AnimMoveSeek(float, float, float, bool)
+void SkinAnimatedMovableNPC::AnimMoveSeek(float speed, float turnRate, float seekRate, bool applyPhysics)
 {
+    u16 newDir = SeekDirection(maFacingDirection, maDesiredFacingDirection, turnRate, seekRate, speed);
+    AnimTranslate(speed, applyPhysics);
+    maFacingDirection = newDir;
 }

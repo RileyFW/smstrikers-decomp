@@ -1,8 +1,13 @@
 #include "Game/CharacterTriggers.h"
 #include "Game/Player.h"
 #include "Game/Ball.h"
+#include "Game/AI/Fielder.h"
+#include "Game/AI/Powerups.h"
 #include "Game/ReplayManager.h"
 #include "Game/RumbleActions.h"
+#include "Game/SAnim.h"
+#include "Game/SAnim/pnSAnimController.h"
+#include "Game/Sys/debug.h"
 
 /**
  * Offset/Address/Size: 0x5190 | 0x801A3F40 | size: 0x94
@@ -92,8 +97,25 @@ void GetAnimTriggerInfo(cCharacter*, int, bool (*)(float, float, unsigned long, 
 /**
  * Offset/Address/Size: 0x2A18 | 0x801A17C8 | size: 0x4C
  */
-void GetCurrentAnimTriggerTime(cCharacter*, unsigned long, unsigned int)
+float GetCurrentAnimTriggerTime(cCharacter* pCharacter, unsigned long uTriggerID, unsigned int uInstanceNumber)
 {
+    cSAnimCallback* cb = pCharacter->m_pCurrentAnimController->m_pSAnim->m_pCallbackList;
+    unsigned int count = 0;
+
+    while (cb != NULL)
+    {
+        cSAnim* pCallbackAnim = (cSAnim*)cb->m_nParam1;
+        if (uTriggerID == pCallbackAnim->m_uHashID)
+        {
+            count++;
+            if (count - 1 == uInstanceNumber)
+            {
+                return cb->m_fTime;
+            }
+        }
+        cb = cb->next;
+    }
+    return -1.0f;
 }
 
 /**
@@ -264,8 +286,12 @@ void EmitMushroom(cFielder*)
 /**
  * Offset/Address/Size: 0x510 | 0x8019F2C0 | size: 0x60
  */
-void KillMushroom(cFielder*)
+void KillMushroom(cFielder* pFielder)
 {
+    pFielder->StopSFX(Audio::CHARSFX_PWRUP_MUSH_IN_EFFECT);
+    PowerupBase::PlayPowerupSound(POWER_UP_MUSHROOM, PowerupBase::PWRUP_SOUND_END, pFielder->m_pPhysicsCharacter, 1.0f);
+    pFielder->EndBlur();
+    tDebugPrintManager::Print(DC_SOUND, "***KillMushroom()***\n");
 }
 
 /**
@@ -278,8 +304,13 @@ void EmitStar(cFielder*)
 /**
  * Offset/Address/Size: 0x320 | 0x8019F0D0 | size: 0x68
  */
-void KillStar(cFielder*)
+void KillStar(cFielder* pFielder)
 {
+    pFielder->StopSFX(Audio::CHARSFX_PWRUP_STAR_IN_EFFECT);
+    pFielder->KillEffect(fxGetGroup("star"));
+    pFielder->EndBlur();
+    pFielder->m_pEffectsTexturing = NULL;
+    tDebugPrintManager::Print(DC_SOUND, "***KillStar()***\n");
 }
 
 /**
