@@ -84,7 +84,7 @@ public:
     void Stop(unsigned long, cGameSFX::StopFlag);
     void StopEmitter(SFXEmitter*, unsigned long);
     bool StopTrackedSFX(SFXPlaySet*);
-    void StopTrackedSFX(nlDLListIterator<SFXPlaySet*>*);
+    bool StopTrackedSFX(nlDLListIterator<SFXPlaySet*>*);
     void StopPlayingAllTrackedSFX();
     void UpdateAllTrackedSFX(float);
 

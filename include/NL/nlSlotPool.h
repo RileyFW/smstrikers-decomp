@@ -74,6 +74,12 @@ public:
     {
         BaseFreeBlocks(this, sizeof(T));
     };
+
+    // Return an entry back to the free list
+    void Free(T* entry)
+    {
+        nlListAddStart(&m_FreeList, (SlotPoolEntry*)entry, (SlotPoolEntry**)NULL);
+    }
 }; // total size: 0x18
 
 template <typename T>

@@ -461,8 +461,7 @@ BaseCup* GameInfoManager::GetCup(GameInfoManager::eGameModes mode)
         result = &mStarCupSeries;
         break;
     case GM_STAR_CUP:
-        if (mBowserCupSeries.mGameNumber == -5 &&
-            mBowserCupKnockout.mGameNumber != -5)
+        if (mBowserCupSeries.mGameNumber == -5 && mBowserCupKnockout.mGameNumber != -5)
         {
             result = &mBowserCupKnockout;
         }
@@ -481,8 +480,7 @@ BaseCup* GameInfoManager::GetCup(GameInfoManager::eGameModes mode)
         result = &mSuperStarCupSeries;
         break;
     case GM_SUPER_STAR_CUP:
-        if (mSuperBowserCupSeries.mGameNumber == -5 &&
-            mSuperBowserCupKnockout.mGameNumber != -5)
+        if (mSuperBowserCupSeries.mGameNumber == -5 && mSuperBowserCupKnockout.mGameNumber != -5)
         {
             result = &mSuperBowserCupKnockout;
         }
@@ -1105,11 +1103,44 @@ GameplaySettings::eSkillLevel GameInfoManager::GetSkillLevel()
 
     return *p;
 }
+
 /**
  * Offset/Address/Size: 0x60 | 0x80175704 | size: 0x98
  */
-void GameInfoManager::GetSkillLevelAsDifficultyID()
+eDifficultyID GameInfoManager::GetSkillLevelAsDifficultyID()
 {
+    eDifficultyID skillToDifficulty[5] = {
+        DIFF_BRAINDEAD,
+        DIFF_EASY,
+        DIFF_MEDIUM,
+        DIFF_HARD,
+        DIFF_VERYHARD
+    };
+
+    GameplaySettings::eSkillLevel level;
+    if (mIsInStrikers101Mode)
+    {
+        level = GameplaySettings::TRAINING;
+    }
+    else
+    {
+        GameplaySettings* pSettings;
+        if (mUseCurGameSettings)
+        {
+            pSettings = &mCurGameGameplayOptions;
+        }
+        else if (mCurrentMode == GM_FRIENDLY || mCurrentMode == GM_DEMO)
+        {
+            pSettings = &mUserInfo.mGameplayOptions;
+        }
+        else
+        {
+            pSettings = &mCurrentCup->mCupSettings;
+        }
+        level = pSettings->SkillLevel;
+    }
+
+    return skillToDifficulty[level];
 }
 
 /**

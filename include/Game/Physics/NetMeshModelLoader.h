@@ -4,8 +4,6 @@
 #include "Game/Render/NetMesh.h"
 #include "NL/gl/glModel.h"
 
-class nlAVLTreeSlotPool;
-
 class NetMeshModelLoader
 {
 public:
@@ -20,8 +18,8 @@ public:
 
     /* 0x04 */ NetMesh& m_NetMesh;              // offset 0x4, size 0x4
     /* 0x08 */ u32 m_NetMeshDrawableObjectID;   // offset 0x8, size 0x4
-    /* 0x0C */ nlAVLTreeSlotPool* m_EdgeList;   // offset 0xC, size 0x4
-    /* 0x10 */ nlAVLTreeSlotPool* m_VertexList; // offset 0x10, size 0x4
+    /* 0x0C */ nlAVLTreeSlotPoolOpaque* m_EdgeList;   // offset 0xC, size 0x4
+    /* 0x10 */ nlAVLTreeSlotPoolOpaque* m_VertexList; // offset 0x10, size 0x4
     /* 0x14 */ int m_NumParticles;              // offset 0x14, size 0x4
     /* 0x18 */ u16* m_TriStripIndices;          // offset 0x18, size 0x4
     /* 0x1C */ int m_CurrentTriStripIndex;      // offset 0x1C, size 0x4

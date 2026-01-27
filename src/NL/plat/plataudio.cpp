@@ -103,18 +103,17 @@ void PlatAudio::InitEmitter(unsigned long idx)
 /**
  * Offset/Address/Size: 0xF8 | 0x801C48F4 | size: 0x20
  */
-void RemoveEmitter(SFXEmitter* emitter)
+bool RemoveEmitter(SFXEmitter* emitter)
 {
-    // sndRemoveEmitter(emitter->m_sndEmitter);
-    sndRemoveEmitter((SND_EMITTER*)emitter);
+    return sndRemoveEmitter((SND_EMITTER*)emitter);
 }
 
 /**
  * Offset/Address/Size: 0x118 | 0x801C4914 | size: 0x30
  */
-void RemoveEmitter(unsigned long idx)
+bool RemoveEmitter(unsigned long idx)
 {
-    sndRemoveEmitter((SND_EMITTER*)&gEmitters[idx]);
+    return sndRemoveEmitter((SND_EMITTER*)&gEmitters[idx]);
 }
 
 /**

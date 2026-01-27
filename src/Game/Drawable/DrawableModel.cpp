@@ -7,6 +7,7 @@ extern bool g_bShadowVolumes;
 static float sfCoPlanarZ;
 static float sfCoPlanar0Z;
 static float sfPlanarShadowOpacity;
+static nlAVLTreeSlotPool<unsigned long, AABBDimensions, DefaultKeyCompare<unsigned long> > boundingBoxCache;
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8011FE0C | size: 0x3C
@@ -518,4 +519,6 @@ void RenderBoundingBox(const glModel*, const nlMatrix4&)
  */
 void CleanBoundingBoxCache()
 {
+    boundingBoxCache.Clear();
+    SlotPoolBase::BaseFreeBlocks(&boundingBoxCache.m_Allocator, sizeof(AVLTreeEntry<unsigned long, AABBDimensions>));
 }

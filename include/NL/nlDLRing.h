@@ -323,7 +323,8 @@ public:
         m_first = true;
     }
 
-private:
+// NOTE: Members are public for decompilation compatibility
+// private:
     Pointer m_head;
     Pointer m_current;
     bool m_first;

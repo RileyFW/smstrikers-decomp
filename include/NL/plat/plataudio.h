@@ -194,8 +194,8 @@ namespace PlatAudio
 u32 GetSndIDError();
 bool IsSFXPlaying(unsigned long);
 static void InitEmitter(unsigned long);
-void RemoveEmitter(SFXEmitter*);
-void RemoveEmitter(unsigned long);
+bool RemoveEmitter(SFXEmitter*);
+bool RemoveEmitter(unsigned long);
 SFXEmitter* GetSFXEmitter(unsigned long);
 void GetFreeEmitter(unsigned long&);
 SND_VOICEID GetEmitterVoiceID(SFXEmitter*);

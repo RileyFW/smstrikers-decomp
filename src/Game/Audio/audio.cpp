@@ -144,9 +144,9 @@ u32 GetEmitterVoiceID(SFXEmitter* emitter)
 /**
  * Offset/Address/Size: 0xD44 | 0x8013D258 | size: 0x20
  */
-void Remove3DSFXEmitter(SFXEmitter* emitter)
+bool Remove3DSFXEmitter(SFXEmitter* emitter)
 {
-    PlatAudio::RemoveEmitter(emitter);
+    return PlatAudio::RemoveEmitter(emitter);
 }
 
 /**
@@ -468,11 +468,13 @@ void UnloadInGameSFX()
  */
 void LoadInGameSFX()
 {
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < 64; i++)
+    {
         PlatAudio::InitEmitter((unsigned long)i);
     }
 
-    for (int j = 0; j < 15; j++) {
+    for (int j = 0; j < 15; j++)
+    {
         gDelayedSFX[j].Init();
     }
 

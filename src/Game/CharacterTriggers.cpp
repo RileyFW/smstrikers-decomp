@@ -5,6 +5,7 @@
 #include "Game/AI/Powerups.h"
 #include "Game/ReplayManager.h"
 #include "Game/RumbleActions.h"
+#include "Game/SAnim/pnSAnimController.h"
 #include "Game/SAnim.h"
 #include "Game/SAnim/pnSAnimController.h"
 #include "Game/Sys/debug.h"

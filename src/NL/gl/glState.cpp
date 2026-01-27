@@ -116,10 +116,35 @@ u32 glSetRasterState(unsigned long&, eGLState, unsigned long)
 
 /**
  * Offset/Address/Size: 0x604 | 0x801DC248 | size: 0xB4
+ * TODO: 79.4% match - register allocation differences (r7/r3 for out, r9/r8 for numBits)
  */
-u32 glSetRasterState(eGLState, unsigned long)
+u32 glSetRasterState(eGLState state, unsigned long value)
 {
-    return 0;
+    u32 out = 0;
+    u32 currentState = _state.m_State;
+    s32 cnt = (s32)out;
+
+    for (; cnt < packed_raster[state].numBits; cnt++)
+    {
+        if (currentState & (1 << (packed_raster[state].startBit + cnt)))
+        {
+            out |= (1 << cnt);
+        }
+    }
+
+    for (cnt = 0; cnt < packed_raster[state].numBits; cnt++)
+    {
+        if (value & (1 << cnt))
+        {
+            _state.m_State = _state.m_State | (1 << (packed_raster[state].startBit + cnt));
+        }
+        else
+        {
+            _state.m_State = _state.m_State & ~(1 << (packed_raster[state].startBit + cnt));
+        }
+    }
+
+    return out;
 }
 
 /**

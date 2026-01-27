@@ -162,7 +162,7 @@ public:
     bool IsPerfectStrikesOn() const;
     bool IsBowserAttackEnabled() const;
     GameplaySettings::eSkillLevel GetSkillLevel();
-    void GetSkillLevelAsDifficultyID();
+    eDifficultyID GetSkillLevelAsDifficultyID();
     CustomPowerups GetCustomPowerups() const;
 
     /* 0x0004 */ GameplaySettings mCurGameGameplayOptions;

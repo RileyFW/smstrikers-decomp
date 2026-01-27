@@ -6,6 +6,7 @@
 #include "Game/AI/Scripts/ScriptQuestions.h"
 #include "Game/AnimInventory.h"
 #include "Game/Ball.h"
+#include "Game/BasicStadium.h"
 #include "Game/CharacterTriggers.h"
 #include "Game/Game.h"
 #include "Game/GameInfo.h"
@@ -801,8 +802,24 @@ void cFielder::SetBombImpactTime(const nlVector3& v3BombImpactLocation, float fB
 /**
  * Offset/Address/Size: 0x93F4 | 0x80022730 | size: 0xC4
  */
-void cFielder::SetDesireDuration(float, bool)
+void cFielder::SetDesireDuration(float duration, bool randomize)
 {
+    if (duration > 0.0f && randomize)
+    {
+        static FilteredRandomReal randgen;
+
+        // Add random variation
+        float rand = randgen.genrand();
+        float temp = 0.6f * rand;
+        float variation = temp - 0.3f;
+        duration += variation;
+        if (0.0f >= duration)
+        {
+            duration = 0.0f;
+        }
+    }
+
+    m_tDesireDuration.SetSeconds(duration);
 }
 
 /**
@@ -1547,10 +1564,12 @@ void cFielder::SetAttemptOneTouchShot()
     bool shouldAttempt = false;
 
     cGlobalPad* pad = GetGlobalPad();
-    if (pad != NULL) {
+    if (pad != NULL)
+    {
         GameTweaks* tweaks = g_pGame->m_pGameTweaks;
         float pressure = GetGlobalPad()->GetPressure(0x15, true);
-        if (pressure > tweaks->unk2B0) {
+        if (pressure > tweaks->unk2B0)
+        {
             shouldAttempt = true;
         }
     }
@@ -2046,9 +2065,11 @@ bool cFielder::SetDesire(eFielderDesireState eNewDesire, float fConfidence)
     m_fDesireConfidence = fConfidence;
 
     eFielderDesireState currentDesire = m_eFielderDesireState;
-    if (currentDesire != eNewDesire) {
+    if (currentDesire != eNewDesire)
+    {
         // Don't save certain desires as previous
-        if (currentDesire != 0x17 && currentDesire != 0x0 && currentDesire != 0x15) {
+        if (currentDesire != 0x17 && currentDesire != 0x0 && currentDesire != 0x15)
+        {
             m_ePrevFielderDesireState = currentDesire;
         }
 
@@ -2144,8 +2165,38 @@ void cFielder::TestButtonsRunning()
 /**
  * Offset/Address/Size: 0x2A6C | 0x8001BDA8 | size: 0x144
  */
-void cFielder::TestButtonsRunningWB(float)
+void cFielder::TestButtonsRunningWB(float fTime)
 {
+    bool shouldAttempt = false;
+
+    cGlobalPad* pad = GetGlobalPad();
+    if (pad != NULL)
+    {
+        GameTweaks* tweaks = g_pGame->m_pGameTweaks;
+        float pressure = GetGlobalPad()->GetPressure(PAD_AIM, true);
+        if (pressure > tweaks->unk2B0)
+        {
+            shouldAttempt = true;
+        }
+    }
+
+    if (GetGlobalPad()->JustPressed(PAD_PASS, true))
+    {
+        InitActionPass(DoFindBestPassTarget(shouldAttempt, false), shouldAttempt, false);
+    }
+    else if (GetGlobalPad()->JustPressed(PAD_SHOOT, true))
+    {
+        m_pShotMeter->Reset();
+        m_pShotMeter->m_fTime = 0.0f;
+    }
+    else if (GetGlobalPad()->JustPressed(PAD_DEKE, true))
+    {
+        InitActionDeke(PAD_DEKE);
+    }
+    else if (m_pController->GetCStickMovementStickMagnitude() > 0.0f)
+    {
+        InitActionDeke(PAD_DEKE);
+    }
 }
 
 /**
@@ -2174,9 +2225,58 @@ void cFielder::Update(float)
 
 /**
  * Offset/Address/Size: 0x21D8 | 0x8001B514 | size: 0x174
+ * TODO: 94.9% match - progress made, but not complete
  */
 void cFielder::ThrowPowerup()
 {
+    cFielder* pTarget;
+
+    if (!g_pGame->mbCaptainShotToScoreOn)
+    {
+        pTarget = m_pPowerupTarget;
+
+        switch (m_ePowerup)
+        {
+        case POWER_UP_NONE:
+            return;
+        case POWER_UP_STAR:
+            m_tPowerupEffectTime.SetSeconds(g_pGame->m_pGameTweaks->fStarEffectTime);
+            EmitStar(this);
+            break;
+        case POWER_UP_MUSHROOM:
+        {
+            f32 time = g_pGame->m_pGameTweaks->fMushroomEffectTime;
+            if (m_eCharacterClass < PEACH && m_eCharacterClass >= LUIGI)
+            {
+                time *= 0.5f;
+            }
+            m_tPowerupEffectTime.SetSeconds(time);
+            EmitMushroom(this);
+            InitBlur(0);
+            break;
+        }
+        case POWER_UP_GREEN_SHELL:
+        case POWER_UP_RED_SHELL:
+        case POWER_UP_SPINY_SHELL:
+        case POWER_UP_FREEZE_SHELL:
+        case POWER_UP_BANANA:
+        case POWER_UP_BOBOMB:
+            m_pPowerupTarget = FindPowerupTarget(this, NULL);
+            PowerupCreateAndThrow(this, m_ePowerup, mnNumPowerups, NULL);
+            break;
+        case POWER_UP_CHAIN_CHOMP:
+            BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp->Fall(this, pTarget);
+            break;
+        default:
+            return;
+        }
+
+        if (g_pGame->IsGameplayOrOvertime())
+        {
+            nlSingleton<StatsTracker>::s_pInstance->TrackStat(STATS_POWERUPS_USED, m_pTeam->m_nSide, m_ID, 0, 0, 0, 0);
+        }
+        m_pPowerupTarget = NULL;
+    }
 }
 
 /**
@@ -2184,13 +2284,62 @@ void cFielder::ThrowPowerup()
  */
 void cFielder::SetPowerup(ePowerUpType, int, cFielder*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x1BE4 | 0x8001AF20 | size: 0x134
+ * TODO: 83.1% match - numPowerups stored in register r30 instead of stack
+ *       offset 0x30, causing extra register save/restore (r28 vs r29 for this)
  */
-void cFielder::UseTeamPowerup(cFielder*)
+void cFielder::UseTeamPowerup(cFielder* pTarget)
 {
+    cTeam* pTeam;
+
+    if (m_ePowerup == POWER_UP_STAR)
+    {
+        return;
+    }
+
+    if (m_tFrozenTimer.m_uPackedTime != 0)
+    {
+        return;
+    }
+
+    if (IsFallenDown(0.0f))
+    {
+        if (m_pTeam->IsCurrentStar())
+        {
+            return;
+        }
+        if (m_pTeam->IsCurrentMushroom())
+        {
+            return;
+        }
+    }
+
+    if (!m_pTeam->IsCurrentNoPowerup())
+    {
+        pTeam = m_pTeam;
+        int numPowerups = pTeam->GetCurrentPowerUp().nnumOfPowerups;
+        ePowerUpType eType = pTeam->GetCurrentPowerUp().eType;
+        SetPowerup(eType, numPowerups, pTarget);
+        m_pTeam->ClearCurrentPowerUp();
+    }
+    else
+    {
+        ePowerUpType powerupType = m_pTeam->GetPowerUpByIndex(1).eType;
+        if (powerupType == POWER_UP_NONE)
+        {
+            return;
+        }
+        m_pTeam->TogglePowerup(true);
+        pTeam = m_pTeam;
+        int numPowerups = pTeam->GetCurrentPowerUp().nnumOfPowerups;
+        ePowerUpType eType = pTeam->GetCurrentPowerUp().eType;
+        SetPowerup(eType, numPowerups, pTarget);
+        m_pTeam->ClearCurrentPowerUp();
+    }
 }
 
 /**

@@ -1,4 +1,5 @@
 #include "Game/GameAudio.h"
+#include "NL/nlString.h"
 #include "types.h"
 
 inline bool IsVolGrpInRange(unsigned long sfxID, cGameSFX* pGameSFX)
@@ -25,10 +26,135 @@ void cGameSFX::StopPlayingAllTrackedSFX()
 
 /**
  * Offset/Address/Size: 0x974 | 0x80151EB8 | size: 0x24C
+ * TODO: ~98% match - r28/r29 register allocation swapped for pPlaySet/pEmitter
  */
-void cGameSFX::StopTrackedSFX(nlDLListIterator<SFXPlaySet*>*)
+bool cGameSFX::StopTrackedSFX(nlDLListIterator<SFXPlaySet*>* pIterator)
 {
-    FORCE_DONT_INLINE;
+    struct EntryIterator
+    {
+        DLListEntry<SFXPlaySet*>* m_head;    // Not used, but part of caller's struct
+        DLListEntry<SFXPlaySet*>* m_current; // The entry we're operating on
+    };
+    EntryIterator* pIter = reinterpret_cast<EntryIterator*>(pIterator);
+
+    DLListEntry<SFXPlaySet*>* pEntry = pIter->m_current;
+    if (pEntry == NULL)
+    {
+        return false;
+    }
+    SFXPlaySet* pPlaySet = pEntry->m_data;
+
+    if (!(pPlaySet->delay >= 0.0f))
+    {
+        int delayedIndex = Audio::IsDelayedCharSFX(pPlaySet->type, this);
+        if (delayedIndex == -1)
+        {
+            goto cleanup_list;
+        }
+        Audio::RemoveDelayedSFX(delayedIndex);
+        return true;
+    }
+
+    if (pPlaySet->bIs3D != 0)
+    {
+        SFXEmitter* pEmitter = pPlaySet->emitter;
+        if (pEmitter != NULL && pEmitter->soundType == pPlaySet->type && pEmitter->pOwner == this)
+        {
+            bool removed = Audio::Remove3DSFXEmitter(pEmitter);
+            pEmitter->bIsStopping = true;
+
+            if (!removed)
+            {
+                goto cleanup_list;
+            }
+
+            if (Audio::IsEmitterActive(pEmitter))
+            {
+                goto cleanup_list;
+            }
+
+            pEmitter->bKeepTrack = true;
+            pEmitter->soundType = (unsigned long)-1;
+            pEmitter->fTimeStamp = -1.0f;
+            pEmitter->bIsStopping = false;
+            pEmitter->bInUse = false;
+            pEmitter->bIsFilterOn = false;
+            pEmitter->m_unk_0x5F = false;
+            pEmitter->pPhysObj = NULL;
+            pEmitter->pOwner = NULL;
+            pEmitter->pos.pvPos = NULL;
+            pEmitter->dir.pvDir = NULL;
+            pEmitter->pos.vPos.f.x = 0.0f;
+            pEmitter->pos.vPos.f.y = 0.0f;
+            pEmitter->pos.vPos.f.z = 0.0f;
+            pEmitter->dir.vDir.f.x = 0.0f;
+            pEmitter->dir.vDir.f.y = 0.0f;
+            pEmitter->dir.vDir.f.z = 0.0f;
+            pEmitter->posUpdateMethod = NONE;
+
+            // Free MIDI controller info
+            if (pEmitter->pMIDIControllerInfo != NULL)
+            {
+                if (pEmitter->pMIDIControllerInfo->paraArray != NULL)
+                {
+                    delete[] pEmitter->pMIDIControllerInfo->paraArray;
+                }
+                delete pEmitter->pMIDIControllerInfo;
+            }
+            pEmitter->pMIDIControllerInfo = NULL;
+            goto cleanup_list;
+        }
+        // Emitter not valid, try stopping by voice ID
+        if (pPlaySet->voiceID != Audio::GetSndIDError())
+        {
+            Audio::StopSFX(pPlaySet->voiceID);
+            goto cleanup_list;
+        }
+        nlPrintf("Stopping stop sound type %d\n which no longer has a valid emitter.\n", pPlaySet->type);
+        goto cleanup_list;
+    }
+    else
+    {
+        // 2D SFX - stop by voice ID
+        Audio::StopSFX(pPlaySet->voiceID);
+    }
+
+cleanup_list:
+    // Update iterator and remove entry from list
+    DLListEntry<SFXPlaySet*>* pNextEntry = pIter->m_current;
+    DLListEntry<SFXPlaySet*>* pHead = mpCurPlaySet.m_Head;
+    pPlaySet = pNextEntry->m_data;
+
+    // Advance iterator
+    if (nlDLRingIsEnd(pHead, pNextEntry) || pIter->m_current == NULL)
+    {
+        pIter->m_current = NULL;
+    }
+    else
+    {
+        pIter->m_current = pIter->m_current->m_next;
+    }
+
+    // Remove from list
+    nlDLRingRemove(&mpCurPlaySet.m_Head, pNextEntry);
+    delete pNextEntry;
+
+    // Reset play set
+    pPlaySet->type = (unsigned long)-1;
+    pPlaySet->voiceID = Audio::GetSndIDError();
+    pPlaySet->bIs3D = false;
+    pPlaySet->emitter = NULL;
+    pPlaySet->delay = -1.0f;
+    pPlaySet->timeStamp = -1.0f;
+    pPlaySet->sfxPriority = 0;
+    pPlaySet->groupPriority = -1;
+
+    // Return to free pool
+    SlotPoolEntry* pFreeEntry = (SlotPoolEntry*)pPlaySet;
+    pFreeEntry->m_next = SFXPlaySet::m_TrackedSFXSlotPool.m_FreeList;
+    SFXPlaySet::m_TrackedSFXSlotPool.m_FreeList = pFreeEntry;
+
+    return true;
 }
 
 /**
@@ -36,9 +162,38 @@ void cGameSFX::StopTrackedSFX(nlDLListIterator<SFXPlaySet*>*)
  */
 bool cGameSFX::StopTrackedSFX(SFXPlaySet* pPlaySet)
 {
-    FORCE_DONT_INLINE;
+    if (!mbCurPlaySetIsValid)
+    {
+        return true;
+    }
 
-    // Not found
+    struct
+    {
+        DLListEntry<SFXPlaySet*>* m_head;
+        DLListEntry<SFXPlaySet*>* m_current;
+    } iter;
+
+    DLListEntry<SFXPlaySet*>* start = nlDLRingGetStart(mpCurPlaySet.m_Head);
+    iter.m_head = mpCurPlaySet.m_Head;
+    iter.m_current = start;
+
+    while (iter.m_current != NULL)
+    {
+        if (pPlaySet == iter.m_current->m_data)
+        {
+            return StopTrackedSFX(reinterpret_cast<nlDLListIterator<SFXPlaySet*>*>(&iter));
+        }
+
+        if (nlDLRingIsEnd(iter.m_head, iter.m_current) || iter.m_current == NULL)
+        {
+            iter.m_current = NULL;
+        }
+        else
+        {
+            iter.m_current = iter.m_current->m_next;
+        }
+    }
+
     return false;
 }
 

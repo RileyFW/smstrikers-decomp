@@ -5,7 +5,9 @@
 #include "Game/Sys/eventman.h"
 
 class PhysicsSphere;
-class nlAVLTreeSlotPool;
+
+// Forward declare the opaque pointer type for NetMesh - specific type is nlAVLTreeSlotPool template
+struct nlAVLTreeSlotPoolOpaque;
 
 class cDistanceConstraint
 {
@@ -98,8 +100,8 @@ public:
     /* 0x71 */ bool mbBallIsInsideNet;
     /* 0x74 */ float mfMotion;
     /* 0x78 */ float mJolt;
-    /* 0x7C */ nlAVLTreeSlotPool* mEdgeList;
-    /* 0x80 */ nlAVLTreeSlotPool* mVertexList;
+    /* 0x7C */ nlAVLTreeSlotPoolOpaque* mEdgeList;
+    /* 0x80 */ nlAVLTreeSlotPoolOpaque* mVertexList;
     /* 0x84 */ cDistanceConstraint* m_aDistanceConstraints;
     /* 0x88 */ cPositionConstraint* m_aPositionConstraints;
 }; // total size: 0x8C
