@@ -250,7 +250,7 @@ void GLInventory::AddSkinData(unsigned long key, nlChunk* skinData)
 /**
  * Offset/Address/Size: 0x334 | 0x801E25CC | size: 0x1A0
  */
-void GLInventory::MakeSkinMesh(unsigned long)
+GLSkinMesh* GLInventory::MakeSkinMesh(unsigned long)
 {
 }
 

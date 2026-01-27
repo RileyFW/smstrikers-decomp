@@ -7,9 +7,9 @@
 #include "Game/SAnim.h"
 #include "NL/gl/glModel.h"
 #include "NL/nlMath.h"
+#include "Game/GL/ShaderSkinMesh.h"
 
 class cPN_SAnimController;
-class GLSkinMesh;
 class cPoseNode;
 
 enum SkinAnimatedNPC_Type

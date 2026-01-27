@@ -9,6 +9,7 @@
 #include "Game/GL/GLVertexAnim.h"
 #include "Game/GL/GLTextureAnim.h"
 class GLShadowVolume;
+class GLSkinMesh;
 class glModel;
 
 template <typename ValueType>
@@ -91,7 +92,7 @@ public:
     void AddMaterialList(unsigned long, GLMaterialList*);
     GLMaterialList* GetMaterialList(unsigned long);
     void AddSkinData(unsigned long, nlChunk*);
-    void MakeSkinMesh(unsigned long);
+    GLSkinMesh* MakeSkinMesh(unsigned long);
     void Update(float);
 
     /* 0x000 */ nlListContainer<void*>* m_pFileData[16];

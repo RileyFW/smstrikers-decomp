@@ -1,14 +1,47 @@
 #include "Game/Render/SkinAnimatedNPC.h"
+#include "Game/GL/GLInventory.h"
+#include "Game/GameObjectLighting.h"
+#include "Game/WorldManager.h"
+#include "Game/World.h"
+#include "NL/gl/gl.h"
+#include "NL/gl/glView.h"
+#include "NL/gl/glUserData.h"
+#include "NL/gl/glState.h"
+#include "Game/SAnim/pnSAnimController.h"
+#include "Game/SAnim/pnBlender.h"
 #include "types.h"
 
+extern GLInventory glInventory;
 extern float GetPlanarShadowOpacity();
 extern void DrawPlanarShadow(const glModel*, const nlMatrix4&, float, bool, bool, bool, unsigned long);
+
+static unsigned long GLTT_BumpLocal_bit = 0x00000020;
 
 /**
  * Offset/Address/Size: 0x60C | 0x80164FB0 | size: 0xC0
  */
-SkinAnimatedNPC::SkinAnimatedNPC(cSHierarchy&, int)
+SkinAnimatedNPC::SkinAnimatedNPC(cSHierarchy& pHierarchy, int nModelID)
 {
+    mpAnimController = 0;
+    mpPoseAccumulator = 0;
+    mpSkinMesh = 0;
+    mpPoseTree = 0;
+    mbIsVisible = 0;
+
+    if ((u32)nModelID == (u32)-1)
+    {
+        mpSkinMesh = 0;
+    }
+    else
+    {
+        mpSkinMesh = glInventory.MakeSkinMesh((unsigned long)nModelID);
+    }
+
+    cPoseAccumulator* pAccum = new (nlMalloc(sizeof(cPoseAccumulator), 8, false)) cPoseAccumulator(&pHierarchy, true);
+    mpPoseAccumulator = pAccum;
+
+    mWorldMatrix.SetIdentity();
+    mbIsVisible = true;
 }
 
 /**
@@ -16,6 +49,12 @@ SkinAnimatedNPC::SkinAnimatedNPC(cSHierarchy&, int)
  */
 SkinAnimatedNPC::~SkinAnimatedNPC()
 {
+    delete mpPoseTree;
+    delete mpPoseAccumulator;
+    if (mpSkinMesh != NULL)
+    {
+        delete mpSkinMesh;
+    }
 }
 
 /**
@@ -40,8 +79,16 @@ void SkinAnimatedNPC::Render()
 /**
  * Offset/Address/Size: 0x398 | 0x80164D3C | size: 0x8C
  */
-void SkinAnimatedNPC::RenderFromReplay(const cPoseAccumulator&, const nlMatrix4*)
+void SkinAnimatedNPC::RenderFromReplay(const cPoseAccumulator& poseAccumulator, const nlMatrix4* pWorldMatrix)
 {
+    if (!mbIsVisible)
+        return;
+    if (!mpSkinMesh)
+        return;
+
+    mpSkinMesh->Pose(const_cast<cPoseAccumulator*>(&poseAccumulator));
+    SendToGL();
+    DrawShadow(poseAccumulator, *pWorldMatrix);
 }
 
 /**
@@ -49,21 +96,108 @@ void SkinAnimatedNPC::RenderFromReplay(const cPoseAccumulator&, const nlMatrix4*
  */
 void SkinAnimatedNPC::SendToGL() const
 {
+    static int index = 0;
+    static unsigned long prevFrame = 0;
+
+    unsigned long frame = glGetCurrentFrame();
+    if (prevFrame != frame)
+    {
+        prevFrame = frame;
+        index = 0;
+    }
+
+    unsigned long prog;
+    void* lightData = GetInGameLightData();
+    prog = glGetProgram("3d pointlit");
+    u32 lightRamp = GetGameObjectLightRamp();
+
+    GLSkinMesh* skinMesh = mpSkinMesh;
+    skinMesh->PrepareToRender(prog, 0);
+
+    glModel* pModel = glModelDup(skinMesh->pModel, true);
+    unsigned long bumpBit = GLTT_BumpLocal_bit;
+
+    glModelPacket* pPacket = pModel->packets;
+    while (pPacket < pModel->packets + pModel->numPackets)
+    {
+        if (lightData)
+        {
+            glUserAttach(lightData, pPacket, false);
+        }
+
+        if (pPacket->state.texconfig & 0x10)
+        {
+            void* specData = WorldManager::s_World->GetCustomSpecularData(pPacket, false);
+            glUserAttach(specData, pPacket, false);
+        }
+
+        pPacket->state.texture[5] = lightRamp;
+        pPacket->state.texconfig |= bumpBit;
+
+        pPacket++;
+    }
+
+    glViewAttachModel((eGLView)6, pModel);
+    const_cast<SkinAnimatedNPC*>(this)->mpLastModel = pModel;
 }
 
 /**
  * Offset/Address/Size: 0x1A4 | 0x80164B48 | size: 0x9C
  */
-void SkinAnimatedNPC::DrawShadow(const cPoseAccumulator&, const nlMatrix4&)
+void SkinAnimatedNPC::DrawShadow(const cPoseAccumulator& poseAccumulator, const nlMatrix4& worldMatrix)
 {
+    GLSkinMesh* skinMesh = mpSkinMesh;
+    unsigned long prog = glGetProgram("3d unlit");
+    skinMesh->PrepareToRender(prog, 0);
+    glModel* pModel = glModelDup(skinMesh->pModel, true);
+    float opacity = GetPlanarShadowOpacity();
+    DrawPlanarShadow(pModel, worldMatrix, opacity, false, true, true, (unsigned long)this);
 }
 
 /**
  * Offset/Address/Size: 0x74 | 0x80164A18 | size: 0x130
  */
-void SkinAnimatedNPC::SetAnimState(cSAnim& pAnim, float fBlendTime, ePlayMode ePlayMode)
+void SkinAnimatedNPC::SetAnimState(cSAnim& pAnim, float fBlendTime, ePlayMode playMode)
 {
-    FORCE_DONT_INLINE
+    cPN_SAnimController* controller = NULL;
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&cPN_SAnimController::m_SAnimControllerSlotPool, sizeof(cPN_SAnimController));
+    }
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList != NULL)
+    {
+        controller = (cPN_SAnimController*)cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList;
+        cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList = cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList->m_next;
+    }
+
+    controller = new (controller) cPN_SAnimController(&pAnim, (const AnimRetarget*)0, playMode, (void (*)(unsigned int, cPN_SAnimController*))0, (unsigned int)0, (bool)0);
+
+    if (mpPoseTree != NULL && fBlendTime > 0.0f)
+    {
+        cPN_Blender* blender = NULL;
+
+        if (cPN_Blender::m_BlenderSlotPool.m_FreeList == NULL)
+        {
+            SlotPoolBase::BaseAddNewBlock(&cPN_Blender::m_BlenderSlotPool, sizeof(cPN_Blender));
+        }
+
+        if (cPN_Blender::m_BlenderSlotPool.m_FreeList != NULL)
+        {
+            blender = (cPN_Blender*)cPN_Blender::m_BlenderSlotPool.m_FreeList;
+            cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
+        }
+
+        blender = new (blender) cPN_Blender(mpPoseTree, controller, fBlendTime);
+        mpPoseTree = blender;
+    }
+    else
+    {
+        mpPoseTree = controller;
+    }
+
+    mpAnimController = controller;
 }
 
 /**
