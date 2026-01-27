@@ -338,8 +338,13 @@ public:
         m_first = true;
     }
 
+<<<<<<< HEAD
     // NOTE: Members are public for decompilation compatibility
     // private:
+=======
+// NOTE: Members are public for decompilation compatibility
+// private:
+>>>>>>> e27a539 (progress GameInfo)
     Pointer m_head;
     Pointer m_current;
     bool m_first;
