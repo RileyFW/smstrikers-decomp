@@ -238,8 +238,11 @@ void SetOutputMode(MusyXOutputType);
 class ARAMTransferHelperLoadEntireFile
 {
 public:
-    void LoadEntireFileCallback(nlFile*, void*, unsigned int, unsigned long);
-    void sndPushGroupCallback(unsigned long, unsigned long);
+    static void LoadEntireFileCallback(nlFile*, void*, unsigned int, unsigned long);
+    static void sndPushGroupCallback(unsigned long, unsigned long);
+
+    static u32 m_uFileSize;
+    static nlFile* s_pFile;
 };
 
 class ARAMTransferHelper

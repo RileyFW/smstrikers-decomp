@@ -1,10 +1,22 @@
 #include "NL/plat/plataudio.h"
 #include "NL/nlMemory.h"
+#include "NL/nlFile.h"
+#include "NL/gl/glMemory.h"
 #include "Game/Sys/debug.h"
 #include "types.h"
 
 extern void nlPrintf(const char*, ...);
 extern u32 sndStackGetAvailableSampleMemory(unsigned long id);
+
+static void* gpEntireSampleFileBufferFirstHalf;
+static void* gpEntireSampleFileBufferSecondHalf;
+static void* gpEntireSampleFileMRAMXferBuffer;
+static u64 gEntireSampleMarker;
+static u8 gAllowSyncReadsPastLoadedData;
+
+// ARAMTransferHelperLoadEntireFile static members
+// static u32 m_uFileSize__32ARAMTransferHelperLoadEntireFile;
+// static nlFile* s_pFile__32ARAMTransferHelperLoadEntireFile;
 
 #include <dolphin/ai.h>
 #include <dolphin/arq.h>
@@ -13,10 +25,10 @@ SFXEmitter gEmitters[16];
 
 struct _struct_stack_list_0x10
 {
-    /* 0x00 */ u32* unk0;       /* inferred */
-    /* 0x04 */ unsigned long id;  /* stack id for sndStack functions */
-    /* 0x08 */ s32 unk8;       /* inferred */
-    /* 0x0C */ u32 unkC;       /* inferred */
+    /* 0x00 */ u32* unk0;        /* inferred */
+    /* 0x04 */ unsigned long id; /* stack id for sndStack functions */
+    /* 0x08 */ s32 unk8;         /* inferred */
+    /* 0x0C */ u32 unkC;         /* inferred */
 };
 
 static struct _struct_stack_list_0x10 stack_list[2] = {
@@ -289,8 +301,15 @@ bool SetSFXReverbVol(SND_VOICEID vid, float value)
 /**
  * Offset/Address/Size: 0xC48 | 0x801C5444 | size: 0x88
  */
-void SetSFXVolume(unsigned long, float)
+void SetSFXVolume(unsigned long voiceID, float volume)
 {
+    volume = (volume >= 0.0f) ? volume : 0.0f;
+    volume = (volume <= 1.0f) ? volume : 1.0f;
+
+    float v = 127.0f * volume;
+    float r = (v < 0.0f) ? -0.5f : 0.5f;
+    v = v + r;
+    sndFXCtrl(voiceID, 7, (u8)(s32)v);
 }
 
 /**
@@ -391,6 +410,22 @@ void Initialize(bool)
  */
 void PurgeSampleFileBuffer()
 {
+    if (gpEntireSampleFileBufferFirstHalf != NULL)
+    {
+        glResourceRelease(gEntireSampleMarker);
+        gEntireSampleMarker = 0;
+        gpEntireSampleFileBufferFirstHalf = NULL;
+    }
+
+    if (gpEntireSampleFileBufferSecondHalf != NULL)
+    {
+        nlVirtualFree(gpEntireSampleFileBufferSecondHalf);
+        gpEntireSampleFileBufferSecondHalf = NULL;
+        nlFree(gpEntireSampleFileMRAMXferBuffer);
+        gpEntireSampleFileMRAMXferBuffer = NULL;
+    }
+
+    gAllowSyncReadsPastLoadedData = 0;
 }
 
 /**
@@ -541,8 +576,20 @@ void SetOutputMode(MusyXOutputType outputType)
 /**
  * Offset/Address/Size: 0x1C44 | 0x801C6440 | size: 0x54
  */
-void ARAMTransferHelperLoadEntireFile::LoadEntireFileCallback(nlFile*, void*, unsigned int, unsigned long)
+void ARAMTransferHelperLoadEntireFile::LoadEntireFileCallback(nlFile* pFile, void* pBuffer, unsigned int size, unsigned long halfIndex)
 {
+    unsigned int fileSize;
+    if (halfIndex == 0)
+    {
+        gpEntireSampleFileBufferFirstHalf = (void*)((char*)pBuffer - size);
+    }
+    else
+    {
+        gpEntireSampleFileBufferSecondHalf = (void*)((char*)pBuffer - size);
+        ARAMTransferHelperLoadEntireFile::m_uFileSize = nlFileSize(pFile, &fileSize);
+        nlClose(ARAMTransferHelperLoadEntireFile::s_pFile);
+        ARAMTransferHelperLoadEntireFile::s_pFile = NULL;
+    }
 }
 
 /**

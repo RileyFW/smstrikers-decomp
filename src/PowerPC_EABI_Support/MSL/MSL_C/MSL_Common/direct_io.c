@@ -2,13 +2,29 @@
 #include "critical_regions.h"
 #include "wchar_io.h"
 
+/**
+ * TODO: Implement __fread to prevent inlining and achieve match.
+ * Currently the compiler inlines the empty __fread stub.
+ */
 size_t __fread(const void* buffer, size_t size, size_t count, FILE* stream)
 {
-    
+    (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0;
+    (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0;
 }
+
+/**
+ * TODO: 42% match - __fread is being inlined by the compiler.
+ * Need to implement __fread or find a way to prevent inlining in MSL C code.
+ */
 size_t fread(const void* buffer, size_t size, size_t count, FILE* stream)
 {
+    size_t retval;
 
+    __begin_critical_region(stdin_access);
+    retval = __fread(buffer, size, count, stream);
+    __end_critical_region(stdin_access);
+
+    return retval;
 }
 
 size_t fwrite(const void* buffer, size_t size, size_t count, FILE* stream) 

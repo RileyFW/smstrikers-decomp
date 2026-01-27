@@ -178,8 +178,14 @@ void MemCard::CloseFile(MemCard::MC_FILE*)
 /**
  * Offset/Address/Size: 0x5DC | 0x801C9D4C | size: 0x44
  */
-void MemCard::FileExists(const char*)
+s32 MemCard::FileExists(const char* fileName)
 {
+    CARDFileInfo fileInfo;
+    s32 result = CARDOpen(m_Slot, fileName, &fileInfo);
+    if (result == 0) {
+        CARDClose(&fileInfo);
+    }
+    return result;
 }
 
 /**

@@ -629,7 +629,7 @@ bool cFielder::IsTurboing()
 
 /**
  * Offset/Address/Size: 0xA50C | 0x80023848 | size: 0x3C
- * TODO: 71% match - register allocation (r5 vs r4) and branch scheduling differ
+ * TODO: 80% match - register allocation (r5 vs r4) and branch scheduling differ
  */
 bool cFielder::IsRunning() const
 {
@@ -722,6 +722,7 @@ bool cFielder::IsPreparingForOneTimer() const
  */
 void cFielder::CleanUpAction()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

@@ -16,8 +16,8 @@ public:
     /* 0x10 */ virtual void Render();
     /* 0x14 */ virtual void RenderFromReplay(const cPoseAccumulator&, const nlMatrix4*);
     /* 0x18 */ virtual void Update(float);
-    /* 0x1C */ virtual void DrawShadow(const glModel*, const nlMatrix4&);
-    /* 0x20 */ virtual void DrawShadow(const cPoseAccumulator&, const nlMatrix4&);
+    // /* 0x1C */ virtual void DrawShadow(const glModel*, const nlMatrix4&);
+    // /* 0x20 */ virtual void DrawShadow(const cPoseAccumulator&, const nlMatrix4&);
     /* 0x24 */ virtual float GetHeadSpin() const;
     /* 0x28 */ virtual float GetHeadTilt() const;
     /* 0x2C */ virtual void SetPosition(const nlVector3&);

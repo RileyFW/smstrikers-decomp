@@ -100,8 +100,19 @@ void cAnimCamera::SelectCameraAnimation(const char* name)
 /**
  * Offset/Address/Size: 0x34C | 0x801A4F40 | size: 0x50
  */
-void cAnimCamera::CameraAnimationExists(const char*) const
+bool cAnimCamera::CameraAnimationExists(const char* name) const
 {
+    u32 hash = nlStringLowerHash(name);
+    cCameraData* data = m_cameraDataList;
+    while (data != NULL)
+    {
+        if (data->m_uHashID == hash)
+        {
+            return true;
+        }
+        data = data->next;
+    }
+    return false;
 }
 
 /**

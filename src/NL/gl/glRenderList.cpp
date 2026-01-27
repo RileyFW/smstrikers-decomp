@@ -24,8 +24,9 @@ void GLRenderList::Iterate(eGLView, void (*)(eGLView, unsigned long, const glMod
 /**
  * Offset/Address/Size: 0x6D0 | 0x801D9990 | size: 0x28
  */
-void PacketCallbackManager::ListCallback(const glModelPacket**)
+void PacketCallbackManager::ListCallback(const glModelPacket** pPacketPtr)
 {
+    DoCallback(*pPacketPtr, 1);
 }
 
 /**

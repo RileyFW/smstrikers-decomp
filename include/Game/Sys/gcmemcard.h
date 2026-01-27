@@ -102,7 +102,7 @@ public:
     void InternalReadFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&);
     void InternalWriteFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&, bool);
     void CloseFile(MemCard::MC_FILE*);
-    void FileExists(const char*);
+    s32 FileExists(const char*);
     void WriteFileIconData(MemCard::MC_FILE*, void*, const MemCardFunctor&);
     unsigned long AlignBytesToSectorSize(unsigned long);
 

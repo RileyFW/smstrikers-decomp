@@ -2,12 +2,33 @@
 #include "Game/AI/AiUtil.h"
 #include "Game/SAnim/pnSAnimController.h"
 
+static inline void _unk(float a, float b, float c, double d)
+{
+    a = 0.f;
+    b = 1.f;
+    c = 0.0000958738f;
+    d = 4503599627370496;
+}
+
 /**
  * Offset/Address/Size: 0x3A4 | 0x80165414 | size: 0xA8
  */
-SkinAnimatedMovableNPC::SkinAnimatedMovableNPC(cSHierarchy& pHierarchy, int nModelID, PhysicsNPC& mpPhysObj)
+SkinAnimatedMovableNPC::SkinAnimatedMovableNPC(cSHierarchy& pHierarchy, int nModelID, PhysicsNPC& pPhysicsObj)
     : SkinAnimatedNPC(pHierarchy, nModelID)
 {
+    maDesiredFacingDirection = 0;
+    mfDesiredSpeed = 0.0f;
+    mpPhysObj = &pPhysicsObj;
+    mv3Velocity.f.x = 0.0f;
+    mv3Velocity.f.y = 0.0f;
+    mv3Velocity.f.z = 0.0f;
+    nlVector3 v3Start;
+    v3Start.f.x = 0.0f;
+    v3Start.f.y = 1.0f;
+    v3Start.f.z = 0.0f;
+    SetPosition(v3Start);
+    mpPhysObj->SetPosition(mv3Position, PhysicsObject::WORLD_COORDINATES);
+    mpPhysObj->EnableCollisions();
 }
 
 /**
@@ -15,14 +36,22 @@ SkinAnimatedMovableNPC::SkinAnimatedMovableNPC(cSHierarchy& pHierarchy, int nMod
  */
 SkinAnimatedMovableNPC::~SkinAnimatedMovableNPC()
 {
+    delete mpPhysObj;
 }
 
 /**
  * Offset/Address/Size: 0x2A4 | 0x80165314 | size: 0x7C
  */
-void SkinAnimatedMovableNPC::SetPosition(const nlVector3&)
+#pragma push
+#pragma optimization_level 1 // needed to match..
+void SkinAnimatedMovableNPC::SetPosition(const nlVector3& pos)
 {
+    mv3Position = pos;
+    nlVector3 physPos = pos;
+    physPos.f.z += mpPhysObj->GetRadius();
+    mpPhysObj->SetPosition(physPos, PhysicsObject::WORLD_COORDINATES);
 }
+#pragma pop
 
 /**
  * Offset/Address/Size: 0x284 | 0x801652F4 | size: 0x20
@@ -56,8 +85,28 @@ void SkinAnimatedMovableNPC::RenderFromReplay(const cPoseAccumulator& poseAcc, c
 /**
  * Offset/Address/Size: 0xFC | 0x8016516C | size: 0xEC
  */
-void SkinAnimatedMovableNPC::AnimTranslate(float, bool)
+void SkinAnimatedMovableNPC::AnimTranslate(float fDeltaT, bool bUseZ)
 {
+    nlVector3 v3RootVel;
+    nlVector3 v3Pos;
+
+    v3Pos = mv3Position;
+    mpAnimController->GetRootTrans(&v3RootVel, maFacingDirection);
+
+    float fInvDeltaT = 1.0f / fDeltaT;
+    mv3Velocity.f.x = v3RootVel.f.x * fInvDeltaT;
+    mv3Velocity.f.y = v3RootVel.f.y * fInvDeltaT;
+
+    v3Pos.f.x += v3RootVel.f.x;
+    v3Pos.f.y += v3RootVel.f.y;
+
+    if (bUseZ)
+    {
+        mv3Velocity.f.z = v3RootVel.f.z * fInvDeltaT;
+        v3Pos.f.z += v3RootVel.f.z;
+    }
+
+    SetPosition(v3Pos);
 }
 
 /**
@@ -68,7 +117,8 @@ void SkinAnimatedMovableNPC::AnimMove(float speed, bool applyPhysics)
     u16 rootRot;
     mpAnimController->GetRootRot(&rootRot);
     AnimTranslate(speed, applyPhysics);
-    maFacingDirection += rootRot;
+    u16 newDir = maFacingDirection + rootRot;
+    maFacingDirection = newDir;
 }
 
 /**

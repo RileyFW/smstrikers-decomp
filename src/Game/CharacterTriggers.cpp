@@ -215,8 +215,13 @@ void CharacterElectrocutionEffect(cCharacter* pCharacter, const nlVector3& v3Pos
 /**
  * Offset/Address/Size: 0xFF4 | 0x8019FDA4 | size: 0x6C
  */
-void EmitBallWallHit(const char*)
+void EmitBallWallHit(const char* name)
 {
+    EmissionController* pController = EmissionManager::Create(fxGetGroup(name), 0);
+    static const nlVector3 velocity = { 0.0f, 0.0f, 0.0f };
+    nlVector3 vel = velocity;
+    pController->SetVelocity(vel);
+    pController->SetPosition(g_pBall->m_v3Position);
 }
 
 /**

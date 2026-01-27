@@ -41,7 +41,7 @@ public:
     void BuildAnimViewMatrix(nlMatrix4&);
     void UnselectCameraAnimation();
     void SelectCameraAnimation(const char*);
-    void CameraAnimationExists(const char*) const;
+    bool CameraAnimationExists(const char*) const;
     void FreeCameraAnimation(const char*);
     void Update(float);
     void ManualUpdate(float);
