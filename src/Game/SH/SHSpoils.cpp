@@ -1,4 +1,7 @@
 #include "Game/SH/SHSpoils.h"
+#include "Game/GameSceneManager.h"
+#include "Game/SH/SHCupTrophy.h"
+#include "Game/SH/SHMilestoneTrophy.h"
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800D1FBC | size: 0x40
@@ -122,6 +125,15 @@ void SpoilsScene::SceneCreated()
 /**
  * Offset/Address/Size: 0x0 | 0x800D0EF0 | size: 0xC4
  */
-void SpoilsScene::ShowSpoils(SpoilsScene::eSpoils)
-{
+void SpoilsScene::ShowSpoils(SpoilsScene::eSpoils spoils) {
+    if (spoils == SPOILS_CUP) {
+        CupTrophyScene* pScene = (CupTrophyScene*)GameSceneManager::GetInstance()->Push(SCENE_CUP_TROPHY, SCREEN_FORWARD, true);
+        pScene->CreateTrophyScene(TROPHY_MUSHROOM_CUP, ButtonComponent::BS_B_ONLY, false);
+    } else if (spoils == SPOILS_SUPER_CUP) {
+        CupTrophyScene* pScene = (CupTrophyScene*)GameSceneManager::GetInstance()->Push(SCENE_CUP_TROPHY, SCREEN_FORWARD, true);
+        pScene->CreateTrophyScene(TROPHY_SUPER_MUSHROOM_CUP, ButtonComponent::BS_B_ONLY, false);
+    } else {
+        MilestoneTrophyScene* pScene = (MilestoneTrophyScene*)GameSceneManager::GetInstance()->Push(SCENE_MILESTONE_TROPHY, SCREEN_FORWARD, true);
+        pScene->CreateTrophyScene(NUM_BATTLE_TROPHIES, ButtonComponent::BS_B_ONLY, false);
+    }
 }

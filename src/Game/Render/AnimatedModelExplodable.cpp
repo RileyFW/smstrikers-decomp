@@ -1,5 +1,14 @@
 #include "Game/Render/AnimatedModelExplodable.h"
 
+struct AnimatedModelExplodableList {
+    SidelineExplodableNode* m_pStart;
+    SidelineExplodableNode* m_pEnd;
+};
+
+static AnimatedModelExplodableList sAnimatedModelExplodableList;
+
+void RemoveSidelineExplodable(SidelineExplodable*);
+
 // /**
 //  * Offset/Address/Size: 0x70 | 0x80158C4C | size: 0x128
 //  */
@@ -23,9 +32,30 @@
 
 /**
  * Offset/Address/Size: 0x1C4 | 0x80158B30 | size: 0xAC
+ * TODO: 98.95% match - r5 vs r12 for vtable pointer in virtual destructor dispatch
  */
 void AnimatedModelExplodable::CleanUp()
 {
+    long zero = 0;
+    SlotPoolBase* pPool = &SidelineExplodableManager::sSidelineExplodableNodeSlotPool;
+    SidelineExplodableNode** pTail = &sAnimatedModelExplodableList.m_pEnd;
+    SidelineExplodableNode* node;
+    while ((node = sAnimatedModelExplodableList.m_pStart) != NULL) {
+        nlListRemoveStart<SidelineExplodableNode>(&sAnimatedModelExplodableList.m_pStart, pTail);
+        SidelineExplodable* pExplodable = node->mpExplodable;
+        if (pExplodable != NULL) {
+            RemoveSidelineExplodable(pExplodable);
+        }
+        pExplodable = node->mpExplodable;
+        if (pExplodable != NULL) {
+            typedef void (*VDtor)(SidelineExplodable*, s32);
+            VDtor fn = (VDtor)((*(unsigned long**)pExplodable)[2]);
+            fn(pExplodable, 1);
+        }
+        node->mpExplodable = (SidelineExplodable*)zero;
+        ((SlotPoolEntry*)node)->m_next = pPool->m_FreeList;
+        pPool->m_FreeList = (SlotPoolEntry*)node;
+    }
 }
 
 /**

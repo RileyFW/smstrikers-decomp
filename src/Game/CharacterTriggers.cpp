@@ -255,8 +255,11 @@ void EmitWindupAtCharacter(cCharacter*, const char*)
 /**
  * Offset/Address/Size: 0xA8C | 0x8019F83C | size: 0x74
  */
-void KillWindups(cCharacter*)
-{
+void KillWindups(cCharacter* pCharacter) {
+    KillWindup(pCharacter, "ball_shot_windup", true);
+    KillWindup(pCharacter, "ball_pass_windup", true);
+    KillWindup(pCharacter, "ball_sts_windup", true);
+    KillWindup(pCharacter, "shoot_to_score_windup", true);
 }
 
 /**
@@ -264,6 +267,7 @@ void KillWindups(cCharacter*)
  */
 void KillWindup(cCharacter*, const char*, bool)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

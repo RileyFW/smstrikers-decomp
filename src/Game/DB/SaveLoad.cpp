@@ -5,7 +5,8 @@ bool InOperation = false;
 
 LoadCallbacks LoadSystem;
 
-MemCard** g_MemCards = nullptr;
+static MemCard* s_MemCardStorage[2] = { nullptr, nullptr };
+MemCard** g_MemCards = s_MemCardStorage;
 struct MemCardIDInfo
 {
     s64 serialID;

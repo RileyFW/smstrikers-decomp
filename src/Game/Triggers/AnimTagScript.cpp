@@ -12,6 +12,13 @@
  */
 void AnimTagScriptInterpreter::AnimControllerCB(unsigned int)
 {
+    InterpreterCore* pVtbl = *(InterpreterCore**)this;
+    unsigned long address = (unsigned long)m_Header;
+    if ((address + 0x10000) != 0xFFFF)
+    {
+        pVtbl->CallFunctionAt(address);
+    }
+    pVtbl->DoFunctionCall(m_Return);
 }
 
 /**

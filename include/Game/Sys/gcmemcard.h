@@ -92,7 +92,7 @@ public:
     void ReadFileDoneCB(long, long);
     void SetStatusDoneCB(long, long);
     void CardCheckBrokenDoneCB(long, long);
-    void CardCheckDoneCB(long, long);
+    static void CardCheckDoneCB(long, long);
     void WriteFileDoneCB(long, long);
     void BeginCardAccess(const MemCardFunctor&);
     void CreateFile(const char*, unsigned long, MemCard::ICON_CONFIG*, MemCard::MC_FILE*&, const MemCardFunctor&);
@@ -127,6 +127,8 @@ public:
 
     static bool s_InitDone;
 }; // total size: 0xA620
+
+extern MemCard** g_MemCards;
 
 // class nlBSearch < nlSortedSlot < MemCard
 // {

@@ -1,4 +1,5 @@
 #include "Game/SH/SHCredits.h"
+#include "Game/FE/tlComponentInstance.h"
 
 // /**
 //  * Offset/Address/Size: 0x570 | 0x80110374 | size: 0x15C
@@ -104,8 +105,24 @@ void CreditScene::SceneCreated()
 /**
  * Offset/Address/Size: 0xA80 | 0x8010FBDC | size: 0xA0
  */
-void CreditScene::Update(float)
-{
+void CreditScene::Update(float dt) {
+    BaseSceneHandler::Update(dt);
+    switch ((s32)mCreditParser.mFileData) {
+        case 2:
+            UpdateForCredits(dt);
+            break;
+        case 3:
+            UpdateForCopyrightMessage(dt);
+            break;
+        case 1:
+            UpdateForNintendoLogo(dt);
+            break;
+        case 0:
+            UpdateForNLGMovie(dt);
+            break;
+        default:
+            break;
+    }
 }
 
 /**
@@ -113,6 +130,7 @@ void CreditScene::Update(float)
  */
 void CreditScene::SetupForPhase()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -145,6 +163,7 @@ void CreditScene::SetupForNLGMovie()
  */
 void CreditScene::UpdateForCopyrightMessage(float)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -152,13 +171,33 @@ void CreditScene::UpdateForCopyrightMessage(float)
  */
 void CreditScene::UpdateForCredits(float)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x104 | 0x8010F260 | size: 0xB8
+ * TODO: 97.7% match - SDA string addressing for "credits_nintendologo" (lis+addi vs sda21)
  */
-void CreditScene::UpdateForNintendoLogo(float)
-{
+void CreditScene::UpdateForNintendoLogo(float dt) {
+    FORCE_DONT_INLINE;
+    TLComponentInstance* pWhiteFade = GetWhiteFadeComponent();
+    f32 timeElapsed = *(f32*)&mCreditParser.mFileSize;
+    timeElapsed += dt;
+    *(f32*)&mCreditParser.mFileSize = timeElapsed;
+    if (timeElapsed < 1.0f) {
+        return;
+    }
+    TLSlide* pSlide = pWhiteFade->GetActiveSlide();
+    f32 slideEnd = pSlide->m_start + pSlide->m_duration;
+    TLSlide* pSlide2 = pWhiteFade->GetActiveSlide();
+    if (pSlide2->m_time >= slideEnd) {
+        if (!*(u8*)&mTimeElapsed) {
+            pWhiteFade->SetActiveSlide("credits_nintendologo");
+            *(u8*)&mTimeElapsed = 1;
+        } else {
+            GotoNextPhase();
+        }
+    }
 }
 
 /**
@@ -166,6 +205,7 @@ void CreditScene::UpdateForNintendoLogo(float)
  */
 void CreditScene::UpdateForNLGMovie(float)
 {
+    FORCE_DONT_INLINE;
     if (FESceneManager::GetInstance()->AreAllScenesValid())
     {
         GameSceneManager* pGameSceneMgr = GameSceneManager::GetInstance();
@@ -188,6 +228,8 @@ void CreditScene::UpdateForNLGMovie(float)
 /**
  * Offset/Address/Size: 0x0 | 0x8010F15C | size: 0x98
  */
-void CreditScene::GetWhiteFadeComponent()
+TLComponentInstance* CreditScene::GetWhiteFadeComponent()
 {
+    FORCE_DONT_INLINE;
+    return NULL;
 }

@@ -1,5 +1,7 @@
 #include "Game/Sys/gcmemcard.h"
 
+void nlPrintf(const char*, ...);
+
 // /**
 //  * Offset/Address/Size: 0x30 | 0x801CB798 | size: 0x24
 //  */
@@ -107,9 +109,34 @@ void MemCard::CardCheckBrokenDoneCB(long, long)
 
 /**
  * Offset/Address/Size: 0xA8 | 0x801CABE8 | size: 0x84
+ * TODO: 93.2% match - mr. r5,r4 vs cmpwi r4,0 (line 8), g_MemCards r4 vs r5 (lines 14/18), vtbl r12 vs r5 (lines 48/4c/54)
  */
-void MemCard::CardCheckDoneCB(long, long)
+void MemCard::CardCheckDoneCB(long channel, long result)
 {
+    MemCard* card = g_MemCards[channel];
+    if (result == 0L)
+    {
+        card->m_State = IS_MOUNTED;
+        card->m_CardState = CS_MOUNTED;
+    }
+    else
+    {
+        card->m_State = IS_IDLE;
+        card->m_CardState = CS_IDLE;
+    }
+    MemCardFunctor* pFunctor = &card->m_CB[1];
+    unsigned long slot = card->m_Slot;
+    unsigned long* vtbl = *(unsigned long**)pFunctor;
+    if ((long)vtbl != 0)
+    {
+        typedef void (*FunctorCall)(MemCardFunctor*, unsigned long);
+        FunctorCall fn = (FunctorCall)vtbl[2];
+        fn(pFunctor, slot);
+    }
+    else
+    {
+        nlPrintf("MemCardFunctor: NOT SET!!!\n");
+    }
 }
 
 /**
@@ -182,7 +209,8 @@ s32 MemCard::FileExists(const char* fileName)
 {
     CARDFileInfo fileInfo;
     s32 result = CARDOpen(m_Slot, fileName, &fileInfo);
-    if (result == 0) {
+    if (result == 0)
+    {
         CARDClose(&fileInfo);
     }
     return result;

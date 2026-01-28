@@ -7,6 +7,8 @@
 #include "Game/FE/feSceneManager.h"
 #include "Game/GameSceneManager.h"
 
+class TLComponentInstance;
+
 struct CreditParser
 {
     /* 0x00 */ unsigned long mFileSize; // size 0x4
@@ -29,7 +31,7 @@ public:
     void UpdateForCredits(float);
     void UpdateForNintendoLogo(float);
     void UpdateForNLGMovie(float);
-    void GetWhiteFadeComponent();
+    TLComponentInstance* GetWhiteFadeComponent();
 
     /*  0x01C */ TLTextInstance* m_pTextLines[10]; // offset 0x1C, size 0x28
     /*  0x044 */ bool mLineOnScreen[10];           // offset 0x44, size 0xA

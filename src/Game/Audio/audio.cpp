@@ -41,6 +41,11 @@ static f32 gfVolumeGroups[0x18];
 
 extern Audio::SoundAttributes gDelayedSFX[15];
 
+extern SoundPropAccessor* gpWORLDSoundPropAccessor;
+extern SoundPropAccessor* gpPWRUPSoundPropAccessor;
+extern SoundPropAccessor* gpSTADGENSoundPropAccessor;
+extern SoundPropAccessor* gpCROWDSoundPropAccessor;
+
 namespace Audio
 {
 

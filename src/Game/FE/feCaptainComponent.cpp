@@ -155,8 +155,16 @@ void IChooseCaptain::Initialize(const char*, const char*)
 /**
  * Offset/Address/Size: 0x1AB0 | 0x800BF44C | size: 0x9C
  */
-void IChooseCaptain::UpdateSound(float)
-{
+void IChooseCaptain::UpdateSound(float dt) {
+    for (s32 i = 0; i < 2; i++) {
+        if (mCaptainSoundDelay[i] > 0.0f) {
+            mCaptainSoundDelay[i] -= dt;
+            if (mCaptainSoundDelay[i] <= 0.0f) {
+                mCaptainSoundDelay[i] = 0.0f;
+                FECharacterSound::PlayCaptainSlideIn((eTeamID)mHomeAwayTeam[i]);
+            }
+        }
+    }
 }
 
 /**

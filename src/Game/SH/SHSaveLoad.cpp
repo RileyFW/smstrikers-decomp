@@ -37,7 +37,7 @@ extern long gResult;
 extern float gRetryTimerDelay;
 
 // extern bool s_InitDone__7MemCard;
-extern MemCard** g_MemCards;
+// extern declared in gcmemcard.h as: extern MemCard* g_MemCards[2];
 extern u8 WasCardRemoved;
 extern u8 PreviousNoCardInSlotState;
 

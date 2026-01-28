@@ -1,5 +1,8 @@
 #include "Game/FE/feCaptainGridComponent.h"
 
+extern unsigned long CaptainCellItems[];
+extern unsigned long NUM_CAPTAIN_CELL_ITEMS;
+
 /**
  * Offset/Address/Size: 0x0 | 0x800C16F4 | size: 0x24
  */
@@ -56,8 +59,31 @@ void ICaptainGridComponent::MoveHighlightToTarget(eTeamID teamID)
  */
 eTeamID ICaptainGridComponent::GetSelectedItem() const
 {
-    // TODO: Implement using CaptainCellItems array
-    return TEAM_INVALID;
+    // TODO: 97.9% match - extra mr r5,r0 for pItems pointer init
+    int selectedItem = mMapMenu->GetSelectedItem();
+    unsigned long* pItems = CaptainCellItems;
+    long count = (long)NUM_CAPTAIN_CELL_ITEMS;
+    long i = 0;
+    eTeamID result = TEAM_INVALID;
+
+    for (; i < count; pItems += 2, i++) {
+        if (selectedItem != (int)pItems[0]) {
+            continue;
+        }
+        switch (pItems[0]) {
+            case 0: result = TEAM_DAISY; break;
+            case 1: result = TEAM_DONKEYKONG; break;
+            case 2: result = TEAM_LUIGI; break;
+            case 3: result = TEAM_MARIO; break;
+            case 4: result = TEAM_PEACH; break;
+            case 5: result = TEAM_WARIO; break;
+            case 6: result = TEAM_WALUIGI; break;
+            case 7: result = TEAM_YOSHI; break;
+            case 8: result = TEAM_MYSTERY; break;
+            default: result = TEAM_MARIO; break;
+        }
+    }
+    return result;
 }
 
 /**

@@ -29,7 +29,8 @@ public:
     InterpreterCore(unsigned int stackSize);
 
     /* 0x08 */ virtual ~InterpreterCore();
-    /* 0x0C */ virtual void DoFunctionCall(unsigned int) = 0;
+    // /* 0x0C */ virtual void UnknownVirtual0C();
+    /* 0x10 */ virtual void DoFunctionCall(unsigned int) = 0;
 
     void LoadByteCode(void* byteCode);
     void CallFunction(unsigned long id);

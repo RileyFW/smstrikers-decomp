@@ -32,9 +32,9 @@ public:
     static void EnableSounds(bool);
     void ResetRandomVoiceToggleSFX();
     void PlayRandomVoiceToggleSFX();
-    static void PlayAnimAudioEvent(unsigned long, bool);
+    static long PlayAnimAudioEvent(unsigned long, bool);
     static void StopAnimAudioEvent(const char*);
-    static void PlayAnimAudioEvent(const char*, bool);
+    static long PlayAnimAudioEvent(const char*, bool);
     static void BuildAnimAudioEventLookup();
 };
 

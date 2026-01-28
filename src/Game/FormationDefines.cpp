@@ -92,9 +92,31 @@ void FieldLocToAILoc(nlVector3&, const nlVector3&, eTeamSide)
 
 /**
  * Offset/Address/Size: 0xD5C | 0x8003BB6C | size: 0xB4
+ * TODO: 96.1% match - FPR register allocation (f3/f4/f5/f6 swapped vs target f4/f0/f6/f3)
  */
-void AILocToFieldLoc(nlVector3&, const nlVector3&, eTeamSide)
-{
+void AILocToFieldLoc(nlVector3& result, const nlVector3& input, eTeamSide side) {
+    f32 minX = 0.0f;
+    f32 maxX = -50.0f;
+    f32 minZ = -35.0f;
+    f32 maxZ = 1.0f;
+
+    if (side == AWAY) {
+        minX = maxX;
+        maxX = 0.0f;
+        minZ = maxZ;
+        maxZ = -35.0f;
+    }
+
+    f32 normX = (input.f.x - minX) / (maxX - minX);
+    if (normX > 1.0f) normX = 1.0f;
+    if (normX < 0.0f) normX = 0.0f;
+
+    f32 normZ = (input.f.y - minZ) / (maxZ - minZ);
+    result.f.x = normX * 10.0f + (-5.0f);
+    if (normZ > 1.0f) normZ = 1.0f;
+    if (normZ < 0.0f) normZ = 0.0f;
+    result.f.y = normZ * 8.0f + (-4.0f);
+    result.f.z = 0.0f;
 }
 
 /**

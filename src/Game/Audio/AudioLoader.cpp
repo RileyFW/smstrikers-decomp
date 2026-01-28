@@ -360,9 +360,29 @@ void AudioLoader::LoadNintendoDialogueGroup(bool)
 
 /**
  * Offset/Address/Size: 0x1E1C | 0x80145BE8 | size: 0x9C
+ * TODO: 99.87% match - r3/r4 register swap (this vs bAsync) at offset 0x10
  */
-void AudioLoader::LoadNLGDialogueGroup(bool)
+void AudioLoader::LoadNLGDialogueGroup(bool bAsync)
 {
+    if (gbDisableAudio)
+        return;
+
+    bool bAlreadyLoaded = false;
+    if (sebringAudioGroups[4].uLoadOrder > -1 && sebringAudioGroups[4].stackEnum > -1)
+    {
+        bAlreadyLoaded = true;
+    }
+
+    if (bAlreadyLoaded)
+        return;
+
+    if (gbDisableAudio)
+        return;
+
+    if (!AudioLoader::IsInited())
+        return;
+
+    PlatAudio::LoadSoundGroup(sebringAudioFileData, 4, 1, bAsync);
 }
 
 /**

@@ -6,6 +6,20 @@
 #include "Game/InterpreterCore.h"
 #include "Game/SAnim.h"
 
+class AnimTagScriptInterpreter;
+
+struct AnimTagInfo
+{
+    /* 0x0 */ unsigned long Trigger;
+    /* 0x4 */ unsigned long ScriptFuncOffset;
+}; // total size: 0x8
+
+struct AnimTagCBInfo
+{
+    /* 0x0 */ AnimTagScriptInterpreter* pAnimTagScript;
+    /* 0x4 */ AnimTagInfo ScriptInfo;
+}; // total size: 0xC
+
 class AnimTagScriptInterpreter : private InterpreterCore
 {
 public:

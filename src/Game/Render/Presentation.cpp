@@ -1,4 +1,5 @@
 #include "Game/Render/Presentation.h"
+#include "NL/nlString.h"
 
 // /**
 //  * Offset/Address/Size: 0x60 | 0x80127308 | size: 0x8
@@ -97,8 +98,19 @@ void Presentation::Update(float)
 /**
  * Offset/Address/Size: 0xDBC | 0x801255A0 | size: 0xB4
  */
-void Presentation::DuringEndOfGamePresentation() const
+bool Presentation::DuringEndOfGamePresentation() const
 {
+    if (nlStrCmp<char>(mCurrentFunction, "ImplGameEnd") == 0)
+        return true;
+    if (nlStrCmp<char>(mCurrentFunction, "GameEndNoSuddenDeath") == 0)
+        return true;
+    if (nlStrCmp<char>(mCurrentFunction, "GoalSuddenDeath") == 0)
+        return true;
+    if (nlStrCmp<char>(mCurrentFunction, "PlayHighlight") == 0)
+        return true;
+    if (nlStrCmp<char>(mCurrentFunction, "PlayCupThrophy") == 0)
+        return true;
+    return false;
 }
 
 /**
@@ -127,6 +139,14 @@ void Presentation::PlayOverlay(const char*, float, float)
  */
 void Presentation::StopOverlay()
 {
+    if (mOverlayDisplayed)
+    {
+        nlSingleton<OverlayManager>::s_pInstance->SetVisible(mOverlayToDisplay, false, false);
+    }
+    mOverlayDisplayed = false;
+    mOverlayToDisplay = SCENE_INVALID;
+    mOverlayDisplayLength = 0.0f;
+    mOverlayDelay = 0.0f;
 }
 
 /**
@@ -140,12 +160,5 @@ void CupWinStingerDone()
  * Offset/Address/Size: 0x60 | 0x80124844 | size: 0x13C
  */
 void Presentation::Reset()
-{
-}
-
-/**
- * Offset/Address/Size: 0x0 | 0x801247E4 | size: 0x60
- */
-Presentation::~Presentation()
 {
 }

@@ -1,6 +1,11 @@
 #ifndef _MOVIE_H_
 #define _MOVIE_H_
 
+#include "NL/nlTask.h"
+#include "Game/GameInfo.h"
+
+extern bool g_bActive;
+
 bool IsMoviePlayingInStrikers101();
 void MoviePlay();
 void MovieStop();

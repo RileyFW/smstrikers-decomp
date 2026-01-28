@@ -2,6 +2,7 @@
 #include "Game/Character.h"
 #include "Game/Player.h"
 #include "Game/AI/HeadTrack.h"
+#include "Game/PoseAccumulator.h"
 
 cCharacter* DrawableCharacter::spRenderOnlyThisCharacter = nullptr;
 bool DrawableCharacter::sbRenderOpposingGoalieToo = false;

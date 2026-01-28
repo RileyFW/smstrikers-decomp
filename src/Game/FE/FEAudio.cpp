@@ -41,8 +41,37 @@ void FEAudio::PlayRandomVoiceToggleSFX()
 /**
  * Offset/Address/Size: 0x5F0 | 0x8009F39C | size: 0xB8
  */
-void FEAudio::PlayAnimAudioEvent(unsigned long, bool)
+long FEAudio::PlayAnimAudioEvent(unsigned long uHash, bool)
 {
+    if (!AudioLoader::IsInited())
+    {
+        return -1;
+    }
+
+    if (!mIsEnabled)
+    {
+        return -1;
+    }
+
+    unsigned long stackHash = uHash;
+    AnimAudioEventLookup* result = nlBSearch<AnimAudioEventLookup, unsigned long>(stackHash, gp_AnimAudioEventTable, gNumAnimAudioEvents);
+    AnimAudioEventLookup* event;
+    if (result)
+    {
+        event = result;
+    }
+    else
+    {
+        event = NULL;
+    }
+
+    if (nlStrICmp<char>(event->szSFXType, "") == 0)
+    {
+        return -1;
+    }
+
+    Audio::PlayWorldSFXbyStr(event->szSFXType, 1.0f, 0.0f, false, true, NULL, NULL, NULL);
+    return 0;
 }
 
 /**
@@ -83,8 +112,10 @@ void FEAudio::StopAnimAudioEvent(const char* eventName)
 /**
  * Offset/Address/Size: 0x738 | 0x8009F4E4 | size: 0xBC
  */
-void FEAudio::PlayAnimAudioEvent(const char*, bool)
+long FEAudio::PlayAnimAudioEvent(const char*, bool)
 {
+    FORCE_DONT_INLINE;
+    return 0;
 }
 
 /**
