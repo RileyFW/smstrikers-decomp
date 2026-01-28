@@ -171,11 +171,8 @@ FormationSpec* FormationSet::GetFormationSpec(int index) const
  */
 FormationSpec* FormationSet::GetFormationSpecFromID(int formationID) const
 {
-    if (formationID < 0)
-    {
-        return nullptr;
-    }
-    if (formationID >= m_NumFormationDefs)
+    // Check for negative ID
+    if (formationID < 0 || formationID >= m_NumFormationDefs)
     {
         // Fall through to linear search
     }
@@ -183,7 +180,7 @@ FormationSpec* FormationSet::GetFormationSpecFromID(int formationID) const
     {
         // Try direct index access first
         FormationSpec* spec = &m_FormationDefArray[formationID];
-        if (spec->m_ID == formationID)
+        if (formationID == spec->m_ID)
         {
             return spec;
         }
@@ -191,16 +188,19 @@ FormationSpec* FormationSet::GetFormationSpecFromID(int formationID) const
 
     // Linear search through all formation defs
     FormationSpec* array = m_FormationDefArray;
-    for (int i = 0; i < m_NumFormationDefs; i++)
+    int i = 0;
+    int count = m_NumFormationDefs;
+    for (; count > 0; count--)
     {
-        if (array->m_ID == formationID)
+        if (formationID == array->m_ID)
         {
-            return array;
+            return &m_FormationDefArray[i];
         }
         array++;
+        i++;
     }
 
-    return nullptr;
+    return NULL;
 }
 
 /**

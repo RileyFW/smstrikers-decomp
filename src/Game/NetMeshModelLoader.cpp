@@ -171,9 +171,31 @@ void NetMeshModelLoader::AddEdge(const glModelPacket&, unsigned short, unsigned 
 
 /**
  * Offset/Address/Size: 0xB90 | 0x80130CE8 | size: 0xB4
+ * TODO: Match pending - initial implementation
  */
-void NetMeshModelLoader::AddTriangleFromGeometry(const glModelPacket&, unsigned short*)
+void NetMeshModelLoader::AddTriangleFromGeometry(const glModelPacket& packet, unsigned short* indices)
 {
+    bool degenerate = false;
+    unsigned short v0 = indices[0];
+    unsigned short v1 = indices[1];
+    unsigned short v2 = indices[2];
+
+    // Check for degenerate triangle (any two vertices equal)
+    if (v0 == v1 || v1 == v2 || v0 == v2)
+    {
+        degenerate = true;
+    }
+
+    if (!degenerate)
+    {
+        // Add edges for each pair of vertices
+        for (int i = 0; i < 3; i++)
+        {
+            unsigned short currVertex = indices[i];
+            unsigned short nextVertex = indices[(i + 1) % 3];
+            AddEdge(packet, currVertex, nextVertex);
+        }
+    }
 }
 
 /**

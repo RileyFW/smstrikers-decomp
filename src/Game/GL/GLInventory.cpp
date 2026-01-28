@@ -134,10 +134,21 @@ void GLInventory::AddTextureAnim(unsigned long hashID, GLTextureAnim* pAnim)
 
 /**
  * Offset/Address/Size: 0x7C0 | 0x801E2A58 | size: 0xC8
+ * TODO: 82% match. The FindGet inline method needs adjustment for exact match.
+ * Target tracks bool 'found' separately and stores value pointer to stack at 0x08(r1).
+ * Missing the clrlwi./beq pattern for bool test before dereferencing result.
  */
-GLTextureAnim* GLInventory::GetTextureAnim(unsigned long)
+GLTextureAnim* GLInventory::GetTextureAnim(unsigned long id)
 {
-    return nullptr; // TODO: Implement actual lookup
+    for (int i = m_nLevel; i >= 0; i--)
+    {
+        GLTextureAnim** pResult = m_pTextureAnims[i]->m_pItems->FindGet(id);
+        if (pResult != nullptr)
+        {
+            return *pResult;
+        }
+    }
+    return nullptr;
 }
 
 /**

@@ -75,8 +75,35 @@ void MemCard::CreateFileDoneCB(long, long)
 /**
  * Offset/Address/Size: 0x498 | 0x801CAFD8 | size: 0xA8
  */
-void MemCard::FormatDoneCB(long, long)
+void MemCard::FormatDoneCB(long channel, long result)
 {
+    // Ensure channel uses first param register
+    long ch = (long)channel;
+    MemCard* card = g_MemCards[ch];
+    if (result == 0L)
+    {
+        CARDFreeBlocks(card->m_Slot, &card->m_CardInfo.FreeBytes, &card->m_CardInfo.FreeFiles);
+        card->m_State = IS_MOUNTED;
+        card->m_CardState = CS_MOUNTED;
+    }
+    else
+    {
+        card->m_State = IS_IDLE;
+        card->m_CardState = CS_IDLE;
+    }
+    MemCardFunctor* pFunctor = &card->m_CB[4];
+    unsigned long slot = card->m_Slot;
+    unsigned long* vtbl = *(unsigned long**)pFunctor;
+    if ((long)vtbl != 0)
+    {
+        typedef void (*FunctorCall)(MemCardFunctor*, unsigned long, long);
+        FunctorCall fn = (FunctorCall)vtbl[2];
+        fn(pFunctor, slot, result);
+    }
+    else
+    {
+        nlPrintf("MemCardFunctor: NOT SET!!!\n");
+    }
 }
 
 /**

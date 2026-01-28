@@ -326,8 +326,11 @@ void KillStar(cFielder* pFielder)
 /**
  * Offset/Address/Size: 0x2C8 | 0x8019F078 | size: 0x58
  */
-void EmitChainBite(cFielder*)
+void EmitChainBite(cFielder* pFielder)
 {
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("chain_bite"), 0);
+    pController->SetPosition(pFielder->m_v3Position);
+    BeginRumbleAction(RUMBLE_SHOT_CONTACT, pFielder->GetGlobalPad());
 }
 
 /**

@@ -136,8 +136,8 @@ struct CROWD_STATE
     /* 0x53 */ unsigned char SkipBlend : 1;
     /* 0x53 */ unsigned char LPFOn : 1;
     /* 0x53 */ unsigned char _padBits : 3;
-    /* 0x54 */ unsigned char StreamLocked;  // SEPARATE BYTE at 0x54, not bitfield!
-    /* 0x55 */ unsigned char _pad[3];       // padding for float alignment
+    /* 0x54 */ unsigned char StreamLocked; // SEPARATE BYTE at 0x54, not bitfield!
+    /* 0x55 */ unsigned char _pad[3];      // padding for float alignment
     /* 0x58 */ float CrowdVolume;
     /* 0x5C */ unsigned long LPFFreq;
     /* 0x60 */ VOCALIZATION_STATE ChantState;

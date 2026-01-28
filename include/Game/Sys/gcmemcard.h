@@ -87,7 +87,7 @@ public:
     void CardRemovedCB(long, long);
     void MountDoneCB(long, long);
     void CreateFileDoneCB(long, long);
-    void FormatDoneCB(long, long);
+    static void FormatDoneCB(long, long);
     void DeleteFileDoneCB(long, long);
     void ReadFileDoneCB(long, long);
     void SetStatusDoneCB(long, long);

@@ -96,15 +96,21 @@ public:
     /* 0x18 */ unsigned long m_IconLoadedCRC;
 }; // total size: 0x1C
 
-// class SaveCallbacks
-// {
-// public:
-//     void FileWriteCB(unsigned long, long, void*);
-//     void DoSave(unsigned long);
-//     void FileWriteIconCB(unsigned long, long, void*);
-//     void CreateFileCB(unsigned long, long, void*);
-//     void CardMountCB(unsigned long, long, void*);
-// };
+class SaveCallbacks
+{
+public:
+    void FileWriteCB(unsigned long, long, void*);
+    void DoSave(unsigned long);
+    void FileWriteIconCB(unsigned long, long, void*);
+    void CreateFileCB(unsigned long, long, void*);
+    void CardMountCB(unsigned long, long, void*);
+
+    /* 0x00 */ MemCard::MC_FILE* m_pSaveFile;
+    /* 0x04 */ void* m_pSaveGameBuffer;
+    /* 0x08 */ unsigned long m_Slot;
+    /* 0x0C */ unsigned long m_IconCRC;
+    /* 0x10 */ unsigned char m_MustFreeMemory;
+}; // total size: 0x14
 
 // class IconDataCache
 // {

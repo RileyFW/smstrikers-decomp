@@ -23,14 +23,100 @@ bool FESlideMenu::PrevItem()
  */
 bool FESlideMenu::NextItem()
 {
+    if (m_lockInput)
+    {
+        return false;
+    }
+    
+    bool didChange = true;
+    
+    if (m_currentSlide == m_size - 1)
+    {
+        // At end of menu
+        if (m_doWrapAround)
+        {
+            m_currentSlide = 0;
+        }
+        else
+        {
+            didChange = false;
+        }
+    }
+    else
+    {
+        m_currentSlide++;
+    }
+    
+    if (didChange)
+    {
+        m_pMenuComp->SetActiveSlide(m_menuItems[m_currentSlide].ItemSlide);
+        
+        MenuItem* item = &m_menuItems[m_currentSlide];
+        int funcType = item->ItemCBFuncs[1].mTag;
+        
+        if (funcType == 0)
+        {
+            // No callback
+        }
+        else if (funcType == 1)
+        {
+            // Direct function call
+            void (*fn)() = (void(*)())item->ItemCBFuncs[1].mFreeFunction;
+            fn();
+        }
+        else
+        {
+            // Virtual call through functor - use inline chained access
+            FunctorBase* functor = item->ItemCBFuncs[1].mFunctor;
+            ((void(*)(FunctorBase*))(*(unsigned long**)functor)[3])(functor);
+        }
+        
+        return true;
+    }
+    
     return false;
 }
 
 /**
  * Offset/Address/Size: 0x200 | 0x80096E54 | size: 0xA4
+ * TODO: 92.7% match - early-return branch structure difference (blt+b vs bge)
  */
-void FESlideMenu::SetSlideByIndex(unsigned char newslide)
+void FESlideMenu::SetSlideByIndex(unsigned char index)
 {
+    if (m_currentSlide == index)
+    {
+        return;
+    }
+    if (!(index < m_size))
+    {
+        return;
+    }
+    m_currentSlide = index;
+
+    // Get pointer to MenuItem and access callback at ON_HIGHLIGHT (index 1)
+    char* pThis = (char*)this;
+    u32 offset = m_currentSlide * 0x14;
+    u32* pItem = (u32*)(pThis + offset);
+
+    // Check callback type at offset 0xC (ItemCBFuncs[1].mTag)
+    int tag = (int)pItem[3];
+    if (tag != 0)
+    {
+        if (tag == 1)
+        {
+            // FREE_FUNCTION - direct call
+            void (*func)() = (void (*)())pItem[4];
+            func();
+        }
+        else
+        {
+            // FUNCTOR - vtable call via fnc_0x8 (vtable[2])
+            FunctorBase* functor = (FunctorBase*)pItem[4];
+            functor->fnc_0x8();
+        }
+    }
+
+    m_pMenuComp->SetActiveSlide(m_menuItems[m_currentSlide].ItemSlide);
 }
 
 /**

@@ -1,9 +1,12 @@
 #include "Game/DB/SaveLoad.h"
 #include "Game/Sys/gcmemcard.h"
 
+extern void nlFree(void*);
+
 bool InOperation = false;
 
 LoadCallbacks LoadSystem;
+SaveCallbacks SaveSystem;
 
 static MemCard* s_MemCardStorage[2] = { nullptr, nullptr };
 MemCard** g_MemCards = s_MemCardStorage;
@@ -252,6 +255,24 @@ void SaveLoad::HasEnoughFreeSpace(int)
  */
 void SaveLoad::FreeAllCallbackMemory()
 {
+    if (SaveSystem.m_MustFreeMemory)
+    {
+        if (SaveSystem.m_pSaveGameBuffer != nullptr)
+        {
+            nlFree(SaveSystem.m_pSaveGameBuffer);
+            SaveSystem.m_pSaveGameBuffer = nullptr;
+        }
+    }
+    SaveSystem.m_MustFreeMemory = false;
+
+    if (LoadSystem.m_MustFreeBuffers)
+    {
+        nlFree(LoadSystem.m_pReadBuffer);
+        LoadSystem.m_pReadBuffer = nullptr;
+        nlFree(LoadSystem.m_pIconReadBuffer);
+        LoadSystem.m_pIconReadBuffer = nullptr;
+    }
+    LoadSystem.m_MustFreeBuffers = false;
 }
 
 /**
