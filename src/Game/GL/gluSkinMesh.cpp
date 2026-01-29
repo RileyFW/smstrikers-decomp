@@ -1,4 +1,8 @@
 #include "Game/GL/gluSkinMesh.h"
+#include "types.h"
+#include "NL/gl/glModel.h"
+#include "NL/gl/glState.h"
+#include "NL/glx/glxDisplayList.h"
 
 // /**
 //  * Offset/Address/Size: 0x38 | 0x801B64C0 | size: 0x18
@@ -51,6 +55,25 @@
  */
 void ShaderSkinMesh::StitchModel()
 {
+    glModel* model = pModel;
+    glModelPacket* pPacket = model->packets;
+    for (int packetIndex = 0; packetIndex < model->numPackets;
+        packetIndex++, pPacket = (glModelPacket*)((u8*)pPacket + 0x4A))
+    {
+        if (glGetRasterState(pPacket->state.raster, GLS_SolidOffset) != 1)
+            continue;
+        DisplayList* dl = dlGetStruct(pPacket->indexBuffer);
+        u8* list = (u8*)dl->list;
+        if (list[3] != 0xff)
+            continue;
+        u8* pWrite = list + 3;
+        unsigned char* pStitch = stitchArray[packetIndex];
+        for (int i = 0; i < pPacket->numVertices; i++)
+        {
+            *pWrite = (pStitch[i] + 1) * 3;
+            pWrite += (pPacket->numStreams - 1) * 2 + 1;
+        }
+    }
 }
 
 /**

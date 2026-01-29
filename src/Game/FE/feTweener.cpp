@@ -3,8 +3,35 @@
 /**
  * Offset/Address/Size: 0x0 | 0x800A2254 | size: 0x9C
  */
-void FETweenManager::startTween(FETweener*)
+void FETweenManager::startTween(FETweener* pTweener)
 {
+    DLListEntry<FETweener*>* pEntry = NULL;
+
+    pTweener->m_tweenActive = 1;
+
+    // Ensure we have slots available in the active tween list
+    if (((SlotPoolBase*)&m_activeTweenList)->m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock((SlotPoolBase*)&m_activeTweenList, sizeof(DLListEntry<FETweener*>));
+    }
+
+    // Get a free entry from the pool
+    if (((SlotPoolBase*)&m_activeTweenList)->m_FreeList != NULL)
+    {
+        pEntry = (DLListEntry<FETweener*>*)((SlotPoolBase*)&m_activeTweenList)->m_FreeList;
+        ((SlotPoolBase*)&m_activeTweenList)->m_FreeList = ((SlotPoolBase*)&m_activeTweenList)->m_FreeList->m_next;
+    }
+
+    // Initialize the entry
+    if (pEntry != NULL)
+    {
+        pEntry->m_next = NULL;
+        pEntry->m_prev = NULL;
+        pEntry->m_data = pTweener;
+    }
+
+    // Add to active tween list
+    nlDLRingAddEnd((DLListEntry<FETweener*>**)((char*)&m_activeTweenList + 0x18), pEntry);
 }
 
 /**

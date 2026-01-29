@@ -1,6 +1,8 @@
 
 #include "Game/Sys/audio.h"
 #include "Game/GameAudio.h"
+#include "Game/Audio/WorldAudio.h"
+#include "Game/Audio/AudioLoader.h"
 
 #include "NL/nlList.h"
 #include "NL/nlMemory.h"
@@ -49,11 +51,12 @@ extern SoundPropAccessor* gpCROWDSoundPropAccessor;
 namespace Audio
 {
 
-cGameSFX gWorldSFX;
-cGameSFX gPowerupSFX;
-cGameSFX gStadGenSFX;
-cGameSFX gCrowdSFX;
+cWorldSFX gWorldSFX;
+cWorldSFX gPowerupSFX;
+cWorldSFX gStadGenSFX;
+cWorldSFX gCrowdSFX;
 
+SND_LISTENER gListener;
 float gChantDelayTimer;
 bool gbGameIsPaused = false;
 bool gbStartingGame = true;
@@ -459,6 +462,25 @@ bool IsWorldSFXLoaded()
  */
 void LoadWorldSFX()
 {
+    if (g_bWorldSFXInitialized)
+        return;
+
+    gWorldSFX.Init();
+    gPowerupSFX.Init();
+    gStadGenSFX.Init();
+
+    if (!AudioLoader::gbDisableCrowd)
+        gCrowdSFX.Init();
+
+    gWorldSFX.SetSFX(gpWORLDSoundPropAccessor);
+    gPowerupSFX.SetSFX(gpPWRUPSoundPropAccessor);
+    gStadGenSFX.SetSFX(gpSTADGENSoundPropAccessor);
+
+    if (!AudioLoader::gbDisableCrowd)
+        gCrowdSFX.SetSFX(gpCROWDSoundPropAccessor);
+
+    gbGameIsPaused = false;
+    g_bWorldSFXInitialized = true;
 }
 
 /**
@@ -466,6 +488,28 @@ void LoadWorldSFX()
  */
 void UnloadInGameSFX()
 {
+    for (int i = 0; i < 64; i++)
+    {
+        PlatAudio::RemoveEmitter(i);
+        PlatAudio::InitEmitter(i);
+    }
+
+    for (int i = 0; i < 15; i++)
+    {
+        gDelayedSFX[i].Init();
+    }
+
+    gbStartingGame = true;
+    g_bHomeTeamHasJustScored = false;
+
+    if (gbListenerInit)
+    {
+        PlatAudio::Remove3DSFXListener(&gListener);
+        gbListenerInit = false;
+    }
+
+    g_bAudioInGameLoaded = false;
+    g_fAudioTimer = 0.0f;
 }
 
 /**

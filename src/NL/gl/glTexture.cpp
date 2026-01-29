@@ -20,9 +20,9 @@ void glTextureAdd(unsigned long arg0, const void* arg1, unsigned long arg2)
 /**
  * Offset/Address/Size: 0x40 | 0x801DF1A0 | size: 0x20
  */
-void glTextureGetNumBits(int arg0)
+int glTextureGetNumBits(int component)
 {
-    glplatTextureGetNumBits(arg0);
+    return glplatTextureGetNumBits(component);
 }
 
 /**

@@ -5,7 +5,7 @@
 
 void glTextureReplace(unsigned long, const void*, unsigned long);
 void glTextureAdd(unsigned long, const void*, unsigned long);
-void glTextureGetNumBits(int);
+int glTextureGetNumBits(int);
 u32 glTextureGetHeight();
 u32 glTextureGetWidth();
 bool glTextureLoad(unsigned long);

@@ -6,6 +6,7 @@
 
 #include "Game/Drawable/DrawableObj.h"
 #include "Game/GL/GLSkinMesh.h"
+#include "Game/PoseAccumulator.h"
 
 class BoneMapList
 {

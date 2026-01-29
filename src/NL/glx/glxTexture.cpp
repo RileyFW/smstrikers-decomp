@@ -10,6 +10,10 @@
 #include "NL/gl/glMemory.h"
 #include "NL/gc/gcSwizzler.h"
 #include "dolphin/gx/GXTexture.h"
+#include "Game/GL/GLInventory.h"
+#include "Game/Sys/debug.h"
+
+extern GLInventory glInventory;
 
 static glxTextureLoadCallback_t glxTextureLoad_cb;
 static int currentMarkerLevel = 0;
@@ -17,6 +21,7 @@ static bool glx_bGridMode = false;
 
 static nlListContainer<PlatTexture*> gridTextures;
 static unsigned long nGridMemory;
+static const u8 kDefaultBits[4] = { 5, 6, 5, 0 };
 
 static nlAVLTree<unsigned long, PlatTexture*, DefaultKeyCompare<unsigned long> >* textures[16];
 static PlatTexture texobj;
@@ -449,10 +454,100 @@ int BundleSortProc(const glTexBundleDict* a, const glTexBundleDict* b)
 /**
  * Offset/Address/Size: 0xBD4 | 0x801B7E90 | size: 0x32C
  */
-PlatTexture* glx_MakeTexture(GXTextureHeader* header, unsigned long handle)
+PlatTexture* glx_MakeTexture(GXTextureHeader* header, unsigned long texhandle)
 {
-    FORCE_DONT_INLINE;
-    return nullptr;
+    PlatTexture* pTex;
+    u16 width;
+    u16 height;
+    eGXTextureFormat format;
+    unsigned long numLevels;
+    unsigned long numEntries;
+    int textureSize;
+
+    textureSize = GCTextureSize(header->format, header->width, header->height, header->numLevels, texhandle);
+
+    // Allocate PlatTexture (inline version of glx_CreatePlatTexture)
+    pTex = (PlatTexture*)glResourceAlloc(sizeof(PlatTexture), GLM_Header);
+    if (pTex != NULL)
+    {
+        pTex->m_unk8 = 0x50544558;
+        pTex->m_Width = 0;
+        pTex->m_Height = 0;
+        pTex->m_Levels = 0;
+        pTex->m_MaxLevel = 0;
+        pTex->m_Format = GXTex_Num;
+        pTex->m_nPaletteEntries = 0;
+        pTex->m_bMissingTexture = false;
+        pTex->m_SwizzledData = NULL;
+        pTex->m_LinearData = NULL;
+        pTex->m_PaletteData = NULL;
+        memset(&pTex->m_TexObj, 0, 0x20);
+        memset(&pTex->m_TlutObj, 0, 0xC);
+        memset(pTex->m_Bits, 0xFF, 4);
+    }
+
+    // Load header values into local vars
+    numLevels = header->numLevels;
+    format = header->format;
+    height = header->height;
+    width = header->width;
+
+    // Free linear data if present
+    if (pTex->m_LinearData != NULL)
+    {
+        nlFree(pTex->m_LinearData);
+        pTex->m_LinearData = NULL;
+    }
+
+    // Set dimensions
+    pTex->m_Width = width;
+    pTex->m_Height = height;
+    pTex->m_Levels = (u8)numLevels;
+    pTex->m_MaxLevel = (u8)numLevels;
+    pTex->m_Format = format;
+
+    // Allocate swizzled data
+    pTex->m_SwizzledData = glResourceAlloc(GCTextureSize(format, width, height, numLevels, -1), GLM_TextureData);
+    pTex->m_LinearData = NULL;
+
+    // Copy bits from header
+    memcpy(pTex->m_Bits, header->numBits, 4);
+
+    // Set missing texture flag
+    pTex->m_bMissingTexture = header->missingTexture ? true : false;
+
+    // Handle palette
+    numEntries = header->numEntries;
+    if (numEntries != 0)
+    {
+        pTex->m_PaletteData = (u16*)glResourceAlloc(numEntries * 2, GLM_TextureData);
+        pTex->m_nPaletteEntries = (s16)numEntries;
+        memcpy(pTex->m_PaletteData, (u8*)&header[1] + textureSize, header->numEntries * 2);
+    }
+
+    // Copy texture data
+    memcpy(pTex->m_SwizzledData, (const u8*)header + 0x20, textureSize);
+
+    // Prepare texture - inline from Prepare()
+    DCStoreRange(pTex->m_SwizzledData, GCTextureSize(pTex->m_Format, pTex->m_Width, pTex->m_Height, pTex->m_Levels, -1));
+
+    if (pTex->m_nPaletteEntries > 0)
+    {
+        DCStoreRange(pTex->m_PaletteData, pTex->m_nPaletteEntries * 2);
+        GXInitTlutObj(&pTex->m_TlutObj, pTex->m_PaletteData, GX_TL_RGB5A3, pTex->m_nPaletteEntries);
+    }
+
+    if (pTex->m_Format == GXTex_CI8)
+    {
+        GXInitTexObjCI(&pTex->m_TexObj, pTex->m_SwizzledData, pTex->m_Width, pTex->m_Height, (GXCITexFmt)gx_format[pTex->m_Format], GX_CLAMP, GX_CLAMP, pTex->m_Levels > 1 ? 1 : 0, 0);
+        GXInitTexObjLOD(&pTex->m_TexObj, (pTex->m_Levels == 1) ? GX_LINEAR : GX_LIN_MIP_NEAR, GX_LINEAR, 0.0f, (float)(pTex->m_MaxLevel - 1), 0.0f, GX_DISABLE, GX_DISABLE, GX_ANISO_1);
+        return pTex;
+    }
+
+    GXInitTexObj(&pTex->m_TexObj, pTex->m_SwizzledData, pTex->m_Width, pTex->m_Height, gx_format[pTex->m_Format], GX_CLAMP, GX_CLAMP, pTex->m_Levels > 1 ? 1 : 0);
+    GXInitTexObjLOD(&pTex->m_TexObj, (pTex->m_Levels == 1) ? GX_LINEAR : GX_LIN_MIP_LIN, GX_LINEAR, 0.0f, (float)(pTex->m_MaxLevel - 1), 0.0f, GX_DISABLE, GX_DISABLE, GX_ANISO_1);
+
+    return pTex;
 }
 
 /**
@@ -480,11 +575,57 @@ bool glx_AddTex(unsigned long handle, PlatTexture* platTex)
 
 /**
  * Offset/Address/Size: 0xF94 | 0x801B8250 | size: 0x194
+ * TODO: 89.5% match - inline template AVL tree FindGet differences,
+ *       register allocation (r28 intermediate vs direct stack access for tex pointer),
+ *       target uses found flag (r0) while current checks tex pointer directly
  */
 PlatTexture* glx_GetTex(unsigned long handle, bool bMissingFatal, bool bAllowGrids)
 {
-    FORCE_DONT_INLINE;
-    return nullptr;
+    PlatTexture** tex;
+    GLTextureAnim* pAnim;
+
+    // Check if handle is already a PlatTexture pointer (high byte 0x80)
+    if (((handle & 0xFF000000) + 0x80000000) == 0)
+    {
+        // Check for "PTEX" signature (0x50544558)
+        if ((*(unsigned long*)handle - 0x50540000) == 0x4558)
+        {
+            return (PlatTexture*)handle;
+        }
+    }
+
+    // Try to get texture animation
+    pAnim = glInventory.GetTextureAnim(handle);
+    if (pAnim != NULL)
+    {
+        handle = pAnim->GetTexture(-1)->textureHandle;
+    }
+
+    // Search through marker levels from current down to 0
+    for (int index = currentMarkerLevel; index >= 0; index--)
+    {
+        tex = textures[index]->FindGet(handle);
+        if (tex != NULL)
+        {
+            // If allowing grids and grid mode is on
+            if (bAllowGrids && glx_bGridMode)
+            {
+                PlatTexture* gridTex = glx_GetGridTexture((u16)(*tex)->m_Height >> 2, (u16)(*tex)->m_Width >> 2);
+                if (gridTex != NULL)
+                {
+                    return gridTex;
+                }
+            }
+            return *tex;
+        }
+    }
+
+    // Texture not found
+    if (bMissingFatal)
+    {
+        tDebugPrintManager::Print(DC_GLPLAT, "texture 0x%08X not found\n", handle);
+    }
+    return NULL;
 }
 
 inline bool IsValidTextureDimension(int dimension)
@@ -514,6 +655,7 @@ inline bool IsValidTextureDimension(int dimension)
  */
 PlatTexture* glx_GetGridTexture(int width, int height)
 {
+    FORCE_DONT_INLINE;
     if (!IsValidTextureDimension(width) || !IsValidTextureDimension(height))
     {
         return nullptr;
@@ -544,11 +686,97 @@ PlatTexture* glx_GetGridTexture(int width, int height)
 
 /**
  * Offset/Address/Size: 0x12EC | 0x801B85A8 | size: 0x53C
+ * TODO: 90.2% match - register allocation (r28/r29 swapped vs r29/r30 for w/h),
+ *       kDefaultBits load timing (target loads after stw r28, current loads earlier),
+ *       loop variable allocation differences, gridColor constant loading pattern
  */
-PlatTexture* glx_MakeGridTexture(int width, int height)
+PlatTexture* glx_MakeGridTexture(int w, int h)
 {
-    FORCE_DONT_INLINE;
-    return new PlatTexture();
+    u8 bits[4];
+    PlatTexture* pTex;
+    int textureSize;
+
+    // Store default bits
+    *(u32*)bits = *(u32*)kDefaultBits;
+
+    // Allocate PlatTexture
+    pTex = (PlatTexture*)nlMalloc(sizeof(PlatTexture), 8, false);
+
+    if (pTex != NULL)
+    {
+        pTex->m_unk8 = 0x50544558;
+        pTex->m_Width = 0;
+        pTex->m_Height = 0;
+        pTex->m_Levels = 0;
+        pTex->m_MaxLevel = 0;
+        pTex->m_Format = GXTex_Num;
+        pTex->m_nPaletteEntries = 0;
+        pTex->m_bMissingTexture = false;
+        pTex->m_SwizzledData = NULL;
+        pTex->m_LinearData = NULL;
+        pTex->m_PaletteData = NULL;
+        memset(&pTex->m_TexObj, 0, 0x20);
+        memset(&pTex->m_TlutObj, 0, 0xC);
+        memset(pTex->m_Bits, 0xFF, 4);
+    }
+
+    // Free linear data if present
+    if (pTex->m_LinearData != NULL)
+    {
+        nlFree(pTex->m_LinearData);
+        pTex->m_LinearData = NULL;
+    }
+
+    // Set dimensions and format
+    pTex->m_Width = (u16)w;
+    pTex->m_Height = (u16)h;
+    pTex->m_Levels = 1;
+    pTex->m_MaxLevel = 1;
+    pTex->m_Format = GXTex_RGB565;
+
+    // Allocate texture data
+    textureSize = GCTextureSize(GXTex_RGB565, w, h, 1, -1);
+    pTex->m_SwizzledData = nlMalloc(textureSize, 0x20, false);
+    pTex->m_LinearData = nlMalloc(textureSize, 0x20, false);
+
+    // Copy bits
+    memcpy(pTex->m_Bits, bits, 4);
+
+    // Generate checkerboard pattern
+    u16 gridColor = 0xFFFF;
+    u16* pData = (u16*)pTex->m_LinearData;
+
+    for (int y = 0; y < h; y++)
+    {
+        if ((y / 4) & 1)
+        {
+            // Odd row of grid blocks
+            for (int x = 0; x < w; x++)
+            {
+                int gridx = x / 4;
+                pData[y * w + x] = gridColor & ~(gridx & 1 ? 0 : -1);
+            }
+        }
+        else
+        {
+            // Even row of grid blocks
+            for (int x = 0; x < w; x++)
+            {
+                int gridx = x / 4;
+                pData[y * w + x] = gridColor & ~(gridx & 1 ? -1 : 0);
+            }
+        }
+    }
+
+    // Update grid memory counter - includes sizeof(PlatTexture)
+    nGridMemory += textureSize + 0x50;
+    nlPrintf("grid [%d %d] now using %uKB\n", w, h, nGridMemory / 1024);
+
+    // Swizzle and prepare texture
+    pTex->Swizzle(true);
+    pTex->Prepare();
+
+    return pTex;
 }
 
 /**

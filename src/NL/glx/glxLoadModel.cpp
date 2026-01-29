@@ -1,19 +1,64 @@
 #include "NL/glx/glxLoadModel.h"
+#include "NL/glx/glxMemory.h"
+#include "NL/gl/glMemory.h"
+#include "NL/gl/glModel.h"
+#include "NL/gl/glState.h"
+#include "NL/gl/glTexture.h"
+#include "NL/gl/glUserData.h"
+#include "NL/glx/glxDisplayList.h"
+#include "NL/glx/glxTexture.h"
+#include "NL/nlFile.h"
+#include "NL/nlFileGC.h"
+#include "NL/nlString.h"
+#include "NL/nlDLRing.h"
+#include "NL/nlMemory.h"
+#include "NL/platvmath.h"
+#include "Game/GL/GLInventory.h"
+#include "Game/GL/GLTextureAnim.h"
+#include "Game/GL/GLVertexAnim.h"
+#include "Game/GL/GLMaterial.h"
+#include "Game/GL/ShaderSkinMesh.h"
+#include "Game/SAnim.h"
+#include "dolphin/os/OSCache.h"
+#include <string.h>
+
+extern GLInventory glInventory;
 
 static bool glIgnoreDuplicateModels;
+static const char glxModelPath[] = "smstk";
+static const char glxSkinExt[] = ".skinmesh";
 
 /**
  * Offset/Address/Size: 0x0 | 0x801BFC20 | size: 0x24
  */
-void glplatEndLoadModel(void*, unsigned long, unsigned long*)
+void glplatEndLoadModel(void* data, unsigned long size, unsigned long* pNumModels)
 {
+    glxLoadModelFromMemory((char*)data, size, pNumModels, false);
 }
 
 /**
  * Offset/Address/Size: 0x24 | 0x801BFC44 | size: 0xA8
  */
-void glplatBeginLoadModel(const char*, void (*)(void*, unsigned long, void*), void*)
+bool glplatBeginLoadModel(const char* filename, void (*callback)(void*, unsigned long, void*), void* userData)
 {
+    char fullname[256];
+    nlStrNCat(fullname, glxModelPath, filename, 256);
+
+    if (userData == NULL)
+    {
+        if (!nlLoadEntireFileAsync(fullname, callback, userData, 32, AllocateEnd))
+        {
+            return false;
+        }
+    }
+    else
+    {
+        if (!nlLoadEntireFileAsync(fullname, callback, userData, 32, (eAllocType)23))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
@@ -21,21 +66,572 @@ void glplatBeginLoadModel(const char*, void (*)(void*, unsigned long, void*), vo
  */
 glModel* glplatLoadModel(const char* filename, unsigned long* pNumModels)
 {
-    return nullptr;
+    unsigned int alignSize;
+    unsigned int fileSize;
+    char fullname[256];
+    char lowerName[256];
+    glModel* retval;
+    nlFile* f;
+    bool bSkinned;
+
+    glx_FreeMemory0();
+    nlStrNCat(fullname, glxModelPath, filename, 256);
+    nlStrNCpy(lowerName, fullname, 256);
+    nlToLower(lowerName);
+
+    bSkinned = (strstr(lowerName, glxSkinExt) == NULL);
+
+    f = nlOpen(fullname);
+    if (f == NULL)
+    {
+        retval = NULL;
+    }
+    else
+    {
+        fileSize = nlFileSize(f, &alignSize);
+        nlClose(f);
+        if (fileSize == 0)
+        {
+            retval = NULL;
+        }
+        else
+        {
+            char* data = (char*)nlLoadEntireFileToVirtualMemory(fullname, (int*)&fileSize, 0x80000, NULL, AllocateEnd);
+            retval = glxLoadModelFromMemory(data, fileSize, pNumModels, bSkinned);
+        }
+    }
+
+    glx_FreeMemory1(filename);
+    return retval;
+}
+
+// BMD model chunk type IDs (lower 24 bits of chunk id).
+enum BMDChunkType
+{
+    BMD_CHUNK_REF_DATA = 0x1B002,     // alloc GLM_TextureData, store ptr
+    BMD_CHUNK_MODELS = 0x1B004,       // model headers (16 bytes each), AddModel to inventory
+    BMD_CHUNK_PACKETS = 0x1B006,      // glModelPacket array (0x4A bytes each)
+    BMD_CHUNK_STREAMS = 0x1B007,      // stream descriptor data (relocated with display list base)
+    BMD_CHUNK_SKIN = 0x1B008,         // skin data, AddSkinData to inventory
+    BMD_CHUNK_DISPLAY_LIST = 0x1B009, // display list / vertex data (GLM_VertexData)
+    BMD_CHUNK_INDEX_DATA = 0x1B00F,   // index/aux data (8-byte align)
+    BMD_CHUNK_TEXTURE_ANIM = 0x1B010,
+    BMD_CHUNK_VERTEX_ANIM = 0x1B011,
+    BMD_CHUNK_MATERIAL_LIST = 0x1B012,
+};
+
+// Division by 67 for packet count (matches asm magic 0xBAD0914D sequence).
+static inline u32 Div67(u32 n)
+{
+    u32 hi = (u32)(((u64)n * 0xBAD0914Du) >> 32);
+    return (((n - hi) >> 1) + hi) >> 6;
+}
+
+static u8* GetBMDChunkDataPointer(nlChunk* chunk)
+{
+    u32 id = chunk->m_ID;
+    u32 alignBits = id & 0x7F000000u;
+    if (alignBits != 0)
+    {
+        u32 align = 1u << (alignBits >> 24);
+        return (u8*)(((u32)((u8*)chunk + align) + 7) & ~(align - 1));
+    }
+    return (u8*)chunk + 8;
 }
 
 /**
  * Offset/Address/Size: 0x1D0 | 0x801BFDF0 | size: 0xA38
  */
-void glxLoadModelFromMemory(char*, int, unsigned long*, bool)
+glModel* glxLoadModelFromMemory(char* data, int size, unsigned long* pNumModels, bool bLoadTextures)
 {
+    FORCE_DONT_INLINE;
+
+    char* chunkStart;
+    char* chunkEnd;
+    bool hasBmdHeader = false;
+    u32 refDataPtr = 0;
+    glModel* pModels = nullptr;
+    u32 numModels = 0;
+    glModelPacket* pPackets = nullptr;
+    u8* pStreamData = nullptr;
+    u8* pDisplayListData = nullptr;
+    u8* pIndexData = nullptr;
+    int numPacketEntries = 0;
+    int numStreamEntries = 0;
+    bool hasSkinData = false;
+    f32 streamStrideTemp[2];
+    // Stream id 12 stride (from gl_stream_stride[12]; index 12 = 1 in GLMeshWriter).
+    static const u8 kStreamId12Stride = 1;
+
+    // If first word looks like BMD magic (0x??B100 in low 16 bits), skip 8-byte header.
+    u32 firstWord = *(u32*)data;
+    if ((firstWord & 0x0000FFFFu) == 0x0000B100u)
+    {
+        u32 innerSize = *(u32*)(data + 4);
+        chunkStart = data + 8;
+        chunkEnd = data + 8 + innerSize;
+        hasBmdHeader = true;
+    }
+    else
+    {
+        chunkStart = data;
+        chunkEnd = data + size;
+    }
+
+    while (chunkStart < chunkEnd)
+    {
+        nlChunk* outerChunk = (nlChunk*)chunkStart;
+        u32 outerId = outerChunk->m_ID & 0x00FFFFFFu;
+        u32 outerSize = outerChunk->m_Size;
+        u8* outerData = (u8*)outerChunk + 8;
+        u8* outerEnd = outerData + outerSize;
+
+        if (!hasBmdHeader)
+        {
+            chunkStart = (char*)(outerData + outerSize);
+        }
+
+        // Inner loop: process sub-chunks within this block.
+        for (nlChunk* chunk = (nlChunk*)outerData; (u8*)chunk < outerEnd; chunk = (nlChunk*)((u8*)chunk + 8 + chunk->m_Size))
+        {
+            u32 id = chunk->m_ID & 0x00FFFFFFu;
+            u32 chunkSize = chunk->m_Size;
+            u8* chunkData = GetBMDChunkDataPointer(chunk);
+
+            switch (id)
+            {
+            case BMD_CHUNK_REF_DATA:
+            {
+                void* p = glResourceAlloc(chunkSize, GLM_TextureData);
+                refDataPtr = (u32)(uintptr_t)p;
+                memcpy(p, chunkData, chunkSize);
+                break;
+            }
+            case BMD_CHUNK_MODELS:
+            {
+                numModels = chunkSize >> 4;
+                if (pNumModels != nullptr)
+                    *pNumModels = numModels;
+                pModels = (glModel*)glResourceAlloc(chunkSize, GLM_Header);
+                memcpy(pModels, chunkData, chunkSize);
+                for (u32 i = 0; i < numModels; i++)
+                {
+                    glModel* pEnt = (glModel*)((u8*)pModels + i * 0x10);
+                    if (glIgnoreDuplicateModels)
+                    {
+                        glModel* existing = glInventory.GetModel(pEnt->id);
+                        if (existing != nullptr)
+                            continue;
+                    }
+                    glInventory.AddModel(pEnt->id, pEnt);
+                }
+                break;
+            }
+            case BMD_CHUNK_PACKETS:
+            {
+                numPacketEntries = (int)Div67(chunkSize);
+                pPackets = (glModelPacket*)glResourceAlloc(chunkSize, GLM_Header);
+                memcpy(pPackets, chunkData, chunkSize);
+                break;
+            }
+            case BMD_CHUNK_STREAMS:
+            {
+                numStreamEntries = (int)(chunkSize / sizeof(glModelStream));
+                pStreamData = (u8*)glResourceAlloc(chunkSize, GLM_Header);
+                memcpy(pStreamData, chunkData, chunkSize);
+                break;
+            }
+            case BMD_CHUNK_DISPLAY_LIST:
+            {
+                pDisplayListData = (u8*)glResourceAlloc(chunkSize, GLM_VertexData);
+                memcpy(pDisplayListData, chunkData, chunkSize);
+                DCFlushRange(pDisplayListData, chunkSize);
+                break;
+            }
+            case BMD_CHUNK_INDEX_DATA:
+            {
+                pIndexData = (u8*)nlMalloc(chunkSize, 8, true);
+                memcpy(pIndexData, chunkData, chunkSize);
+                DCFlushRange(pIndexData, chunkSize);
+                break;
+            }
+            case BMD_CHUNK_TEXTURE_ANIM:
+            {
+                u32 animId = *(u32*)chunkData;
+                if (glInventory.GetTextureAnim(animId) != nullptr)
+                {
+                    // Duplicate texture anim id - debug print and skip.
+                    break;
+                }
+                {
+                    int numTextures = *(int*)(chunkData + 4);
+                    u32 mode = *(u32*)(chunkData + 8);
+                    memcpy(streamStrideTemp, chunkData + 12, 4);
+                    u8* pFrames = chunkData + 16;
+                    GLTextureAnim* pAnim = (GLTextureAnim*)nlMalloc(0x20, 8, false);
+                    if (pAnim != nullptr)
+                        pAnim = new (pAnim) GLTextureAnim();
+                    if (pAnim == nullptr)
+                        break;
+                    pAnim->m_unk_0x00 = (s32)animId;
+                    pAnim->SetNumTextures(numTextures);
+                    pAnim->m_mode = mode;
+                    int frameIdx = (int)streamStrideTemp[0];
+                    pAnim->SetFrame(frameIdx);
+                    for (int t = 0; t < numTextures; t++)
+                    {
+                        u32 texHandle = *(u32*)pFrames;
+                        pFrames += 4;
+                        memcpy(streamStrideTemp, pFrames, 4);
+                        pFrames += 4;
+                        GLAnimTex animTex;
+                        animTex.textureHandle = texHandle;
+                        animTex.time = streamStrideTemp[0];
+                        streamStrideTemp[0] = animTex.time;
+                        pAnim->SetTexture(t, animTex);
+                    }
+                    glInventory.AddTextureAnim(animId, pAnim);
+                }
+                break;
+            }
+            case BMD_CHUNK_VERTEX_ANIM:
+            {
+                u32 modelId = *(u32*)chunkData;
+                int numFrames = *(int*)(chunkData + 4);
+                int numVerts = *(int*)(chunkData + 8);
+                u32 frameRateU = *(u32*)(chunkData + 12);
+                int dataSize = numFrames * numVerts * 12;
+                GLVertexAnim* pAnim = (GLVertexAnim*)nlMalloc(0x28, 8, false);
+                if (pAnim != nullptr)
+                    pAnim = new (pAnim) GLVertexAnim();
+                if (pAnim == nullptr)
+                    break;
+                pAnim->m_uHashID = modelId;
+                pAnim->m_nNumFrames = numFrames;
+                pAnim->m_nNumVertices = numVerts;
+                pAnim->m_fFrameRate = (f32)(s32)frameRateU;
+                u8* pAnimData = (u8*)glResourceAlloc(dataSize, GLM_VertexData);
+                memcpy(pAnimData, chunkData + 16, dataSize);
+                DCFlushRange(pAnimData, dataSize);
+                pAnim->m_pVertices = (nlVector3*)pAnimData;
+                pAnim->m_pModel = glInventory.GetModel(modelId);
+                pAnim->Reset();
+                glInventory.AddVertexAnim(modelId, pAnim);
+                break;
+            }
+            case BMD_CHUNK_MATERIAL_LIST:
+            {
+                u32 listId = *(u32*)chunkData;
+                int numMats = *(int*)(chunkData + 4);
+                GLMaterialList* pList = (GLMaterialList*)nlMalloc(0x0C, 8, false);
+                if (pList != nullptr)
+                    pList = new (pList) GLMaterialList();
+                if (pList == nullptr)
+                    break;
+                pList->m_uHashID = listId;
+                pList->SetMaterials(numMats, (const GLMaterialEntry*)(chunkData + 8));
+                glInventory.AddMaterialList(listId, pList);
+                break;
+            }
+            case BMD_CHUNK_SKIN:
+            {
+                u32 skinSize = chunkSize + 8;
+                nlChunk* pSkinChunk;
+                if (nlVirtualLargestBlock() >= skinSize + 0x100)
+                {
+                    pSkinChunk = (nlChunk*)nlVirtualAlloc(skinSize, false);
+                }
+                else
+                {
+                    pSkinChunk = (nlChunk*)nlMalloc(skinSize, 0x20, false);
+                }
+                memcpy(pSkinChunk, chunk, skinSize);
+                glInventory.AddSkinData(pModels->id, pSkinChunk);
+                hasSkinData = true;
+                break;
+            }
+            default:
+                break;
+            }
+        }
+
+        if (hasBmdHeader)
+        {
+            chunkStart = (char*)(outerData + outerSize);
+        }
+    }
+
+    // Relocate stream pointers in model headers (add packet base to offset at +0xC).
+    if (numModels > 0 && pModels != nullptr && pPackets != nullptr)
+    {
+        glModel* pM = pModels;
+        for (u32 i = 0; i < numModels; i++)
+        {
+            u32* pStreamPtr = (u32*)((u8*)pM + 0x0C);
+            *pStreamPtr += (u32)(uintptr_t)pPackets;
+            pM = (glModel*)((u8*)pM + 0x10);
+        }
+    }
+
+    // Relocate packet fields: streams base, index buffer, and ref data.
+    if (numPacketEntries > 0 && pPackets != nullptr)
+    {
+        glModelPacket* pPkt = pPackets;
+        for (int i = 0; i < numPacketEntries; i++)
+        {
+            if (glGetRasterState(pPkt->state.raster, (eGLState)5) == 0)
+            {
+                if (glTextureLoad(pPkt->state.texture[0]))
+                {
+                    glUnHandleizeRasterState(pPkt->state.raster);
+                    int bits = glTextureGetNumBits(3);
+                    if (bits == 1)
+                    {
+                        glSetRasterState((eGLState)5, 0);
+                        glSetRasterState((eGLState)3, 1);
+                        glSetRasterState((eGLState)4, 0x40);
+                    }
+                    else if (bits > 1)
+                    {
+                        glSetRasterState((eGLState)5, 1);
+                        glSetRasterState((eGLState)3, 1);
+                        glSetRasterState((eGLState)4, 0);
+                        glSetRasterState((eGLState)1, 0);
+                    }
+                    pPkt->state.raster = glHandleizeRasterState();
+                }
+            }
+            pPkt->streams = (glModelStream*)((u32)(uintptr_t)pPkt->streams + (u32)(uintptr_t)pStreamData);
+            pPkt->indexBuffer = (u32)(uintptr_t)pPkt->indexBuffer + (u32)(uintptr_t)pIndexData;
+            pPkt->state.matrix = (u32)((u32)pPkt->state.matrix + refDataPtr);
+            pPkt = (glModelPacket*)((u8*)pPkt + 0x4A);
+        }
+    }
+
+    // Relocate stream addresses in stream descriptor block (add display list base).
+    if (numStreamEntries > 0 && pStreamData != nullptr && pDisplayListData != nullptr)
+    {
+        u8* p = pStreamData;
+        for (int i = 0; i < numStreamEntries; i++)
+        {
+            *(u32*)p += (u32)(uintptr_t)pDisplayListData;
+            p += 6;
+        }
+    }
+
+    nlFree(data);
+
+    // Final pass: build display lists and optionally resolve textures.
+    if (pModels != nullptr)
+    {
+        glModel* pModel = pModels;
+        for (u32 m = 0; m < numModels; m++)
+        {
+            glModelPacket* pPacket = (glModelPacket*)pModel->packets;
+            u32 n = pModel->numPackets;
+            for (u32 p = 0; p < n; p++)
+            {
+                if (hasSkinData)
+                {
+                    u8 numStreams = pPacket->numStreams;
+                    u32* pRaster = &pPacket->state.raster;
+                    if (glGetRasterState(*pRaster, (eGLState)8) == 1)
+                    {
+                        int newNum = numStreams + 1;
+                        glModelStream* pNewStreams = (glModelStream*)glResourceAlloc(newNum * 6, GLM_Header);
+                        memcpy(pNewStreams, pPacket->streams, numStreams * 6);
+                        glModelStream* pExtra = &pNewStreams[numStreams];
+                        pExtra->address = 0;
+                        pExtra->id = 12;
+                        pExtra->stride = kStreamId12Stride;
+                        pPacket->numStreams = (u8)newNum;
+                        pPacket->streams = pNewStreams;
+                    }
+                }
+                if (pPacket->indexBuffer != 0)
+                {
+                    DisplayList* pDL = dlMakeDisplayList(pPacket, true);
+                    pPacket->indexBuffer = (u32)(uintptr_t)pDL;
+                }
+                if (bLoadTextures)
+                {
+                    u8 texMask = *(u8*)((u8*)pPacket + 0x40);
+                    for (int s = 0; s < 6; s++)
+                    {
+                        if (!((texMask >> s) & 1))
+                            continue;
+                        u32 texHandle = pPacket->state.texture[s];
+                        if (glInventory.GetTextureAnim(texHandle) != nullptr)
+                            continue;
+                        if (!glTextureLoad(texHandle))
+                            continue;
+                        pPacket->state.texture[s] = (u32)(uintptr_t)glx_GetTex(texHandle, true, true);
+                    }
+                }
+                pPacket = (glModelPacket*)((u8*)pPacket + 0x4A);
+            }
+            pModel = (glModel*)((u8*)pModel + 0x10);
+        }
+        nlFree(pIndexData);
+    }
+
+    return pModels;
+}
+
+// Skin mesh chunk type IDs (lower 24 bits of m_ID); switch index = (type - 0x1B009).
+enum SkinChunkType
+{
+    SKIN_CHUNK_0x1B009 = 0x1B009,
+    SKIN_CHUNK_BONE_MATRICES = 0x1B00A,
+    SKIN_CHUNK_BONE_MAP_LIST = 0x1B00B,
+    SKIN_CHUNK_MORPH = 0x1B00C,
+    SKIN_CHUNK_SOFTWARE_VERTICES = 0x1B00D,
+    SKIN_CHUNK_SKIN_PAIRS = 0x1B00E,
+    SKIN_CHUNK_0x1B00F = 0x1B00F,
+    SKIN_CHUNK_STITCHING = 0x1B010,
+};
+
+// Node for bone map list during load; layout matches BoneMapList but tree is Ul,Ul for file format.
+struct SkinMeshBoneMapNode
+{
+    SkinMeshBoneMapNode* m_next;
+    nlAVLTree<unsigned long, unsigned long, DefaultKeyCompare<unsigned long> > boneMap;
+};
+
+static u8* GetChunkDataPointer(nlChunk* chunk)
+{
+    u32 id = chunk->m_ID;
+    u32 alignBits = id & 0x7F000000u;
+    if (alignBits != 0)
+    {
+        u32 align = 1u << (alignBits >> 24);
+        return (u8*)(((u32)((u8*)chunk + align) + 7) & ~(align - 1));
+    }
+    return (u8*)chunk + 8;
 }
 
 /**
  * Offset/Address/Size: 0xC08 | 0x801C0828 | size: 0x2A0
  */
-void glx_MakeSkinMesh(nlChunk*, glModel*)
+GLSkinMesh* glx_MakeSkinMesh(nlChunk* outerChunk, glModel* models)
 {
+    ShaderSkinMesh* mesh = (ShaderSkinMesh*)nlMalloc(sizeof(ShaderSkinMesh), 8, false);
+    if (mesh != nullptr)
+    {
+        mesh = new (mesh) ShaderSkinMesh();
+    }
+    if (mesh == nullptr)
+    {
+        return nullptr;
+    }
+
+    mesh->pModel = models;
+
+    u8* chunkEnd = (u8*)outerChunk + outerChunk->m_Size + 8;
+    nlChunk* chunk = (nlChunk*)((u8*)outerChunk + 8);
+
+    while ((u8*)chunk < chunkEnd)
+    {
+        u32 chunkType = chunk->m_ID & 0x00FFFFFFu;
+        u32 chunkSize = chunk->m_Size;
+        u8* data = GetChunkDataPointer(chunk);
+
+        // Switch on (chunkType - 0x1B009); valid range 0..7
+        u32 switchIdx = chunkType - 0x1B009u;
+        if (switchIdx > 7)
+        {
+            chunk = (nlChunk*)((u8*)chunk + chunkSize + 8);
+            continue;
+        }
+
+        switch (switchIdx)
+        {
+        case 1: // SKIN_CHUNK_BONE_MATRICES: each entry = bone id (4) + 4x4 matrix (0x40) = 0x44 bytes
+        {
+            unsigned int count = chunkSize / 0x44; // each entry: bone id (4) + matrix (0x40)
+            const u8* p = data;
+            for (unsigned int i = 0; i < count; i++)
+            {
+                u32 boneId = *(const u32*)p;
+                nlMatrix4 src, inv;
+                memcpy(&src, p + 4, sizeof(nlMatrix4));
+                nlInvertMatrix(inv, src);
+                mesh->SetBoneMatrix(boneId, &inv);
+                p += 0x44;
+            }
+            break;
+        }
+        case 2: // SKIN_CHUNK_BONE_MAP_LIST: AVLTree<Ul,Ul> from pairs, then nlRingAddEnd
+        {
+            SkinMeshBoneMapNode* node = (SkinMeshBoneMapNode*)nlMalloc(sizeof(SkinMeshBoneMapNode), 8, false);
+            if (node != nullptr)
+            {
+                node->m_next = nullptr;
+                new (&node->boneMap) nlAVLTree<unsigned long, unsigned long, DefaultKeyCompare<unsigned long> >();
+                unsigned int numPairs = chunkSize / 8;
+                const u32* p = (const u32*)data;
+                for (unsigned int i = 0; i < numPairs; i++)
+                {
+                    unsigned long key = p[0];
+                    unsigned long value = p[1];
+                    AVLTreeNode* existingNode = nullptr;
+                    node->boneMap.AddAVLNode((AVLTreeNode**)&node->boneMap.m_Root, &key, &value, &existingNode, node->boneMap.m_NumElements);
+                    if (existingNode == nullptr)
+                    {
+                        node->boneMap.m_NumElements++;
+                    }
+                    p += 2;
+                }
+                nlRingAddEnd<BoneMapList>(&mesh->boneMaps, (BoneMapList*)node);
+            }
+            break;
+        }
+        case 3: // SKIN_CHUNK_MORPH
+        {
+            u32 numMorphs = *(const u32*)data;
+            u32 numBaseVerts = *(const u32*)(data + 4);
+            mesh->numMorphs = numMorphs;
+            mesh->numBaseVerts = numBaseVerts;
+            const u32* morphIds = (const u32*)(data + 8);
+            mesh->SetMorphIDs(morphIds);
+            const u32* morphNumDeltas = (const u32*)(data + 8 + numMorphs * 4);
+            mesh->SetMorphNumDeltas(morphNumDeltas);
+            const u8* morphDeltasPtr = data + 8 + numMorphs * 4 + numMorphs * 4;
+            u32 numDeltas = *(const u32*)morphDeltasPtr;
+            const MorphDelta* deltas = (const MorphDelta*)(morphDeltasPtr + 4);
+            mesh->SetMorphDeltas((int)numDeltas, deltas);
+            break;
+        }
+        case 4: // SKIN_CHUNK_SOFTWARE_VERTICES: count = size / 16
+        {
+            int num = (int)(chunkSize >> 4);
+            mesh->SetSoftwareVertices(num, (const SkinVertex*)data);
+            break;
+        }
+        case 5: // SKIN_CHUNK_SKIN_PAIRS: count = size / 4
+        {
+            int numPairs = (int)(chunkSize >> 2);
+            mesh->AppendSkinPairList(numPairs, (const SkinPair*)data);
+            break;
+        }
+        case 7: // SKIN_CHUNK_STITCHING
+        {
+            u32 numPackets = *(const u32*)data;
+            u32 packetIndex = *(const u32*)(data + 4);
+            int num = (int)(chunkSize - 8);
+            const unsigned char* pIndices = (const unsigned char*)(data + 8);
+            mesh->AppendStitchingInfo((int)packetIndex, (int)numPackets, num, pIndices);
+            break;
+        }
+        default:
+            break;
+        }
+
+        chunk = (nlChunk*)((u8*)chunk + chunkSize + 8);
+    }
+
+    mesh->StitchModel();
+    return (GLSkinMesh*)mesh;
 }
 
 /**

@@ -28,7 +28,6 @@
 // {
 // }
 
-
 // /**
 //  * Offset/Address/Size: 0x0 | 0x801E20F4 | size: 0x70
 //  */
@@ -186,6 +185,17 @@ void ShaderSkinMesh::ConnectToPose(cPoseAccumulator*)
  */
 void ShaderSkinMesh::SetBoneMatrix(unsigned long boneID, const nlMatrix4* matrix)
 {
+    AVLTreeNode* existingNode;
+    SkinMatrix skinMatrix;
+
+    skinMatrix.Set(*matrix);
+
+    boneMatrices.AddAVLNode((AVLTreeNode**)&boneMatrices.m_Root, &boneID, &skinMatrix, &existingNode, boneMatrices.m_NumElements);
+
+    if (existingNode == NULL)
+    {
+        boneMatrices.m_NumElements++;
+    }
 }
 
 /**
@@ -315,9 +325,51 @@ void* ShaderSkinMesh::MakeUserData(nlAVLTree<unsigned long, unsigned long, Defau
 
 /**
  * Offset/Address/Size: 0x108 | 0x801E074C | size: 0x1DC
+ * TODO: 80.5% match - FindGet inline generates different code pattern (bool return vs pointer),
+ *       register allocation differs for nodeMatrix (mr r0,r3; mr r26,r0 vs mr r26,r3),
+ *       stack offsets for existingNode/foundMatrix swapped (0x8/0x10 vs 0x10/0x8)
  */
-void ShaderSkinMesh::Pose(cPoseAccumulator*)
+void ShaderSkinMesh::Pose(cPoseAccumulator* pPoseAccumulator)
 {
+    AVLTreeNode* existingNode;
+    unsigned long nodeID;
+    SkinMatrix* foundMatrix;
+    SkinMatrix result;
+    SkinMatrix skinMat;
+    AVLTreeNode** pRoot = (AVLTreeNode**)&poseMatrices.m_Root;
+    int i = 0;
+
+    for (; i < pPoseAccumulator->GetNumNodes(); i++)
+    {
+        cSHierarchy* hierarchy = pPoseAccumulator->m_BaseSHierarchy;
+        nlMatrix4* nodeMatrix = &pPoseAccumulator->GetNodeMatrix(i);
+        nodeID = hierarchy->GetNodeID(i);
+
+        foundMatrix = (SkinMatrix*)boneMatrices.FindGet(nodeID);
+        if (foundMatrix != nullptr)
+        {
+            skinMat.Set(*nodeMatrix);
+
+            nlMultMatrices(result, *foundMatrix, skinMat);
+
+            poseMatrices.AddAVLNode(pRoot, &nodeID, &result, &existingNode, poseMatrices.m_NumElements);
+
+            SkinMatrix* existing = nullptr;
+            if (existingNode == nullptr)
+            {
+                poseMatrices.m_NumElements++;
+            }
+            else
+            {
+                existing = (SkinMatrix*)(((char*)existingNode) + 0x10);
+            }
+
+            if (existing != nullptr)
+            {
+                *existing = result;
+            }
+        }
+    }
 }
 
 /**
@@ -336,6 +388,26 @@ void ShaderSkinMesh::SetMorphNumDeltas(const unsigned long* numDeltas)
 /**
  * Offset/Address/Size: 0x0 | 0x801E0644 | size: 0x98
  */
-void ShaderSkinMesh::SetMorphDeltas(int, const MorphDelta*)
+void ShaderSkinMesh::SetMorphDeltas(int numDeltas, const MorphDelta* p)
 {
+    if (morphData != nullptr)
+    {
+        delete[] morphData;
+    }
+
+    unsigned int largestBlock = nlVirtualLargestBlock();
+    unsigned long size = numDeltas * sizeof(MorphDelta);
+    MorphDelta* newData;
+
+    if (largestBlock >= size + 0x100)
+    {
+        newData = (MorphDelta*)nlVirtualAlloc(size, false);
+    }
+    else
+    {
+        newData = (MorphDelta*)nlMalloc(size, 0x20, false);
+    }
+
+    morphData = newData;
+    memcpy(morphData, p, size);
 }

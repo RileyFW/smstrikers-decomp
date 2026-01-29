@@ -106,16 +106,81 @@ void GLInventory::ResourceRelease(int nLevel)
 /**
  * Offset/Address/Size: 0xA8C | 0x801E2D24 | size: 0x74
  */
-void GLInventory::AddModel(unsigned long, glModel*)
+void GLInventory::AddModel(unsigned long key, glModel* model)
 {
+    unsigned long k = key;
+    glModel* value = model;
+    nlAVLTree<unsigned long, glModel*, DefaultKeyCompare<unsigned long> >* pTree = m_pModels[m_nLevel]->m_pItems;
+    AVLTreeNode* existingNode;
+    pTree->AddAVLNode((AVLTreeNode**)&pTree->m_Root, &k, &value, &existingNode, pTree->m_NumElements);
+    if (existingNode == nullptr)
+    {
+        pTree->m_NumElements++;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x9C4 | 0x801E2C5C | size: 0xC8
  */
-glModel* GLInventory::GetModel(unsigned long)
+glModel* GLInventory::GetModel(unsigned long id)
 {
-    return nullptr; // TODO: Implement actual lookup
+    for (int i = m_nLevel; i >= 0; i--)
+    {
+        bool found;
+        glModel** pResult;
+        AVLTreeEntry<unsigned long, glModel*>* node = m_pModels[i]->m_pItems->m_Root;
+
+        while (node != nullptr)
+        {
+            int cmpResult;
+            if (id == node->key)
+            {
+                cmpResult = 0;
+            }
+            else if (id < node->key)
+            {
+                cmpResult = -1;
+            }
+            else
+            {
+                cmpResult = 1;
+            }
+
+            if (cmpResult == 0)
+            {
+                if (&pResult != nullptr)
+                {
+                    pResult = &node->value;
+                }
+                found = true;
+                goto check_found;
+            }
+            else if (cmpResult < 0)
+            {
+                node = (AVLTreeEntry<unsigned long, glModel*>*)node->node.left;
+            }
+            else
+            {
+                node = (AVLTreeEntry<unsigned long, glModel*>*)node->node.right;
+            }
+        }
+        found = false;
+check_found:
+        glModel* result;
+        if (found)
+        {
+            result = *pResult;
+        }
+        else
+        {
+            result = nullptr;
+        }
+        if (result != nullptr)
+        {
+            return result;
+        }
+    }
+    return nullptr;
 }
 
 /**
@@ -128,8 +193,17 @@ void GLInventory::GetShadowVolume(unsigned long)
 /**
  * Offset/Address/Size: 0x888 | 0x801E2B20 | size: 0x74
  */
-void GLInventory::AddTextureAnim(unsigned long hashID, GLTextureAnim* pAnim)
+void GLInventory::AddTextureAnim(unsigned long key, GLTextureAnim* anim)
 {
+    unsigned long k = key;
+    GLTextureAnim* value = anim;
+    nlAVLTree<unsigned long, GLTextureAnim*, DefaultKeyCompare<unsigned long> >* pTree = m_pTextureAnims[m_nLevel]->m_pItems;
+    AVLTreeNode* existingNode;
+    pTree->AddAVLNode((AVLTreeNode**)&pTree->m_Root, &k, &value, &existingNode, pTree->m_NumElements);
+    if (existingNode == nullptr)
+    {
+        pTree->m_NumElements++;
+    }
 }
 
 /**

@@ -148,6 +148,26 @@ bool FrontEnd::Initialize()
 /**
  * Offset/Address/Size: 0x89C | 0x80095520 | size: 0x9C
  */
-void FrontEnd::FEEventHandler(Event*, void*)
+void FrontEnd::FEEventHandler(Event* pEvent, void* pParam)
 {
+    switch (pEvent->m_uEventID)
+    {
+        case 3:
+            m_bGameOver = true;
+            m_feStatePending = 5;
+            break;
+        case 9:
+            m_feStatePending = 3;
+            break;
+        case 0x1C:
+            if (nlSingleton<OverlayManager>::s_pInstance != NULL)
+            {
+                if (nlSingleton<OverlayManager>::s_pInstance->IsOnStack(SCENE_SUPER_LOADING))
+                {
+                    nlSingleton<OverlayManager>::s_pInstance->Pop();
+                    nlSingleton<FESceneManager>::s_pInstance->ForceImmediateStackProcessing();
+                }
+            }
+            break;
+    }
 }

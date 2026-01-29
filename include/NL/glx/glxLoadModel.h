@@ -3,16 +3,19 @@
 
 #include "NL/nlMath.h"
 #include "NL/gl/glView.h"
+#include "NL/nlFile.h"
+#include "NL/nlString.h"
 
 class nlChunk;
 class glModel;
 class BoneMapList;
+class GLSkinMesh;
 
 void glplatEndLoadModel(void*, unsigned long, unsigned long*);
-void glplatBeginLoadModel(const char*, void (*)(void*, unsigned long, void*), void*);
+bool glplatBeginLoadModel(const char* filename, void (*callback)(void*, unsigned long, void*), void* userData);
 glModel* glplatLoadModel(const char* filename, unsigned long* pNumModels);
-void glxLoadModelFromMemory(char*, int, unsigned long*, bool);
-void glx_MakeSkinMesh(nlChunk*, glModel*);
+glModel* glxLoadModelFromMemory(char* data, int size, unsigned long* pNumModels, bool bLoadTextures);
+GLSkinMesh* glx_MakeSkinMesh(nlChunk* outerChunk, glModel* models);
 void glSetIgnoreDuplicateModels(bool);
 // void nlRingAddEnd<BoneMapList>(BoneMapList**, BoneMapList*);
 // void nlRingAddStart<BoneMapList>(BoneMapList**, BoneMapList*);
