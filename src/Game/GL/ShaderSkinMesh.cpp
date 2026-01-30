@@ -325,28 +325,62 @@ void* ShaderSkinMesh::MakeUserData(nlAVLTree<unsigned long, unsigned long, Defau
 
 /**
  * Offset/Address/Size: 0x108 | 0x801E074C | size: 0x1DC
- * TODO: 80.5% match - FindGet inline generates different code pattern (bool return vs pointer),
- *       register allocation differs for nodeMatrix (mr r0,r3; mr r26,r0 vs mr r26,r3),
- *       stack offsets for existingNode/foundMatrix swapped (0x8/0x10 vs 0x10/0x8)
+ * TODO: 87.79% match - register allocation differs: target uses stmw r26, current uses stmw r27.
+ *       Target directly moves GetNodeMatrix result to r26 (mr r26,r3), but current goes through
+ *       r0 (mr r0,r3; mr r27,r0). This is a mwcc compiler register allocation quirk.
  */
 void ShaderSkinMesh::Pose(cPoseAccumulator* pPoseAccumulator)
 {
-    AVLTreeNode* existingNode;
-    unsigned long nodeID;
     SkinMatrix* foundMatrix;
+    unsigned long nodeID;
+    AVLTreeNode* existingNode;
     SkinMatrix result;
     SkinMatrix skinMat;
     AVLTreeNode** pRoot = (AVLTreeNode**)&poseMatrices.m_Root;
-    int i = 0;
 
-    for (; i < pPoseAccumulator->GetNumNodes(); i++)
+    for (int i = 0; i < pPoseAccumulator->GetNumNodes(); i++)
     {
         cSHierarchy* hierarchy = pPoseAccumulator->m_BaseSHierarchy;
         nlMatrix4* nodeMatrix = &pPoseAccumulator->GetNodeMatrix(i);
         nodeID = hierarchy->GetNodeID(i);
 
-        foundMatrix = (SkinMatrix*)boneMatrices.FindGet(nodeID);
-        if (foundMatrix != nullptr)
+        // Inline FindGet with bool return
+        u8 found;
+        {
+            AVLTreeEntry<unsigned long, SkinMatrix>* node = boneMatrices.m_Root;
+            while (node != nullptr)
+            {
+                int cmpResult;
+                if (nodeID == node->key)
+                    cmpResult = 0;
+                else if (nodeID < node->key)
+                    cmpResult = -1;
+                else
+                    cmpResult = 1;
+
+                if (cmpResult == 0)
+                {
+                    if (&foundMatrix != nullptr)
+                    {
+                        foundMatrix = &node->value;
+                    }
+                    found = 1;
+                    goto check_found;
+                }
+                else if (cmpResult < 0)
+                {
+                    node = (AVLTreeEntry<unsigned long, SkinMatrix>*)node->node.left;
+                }
+                else
+                {
+                    node = (AVLTreeEntry<unsigned long, SkinMatrix>*)node->node.right;
+                }
+            }
+            found = 0;
+        }
+
+check_found:
+        if (found)
         {
             skinMat.Set(*nodeMatrix);
 
@@ -354,19 +388,21 @@ void ShaderSkinMesh::Pose(cPoseAccumulator* pPoseAccumulator)
 
             poseMatrices.AddAVLNode(pRoot, &nodeID, &result, &existingNode, poseMatrices.m_NumElements);
 
-            SkinMatrix* existing = nullptr;
+            SkinMatrix* existing;
             if (existingNode == nullptr)
             {
                 poseMatrices.m_NumElements++;
+                existing = nullptr;
             }
             else
             {
                 existing = (SkinMatrix*)(((char*)existingNode) + 0x10);
             }
 
-            if (existing != nullptr)
+            foundMatrix = existing;
+            if (foundMatrix != nullptr)
             {
-                *existing = result;
+                *foundMatrix = result;
             }
         }
     }
