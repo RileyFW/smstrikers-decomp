@@ -78,10 +78,10 @@ enum eGLViewSort
 class glModel;
 
 // General GL functions
-void glEndLoadTextureBundle(void*, unsigned long);
-void glBeginLoadTextureBundle(const char*, void (*)(void*, unsigned long, void*), void*);
-void glEndLoadModel(void*, unsigned long, unsigned long*);
-void glBeginLoadModel(const char*, void (*)(void*, unsigned long, void*), void*);
+bool glEndLoadTextureBundle(void*, unsigned long);
+bool glBeginLoadTextureBundle(const char*, void (*)(void*, unsigned long, void*), void*);
+glModel* glEndLoadModel(void*, unsigned long, unsigned long*);
+bool glBeginLoadModel(const char*, void (*)(void*, unsigned long, void*), void*);
 u32* glGetClearColour();
 float glGetOrthographicHeight();
 float glGetOrthographicWidth();

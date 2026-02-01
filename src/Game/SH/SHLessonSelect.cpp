@@ -1,4 +1,6 @@
 #include "Game/SH/SHLessonSelect.h"
+#include "Game/OverlayManager.h"
+#include "Game/SH/SHLesson.h"
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8010CE0C | size: 0x38
@@ -156,11 +158,16 @@ void LessonSelectScene::UpdateRow(int, bool)
 {
 }
 
+extern int sCurrentRow;
+
 /**
  * Offset/Address/Size: 0x2E4 | 0x8010B134 | size: 0x50
  */
 void LessonSelectScene::StartLesson()
 {
+    OverlayManager::Instance()->Push(IGSCENE_LESSON, SCREEN_FORWARD, true);
+    LessonScene::SetLesson(sCurrentRow + 1);
+    SetTickerLesson(sCurrentRow);
 }
 
 /**
@@ -168,4 +175,5 @@ void LessonSelectScene::StartLesson()
  */
 void SetTickerLesson(int)
 {
+    FORCE_DONT_INLINE;
 }

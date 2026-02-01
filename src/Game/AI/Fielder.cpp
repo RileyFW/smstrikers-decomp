@@ -581,8 +581,22 @@ bool cFielder::IsPlayingPowerupAnim()
 /**
  * Offset/Address/Size: 0xA5DC | 0x80023918 | size: 0xCC
  */
-bool cFielder::IsCharacterInAir(bool) const
+bool cFielder::IsCharacterInAir(bool bUseOffset) const
 {
+    f32 offsetZ = 0.0f;
+    if (bUseOffset)
+    {
+        offsetZ = m_v3Position.f.z;
+    }
+
+    f32 leftFootZ = offsetZ + GetJointPosition(m_nLeftFootJointIndex).f.z;
+    f32 rightFootZ = offsetZ + GetJointPosition(m_nRightFootJointIndex).f.z;
+    f32 headZ = offsetZ + GetJointPosition(m_nHeadJointIndex).f.z;
+
+    if (leftFootZ > 1.0f && rightFootZ > 1.0f && headZ > 1.0f)
+    {
+        return true;
+    }
     return false;
 }
 
@@ -596,7 +610,7 @@ bool cFielder::IsTurboing()
         bool bResult = true;
         bool bIsTurboing = false;
         s32 animID = m_eAnimID;
-        
+
         if (animID == 0x1D)
             goto setTrue1;
         if (animID == 0x1E)
@@ -624,7 +638,7 @@ bool cFielder::IsTurboing()
         bool bResult = true;
         bool bIsTurboing = false;
         s32 animID = m_eAnimID;
-        
+
         if (animID == 0x10)
             goto setTrue2;
         if (animID == 0x0F)
@@ -2131,8 +2145,35 @@ void cFielder::TestCollisionForInvicibility(cFielder*)
 /**
  * Offset/Address/Size: 0x355C | 0x8001C898 | size: 0x10C
  */
-void cFielder::TestButtonsToQueueActions(float)
+void cFielder::TestButtonsToQueueActions(float fTime)
 {
+    if (GetGlobalPad() == nullptr) {
+        return;
+    }
+    if (m_pBall == nullptr) {
+        return;
+    }
+
+    if (GetGlobalPad()->JustPressed(PAD_PASS, true)) {
+        m_eLastPadAction = PAD_PASS;
+    }
+    else if (GetGlobalPad()->JustPressed(PAD_SHOOT, true)) {
+        m_pShotMeter->Reset();
+        m_pShotMeter->m_fTime = 0.0f;
+        m_eLastPadAction = PAD_SHOOT;
+    }
+    else if (GetGlobalPad()->JustPressed(PAD_DEKE, true)) {
+        m_eLastPadAction = PAD_DEKE;
+    }
+    else if (m_pController->GetCStickMovementStickMagnitude() > 0.0f) {
+        u16 direction = m_pController->GetCStickMovementStickDirection();
+        s16 diff = (s16)(direction - m_aActualFacingDirection);
+        if (diff < 0) {
+            m_eLastPadAction = PAD_DEKE_RIGHT;
+        } else {
+            m_eLastPadAction = PAD_DEKE_LEFT;
+        }
+    }
 }
 
 /**
@@ -2406,8 +2447,47 @@ float cFielder::GetDistanceToDesiredPos()
 /**
  * Offset/Address/Size: 0x1224 | 0x8001A560 | size: 0x114
  */
-void cFielder::S2SShootWasPressed()
+bool cFielder::S2SShootWasPressed()
 {
+    bool result;
+    bool padResult;
+
+    result = false;
+
+    if (m_eActionState == ACTION_SHOOT_TO_SCORE)
+    {
+
+        if (GetGlobalPad() != NULL)
+        {
+            padResult = false;
+            if (GetGlobalPad()->JustPressed(PAD_SHOOT, true) || GetGlobalPad()->JustPressed(PAD_PASS, true))
+            {
+                padResult = true;
+            }
+            result = padResult;
+        }
+        else
+        {
+            // No pad - use float logic
+            if (mActionShootToScoreVars.fFrameButtonDownTime1 < 0.0f)
+            {
+                result = (mActionShootToScoreVars.fMeterFractionTime >= (m_DesireCommonVars.fMisc - 0.009f));
+            }
+            else
+            {
+                result = (mActionShootToScoreVars.fMeterFractionTime <= -(m_DesireCommonVars.fMisc - 0.009f));
+            }
+            mActionShootToScoreVars.bShootWasPressed = result;
+        }
+    }
+
+    if (mActionShootToScoreVars.fFrameButtonDownTime2 >= 0.0f)
+    {
+        mActionShootToScoreVars.bShootWasPressed = false;
+        result = false;
+    }
+
+    return result;
 }
 
 /**

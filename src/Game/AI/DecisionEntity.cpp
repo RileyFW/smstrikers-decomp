@@ -131,9 +131,37 @@ cDecisionEntity::cDecisionEntity(eDecisionEntity type, unsigned long id, FuzzyVa
 /**
  * Offset/Address/Size: 0xE5C | 0x80018DB8 | size: 0xCC
  */
-float cDecisionEntity::CallDTF(cFielder*)
+float cDecisionEntity::CallDTF(cFielder* pFielder)
 {
-    return 0.0f;
+    float result = 0.0f;
+    m_iNumDTFCalls++;
+
+    if (m_pDTF != NULL)
+    {
+        cFielder* pSavedFielder = g_pScriptCurrentFielder;
+        if (g_pScriptCurrentFielder != pFielder)
+        {
+            FuzzyScriptSetCurrentFielder(pFielder);
+        }
+
+        m_pDTF(this);
+
+        if (SelectAction(SAS_BEST_CHANCE, 1.0f))
+        {
+            result = m_LastSelectedAction.m_fConfidence;
+        }
+        else
+        {
+            result = 0.0f;
+        }
+
+        if (pSavedFielder != pFielder)
+        {
+            FuzzyScriptSetCurrentFielder(pSavedFielder);
+        }
+    }
+
+    return result;
 }
 
 /**
@@ -200,6 +228,7 @@ void cDecisionEntity::FindDesireAction(int, FuzzyVariant, FuzzyVariant)
 /**
  * Offset/Address/Size: 0x0 | 0x80017F5C | size: 0x304
  */
-void cDecisionEntity::SelectAction(eScriptActionSelection, float)
+bool cDecisionEntity::SelectAction(eScriptActionSelection, float)
 {
+    return false;
 }

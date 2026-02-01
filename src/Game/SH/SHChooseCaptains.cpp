@@ -183,6 +183,7 @@ void ChooseCaptainsSceneV2::ChangeSceneType(ChooseCaptainsSceneV2::SceneType sce
  */
 void ChooseCaptainsSceneV2::ResetForCHOOSECAPTAINS()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -190,6 +191,7 @@ void ChooseCaptainsSceneV2::ResetForCHOOSECAPTAINS()
  */
 void ChooseCaptainsSceneV2::ResetForCHOOSESIDES()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

@@ -33,7 +33,7 @@ public:
     void QueueActionSetDesire(int, float, float, FuzzyVariant, FuzzyVariant);
     void QueueActionSetPlay(int, float, float);
     void FindDesireAction(int, FuzzyVariant, FuzzyVariant);
-    void SelectAction(eScriptActionSelection, float);
+    bool SelectAction(eScriptActionSelection, float);
 
     /* 0x00 */ eDecisionEntity m_type;                         // offset 0x0, size 0x4
     /* 0x04 */ unsigned long m_id;                             // offset 0x4, size 0x4

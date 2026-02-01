@@ -1,5 +1,10 @@
 #include "Game/Render/Presentation.h"
+#include "Game/WorldManager.h"
+#include "Game/Drawable/DrawableObj.h"
+#include "NL/gl/gl.h"
 #include "NL/nlString.h"
+
+extern unsigned long cupTrophyHash;
 
 // /**
 //  * Offset/Address/Size: 0x60 | 0x80127308 | size: 0x8
@@ -70,8 +75,16 @@ void ReadTrophyTexture(void*, unsigned long, void*)
 /**
  * Offset/Address/Size: 0x1CA8 | 0x8012648C | size: 0x70
  */
-void ReadTrophyModel(void*, unsigned long, void*)
+void ReadTrophyModel(void* data, unsigned long size, void* userData)
 {
+    unsigned long localVar = 0;
+    glModel* model = glEndLoadModel(data, size, &localVar);
+
+    int localVar2 = 0;
+    WorldManager::s_World->LoadGeometry(model, localVar, true, true, &cupTrophyHash, &localVar2, true);
+
+    DrawableObject* obj = WorldManager::s_World->FindDrawableObject(cupTrophyHash);
+    obj->m_uObjectFlags &= ~1;
 }
 
 /**

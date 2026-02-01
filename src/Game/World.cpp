@@ -213,7 +213,7 @@ void World::HandleObjectCreation(WorldObjectData*)
 /**
  * Offset/Address/Size: 0x3420 | 0x801980E4 | size: 0x274
  */
-bool World::LoadGeometry(glModel*, unsigned long, bool, bool, unsigned long*, int*, bool)
+bool World::LoadGeometry(glModel* gModel, unsigned long uNumModels, bool bMakeDrawables, bool keepTransform, unsigned long* pDrawableObjectHashes, int* pNumObjectsLoaded, bool bVar)
 {
     FORCE_DONT_INLINE;
     return false;
@@ -235,6 +235,7 @@ bool World::LoadGeometry(const char* szWorldName, bool bMakeDrawables, bool keep
 
     m_pModels = glLoadModel(buffer, &m_uNumModels);
 
+    // return LoadGeometry(m_pModels, m_uNumModels, bMakeDrawables, keepTransform, pNumObjectsLoaded, pDrawableObjectHashes, false);
     return LoadGeometry(m_pModels, m_uNumModels, bMakeDrawables, keepTransform, pDrawableObjectHashes, pNumObjectsLoaded, false);
 }
 

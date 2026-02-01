@@ -11,7 +11,7 @@ class glModel;
 class BoneMapList;
 class GLSkinMesh;
 
-void glplatEndLoadModel(void*, unsigned long, unsigned long*);
+glModel* glplatEndLoadModel(void*, unsigned long, unsigned long*);
 bool glplatBeginLoadModel(const char* filename, void (*callback)(void*, unsigned long, void*), void* userData);
 glModel* glplatLoadModel(const char* filename, unsigned long* pNumModels);
 glModel* glxLoadModelFromMemory(char* data, int size, unsigned long* pNumModels, bool bLoadTextures);

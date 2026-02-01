@@ -89,6 +89,7 @@ void StatsTracker::ResetCurrentStats()
  */
 void StatsTracker::CreateEventHandler()
 {
+    mEventHandler = g_pEventManager->AddEventHandler(eventHandler, NULL, 1);
 }
 
 /**

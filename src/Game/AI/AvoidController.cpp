@@ -1,17 +1,58 @@
 #include "Game/AI/AvoidController.h"
 
+static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
+static const nlVector2 v2Zero = { 0.0f, 0.0f };
+
 /**
  * Offset/Address/Size: 0x22E8 | 0x8000993C | size: 0x98
  */
-AvoidController::AvoidController(cFielder*)
+AvoidController::AvoidController(cFielder* fielder)
 {
+    m_pFielder = fielder;
+    m_pFTweaks = (const FielderTweaks*)fielder->m_pTweaks;
+    m_ThingsToAvoid = 0;
+    m_CurrentlyAvoiding = 0;
+    m_VeryCloseToSideline = false;
+    m_UseMinimumAvoidance = false;
+    m_pIgnoreThisPlayer = 0;
+
+    m_SidelineNormal.f.x = 0.0f;
+    m_SidelineNormal.f.y = 0.0f;
+    m_SidelineDirection.f.x = 0.0f;
+    m_SidelineDirection.f.y = 0.0f;
+
+    m_LastRepulsionVector[0] = v3Zero;
+    m_LastRepulsionVector[1] = v3Zero;
+    m_LastRepulsionVector[2] = v3Zero;
+    m_LastRepulsionVector[3] = v3Zero;
+    m_LastRepulsionVector[4] = v3Zero;
+    m_LastRepulsionVector[5] = v3Zero;
 }
 
 /**
  * Offset/Address/Size: 0x2250 | 0x800098A4 | size: 0x98
  */
-void AvoidController::SetThingsToAvoid(int)
+void AvoidController::SetThingsToAvoid(int thingsToAvoid)
 {
+    m_ThingsToAvoid = thingsToAvoid;
+    if (m_ThingsToAvoid != 0)
+    {
+        return;
+    }
+
+    m_CurrentlyAvoiding = 0;
+    m_VeryCloseToSideline = false;
+    m_SidelineUnavoidable = false;
+
+    m_SidelineNormal = v2Zero;
+    m_SidelineDirection = v2Zero;
+
+    m_LastRepulsionVector[0] = v3Zero;
+    m_LastRepulsionVector[1] = v3Zero;
+    m_LastRepulsionVector[2] = v3Zero;
+    m_LastRepulsionVector[3] = v3Zero;
+    m_LastRepulsionVector[4] = v3Zero;
+    m_LastRepulsionVector[5] = v3Zero;
 }
 
 /**

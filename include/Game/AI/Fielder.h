@@ -283,7 +283,7 @@ public:
     void UpdateController(float);
     void UpdatePlay(float);
     float GetDistanceToDesiredPos();
-    void S2SShootWasPressed();
+    bool S2SShootWasPressed();
     void StartRunning();
     void DoAILooseBallActionSelection();
     void DoAIReceivePassActionSelection();

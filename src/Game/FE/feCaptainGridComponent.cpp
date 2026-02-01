@@ -1,4 +1,5 @@
 #include "Game/FE/feCaptainGridComponent.h"
+#include "Game/GameInfo.h"
 
 extern unsigned long CaptainCellItems[];
 extern unsigned long NUM_CAPTAIN_CELL_ITEMS;
@@ -172,11 +173,24 @@ void ICaptainGridComponent::SetValid(eTeamID teamID, bool valid)
     mMapMenu->SetItemActive(position, valid);
 }
 
+extern bool g_e3_Build;
+
 /**
  * Offset/Address/Size: 0x29C | 0x800C1990 | size: 0x7C
  */
 void ICaptainGridComponent::UpdateSuperTeamIconState()
 {
+    if (g_e3_Build) {
+        return;
+    }
+
+    if (GameInfoManager::Instance()->IsSuperTeamUnlocked()) {
+        if (mMapMenu->IsItemActive(8)) {
+            mMapMenu->SetItemActive(8, true);
+            return;
+        }
+    }
+    mMapMenu->SetItemActive(8, false);
 }
 
 /**

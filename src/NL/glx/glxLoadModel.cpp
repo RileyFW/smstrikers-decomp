@@ -31,9 +31,9 @@ static const char glxSkinExt[] = ".skinmesh";
 /**
  * Offset/Address/Size: 0x0 | 0x801BFC20 | size: 0x24
  */
-void glplatEndLoadModel(void* data, unsigned long size, unsigned long* pNumModels)
+glModel* glplatEndLoadModel(void* data, unsigned long size, unsigned long* pNumModels)
 {
-    glxLoadModelFromMemory((char*)data, size, pNumModels, false);
+    return glxLoadModelFromMemory((char*)data, size, pNumModels, false);
 }
 
 /**

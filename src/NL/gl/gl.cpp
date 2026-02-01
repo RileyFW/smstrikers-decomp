@@ -21,33 +21,33 @@ s32 gl_state = 0;
 /**
  * Offset/Address/Size: 0x0 | 0x801D733C | size: 0x20
  */
-void glEndLoadTextureBundle(void* arg0, unsigned long arg1)
+bool glEndLoadTextureBundle(void* arg0, unsigned long arg1)
 {
-    glplatEndLoadTextureBundle(arg0, arg1);
+    return glplatEndLoadTextureBundle(arg0, arg1);
 }
 
 /**
  * Offset/Address/Size: 0x20 | 0x801D735C | size: 0x20
  */
-void glBeginLoadTextureBundle(const char* arg0, void (*arg1)(void*, unsigned long, void*), void* arg2)
+bool glBeginLoadTextureBundle(const char* arg0, void (*arg1)(void*, unsigned long, void*), void* arg2)
 {
-    glplatBeginLoadTextureBundle(arg0, arg1, arg2);
+    return glplatBeginLoadTextureBundle(arg0, arg1, arg2);
 }
 
 /**
  * Offset/Address/Size: 0x40 | 0x801D737C | size: 0x20
  */
-void glEndLoadModel(void* arg0, unsigned long arg1, unsigned long* arg2)
+glModel* glEndLoadModel(void* arg0, unsigned long arg1, unsigned long* arg2)
 {
-    glplatEndLoadModel(arg0, arg1, arg2);
+    return glplatEndLoadModel(arg0, arg1, arg2);
 }
 
 /**
  * Offset/Address/Size: 0x60 | 0x801D739C | size: 0x20
  */
-void glBeginLoadModel(const char* arg0, void (*arg1)(void*, unsigned long, void*), void* arg2)
+bool glBeginLoadModel(const char* arg0, void (*arg1)(void*, unsigned long, void*), void* arg2)
 {
-    glplatBeginLoadModel(arg0, arg1, arg2);
+    return glplatBeginLoadModel(arg0, arg1, arg2);
 }
 
 /**
