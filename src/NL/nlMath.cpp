@@ -311,19 +311,58 @@ float nlSqrt(float arg0, bool arg1)
 
 /**
  * Offset/Address/Size: 0x8EC | 0x801D1D60 | size: 0x84
+ * TODO: ~39% match - instruction scheduling differences with -O4,p
  */
-float nlRandomf(float, float, unsigned int*)
+#pragma fp_contract off
+float nlRandomf(float fMin, float fMax, unsigned int* pSeed)
 {
-    return 0.f;
+    float range;
+    float scale;
+    unsigned int seed;
+    unsigned int xored;
+    unsigned int s0;
+    unsigned int s1;
+    unsigned int modResult;
+
+    range = fMax - fMin;
+    scale = fUnk_504;
+    seed = *pSeed;
+    scale *= range;
+    modResult = seed % 0x7FFFFFFFu;
+    xored = seed ^ 0x1D872B41;
+    s0 = xored >> 5;
+    s1 = xored ^ s0;
+    *pSeed = s1 ^ (xored ^ (s1 << 27));
+
+    return fMin + scale * (float)modResult;
 }
+#pragma fp_contract on
 
 /**
  * Offset/Address/Size: 0x970 | 0x801D1DE4 | size: 0x7C
+ * TODO: match pending - instruction scheduling differences with -O4,p
  */
-float nlRandomf(float, unsigned int*)
+#pragma fp_contract off
+float nlRandomf(float fMax, unsigned int* pSeed)
 {
-    return 0.f;
+    float scale;
+    unsigned int seed;
+    unsigned int xored;
+    unsigned int s0;
+    unsigned int s1;
+    unsigned int modResult;
+
+    scale = fUnk_504 * fMax;
+    seed = *pSeed;
+    modResult = seed % 0x7FFFFFFFu;
+    xored = seed ^ 0x1D872B41;
+    s0 = xored >> 5;
+    s1 = xored ^ s0;
+    *pSeed = s1 ^ (xored ^ (s1 << 27));
+
+    return scale * (float)modResult;
 }
+#pragma fp_contract on
 
 /**
  * Offset/Address/Size: 0x9EC | 0x801D1E60 | size: 0x34

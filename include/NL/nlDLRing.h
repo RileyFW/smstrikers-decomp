@@ -304,6 +304,13 @@ public:
         m_first = true;
     }
 
+    nlDLListIterator(Pointer head, Pointer current)
+    {
+        m_head = head;
+        m_current = current;
+        // m_first = true;
+    }
+
     bool hasNext() const { return (m_current != 0) && (m_first || m_current != m_head); }
 
     Pointer next()
@@ -323,8 +330,8 @@ public:
         m_first = true;
     }
 
-// NOTE: Members are public for decompilation compatibility
-// private:
+    // NOTE: Members are public for decompilation compatibility
+    // private:
     Pointer m_head;
     Pointer m_current;
     bool m_first;

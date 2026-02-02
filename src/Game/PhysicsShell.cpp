@@ -1,4 +1,5 @@
 #include "Game/Physics/PhysicsShell.h"
+#include "Game/Game.h"
 
 extern CollisionSpace* g_CollisionSpace;
 extern PhysicsWorld* g_PhysicsWorld;
@@ -13,9 +14,17 @@ bool PhysicsShell::SetContactInfo(dContact* contact, PhysicsObject* other, bool 
         SetDefaultContactInfo(contact);
     }
 
-    contact->surface.bounce = 0.01f;
-    contact->surface.bounce_vel = 0.0f;
-    contact->surface.mu = 5.0f;
+    if (other->GetObjectType() == 0x11)
+    {
+        contact->surface.bounce = g_pGame->m_pGameTweaks->fShellBounceGround;
+    }
+    else
+    {
+        contact->surface.bounce = g_pGame->m_pGameTweaks->fShellBounce;
+    }
+
+    contact->surface.bounce_vel = 5.0f;
+    contact->surface.mu = 0.0f;
 
     return true;
 }

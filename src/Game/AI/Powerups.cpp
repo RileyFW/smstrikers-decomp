@@ -1,4 +1,7 @@
 #include "Game/AI/Powerups.h"
+#include "Game/AI/Fielder.h"
+#include "Game/AI/AiUtil.h"
+#include "Game/Render/Bowser.h"
 #include "Game/Physics/PhysicsSphere.h"
 #include "Game/Effects/EmissionManager.h"
 #include "Game/Effects/EffectsGroup.h"
@@ -36,6 +39,8 @@ unsigned long uSPINY_SHELL_MASTER_OBJECT;
 unsigned long uFREEZE_SHELL_MASTER_OBJECT;
 
 } // namespace
+
+static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
 // extern Audio::cWorldSFX gPowerupSFX;
 
@@ -281,8 +286,31 @@ void PowerupBase::Destroy(bool)
 /**
  * Offset/Address/Size: 0x27C0 | 0x8005D0AC | size: 0x11C
  */
-void PowerupBase::PreThrow(cFielder*, Bowser*)
+void PowerupBase::PreThrow(cFielder* pFielder, Bowser* pBowser)
 {
+    nlVector3 pos;
+
+    if (pFielder != NULL)
+    {
+        if (pFielder->m_nPowerupAnimID == 0x5F || pFielder->m_nPowerupAnimID == 0x61)
+        {
+            pos = pFielder->GetJointPosition(pFielder->m_nLeftHandJointIndex);
+        }
+        else
+        {
+            pos = pFielder->GetJointPosition(pFielder->m_nRightHandJointIndex);
+        }
+    }
+    else
+    {
+        nlVector3 localPt = { 0.0f, 0.0f, 0.0f };
+        GetWorldPoint(pos, localPt, pBowser->mv3Position, pBowser->maFacingDirection);
+    }
+
+    m_v3Position = pos;
+    m_pPhysicsObject->SetPosition(m_v3Position, PhysicsObject::WORLD_COORDINATES);
+    m_v3Velocity = v3Zero;
+    m_pPhysicsObject->SetLinearVelocity(v3Zero);
 }
 
 /**

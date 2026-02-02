@@ -53,11 +53,39 @@ void ScriptQuestionCache::Lookup(unsigned long, FuzzyVariant&, const char*)
 {
 }
 
+// Stub for find_or_insert result (std::pair<const unsigned long, FuzzyVariant> in map)
+struct FuzzyMapPair
+{
+    unsigned long key;
+    FuzzyVariant value;
+};
+
+extern "C" FuzzyMapPair* __find_or_insert(void* tree, const unsigned long* key);
+
 /**
  * Offset/Address/Size: 0x0 | 0x80079C80 | size: 0xE4
  */
-void ScriptQuestionCache::AddToCache(unsigned long, const FuzzyVariant&, const char*)
+const FuzzyVariant& ScriptQuestionCache::AddToCache(unsigned long key, const FuzzyVariant& variant, const char* name)
 {
+    if (g_bScriptQuestionCachingOn)
+    {
+        if (g_bScriptQuestionCachingUseSTD)
+        {
+            // TODO: Implement all this std stuff..
+            FuzzyMapPair* pair = __find_or_insert(&mQuestionCacheMapSTD, &key);
+            pair->value = variant;
+        }
+        else
+        {
+            AVLTreeNode* existingNode;
+            mQuestionCacheMap.AddAVLNode((AVLTreeNode**)&mQuestionCacheMap.m_Root, (void*)&key, (void*)&variant, &existingNode, mQuestionCacheMap.m_NumElements);
+            if (existingNode == NULL)
+            {
+                mQuestionCacheMap.m_NumElements++;
+            }
+        }
+    }
+    return variant;
 }
 
 /**

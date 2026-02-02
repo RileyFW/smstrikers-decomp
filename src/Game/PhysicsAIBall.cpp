@@ -1,5 +1,6 @@
 #include "Game/Physics/PhysicsAIBall.h"
 #include "Game/Ball.h"
+#include "Game/Field.h"
 
 extern CollisionSpace* g_CollisionSpace;
 extern PhysicsWorld* g_PhysicsWorld;
@@ -7,11 +8,17 @@ extern PhysicsWorld* g_PhysicsWorld;
 /**
  * Offset/Address/Size: 0x0 | 0x80133A34 | size: 0x84
  */
-bool PhysicsAIBall::IsBallOutsideNet(const nlVector3&)
+bool PhysicsAIBall::IsBallOutsideNet(const nlVector3& v3Pos)
 {
-    FORCE_DONT_INLINE;
-    float dVar2 = g_pBall->m_pPhysicsBall->GetRadius();
-    return false;
+    f32 radius = g_pBall->m_pPhysicsBall->GetRadius();
+    f64 absX = (float)fabs(v3Pos.f.x);
+    f32 threshold = cField::GetGoalLineX((unsigned int)1);
+    f32 sum;
+    f32 fAbsX;
+    sum = radius + threshold;
+    fAbsX = (f32)absX;
+    threshold = sum - 0.2f;
+    return fAbsX < threshold;
 }
 
 /**

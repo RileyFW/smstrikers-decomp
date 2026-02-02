@@ -376,6 +376,10 @@ class CollisionPlayerWallData
 {
 public:
     virtual u32 GetID();
+
+    /* 0x04 */ u32 pad_04;
+    /* 0x08 */ nlVector3 contactPoint;
+    /* 0x14 */ nlVector3 wallNormal;
 };
 
 // class CollisionPowerupWallData

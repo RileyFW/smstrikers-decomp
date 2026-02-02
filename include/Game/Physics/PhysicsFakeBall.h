@@ -6,8 +6,19 @@
 #include "Game/Physics/PhysicsPlane.h"
 #include "Game/Physics/PhysicsWorld.h"
 #include "Game/Physics/CollisionSpace.h"
+#include "NL/nlDLListSlotPool.h"
+#include "NL/nlSlotPool.h"
 
 class FakePhysicsBall;
+
+struct BallCacheInfo
+{
+    /* 0x00 */ float mfTime;
+    /* 0x04 */ nlVector3 mv3Position;
+    /* 0x10 */ nlVector3 mv3LinearVelocity;
+
+    static SlotPool<BallCacheInfo> mBallCacheInfoSlotPool;
+}; // total size: 0x1C
 
 class FakeBallWorld
 {
@@ -31,6 +42,11 @@ public:
     /* 0x14 */ PhysicsPlane* mpGroundPlane;      // offset 0x14, size 0x4
     /* 0x18 */ bool mbHitSuccess;                // offset 0x18, size 0x1
     /* 0x1C */ dContactGeom mContactInfo;        // offset 0x1C, size 0x2C
+
+    static nlDLListIterator<DLListEntry<BallCacheInfo*> >* mpCacheIterator;
+    static nlDLListSlotPool<BallCacheInfo*> mBallCacheList;
+    static float mfLastCacheTime;
+    static FakeBallWorld* mpPredictWorld;
 }; // total size: 0x48
 
 class FakePhysicsBall : public PhysicsBall

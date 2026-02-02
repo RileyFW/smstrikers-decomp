@@ -180,4 +180,10 @@ s32 nlListCountElements(T* head)
     return count;
 }
 
+template <typename EntryT, typename ContainerT>
+void nlWalkList(EntryT* list, ContainerT* cbClass, void (ContainerT::*cb)(EntryT*))
+{
+    FORCE_DONT_INLINE;
+}
+
 #endif

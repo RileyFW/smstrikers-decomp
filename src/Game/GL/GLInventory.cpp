@@ -165,7 +165,7 @@ glModel* GLInventory::GetModel(unsigned long id)
             }
         }
         found = false;
-check_found:
+    check_found:
         glModel* result;
         if (found)
         {
@@ -337,6 +337,7 @@ void GLInventory::AddSkinData(unsigned long key, nlChunk* skinData)
  */
 GLSkinMesh* GLInventory::MakeSkinMesh(unsigned long)
 {
+    return nullptr;
 }
 
 /**

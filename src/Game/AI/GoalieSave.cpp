@@ -1,6 +1,11 @@
 #include "Game/AI/GoalieSave.h"
 #include "Game/AI/FilteredRandom.h"
 
+static nlAVLTree<int, SaveData*, DefaultKeyCompare<int> > gSaveMap;
+static nlListContainer<SaveData*> gSaveGrid[7][5];
+
+typedef ListContainerBase<SaveData*, NewAdapter<SaveData*> > SaveListBase;
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80056D60 | size: 0xA4
 //  */
@@ -178,9 +183,51 @@
 
 /**
  * Offset/Address/Size: 0x2B44 | 0x80055F64 | size: 0xE0
+ * TODO: 89.2% match - register allocation: compiler merges two NULL constants into one register (r31) vs target using two (r30, r31)
  */
 void GoalieSave::ClearData()
 {
+    if (!mbInitialized)
+    {
+        return;
+    }
+
+    gSaveMap.Clear();
+
+    // nlListContainer<SaveData*>* pGrid = &gSaveGrid[0][0];
+    int i = 0;
+
+    do
+    {
+        int j = 0;
+        nlListContainer<SaveData*>* pEntry = &gSaveGrid[i][j];
+        ListEntry<SaveData*>* headClr = pEntry->m_Head;
+        ListEntry<SaveData*>* tailClr = pEntry->m_Tail;
+        // ListEntry<SaveData*>* headClr = (ListEntry<SaveData*>*)(u32)j;
+        // ListEntry<SaveData*>* tailClr = (ListEntry<SaveData*>*)(u32)j;
+        do
+        {
+            nlWalkList<ListEntry<SaveData*>, SaveListBase>(pEntry->m_Head, (SaveListBase*)pEntry, (void (SaveListBase::*)(ListEntry<SaveData*>*))&SaveListBase::DeleteEntry);
+            pEntry->m_Head = headClr;
+            j++;
+            pEntry->m_Tail = tailClr;
+            pEntry++;
+        } while (j < 5);
+        i++;
+        // pGrid += 5;
+    } while (i < 7);
+
+    if (mpSaveTable != NULL)
+    {
+        delete[] ((u8*)mpSaveTable - 0x10);
+    }
+
+    if (mpPositionTable != NULL)
+    {
+        delete[] ((u8*)mpPositionTable - 0x10);
+    }
+
+    mbInitialized = 0;
 }
 
 /**
@@ -237,8 +284,10 @@ SaveData* GoalieSave::GetMissChipSaveData(bool bLeft, bool bFar)
 SaveData* GoalieSave::GetRandomSTSMissData(bool bParam)
 {
     int index = muSTSGoalIndexStart;
-    if (!bParam) {
-        if ((u32)muSTSGoalCount > 1) {
+    if (!bParam)
+    {
+        if ((u32)muSTSGoalCount > 1)
+        {
             static FilteredRandomRange randgen;
             index += randgen.genrand(muSTSGoalCount);
         }

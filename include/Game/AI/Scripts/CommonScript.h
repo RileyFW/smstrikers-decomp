@@ -2,11 +2,21 @@
 #define _COMMONSCRIPT_H_
 
 #include "NL/nlSingleton.h"
+#include "NL/nlAVLTreeSlotPool.h"
 #include "Game/AI/FuzzyVariant.h"
 
 class cTeam;
 class cPlayer;
 class cFielder;
+
+extern unsigned char g_bScriptQuestionCachingOn;
+extern unsigned char g_bScriptQuestionCachingUseSTD;
+
+// Stub for std::map<unsigned long, FuzzyVariant> - size 0x10
+struct StdMapStub
+{
+    u8 _data[0x10];
+};
 
 class Fuzzy
 {
@@ -51,8 +61,13 @@ class ScriptQuestionCache : public nlSingleton<ScriptQuestionCache>
 {
 public:
     void Lookup(unsigned long, FuzzyVariant&, const char*);
-    void AddToCache(unsigned long, const FuzzyVariant&, const char*);
+    const FuzzyVariant& AddToCache(unsigned long, const FuzzyVariant&, const char*);
     void Clear();
+
+    /* 0x00 */ nlAVLTreeSlotPool<unsigned long, FuzzyVariant, DefaultKeyCompare<unsigned long> > mQuestionCacheMap;
+    /* 0x28 */ StdMapStub mQuestionCacheMapSTD;
+    /* 0x38 */ int mTotalLookups;
+    /* 0x3C */ int mCacheHits;
 };
 
 // class std

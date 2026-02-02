@@ -1,4 +1,5 @@
 #include "NL/gl/glRenderList.h"
+#include "NL/nlSlotPool.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x801D92C0 | size: 0x36C
@@ -65,6 +66,18 @@ bool GLRenderList::IsEmpty() const
  */
 void GLRenderList::Compact()
 {
+    Clear();
+
+    for (int i = 0; i < 7; i++) {
+        u32* ptr = (u32*)((u8*)this + 0x0C + i * 4);
+        SlotPoolBase::BaseFreeBlocks((SlotPoolBase*)(*ptr + 4), 0x14);
+    }
+
+    u32 poolAddr2 = *(u32*)((u8*)this + 0x28);
+    SlotPoolBase::BaseFreeBlocks((SlotPoolBase*)(poolAddr2 + 4), 0x18);
+
+    u32 poolAddr3 = *(u32*)((u8*)this + 0x2C);
+    SlotPoolBase::BaseFreeBlocks((SlotPoolBase*)poolAddr3, 0x0C);
 }
 
 /**
@@ -72,6 +85,7 @@ void GLRenderList::Compact()
  */
 void GLRenderList::Clear()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

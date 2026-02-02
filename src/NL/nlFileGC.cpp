@@ -20,14 +20,15 @@ u8 asyncToVirMemBuffer[0x4000];
 void nlReadAsyncToVirtualMemory(nlFile* file, void* buffer, int size, ReadAsyncCallback callback, unsigned long alignment,
     unsigned long length, void* userData)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0xEC | 0x801CEE40 | size: 0x38
  */
-void nlAsyncLoadFileToVirtualMemory(nlFile* param_1, int param_2, void* param_3, ReadAsyncCallback param_4, unsigned long param_5)
+void nlAsyncLoadFileToVirtualMemory(nlFile* file, int size, void* buffer, ReadAsyncCallback callback, unsigned long alignment)
 {
-    nlReadAsyncToVirtualMemory((GCFile*)param_1, param_3, param_2, param_4, param_5, 0x4000, &nlFileGC::asyncToVirMemBuffer);
+    nlReadAsyncToVirtualMemory(file, buffer, size, callback, alignment, 0x4000, nlFileGC::asyncToVirMemBuffer);
 }
 
 namespace nlFileGC

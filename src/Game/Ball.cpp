@@ -1,4 +1,5 @@
 #include "Game/WorldManager.h"
+#include "NL/platqmath.h"
 #pragma pool_data off
 
 #include "Game/Ball.h"
@@ -539,13 +540,17 @@ cBall::~cBall()
     delete m_pBallPosCollider;
 }
 
+static nlVector3 v3Zero = { 0.f, 0.f, 0.f };
+static nlQuaternion qIdentity = { 0.f, 0.f, 0.f, 1.f };
+
 /**
  * Offset/Address/Size: 0x3908 | 0x8000D2DC | size: 0x260
+ * TODO: 96.22% match - todo: inline setter for quaternions seems to be missing
  */
 cBall::cBall()
 {
-    // m_unk_0x00 = 0;
-    // m_unk_0x04 = 0;
+    u32 t0, t1, t2;
+    nlVector3* pz;
 
     m_bBallPathChangeCount = 0;
     m_bBallDeflectCount = 0;
@@ -553,48 +558,81 @@ cBall::cBall()
     m_tShotTimer.SetSeconds(0.f);
     m_tNoPickupTimer.SetSeconds(0.f);
     m_tPassTargetTimer.SetSeconds(0.f);
-    // m_timer_0x14->SetSeconds(0.f);
-    m_fTotalPassTime = 0.f;
+    m_tBuzzerBeaterTimer.SetSeconds(0.f);
 
+    m_pBlurHandler = NULL;
     m_pOwner = NULL;
     m_pPrevOwner = NULL;
     m_pLastTouch = NULL;
     m_pPassTarget = NULL;
     m_pShooter = NULL;
 
-    m_uGoalType = 0x4;
+    m_uGoalType = 4;
     m_uVoiceID = 0;
 
     mbIsPerfectShot = false;
     mbHyperSTS = false;
     mbCanDamage = false;
-    // m_mpDamageTarget = NULL;
+    m_unk_0xA3 = false;
+    m_unk_0xA4 = false;
+    m_unk_0xA6 = false;
+    mpDamageTarget = NULL;
 
     m_pDrawableBall = WorldManager::s_World->FindDrawableObject(nlStringHash("gameplay/ball"));
 
-    void* this_00 = nlMalloc(0x5c, 8, FALSE);
-    if (this_00 != NULL)
+    m_pDrawableBall->m_uObjectFlags |= 0x4;
+    m_pDrawableBall->m_uObjectFlags |= 0x10;
+    m_pDrawableBall->m_uObjectFlags |= 0x100;
+
+    m_pPhysicsBall = new (nlMalloc(0x5c, 8, FALSE)) PhysicsAIBall(0.18f);
+    m_pPhysicsBall->m_pAIBall = this;
+
+    m_v3Position.f.x = 0.f;
+    m_v3Position.f.y = 2.f;
+    m_v3Position.f.z = 0.18f;
+
+    m_v3PrevPosition = m_v3Position;
+
+    m_v3PassIntercept.f.x = 0.f;
+    m_v3PassIntercept.f.y = 0.f;
+    m_v3PassIntercept.f.z = 0.f;
+
+    m_pPhysicsBall->SetPosition(m_v3Position, PhysicsObject::WORLD_COORDINATES);
+
+    // m_qOrientation.Identity();
+    // nlQuatIdentity(m_qOrientation);
+
+    // nlQuatSet2(m_qOrientation, 0.f, 0.f, 0.f, 1.f);
+
+    pz = &v3Zero;
+
+    m_qOrientation.f.z = 0.f;
+    t0 = pz->as_u32[0];
+    m_qOrientation.f.y = 0.f;
+    t1 = pz->as_u32[1];
+    m_qOrientation.f.x = 0.f;
+    t2 = pz->as_u32[2];
+    m_qOrientation.f.w = 1.f;
+
+    m_v3ShotOrigin = m_v3Position;
+
+    m_v3Velocity.as_u32[0] = t0;
+    m_v3Velocity.as_u32[1] = t1;
+    m_v3Velocity.as_u32[2] = t2;
+
+    m_pPhysicsBall->SetLinearVelocity(m_v3Velocity);
+    m_pPhysicsBall->SetAngularVelocity(*pz);
+
+    m_fTotalPassTime = 0.f;
+    m_tBuzzerBeaterTimer.SetSeconds(0.f);
+
+    nlVector3 rayDir = { 0.f, 0.f, -1.f };
+
+    m_pBallPosCollider = new (nlMalloc(0x2C, 8, FALSE)) RayCollider(1.f, m_v3Position, rayDir);
+
+    if (AudioLoader::IsInited())
     {
-        this_00 = new (this_00) PhysicsAIBall(0.18f);
-    }
-    m_pPhysicsBall = (PhysicsAIBall*)this_00;
-
-    // m_timer_0x14->SetSeconds(0.f);
-
-    nlVec3Set(m_v3Position, 0.f, 0.f, 0.f);
-    nlVector3 m_rayDir;
-    nlVec3Set(m_v3Position, 0.f, 0.f, 0.f);
-
-    void* this_01 = nlMalloc(0x2C, 8, FALSE);
-    if (this_01 != NULL)
-    {
-        this_01 = new (this_01) RayCollider(1.f, m_v3Position, m_rayDir);
-    }
-    m_pBallPosCollider = (RayCollider*)this_01;
-
-    if (AudioLoader::IsInited() != false)
-    {
-        // gfPerfectPassSFXVol = GetSFXVol__8cGameSFXCFUl(&gStadGenSFX__5Audio, 0xBA);
+        gfPerfectPassSFXVol = Audio::gStadGenSFX.GetSFXVol(0xBA);
     }
 }
 

@@ -3,8 +3,6 @@
 #include "NL/nlDLRing.h"
 #include "NL/nlDLListSlotPool.h"
 
-struct BallCacheInfo;
-
 /**
  * Offset/Address/Size: 0x60 | 0x8013744C | size: 0x38
  */
@@ -34,9 +32,40 @@ void FakeBallWorld::GetNextBallPosition(nlVector3&)
 
 /**
  * Offset/Address/Size: 0x668 | 0x80137A54 | size: 0xC8
+ * TODO: register allocation: compiler uses r5 for &iter instead of r31
  */
 void FakeBallWorld::ResetBallIterator()
 {
+    nlVector3 v3Position;
+    nlVector3 v3Velocity;
+
+    GetPredictedBallPosition(0.0f, v3Position, v3Velocity);
+
+    // static signed char init;
+    static nlDLListIterator<DLListEntry<BallCacheInfo*> > iter(nlDLRingGetStart(mBallCacheList.m_Head), mBallCacheList.m_Head);
+
+    // if (!init)
+    // {
+    //     iter.m_Curr = nlDLRingGetStart(mBallCacheList.m_Head);
+    //     iter.m_Head = mBallCacheList.m_Head;
+    //     init = 1;
+    // }
+
+    iter.m_current = nlDLRingGetStart(mBallCacheList.m_Head);
+    iter.m_head = mBallCacheList.m_Head;
+    mpCacheIterator = &iter;
+
+    if (mpCacheIterator->m_current != NULL)
+    {
+        if (nlDLRingIsEnd(mpCacheIterator->m_head, mpCacheIterator->m_current) || mpCacheIterator->m_current == NULL)
+        {
+            mpCacheIterator->m_current = NULL;
+        }
+        else
+        {
+            mpCacheIterator->m_current = mpCacheIterator->m_current->m_next;
+        }
+    }
 }
 
 /**
@@ -73,14 +102,47 @@ float FakeBallWorld::GetPredictedPlaneIntersectTime(const nlVector4& plane, nlVe
  */
 bool FakeBallWorld::GetPredictedBallPosition(float, nlVector3&, nlVector3&)
 {
+    FORCE_DONT_INLINE;
     return false;
 }
+
+typedef DLListContainerBase<BallCacheInfo*, BasicSlotPool<DLListEntry<BallCacheInfo*> > > BallCacheListBase;
 
 /**
  * Offset/Address/Size: 0x1E28 | 0x80139214 | size: 0xEC
  */
 void FakeBallWorld::InvalidateBallCache()
 {
+    if (mBallCacheList.m_Head != NULL)
+    {
+        DLListEntry<BallCacheInfo*>* start = nlDLRingGetStart(mBallCacheList.m_Head);
+        DLListEntry<BallCacheInfo*>* end = mBallCacheList.m_Head;
+        DLListEntry<BallCacheInfo*>* current = start;
+
+        while (current != NULL)
+        {
+            BallCacheInfo* data = current->m_data;
+            ((SlotPoolEntry*)data)->m_next = BallCacheInfo::mBallCacheInfoSlotPool.m_FreeList;
+            BallCacheInfo::mBallCacheInfoSlotPool.m_FreeList = (SlotPoolEntry*)data;
+
+            if (nlDLRingIsEnd(end, current) || current == NULL)
+            {
+                current = NULL;
+            }
+            else
+            {
+                current = current->m_next;
+            }
+        }
+
+        nlWalkDLRing<DLListEntry<BallCacheInfo*>, BallCacheListBase>(
+            mBallCacheList.m_Head,
+            (BallCacheListBase*)&mBallCacheList,
+            (void (BallCacheListBase::*)(DLListEntry<BallCacheInfo*>*))&BallCacheListBase::DeleteEntry);
+        mBallCacheList.m_Head = NULL;
+    }
+
+    mfLastCacheTime = -1.0f;
 }
 
 /**

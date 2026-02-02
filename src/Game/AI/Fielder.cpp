@@ -2147,30 +2147,39 @@ void cFielder::TestCollisionForInvicibility(cFielder*)
  */
 void cFielder::TestButtonsToQueueActions(float fTime)
 {
-    if (GetGlobalPad() == nullptr) {
+    if (GetGlobalPad() == nullptr)
+    {
         return;
     }
-    if (m_pBall == nullptr) {
+    if (m_pBall == nullptr)
+    {
         return;
     }
 
-    if (GetGlobalPad()->JustPressed(PAD_PASS, true)) {
+    if (GetGlobalPad()->JustPressed(PAD_PASS, true))
+    {
         m_eLastPadAction = PAD_PASS;
     }
-    else if (GetGlobalPad()->JustPressed(PAD_SHOOT, true)) {
+    else if (GetGlobalPad()->JustPressed(PAD_SHOOT, true))
+    {
         m_pShotMeter->Reset();
         m_pShotMeter->m_fTime = 0.0f;
         m_eLastPadAction = PAD_SHOOT;
     }
-    else if (GetGlobalPad()->JustPressed(PAD_DEKE, true)) {
+    else if (GetGlobalPad()->JustPressed(PAD_DEKE, true))
+    {
         m_eLastPadAction = PAD_DEKE;
     }
-    else if (m_pController->GetCStickMovementStickMagnitude() > 0.0f) {
+    else if (m_pController->GetCStickMovementStickMagnitude() > 0.0f)
+    {
         u16 direction = m_pController->GetCStickMovementStickDirection();
         s16 diff = (s16)(direction - m_aActualFacingDirection);
-        if (diff < 0) {
+        if (diff < 0)
+        {
             m_eLastPadAction = PAD_DEKE_RIGHT;
-        } else {
+        }
+        else
+        {
             m_eLastPadAction = PAD_DEKE_LEFT;
         }
     }
@@ -2533,8 +2542,8 @@ void cFielder::DoAIWindupActionSelection()
  */
 void cFielder::DoSpeedBoost()
 {
-    eShotMeterState state = m_pShotMeter->m_eShotMeterState;
-    bool bReturn = (state == SHOT_METER_ACTIVE || state == SHOT_METER_STS_ACTIVE || state == SHOT_METER_STS_TRANSISTION);
+    eShotMeterState meterState = m_pShotMeter->m_eShotMeterState;
+    bool bReturn = (meterState == SHOT_METER_ACTIVE || meterState == SHOT_METER_STS_ACTIVE || meterState == SHOT_METER_STS_TRANSISTION);
 
     if (bReturn)
         return;

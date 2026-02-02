@@ -4,15 +4,8 @@
 #include "types.h"
 
 struct nlMatrix4;
-struct nlVector3;
-
-// struct nlQuaternion
-// {
-//     float x;
-//     float y;
-//     float z;
-//     float w;
-// };
+// struct nlVector3;
+#include "NL/nlMath.h"
 
 class nlQuaternion
 {
@@ -27,7 +20,28 @@ public:
             float z; // offset 0x8, size 0x4
             float w; // offset 0xC, size 0x4
         } f;
+        struct
+        {
+            nlVector3 v;
+            float w;
+        } vw;
     };
+
+    inline void Identity()
+    {
+        f.x = 0.f;
+        f.y = 0.f;
+        f.z = 0.f;
+        f.w = 1.f;
+    }
+
+    inline void setVec3(const nlVector3& v)
+    {
+        vw.v = v;
+        // f.x = v.f.x;
+        // f.y = v.f.y;
+        // f.z = v.f.z;
+    }
 }; // total size: 0x10
 
 inline void nlQuatSet(nlQuaternion& q0, float _x, float _y, float _z, float _w)
@@ -36,6 +50,14 @@ inline void nlQuatSet(nlQuaternion& q0, float _x, float _y, float _z, float _w)
     q0.f.x = _x;
     q0.f.y = _y;
     q0.f.z = _z;
+}
+
+inline void nlQuatIdentity(nlQuaternion& q0)
+{
+    q0.f.x = 0.f;
+    q0.f.y = 0.f;
+    q0.f.z = 0.f;
+    q0.f.w = 1.f;
 }
 
 void nlQuatScale(nlQuaternion& result, const nlQuaternion& input, float scaleFactor);

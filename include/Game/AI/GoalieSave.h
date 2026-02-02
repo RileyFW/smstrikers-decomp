@@ -3,6 +3,7 @@
 
 #include "NL/nlMath.h"
 #include "NL/nlList.h"
+#include "NL/nlAVLTree.h"
 
 // void InsertSorted(nlDLListContainer<MyMiniData*>&, MyMiniData*);
 // void nlListAddStart<ListEntry<SaveData*>>(ListEntry<SaveData*>**, ListEntry<SaveData*>*, ListEntry<SaveData*>**);
@@ -13,6 +14,15 @@
 // void nlDLRingAddStart<DLListEntry<MyMiniData*>>(DLListEntry<MyMiniData*>**, DLListEntry<MyMiniData*>*);
 // void nlDLRingInsert<DLListEntry<MyMiniData*>>(DLListEntry<MyMiniData*>**, DLListEntry<MyMiniData*>*, DLListEntry<MyMiniData*>*);
 // void 0x8028D298..0x8028D29C | size: 0x4;
+
+class SavePositionData
+{
+public:
+    /* 0x00 */ int mnAnimID;
+    /* 0x04 */ float mfAnimDistance;
+    /* 0x08 */ float mfAnimTime;
+    /* 0x0C */ float mfAnimVelocity;
+}; // total size: 0x10
 
 class SaveData
 {
@@ -74,6 +84,8 @@ public:
     static int muSTSSaveCount;
     static int muMissChipIndexStart;
     static float mfCrouchDuration;
+    static SavePositionData* mpPositionTable;
+    static unsigned char mbInitialized;
 };
 
 // class AVLTreeBase<int, SaveData*, NewAdapter<AVLTreeEntry<int, SaveData*>>, DefaultKeyCompare<int>>
