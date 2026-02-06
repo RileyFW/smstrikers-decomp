@@ -541,9 +541,35 @@ void cFielder::CollideWithBowserCallback(Bowser* pBowser)
     }
 }
 
+// static inline bool ShouldElectrocute(eFielderActionState state,
+//     const CollisionPlayerWallData* eventData,
+//     cFielder* pFielder)
+// {
+//     if (state == ACTION_HIT_REACT || state == ACTION_BOMB_REACT || state == ACTION_STS_HIT_REACT)
+//     {
+//         f32 netHalfWidth = cNet::GetNetWidth() / 2.0f;
+//         f32 netHeight = cNet::GetNetHeight();
+//         nlVector3 jointPos = pFielder->GetJointPosition(pFielder->m_nBip01JointIndex_0xA4);
+//         if ((f32)fabs(eventData->contactPoint.f.y) > netHalfWidth || (f32)fabs(jointPos.f.z) > netHeight)
+//         {
+//             return true;
+//         }
+//     }
+//     return false;
+// }
+
+// void cFielder::CollideWithWallCallback(const CollisionPlayerWallData* eventData)
+// {
+//     cPlayer::CollideWithWallCallback(eventData);
+//     if (ShouldElectrocute(m_eActionState, eventData, this))
+//     {
+//         InitActionElectrocution(eventData->contactPoint, eventData->wallNormal);
+//     }
+// }
+
 /**
  * Offset/Address/Size: 0xA70C | 0x80023A48 | size: 0xF8
- * TODO: pretty sure the goto is an inline..
+ * TODO: check inline version - problem with getter inlining
  */
 void cFielder::CollideWithWallCallback(const CollisionPlayerWallData* eventData)
 {
