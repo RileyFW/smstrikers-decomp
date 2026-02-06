@@ -1492,9 +1492,59 @@ float NearToSideline(const nlVector3&)
 
 /**
  * Offset/Address/Size: 0x1AB8 | 0x80080540 | size: 0x11C
+ * TODO: work in progress...
  */
-void CloseToSideline(cFielder*)
+float CloseToSideline(cFielder* pFielder)
 {
+    if (!pFielder)
+    {
+        return 0.0f;
+    }
+
+    cGame* pGame = g_pGame;
+    int i = 0;
+    float fScore = 0.0f;
+    FuzzyTweaks* pFuzzyTweaks = pGame->m_pFuzzyTweaks;
+    s32 offset = i;
+    f32 fZero = fScore;
+    const u8* pBase = (const u8*)cField::mSidelines;
+    const nlVector2* pConfidence = &pFuzzyTweaks->vCloseToSidelineDistanceConfidence;
+
+    for (; i < 4; i++, offset += 0xC)
+    {
+        const sSideLinePlane* sideline = (const sSideLinePlane*)(pBase + offset);
+        nlVector3 v3SidelinePos;
+
+        v3SidelinePos.as_u32[2] = pFielder->m_v3Position.as_u32[2];
+        v3SidelinePos.as_u32[0] = pFielder->m_v3Position.as_u32[0];
+        v3SidelinePos.as_u32[1] = pFielder->m_v3Position.as_u32[1];
+        v3SidelinePos.f.z = fZero;
+
+        if (fZero == sideline->vNormal.f.x)
+        {
+            v3SidelinePos.f.y = sideline->fDistance * sideline->vNormal.f.y;
+        }
+        else
+        {
+            v3SidelinePos.f.x = sideline->fDistance * sideline->vNormal.f.x;
+        }
+
+        f32 dy = v3SidelinePos.f.y - pFielder->m_v3Position.f.y;
+        f32 dx = v3SidelinePos.f.x - pFielder->m_v3Position.f.x;
+        float fDistance = nlSqrt(dx * dx + dy * dy, true);
+
+        float fNormalized = NormalizeVal(fDistance, *pConfidence);
+
+        if (fScore >= fNormalized)
+        {
+        }
+        else
+        {
+            fScore = fNormalized;
+        }
+    }
+
+    return fScore;
 }
 
 /**

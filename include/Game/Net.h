@@ -11,8 +11,16 @@ public:
     float GetGoalLineX() const;
     void GetPostLocation(nlVector3&, unsigned int, float) const;
     void SetNetDimensions(float, float, float, float);
-    float GetNetHeight() { return m_fNetHeight; };
-    float GetNetWidth() { return m_fNetWidth; };
+    static float GetNetHeight()
+    {
+        FORCE_DONT_INLINE;
+        return m_fNetHeight;
+    };
+    static float GetNetWidth()
+    {
+        FORCE_DONT_INLINE;
+        return m_fNetWidth;
+    };
 
     static float m_fNetHeight;
     static float m_fNetWidth;

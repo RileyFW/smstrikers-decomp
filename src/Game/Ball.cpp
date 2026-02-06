@@ -20,9 +20,11 @@
 
 #include "Game/Audio/AudioLoader.h"
 #include "Game/Audio/WorldAudio.h"
+#include "Game/AI/AiUtil.h"
 
 extern float gfPerfectPassSFXVol;
 extern bool gbCanFadeOutPerfectPassSFX;
+extern float g_BallAirResistance;
 
 cBall* g_pBall = NULL;
 
@@ -212,8 +214,17 @@ void cBall::Update(float)
 /**
  * Offset/Address/Size: 0xA40 | 0x8000A414 | size: 0x100
  */
-void cBall::ShootAtFast(nlVector3&, const nlVector3&, float)
+void cBall::ShootAtFast(nlVector3& v3Vel, const nlVector3& v3Target, float fDesiredTime)
 {
+    float k = g_BallAirResistance;
+    float g = 0.5f * m_pPhysicsBall->m_gravity;
+    float eToTheNegativeKT = Exp(-k * fDesiredTime);
+    float kSquaredOverOneMinusEToTheNegativeKT = (k * k) / (1.0f - eToTheNegativeKT);
+    float oneOverK = 1.0f / k;
+
+    v3Vel.f.x = kSquaredOverOneMinusEToTheNegativeKT * (oneOverK * (v3Target.f.x - m_v3Position.f.x));
+    v3Vel.f.y = kSquaredOverOneMinusEToTheNegativeKT * (oneOverK * (v3Target.f.y - m_v3Position.f.y));
+    v3Vel.f.z = kSquaredOverOneMinusEToTheNegativeKT * (oneOverK * (v3Target.f.z - m_v3Position.f.z - g * fDesiredTime / k)) + g / k;
 }
 
 /**

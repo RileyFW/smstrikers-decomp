@@ -101,7 +101,7 @@ float PositionIsAtIdealDistanceForShooting(const nlVector3&, const nlVector3&);
 float AtIdealDistanceForTackling(cPlayer*, cPlayer*);
 void StuckOnSidelines(cFielder*);
 float FacingSideline(cFielder*);
-void CloseToSideline(cFielder*);
+float CloseToSideline(cFielder*);
 float NearToSideline(const nlVector3&);
 float CloseToSideline(const nlVector3&, const nlVector2*, bool);
 float FarToTheirGoalie(cPlayer*);

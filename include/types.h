@@ -47,20 +47,25 @@ typedef u16 wchar_t;
 #endif
 
 // Workaround for strongly typed enums (our version of C++ doesn't support them)
-#define DEFINE_ENUM_TYPE(name, ...)  \
-	struct name {                    \
-		enum Values { __VA_ARGS__ }; \
-		typedef Values Type;         \
-	}
+#define DEFINE_ENUM_TYPE(name, ...) \
+    struct name                     \
+    {                               \
+        enum Values                 \
+        {                           \
+            __VA_ARGS__             \
+        };                          \
+        typedef Values Type;        \
+    }
 
 // Workaround for Visual Studio and VS Code not recognising the above macro as a valid type
 #define BEGIN_ENUM_TYPE(name) \
-	struct name {             \
-		typedef
+    struct name               \
+    {                         \
+        typedef
 
 #define END_ENUM_TYPE \
-	Type;             \
-	}
+    Type;             \
+    }
 
 // Workarounds for our version of C++ and other stupidities
 #undef TRUE
@@ -70,20 +75,20 @@ typedef u16 wchar_t;
 
 #if !defined(__cplusplus)
 #undef NULL
-#define NULL    ((void*)0)
+#define NULL ((void*)0)
 #undef nullptr
 #define nullptr 0
 #elif __cplusplus >= 201103L
 #define NULL nullptr
 #else
 #undef NULL
-#define NULL    0
+#define NULL 0
 #undef nullptr
 #define nullptr 0
 #endif
 
 // Random and useful macros
-#define PATH_MAX  (256)                     // Max path length
+#define PATH_MAX (256) // Max path length
 
 #ifndef MAX
 #define MAX(a, b) (((a) > (b)) ? (a) : (b)) // Returns the maximum of a and b
@@ -113,17 +118,22 @@ typedef u16 wchar_t;
 #define ATTRIBUTE_ALIGN(num)            __attribute__((aligned(num)))    // Align object to num bytes (num should be power of two)
 #define IS_FLAG_SET(flags, bitsFromLSB) (((flags) >> (bitsFromLSB) & 1)) // Checks if a flag is set in a bitfield
 #define ASSERT_HANG(cond) \
-	if (!(cond)) {        \
-		while (true) { }  \
-	}
+    if (!(cond))          \
+    {                     \
+        while (true)      \
+        {                 \
+        }                 \
+    }
 
 #define BUMP_REGISTER(reg) \
-	{                      \
-		asm { mr reg, reg }   \
-	}
+    {                      \
+        asm { mr reg, reg }          \
+    }
 
 // clang-format off
 #define FORCE_DONT_INLINE \
+	(void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; \
+	(void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; \
 	(void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; \
 	(void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; \
 	(void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; (void*)0; \
@@ -144,7 +154,7 @@ typedef u16 wchar_t;
 
 inline void padStack(void)
 {
-	int pad = 0;
+    int pad = 0;
 }
 #define PAD_STACK() padStack()
 

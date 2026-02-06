@@ -19,6 +19,7 @@
 #include "Game/SAnim/pnSAnimController.h"
 #include "Game/SAnim.h"
 #include "Game/Sys/eventman.h"
+#include "Game/Net.h"
 #include "NL/nlSlotPool.h"
 #include "math.h"
 
@@ -542,9 +543,38 @@ void cFielder::CollideWithBowserCallback(Bowser* pBowser)
 
 /**
  * Offset/Address/Size: 0xA70C | 0x80023A48 | size: 0xF8
+ * TODO: pretty sure the goto is an inline..
  */
 void cFielder::CollideWithWallCallback(const CollisionPlayerWallData* eventData)
 {
+    cPlayer::CollideWithWallCallback(eventData);
+
+    eFielderActionState state = m_eActionState;
+    if (state != ACTION_HIT_REACT && state != ACTION_BOMB_REACT && state != ACTION_STS_HIT_REACT)
+    {
+        goto skip_check;
+    }
+
+    f32 netHalfWidth = cNet::GetNetWidth() / 2.0f;
+    f32 netHeight = cNet::GetNetHeight();
+
+    nlVector3 jointPos = GetJointPosition(m_nBip01JointIndex_0xA4);
+
+    bool shouldElectrocute;
+    if ((f32)fabs(eventData->contactPoint.f.y) > netHalfWidth || (f32)fabs(jointPos.f.z) > netHeight)
+    {
+        shouldElectrocute = true;
+    }
+    else
+    {
+    skip_check:
+        shouldElectrocute = false;
+    }
+
+    if (shouldElectrocute)
+    {
+        InitActionElectrocution(eventData->contactPoint, eventData->wallNormal);
+    }
 }
 
 /**
