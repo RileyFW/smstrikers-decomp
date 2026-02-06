@@ -58,9 +58,6 @@ public:
     BasicSlotPool()
         : SlotPoolBase()
     {
-        this->m_Initial = 0x400;
-        BaseAddNewBlock(this, sizeof(T));
-        this->m_Delta = 0x80;
     }
     BasicSlotPool(const int initial, const int delta)
         : SlotPoolBase()

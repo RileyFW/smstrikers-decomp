@@ -2,6 +2,7 @@
 #include "Game/GameInfo.h"
 #include "Game/GameSceneManager.h"
 #include "Game/FE/feMusic.h"
+#include "Game/FE/fePopupMenu.h"
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800AC57C | size: 0x40
@@ -205,19 +206,6 @@ void onSelectCup(TLComponentInstance*)
     GameSceneManager::s_pInstance->Push(SCENE_CUP_CHOOSE_CUP, SCREEN_FORWARD, false);
 }
 
-enum ePopupMenu {
-    POPUP_MENU_0 = 0,
-    POPUP_MENU_1 = 1,
-    POPUP_MENU_2 = 2,
-    POPUP_MENU_3 = 3,
-    POPUP_MENU_4 = 4,
-};
-
-class FEPopupMenu {
-public:
-    void Create(ePopupMenu);
-};
-
 /**
  * Offset/Address/Size: 0x1A50 | 0x800AB4AC | size: 0x80
  */
@@ -225,7 +213,7 @@ void onSelectSuperCup(TLComponentInstance*)
 {
     if (!GameInfoManager::Instance()->IsSuperCupModeUnlocked()) {
         FEPopupMenu* menu = (FEPopupMenu*)GameSceneManager::Instance()->Push(SCENE_POPUP_MENU, SCREEN_FORWARD, false);
-        menu->Create(POPUP_MENU_4);
+        menu->Create(POPUP_SUPER_CUPS_LOCKED);
     } else {
         GameSceneManager::Instance()->PopEntireStack();
         GameSceneManager::Instance()->Push(SCENE_SUPER_CUP_CHOOSE_CUP, SCREEN_FORWARD, false);
@@ -271,9 +259,24 @@ void continueTourn()
 
 /**
  * Offset/Address/Size: 0x182C | 0x800AB288 | size: 0xE8
+ * TODO: 99.9% match - i diff on bl Create (branch offset, relocation)
  */
 void confirmNewTourn()
 {
+    FEPopupMenu* menu = (FEPopupMenu*)nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_POPUP_MENU, SCREEN_NOTHING, false);
+
+    {
+        Function<FnVoidVoid> yes;
+        yes.mTag = FREE_FUNCTION;
+        yes.mFreeFunction = newTourn;
+
+        Function<FnVoidVoid> no;
+        no.mTag = FREE_FUNCTION;
+        no.mFreeFunction = FEPopupMenu::Nothing;
+
+        menu->Create(POPUP_REALLY_OVERWRITE, yes, no);
+    }
+    *(u8*)((u8*)menu + 0xAA4) = 0;
 }
 
 /**

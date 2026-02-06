@@ -15,6 +15,7 @@
 #include "Game/DB/StatsTracker.h"
 #include "Game/Effects/EffectsGroup.h"
 #include "Game/CharacterTriggers.h"
+#include "Game/Game.h"
 
 float g_fPassInterceptNoPickupTimer = 5.0f;
 
@@ -427,6 +428,33 @@ void cPlayer::SwapController()
  */
 void cPlayer::SetDesiredFacingDirection()
 {
+    if (m_pController != NULL)
+    {
+        if (m_pController->GetMovementStickMagnitude() > 0.1f)
+        {
+            if (m_tSwapFacingTimer.m_uPackedTime != 0)
+            {
+                GameTweaks* pGameTweaks = g_pGame->m_pGameTweaks;
+                f32 t = m_tSwapFacingTimer.GetSeconds() / pGameTweaks->fSwapFacingTime;
+                u16 aStickDirection = m_pController->GetMovementStickDirection();
+                s16 diff = m_aSwapFacingDirection - aStickDirection;
+                m_aDesiredFacingDirection = (u16)((f32)aStickDirection + (f32)diff * t);
+            }
+            else
+            {
+                m_aDesiredFacingDirection = m_pController->GetMovementStickDirection();
+            }
+        }
+        else
+        {
+            m_aDesiredFacingDirection = m_aActualFacingDirection;
+        }
+    }
+
+    if (m_eAnimID >= 0x5C || m_eAnimID < 0x56)
+    {
+        m_aDesiredMovementDirection = m_aDesiredFacingDirection;
+    }
 }
 
 /**

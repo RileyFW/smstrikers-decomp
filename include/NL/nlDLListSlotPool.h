@@ -10,12 +10,19 @@ class nlDLListSlotPool : public DLListContainerBase<T, BasicSlotPool<DLListEntry
 public:
     nlDLListSlotPool()
     {
-        SlotPoolBase::BaseAddNewBlock(&this->m_Allocator, sizeof(T));
+        this->m_Head = NULL;
+        this->m_Allocator.m_Initial = 16;
+        SlotPoolBase::BaseAddNewBlock((SlotPoolBase*)&this->m_Allocator, sizeof(DLListEntry<T>));
+        this->m_Allocator.m_Delta = 16;
+    }
+
+    nlDLListSlotPool(const int initial, const int delta)
+        : DLListContainerBase<T, BasicSlotPool<DLListEntry<T> > >(initial, delta)
+    {
     }
 
     ~nlDLListSlotPool()
     {
-        SlotPoolBase::BaseFreeBlocks(&this->m_Allocator, sizeof(T));
     }
 }; // total size: 0x1C
 

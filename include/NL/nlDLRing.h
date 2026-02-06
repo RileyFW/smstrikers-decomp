@@ -268,20 +268,28 @@ void nlRingAddEnd(T** list, T* item)
 template <typename T, typename CallbackType>
 void nlWalkDLRing(T* head, CallbackType* callback, void (CallbackType::*callbackFunc)(T*))
 {
-    nlWalkRing(head, callback, callbackFunc);
+    void (CallbackType::*func)(T*) = callbackFunc;
+    nlWalkRing(head, callback, func);
 }
 
 template <typename T, typename CallbackType>
 void nlWalkRing(T* head, CallbackType* callback, void (CallbackType::*callbackFunc)(T*))
 {
-    if (head != NULL)
+    if (head == NULL)
     {
-        T* current = head; // This likely uses r27
-        do
+        return;
+    }
+
+    T* current = head->m_next;
+    while (true)
+    {
+        T* next = current->m_next;
+        (callback->*callbackFunc)(current);
+        if (current == head)
         {
-            current = current->m_next;          // This likely uses r30/r31
-            (callback->*callbackFunc)(current); // This uses r28, r29
-        } while (current != head);
+            break;
+        }
+        current = next;
     }
 }
 

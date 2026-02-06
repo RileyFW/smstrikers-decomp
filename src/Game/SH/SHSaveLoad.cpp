@@ -3,9 +3,12 @@
 #include "dolphin/card.h"
 #include "Game/BaseGameSceneManager.h"
 #include "Game/DB/SaveLoad.h"
+#include "Game/FE/feFinder.h"
+#include "Game/FE/feInput.h"
 #include "Game/FE/tlTextInstance.h"
 #include "Game/ResetTask.h"
 #include "Game/Sys/gcmemcard.h"
+#include "NL/nlConfig.h"
 #include "types.h"
 
 enum eSaveLoad
@@ -33,6 +36,7 @@ extern float gSceneTime;
 extern bool gIgnoreMinWait;
 extern bool gContinueWithoutOperation;
 extern bool gSaveLoadEnabled;
+extern bool g_e3_Build;
 extern long gResult;
 extern float gRetryTimerDelay;
 
@@ -293,8 +297,9 @@ void CheckResults()
 /**
  * Offset/Address/Size: 0x1408 | 0x800B1990 | size: 0x1DC
  */
-void PushNoCardMessage()
+bool PushNoCardMessage()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -330,7 +335,17 @@ void SaveLoadScene::Update(float)
  */
 bool SaveLoadScene::IsIOEnabled()
 {
-    return true;
+    if (!gSaveLoadEnabled)
+    {
+        return false;
+    }
+
+    if (g_e3_Build)
+    {
+        return false;
+    }
+
+    return GetConfigBool(Config::Global(), "DisableMemCard", false) != true;
 }
 
 /**
@@ -338,7 +353,60 @@ bool SaveLoadScene::IsIOEnabled()
  */
 void SaveLoadScene::SetupForAboutAutoSave()
 {
-    FORCE_DONT_INLINE;
+    typedef TLComponentInstance* (*FindByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union {
+        FindByValue byValue;
+        FindByRef byRef;
+    } findFunc;
+
+    m_pFEPresentation->SetActiveSlide(mAboutAutoSaveSlide);
+
+    if (mButtonComponent == NULL)
+    {
+        ButtonComponent* ptr = new ((u8*)nlMalloc(sizeof(ButtonComponent), 8, false)) ButtonComponent();
+        mButtonComponent = ptr;
+
+        volatile InlineHasher hB, hA, h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+        h0.m_Hash = 0;
+        h1.m_Hash = 0;
+        h2.m_Hash = 0;
+        h3.m_Hash = 0;
+        h4.m_Hash = 0;
+        h5.m_Hash = 0;
+        h6.m_Hash = 0;
+        h7.m_Hash = 0;
+
+        unsigned long hash;
+        hash = nlStringLowerHash("buttons");
+        h8.m_Hash = hash;
+        h9.m_Hash = hash;
+
+        hash = nlStringLowerHash("Layer");
+        hB.m_Hash = hash;
+        hA.m_Hash = hash;
+
+        findFunc.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+
+        mButtonComponent->mButtonInstance = findFunc.byRef(
+            mAboutAutoSaveSlide,
+            (InlineHasher&)hB,
+            (InlineHasher&)h9,
+            (InlineHasher&)h7,
+            (InlineHasher&)h5,
+            (InlineHasher&)h3,
+            (InlineHasher&)h1);
+    }
+
+    mButtonComponent->SetState(ButtonComponent::BS_A_ONLY);
+    mButtonComponent->CentreButtons();
+
+    TLComponentInstance* inst = mButtonComponent->mButtonInstance;
+    if (inst != NULL)
+    {
+        inst->m_bVisible = false;
+    }
 }
 
 /**
@@ -346,6 +414,29 @@ void SaveLoadScene::SetupForAboutAutoSave()
  */
 void SaveLoadScene::UpdateForAboutToSaveSlide()
 {
+    if (PushNoCardMessage()) {
+        SceneCreated();
+        return;
+    }
+
+    if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x100, false, NULL)) {
+        SceneCreated();
+
+        gSceneTypeStackDepth = 0;
+        gSceneTypeStack[gSceneTypeStackDepth++] = ST_SAVE;
+        gSaveLoadStarted = false;
+        gSaveLoadFinished = false;
+        gCallbackMade = false;
+        gSceneTime = 0.0f;
+        ResetTask::s_resetPaused = true;
+    }
+
+    if (mButtonComponent != NULL) {
+        TLComponentInstance* inst = mButtonComponent->mButtonInstance;
+        if (inst != NULL) {
+            inst->m_bVisible = true;
+        }
+    }
 }
 
 /**

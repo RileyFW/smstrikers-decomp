@@ -100,10 +100,12 @@ struct GoalieSaveData : public EventData
 
     /* 0x04 */ nlVector3 v3BallVelocity;
     /* 0x10 */ cPlayer* pGoalie;
-    /* 0x14 */ float fWowFactor;
-    /* 0x18 */ unsigned int isSTS : 1;
-    /* 0x18 */ unsigned int saveType : 31;
-}; // total size: 0x1C
+    /* 0x14 */ cPlayer* pShooter;
+    /* 0x18 */ u32 saveType;
+    /* 0x1C */ float fWowFactor;
+    /* 0x20 */ unsigned int isSTS : 1;
+    /* 0x20 */ unsigned int padding : 31;
+}; // total size: 0x24
 
 struct GoalScoredData : public EventData
 {

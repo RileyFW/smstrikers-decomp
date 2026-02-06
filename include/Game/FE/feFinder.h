@@ -3,8 +3,6 @@
 
 #include "NL/nlString.h"
 
-class TLSlide;
-
 struct InlineHasher
 {
     /* 0x0 */ unsigned long m_Hash;
@@ -14,8 +12,10 @@ template <typename T, int N>
 class FEFinder
 {
 public:
-    static T* Find(TLSlide* slide, InlineHasher& h1, InlineHasher& h2, InlineHasher& h3, InlineHasher& h4, InlineHasher& h5, InlineHasher& h6);
-    static T* _Find(TLSlide* slide, unsigned long hash1, unsigned long hash2, unsigned long hash3, unsigned long hash4, unsigned long hash5, unsigned long hash6);
+    template <typename U>
+    static T* Find(U* slide, InlineHasher h1, InlineHasher h2, InlineHasher h3, InlineHasher h4, InlineHasher h5, InlineHasher h6);
+    template <typename U>
+    static T* _Find(U* slide, const unsigned long hash1, const unsigned long hash2, const unsigned long hash3, const unsigned long hash4, const unsigned long hash5, const unsigned long hash6);
 };
 
 #endif // _FEFINDER_H_

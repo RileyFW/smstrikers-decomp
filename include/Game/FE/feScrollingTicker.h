@@ -3,6 +3,7 @@
 
 #include "Game/BaseSceneHandler.h"
 #include "Game/FE/feTweener.h"
+#include "Game/FE/feTweenFuncs.h"
 #include "Game/FE/feScrollText.h"
 
 // Forward declarations
@@ -33,10 +34,10 @@ public:
     ~ScrollingTickerScene();
     ScrollingTickerScene();
 
-    void tickerClosed(void*);
-    void tickerOpened(void*);
-    void setScaleTweenCallback(void*, const float*);
-    void setSizeTweenCallback(void*, const float*);
+    static void tickerClosed(void*);
+    static void tickerOpened(void*);
+    static void setScaleTweenCallback(void*, const float*);
+    static void setSizeTweenCallback(void*, const float*);
     // void @4@SceneCreated();
     // void @4@Update(float);
 

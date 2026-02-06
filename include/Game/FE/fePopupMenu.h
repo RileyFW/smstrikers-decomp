@@ -2,6 +2,11 @@
 #define _FEPOPUPMENU_H_
 
 #include "Game/FE/fePresentation.h"
+#include "Game/FE/feInput.h"
+#include "Game/BaseSceneHandler.h"
+#include "NL/nlBasicString.h"
+#include "NL/nlColour.h"
+#include "NL/nlFunction.h"
 
 // void CastToSomeType<TLInstance>(TLInstance*, void*);
 // void CastToSomeType<TLSlide>(TLSlide*, void*);
@@ -42,22 +47,46 @@ enum ePopupMenu
     POPUP_MEMCARD_ASK_SAVE_OVERWRITE = 28,
 };
 
-class FEPopupMenu
+struct Popup
+{
+    /* 0x00 */ BasicString<unsigned short, Detail::TempStringAllocator>* pMessage;         // size 0x4
+    /* 0x04 */ BasicString<unsigned short, Detail::TempStringAllocator>* pOptionLabels[4]; // size 0x10
+    /* 0x14 */ int numOptions;                                                             // size 0x4
+}; // total size: 0x18
+
+class FEPopupMenu : public BaseSceneHandler
 {
 public:
+    FEPopupMenu();
+    virtual ~FEPopupMenu();
+    virtual void Update(float);
+    virtual void SceneCreated();
+
     void SetOptionTextColourOnCurrent(bool);
     void ResizeHighlight();
     void CentrePopup(float, float);
     void SetPositions();
-    void Update(float);
-    void SceneCreated();
-    ~FEPopupMenu();
-    FEPopupMenu();
 
     void Create(ePopupMenu);
+    void Create(ePopupMenu, Function<FnVoidVoid>&, Function<FnVoidVoid>&);
+    static void Nothing();
 
-    /* 0x0 */ TLSlide* m_slides;
-};
+    // /* 0x0 */ TLSlide* m_slides;
+
+    /* 0x01C */ unsigned short mMessageBuffer[1024];  // size 0x800
+    /* 0x81C */ unsigned short mOptionBuffers[4][64]; // size 0x200
+    /* 0xA1C */ bool mMenuDisplayed;                  // size 0x1
+    /* 0xA1D */ bool mMenuCreated;                    // size 0x1
+    /* 0xA1E */ bool mRunCallBack;                    // size 0x1
+    /* 0xA20 */ int mHighlightedOption;               // size 0x4
+    /* 0xA24 */ float mAcceptDelayTime;               // size 0x4
+    /* 0xA28 */ Popup mPopup;                         // size 0x18
+    /* 0xA40 */ eFEINPUT_PAD mControlInput;           // size 0x4
+    /* 0xA44 */ Function<FnVoidVoid> callBacks[4];    // size 0x20
+    /* 0xA64 */ nlColour mOptionColour;               // size 0x4
+    /* 0xA68 */ feVector3 mHighlightSize;             // size 0xC
+    /* 0xA74 */ ePopupMenu mType;                     // size 0x4
+}; // total size: 0xA78
 
 // class FEFinder<TLTextInstance, 3>
 // {

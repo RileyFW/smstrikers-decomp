@@ -8,12 +8,13 @@
 #include "Game/GameInfo.h"
 #include "Game/Camera/CameraMan.h"
 #include "Game/Camera/GameplayCam.h"
+#include "Game/BasicStadium.h"
 #include "NL/nlConfig.h"
 #include "NL/nlLexicalCast.h"
 #include "NL/nlMath.h"
 
-extern cTeam* g_pTeams[2];
-extern PowerupBase* g_pPowerups[25];
+extern cTeam* g_pTeams[];
+extern PowerupBase* g_pPowerups[];
 
 // /**
 //  * Offset/Address/Size: 0x24 | 0x800401E8 | size: 0x4
@@ -248,9 +249,49 @@ void DestroyGame()
 
 /**
  * Offset/Address/Size: 0x2024 | 0x8003E598 | size: 0xF4
+ * TODO: 99.0% match - r28/r29/r30 register rotation for pGame/i/ppPowerups
  */
 void DestroyPowerups()
 {
+    int i;
+    cGame* pGame;
+    cTeam** ppTeams;
+    cTeam* pTeam;
+
+    ppTeams = g_pTeams;
+    pGame = g_pGame;
+
+    for (i = 0; i < 2; i++)
+    {
+        pTeam = ppTeams[i];
+        if (pTeam != NULL)
+        {
+            pTeam->mfPowerupMeter = 0.0f;
+        }
+    }
+
+    for (i = 0; i < 25; i++)
+    {
+        PowerupBase* pPowerup = g_pPowerups[i];
+        if (pPowerup != NULL)
+        {
+            pPowerup->Destroy(true);
+            g_pPowerups[i] = NULL;
+        }
+    }
+
+    if (BasicStadium::GetCurrentStadium()->mpNPCManager != NULL)
+    {
+        if (BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp != NULL)
+        {
+            if (pGame->mbCaptainShotToScoreOn == false)
+            {
+                BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp->Hide(true);
+            }
+        }
+    }
+
+    CompactPowerups();
 }
 
 /**
@@ -377,8 +418,42 @@ void cGame::BlowUpPowerups(const nlVector3& pos, float radius)
 /**
  * Offset/Address/Size: 0xCE4 | 0x8003D258 | size: 0x10C
  */
-void cGame::ResetPowerups(bool)
+void cGame::ResetPowerups(bool clearPowerUps)
 {
+    for (int i = 0; i < 2; i++)
+    {
+        cTeam* pTeam = g_pTeams[i];
+        if (pTeam != nullptr)
+        {
+            if (clearPowerUps)
+            {
+                pTeam->ClearAllPowerUps();
+                pTeam->ClearCurrentPowerUp();
+            }
+            pTeam->mfPowerupMeter = 0.0f;
+        }
+    }
+
+    for (int i = 0; i < 25; i++)
+    {
+        PowerupBase* pPowerup = g_pPowerups[i];
+        if (pPowerup != nullptr)
+        {
+            pPowerup->Destroy(true);
+            g_pPowerups[i] = nullptr;
+        }
+    }
+
+    if (BasicStadium::GetCurrentStadium()->mpNPCManager != nullptr)
+    {
+        if (BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp != nullptr)
+        {
+            if (!mbCaptainShotToScoreOn)
+            {
+                BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp->Hide(true);
+            }
+        }
+    }
 }
 
 /**
@@ -578,20 +653,176 @@ void cGame::InitGameState(eGameState state)
 /**
  * Offset/Address/Size: 0x25C | 0x8003C7D0 | size: 0x118
  */
-void cGame::IsThoughtAllowed(unsigned long)
+bool cGame::IsThoughtAllowed(unsigned long thought_id)
 {
+    bool bAllowedToThink = false;
+
+    if (mThoughtsAllowedThisUpdate > 0)
+    {
+        ListEntry<unsigned long>* head = mThoughtsQueue.m_Head;
+        if (head == NULL)
+        {
+            bAllowedToThink = true;
+        }
+        else if (thought_id == head->data)
+        {
+            ListEntry<unsigned long>* removed = nlListRemoveStart<ListEntry<unsigned long> >(&mThoughtsQueue.m_Head, &mThoughtsQueue.m_Tail);
+            unsigned long temp;
+            if (&temp != NULL)
+            {
+                temp = removed->data;
+            }
+            ::operator delete(removed);
+            bAllowedToThink = true;
+        }
+    }
+
+    if (!bAllowedToThink)
+    {
+        ListEntry<unsigned long>* node = mThoughtsQueue.m_Head;
+        bool bFound = false;
+        while (node != NULL)
+        {
+            if (thought_id == node->data)
+            {
+                bFound = true;
+                break;
+            }
+            node = node->next;
+        }
+
+        if (!bFound)
+        {
+            ListEntry<unsigned long>* newEntry = (ListEntry<unsigned long>*)nlMalloc(sizeof(ListEntry<unsigned long>), 8, false);
+            if (newEntry != NULL)
+            {
+                newEntry->next = NULL;
+                newEntry->data = thought_id;
+            }
+            nlListAddEnd(&mThoughtsQueue.m_Head, &mThoughtsQueue.m_Tail, newEntry);
+        }
+    }
+
+    if (bAllowedToThink)
+    {
+        mThoughtsAllowedThisUpdate--;
+    }
+
+    return bAllowedToThink;
 }
 
 /**
  * Offset/Address/Size: 0x1A0 | 0x8003C714 | size: 0xBC
  */
-void cGame::AbortPendingThought(unsigned long)
+bool cGame::AbortPendingThought(unsigned long thoughtHash)
 {
+    struct ThoughtEntry
+    {
+        ThoughtEntry* next;
+        u32 hash;
+    };
+
+    ThoughtEntry* head = (ThoughtEntry*)*(void**)((u8*)this + 0x50);
+    ThoughtEntry** pHead = (ThoughtEntry**)((u8*)this + 0x50);
+    ThoughtEntry** pTail = (ThoughtEntry**)((u8*)this + 0x54);
+
+    if (head != NULL)
+    {
+        // Check if the first entry matches
+        if (thoughtHash == head->hash)
+        {
+            ThoughtEntry* newHead;
+            if (head == *pTail)
+            {
+                *pTail = newHead = 0;
+            }
+            else
+            {
+                newHead = head->next;
+            }
+
+            delete *pHead;
+            *pHead = newHead;
+        }
+        else
+        {
+            // Search through rest of list
+            ThoughtEntry* prev = head;
+            ThoughtEntry* curr = head->next;
+
+            while (curr != NULL)
+            {
+                if (thoughtHash == curr->hash)
+                {
+                    // Remove this entry
+                    prev->next = curr->next;
+
+                    if (curr == *pTail)
+                    {
+                        *pTail = prev;
+                    }
+
+                    delete curr;
+                    break;
+                }
+
+                prev = curr;
+                curr = curr->next;
+            }
+        }
+    }
+
+    return true;
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x8003C574 | size: 0x1A0
  */
-void cGame::SetDifficulty(eDifficultyID, eDifficultyID, eDifficultyID)
+void cGame::SetDifficulty(eDifficultyID diff0, eDifficultyID diff1, eDifficultyID diff2)
 {
+    if (diff0 != DIFF_DEFAULT)
+    {
+        g_pTeams[0]->SetDifficulty(diff0);
+    }
+
+    if (diff1 != DIFF_DEFAULT)
+    {
+        g_pTeams[1]->SetDifficulty(diff1);
+    }
+
+    if (diff2 != DIFF_DEFAULT)
+    {
+        SkillTweaks skillTweaks;
+        SkillTweaks* pSkillTweaks;
+
+        skillTweaks.Init(diff2, false);
+
+        for (int i = 0; i < 2; i++)
+        {
+            pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pTeams[i]->m_nSide);
+            pSkillTweaks->fShotValue1 = skillTweaks.fShotValue1;
+            pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pTeams[i]->m_nSide);
+            pSkillTweaks->fShotValue2 = skillTweaks.fShotValue2;
+            pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pTeams[i]->m_nSide);
+            pSkillTweaks->fShotValue3 = skillTweaks.fShotValue3;
+            pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pTeams[i]->m_nSide);
+            pSkillTweaks->fShotChance0 = skillTweaks.fShotChance0;
+            pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pTeams[i]->m_nSide);
+            pSkillTweaks->fShotChance1 = skillTweaks.fShotChance1;
+            pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pTeams[i]->m_nSide);
+            pSkillTweaks->fShotChance2 = skillTweaks.fShotChance2;
+            pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pTeams[i]->m_nSide);
+            pSkillTweaks->fShotChance3 = skillTweaks.fShotChance3;
+            pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pTeams[i]->m_nSide);
+            pSkillTweaks->fShotChance4 = skillTweaks.fShotChance4;
+            pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pTeams[i]->m_nSide);
+            pSkillTweaks->fSTSWindupTime = skillTweaks.fSTSWindupTime;
+            pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pTeams[i]->m_nSide);
+            pSkillTweaks->fAttackCarrierDistance = skillTweaks.fAttackCarrierDistance;
+            pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pTeams[i]->m_nSide);
+            pSkillTweaks->fLooseBallChaseDistance = skillTweaks.fLooseBallChaseDistance;
+            pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pTeams[i]->m_nSide);
+            pSkillTweaks->fGoalieCanInterceptPass = skillTweaks.fGoalieCanInterceptPass;
+        }
+    }
 }

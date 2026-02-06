@@ -59,8 +59,8 @@ public:
     void SetPotentialScorer(cPlayer*);
     void ChangeGameState(eGameState);
     void InitGameState(eGameState);
-    void IsThoughtAllowed(unsigned long);
-    void AbortPendingThought(unsigned long);
+    bool IsThoughtAllowed(unsigned long);
+    bool AbortPendingThought(unsigned long);
     void SetDifficulty(eDifficultyID, eDifficultyID, eDifficultyID);
 
     inline bool IsGameplayOrOvertime()
@@ -87,7 +87,7 @@ public:
     /* 0x42 */ bool mInSuddenDeath;
     /* 0x44 */ Timer mBowserTimer;
     /* 0x48 */ f32 mfCheatTilt;
-    /* 0x4C */ nlListContainer<SomeStructOrClass> mThoughtsQueue;
+    /* 0x4C */ nlListContainer<unsigned long> mThoughtsQueue;
     /* 0x58 */ int mThoughtsAllowedThisUpdate;
 }; // total size: 0x5C
 

@@ -15,7 +15,15 @@
 
 extern nlColour MenuHighliteColour;
 
-bool SingleHighlite::TEMPDISABLESOUND = true;
+namespace SingleHighlite
+{
+bool TEMPDISABLESOUND = true;
+}
+
+namespace DoubleHighlite
+{
+static bool TEMPDISABLESOUND;
+}
 
 enum nlLanguage
 {
@@ -517,26 +525,140 @@ TLInstance* FindComponent(TLSlide* slide, const char* name)
     return inst;
 }
 
-// /**
-//  * Offset/Address/Size: 0xE64 | 0x800A3F20 | size: 0xC
-//  */
-// void DoubleHighlite::TempDisableSound()
-// {
-// }
+/**
+ * Offset/Address/Size: 0xE64 | 0x800A3F20 | size: 0xC
+ */
+void DoubleHighlite::TempDisableSound()
+{
+    TEMPDISABLESOUND = true;
+}
 
-// /**
-//  * Offset/Address/Size: 0xCB4 | 0x800A3D70 | size: 0x1B0
-//  */
-// void DoubleHighlite::OpenItem(TLComponentInstance*)
-// {
-// }
+/**
+ * Offset/Address/Size: 0xCB4 | 0x800A3D70 | size: 0x1B0
+ * TODO: 85.9% match - remaining diffs are around forcing direct-branch codegen for
+ * FEFinder<TLImageInstance, 2>::Find with the exact register usage (avoiding mtctr/bctrl
+ * function-pointer dispatch while still preserving the hasher stack layout).
+ */
+void DoubleHighlite::OpenItem(TLComponentInstance* component)
+{
+    typedef TLImageInstance* (*FindImageByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLImageInstance* (*FindImageByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
 
-// /**
-//  * Offset/Address/Size: 0xC00 | 0x800A3CBC | size: 0xB4
-//  */
-// void DoubleHighlite::CloseItem(TLComponentInstance*)
-// {
-// }
+    union
+    {
+        FindImageByValue byValue;
+        FindImageByRef byRef;
+    } findImage;
+
+    TLComponentInstance* highlite;
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8;
+    volatile InlineHasher h7, h6, h5, h4, h3, h2, h1, h0;
+
+    findImage.byValue = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
+
+    component->SetActiveSlide("high");
+
+    highlite = (TLComponentInstance*)component->GetActiveSlide()->m_instances;
+    TLComponentInstance* head = highlite;
+    unsigned long hash = nlStringLowerHash("highlite");
+    while (highlite)
+    {
+        if (hash == highlite->m_hashID)
+        {
+            break;
+        }
+
+        highlite = (TLComponentInstance*)highlite->m_next;
+        if (highlite == head)
+        {
+            highlite = NULL;
+            break;
+        }
+    }
+
+    highlite->m_bVisible = true;
+    highlite->SetActiveSlide("high");
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+    h8.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    hash = nlStringLowerHash("may_highlite");
+    hA.m_Hash = hash;
+    hB.m_Hash = hash;
+
+    findImage.byRef(
+                 highlite->GetActiveSlide(),
+                 (InlineHasher&)hB,
+                 (InlineHasher&)h9,
+                 (InlineHasher&)h7,
+                 (InlineHasher&)h5,
+                 (InlineHasher&)h3,
+                 (InlineHasher&)h1)
+        ->SetAssetColour(MenuHighliteColour);
+
+    volatile InlineHasher g7, g6;
+    volatile InlineHasher g4, g3, g2, g1, g0;
+
+    g0.m_Hash = 0;
+    h1.m_Hash = 0;
+    g1.m_Hash = 0;
+    h3.m_Hash = 0;
+    g2.m_Hash = 0;
+    h5.m_Hash = 0;
+    g3.m_Hash = 0;
+    h7.m_Hash = 0;
+    g4.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    hash = nlStringLowerHash("may_highlite2");
+    g6.m_Hash = hash;
+    g7.m_Hash = hash;
+
+    findImage.byRef(
+                 highlite->GetActiveSlide(),
+                 (InlineHasher&)g7,
+                 (InlineHasher&)h9,
+                 (InlineHasher&)h7,
+                 (InlineHasher&)h5,
+                 (InlineHasher&)h3,
+                 (InlineHasher&)h1)
+        ->SetAssetColour(MenuHighliteColour);
+
+    highlite->Update(0.0f);
+    component->Update(0.0f);
+
+    if (TEMPDISABLESOUND == false)
+    {
+        FEAudio::PlayAnimAudioEvent("sfx_menu_highlight_open", false);
+    }
+
+    TEMPDISABLESOUND = false;
+}
+
+/**
+ * Offset/Address/Size: 0xC00 | 0x800A3CBC | size: 0xB4
+ */
+void DoubleHighlite::CloseItem(TLComponentInstance* component)
+{
+    TLComponentInstance* highlite;
+
+    component->SetActiveSlide("out");
+
+    highlite = (TLComponentInstance*)FindComponent(component->GetActiveSlide(), "highlite");
+    highlite->m_bVisible = true;
+    highlite->SetActiveSlide("out");
+    highlite->SetAssetColour(MenuHighliteColour);
+    component->Update(0.0f);
+}
 
 /**
  * Offset/Address/Size: 0xBF4 | 0x800A3CB0 | size: 0xC
@@ -618,8 +740,89 @@ void SingleHighlite::OpenItem(TLComponentInstance* component)
 /**
  * Offset/Address/Size: 0x990 | 0x800A3A4C | size: 0x120
  */
-void SingleHighlite::CloseItem(TLComponentInstance*)
+void SingleHighlite::CloseItem(TLComponentInstance* component)
 {
+    typedef TLComponentInstance* (*FindComponentByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindComponentByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+    typedef TLImageInstance* (*FindImageByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLImageInstance* (*FindImageByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindComponentByValue byValue;
+        FindComponentByRef byRef;
+    } findComponent;
+    union
+    {
+        FindImageByValue byValue;
+        FindImageByRef byRef;
+    } findImage;
+
+    unsigned long hash;
+
+    volatile InlineHasher hC;
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8;
+    volatile InlineHasher h7, h6, h5, h4, h3, h2, h1, h0;
+
+    findComponent.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+    findImage.byValue = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
+
+    component->SetActiveSlide("out");
+    component->Update(0.0f);
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+    h8.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    hash = nlStringLowerHash("high");
+    hA.m_Hash = hash;
+    hB.m_Hash = hash;
+    component = findComponent.byRef(
+        component->GetActiveSlide(),
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    component->SetActiveSlide("out");
+    component->Update(0.0f);
+
+    volatile InlineHasher g7, g6;
+    volatile InlineHasher g5, g4, g3, g2, g1, g0;
+
+    g0.m_Hash = 0;
+    h1.m_Hash = 0;
+    g1.m_Hash = 0;
+    h3.m_Hash = 0;
+    g2.m_Hash = 0;
+    h5.m_Hash = 0;
+    g3.m_Hash = 0;
+    h7.m_Hash = 0;
+    g4.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    hash = nlStringLowerHash("may_highlite");
+    g6.m_Hash = hash;
+    g7.m_Hash = hash;
+    findImage.byRef(
+                 component->GetActiveSlide(),
+                 (InlineHasher&)g7,
+                 (InlineHasher&)h9,
+                 (InlineHasher&)h7,
+                 (InlineHasher&)h5,
+                 (InlineHasher&)h3,
+                 (InlineHasher&)h1)
+        ->SetAssetColour(MenuHighliteColour);
 }
 
 // /**

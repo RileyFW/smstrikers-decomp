@@ -4,9 +4,9 @@
 
 extern bool g_bShadowVolumes;
 
-static float sfCoPlanarZ;
-static float sfCoPlanar0Z;
-static float sfPlanarShadowOpacity;
+static float sfCoPlanarZ = 0.1f;
+static float sfCoPlanar0Z = 0.041666668f;
+static float sfPlanarShadowOpacity = 0.3f;
 static nlAVLTreeSlotPool<unsigned long, AABBDimensions, DefaultKeyCompare<unsigned long> > boundingBoxCache;
 
 // /**
@@ -465,6 +465,7 @@ void DrawCoPlanarReference(eGLView, const glModel&, const nlMatrix4&, unsigned l
  */
 void DrawPlanarShadow(const glModel*, const nlMatrix4&, float, bool, bool, bool, unsigned long)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

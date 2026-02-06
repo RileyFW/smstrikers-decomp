@@ -3,10 +3,18 @@
 
 #include "Game/FE/Overlay/OverlayHandlerSummary.h"
 #include "Game/FE/FEAudio.h"
+#include "Game/FE/feHelpFuncs.h"
+#include "Game/FE/feFinder.h"
+#include "Game/FE/tlTextInstance.h"
 #include "Game/GameInfo.h"
 #include "Game/Game.h"
 
 extern FEInput* g_pFEInput;
+
+namespace DoubleHighlite
+{
+void OpenItem(TLComponentInstance*);
+}
 
 // /**
 //  * Offset/Address/Size: 0x38 | 0x800B01B4 | size: 0x40
@@ -341,7 +349,36 @@ void PauseMenuScene::TransitionOut(PauseMenuScene::TransitionType)
 
 /**
  * Offset/Address/Size: 0x0 | 0x800AD4F8 | size: 0xD0
+ * TODO: 99.9% match - only `i` diff on bl Find (branch offset relocation)
  */
-void PauseMenuScene::OpenItem(TLComponentInstance*)
+void PauseMenuScene::OpenItem(TLComponentInstance* instance)
 {
+    DoubleHighlite::OpenItem(instance);
+
+    if (mMenuItems.mMenuItems[mMenuItems.mCurrentIndex].mDisabled)
+    {
+        InlineHasher hashers[12];
+        InlineHasher* p = hashers;
+        int i;
+        for (i = 0; i < 10; i++)
+        {
+            p[i].m_Hash = 0;
+        }
+
+        p[10].m_Hash = nlStringLowerHash("disabled_text");
+        p[11].m_Hash = p[10].m_Hash;
+
+        TLSlide* slide = instance->GetActiveSlide();
+        TLTextInstance* text = FEFinder<TLTextInstance, 3>::Find(
+            slide,
+            p[11],
+            p[9],
+            p[7],
+            p[5],
+            p[3],
+            p[1]);
+
+        text->m_LocStrId = 0x38202C30;
+        text->m_OverloadFlags |= 0x8;
+    }
 }

@@ -19,6 +19,25 @@ void ScrollingTickerScene::CloseMessengerNow()
  */
 void ScrollingTickerScene::CloseMessenger()
 {
+    m_pFETweenManager.clearTweensOnObj(this);
+
+    f32 endScale = 0.0f;
+    f32 startScale = 1.0f;
+
+    FETweener* scaleTween = m_pFETweenManager.createTween(
+        &endScale, &startScale, 0.3f, 0.1f, 1,
+        TweenFunctions::easeinelastic, this, setScaleTweenCallback);
+
+    FETweener* sizeTween = m_pFETweenManager.createTween(
+        &endScale, &startScale, 0.15f, 0.0f, 1,
+        TweenFunctions::linear, this, setSizeTweenCallback);
+
+    sizeTween->setNextTween(scaleTween);
+    scaleTween->setDoneCallFunc(tickerClosed, this);
+    m_pFETweenManager.startTween(sizeTween);
+
+    m_textBox->m_bVisible = false;
+    m_active = 0;
 }
 
 /**
@@ -79,9 +98,9 @@ ScrollingTickerScene::ScrollingTickerScene()
 /**
  * Offset/Address/Size: 0xE88 | 0x800A0AE0 | size: 0x30
  */
-void ScrollingTickerScene::tickerClosed(void*)
+void ScrollingTickerScene::tickerClosed(void* scene)
 {
-    SetVisible(false);
+    ((ScrollingTickerScene*)scene)->SetVisible(false);
 }
 
 /**
@@ -94,15 +113,44 @@ void ScrollingTickerScene::tickerOpened(void*)
 /**
  * Offset/Address/Size: 0xED0 | 0x800A0B28 | size: 0xCC
  */
-void ScrollingTickerScene::setScaleTweenCallback(void*, const float*)
+void ScrollingTickerScene::setScaleTweenCallback(void* scene, const float* value)
 {
+    ScrollingTickerScene* tscene = (ScrollingTickerScene*)scene;
+    f32 val = *value;
+    f32 x = tscene->m_ballClosedScale.f.x * val;
+    f32 y = tscene->m_ballClosedScale.f.y * val;
+    f32 z = tscene->m_ballClosedScale.f.z * val;
+    tscene->m_leftBall->SetAssetScale(x, y, z);
+    tscene->m_rightBall->SetAssetScale(x, y, z);
+    tscene->m_backRectangle->SetAssetScale(
+        tscene->m_grayClosedScale.f.x * val,
+        tscene->m_grayClosedScale.f.y * val,
+        tscene->m_grayClosedScale.f.z * val);
 }
 
 /**
  * Offset/Address/Size: 0xF9C | 0x800A0BF4 | size: 0xB0
  */
-void ScrollingTickerScene::setSizeTweenCallback(void*, const float*)
+void ScrollingTickerScene::setSizeTweenCallback(void* scene, const float* value)
 {
+    ScrollingTickerScene* tscene = (ScrollingTickerScene*)scene;
+    f32 val = value[0];
+    f32 closedY = tscene->m_leftBallClosedPos.f.y;
+    f32 open = tscene->m_leftBallOpenPos.f.x;
+    f32 x;
+
+    x = val * (open - tscene->m_leftBallClosedPos.f.x) + tscene->m_leftBallClosedPos.f.x;
+    tscene->m_leftBall->SetAssetPosition(x, closedY, 0.0f);
+
+    open = tscene->m_rightBallOpenPos.f.x;
+    x = open - tscene->m_rightBallClosedPos.f.x;
+    x = val * x + tscene->m_rightBallClosedPos.f.x;
+    tscene->m_rightBall->SetAssetPosition(x, closedY, 0.0f);
+
+    open = tscene->m_grayOpenScale.f.x;
+    x = open - tscene->m_grayClosedScale.f.x;
+    x = val * x + tscene->m_grayClosedScale.f.x;
+    tscene->m_backRectangle->SetAssetScale(x, tscene->m_grayOpenScale.f.y, 1.0f);
 }
 
 // /**

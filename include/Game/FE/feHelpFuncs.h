@@ -79,23 +79,21 @@ public:
 //     void Build(CaptainSidekickFilename::Type, char*, int, int, int);
 // };
 
-class SingleHighlite
+namespace SingleHighlite
 {
-public:
-    void CloseItem(TLComponentInstance*);
-    void OpenItem(TLComponentInstance*);
-    void TempDisableSound();
+static void CloseItem(TLComponentInstance*);
+static void OpenItem(TLComponentInstance*);
+static void TempDisableSound();
 
-    static bool TEMPDISABLESOUND;
-};
+extern bool TEMPDISABLESOUND;
+} // namespace SingleHighlite
 
-// class DoubleHighlite
-// {
-// public:
-//     void CloseItem(TLComponentInstance*);
-//     void OpenItem(TLComponentInstance*);
-//     void TempDisableSound();
-// };
+namespace DoubleHighlite
+{
+static void CloseItem(TLComponentInstance*);
+static void OpenItem(TLComponentInstance*);
+static void TempDisableSound();
+} // namespace DoubleHighlite
 
 // class GetLOCDifficultyName(GameplaySettings
 // {

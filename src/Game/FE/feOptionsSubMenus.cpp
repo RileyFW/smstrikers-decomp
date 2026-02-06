@@ -13,6 +13,8 @@
 #include "Game/FE/feFinder.h"
 #include "types.h"
 
+extern nlColour MenuHighliteColour;
+
 static const char* MAIN_MENU_SLIDE = "Slide1";
 static const char* VISUAL_MENU_SLIDE = "Slide6";
 static const char* SAVE_LOAD_SLIDE = "Slide_SaveLoad";
@@ -132,15 +134,15 @@ OptionsSaveLoad::OptionsSaveLoad(FEPresentation* presentation, ButtonComponent::
         }
         instance->Update(0.0f);
 
-        MenuItem<SlideMenuItem>* menuItem = &mMenuItems.mMenuItems[mMenuItems.mNumItemsAdded];
-        menuItem->mType = (SlideMenuItem*)instance;
+        MenuItem<TLComponentInstance>* menuItem = &mMenuItems.mMenuItems[mMenuItems.mNumItemsAdded];
+        menuItem->mType = instance;
         mMenuItems.mNumItemsAdded++;
 
         menuItem->mCallbacks[0].mTag = FREE_FUNCTION;
-        menuItem->mCallbacks[0].mFreeFunction = (void (*)(SlideMenuItem*))openItem;
+        menuItem->mCallbacks[0].mFreeFunction = (void (*)(TLComponentInstance*))openItem;
 
         menuItem->mCallbacks[1].mTag = FREE_FUNCTION;
-        menuItem->mCallbacks[1].mFreeFunction = (void (*)(SlideMenuItem*))closeItem;
+        menuItem->mCallbacks[1].mFreeFunction = (void (*)(TLComponentInstance*))closeItem;
 
         menuItem->mDisabled = false;
 
@@ -169,8 +171,89 @@ OptionsSaveLoad::OptionsSaveLoad(FEPresentation* presentation, ButtonComponent::
 /**
  * Offset/Address/Size: 0x620 | 0x800B5664 | size: 0x124
  */
-void OptionsGameplayMenuV2::CloseItem(TLComponentInstance*)
+void OptionsGameplayMenuV2::CloseItem(TLComponentInstance* compinstance)
 {
+    typedef TLComponentInstance* (*FindComponentByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindComponentByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+    typedef TLImageInstance* (*FindImageByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLInstance* (*FindImageAsInstance)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindComponentByValue byValue;
+        FindComponentByRef byRef;
+    } findComponent;
+
+    union
+    {
+        FindImageByValue typed;
+        FindImageAsInstance asInstance;
+    } findImage;
+
+    unsigned long hash;
+
+    findComponent.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+    findImage.typed = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
+
+    compinstance->SetActiveSlide("out");
+    compinstance->Update(0.0f);
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+    h8.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    hash = nlStringLowerHash("high");
+    hA.m_Hash = hash;
+    hB.m_Hash = hash;
+
+    compinstance = findComponent.byRef(
+        compinstance->GetActiveSlide(),
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    compinstance->SetActiveSlide("out");
+    compinstance->Update(0.0f);
+
+    volatile InlineHasher g7, g6;
+    volatile InlineHasher g5, g4, g3, g2, g1, g0;
+
+    g0.m_Hash = 0;
+    h1.m_Hash = 0;
+    g1.m_Hash = 0;
+    h3.m_Hash = 0;
+    g2.m_Hash = 0;
+    h5.m_Hash = 0;
+    g3.m_Hash = 0;
+    h7.m_Hash = 0;
+    g4.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    hash = nlStringLowerHash("may_highlite");
+    g6.m_Hash = hash;
+    g7.m_Hash = hash;
+    findImage.asInstance(
+                 compinstance->GetActiveSlide(),
+                 (InlineHasher&)g7,
+                 (InlineHasher&)h9,
+                 (InlineHasher&)h7,
+                 (InlineHasher&)h5,
+                 (InlineHasher&)h3,
+                 (InlineHasher&)h1)
+        ->SetAssetColour(MenuHighliteColour);
 }
 
 /**
@@ -386,7 +469,7 @@ void OptionsVisualMenuV2::Update(float dt)
 {
     OptionsSubMenu::Update(dt);
 
-    MenuItem<SlideMenuItem>* menuItem = &mMenuItems.mMenuItems[1];
+    MenuItem<TLComponentInstance>* menuItem = &mMenuItems.mMenuItems[1];
     if (menuItem == NULL)
         return;
 
@@ -683,23 +766,29 @@ OptionsCheatsMenu::OptionsCheatsMenu(FEPresentation*, ButtonComponent::ButtonSta
 
 /**
  * Offset/Address/Size: 0x4ECC | 0x800B9F10 | size: 0xB8
- * TODO: this Find-Template is still a bit of a puzzle....
  */
 void OptionsSubMenu::SetAButtonLOC(unsigned long locStrId)
 {
+    FORCE_DONT_INLINE;
+
+    typedef TLTextInstance* (*FindTextByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLTextInstance* (*FindTextByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindTextByValue byValue;
+        FindTextByRef byRef;
+    } findText;
+
     if (m_buttons == NULL)
     {
         return;
     }
 
-    InlineHasher h7;
-    InlineHasher h6;
-    InlineHasher h5;
-    InlineHasher h4;
-    InlineHasher h3;
-    InlineHasher h2;
-    InlineHasher h1;
-    InlineHasher h0;
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+
+    findText.byValue = FEFinder<TLTextInstance, 3>::Find<TLSlide>;
 
     h0.m_Hash = 0;
     h1.m_Hash = 0;
@@ -709,20 +798,21 @@ void OptionsSubMenu::SetAButtonLOC(unsigned long locStrId)
     h5.m_Hash = 0;
     h6.m_Hash = 0;
     h7.m_Hash = 0;
-    // h8.m_Hash = 0;
+    h8.m_Hash = 0;
+    h9.m_Hash = 0;
 
     unsigned long hash = nlStringLowerHash("accept");
-    h0.m_Hash = hash;
-    h1.m_Hash = hash;
+    hB.m_Hash = hash;
+    hA.m_Hash = hash;
 
-    TLTextInstance* textInstance = FEFinder<TLTextInstance, 3>::Find(
+    TLTextInstance* textInstance = findText.byRef(
         m_buttons->GetActiveSlide(),
-        h0,
-        h1,
-        h2,
-        h3,
-        h4,
-        h5);
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
 
     if (textInstance != NULL)
     {
@@ -734,9 +824,50 @@ void OptionsSubMenu::SetAButtonLOC(unsigned long locStrId)
 /**
  * Offset/Address/Size: 0x4F84 | 0x800B9FC8 | size: 0xC8
  */
-void OptionsSubMenu::SetButtonState(ButtonComponent::ButtonState)
+void OptionsSubMenu::SetButtonState(ButtonComponent::ButtonState buttonState)
 {
     FORCE_DONT_INLINE;
+
+    typedef TLComponentInstance* (*FindComponentByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindComponentByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindComponentByValue byValue;
+        FindComponentByRef byRef;
+    } findComponent;
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+
+    h9.m_Hash = h8.m_Hash = nlStringLowerHash("buttons");
+    hA.m_Hash = hB.m_Hash = nlStringLowerHash("Layer");
+
+    findComponent.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+
+    m_buttons = findComponent.byRef(
+        m_pres->m_currentSlide,
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    mButtons.mButtonInstance = m_buttons;
+    mButtons.SetState(buttonState);
+    m_currentButtonState = buttonState;
+
+    SetAButtonLOC(0x527F4084);
 }
 
 /**
@@ -800,7 +931,7 @@ void OptionsSubMenu::GoBack()
 
     m_pres->SetActiveSlide(MAIN_MENU_SLIDE);
     m_pres->Update(0.0f);
-    SetButtonState((ButtonComponent::ButtonState)0);
+    SetButtonState(ButtonComponent::BS_A_AND_B);
 }
 
 /**
@@ -815,6 +946,13 @@ void OptionsSubMenu::Update(float)
  */
 OptionsSubMenu::~OptionsSubMenu()
 {
+    for (int i = 0; i < 8; i++)
+    {
+        if (mSlideMenuLists[i] != NULL)
+        {
+            delete mSlideMenuLists[i];
+        }
+    }
 }
 
 // /**

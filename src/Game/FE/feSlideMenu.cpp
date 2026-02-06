@@ -15,6 +15,39 @@ void FESlideMenu::UpdatePresentation()
  */
 bool FESlideMenu::PrevItem()
 {
+    if (m_lockInput) {
+        return false;
+    }
+
+    u8 idx = m_currentSlide;
+    bool changed = true;
+
+    if (idx == 0) {
+        if (m_doWrapAround) {
+            m_currentSlide = m_size - 1;
+        } else {
+            changed = false;
+        }
+    } else {
+        m_currentSlide = idx - 1;
+    }
+
+    if (changed) {
+        m_pMenuComp->SetActiveSlide(m_menuItems[m_currentSlide].ItemSlide);
+
+        MenuItem* item = &m_menuItems[m_currentSlide];
+        s32 tag = item->ItemCBFuncs[1].mTag;
+        if (tag != EMPTY) {
+            if (tag == FREE_FUNCTION) {
+                ((void (*)(MenuItem*))item->ItemCBFuncs[1].mFreeFunction)(item);
+            } else {
+                item->ItemCBFuncs[1].mFunctor->fnc_0x8();
+            }
+        }
+
+        return true;
+    }
+
     return false;
 }
 

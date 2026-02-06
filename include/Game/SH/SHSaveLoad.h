@@ -4,7 +4,7 @@
 #include "Game/BaseGameSceneManager.h"
 #include "Game/FE/feButtonComponent.h"
 
-void PushNoCardMessage();
+bool PushNoCardMessage();
 void CheckResults();
 void CreateFileAndSaveCB();
 void OverwriteFileAndContinueCB();

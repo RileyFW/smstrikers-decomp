@@ -377,10 +377,36 @@ void Goalie::InitActionGrabBall()
 
 /**
  * Offset/Address/Size: 0x214C | 0x80044C48 | size: 0x100
+ * TODO: 97.19% match - ownerX assigned f3 instead of f1, causing cascading register
+ * diffs through fabs section (0x58-0x68) and first CalculateDistanceSquared2D call
+ * (0x98-0xAC). Target reloads ownerX from memory at 0x5c; our compiler caches in f3.
  */
 bool Goalie::IsTeammateHoardingBall()
 {
+    cFielder* pOwner = g_pBall->GetOwnerFielder();
+    if (pOwner != NULL && IsOnSameTeam(pOwner))
+    {
+        f32 myX = m_v3Position.f.x;
+        f32 ownerX = pOwner->m_v3Position.f.x;
+        cBall* pBall = g_pBall;
+        if (myX * ownerX > 0.0f)
+        {
+            f32 absMyX = (f32)fabs(myX);
+            f32 absOwnerX = (f32)fabs(ownerX);
+            f32 threshold = absMyX - 2.7f;
 
+            if (absOwnerX > threshold || (f32)fabs(pBall->m_v3Position.f.x) > threshold)
+            {
+                f32 distThresh = 100.0f;
+
+                if (m_v3Position.CalculateDistanceSquared2D(pOwner->m_v3Position) < distThresh ||
+                    m_v3Position.CalculateDistanceSquared2D(pBall->m_v3Position) < distThresh)
+                {
+                    return true;
+                }
+            }
+        }
+    }
     return false;
 }
 
@@ -1023,8 +1049,34 @@ void Goalie::UpdateActionState(float fDeltaTime)
 /**
  * Offset/Address/Size: 0x6104 | 0x80048C00 | size: 0x114
  */
-void Goalie::MakeSaveEvent(bool)
+void Goalie::MakeSaveEvent(bool bIsSTS)
 {
+    Event* pEvent = g_pEventManager->CreateValidEvent(0xF, 0x38);
+    GoalieSaveData* pSaveData = new ((u8*)pEvent + 0x10) GoalieSaveData();
+
+    pSaveData->pGoalie = this;
+    pSaveData->v3BallVelocity = g_pBall->m_v3Velocity;
+
+    GoalieTweaks* pTweaks = (GoalieTweaks*)m_pTweaks;
+    pSaveData->fWowFactor = 1.0f / pTweaks->fShotFatigueMax;
+
+    // Use struct bitfield but offset by 8 bytes (0x20 - 0x18 = 8)
+    GoalieSaveData* pOffset = (GoalieSaveData*)((u8*)pSaveData + 8);
+    pOffset->isSTS = bIsSTS;
+
+    pSaveData->saveType = g_pBall->m_uGoalType;
+    pSaveData->pShooter = g_pBall->m_pShooter;
+
+    if (mpSaveData != NULL)
+    {
+        pOffset->saveType = mpSaveData->muSaveType;
+        pSaveData->fWowFactor *= mpSaveData->mfFatigueValue;
+    }
+    else
+    {
+        pOffset->saveType = 3;
+        pSaveData->fWowFactor *= ((GoalieTweaks*)m_pTweaks)->fShotFatigueDefault;
+    }
 }
 
 /**
