@@ -68,27 +68,17 @@ public:
     void MoveHighlightToCurrentCaptain(int);
     void SetupNameComponentToCurrentCaptain(int);
 
-    // IChooseCaptain_ComponentState mComponentState[2];    // 0x00, size 0x18
-    // unsigned char mIsSinglePlayerInput;                  // 0x18, size 0x1
-    // unsigned char pad19[3];                              // 0x19, padding
-    // eFEINPUT_PAD mAllPushedPlayers[4];                   // 0x1C, size 0x10
-    // int mAllPushedPlayerSides[4];                        // 0x2C, size 0x10
-    // int mNumTotalPushedPlayers;                          // 0x3C, size 0x4
-    // AsyncImage* mAsyncImage[2][3];                       // 0x40, size 0x18
-    // int mHomeAwayTeam[2];                                // 0x58, size 0x8
-    // int mHomeAwaySidekicks[2];                           // 0x60, size 0x8
-    // unsigned char mDidSwapCaptains[2];                   // 0x68, size 0x2
-    // unsigned char mDidSwapSidekicks[2];                  // 0x6A, size 0x2
-    // TLComponentInstance* mCaptainComponents[2];          // 0x6C, size 0x8
-    // TLComponentInstance* mSidekickComponents[2];         // 0x74, size 0x8
-    // TLComponentInstance* mSidekickMiniHeadComponents[2]; // 0x7C, size 0x8
-    // float mCaptainSlideDurations[2];                     // 0x84, size 0x8
-    // float mSidekickSlideDurations[2];                    // 0x8C, size 0x8
-    // float mCaptainSoundDelay[2];                         // 0x94, size 0x8
-    // ICaptainGridComponent* mCaptainGridComponents[2];    // 0x9C, size 0x8
-    // ISidekickGridComponent* mSidekickGridComponents[2];  // 0xA4, size 0x8
-    // char* mLastCaptainSelectSoundStrPlayed[2];           // 0xAC, size 0x8
-    // IChooseCaptain_NameComponent mNameComponents[2];     // 0xB4, size 0x18
+    inline bool IsPlayerPushed(const int pad)
+    {
+        for (int i = 0; i < mNumTotalPushedPlayers; i++)
+        {
+            if (mAllPushedPlayers[i] == pad)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /* 0x00 */ ComponentState mComponentState[2];                   // size 0x18
     /* 0x18 */ bool mIsSinglePlayerInput;                           // size 0x1

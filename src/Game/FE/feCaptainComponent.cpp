@@ -155,11 +155,15 @@ void IChooseCaptain::Initialize(const char*, const char*)
 /**
  * Offset/Address/Size: 0x1AB0 | 0x800BF44C | size: 0x9C
  */
-void IChooseCaptain::UpdateSound(float dt) {
-    for (s32 i = 0; i < 2; i++) {
-        if (mCaptainSoundDelay[i] > 0.0f) {
+void IChooseCaptain::UpdateSound(float dt)
+{
+    for (s32 i = 0; i < 2; i++)
+    {
+        if (mCaptainSoundDelay[i] > 0.0f)
+        {
             mCaptainSoundDelay[i] -= dt;
-            if (mCaptainSoundDelay[i] <= 0.0f) {
+            if (mCaptainSoundDelay[i] <= 0.0f)
+            {
                 mCaptainSoundDelay[i] = 0.0f;
                 FECharacterSound::PlayCaptainSlideIn((eTeamID)mHomeAwayTeam[i]);
             }
@@ -207,6 +211,16 @@ void IChooseCaptain::StartSidekickMiniHead(int, eSidekickID)
  */
 void IChooseCaptain::CheckForDisconnectedHumanPlayers()
 {
+    for (int i = 0; i < 4; i++)
+    {
+        if (IsPlayerPushed(i))
+        {
+            if (!g_pFEInput->IsConnected((eFEINPUT_PAD)i))
+            {
+                PopPlayer((eFEINPUT_PAD)i);
+            }
+        }
+    }
 }
 
 /**
@@ -245,6 +259,7 @@ void IChooseCaptain::PushPlayer(eFEINPUT_PAD pad, int side)
  */
 void IChooseCaptain::PopPlayer(eFEINPUT_PAD)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -268,6 +283,33 @@ void IChooseCaptain::ResetPushPlayerData()
  */
 void IChooseCaptain::PushPlayerWithGameInfoDB()
 {
+    int i;
+    int side;
+
+    for (i = 0; i < 4; i++)
+    {
+        side = nlSingleton<GameInfoManager>::s_pInstance->GetPlayingSide(i);
+        if (g_pFEInput->IsConnected((eFEINPUT_PAD)i))
+        {
+            if (side != -1)
+            {
+                mAllPushedPlayers[mNumTotalPushedPlayers] = (eFEINPUT_PAD)i;
+                if (side != -1)
+                {
+                    mAllPushedPlayerSides[mNumTotalPushedPlayers] = side;
+                }
+                else
+                {
+                    mAllPushedPlayerSides[mNumTotalPushedPlayers] = mNumTotalPushedPlayers & 1;
+                }
+                mNumTotalPushedPlayers++;
+            }
+        }
+        else
+        {
+            nlSingleton<GameInfoManager>::s_pInstance->SetPlayingSide(i, -1);
+        }
+    }
 }
 
 /**
