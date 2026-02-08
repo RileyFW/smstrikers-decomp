@@ -5,8 +5,10 @@
 #include "Game/FE/feButtonComponent.h"
 #include "Game/FE/feCaptainComponent.h"
 #include "Game/FE/feChooseSideComponent.h"
+#include "Game/FE/feFinder.h"
 #include "Game/FE/feScrollText.h"
 #include "Game/FE/tlComponentInstance.h"
+#include "NL/gl/glStruct.h"
 // #include "types.h"
 
 class ChooseCaptainsSceneV2 : public BaseSceneHandler
@@ -14,7 +16,8 @@ class ChooseCaptainsSceneV2 : public BaseSceneHandler
 public:
     enum SceneType
     {
-        SceneType_0 = 0
+        SceneType_0 = 0,
+        SceneType_1 = 1
     };
 
     ChooseCaptainsSceneV2(ChooseCaptainsSceneV2::SceneType);

@@ -2,11 +2,22 @@
 #define _SHSTADIUMSELECT_H_
 
 #include "Game/BaseSceneHandler.h"
+#include "Game/DB/Cup.h"
 #include "Game/FE/feAsyncImage.h"
 #include "Game/FE/feButtonComponent.h"
 #include "Game/FE/feMenu.h"
 #include "Game/FE/feScrollText.h"
 #include "Game/FE/tlComponentInstance.h"
+
+struct StadiumEntry
+{
+    /* 0x0 */ eStadiumID stadiumID;
+    /* 0x4 */ const char* imagePath;
+}; // total size: 0x8
+
+extern eStadiumID STADIUM_ORDER[7];
+extern StadiumEntry StadiumEntries[8];
+extern unsigned long StadiumDescriptions[7];
 
 enum Direction
 {

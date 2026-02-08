@@ -5,6 +5,11 @@
 
 class FEScrollText;
 
+enum eCupTickerState
+{
+    CUP_TICKER_STATE_0 = 0
+};
+
 class CupTickerManager
 {
 public:
@@ -15,8 +20,10 @@ public:
     void Update(float);
     // void BuildGoalTotalTickerMessage(BasicString<unsigned short, Detail::TempStringAllocator>&, bool);
 
-    /* 0x00 */ FEScrollText* m_pScrollText;
-};
+    /* 0x000 */ FEScrollText* mTicker;
+    /* 0x004 */ eCupTickerState mState;
+    /* 0x008 */ unsigned short mMessageBuffer[512];
+}; // total size: 0x408
 
 // class BasicString<unsigned short, Detail
 // {

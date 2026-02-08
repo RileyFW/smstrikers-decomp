@@ -2,6 +2,10 @@
 
 #include "Game/GameSceneManager.h"
 #include "Game/BaseGameSceneManager.h"
+#include "Game/FE/feFinder.h"
+#include "Game/GameInfo.h"
+
+static const char* CUP_HUB_LAYER_NAME;
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800F1F90 | size: 0x38
@@ -271,6 +275,58 @@ void CupHubScene::ColourUserRow()
  */
 void CupHubScene::HandleButtonComponent()
 {
+    typedef TLComponentInstance* (*FindByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union {
+        FindByValue byValue;
+        FindByRef byRef;
+    } findComp;
+
+    findComp.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+
+    FEPresentation* pres = m_pFEPresentation;
+
+    volatile InlineHasher hB, hA, h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+
+    unsigned long buttonHash = nlStringLowerHash("@4158");
+    h8.m_Hash = buttonHash;
+    h9.m_Hash = buttonHash;
+
+    unsigned long layerHash = nlStringLowerHash(CUP_HUB_LAYER_NAME);
+    hB.m_Hash = layerHash;
+    hA.m_Hash = layerHash;
+
+    TLComponentInstance* inst = findComp.byRef(
+        pres->m_currentSlide,
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    mButtons.mButtonInstance = inst;
+    inst->m_bVisible = false;
+
+    s16 roundNum = nlSingleton<GameInfoManager>::s_pInstance->GetCurrentRoundNumber();
+    if (roundNum == -5)
+    {
+        mButtons.SetState(ButtonComponent::BS_A_ONLY);
+    }
+    else
+    {
+        mButtons.SetState(ButtonComponent::BS_A_AND_B);
+    }
 }
 
 /**

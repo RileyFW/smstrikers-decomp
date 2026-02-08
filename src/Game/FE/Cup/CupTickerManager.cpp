@@ -118,8 +118,9 @@ void CupTickerManager::CreateNewMessage()
  */
 void CupTickerManager::Update(float dt)
 {
-    if (m_pScrollText != NULL) {
-        m_pScrollText->Update(dt);
+    if (mTicker != NULL)
+    {
+        mTicker->Update(dt);
     }
 }
 

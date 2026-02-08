@@ -1,11 +1,12 @@
 #include "Game/SH/SHChooseCaptains.h"
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x800D8554 | size: 0x2C
-//  */
-// void IChooseCaptain::SetPhaseReady(int)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x800D8554 | size: 0x2C
+ */
+void IChooseCaptain::SetPhaseReady(int)
+{
+    FORCE_DONT_INLINE;
+}
 
 // /**
 //  * Offset/Address/Size: 0xAB0 | 0x800D83F8 | size: 0x15C
@@ -159,6 +160,34 @@ ChooseCaptainsSceneV2::~ChooseCaptainsSceneV2()
  */
 void ChooseCaptainsSceneV2::SceneCreated()
 {
+    mChooseCaptain.Initialize("art/fe/LoadingScreensUI.res", "art/fe/LoadingScreensSidekicksUI.res");
+    mChooseCaptain.SceneCreated(m_pFEPresentation);
+
+    if (mDesiredSceneType == SceneType_1)
+    {
+        mChooseCaptain.SetPhaseReady(0);
+        mChooseCaptain.SetPhaseReady(1);
+    }
+    else
+    {
+        eFEINPUT_PAD pad = nlSingleton<GameInfoManager>::s_pInstance->mMainUserPadNumber;
+        if (g_pFEInput->IsConnected(pad))
+        {
+            mChooseCaptain.PushPlayer(pad, -1);
+        }
+
+        GameInfoManager* gim = nlSingleton<GameInfoManager>::s_pInstance;
+        gim->mCurGameGameplayOptions.SkillLevel = gim->mUserInfo.mGameplayOptions.SkillLevel;
+        gim->mCurGameGameplayOptions.GameTime = gim->mUserInfo.mGameplayOptions.GameTime;
+        gim->mCurGameGameplayOptions.PowerUps = gim->mUserInfo.mGameplayOptions.PowerUps;
+        gim->mCurGameGameplayOptions.Shoot2Score = gim->mUserInfo.mGameplayOptions.Shoot2Score;
+        gim->mCurGameGameplayOptions.BowserAttackEnabled = gim->mUserInfo.mGameplayOptions.BowserAttackEnabled;
+        gim->mCurGameGameplayOptions.RumbleEnabled = gim->mUserInfo.mGameplayOptions.RumbleEnabled;
+    }
+
+    BindChooseSideInstances();
+    CreateTicker();
+    ChangeSceneType(mDesiredSceneType);
 }
 
 /**
@@ -199,6 +228,7 @@ void ChooseCaptainsSceneV2::ResetForCHOOSESIDES()
  */
 void ChooseCaptainsSceneV2::Update(float)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -206,6 +236,7 @@ void ChooseCaptainsSceneV2::Update(float)
  */
 void ChooseCaptainsSceneV2::BindChooseSideInstances()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -213,4 +244,42 @@ void ChooseCaptainsSceneV2::BindChooseSideInstances()
  */
 void ChooseCaptainsSceneV2::CreateTicker()
 {
+    typedef TLTextInstance* (*FindTextByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLTextInstance* (*FindTextByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindTextByValue byValue;
+        FindTextByRef byRef;
+    } findText;
+
+    FEPresentation* pres = m_pFEPresentation;
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+
+    findText.byValue = FEFinder<TLTextInstance, 3>::Find<TLSlide>;
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+
+    u32 hash = nlStringLowerHash("TickerText");
+    h8.m_Hash = hash;
+    h9.m_Hash = hash;
+
+    hash = nlStringLowerHash("Layer");
+    hB.m_Hash = hash;
+    hA.m_Hash = hash;
+
+    TLTextInstance* textInstance = findText.byRef(pres->m_currentSlide, (InlineHasher&)hB, (InlineHasher&)h9, (InlineHasher&)h7, (InlineHasher&)h5, (InlineHasher&)h3, (InlineHasher&)h1);
+
+    gl_ScreenInfo* screenInfo = glGetScreenInfo();
+
+    mTicker = new (nlMalloc(0x22C, 8, false)) FEScrollText(textInstance, 0, screenInfo->ScreenWidth + 0x32);
 }

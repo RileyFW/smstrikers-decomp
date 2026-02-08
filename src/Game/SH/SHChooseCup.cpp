@@ -1,4 +1,6 @@
 #include "Game/SH/SHChooseCup.h"
+#include "Game/GameInfo.h"
+#include "Game/GameSceneManager.h"
 
 // /**
 //  * Offset/Address/Size: 0x2C4 | 0x800DCE10 | size: 0xBC
@@ -114,8 +116,39 @@
 /**
  * Offset/Address/Size: 0x20B8 | 0x800DC33C | size: 0x10C
  */
-void confirmedNewCup(bool)
+void confirmedNewCup(bool isSuperCup)
 {
+    GameInfoManager* gim = nlSingleton<GameInfoManager>::s_pInstance;
+
+    if (gim->mCurrentMode == GameInfoManager::GM_BOWSER_CUP) {
+        gim->mCurrentCup = (BaseCup*)&gim->mBowserCupSeries;
+        gim->mDoingKnockout = false;
+        gim->mBowserCupKnockout.mGameNumber = -5;
+    } else if (gim->mCurrentMode == GameInfoManager::GM_SUPER_BOWSER_CUP) {
+        gim->mCurrentCup = (BaseCup*)&gim->mSuperBowserCupSeries;
+        gim->mDoingKnockout = false;
+        gim->mSuperBowserCupKnockout.mGameNumber = -5;
+    }
+
+    BaseCup* cup = nlSingleton<GameInfoManager>::s_pInstance->mCurrentCup;
+    cup->mCupStarted = false;
+
+    GameInfoManager* gim2 = nlSingleton<GameInfoManager>::s_pInstance;
+    cup->mCupSettings.SkillLevel = gim2->mUserInfo.mGameplayOptions.SkillLevel;
+    cup->mCupSettings.GameTime = gim2->mUserInfo.mGameplayOptions.GameTime;
+    cup->mCupSettings.PowerUps = gim2->mUserInfo.mGameplayOptions.PowerUps;
+    cup->mCupSettings.Shoot2Score = gim2->mUserInfo.mGameplayOptions.Shoot2Score;
+    cup->mCupSettings.BowserAttackEnabled = gim2->mUserInfo.mGameplayOptions.BowserAttackEnabled;
+    cup->mCupSettings.RumbleEnabled = gim2->mUserInfo.mGameplayOptions.RumbleEnabled;
+
+    if (!isSuperCup) {
+        nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_CUP_OPTIONS_INITIAL_CUP, SCREEN_NOTHING, true);
+    } else {
+        if (cup->mCupSettings.SkillLevel == GameplaySettings::ROOKIE) {
+            cup->mCupSettings.SkillLevel = GameplaySettings::PROFESSIONAL;
+        }
+        nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_CUP_OPTIONS_INITIAL_SUPER, SCREEN_NOTHING, true);
+    }
 }
 
 /**

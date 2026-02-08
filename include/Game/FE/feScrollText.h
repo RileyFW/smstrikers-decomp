@@ -7,6 +7,7 @@
 
 #include "Game/FE/tlTextInstance.h"
 
+/* total size: 0x22C */
 class FEScrollText
 {
 public:
@@ -16,7 +17,7 @@ public:
     void Update(float);
     void SetDisplayMessage(const char*);
     void SetDisplayMessage(unsigned long);
-    // void SetDisplayMessage(const BasicString<unsigned short, Detail::TempStringAllocator>&);
+    void SetDisplayMessage(const BasicString<unsigned short, Detail::TempStringAllocator>&);
 
     /* 0x0,  */ TLTextInstance* m_controlText;
     /* 0x4,  */ BasicString<unsigned short, Detail::TempStringAllocator> m_message;

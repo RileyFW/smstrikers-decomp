@@ -40,9 +40,9 @@ void FEScrollText::SetDisplayMessage(unsigned long)
 /**
  * Offset/Address/Size: 0x4F0 | 0x800C8EC4 | size: 0x578
  */
-// void FEScrollText::SetDisplayMessage(const BasicString<unsigned short, Detail::TempStringAllocator>&)
-// {
-// }
+void FEScrollText::SetDisplayMessage(const BasicString<unsigned short, Detail::TempStringAllocator>&)
+{
+}
 
 /**
  * Offset/Address/Size: 0xA68 | 0x800C943C | size: 0x1E8

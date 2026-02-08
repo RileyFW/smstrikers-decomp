@@ -1,5 +1,14 @@
 #include "Game/FE/feSidekickGridComponent.h"
 #include "Game/FE/feMapMenu.h"
+#include "Game/FE/feFinder.h"
+#include "Game/FE/tlComponentInstance.h"
+
+struct CellItem {
+    int mIconType;
+    const char* mIconName;
+};
+
+extern CellItem SidekickCellItems[4];
 
 /**
  * Offset/Address/Size: 0x0 | 0x800C2810 | size: 0x34
@@ -71,6 +80,49 @@ void ISidekickGridComponent::Update(eFEINPUT_PAD)
  */
 void ISidekickGridComponent::RebuildInstanceTable()
 {
+    typedef TLInstance* (*FindByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLInstance* (*FindByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union {
+        FindByValue byValue;
+        FindByRef byRef;
+    } findInst;
+
+    findInst.byValue = FEFinder<TLInstance, 2>::Find<TLSlide>;
+
+    TLSlide* activeslide = mParentComponent->GetActiveSlide();
+
+    for (int i = 0; i < 4; i++) {
+        volatile InlineHasher hB, hA, h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+
+        h0.m_Hash = 0;
+        h1.m_Hash = 0;
+        h2.m_Hash = 0;
+        h3.m_Hash = 0;
+        h4.m_Hash = 0;
+        h5.m_Hash = 0;
+        h6.m_Hash = 0;
+        h7.m_Hash = 0;
+        h8.m_Hash = 0;
+        h9.m_Hash = 0;
+
+        unsigned long hash = nlStringLowerHash(SidekickCellItems[i].mIconName);
+        hA.m_Hash = hash;
+        hB.m_Hash = hash;
+
+        TLInstance* inst = findInst.byRef(
+            activeslide,
+            (InlineHasher&)hB,
+            (InlineHasher&)h9,
+            (InlineHasher&)h7,
+            (InlineHasher&)h5,
+            (InlineHasher&)h3,
+            (InlineHasher&)h1);
+
+        int iconType = SidekickCellItems[i].mIconType;
+        mInstanceTable[iconType] = inst;
+        mMapMenu->ChangeItem(iconType, mInstanceTable[iconType]);
+    }
 }
 
 /**

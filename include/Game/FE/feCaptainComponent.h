@@ -40,6 +40,7 @@ public:
 
     class ComponentState
     {
+    public:
         static void GotoNextPhase();
         static void GotoPreviousPhase();
         static void SetCurrentPhase(Phase);
@@ -67,6 +68,7 @@ public:
     void PushPlayerWithGameInfoDB();
     void MoveHighlightToCurrentCaptain(int);
     void SetupNameComponentToCurrentCaptain(int);
+    void SetPhaseReady(int);
 
     inline bool IsPlayerPushed(const int pad)
     {

@@ -1,4 +1,6 @@
 #include "Game/FE/feCaptainComponent.h"
+#include "Game/FE/feAsyncImage.h"
+#include "Game/FE/feFinder.h"
 
 // /**
 //  * Offset/Address/Size: 0x9C | 0x800C1658 | size: 0x9C
@@ -109,9 +111,56 @@ void IChooseCaptain::ComponentState::SetCurrentPhase(Phase phase)
 /**
  * Offset/Address/Size: 0xEC | 0x800BF890 | size: 0xC0
  */
-void IChooseCaptain::NameComponent::SetTextName(const char*, unsigned long)
+void IChooseCaptain::NameComponent::SetTextName(const char* objname, unsigned long locstring)
 {
-    FORCE_DONT_INLINE;
+    typedef TLTextInstance* (*FindTextByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLTextInstance* (*FindTextByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindTextByValue byValue;
+        FindTextByRef byRef;
+    } findText;
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+
+    findText.byValue = FEFinder<TLTextInstance, 3>::Find<TLSlide>;
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+    h8.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    unsigned long hash = nlStringLowerHash(objname);
+    hB.m_Hash = hash;
+    hA.m_Hash = hash;
+
+    TLTextInstance* textinstance = findText.byRef(
+        mComponent->GetActiveSlide(),
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    if (locstring != 0)
+    {
+        textinstance->m_LocStrId = locstring;
+        textinstance->m_OverloadFlags |= 0x8u;
+        textinstance->m_bVisible = true;
+    }
+    else
+    {
+        textinstance->m_bVisible = false;
+    }
 }
 
 /**
@@ -126,9 +175,55 @@ void IChooseCaptain::NameComponent::SetCaptainName(unsigned long captainID)
 /**
  * Offset/Address/Size: 0x0 | 0x800BF7A4 | size: 0xC4
  */
-void IChooseCaptain::NameComponent::SetCaptainLogo(const char*)
+void IChooseCaptain::NameComponent::SetCaptainLogo(const char* name)
 {
-    FORCE_DONT_INLINE;
+    typedef TLComponentInstance* (*FindCompByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindCompByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindCompByValue byValue;
+        FindCompByRef byRef;
+    } findComp;
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+
+    findComp.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+    h8.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    unsigned long hash = nlStringLowerHash("component");
+    hB.m_Hash = hash;
+    hA.m_Hash = hash;
+
+    TLComponentInstance* comp = findComp.byRef(
+        mComponent->GetActiveSlide(),
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    if (name != NULL)
+    {
+        comp->SetActiveSlide(name);
+        comp->m_bVisible = true;
+    }
+    else
+    {
+        comp->m_bVisible = false;
+    }
 }
 
 /**
@@ -183,6 +278,45 @@ void IChooseCaptain::Update(float)
  */
 void IChooseCaptain::UpdateAsyncImages()
 {
+    int j;
+    int i;
+    bool canswapcaptains;
+
+    for (j = 0; j < 3; j++)
+    {
+        mAsyncImage[0][j]->Update(false);
+        mAsyncImage[1][j]->Update(false);
+    }
+
+    for (i = 0; i < 2; i++)
+    {
+        if (mComponentState[i].mCurrentPhase != PHASE_READY)
+        {
+            mCaptainSoundDelay[i] = 0.0f;
+        }
+        else
+        {
+            canswapcaptains = false;
+            if (!mDidSwapCaptains[i])
+            {
+                if (mAsyncImage[i][0]->CanSwapTextures() && mAsyncImage[i][1]->CanSwapTextures() && mAsyncImage[i][2]->CanSwapTextures())
+                {
+                    canswapcaptains = true;
+                }
+            }
+
+            if (canswapcaptains)
+            {
+                mCaptainComponents[i]->SetActiveSlide("Slide1");
+                mCaptainComponents[i]->m_bVisible = true;
+                mAsyncImage[i][0]->Update(true);
+                mAsyncImage[i][1]->Update(true);
+                mAsyncImage[i][2]->Update(true);
+                mDidSwapCaptains[i] = true;
+                mCaptainSoundDelay[i] = mCaptainSlideDurations[0];
+            }
+        }
+    }
 }
 
 /**

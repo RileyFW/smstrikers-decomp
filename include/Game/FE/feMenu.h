@@ -25,7 +25,7 @@ template <typename T>
 class MenuList
 {
 public:
-    MenuList() { };
+    MenuList() : mCurrentIndex(0), mNumItemsAdded(0), mFlags(0) { };
     virtual ~MenuList() { };
 
     /* 0x004 */ MenuItem<T> mMenuItems[16];

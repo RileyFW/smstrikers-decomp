@@ -55,10 +55,13 @@ template <typename T>
 class Function : public Function1<void, T>
 {
 public:
-    // Function() { };
-    // ~Function() {
-    // delete mFunctor;
-    // };
+    ~Function()
+    {
+        if (mTag == FUNCTOR) {
+            delete mFunctor;
+        }
+        mTag = EMPTY;
+    }
 }; // total size: 0x8
 
 typedef void FnVoidVoid();
