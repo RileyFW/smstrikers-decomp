@@ -275,6 +275,9 @@ class CharacterDirectionData
 {
 public:
     virtual u32 GetID();
+
+    /* 0x04 */ nlVector3* home;
+    /* 0x08 */ nlVector3* away;
 };
 
 class cFielder;

@@ -59,6 +59,8 @@ DrawableCharacter::~DrawableCharacter()
  */
 void DrawableCharacter::Free()
 {
+    delete mPoseAccumulator;
+    mPoseAccumulator = NULL;
 }
 
 /**
@@ -88,9 +90,12 @@ void DrawableCharacterHeadTrackCallback(unsigned int ctx, unsigned int, cPoseAcc
 /**
  * Offset/Address/Size: 0x290C | 0x8011B7BC | size: 0xE4
  */
-void DrawableCharacter::DrawableBowserHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int)
+void DrawableCharacter::DrawableBowserHeadTrackCallback(unsigned int ctx, unsigned int, cPoseAccumulator* poseAccumulator, unsigned int headNodeIndex, int)
 {
-    FORCE_DONT_INLINE;
+    DrawableCharacter* pDrawableCharacter = (DrawableCharacter*)ctx;
+    nlMatrix4& nodeMatrix = poseAccumulator->GetNodeMatrix(headNodeIndex);
+    pDrawableCharacter->mBowser->mLastHeadMatrix = nodeMatrix;
+    CalcHeadTrackMatrix(pDrawableCharacter->mHeadSpin, pDrawableCharacter->mHeadTilt, poseAccumulator, headNodeIndex);
 }
 
 /**
@@ -98,6 +103,42 @@ void DrawableCharacter::DrawableBowserHeadTrackCallback(unsigned int, unsigned i
  */
 void DrawableCharacter::BuildNodeMatrices()
 {
+    nlMatrix4 worldMatrix;
+    float angle = 0.0000958738f * (float)mFacingDirection;
+    nlMakeRotationMatrixZ(worldMatrix, angle);
+
+    worldMatrix.SetRow_(3, mPosition);
+
+    if (mCharacter != nullptr)
+    {
+        mPoseAccumulator->SetBuildNodeMatrixCallback(mCharacter->m_nHeadJointIndex, DrawableCharacterHeadTrackCallback, (unsigned int)this, 0);
+    }
+    else
+    {
+        if (mBowser != nullptr)
+        {
+            mPoseAccumulator->SetBuildNodeMatrixCallback(mBowser->mnHeadJointIndex, DrawableBowserHeadTrackCallback, (unsigned int)this, 0);
+        }
+    }
+
+    mPoseAccumulator->BuildNodeMatrices(worldMatrix);
+
+    if (mCharacter != nullptr)
+    {
+        mPoseAccumulator->SetBuildNodeMatrixCallback(
+            mCharacter->m_nHeadJointIndex,
+            nullptr,
+            0,
+            0);
+    }
+    else if (mBowser != nullptr)
+    {
+        mPoseAccumulator->SetBuildNodeMatrixCallback(
+            mBowser->mnHeadJointIndex,
+            nullptr,
+            0,
+            0);
+    }
 }
 
 /**

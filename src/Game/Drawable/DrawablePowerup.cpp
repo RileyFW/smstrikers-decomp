@@ -2,9 +2,25 @@
 
 /**
  * Offset/Address/Size: 0x0 | 0x8011EC74 | size: 0xF8
+ * TODO: 68.5% match - MWCC CSE prevents second blendFactors[2] load and second
+ * 1.0f-t subtraction. Target has two separate lfs from 8(r4) and two fsubs for
+ * invT, causing FPR register renaming (f5/f6/f9/f8 vs f7/f8). All logic correct.
  */
-void DrawablePowerup::Blend(const float*, const DrawablePowerup&, const DrawablePowerup&)
+void DrawablePowerup::Blend(const float* blendFactors, const DrawablePowerup& lhs, const DrawablePowerup& rhs)
 {
+    mVisible = lhs.mVisible && rhs.mVisible;
+    if (!mVisible)
+        return;
+
+    float t = blendFactors[2];
+    float invT = 1.0f - t;
+    mType = lhs.mType;
+    mScale = invT * lhs.mScale + t * rhs.mScale;
+    mRadius = lhs.mRadius;
+    mOrientation = lhs.mOrientation + (s16)((s16)(rhs.mOrientation - lhs.mOrientation) * t);
+    mPosition.f.x = invT * lhs.mPosition.f.x + t * rhs.mPosition.f.x;
+    mPosition.f.y = invT * lhs.mPosition.f.y + t * rhs.mPosition.f.y;
+    mPosition.f.z = invT * lhs.mPosition.f.z + t * rhs.mPosition.f.z;
 }
 
 /**

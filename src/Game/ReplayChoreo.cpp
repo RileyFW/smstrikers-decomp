@@ -23,6 +23,12 @@
 // {
 // }
 
+ReplayChoreo& ReplayChoreo::Instance()
+{
+    static ReplayChoreo instance;
+    return instance;
+}
+
 /**
  * Offset/Address/Size: 0x0 | 0x801287C0 | size: 0x3B4
  */
@@ -45,17 +51,11 @@ void ReplayChoreo::DoFunctionCall(unsigned int)
 // }
 
 /**
- * Offset/Address/Size: 0xFDC | 0x80128648 | size: 0xE8
- */
-void ReplayChoreo::Instance()
-{
-}
-
-/**
  * Offset/Address/Size: 0xCC8 | 0x80128334 | size: 0x314
  */
 void ReplayChoreo::LoadScript()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -89,21 +89,14 @@ void ReplayChoreo::StartAutoReplay(ReplayType)
 
 /**
  * Offset/Address/Size: 0x408 | 0x80127A74 | size: 0x20
- * TODO: unclear struct
  */
 void ReplayChoreo::FlushHighlights()
 {
     mHighlightIndex = -1;
-    mHighlights[4].mSideOfInterest = 0;
-    mHighlights[4].mGoalScoredData.uTeamIndex = 0;
-    mHighlights[0].mGoalScoredData.uTeamIndex = 0;
-    mHighlights[1].mGoalScoredData.uTeamIndex = 0;
-    mHighlights[2].mGoalScoredData.uTeamIndex = 0;
-    // mHighlights[1].mSideOfInterest = 0;
-    // mHighlights[2].mSideOfInterest = 0;
-    // mHighlights[3].mSideOfInterest = 0;
-
-    // mHighlightIndex = sizeof(InterpreterCore);
+    mNumHighlights = 0;
+    mHighlights[0].mSideOfInterest = 0;
+    mHighlights[1].mSideOfInterest = 0;
+    mHighlights[2].mSideOfInterest = 0;
 }
 
 /**

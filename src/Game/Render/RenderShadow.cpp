@@ -1,6 +1,7 @@
 #include "Game/Render/RenderShadow.h"
 
 #include "Game/GL/GLInventory.h"
+#include "Game/WorldManager.h"
 #include "NL/nlString.h"
 
 extern GLInventory glInventory;
@@ -55,8 +56,31 @@ void GetShadowPartitionIndex()
 /**
  * Offset/Address/Size: 0x140C | 0x80124440 | size: 0xD0
  */
-void ShouldShadowBeUpdated(const ProjectedShadowParams&)
+u8 ShouldShadowBeUpdated(const ProjectedShadowParams& params)
 {
+    float fRadius = 2.0f * params.fRadius;
+    nlMatrix4 mWorld;
+    mWorld.SetIdentity();
+    mWorld.f.m41 = params.vPosition.f.x;
+    mWorld.f.m42 = params.vPosition.f.y;
+    mWorld.f.m43 = params.vPosition.f.z;
+    mWorld.f.m44 = 1.0f;
+    mWorld.f.m43 += 0.5f * params.fHeight;
+
+    u8 isVisible = WorldManager::s_World->IsSphereInFrustum(mWorld, fRadius);
+    u32 interval;
+    if (isVisible) {
+        interval = params.nVisibleInterval;
+    } else {
+        interval = params.nInvisibleInterval;
+    }
+
+    u32 currentFrame = (u32)glGetCurrentFrame();
+    u32 frame = (u32)params.nPartitionIndex + currentFrame;
+    if (frame % interval != 0) {
+        return 0;
+    }
+    return 1;
 }
 
 /**

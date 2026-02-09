@@ -118,7 +118,7 @@ struct GoalScoredData : public EventData
     /* 0x18 */ cPlayer* pAssister;
     /* 0x1C */ cPlayer* pLastTouch[2];
 
-    virtual u32 GetID() { return 0x13C; }
+    virtual u32 GetID() { return 0x18A; }
 }; // total size: 0x24
 
 class Goalie : public cPlayer

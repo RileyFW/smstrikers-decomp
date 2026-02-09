@@ -1,5 +1,6 @@
 #include "Game/SH/SHCredits.h"
 #include "Game/FE/tlComponentInstance.h"
+#include "Game/FE/tlImageInstance.h"
 
 // /**
 //  * Offset/Address/Size: 0x570 | 0x80110374 | size: 0x15C
@@ -105,23 +106,25 @@ void CreditScene::SceneCreated()
 /**
  * Offset/Address/Size: 0xA80 | 0x8010FBDC | size: 0xA0
  */
-void CreditScene::Update(float dt) {
+void CreditScene::Update(float dt)
+{
     BaseSceneHandler::Update(dt);
-    switch ((s32)mCreditParser.mFileData) {
-        case 2:
-            UpdateForCredits(dt);
-            break;
-        case 3:
-            UpdateForCopyrightMessage(dt);
-            break;
-        case 1:
-            UpdateForNintendoLogo(dt);
-            break;
-        case 0:
-            UpdateForNLGMovie(dt);
-            break;
-        default:
-            break;
+    switch ((s32)mCreditParser.mFileData)
+    {
+    case 2:
+        UpdateForCredits(dt);
+        break;
+    case 3:
+        UpdateForCopyrightMessage(dt);
+        break;
+    case 1:
+        UpdateForNintendoLogo(dt);
+        break;
+    case 0:
+        UpdateForNLGMovie(dt);
+        break;
+    default:
+        break;
     }
 }
 
@@ -130,7 +133,40 @@ void CreditScene::Update(float dt) {
  */
 void CreditScene::SetupForPhase()
 {
-    FORCE_DONT_INLINE;
+    *(u8*)&mTimeElapsed = 0;
+    *(f32*)&mCreditParser.mFileSize = 0.0f;
+
+    switch ((s32)mCreditParser.mFileData)
+    {
+    case 0:
+        SetupForNLGMovie();
+        break;
+    case 1:
+        m_pFEPresentation->SetActiveSlide("copyright");
+        m_pFEPresentation->m_currentSlide->Update(0.0f);
+        break;
+    case 2:
+        SetupForCredits();
+        break;
+    case 3:
+        m_pFEPresentation->SetActiveSlide("nintendologo");
+        m_pFEPresentation->m_currentSlide->Update(0.0f);
+        break;
+    case 4:
+    {
+        nlSingleton<GameSceneManager>::s_pInstance->Push(mNextScene, SCREEN_NOTHING, true);
+        if (mNextScene == SCENE_OPTIONS)
+        {
+            FEMusic::StartStreamIfDifferent(7);
+        }
+        else
+        {
+            FEMusic::StartStreamIfDifferent(0);
+        }
+        mNextScene = SCENE_MAIN_MENU;
+        break;
+    }
+    }
 }
 
 /**
@@ -156,14 +192,71 @@ void CreditScene::SetupForCredits()
  */
 void CreditScene::SetupForNLGMovie()
 {
+    BaseSceneHandler* pScene = nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_NLG_MOVIE, SCREEN_NOTHING, false);
+    ((u8*)pScene)[0xAA] = 0;
+
+    nlSingleton<FESceneManager>::s_pInstance->ForceImmediateStackProcessing();
+
+    m_pFEPresentation->SetActiveSlide("nlg");
+
+    typedef TLImageInstance* (*FindByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLImageInstance* (*FindByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+    union {
+        FindByValue byValue;
+        FindByRef byRef;
+    } findImg;
+    findImg.byValue = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
+
+    volatile InlineHasher lRef, lLocal;
+    volatile InlineHasher nRef, nLocal;
+    volatile InlineHasher h, g, f, e, d, c, b, a;
+    a.m_Hash = 0;
+    b.m_Hash = 0;
+    c.m_Hash = 0;
+    d.m_Hash = 0;
+    e.m_Hash = 0;
+    f.m_Hash = 0;
+    g.m_Hash = 0;
+    h.m_Hash = 0;
+    u32 hash1 = nlStringLowerHash("NLG Logo");
+    nLocal.m_Hash = hash1;
+    nRef.m_Hash = hash1;
+    u32 hash2 = nlStringLowerHash("Layer");
+    lRef.m_Hash = hash2;
+    lLocal.m_Hash = hash2;
+    TLImageInstance* pImage = findImg.byRef(
+        m_pFEPresentation->m_currentSlide, (InlineHasher&)lRef, (InlineHasher&)nRef, (InlineHasher&)h, (InlineHasher&)f, (InlineHasher&)d, (InlineHasher&)b);
+    pImage->m_bVisible = false;
 }
 
 /**
  * Offset/Address/Size: 0x554 | 0x8010F6B0 | size: 0xB8
  */
-void CreditScene::UpdateForCopyrightMessage(float)
+void CreditScene::UpdateForCopyrightMessage(float dt)
 {
-    FORCE_DONT_INLINE;
+    TLComponentInstance* pWhiteFade = GetWhiteFadeComponent();
+    f32 timeElapsed = *(f32*)&mCreditParser.mFileSize;
+    timeElapsed += dt;
+    *(f32*)&mCreditParser.mFileSize = timeElapsed;
+    if (timeElapsed < 1.0f)
+    {
+        return;
+    }
+    TLSlide* pSlide = pWhiteFade->GetActiveSlide();
+    f32 slideEnd = pSlide->m_start + pSlide->m_duration;
+    TLSlide* pSlide2 = pWhiteFade->GetActiveSlide();
+    if (pSlide2->m_time >= slideEnd)
+    {
+        if (!*(u8*)&mTimeElapsed)
+        {
+            pWhiteFade->SetActiveSlide("credits");
+            *(u8*)&mTimeElapsed = 1;
+        }
+        else
+        {
+            GotoNextPhase();
+        }
+    }
 }
 
 /**
@@ -178,23 +271,29 @@ void CreditScene::UpdateForCredits(float)
  * Offset/Address/Size: 0x104 | 0x8010F260 | size: 0xB8
  * TODO: 97.7% match - SDA string addressing for "credits_nintendologo" (lis+addi vs sda21)
  */
-void CreditScene::UpdateForNintendoLogo(float dt) {
+void CreditScene::UpdateForNintendoLogo(float dt)
+{
     FORCE_DONT_INLINE;
     TLComponentInstance* pWhiteFade = GetWhiteFadeComponent();
     f32 timeElapsed = *(f32*)&mCreditParser.mFileSize;
     timeElapsed += dt;
     *(f32*)&mCreditParser.mFileSize = timeElapsed;
-    if (timeElapsed < 1.0f) {
+    if (timeElapsed < 1.0f)
+    {
         return;
     }
     TLSlide* pSlide = pWhiteFade->GetActiveSlide();
     f32 slideEnd = pSlide->m_start + pSlide->m_duration;
     TLSlide* pSlide2 = pWhiteFade->GetActiveSlide();
-    if (pSlide2->m_time >= slideEnd) {
-        if (!*(u8*)&mTimeElapsed) {
+    if (pSlide2->m_time >= slideEnd)
+    {
+        if (!*(u8*)&mTimeElapsed)
+        {
             pWhiteFade->SetActiveSlide("credits_nintendologo");
             *(u8*)&mTimeElapsed = 1;
-        } else {
+        }
+        else
+        {
             GotoNextPhase();
         }
     }
@@ -230,6 +329,32 @@ void CreditScene::UpdateForNLGMovie(float)
  */
 TLComponentInstance* CreditScene::GetWhiteFadeComponent()
 {
-    FORCE_DONT_INLINE;
-    return NULL;
+    typedef TLComponentInstance* (*FindByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+    union
+    {
+        FindByValue byValue;
+        FindByRef byRef;
+    } findComp;
+    findComp.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+
+    volatile InlineHasher lRef, lLocal;
+    volatile InlineHasher wRef, wLocal;
+    volatile InlineHasher h, g, f, e, d, c, b, a;
+    a.m_Hash = 0;
+    b.m_Hash = 0;
+    c.m_Hash = 0;
+    d.m_Hash = 0;
+    e.m_Hash = 0;
+    f.m_Hash = 0;
+    g.m_Hash = 0;
+    h.m_Hash = 0;
+    u32 hash1 = nlStringLowerHash("WHITE FADE");
+    wLocal.m_Hash = hash1;
+    wRef.m_Hash = hash1;
+    u32 hash2 = nlStringLowerHash("Layer");
+    lRef.m_Hash = hash2;
+    lLocal.m_Hash = hash2;
+    return findComp.byRef(
+        m_pFEPresentation->m_currentSlide, (InlineHasher&)lRef, (InlineHasher&)wRef, (InlineHasher&)h, (InlineHasher&)f, (InlineHasher&)d, (InlineHasher&)b);
 }

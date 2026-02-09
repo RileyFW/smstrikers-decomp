@@ -11,7 +11,7 @@ public:
     virtual ~GoalOverlay();
     virtual void SceneCreated();
     virtual void Update(float);
-    void eventHandler(Event*, void*);
+    static void eventHandler(Event*, void*);
     void UpdateGoalInfo(int, int, bool, int);
     void SetHighlightNumber(int);
     void DoMatchEndOverlay();

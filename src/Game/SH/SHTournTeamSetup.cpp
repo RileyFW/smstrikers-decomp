@@ -179,6 +179,7 @@ void TournTeamSetupSceneV2::UpdateControllerIcon(int)
  */
 void TournTeamSetupSceneV2::UpdateRow(int)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -209,6 +210,7 @@ void TournTeamSetupSceneV2::StartChooseCaptain(int arg)
  */
 void TournTeamSetupSceneV2::UpdateCaptainName()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -251,6 +253,21 @@ void TournTeamSetupSceneV2::AutoFill()
  */
 void TournTeamSetupSceneV2::UpdateForCurrentRow()
 {
+    int numRows;
+    int i = 0;
+    numRows = ((u32)(3 - (u32)mTournInfo.m_numTeams) >> 31) + 3;
+
+    for (; i < numRows; i++)
+    {
+        UpdateRow(i);
+    }
+
+    mCurrentCaptain = mTeamData[mCurrentRow].captain;
+    mCurrentSK = mTeamData[mCurrentRow].sidekick;
+
+    mCaptainGrid->MoveHighlightToTarget(mCurrentCaptain);
+    ((IGridComponent*)mSKGrid)->MoveHighlightToTarget((eTeamID)mCurrentSK);
+    UpdateCaptainName();
 }
 
 /**

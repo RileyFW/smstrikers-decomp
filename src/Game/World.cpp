@@ -126,7 +126,7 @@ void DoTranslucency(DrawableObject*)
 /**
  * Offset/Address/Size: 0x1340 | 0x80196004 | size: 0xE8
  */
-void World::IsSphereInFrustum(const nlMatrix4&, float)
+u8 World::IsSphereInFrustum(const nlMatrix4&, float)
 {
 }
 

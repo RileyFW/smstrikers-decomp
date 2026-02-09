@@ -5,9 +5,12 @@
 #include "Game/Sys/simpleparser.h"
 #include "Game/FE/tlTextInstance.h"
 #include "Game/FE/feSceneManager.h"
+#include "Game/FE/feFinder.h"
 #include "Game/GameSceneManager.h"
+#include "Game/FE/feMusic.h"
 
 class TLComponentInstance;
+class TLImageInstance;
 
 struct CreditParser
 {
@@ -33,13 +36,15 @@ public:
     void UpdateForNLGMovie(float);
     TLComponentInstance* GetWhiteFadeComponent();
 
+    static SceneList mNextScene;
+
     /*  0x01C */ TLTextInstance* m_pTextLines[10]; // offset 0x1C, size 0x28
     /*  0x044 */ bool mLineOnScreen[10];           // offset 0x44, size 0xA
     /*  0x04E */ bool mAreCreditsOver;             // offset 0x4E, size 0x1
     /*  0x04F */ bool mFinalMessageDisplayed;      // offset 0x4F, size 0x1
     /*  0x050 */ float mTimeElapsed;               // offset 0x50, size 0x4
     /*  0x054 */ CreditParser mCreditParser;       // offset 0x54, size 0x51C
-    /*  0x570*/ unsigned short mStrings[10][64];   // offset 0x570, size 0x500
+    /*  0x570 */ unsigned short mStrings[10][64];  // offset 0x570, size 0x500
 }; // total size: 0xA70
 
 // class FEFinder<TLComponentInstance, 4>

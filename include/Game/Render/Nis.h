@@ -87,7 +87,8 @@ struct NisHeader
     /* 0xA4 */ NisTarget target;
     /* 0xA8 */ NisWinnerType winnerType;
     /* 0xAC */ nlVector3 stadiumOffset;
-}; // total size: 0xB8
+    /* 0xB8 */ u8 _padB8[4];
+}; // total size: 0xBC
 
 enum NisAudioType
 {

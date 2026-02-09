@@ -7,7 +7,19 @@
 #include "NL/gl/gl.h"
 #include "NL/gl/glConstant.h"
 
-class ProjectedShadowParams;
+struct ProjectedShadowParams {
+    nlVector4 vLight;           // 0x00, size 0x10
+    nlVector3 vPosition;        // 0x10, size 0xC
+    float fRadius;              // 0x1C, size 0x4
+    struct glModel* pModel;     // 0x20, size 0x4
+    float fWidth;               // 0x24, size 0x4
+    float fHeight;              // 0x28, size 0x4
+    float fScalar;              // 0x2C, size 0x4
+    int nPartitionIndex;        // 0x30, size 0x4
+    int nVisibleInterval;       // 0x34, size 0x4
+    int nInvisibleInterval;     // 0x38, size 0x4
+};
+
 class nlColour;
 class glQuad3;
 class glModel;
@@ -17,7 +29,7 @@ void RenderBlobShadow(const nlVector3&, const nlVector3*, int, const int*, const
 void SubdivideAndRender(glQuad3&, eGLView);
 void SetCharacterShadowUpdated(int, bool);
 void RenderCharacterIntoTexture(const ProjectedShadowParams&);
-void ShouldShadowBeUpdated(const ProjectedShadowParams&);
+u8 ShouldShadowBeUpdated(const ProjectedShadowParams&);
 void GetShadowPartitionIndex();
 void RenderShadowModel(unsigned long, glModel*, unsigned long);
 void ShadowStartup();

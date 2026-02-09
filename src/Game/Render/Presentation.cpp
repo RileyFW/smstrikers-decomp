@@ -1,10 +1,19 @@
 #include "Game/Render/Presentation.h"
+#include "Game/FixedUpdateTask.h"
+#include "Game/ParticleUpdateTask.h"
 #include "Game/WorldManager.h"
 #include "Game/Drawable/DrawableObj.h"
 #include "NL/gl/gl.h"
 #include "NL/nlString.h"
 
+class NisPlayer : public InterpreterCore {
+public:
+    static NisPlayer* Instance();
+    void SetExtraNameFilter(const char*);
+};
+
 extern unsigned long cupTrophyHash;
+static const char* idleFun = "Idle";
 
 // /**
 //  * Offset/Address/Size: 0x60 | 0x80127308 | size: 0x8
@@ -129,10 +138,28 @@ bool Presentation::DuringEndOfGamePresentation() const
 /**
  * Offset/Address/Size: 0xCF0 | 0x801254D4 | size: 0xCC
  */
-void Presentation::Call(const char*, const char*)
+void Presentation::Call(const char* functionName, const char* nisFilter)
 {
-}
+    FixedUpdateTask::mTimeScale = 1.0f;
+    ParticleUpdateTask::SetTimeScale(1.0f);
 
+    if (nlStrCmp<char>(idleFun, mCurrentFunction) != 0 && nlStrCmp<char>(idleFun, functionName) != 0)
+    {
+        mQueuedFunction = functionName;
+        return;
+    }
+
+    nlStrNCpy<char>(mCurrentFunction, functionName, 64);
+    mSkipPressed = false;
+    mInsideByPass = false;
+    mByPassing = false;
+    mInterruptWipe = 0;
+    mUseInterruptWipe = 0;
+    mTimeInFunction = 0.0f;
+
+    NisPlayer::Instance()->SetExtraNameFilter(nisFilter);
+    CallFunction(nlStringHash(functionName));
+}
 /**
  * Offset/Address/Size: 0x57C | 0x80124D60 | size: 0x774
  */

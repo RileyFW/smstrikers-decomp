@@ -1,10 +1,10 @@
 #include "Game/NisPlayer.h"
+#include "Game/Camera/CameraMan.h"
+#include "Game/Character.h"
 #include "Game/Effects/EmissionManager.h"
 #include "NL/nlTask.h"
 #include "NL/nlString.h"
 #include "string.h"
-
-NisPlayer* NisPlayer::m_pInstance = NULL;
 
 /**
  * Offset/Address/Size: 0x0 | 0x80114CDC | size: 0x74
@@ -55,6 +55,16 @@ void NisPlayer::EventHandler(Event*)
  */
 void NisPlayer::PlayCharacterDirection()
 {
+    Event* event = g_pEventManager->CreateValidEvent(7, 0x20);
+    CharacterDirectionData* pData = new (&event->m_data) CharacterDirectionData();
+    pData->home = &mCharDirections[0];
+    pData->away = &mCharDirections[4];
+    for (int i = 0; i < 10; i++)
+    {
+        mCharDirections[i].f.x = nlRandomf(-20.0f, 20.0f, &nlDefaultSeed);
+        mCharDirections[i].f.y = nlRandomf(-50.0f, 10.0f, &nlDefaultSeed);
+        mCharDirections[i].f.z = 0.0f;
+    }
 }
 
 /**
@@ -73,9 +83,17 @@ void NisPlayer::GetTargetFilter(NisTarget, NisWinnerType) const
 
 /**
  * Offset/Address/Size: 0x1A48 | 0x80116724 | size: 0x98
+ * TODO: 99.21% match - remaining `i` diffs are the local-static `instance` / `init$` relocation immediates.
  */
-void NisPlayer::AsyncLoad(nlFile*, void*, unsigned int, unsigned long)
+void NisPlayer::AsyncLoad(nlFile* file, void* buffer, unsigned int size, unsigned long param)
 {
+    if (file != NULL)
+    {
+        nlClose(file);
+    }
+
+    static NisPlayer instance;
+    instance.Load((char*)buffer - size, size, *(NisHeader*)param);
 }
 
 /**
@@ -83,13 +101,41 @@ void NisPlayer::AsyncLoad(nlFile*, void*, unsigned int, unsigned long)
  */
 void NisPlayer::LoadTriggers(Nis&)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x27E8 | 0x801174C4 | size: 0x10C
  */
-void NisPlayer::Load(char*, unsigned int, NisHeader&)
+void NisPlayer::Load(char* buffer, unsigned int size, NisHeader& nisHeader)
 {
+    if (!mActive)
+        return;
+
+    for (int i = 0; i < 4; i++)
+    {
+        if (mLoaded[i] != NULL)
+            continue;
+
+        int j;
+        for (j = 0; j < 4; j++)
+        {
+            if (&nisHeader == mLoadQueue[j])
+            {
+                mLoadQueue[j] = NULL;
+                mAsyncStarted[j] = false;
+                break;
+            }
+        }
+
+        if (j >= 4)
+            continue;
+
+        Nis* nis = new (nlMalloc(0x740, 8, false)) Nis(nisHeader, buffer, size);
+        mLoaded[i] = nis;
+        LoadTriggers(*mLoaded[i]);
+        return;
+    }
 }
 
 /**
@@ -111,6 +157,27 @@ void NisPlayer::Play()
  */
 void NisPlayer::Reset()
 {
+    if (!mActive)
+    {
+        return;
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        delete mPlaying[i];
+        delete mLoaded[i];
+        mPlaying[i] = NULL;
+        mLoaded[i] = NULL;
+        mLoadQueue[i] = NULL;
+        mAsyncStarted[i] = false;
+    }
+
+    mActive = false;
+    mLoadingFromBack = false;
+    mUsedFromFront = 0;
+    mUsedFromBack = 0x70800;
+    mCamera.UnselectCameraAnimation();
+    cCameraManager::Remove(mCamera);
 }
 
 /**
@@ -181,11 +248,50 @@ bool NisPlayer::WorldIsFrozen() const
     return frozenTime > 0.0f;
 }
 
+static inline float GetTimeLeftForTrophy(const float t)
+{
+    return (1.0f - t);
+}
 /**
  * Offset/Address/Size: 0x3358 | 0x80118034 | size: 0xB0
+ * TODO: 99.3% match - f1/f0 register swap for 1.0f vs m_fAnimationSpeed load order (MWCC SDA scheduling quirk)
  */
 float NisPlayer::TimeLeft() const
 {
+    if (mPlaying[0] != NULL)
+    {
+        if (strstr(mPlaying[0]->Name(), "trophy") != NULL)
+        {
+            return 1.0f;
+        }
+    }
+
+    cCameraData* pCameraData = mCamera.m_pActiveCameraData;
+    if (pCameraData != NULL)
+    {
+        // float t = mCamera.m_fAnimationSpeed;
+        float timeRemaining = 1.0f;
+        timeRemaining = timeRemaining - mCamera.m_fAnimationSpeed;
+        // float t = mCamera.m_fAnimationSpeed;
+        // float timeRemaining = 1.0f - t;
+        // float timeRemaining = 1.0f - mCamera.m_fAnimationSpeed;
+        // float timeRemaining = GetTimeLeftForTrophy(mCamera.m_fAnimationSpeed);
+
+        float duration;
+        if (pCameraData != NULL)
+        {
+            duration = (float)(pCameraData->m_uKeyCount - 1) / 30.0f;
+        }
+        else
+        {
+            duration = 0.0f;
+        }
+
+        // return (mCamera.m_fAnimationSpeed - 1.f) * duration;
+        // return GetTimeLeftForTrophy(mCamera.m_fAnimationSpeed) * duration;
+        return timeRemaining * duration;
+    }
+
     return 0.0f;
 }
 
@@ -202,11 +308,8 @@ NisPlayer::NisPlayer()
  */
 NisPlayer* NisPlayer::Instance()
 {
-    if (m_pInstance == NULL)
-    {
-        m_pInstance = new NisPlayer();
-    }
-    return m_pInstance;
+    static NisPlayer instance;
+    return &instance;
 }
 
 /**

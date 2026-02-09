@@ -65,7 +65,7 @@ public:
     HelperObject* FindHelperObject(unsigned long uHashId);
     DrawableObject* FindDrawableObject(unsigned long);
     void HandleCameraSwitch();
-    void IsSphereInFrustum(const nlMatrix4&, float);
+    u8 IsSphereInFrustum(const nlMatrix4&, float);
     void ExtractFrustumPlanes();
     void* GetCustomSpecularData(glModelPacket*, bool);
     void CreateLightUserData();

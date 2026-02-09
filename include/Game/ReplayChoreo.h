@@ -24,12 +24,33 @@ public:
 
     struct Highlight
     {
+        Highlight()
+        {
+            // TODO: struct is not clearly defined
+        }
+
         int mSideOfInterest;            // offset 0x0, size 0x4
         GoalScoredData mGoalScoredData; // offset 0x4, size 0x24
-    }; // total size: 0x28
+        u8 pad[0xC];                    // padding to 0x34
+    }; // total size: 0x34
+
+    /**
+     * Offset/Address/Size: 0xFDC | 0x80128648 | size: 0xE8
+     */
+    ReplayChoreo()
+        : InterpreterCore(10)
+        , mReplayManager(NULL)
+        , mRunForTimeLeft(0.0f)
+        , mRunningFor(false)
+        , mByteCode(NULL)
+        , mHighlightIndex(-1)
+        , mNumHighlights(0)
+    {
+        LoadScript();
+    }
 
     void DoFunctionCall(unsigned int);
-    void Instance();
+    static ReplayChoreo& Instance();
     void LoadScript();
     void EventHandler(Event*);
     void Reset();
@@ -50,8 +71,10 @@ public:
     bool mRunningFor;               // offset 0x200, size 0x1
     void* mByteCode;                // offset 0x204, size 0x4
     GoalScoredData mGoalScoredData; // offset 0x208, size 0x24
-    Highlight mHighlights[4];       // offset 0x22C, size 0xA0
+    int mReplayPad;                 // offset 0x22C, size 0x4
+    Highlight mHighlights[3];       // offset 0x230, size 0x9C
     int mHighlightIndex;            // offset 0x2CC, size 0x4
-}; // total size: 0x2D0
+    int mNumHighlights;             // offset 0x2D0, size 0x4
+}; // total size: 0x2D4
 
 #endif // _REPLAYCHOREO_H_

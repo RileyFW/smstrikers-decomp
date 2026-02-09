@@ -21,7 +21,7 @@ public:
     /* 0x04 */ Event* m_prev;
     /* 0x08 */ u32 m_uEventID;
     /* 0x0C */ s32 m_nReferenceCount;
-    /* 0x10 */ EventData* m_data;
+    /* 0x10 */ EventData m_data;
 };
 
 typedef void (*EventCallback)(Event*, void*);

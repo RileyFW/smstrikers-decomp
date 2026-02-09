@@ -8,6 +8,7 @@
 #include "Game/GameSceneManager.h"
 #include "NL/gl/glStruct.h"
 #include "NL/nlPrint.h"
+#include "types.h"
 
 static inline bool IsStadiumUnlocked(eStadiumID sid)
 {
@@ -630,6 +631,7 @@ update_images:
  */
 void StadiumSelectSceneV2::ResetFromRight()
 {
+    FORCE_DONT_INLINE;
     if (mTempTextureBuffer == NULL)
     {
         mTempTextureBufferSize = mImages[0]->mTextureSize;
@@ -668,6 +670,7 @@ void StadiumSelectSceneV2::ResetFromRight()
  */
 void StadiumSelectSceneV2::ResetFromLeft()
 {
+    FORCE_DONT_INLINE;
     if (mTempTextureBuffer == NULL)
     {
         mTempTextureBufferSize = mImages[0]->mTextureSize;

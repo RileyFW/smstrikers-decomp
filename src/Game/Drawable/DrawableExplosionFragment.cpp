@@ -1,6 +1,7 @@
 #include "Game/Drawable/DrawableExplosionFragment.h"
 
 #include "Game/Game.h"
+#include "Game/Render/SidelineExplodable.h"
 #include "Game/World.h"
 #include "Game/WorldManager.h"
 #include "Game/Drawable/DrawableObj.h"
@@ -65,9 +66,34 @@ void DrawableExplosionFragment::Render() const
 
 /**
  * Offset/Address/Size: 0x1D4 | 0x8011F974 | size: 0xBC
+ * TODO: 94.7% match - f0/f1 register swap on sfFadeOutTime comparison (MWCC SDA scheduling quirk)
  */
 void DrawableExplosionFragment::Grab()
 {
+    ExplosionFragment* frag = SidelineExplodableManager::GetFragmentFromHandle(mID);
+    if (frag == NULL)
+    {
+        mVisible = false;
+        return;
+    }
+
+    mVisible = true;
+    mFragmentModelHash = frag->mFragmentModelHash;
+
+    mPosition = frag->ExplosionFragment::GetPosition();
+
+    static nlMatrix4 temp;
+    frag->ExplosionFragment::GetRotation(&temp);
+    nlMatrixToQuat(mOrientation, temp);
+
+    if (frag->mfRemainingLifespan > ExplosionFragment::sfFadeOutTime)
+    {
+        mOpacity = 1.0f;
+    }
+    else
+    {
+        mOpacity = frag->mfRemainingLifespan / ExplosionFragment::sfFadeOutTime;
+    }
 }
 
 /**

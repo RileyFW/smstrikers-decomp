@@ -101,7 +101,7 @@ ContactType PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int 
                     Event* event = g_pEventManager->CreateValidEvent(0x22, 0x2C);
                     // if (event != nullptr)
                     {
-                        CollisionPowerupGroundData* eventData = (CollisionPowerupGroundData*)(event->m_data);
+                        CollisionPowerupGroundData* eventData = (CollisionPowerupGroundData*)(&event->m_data);
 
                         eventData = new (eventData) CollisionPowerupGroundData();
 
@@ -304,7 +304,7 @@ ContactType PhysicsBanana::Contact(PhysicsObject* other, dContact* contact, int 
                 Event* event = g_pEventManager->CreateValidEvent(0x21, 0x3C);
                 // if (event != nullptr)
                 // {
-                CollisionPowerupWallData* eventData = (CollisionPowerupWallData*)(event->m_data);
+                CollisionPowerupWallData* eventData = (CollisionPowerupWallData*)(&event->m_data);
                 eventData = new (eventData) CollisionPowerupWallData();
 
                 // Set powerup object references

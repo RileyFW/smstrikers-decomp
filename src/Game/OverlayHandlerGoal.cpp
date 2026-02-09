@@ -1,6 +1,8 @@
 #include "Game/OverlayHandlerGoal.h"
 #include "Game/FE/feNSNMessenger.h"
 #include "Game/Game.h"
+#include "Game/Goalie.h"
+#include "NL/nlBundleFile.h"
 
 /**
  * Offset/Address/Size: 0x106C | 0x80104868 | size: 0xCF0
@@ -126,8 +128,55 @@ void GoalOverlay::Update(float dt)
 /**
  * Offset/Address/Size: 0x2F44 | 0x80102FB4 | size: 0x118
  */
-void GoalOverlay::eventHandler(Event*, void*)
+void GoalOverlay::eventHandler(Event* event, void* param)
 {
+    GoalOverlay* pGoal = (GoalOverlay*)param;
+
+    if (event->m_uEventID == 5)
+    {
+        GoalScoredData* data;
+        s32 id = event->m_data.GetID();
+        if (id == -1)
+        {
+            nlPrintf("Error: Trying to get event data on event with none!\n");
+            data = 0;
+        }
+        else
+        {
+            id = event->m_data.GetID();
+            if (id != 0x18A)
+            {
+                nlPrintf("Error: GetData() failed! Data types do not match!\n");
+                data = 0;
+            }
+            else
+            {
+                data = (GoalScoredData*)&event->m_data;
+            }
+        }
+
+        bool isCaptainS2S = (data->uGoalType == 6);
+        int playerIndex;
+
+        if (data->uGoalType == 5)
+        {
+            playerIndex = data->pLastTouch[data->uTeamIndex]->m_ID;
+        }
+        else
+        {
+            playerIndex = data->pScorer->m_ID;
+        }
+
+        pGoal->UpdateGoalInfo((int)data->uTeamIndex, playerIndex, isCaptainS2S, (int)data->uNumGoalsScored);
+    }
+    else if (event->m_uEventID == 3)
+    {
+        pGoal->mCaptainGoals[0] = 0;
+        pGoal->mCaptainGoals[1] = 0;
+        pGoal->mSidekickGoals[0] = 0;
+        pGoal->mSidekickGoals[1] = 0;
+        pGoal->mIsInOvertime = false;
+    }
 }
 
 /**
@@ -135,6 +184,7 @@ void GoalOverlay::eventHandler(Event*, void*)
  */
 void GoalOverlay::UpdateGoalInfo(int, int, bool, int)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
