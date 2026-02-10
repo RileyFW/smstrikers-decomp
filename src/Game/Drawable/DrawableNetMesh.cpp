@@ -1,13 +1,66 @@
 #include "Game/Drawable/DrawableNetMesh.h"
 #include "Game/Replay.h"
+/**
+ * Offset/Address/Size: 0xC4C | 0x80114BA8 | size: 0x24
+ */
+DrawableNetMesh::DrawableNetMesh(bool isPositiveXNet)
+{
+    int netFlag = (u32)isPositiveXNet;
+    miNetIndex = (netFlag == 0);
+    mNumQuads = 0;
+    mNumVertices = 0;
+    mbInitialized = false;
+}
 
 /**
- * Offset/Address/Size: 0x0 | 0x80113F5C | size: 0x38
+ * Offset/Address/Size: 0xB80 | 0x80114ADC | size: 0xCC
  */
-void DrawableNetMesh::Replay(SaveFrame& frame)
+DrawableNetMesh::~DrawableNetMesh()
 {
-    mJoltCache = mpNetMesh->mJolt;
-    Replayable<0, SaveFrame, float>(frame, mJoltCache);
+    if (mbInitialized)
+    {
+        delete[] mpPosition;
+    }
+
+    if (sbStaticInitialized[miNetIndex])
+    {
+        delete[] spTexcoord[miNetIndex];
+        delete[] spTriIndices[miNetIndex];
+        delete[] spColour[miNetIndex];
+        sbStaticInitialized[miNetIndex] = false;
+    }
+
+    mNumQuads = 0;
+    mNumVertices = 0;
+    mbInitialized = false;
+}
+
+/**
+ * Offset/Address/Size: 0x91C | 0x80114878 | size: 0x264
+ */
+void DrawableNetMesh::RenderInvisiblePlanes() const
+{
+}
+
+/**
+ * Offset/Address/Size: 0x4B8 | 0x80114414 | size: 0x464
+ */
+void DrawableNetMesh::Render() const
+{
+}
+
+/**
+ * Offset/Address/Size: 0x2C0 | 0x8011421C | size: 0x1F8
+ */
+void DrawableNetMesh::Grab(NetMesh&)
+{
+}
+
+/**
+ * Offset/Address/Size: 0xAC | 0x80114008 | size: 0x214
+ */
+void DrawableNetMesh::Blend(float, const DrawableNetMesh&, const DrawableNetMesh&)
+{
 }
 
 /**
@@ -32,45 +85,12 @@ void DrawableNetMesh::Replay(LoadFrame& frame)
 }
 
 /**
- * Offset/Address/Size: 0xAC | 0x80114008 | size: 0x214
+ * Offset/Address/Size: 0x0 | 0x80113F5C | size: 0x38
  */
-void DrawableNetMesh::Blend(float, const DrawableNetMesh&, const DrawableNetMesh&)
+void DrawableNetMesh::Replay(SaveFrame& frame)
 {
-}
-
-/**
- * Offset/Address/Size: 0x2C0 | 0x8011421C | size: 0x1F8
- */
-void DrawableNetMesh::Grab(NetMesh&)
-{
-}
-
-/**
- * Offset/Address/Size: 0x4B8 | 0x80114414 | size: 0x464
- */
-void DrawableNetMesh::Render() const
-{
-}
-
-/**
- * Offset/Address/Size: 0x91C | 0x80114878 | size: 0x264
- */
-void DrawableNetMesh::RenderInvisiblePlanes() const
-{
-}
-
-/**
- * Offset/Address/Size: 0xB80 | 0x80114ADC | size: 0xCC
- */
-DrawableNetMesh::~DrawableNetMesh()
-{
-}
-
-/**
- * Offset/Address/Size: 0xC4C | 0x80114BA8 | size: 0x24
- */
-DrawableNetMesh::DrawableNetMesh(bool)
-{
+    mJoltCache = mpNetMesh->mJolt;
+    Replayable<0, SaveFrame, float>(frame, mJoltCache);
 }
 
 /**

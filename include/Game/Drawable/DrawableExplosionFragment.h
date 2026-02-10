@@ -18,6 +18,7 @@ public:
     void Blend(const float*, const DrawableExplosionFragment&, const DrawableExplosionFragment&);
     void Render() const;
     void Grab();
+
     // void Replay<LoadFrame>(LoadFrame&);
     // void Replay<SaveFrame>(SaveFrame&);
 

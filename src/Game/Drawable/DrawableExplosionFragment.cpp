@@ -66,7 +66,6 @@ void DrawableExplosionFragment::Render() const
 
 /**
  * Offset/Address/Size: 0x1D4 | 0x8011F974 | size: 0xBC
- * TODO: 94.7% match - f0/f1 register swap on sfFadeOutTime comparison (MWCC SDA scheduling quirk)
  */
 void DrawableExplosionFragment::Grab()
 {
@@ -92,23 +91,27 @@ void DrawableExplosionFragment::Grab()
     }
     else
     {
-        mOpacity = frag->mfRemainingLifespan / ExplosionFragment::sfFadeOutTime;
+        float ratio = frag->mfRemainingLifespan;
+        ratio /= ExplosionFragment::sfFadeOutTime;
+        mOpacity = ratio;
     }
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x8011FA30 | size: 0x7C
  */
-// void DrawableExplosionFragment::Replay<LoadFrame>(LoadFrame&)
-// {
-// }
+template <>
+void DrawableExplosionFragment::Replay<LoadFrame>(LoadFrame&)
+{
+}
 
 /**
  * Offset/Address/Size: 0x7C | 0x8011FAAC | size: 0x7C
  */
-// void DrawableExplosionFragment::Replay<SaveFrame>(SaveFrame&)
-// {
-// }
+template <>
+void DrawableExplosionFragment::Replay<SaveFrame>(SaveFrame&)
+{
+}
 
 /**
  * Offset/Address/Size: 0x0 | 0x8011FB28 | size: 0x50
