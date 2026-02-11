@@ -32,6 +32,7 @@ class WorldAnimController
 {
 public:
     virtual ~WorldAnimController() { };
+    virtual void Update(float) { };
 
     void SetAnimation(const char* szAnimationName, ePlayMode playMode);
     void SetAnimationTime(float fTime);

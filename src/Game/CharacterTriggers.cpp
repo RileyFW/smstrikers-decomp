@@ -10,6 +10,22 @@
 #include "Game/SAnim/pnSAnimController.h"
 #include "Game/Sys/debug.h"
 
+namespace Audio
+{
+enum eWorldSFX
+{
+    WORLDSFX_DUMMY = 0,
+};
+
+class cWorldSFX : public cGameSFX
+{
+public:
+    void Stop(eWorldSFX, cGameSFX::StopFlag);
+};
+
+extern cWorldSFX gCrowdSFX;
+} // namespace Audio
+
 /**
  * Offset/Address/Size: 0x5190 | 0x801A3F40 | size: 0x94
  */
@@ -248,8 +264,21 @@ void EmitWindupAtBall(cCharacter*, const char*)
 /**
  * Offset/Address/Size: 0xB00 | 0x8019F8B0 | size: 0x104
  */
-void EmitWindupAtCharacter(cCharacter*, const char*)
+void EmitWindupAtCharacter(cCharacter* pCharacter, const char* name)
 {
+    Audio::gCrowdSFX.Stop((Audio::eWorldSFX)0x9F, cGameSFX::SFX_STOP_FIRST);
+    pCharacter->Play3DSFX((Audio::eCharSFX)0x16, (PosUpdateMethod)1, 1.0f);
+    EmissionController* pController = EmissionManager::Create(fxGetGroup(name), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 0.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.0f;
+    {
+        Function<EmissionController&> update;
+        update.mTag = FREE_FUNCTION;
+        update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+        pController->SetUpdateCallback(update);
+    }
+    pCharacter->AttachEffect(pController);
 }
 
 /**

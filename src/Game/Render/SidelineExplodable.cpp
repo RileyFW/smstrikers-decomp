@@ -1,4 +1,6 @@
 #include "Game/Render/SidelineExplodable.h"
+#include "Game/Render/AnimatedModelExplodable.h"
+#include "Game/Render/StaticModelExplodable.h"
 #include "NL/nlMath.h"
 #include "types.h"
 
@@ -83,7 +85,8 @@ nlVector3& ExplosionFragment::GetPosition() const
  */
 void ExplosionFragment::GetRotation(nlMatrix4* dest) const
 {
-    if (mpPhysicsObject != NULL) {
+    if (mpPhysicsObject != NULL)
+    {
         mpPhysicsObject->GetRotation(dest);
         return;
     }
@@ -138,8 +141,38 @@ SidelineExplodable::~SidelineExplodable()
 /**
  * Offset/Address/Size: 0x1CC4 | 0x80169024 | size: 0xB0
  */
-void SidelineExplodable::Initialize(int)
+extern "C" void Allocate__18SidelineExplodableFv(SidelineExplodable*);
+
+void SidelineExplodable::Initialize(int numFragmentModels)
 {
+    mNumFragmentModels = numFragmentModels;
+    Allocate__18SidelineExplodableFv(this);
+
+    SidelineExplodableNode* node = NULL;
+
+    if (SidelineExplodableNode::sSidelineExplodableNodeSlotPool.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&SidelineExplodableNode::sSidelineExplodableNodeSlotPool, 8);
+    }
+
+    SlotPoolEntry* entry = SidelineExplodableNode::sSidelineExplodableNodeSlotPool.m_FreeList;
+    if (entry != NULL)
+    {
+        node = (SidelineExplodableNode*)entry;
+        SidelineExplodableNode::sSidelineExplodableNodeSlotPool.m_FreeList = (SlotPoolEntry*)entry->m_next;
+    }
+
+    if (node != NULL)
+    {
+        node->mpExplodable = NULL;
+        node->next = NULL;
+    }
+
+    node->mpExplodable = this;
+    node->next = NULL;
+    nlListAddEnd<SidelineExplodableNode>(&SidelineExplodableManager::sSidelineExplodableList.m_pStart,
+        &SidelineExplodableManager::sSidelineExplodableList.m_pEnd,
+        node);
 }
 
 /**
@@ -200,13 +233,80 @@ void ExplodableCategoryData::LoadGeometry()
  */
 void SidelineExplodableManager::CleanUp()
 {
+    AnimatedModelExplodable::CleanUp();
+    StaticModelExplodable::CleanUp();
+
+    if (sbIsInitialized)
+    {
+        DrawableFragmentHandleNode** pTail = &sUnusedDrawableFragments.m_pEnd;
+        SlotPoolBase* pPool = &DrawableFragmentHandleNode::sDrawableFragmentHandleNodePool;
+        DrawableFragmentHandleNode* node;
+
+        while ((node = sUnusedDrawableFragments.m_pStart) != NULL)
+        {
+            nlListRemoveStart<DrawableFragmentHandleNode>(&sUnusedDrawableFragments.m_pStart, pTail);
+            ((SlotPoolEntry*)node)->m_next = pPool->m_FreeList;
+            pPool->m_FreeList = (SlotPoolEntry*)node;
+        }
+
+        operator delete[](sFragmentLookupTable);
+        sFragmentLookupTable = NULL;
+        sbIsInitialized = false;
+    }
+
+    SlotPoolBase::BaseFreeBlocks(&SidelineExplodableNode::sSidelineExplodableNodeSlotPool, 8);
+    SlotPoolBase::BaseFreeBlocks(&DrawableFragmentHandleNode::sDrawableFragmentHandleNodePool, 8);
 }
 
 /**
  * Offset/Address/Size: 0x810 | 0x80167B70 | size: 0x128
  */
-void SidelineExplodableManager::Update(float)
+void SidelineExplodableManager::Update(float fDeltaT)
 {
+    if (!sbIsInitialized)
+    {
+        sbIsInitialized = true;
+        sFragmentLookupTable = (ExplosionFragment**)nlMalloc(0x50, 8, false);
+
+        SlotPool<DrawableFragmentHandleNode>& pool = DrawableFragmentHandleNode::sDrawableFragmentHandleNodePool;
+        u16 i;
+        DrawableFragmentHandleNode* node;
+        DrawableFragmentHandleNode** tail = &sUnusedDrawableFragments.m_pEnd;
+
+        for (i = 0; i < 20; i++)
+        {
+            node = NULL;
+
+            if (pool.m_FreeList == NULL)
+            {
+                SlotPoolBase::BaseAddNewBlock(&DrawableFragmentHandleNode::sDrawableFragmentHandleNodePool, 8);
+            }
+
+            SlotPoolEntry* entry = pool.m_FreeList;
+            if (entry != NULL)
+            {
+                node = (DrawableFragmentHandleNode*)entry;
+                pool.m_FreeList = (SlotPoolEntry*)entry->m_next;
+            }
+
+            if (node != NULL)
+            {
+                node->mID = 0;
+                node->next = NULL;
+            }
+
+            node->mID = i;
+            nlListAddEnd<DrawableFragmentHandleNode>(&sUnusedDrawableFragments.m_pStart, tail, node);
+            sFragmentLookupTable[i] = NULL;
+        }
+    }
+
+    SidelineExplodableNode* node = sSidelineExplodableList.m_pStart;
+    while (node != NULL)
+    {
+        node->mpExplodable->SidelineExplodable::Update(fDeltaT);
+        node = node->next;
+    }
 }
 
 /**

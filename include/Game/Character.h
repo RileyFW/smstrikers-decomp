@@ -281,6 +281,7 @@ public:
 };
 
 class cFielder;
+class ChainChomp;
 
 struct PowerupData : public EventData
 {
@@ -357,11 +358,14 @@ public:
     virtual u32 GetID();
 };
 
-class CollisionChainPlayerData
+class CollisionChainPlayerData : public EventData
 {
 public:
     virtual u32 GetID();
-};
+
+    /* 0x04 */ cFielder* pFielder;
+    /* 0x08 */ ChainChomp* pChain;
+}; // total size: 0xC
 
 class CollisionPlayerShootToScoreBallData
 {

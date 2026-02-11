@@ -46,7 +46,41 @@ struct CARD_INFO
 class MemCardFunctor
 {
 public:
-    MemCardFunctor();
+    MemCardFunctor() {}
+
+    class MCInternalFunctorBase
+    {
+    public:
+        MCInternalFunctorBase() : m_pData(NULL) {}
+        virtual ~MCInternalFunctorBase();
+        virtual void Call(unsigned long, long);
+        virtual void Destroy();
+
+        /* 0x04 */ void* m_pData;
+    };
+
+    template<class T>
+    class MCMemberFunctor : public MCInternalFunctorBase
+    {
+    public:
+        typedef void (T::*MemberCB)(unsigned long, long, void*);
+
+        MCMemberFunctor(T* obj, const MemberCB& cb)
+        {
+            m_pFunc = ((void**)&cb)[0];
+            m_Slot = ((unsigned long*)&cb)[1];
+            m_pfnCB = ((void**)&cb)[2];
+            m_pObject = obj;
+        }
+        virtual ~MCMemberFunctor();
+        virtual void Call(unsigned long, long);
+        virtual void Destroy();
+
+        /* 0x08 */ void* m_pFunc;
+        /* 0x0C */ unsigned long m_Slot;
+        /* 0x10 */ void* m_pfnCB;
+        /* 0x14 */ T* m_pObject;
+    };
 
     /* 0x00 */ unsigned char m_FunctorMem[24];
 }; // total size: 0x18
@@ -94,7 +128,7 @@ public:
     void CardCheckBrokenDoneCB(long, long);
     static void CardCheckDoneCB(long, long);
     void WriteFileDoneCB(long, long);
-    void BeginCardAccess(const MemCardFunctor&);
+    s32 BeginCardAccess(const MemCardFunctor&);
     void CreateFile(const char*, unsigned long, MemCard::ICON_CONFIG*, MemCard::MC_FILE*&, const MemCardFunctor&);
     void OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*);
     void FormatCard(const MemCardFunctor&);

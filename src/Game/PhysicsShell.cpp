@@ -62,11 +62,12 @@ PhysicsShell::PhysicsShell(float radius)
     : PhysicsSphere(g_CollisionSpace, g_PhysicsWorld, radius)
 {
 
-    m_unk_0x2c = 0;
-    m_unk_0x30 = 0;
-    m_unk_0x34 = 0;
-    m_unk_0x38 = 0;
-    m_unk_0x39 = 0;
+    m_pTriggerCallbackFunc = 0;
+    m_pCallbackParam = 0;
+    m_pPowerupObject = 0;
+    mbIsInNet = false;
+    m_bIsSupportedByGround = false;
+
     SetCollide(0xef);
     SetCategory(0x20);
     m_gravity = -32.f;

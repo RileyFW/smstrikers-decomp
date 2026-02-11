@@ -1,6 +1,8 @@
 #include "Game/Render/StaticModelExplodable.h"
 #include "Game/Drawable/DrawableObj.h"
 
+nlList<SidelineExplodableNode> StaticModelExplodable::sStaticModelExplodableList;
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80165D2C | size: 0x138
 //  */
@@ -20,6 +22,23 @@ void StaticModelExplodable::CreateExplodablesFromHelperObjects()
  */
 void StaticModelExplodable::CleanUp()
 {
+    long zero = 0;
+    SlotPoolBase* pPool = &SidelineExplodableNode::sSidelineExplodableNodeSlotPool;
+    SidelineExplodableNode** pTail = &sStaticModelExplodableList.m_pEnd;
+    SidelineExplodableNode* node;
+    while ((node = sStaticModelExplodableList.m_pStart) != NULL)
+    {
+        nlListRemoveStart<SidelineExplodableNode>(&sStaticModelExplodableList.m_pStart, pTail);
+        SidelineExplodable* pExplodable = node->mpExplodable;
+        if (pExplodable != NULL)
+        {
+            SidelineExplodableManager::RemoveSidelineExplodable(pExplodable);
+            delete node->mpExplodable;
+        }
+        node->mpExplodable = (SidelineExplodable*)zero;
+        ((SlotPoolEntry*)node)->m_next = pPool->m_FreeList;
+        pPool->m_FreeList = (SlotPoolEntry*)node;
+    }
 }
 
 /**
@@ -56,9 +75,12 @@ void StaticModelExplodable::GetWorldMatrix() const
 void StaticModelExplodable::SetUnexplodedModelVisibility(bool visible)
 {
     DrawableObject* obj = m_pUnexplodedModel;
-    if (visible) {
+    if (visible)
+    {
         obj->m_uObjectFlags |= 1;
-    } else {
+    }
+    else
+    {
         obj->m_uObjectFlags &= ~1;
     }
 }

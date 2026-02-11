@@ -1,4 +1,5 @@
 #include "Game/DB/StatsTracker.h"
+#include "Game/GameInfo.h"
 
 // /**
 //  * Offset/Address/Size: 0x2C7C | 0x80189818 | size: 0x144
@@ -79,9 +80,45 @@ void StatsTracker::SetBasicGameInfoPointer(BasicGameInfo*, bool)
 
 /**
  * Offset/Address/Size: 0x4FD0 | 0x80186530 | size: 0xF8
+ * TODO: 94.2% match - r29/r30 register swap for this pointer vs teamIdx (MWCC register allocation quirk)
  */
 void StatsTracker::ResetCurrentStats()
 {
+    eTeamID teamIdx;
+    int i;
+
+    mIsOvertime = false;
+    mHasGameEnded = false;
+
+    teamIdx = mCumulativeTeamStats[0].mTeamIndex;
+    memset(&mCurrentTeamStats[0].mPlayerTotalStats, 0, sizeof(PlayerStats));
+    mCurrentTeamStats[0].mPlayerTotalStats.mRecordType.mTeamID = teamIdx;
+    mCurrentTeamStats[0].mPlayerTotalStats.mType = TYPE_TEAM;
+    mCurrentTeamStats[0].mTeamIndex = teamIdx;
+    mCurrentTeamStats[0].mNumWins = 0;
+    mCurrentTeamStats[0].mNumLosses = 0;
+    mCurrentTeamStats[0].mNumOTLosses = 0;
+    mCurrentTeamStats[0].mNumPoints = 0;
+
+    teamIdx = mCumulativeTeamStats[1].mTeamIndex;
+    memset(&mCurrentTeamStats[1].mPlayerTotalStats, 0, sizeof(PlayerStats));
+    mCurrentTeamStats[1].mPlayerTotalStats.mRecordType.mTeamID = teamIdx;
+    mCurrentTeamStats[1].mPlayerTotalStats.mType = TYPE_TEAM;
+    mCurrentTeamStats[1].mTeamIndex = teamIdx;
+    mCurrentTeamStats[1].mNumWins = 0;
+    mCurrentTeamStats[1].mNumLosses = 0;
+    mCurrentTeamStats[1].mNumOTLosses = 0;
+    mCurrentTeamStats[1].mNumPoints = 0;
+
+    mNumConsecutiveGamesPlayed = mNumConsecutiveGamesPlayed + 1;
+
+    i = 0;
+    do {
+        memset(&mCurrentUserStats[i], 0, sizeof(PlayerStats));
+        mCurrentUserStats[i].mRecordType.mControllerID = i;
+        mCurrentUserStats[i].mType = TYPE_USER;
+        i++;
+    } while (i < 4);
 }
 
 /**
@@ -191,8 +228,59 @@ void StatsTracker::WriteStats(float, float, const char*)
 /**
  * Offset/Address/Size: 0x418 | 0x80181978 | size: 0x128
  */
-void StatsTracker::AwardCup(eUserGameResult)
+void StatsTracker::AwardCup(eUserGameResult gameResult)
 {
+    eUserGameResult neededResult = nlSingleton<GameInfoManager>::s_pInstance->mCupMatchRequirement;
+    mIsUserCupWinner = false;
+
+    if (neededResult == RESULT_USER_LOSES)
+    {
+        mIsUserCupWinner = false;
+    }
+    else if (neededResult == RESULT_CUP_WIN)
+    {
+        mIsUserCupWinner = true;
+    }
+    else if (neededResult == RESULT_USER_OT_LOSES)
+    {
+        if (gameResult == RESULT_USER_WINS || gameResult == RESULT_USER_OT_WINS || gameResult == RESULT_USER_OT_LOSES)
+        {
+            mIsUserCupWinner = true;
+        }
+        else
+        {
+            mIsUserCupWinner = false;
+        }
+    }
+    else if (neededResult == RESULT_USER_OT_WINS)
+    {
+        if (gameResult == RESULT_USER_WINS || gameResult == RESULT_USER_OT_WINS)
+        {
+            mIsUserCupWinner = true;
+        }
+        else
+        {
+            mIsUserCupWinner = false;
+        }
+    }
+    else if (neededResult == RESULT_USER_WINS)
+    {
+        if (gameResult == RESULT_USER_WINS)
+        {
+            mIsUserCupWinner = true;
+        }
+        else
+        {
+            mIsUserCupWinner = false;
+        }
+    }
+
+    if (mIsUserCupWinner == true)
+    {
+        eTrophyType tourneyCup = nlSingleton<GameInfoManager>::s_pInstance->GetTrophyTypeByCurrentMode();
+        nlSingleton<GameInfoManager>::s_pInstance->mUserInfo.mTrophies[tourneyCup / 8] |= (1 << (tourneyCup % 8));
+        nlSingleton<GameInfoManager>::s_pInstance->SetResultsOfLastUserGame(RESULT_CUP_WIN);
+    }
 }
 
 /**

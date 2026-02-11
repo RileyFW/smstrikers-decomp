@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "NL/nlMath.h"
+#include "Game/Render/SidelineExplodable.h"
 
 // void 0x8028D320..0x8028D324 | size: 0x4;
 
@@ -15,10 +16,10 @@ enum StaticModelExplodableCategory
 
 class DrawableObject;
 
-class StaticModelExplodable
+class StaticModelExplodable : public SidelineExplodable
 {
 public:
-    void CleanUp();
+    static void CleanUp();
     StaticModelExplodable(StaticModelExplodableCategory, const nlMatrix4&);
     ~StaticModelExplodable();
     void GetCategoryData() const;
@@ -27,9 +28,11 @@ public:
 
     static bool LoadGeometry();
     static void CreateExplodablesFromHelperObjects();
+    static nlList<SidelineExplodableNode> sStaticModelExplodableList;
 
-    /* 0x00 */ char pad[0x2C];
     /* 0x2C */ DrawableObject* m_pUnexplodedModel;
+    /* 0x30 */ StaticModelExplodableCategory mCategory;
+    /* 0x34 */ nlMatrix4 mWorldMatrix;
 };
 
 #endif // _STATICMODELEXPLODABLE_H_

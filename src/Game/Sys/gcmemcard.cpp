@@ -44,12 +44,12 @@ void nlPrintf(const char*, ...);
 // {
 // }
 
-/**
- * Offset/Address/Size: 0x904 | 0x801CB444 | size: 0xC
- */
-MemCardFunctor::MemCardFunctor()
-{
-}
+// /**
+//  * Offset/Address/Size: 0x904 | 0x801CB444 | size: 0xC
+//  */
+// MemCardFunctor::MemCardFunctor() - moved to header as inline
+// {
+// }
 
 /**
  * Offset/Address/Size: 0x824 | 0x801CB364 | size: 0xE0
@@ -176,7 +176,7 @@ void MemCard::WriteFileDoneCB(long, long)
 /**
  * Offset/Address/Size: 0x12DC | 0x801CAA4C | size: 0xF4
  */
-void MemCard::BeginCardAccess(const MemCardFunctor&)
+s32 MemCard::BeginCardAccess(const MemCardFunctor&)
 {
 }
 

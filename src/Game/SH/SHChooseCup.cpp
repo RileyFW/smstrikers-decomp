@@ -120,14 +120,17 @@ void confirmedNewCup(bool isSuperCup)
 {
     GameInfoManager* gim = nlSingleton<GameInfoManager>::s_pInstance;
 
-    if (gim->mCurrentMode == GameInfoManager::GM_BOWSER_CUP) {
+    if (gim->mCurrentMode == GameInfoManager::GM_BOWSER_CUP)
+    {
         gim->mCurrentCup = (BaseCup*)&gim->mBowserCupSeries;
         gim->mDoingKnockout = false;
-        gim->mBowserCupKnockout.mGameNumber = -5;
-    } else if (gim->mCurrentMode == GameInfoManager::GM_SUPER_BOWSER_CUP) {
+        gim->mBowserCupKnockout.mRoundNumber = -5;
+    }
+    else if (gim->mCurrentMode == GameInfoManager::GM_SUPER_BOWSER_CUP)
+    {
         gim->mCurrentCup = (BaseCup*)&gim->mSuperBowserCupSeries;
         gim->mDoingKnockout = false;
-        gim->mSuperBowserCupKnockout.mGameNumber = -5;
+        gim->mSuperBowserCupKnockout.mRoundNumber = -5;
     }
 
     BaseCup* cup = nlSingleton<GameInfoManager>::s_pInstance->mCurrentCup;
@@ -141,10 +144,14 @@ void confirmedNewCup(bool isSuperCup)
     cup->mCupSettings.BowserAttackEnabled = gim2->mUserInfo.mGameplayOptions.BowserAttackEnabled;
     cup->mCupSettings.RumbleEnabled = gim2->mUserInfo.mGameplayOptions.RumbleEnabled;
 
-    if (!isSuperCup) {
+    if (!isSuperCup)
+    {
         nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_CUP_OPTIONS_INITIAL_CUP, SCREEN_NOTHING, true);
-    } else {
-        if (cup->mCupSettings.SkillLevel == GameplaySettings::ROOKIE) {
+    }
+    else
+    {
+        if (cup->mCupSettings.SkillLevel == GameplaySettings::ROOKIE)
+        {
             cup->mCupSettings.SkillLevel = GameplaySettings::PROFESSIONAL;
         }
         nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_CUP_OPTIONS_INITIAL_SUPER, SCREEN_NOTHING, true);
@@ -161,7 +168,8 @@ void startNewCup(bool)
 /**
  * Offset/Address/Size: 0x1EFC | 0x800DC180 | size: 0x68
  */
-class BaseGameSceneManagerCont {
+class BaseGameSceneManagerCont
+{
 public:
     virtual ~BaseGameSceneManagerCont();
     virtual void* Push(int, int, bool);
@@ -171,10 +179,13 @@ extern BaseGameSceneManagerCont* g_pGameSceneManager;
 
 void continueCup(bool isSuperCup)
 {
-    if (isSuperCup) {
-        g_pGameSceneManager->Push(20, 0, true);  // SCENE_SUPER_CUP_STANDINGS
-    } else {
-        g_pGameSceneManager->Push(17, 0, true);  // SCENE_CUP_STANDINGS
+    if (isSuperCup)
+    {
+        g_pGameSceneManager->Push(20, 0, true); // SCENE_SUPER_CUP_STANDINGS
+    }
+    else
+    {
+        g_pGameSceneManager->Push(17, 0, true); // SCENE_CUP_STANDINGS
     }
 }
 

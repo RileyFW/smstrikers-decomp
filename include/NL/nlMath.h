@@ -218,6 +218,11 @@ inline void nlVec4Set(nlVector4& v0, float _x, float _y, float _z, float _w)
     v0.f.w = _w;
 }
 
+inline float nlPlaneDot(const nlVector4& plane, const nlVector3& v)
+{
+    return v.f.x * plane.f.x + v.f.y * plane.f.y + v.f.z * plane.f.z + plane.f.w;
+}
+
 struct nlMatrix3
 {
     // float m[3 * 3]; // Flat array access

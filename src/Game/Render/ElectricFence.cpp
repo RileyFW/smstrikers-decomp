@@ -4,7 +4,8 @@ static f32 sfStartAngle;
 static f32 sfElectricFenceDisplayAngle;
 static bool sbIsElectricFenceBeingDisplayed;
 
-class EmissionManager {
+class EmissionManager
+{
 public:
     static void DestroyAll(bool);
 };
@@ -47,8 +48,32 @@ void GetWallPoint(const nlVector3&, float, float, nlVector3&)
 /**
  * Offset/Address/Size: 0x12CC | 0x8016C2FC | size: 0xA4
  */
-void ElectricFenceFinished(EmissionController&)
+void ElectricFenceFinished(EmissionController& controller)
 {
+    ElectricFenceData* node = ElectricFenceData::sActiveElectricFences.m_pStart;
+    while (node != NULL)
+    {
+        if (node->mpEmissionController == &controller)
+        {
+            if (node != NULL)
+            {
+                nlListRemoveElement<ElectricFenceData>(&ElectricFenceData::sActiveElectricFences.m_pStart, node, &ElectricFenceData::sActiveElectricFences.m_pEnd);
+                ElectricFenceData::numAllocated--;
+                ElectricFenceGeometry* geom = node->mpGeometry;
+                if (geom != NULL)
+                {
+                    SlotPoolEntry* oldFree = ElectricFenceGeometry::sElectricFenceGeometryPool.m_FreeList;
+                    *(SlotPoolEntry**)geom = oldFree;
+                    ElectricFenceGeometry::sElectricFenceGeometryPool.m_FreeList = (SlotPoolEntry*)geom;
+                }
+                SlotPoolEntry* oldFree2 = ElectricFenceData::sElectricFenceDataPool.m_FreeList;
+                *(SlotPoolEntry**)node = oldFree2;
+                ElectricFenceData::sElectricFenceDataPool.m_FreeList = (SlotPoolEntry*)node;
+            }
+            return;
+        }
+        node = node->next;
+    }
 }
 
 /**
@@ -84,6 +109,27 @@ void InitializeElectricFence()
  */
 void FreeElectricFence()
 {
+    ElectricFenceData* node;
+    while ((node = ElectricFenceData::sActiveElectricFences.m_pStart) != NULL)
+    {
+        if (node != NULL)
+        {
+            nlListRemoveElement<ElectricFenceData>(&ElectricFenceData::sActiveElectricFences.m_pStart, node, &ElectricFenceData::sActiveElectricFences.m_pEnd);
+            ElectricFenceData::numAllocated--;
+            ElectricFenceGeometry* geom = node->mpGeometry;
+            if (geom != NULL)
+            {
+                SlotPoolEntry* oldFree = ElectricFenceGeometry::sElectricFenceGeometryPool.m_FreeList;
+                *(SlotPoolEntry**)geom = oldFree;
+                ElectricFenceGeometry::sElectricFenceGeometryPool.m_FreeList = (SlotPoolEntry*)geom;
+            }
+            SlotPoolEntry* oldFree2 = ElectricFenceData::sElectricFenceDataPool.m_FreeList;
+            *(SlotPoolEntry**)node = oldFree2;
+            ElectricFenceData::sElectricFenceDataPool.m_FreeList = (SlotPoolEntry*)node;
+        }
+    }
+    SlotPoolBase::BaseFreeBlocks(&ElectricFenceData::sElectricFenceDataPool, sizeof(ElectricFenceData));
+    SlotPoolBase::BaseFreeBlocks(&ElectricFenceGeometry::sElectricFenceGeometryPool, sizeof(ElectricFenceGeometry));
 }
 
 /**

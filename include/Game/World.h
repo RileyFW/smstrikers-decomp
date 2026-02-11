@@ -5,6 +5,9 @@
 #include "Game/TerrainTypes.h"
 #include "NL/nlAVLTree.h"
 
+#include "Game/World/worldanim.h"
+#include "NL/nlDLListContainer.h"
+
 // void DoTranslucency(DrawableObject*);
 // void nlListAddStart<ListEntry<LightObject*>>(ListEntry<LightObject*>**, ListEntry<LightObject*>*, ListEntry<LightObject*>**);
 // void nlDLRingIsEnd<DLListEntry<WorldAnimController*>>(DLListEntry<WorldAnimController*>*, DLListEntry<WorldAnimController*>*);
@@ -65,7 +68,7 @@ public:
     HelperObject* FindHelperObject(unsigned long uHashId);
     DrawableObject* FindDrawableObject(unsigned long);
     void HandleCameraSwitch();
-    u8 IsSphereInFrustum(const nlMatrix4&, float);
+    bool IsSphereInFrustum(const nlMatrix4&, float);
     void ExtractFrustumPlanes();
     void* GetCustomSpecularData(glModelPacket*, bool);
     void CreateLightUserData();
@@ -79,43 +82,30 @@ public:
     /* 0x008 */ nlAVLTree<unsigned long, LightObject*, DefaultKeyCompare<unsigned long> > m_lightMap;
     /* 0x01C */ bool m_Locked;
     /* 0x020 */ struct glModel* m_pModels;
-    /* 0x024 */ unsigned long m_uNumModels;
-    // /* 0x028 */ nlDLListContainer m_animControllerList;
-    /* 0x028 */ u8 pad_0x28[0x4];
-    /* 0x030 */ void* m_pLightData;
+    /* 0x024! */ unsigned long m_uNumModels;
+    /* 0x028! */ DLListContainerBase<WorldAnimController*, NewAdapter<DLListEntry<WorldAnimController*> > > m_animControllerList;
+    // todo: class field layout not yet verified
+    // /* 0x030 */ void* m_pLightData; ??
     /* 0x034 */ void* m_pPlayerNISLightData;
     /* 0x038 */ void* m_pIntensityPerm;
     /* 0x03C */ void* m_pIntensityData;
     /* 0x040 */ void* m_pSTSIntensity;
     /* 0x044 */ void* m_pSpecularData;
     /* 0x044 */ nlAVLTree<unsigned long, DrawableObject*, DefaultKeyCompare<unsigned long> > m_drawableMap;
-    // /* 0x048 */ nlAVLTree m_drawableMap;
-    // /* 0x048 */ u8 pad_0x48[0x14];
-    /* 0x058 */ nlAVLTree<unsigned long, DrawableObject*, DefaultKeyCompare<unsigned long> > m_hyperSTSDrawableMap;
+    /* 0x060! */ nlAVLTree<unsigned long, DrawableObject*, DefaultKeyCompare<unsigned long> > m_hyperSTSDrawableMap; // verified
     /* 0x070 */ nlAVLTree<unsigned long, HelperObject*, DefaultKeyCompare<unsigned long> > m_helperMap;
-    u8 pad_0x[0x4];
-    // /* 0x05C */ nlAVLTree m_hyperSTSDrawableMap;
-    // /* 0x05C */ u8 pad_0x5C[0x14];
-    // /* 0x070 */ nlAVLTree m_helperMap;
-    // /* 0x070 */ u8 pad_0x70[0x14];
-    /* 0x084 */ nlVector4 m_frustumPlane[5];
-    /* 0x0D4 */ char m_WorldNamePrefix[64];
+    /* 0x080 */ nlVector4 m_frustumPlane[6];
+    /* 0x0D4 */ char m_WorldNamePrefix[48]; // instead of 64 because frustum seems to be 6 not 5 planes
     /* 0x114 */ int m_WorldNameLength;
     /* 0x118 */ unsigned long m_WorldLightRamp;
     /* 0x11C */ unsigned long m_ObjectLightRamp;
     /* 0x120 */ unsigned long m_PlayerLightRamp_;
-    // /* 0x124 */ unsigned long m_STSLightRamp;
+    /* 0x124 */ unsigned long m_STSLightRamp;
     // /* 0x128 */ unsigned long m_PlayerNISLightRamp;
-
     /* 0x124 */ u32 m_LightRampTexA;
     /* 0x128 */ u32 m_LightRampTexB;
     /* 0x12C */ u32 m_PlayerLightRampTex;
     /* 0x130 */ u32 m_GlobalLightRampSTSTex;
-
-    // DWARF seems wrong here
-
-    // /* 0x12C */ CharacterPhysicsData* m_pPhysicsData;
-    // /* 0x130 */ const LightObject* m_pShadowLight;
 }; // total size: 0x134
 
 // class nlAVLTree<unsigned long, LightObject*, DefaultKeyCompare<unsigned long>>

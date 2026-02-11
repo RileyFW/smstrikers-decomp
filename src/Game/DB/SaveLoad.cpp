@@ -1,5 +1,7 @@
 #include "Game/DB/SaveLoad.h"
+#include "Game/GameInfo.h"
 #include "Game/Sys/gcmemcard.h"
+#include <string.h>
 
 extern void nlFree(void*);
 
@@ -7,8 +9,13 @@ bool InOperation = false;
 
 LoadCallbacks LoadSystem;
 SaveCallbacks SaveSystem;
+DeleteCallbacks DeleteSystem;
+FormatCallbacks FormatSystem;
 
 static MemCard* s_MemCardStorage[2] = { nullptr, nullptr };
+void (*g_Callback)(long);
+FileExistsCallbacks FileExistsSystem;
+MemoryCardIDCallbacks MemoryCardIDSystem;
 MemCard** g_MemCards = s_MemCardStorage;
 struct MemCardIDInfo
 {
@@ -154,8 +161,34 @@ void LoadMemoryCardIconData()
 /**
  * Offset/Address/Size: 0x10D4 | 0x8018AA30 | size: 0x108
  */
-void SaveLoad::StartSave(int, void (*)(long))
+void SaveLoad::StartSave(int slot, void (*callback)(long))
 {
+    nlPrintf("StartSave\n");
+
+    if (SaveSystem.m_MustFreeMemory)
+    {
+        if (SaveSystem.m_pSaveGameBuffer != nullptr)
+        {
+            nlFree(SaveSystem.m_pSaveGameBuffer);
+            SaveSystem.m_pSaveGameBuffer = nullptr;
+        }
+    }
+
+    SaveSystem.m_MustFreeMemory = false;
+    InOperation = true;
+    g_Callback = callback;
+
+    typedef void (SaveCallbacks::*MemberCB)(unsigned long, long, void*);
+    MemberCB cb = &SaveCallbacks::CardMountCB;
+
+    MemCardFunctor functor;
+    new (functor.m_FunctorMem) MemCardFunctor::MCMemberFunctor<SaveCallbacks>(&SaveSystem, cb);
+
+    s32 result = g_MemCards[slot]->BeginCardAccess(functor);
+    if (result != 0)
+    {
+        InOperation = false;
+    }
 }
 
 // /**
@@ -190,8 +223,23 @@ bool SaveLoad::DidGameIDChange()
 /**
  * Offset/Address/Size: 0xA54 | 0x8018A3B0 | size: 0xBC
  */
-void SaveLoad::StartDelete(int, void (*)(long))
+void SaveLoad::StartDelete(int slot, void (*callback)(long))
 {
+    nlPrintf("StartDelete\n");
+
+    InOperation = true;
+
+    typedef void (DeleteCallbacks::*MemberCB)(unsigned long, long, void*);
+    MemberCB cb = &DeleteCallbacks::CardMountCB;
+
+    MemCardFunctor functor;
+    new (functor.m_FunctorMem) MemCardFunctor::MCMemberFunctor<DeleteCallbacks>(&DeleteSystem, cb);
+
+    s32 result = g_MemCards[slot]->BeginCardAccess(functor);
+    if (result != 0)
+    {
+        InOperation = false;
+    }
 }
 
 // /**
@@ -204,8 +252,23 @@ void SaveLoad::StartDelete(int, void (*)(long))
 /**
  * Offset/Address/Size: 0x844 | 0x8018A1A0 | size: 0xBC
  */
-void SaveLoad::StartFormat(int, void (*)(long))
+void SaveLoad::StartFormat(int slot, void (*callback)(long))
 {
+    nlPrintf("StartFormat\n");
+
+    InOperation = true;
+
+    typedef void (FormatCallbacks::*MemberCB)(unsigned long, long, void*);
+    MemberCB cb = &FormatCallbacks::CardMountCB;
+
+    MemCardFunctor functor;
+    new (functor.m_FunctorMem) MemCardFunctor::MCMemberFunctor<FormatCallbacks>(&FormatSystem, cb);
+
+    s32 result = g_MemCards[slot]->BeginCardAccess(functor);
+    if (result != 0)
+    {
+        InOperation = false;
+    }
 }
 
 // /**
@@ -218,8 +281,24 @@ void SaveLoad::StartFormat(int, void (*)(long))
 /**
  * Offset/Address/Size: 0x520 | 0x80189E7C | size: 0xCC
  */
-void SaveLoad::StartFileExistsCheck(int, void (*)(long))
+void SaveLoad::StartFileExistsCheck(int slot, void (*callback)(long))
 {
+    nlPrintf("StartFileExistsCheck\n");
+
+    InOperation = true;
+    g_Callback = callback;
+
+    typedef void (FileExistsCallbacks::*MemberCB)(unsigned long, long, void*);
+    MemberCB cb = &FileExistsCallbacks::CardMountCB;
+
+    MemCardFunctor functor;
+    new (functor.m_FunctorMem) MemCardFunctor::MCMemberFunctor<FileExistsCallbacks>(&FileExistsSystem, cb);
+
+    s32 result = g_MemCards[slot]->BeginCardAccess(functor);
+    if (result != 0)
+    {
+        InOperation = false;
+    }
 }
 
 // /**
@@ -232,16 +311,74 @@ void SaveLoad::StartFileExistsCheck(int, void (*)(long))
 /**
  * Offset/Address/Size: 0x390 | 0x80189CEC | size: 0xCC
  */
-void SaveLoad::StartMemoryCardIDCheck(int, void (*)(long))
+void SaveLoad::StartMemoryCardIDCheck(int slot, void (*callback)(long))
 {
+    nlPrintf("StartMemoryCardIDCheck\n");
+
+    InOperation = true;
+    g_Callback = callback;
+
+    typedef void (MemoryCardIDCallbacks::*MemberCB)(unsigned long, long, void*);
+    MemberCB cb = &MemoryCardIDCallbacks::CardMountCB;
+
+    MemCardFunctor functor;
+    new (functor.m_FunctorMem) MemCardFunctor::MCMemberFunctor<MemoryCardIDCallbacks>(&MemoryCardIDSystem, cb);
+
+    s32 result = g_MemCards[slot]->BeginCardAccess(functor);
+    if (result != 0)
+    {
+        InOperation = false;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x264 | 0x80189BC0 | size: 0x12C
+ * TODO: 76.4% match - loop pre-check uses cmpwi path (target keeps addic flags), icon constant/register allocation differs (r3/r4/r5 vs r7/r4/r3), and second block-count path still inserts cmpwi/mr
  */
-void SaveLoad::GetSaveBlockSize(int)
-{
+#pragma push
+#pragma opt_propagation off
+int SaveLoad::GetSaveBlockSize(int) {
+    int numBlocks = 0;
+    int dataSize = nlSingleton<GameInfoManager>::s_pInstance->GetMemoryCardDataSize();
+    dataSize += 12;
+    int blocks = (dataSize + 0x1FFF) >> 13;
+    if (dataSize > 0) {
+        for (int i = 0; i < blocks; i++) {
+            numBlocks++;
+        }
+    }
+
+    MemCard::ICON_CONFIG IconCfg;
+    IconCfg.BannerFormat = 0;
+    IconCfg.IconCount = 0;
+    IconCfg.IconFormat = 0;
+    IconCfg.IconAnimType = 0;
+    memset(IconCfg.IconSpeeds, 0, 8);
+
+    memset(&IconCfg, 0, sizeof(MemCard::ICON_CONFIG));
+    IconCfg.BannerFormat = 2;
+    IconCfg.IconCount = 1;
+    IconCfg.IconFormat = 2;
+    IconCfg.IconSpeeds[0] = 3;
+
+    int bannerSize = IconCfg.BannerFormat * 0xC00;
+    int iconSize = (IconCfg.IconFormat << 10) * IconCfg.IconCount;
+    int bannerClut = (IconCfg.BannerFormat < 2) ? 512 : 0;
+    int iconClut = (IconCfg.IconCount <= 0) ? 512 : 0;
+
+    IconCfg.HeaderSize = bannerClut + bannerSize + iconSize + iconClut + 0x40;
+
+    dataSize = IconCfg.HeaderSize;
+    blocks = (dataSize + 0x1FFF) >> 13;
+    if (dataSize > 0) {
+        for (int i = 0; i < blocks; i++) {
+            numBlocks++;
+        }
+    }
+
+    return numBlocks;
 }
+#pragma pop
 
 /**
  * Offset/Address/Size: 0xD8 | 0x80189A34 | size: 0x18C

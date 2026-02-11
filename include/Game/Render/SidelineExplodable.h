@@ -77,6 +77,7 @@ class SidelineExplodableNode
 public:
     /* 0x0 */ SidelineExplodable* mpExplodable;
     /* 0x4 */ SidelineExplodableNode* next;
+    static SlotPool<SidelineExplodableNode> sSidelineExplodableNodeSlotPool;
 }; // total size: 0x8
 
 void SidelineExplodableTextureLoadCallback(unsigned long);
@@ -100,6 +101,14 @@ public:
     ExplosionFragment* mpExplosionFragment;
 }; // total size: 0x30
 
+class DrawableFragmentHandleNode
+{
+public:
+    /* 0x0 */ unsigned short mID;
+    /* 0x4 */ DrawableFragmentHandleNode* next;
+    static SlotPool<DrawableFragmentHandleNode> sDrawableFragmentHandleNodePool;
+}; // total size: 0x8
+
 class SidelineExplodableManager
 {
 public:
@@ -110,7 +119,7 @@ public:
     static void SetVisibilityOfUnexplodedModels(bool* visibility, int numExplodables);
     void TriggerExplosions(const nlVector3&, float);
     static void DestroyAllActiveFragments(bool renewExplodables);
-    void RemoveSidelineExplodable(SidelineExplodable*);
+    static void RemoveSidelineExplodable(SidelineExplodable*);
     static ExplosionFragment* GetFragmentFromHandle(unsigned short);
     void AssociateEffectWithNearbyFloatingCamera(EmissionController*);
     static void UnAssociateEffectWithNearbyFloatingCamera(EmissionController* pEmissionController);
@@ -118,6 +127,8 @@ public:
     static ExplosionFragment** sFragmentLookupTable;
     static nlList<SidelineExplodableNode> sSidelineExplodableList;
     static SlotPool<SidelineExplodableNode> sSidelineExplodableNodeSlotPool;
+    static nlList<DrawableFragmentHandleNode> sUnusedDrawableFragments;
+    static bool sbIsInitialized;
 };
 
 // class PhysicsBox

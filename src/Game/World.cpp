@@ -125,9 +125,28 @@ void DoTranslucency(DrawableObject*)
 
 /**
  * Offset/Address/Size: 0x1340 | 0x80196004 | size: 0xE8
+ * TODO: 83.7% match - work in progress...
  */
-u8 World::IsSphereInFrustum(const nlMatrix4&, float)
+bool World::IsSphereInFrustum(const nlMatrix4& matWorld, float fRadius)
 {
+    nlVector3 v3Position = *(nlVector3*)&matWorld.f.m41;
+    int numSets = 2;
+
+    const nlVector4* pPlane = &m_frustumPlane[0];
+    f32 negRadius = -fRadius;
+
+    do
+    {
+        if (nlPlaneDot(pPlane[0], v3Position) < negRadius)
+            return false;
+        if (nlPlaneDot(pPlane[1], v3Position) < negRadius)
+            return false;
+        if (nlPlaneDot(pPlane[2], v3Position) < negRadius)
+            return false;
+        pPlane += 3;
+    } while (--numSets);
+
+    return true;
 }
 
 /**
@@ -147,8 +166,25 @@ void World::UpdateInReplay(float)
 /**
  * Offset/Address/Size: 0x1884 | 0x80196548 | size: 0x98
  */
-void World::Update(float)
+void World::Update(float fDeltaT)
 {
+    DLListEntry<WorldAnimController*>* start = nlDLRingGetStart(m_animControllerList.m_Head);
+    DLListEntry<WorldAnimController*>* head = m_animControllerList.m_Head;
+    DLListEntry<WorldAnimController*>* current = start;
+
+    while (current != NULL)
+    {
+        current->m_data->Update(fDeltaT);
+
+        if ((nlDLRingIsEnd(head, current) != 0) || (current == NULL))
+        {
+            current = NULL;
+        }
+        else
+        {
+            current = current->m_next;
+        }
+    }
 }
 
 /**

@@ -111,11 +111,11 @@ public:
     BaseCup* GetCup(GameInfoManager::eGameModes);
     bool IsUserQualified(GameInfoManager::eGameModes) const;
     void SetMode(GameInfoManager::eGameModes);
-    void GetMemoryCardDataSize() const;
+    unsigned long GetMemoryCardDataSize() const;
     void GetMemoryCardData(void*);
     void SetMemoryCardData(void*);
     void CheckSaveIDChanged(void*);
-    void HasTrophy(eTrophyType) const;
+    bool HasTrophy(eTrophyType) const;
     void GetMilestoneLevel(eTrophyType) const;
     bool IsInRegularCupMode() const;
     bool IsInSuperCupMode() const;

@@ -20,7 +20,7 @@ enum AnimatedModelExplodableCategory
 class AnimatedModelExplodable : public SidelineExplodable
 {
 public:
-    void CleanUp();
+    static void CleanUp();
     AnimatedModelExplodable(AnimatedModelExplodableCategory, SkinAnimatedNPC*);
     ~AnimatedModelExplodable();
     void GetCategoryData() const;

@@ -20,8 +20,37 @@ void cGameSFX::UpdateAllTrackedSFX(float)
  */
 void cGameSFX::StopPlayingAllTrackedSFX()
 {
-    // todo: implement
-    FORCE_DONT_INLINE;
+    if (!mbCurPlaySetIsValid)
+    {
+        return;
+    }
+
+    DLListEntry<SFXPlaySet*>* start = nlDLRingGetStart(mpCurPlaySet.m_Head);
+    DLListEntry<SFXPlaySet*>* head = mpCurPlaySet.m_Head;
+    DLListEntry<SFXPlaySet*>* current = start;
+
+    while (current != NULL)
+    {
+        struct
+        {
+            DLListEntry<SFXPlaySet*>* m_head;
+            DLListEntry<SFXPlaySet*>* m_current;
+        } iter;
+
+        iter.m_head = head;
+        iter.m_current = current;
+
+        if (nlDLRingIsEnd(head, current) || current == NULL)
+        {
+            current = NULL;
+        }
+        else
+        {
+            current = current->m_next;
+        }
+
+        StopTrackedSFX(reinterpret_cast<nlDLListIterator<SFXPlaySet*>*>(&iter));
+    }
 }
 
 /**
@@ -207,8 +236,80 @@ void cGameSFX::StopEmitter(SFXEmitter*, unsigned long)
 /**
  * Offset/Address/Size: 0xDD4 | 0x80152318 | size: 0x12C
  */
-void cGameSFX::Stop(unsigned long, cGameSFX::StopFlag)
+void cGameSFX::Stop(unsigned long soundID, cGameSFX::StopFlag stopFlag)
 {
+    if (!mbCurPlaySetIsValid)
+    {
+        return;
+    }
+
+    f32 oldestTimeStamp = -1.0f;
+
+    struct
+    {
+        DLListEntry<SFXPlaySet*>* m_head;
+        DLListEntry<SFXPlaySet*>* m_current;
+    } bestIter;
+
+    DLListEntry<SFXPlaySet*>* start1 = nlDLRingGetStart(mpCurPlaySet.m_Head);
+    bestIter.m_head = mpCurPlaySet.m_Head;
+    bestIter.m_current = start1;
+
+    struct
+    {
+        DLListEntry<SFXPlaySet*>* m_head;
+        DLListEntry<SFXPlaySet*>* m_current;
+    } iter;
+
+    DLListEntry<SFXPlaySet*>* start2 = nlDLRingGetStart(bestIter.m_head);
+    DLListEntry<SFXPlaySet*>* loopHead = mpCurPlaySet.m_Head;
+    DLListEntry<SFXPlaySet*>* current = start2;
+
+    while (current != NULL)
+    {
+        SFXPlaySet* playSet = current->m_data;
+
+        iter.m_head = loopHead;
+        iter.m_current = current;
+
+        if (nlDLRingIsEnd(loopHead, current) || current == NULL)
+        {
+            current = NULL;
+        }
+        else
+        {
+            current = current->m_next;
+        }
+
+        if (playSet->type != soundID)
+        {
+            continue;
+        }
+
+        if (stopFlag == SFX_STOP_OLDEST)
+        {
+            if (oldestTimeStamp != -1.0f && !(playSet->timeStamp < oldestTimeStamp))
+            {
+                continue;
+            }
+            oldestTimeStamp = playSet->timeStamp;
+            bestIter.m_head = iter.m_head;
+            bestIter.m_current = iter.m_current;
+            continue;
+        }
+
+        StopTrackedSFX(reinterpret_cast<nlDLListIterator<SFXPlaySet*>*>(&iter));
+
+        if (stopFlag != SFX_STOP_ALL)
+        {
+            break;
+        }
+    }
+
+    if (stopFlag == SFX_STOP_OLDEST && oldestTimeStamp != -1.0f)
+    {
+        StopTrackedSFX(reinterpret_cast<nlDLListIterator<SFXPlaySet*>*>(&bestIter));
+    }
 }
 
 /**

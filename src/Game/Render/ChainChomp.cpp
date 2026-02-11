@@ -6,6 +6,10 @@
 #include "Game/Effects/EmissionController.h"
 #include "Game/Effects/EmissionManager.h"
 #include "Game/AI/Powerups.h"
+#include "Game/Physics/PhysicsShell.h"
+#include "Game/Physics/PhysicsBanana.h"
+#include "Game/Physics/PhysicsCharacter.h"
+#include "Game/Physics/PhysicsAIBall.h"
 
 const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 const nlVector3 gv3HomePosition = { 0.0f, 0.0f, 10.0f };
@@ -34,9 +38,48 @@ void ChainChomp::Update(float)
 
 /**
  * Offset/Address/Size: 0x97C | 0x8015E680 | size: 0x12C
+ * TODO: 83.8% match - MWCC generates if/else chain instead of jump table for sparse switch (5 cases across 17 slots)
  */
-void ChainChomp::CollisionCallback(PhysicsObject*, PhysicsObject*, const nlVector3&)
+void ChainChomp::CollisionCallback(PhysicsObject* pObjA, PhysicsObject* pObjB, const nlVector3& v3Normal)
 {
+    ChainChomp* pChainChomp = (ChainChomp*)((PhysicsNPC*)this)->mpAINPC;
+    cFielder* pFielder = NULL;
+
+    int objType = pObjA->GetObjectType();
+
+    if ((u32)(objType - 13) <= 1u)
+    {
+        pFielder = (cFielder*)((PhysicsCharacter*)pObjA->m_parentObject)->m_pAICharacter;
+    }
+    else if (objType == 0x0F)
+    {
+        cBall* pBall = ((PhysicsAIBall*)pObjA)->m_pAIBall;
+        if (pBall->m_pOwner != NULL)
+        {
+            pFielder = (cFielder*)pBall->m_pOwner;
+        }
+        else
+        {
+            pBall->ClearPassTarget();
+            pBall->ClearShotInProgress();
+        }
+    }
+    else if (objType == 0x13)
+    {
+        ((PhysicsShell*)pObjA)->m_pPowerupObject->m_bShouldDestroy = true;
+    }
+    else if (objType == 0x14)
+    {
+        ((PhysicsBanana*)pObjA)->m_pPowerupObject->m_bShouldDestroy = true;
+    }
+
+    if (pFielder != NULL && pFielder->m_eClassType == FIELDER && !pFielder->IsFallenDown(0.0f))
+    {
+        Event* pEvent = g_pEventManager->CreateValidEvent(0x2F, 0x20);
+        CollisionChainPlayerData* pData = new ((u8*)pEvent + 0x10) CollisionChainPlayerData();
+        pData->pFielder = pFielder;
+        pData->pChain = pChainChomp;
+    }
 }
 
 /**

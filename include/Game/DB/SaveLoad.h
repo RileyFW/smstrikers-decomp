@@ -10,44 +10,44 @@ class SaveLoad
 {
 public:
     static bool CardBusy();
-    void StartSave(int, void (*)(long));
+    static void StartSave(int, void (*)(long));
     void StartLoad(int, void (*)(long), bool, bool);
     bool DidGameIDChange();
-    void StartDelete(int, void (*)(long));
-    void StartFormat(int, void (*)(long));
-    void StartFileExistsCheck(int, void (*)(long));
-    void StartMemoryCardIDCheck(int, void (*)(long));
-    void GetSaveBlockSize(int);
+    static void StartDelete(int, void (*)(long));
+    static void StartFormat(int, void (*)(long));
+    static void StartFileExistsCheck(int, void (*)(long));
+    static void StartMemoryCardIDCheck(int, void (*)(long));
+    int GetSaveBlockSize(int);
     void HasEnoughFreeSpace(int);
     void FreeAllCallbackMemory();
     static void RememberCurrentMemCardSerialID(int);
 };
 
-// class MemoryCardIDCallbacks
-// {
-// public:
-//     void CardMountCB(unsigned long, long, void*);
-// };
+class MemoryCardIDCallbacks
+{
+public:
+    void CardMountCB(unsigned long, long, void*);
+};
 
-// class FileExistsCallbacks
-// {
-// public:
-//     void CardMountCB(unsigned long, long, void*);
-// };
+class FileExistsCallbacks
+{
+public:
+    void CardMountCB(unsigned long, long, void*);
+};
 
-// class FormatCallbacks
-// {
-// public:
-//     void FormatDoneCB(unsigned long, long, void*);
-//     void CardMountCB(unsigned long, long, void*);
-// };
+class FormatCallbacks
+{
+public:
+    void FormatDoneCB(unsigned long, long, void*);
+    void CardMountCB(unsigned long, long, void*);
+};
 
-// class DeleteCallbacks
-// {
-// public:
-//     void DeleteDoneCB(unsigned long, long, void*);
-//     void CardMountCB(unsigned long, long, void*);
-// };
+class DeleteCallbacks
+{
+public:
+    void DeleteDoneCB(unsigned long, long, void*);
+    void CardMountCB(unsigned long, long, void*);
+};
 
 // struct ICON_DATA_INFO
 // {

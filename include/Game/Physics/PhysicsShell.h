@@ -3,6 +3,8 @@
 
 #include "Game/Physics/PhysicsSphere.h"
 
+class PowerupBase;
+
 class PhysicsShell : public PhysicsSphere
 {
 public:
@@ -12,11 +14,11 @@ public:
     virtual void PostUpdate();
     virtual ContactType Contact(PhysicsObject*, dContact*, int);
 
-    /* 0x2c */ void* m_unk_0x2c;
-    /* 0x30 */ void* m_unk_0x30;
-    /* 0x34 */ void* m_unk_0x34;
-    /* 0x38 */ u8 m_unk_0x38;
-    /* 0x39 */ u8 m_unk_0x39;
+    /* 0x2C */ void (*m_pTriggerCallbackFunc)(class PhysicsObject*, class PhysicsObject*, class nlVector3&, void*);
+    /* 0x30 */ void* m_pCallbackParam;
+    /* 0x34 */ PowerupBase* m_pPowerupObject;
+    /* 0x38 */ bool mbIsInNet;
+    /* 0x39 */ bool m_bIsSupportedByGround;
 };
 
 #endif // _PHYSICSSHELL_H_
