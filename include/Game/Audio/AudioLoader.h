@@ -12,6 +12,7 @@
 #include "Game/Render/Bowser.h"
 #include "Game/Sys/audio.h"
 #include "Game/Sys/GCStream.h"
+#include "NL/nlAVLTreeSlotPool.h"
 #include "NL/nlConfig.h"
 
 extern Config g_FEStreamConfig;
@@ -94,17 +95,21 @@ public:
     static bool Initialize();
     static void ActivateDPL2(bool, bool);
     static void SetupSoundGroups();
-    static void GetWorldSFXTypeFromStr(const char*);
-    static void GetCharSFXTypeFromStr(const char*);
-    static void GetSFXIDFromStr(const char*, SoundStrToIDNode**);
+    static unsigned long GetWorldSFXTypeFromStr(const char*);
+    static unsigned long GetCharSFXTypeFromStr(const char*);
+    static unsigned long GetSFXIDFromStr(const char*, SoundStrToIDNode**);
     static void SetupWorldSoundTypesAVLTree();
     static void SetupCharSoundTypesAVLTree();
     static void SetupSoundDefinesAVLTree();
 
     static bool gbDisableAudio;
     static bool gbDisableCrowd;
+    static bool gbStream;
     static bool gbAsyncLoadEntireSampleFileIntoMemRequestMade;
     static AudioFileData sebringAudioFileData;
+    static nlAVLTreeSlotPool<int, SoundStrToIDNode*, DefaultKeyCompare<int> > gMusyXSoundDefineMap;
+    static nlAVLTreeSlotPool<int, SoundStrToIDNode*, DefaultKeyCompare<int> > gWorldSoundDefineMap;
+    static nlAVLTreeSlotPool<int, SoundStrToIDNode*, DefaultKeyCompare<int> > gCharSoundDefineMap;
 };
 
 // class GCAudioStreaming

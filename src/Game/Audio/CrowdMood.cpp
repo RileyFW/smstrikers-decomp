@@ -1,9 +1,18 @@
 #include "Game/Audio/CrowdMood.h"
+#include "Game/Audio/WorldAudio.h"
 #include "Game/Sys/GCStream.h"
 
 #include "NL/nlString.h"
 
+extern void ___blank(const char*, ...);
+
+static bool g_Initd;
+
+template <typename T>
+void Increment(T& Value);
+
 static bool g_DoDecay = true;
+static bool g_CrowdSFXStopped;
 
 CROWD_AUDIO_INIT g_CrowdAudio;
 CROWD_STATE g_CrowdState;
@@ -149,9 +158,6 @@ void CrowdMood::Update(float)
 {
 }
 
-static bool g_Initd;
-extern "C" void ___blank(const char*, ...);
-
 /**
  * Offset/Address/Size: 0x92C | 0x8014E040 | size: 0xCC
  * TODO: 93% match - register allocation differences (r6/r7 swap, nor dest reg)
@@ -190,8 +196,31 @@ void CrowdMood::AdjustMood(CrowdMood::CROWD_MOOD Towards, unsigned long Amount)
 /**
  * Offset/Address/Size: 0x804 | 0x8014DF18 | size: 0x128
  */
-void CrowdMood::SetMood(CrowdMood::CROWD_MOOD, unsigned long)
+void CrowdMood::SetMood(CrowdMood::CROWD_MOOD Mood, unsigned long Amount)
 {
+    g_CrowdState.AtDestination = false;
+    g_CrowdState.DestMoodLevel = Amount;
+    g_CrowdState.DestMood = Mood;
+    g_CrowdState.SinceMoodDest = (f32)Amount;
+    g_CrowdState.CurrentMood = Mood;
+    g_CrowdState.Interpolant = 0.0f;
+    g_CrowdState.SkipBlend = true;
+
+    for (CrowdMood::CROWD_MOOD mood = CM_Positive; mood < CM_Neutral; Increment<CrowdMood::CROWD_MOOD>(mood))
+    {
+        f32 blend;
+        if (mood == Mood)
+        {
+            blend = (f32)Amount / (f32)CM_END;
+        }
+        else
+        {
+            blend = 0.0f;
+        }
+        g_CrowdState.CurrentMoodBlend[mood] = blend;
+    }
+
+    ___blank("Crowd mood set to %d %d\n", *(volatile s8*)&g_CrowdState.DestMood, g_CrowdState.DestMoodLevel);
 }
 
 /**
@@ -252,6 +281,30 @@ void CrowdMood::EnableCrowdDecay(bool enable)
  */
 void CrowdMood::RestartLoops()
 {
+    struct LOOP_LOAD
+    {
+        const char* SampleName;
+        unsigned long AudioId;
+        unsigned long* pVoiceId;
+    };
+
+    LOOP_LOAD LoadData[3] = {
+        { 0, 0, &g_CrowdAudio.NeutralVoiceId },
+        { 0, 0, &g_CrowdAudio.PositiveVoiceId },
+        { 0, 0, &g_CrowdAudio.NegativeVoiceId },
+    };
+
+    u32 i;
+    for (i = 0; i < 3; i++)
+    {
+        Audio::SoundAttributes sndAtr;
+        sndAtr.Init();
+        sndAtr.SetSoundType(LoadData[i].AudioId, false);
+        sndAtr.mf_Volume = 0.0f;
+        *LoadData[i].pVoiceId = Audio::gCrowdSFX.Play(sndAtr);
+        PlatAudio::SetSFXVolume(*LoadData[i].pVoiceId, 0.0f);
+    }
+    g_CrowdSFXStopped = false;
 }
 
 // #include "Game/Audio/CrowdMood.h"

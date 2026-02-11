@@ -1,4 +1,5 @@
 #include "Game/Physics/NetMeshModelLoader.h"
+#include "NL/glx/glxDisplayList.h"
 
 // /**
 //  * Offset/Address/Size: 0x1554 | 0x80132B00 | size: 0x10
@@ -167,33 +168,26 @@ void NetMeshModelLoader::LoadGeometryFromModel()
  */
 void NetMeshModelLoader::AddEdge(const glModelPacket&, unsigned short, unsigned short)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0xB90 | 0x80130CE8 | size: 0xB4
- * TODO: Match pending - initial implementation
  */
-void NetMeshModelLoader::AddTriangleFromGeometry(const glModelPacket& packet, unsigned short* indices)
+void NetMeshModelLoader::AddTriangleFromGeometry(const glModelPacket& packet, unsigned short* vertexIndices)
 {
-    bool degenerate = false;
-    unsigned short v0 = indices[0];
-    unsigned short v1 = indices[1];
-    unsigned short v2 = indices[2];
+    unsigned char isThin = 0;
 
-    // Check for degenerate triangle (any two vertices equal)
-    if (v0 == v1 || v1 == v2 || v0 == v2)
+    if (vertexIndices[0] == vertexIndices[1] || vertexIndices[1] == vertexIndices[2] || vertexIndices[0] == vertexIndices[2])
     {
-        degenerate = true;
+        isThin = 1;
     }
 
-    if (!degenerate)
+    if (!isThin)
     {
-        // Add edges for each pair of vertices
-        for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
         {
-            unsigned short currVertex = indices[i];
-            unsigned short nextVertex = indices[(i + 1) % 3];
-            AddEdge(packet, currVertex, nextVertex);
+            AddEdge(packet, vertexIndices[j], vertexIndices[(j + 1) % 3]);
         }
     }
 }
@@ -201,8 +195,53 @@ void NetMeshModelLoader::AddTriangleFromGeometry(const glModelPacket& packet, un
 /**
  * Offset/Address/Size: 0xA80 | 0x80130BD8 | size: 0x110
  */
-void NetMeshModelLoader::ReadEdgesFromGeometryPacket(const glModelPacket&)
+/**
+ * TODO: 89.7% match - register allocation shift: all callee-saved regs
+ * off by 1 (e.g. this=r26 instead of r27, packet=r27 instead of r28).
+ * Also inner loop vertOff computation order differs (j-2+i vs i+j-2)
+ * and stride*vertOff+N add order swapped (addi before add vs add before addi).
+ * Likely unavoidable MWCC register allocator quirk.
+ */
+void NetMeshModelLoader::ReadEdgesFromGeometryPacket(const glModelPacket& packet)
 {
+    u16 maxVertex = 0;
+    DisplayList* pList;
+
+    if (packet.primType != 1)
+        return;
+
+    pList = dlGetStruct(packet.indexBuffer);
+    s32 numVerts = packet.numVertices;
+
+    for (s32 i = 2; i < numVerts; i++)
+    {
+        u16 vertexIndices[3];
+
+        for (s32 j = 0; j < 3; j++)
+        {
+            u16* ptr;
+            u16 hasColor = ((u16*)&pList->indices)[1];
+            if (hasColor)
+            {
+                u16 ns = ((u16*)&pList->indices)[0];
+                s32 vertOff = i + j - 2;
+                s32 stride = (ns - 1) * 2 + 1;
+                ptr = (u16*)((u8*)pList->list + stride * vertOff + 4);
+            }
+            else
+            {
+                u16 ns = ((u16*)&pList->indices)[0];
+                s32 vertOff = i + j - 2;
+                s32 stride = ns * 2;
+                ptr = (u16*)((u8*)pList->list + stride * vertOff + 3);
+            }
+            vertexIndices[j] = *ptr;
+            if (vertexIndices[j] > maxVertex)
+                maxVertex = vertexIndices[j];
+        }
+        AddTriangleFromGeometry(packet, vertexIndices);
+    }
+    ProcessEdges(packet, (s32)maxVertex);
 }
 
 /**
@@ -210,6 +249,7 @@ void NetMeshModelLoader::ReadEdgesFromGeometryPacket(const glModelPacket&)
  */
 void NetMeshModelLoader::ProcessEdges(const glModelPacket&, int)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

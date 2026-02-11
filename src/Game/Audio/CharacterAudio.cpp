@@ -4,6 +4,7 @@
 #include "Game/GameInfo.h"
 #include "Game/Render/Nis.h"
 #include "Game/AI/Fielder.h"
+#include "Game/FE/feHelpFuncs.h"
 
 #include "NL/nlMath.h"
 #include "NL/nlSingleton.h"
@@ -302,10 +303,62 @@ void cCharacterSFX::StartMovementLoop()
 
 /**
  * Offset/Address/Size: 0x1E4 | 0x8014C588 | size: 0x10C
+ * TODO: 68.7% match in decomp.me - jump table not generated (env limitation)
+ *       and g_pTeams uses SDA instead of absolute addressing (linker config).
+ *       Code logic is correct; expected ~100% in real build.
  */
 cCharacter* cCharacterSFX::GetCharacterFromNisCharClass(NisCharacterClass charIdentifier)
 {
-    return nullptr;
+    cCharacter* pChar = NULL;
+
+    switch (charIdentifier)
+    {
+    case NIS_CHAR_CLASS_BIRDO:
+    case NIS_CHAR_CLASS_DAISY:
+    case NIS_CHAR_CLASS_DONKEYKONG:
+    case NIS_CHAR_CLASS_HAMMERBROS:
+    case NIS_CHAR_CLASS_KOOPA:
+    case NIS_CHAR_CLASS_LUIGI:
+    case NIS_CHAR_CLASS_MARIO:
+    case NIS_CHAR_CLASS_PEACH:
+    case NIS_CHAR_CLASS_TOAD:
+    case NIS_CHAR_CLASS_WALUIGI:
+    case NIS_CHAR_CLASS_WARIO:
+    case NIS_CHAR_CLASS_YOSHI:
+        for (int team = 0; team < 2; team++)
+        {
+            cTeam* pTeam = g_pTeams[team];
+            if ((u32)pTeam->GetCaptain()->m_eCharacterClass == (u32)charIdentifier)
+            {
+                pChar = pTeam->GetCaptain();
+                break;
+            }
+        }
+        break;
+    case NIS_CHAR_CLASS_MYSTERY:
+        for (int team = 0; team < 2; team++)
+        {
+            if ((u32)ConvertToCharacterClass(GameInfoManager::Instance()->GetSidekick((short)team)) == (u32)charIdentifier)
+            {
+                pChar = g_pTeams[team]->GetFielder(1);
+                break;
+            }
+        }
+        break;
+    case NIS_CHAR_CLASS_HOME_GOALIE:
+    case NIS_CHAR_CLASS_AWAY_GOALIE:
+    {
+        int team = 0;
+        if (charIdentifier == NIS_CHAR_CLASS_AWAY_GOALIE)
+        {
+            team = 1;
+        }
+        pChar = g_pTeams[team]->GetGoalie();
+        break;
+    }
+    }
+
+    return pChar;
 }
 
 /**

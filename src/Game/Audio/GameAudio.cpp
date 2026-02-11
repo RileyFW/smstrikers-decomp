@@ -267,7 +267,83 @@ void cGameSFX::SetFilterFreqOnAllTrackedSFX(unsigned short)
  */
 bool cGameSFX::ActivateFilterOnAllTrackedSFX(bool bActivate)
 {
-    return false;
+    bool bParam = bActivate;
+    u8 bActivateU8 = (u8)bActivate;
+    u32 bNeg = (u32)(-(s32)bActivateU8);
+    u32 bOr = bNeg | bActivateU8;
+    u32 bNorm = bOr >> 31;
+    bool result;
+
+    if (!mbCurPlaySetIsValid)
+    {
+        result = true;
+        goto epilogue;
+    }
+
+    {
+        SFXPlaySet* pPlaySet;
+        bool filterActive;
+        DLListEntry<SFXPlaySet*>* start = nlDLRingGetStart(mpCurPlaySet.m_Head);
+        DLListEntry<SFXPlaySet*>* head = mpCurPlaySet.m_Head;
+        DLListEntry<SFXPlaySet*>* current = start;
+
+        while (current != NULL)
+        {
+            pPlaySet = current->m_data;
+
+            if (nlDLRingIsEnd(head, current) || current == NULL)
+            {
+                current = NULL;
+            }
+            else
+            {
+                current = current->m_next;
+            }
+
+            if (pPlaySet->type == (unsigned long)-1)
+            {
+                continue;
+            }
+
+            filterActive = false;
+            if (bNorm == 1)
+            {
+                filterActive = true;
+            }
+
+            if (pPlaySet->bIs3D)
+            {
+                if (!Audio::IsEmitterActive(pPlaySet->emitter))
+                {
+                    continue;
+                }
+                pPlaySet->voiceID = Audio::GetEmitterVoiceID(pPlaySet->emitter);
+            }
+
+            unsigned long sndIDError = Audio::GetSndIDError();
+            if (pPlaySet->voiceID != sndIDError)
+            {
+                if (Audio::IsSFXPlaying(pPlaySet->voiceID))
+                {
+                    Audio::ActivateFilterOnSFX(pPlaySet->voiceID, filterActive);
+                }
+            }
+        }
+    }
+
+    result = true;
+
+epilogue:
+    if (bParam)
+    {
+        mbGroupFilterOn = true;
+    }
+    else
+    {
+        mbGroupFilterOn = false;
+    }
+
+    return result;
 }
 
 /**

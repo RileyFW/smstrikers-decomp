@@ -1,4 +1,45 @@
 #include "Game/Audio/AudioLoader.h"
+#include "dolphin/arq.h"
+
+/**
+ * Helper struct for inlining FindGet with bool return to match target assembly.
+ * The target uses a bool found flag pattern (li r0,1 / li r0,0 / clrlwi.)
+ * which the native AVLTreeBase::FindGet (returning ValueType*) does not produce.
+ */
+struct SoundDefineMapType
+{
+    char pad[0x1C];
+    AVLTreeEntry<int, SoundStrToIDNode*>* m_Root;
+
+    inline bool FindGet(int key, SoundStrToIDNode*** foundValue) const
+    {
+        AVLTreeEntry<int, SoundStrToIDNode*>* node = m_Root;
+        while (node != NULL)
+        {
+            int cmpResult;
+            if (key == node->key)
+                cmpResult = 0;
+            else if (key < node->key)
+                cmpResult = -1;
+            else
+                cmpResult = 1;
+            if (cmpResult == 0)
+            {
+                if (foundValue != NULL)
+                    *foundValue = &node->value;
+                return true;
+            }
+            else
+            {
+                if (cmpResult < 0)
+                    node = (AVLTreeEntry<int, SoundStrToIDNode*>*)node->node.left;
+                else
+                    node = (AVLTreeEntry<int, SoundStrToIDNode*>*)node->node.right;
+            }
+        }
+        return false;
+    }
+};
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x801490F4 | size: 0x60
@@ -149,37 +190,124 @@ void AudioLoader::SetupCharSoundTypesAVLTree()
 
 /**
  * Offset/Address/Size: 0x3D40 | 0x80147B0C | size: 0xB4
+ * TODO: 86% match - prologue lis/addi scheduling: compiler computes addi for
+ * gWorldSFXInfo and gWorldSoundTable into temp registers (r0, r3) then moves
+ * to saved registers via mr, instead of addi directly into saved registers.
+ * This is an inherent MWCC instruction scheduling difference for non-SDA
+ * globals used with pointer variables.
  */
 void AudioLoader::SetupWorldSoundTypesAVLTree()
 {
+    SoundStrToIDNode* const pSFXInfoBase = Audio::gWorldSFXInfo;
+    const char* const* pSoundTableBase = Audio::gWorldSoundTable;
+    AVLTreeNode** const ppRoot = (AVLTreeNode**)((char*)&gWorldSoundDefineMap + 0x1C);
+    SoundStrToIDNode* pSFXInfo = pSFXInfoBase;
+    const char** pSoundTable = (const char**)pSoundTableBase;
+
+    for (int i = 0; i < 211; i++, pSFXInfo++, pSoundTable++)
+    {
+        SoundStrToIDNode* value = pSFXInfo;
+        pSFXInfo->typeStr = *pSoundTable;
+        value->uHashVal = nlStringLowerHash(pSFXInfo->typeStr);
+
+        unsigned int key = value->uHashVal;
+        AVLTreeNode* existingNode;
+
+        ((AVLTreeUntemplated*)&gWorldSoundDefineMap)->AddAVLNode(ppRoot, &key, &value, &existingNode, *(unsigned int*)((char*)&gWorldSoundDefineMap + 0x24));
+
+        if (existingNode == NULL)
+        {
+            (*(unsigned int*)((char*)&gWorldSoundDefineMap + 0x24))++;
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0x3C60 | 0x80147A2C | size: 0xE0
  */
-void AudioLoader::GetSFXIDFromStr(const char*, SoundStrToIDNode**)
+unsigned long AudioLoader::GetSFXIDFromStr(const char* str, SoundStrToIDNode** ppNode)
 {
+    if (ppNode != NULL)
+    {
+        *ppNode = NULL;
+    }
+
+    SoundStrToIDNode** foundValue = NULL;
+    unsigned long hash = nlStringLowerHash(str);
+    bool found = ((SoundDefineMapType*)&AudioLoader::gMusyXSoundDefineMap)->FindGet(hash, &foundValue);
+
+    if (found)
+    {
+        if (ppNode != NULL)
+        {
+            *ppNode = *foundValue;
+        }
+        return (*foundValue)->musyxID;
+    }
+    return -1;
 }
 
 /**
  * Offset/Address/Size: 0x3BAC | 0x80147978 | size: 0xB4
  */
-void AudioLoader::GetCharSFXTypeFromStr(const char*)
+unsigned long AudioLoader::GetCharSFXTypeFromStr(const char* str)
 {
+    SoundStrToIDNode** ppNode = NULL;
+    unsigned long key = nlStringLowerHash(str);
+    bool found = ((SoundDefineMapType*)&AudioLoader::gCharSoundDefineMap)->FindGet(key, &ppNode);
+    if (found)
+        return (*ppNode)->typeID;
+    else
+        return -1;
 }
 
 /**
  * Offset/Address/Size: 0x3AF8 | 0x801478C4 | size: 0xB4
  */
-void AudioLoader::GetWorldSFXTypeFromStr(const char*)
+unsigned long AudioLoader::GetWorldSFXTypeFromStr(const char* str)
 {
+    SoundStrToIDNode** ppNode = NULL;
+    unsigned long key = nlStringLowerHash(str);
+    bool found = ((SoundDefineMapType*)&AudioLoader::gWorldSoundDefineMap)->FindGet(key, &ppNode);
+    if (found)
+        return (*ppNode)->typeID;
+    else
+        return -1;
 }
 
 /**
  * Offset/Address/Size: 0x39F4 | 0x801477C0 | size: 0x104
+ * TODO: 96.15% match - callee-saved register shift (r29/r30/r31 rotated by 1)
+ * is an unavoidable MWCC graph-coloring allocator decision
  */
 void AudioLoader::SetupSoundGroups()
 {
+    SndGroupData* group;
+    const char* firstName;
+
+    group = sebringAudioGroups;
+    firstName = sebringAudioGroups[0].szGroupName;
+    int i = 0;
+
+    while ((u32)nlStrLen(firstName) != 0)
+    {
+        SoundStrToIDNode** foundValue = NULL;
+        int hash = (int)nlStringLowerHash(sebringAudioGroups[i].szGroupName);
+
+        bool found = ((SoundDefineMapType*)&AudioLoader::gMusyXSoundDefineMap)->FindGet(hash, &foundValue);
+
+        s32 musyxID;
+        if (found)
+            musyxID = (*foundValue)->musyxID;
+        else
+            musyxID = -1;
+
+        if ((u32)(musyxID + 0x10000) == 0xFFFF)
+            break;
+
+        sebringAudioGroups[i].groupID = (u16)musyxID;
+        i++;
+    }
 }
 
 /**
@@ -194,22 +322,28 @@ void AudioLoader::ActivateDPL2(bool, bool)
  */
 bool AudioLoader::StartLoad(LoadingManager*)
 {
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         return true;
     }
 
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         return true;
     }
 
     bool isInited;
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         isInited = false;
-    } else {
+    }
+    else
+    {
         isInited = Audio::IsInited();
     }
 
-    if (isInited) {
+    if (isInited)
+    {
         return true;
     }
 
@@ -224,18 +358,23 @@ bool AudioLoader::StartLoad(LoadingManager*)
  */
 bool AudioLoader::Initialize()
 {
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         return true;
     }
 
     bool isInited;
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         isInited = false;
-    } else {
+    }
+    else
+    {
         isInited = Audio::IsInited();
     }
 
-    if (isInited) {
+    if (isInited)
+    {
         return true;
     }
 
@@ -250,7 +389,8 @@ bool AudioLoader::Initialize()
  */
 bool AudioLoader::IsInited()
 {
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         return false;
     }
     return Audio::IsInited();
@@ -296,6 +436,15 @@ void AudioLoader::PlayPauseMenuMusic()
  */
 void AudioLoader::StopPauseMenuMusic()
 {
+    if (gbDisableAudio || !gbStream)
+    {
+        return;
+    }
+
+    AudioStreamTrack::TrackManagerBase* pTrackMgr = g_pTrackManager;
+    AudioStreamTrack::StreamTrack* track = pTrackMgr->GetTrack(nlStringLowerHash("Announcer"));
+    s32 fadeOut = GetConfigInt(g_FEStreamConfig, "InterruptFadeOut", 0);
+    track->Stop(fadeOut);
 }
 
 /**
@@ -311,7 +460,8 @@ void AudioLoader::StopStreaming()
  */
 void AudioLoader::SetupSoundBuffers()
 {
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         return;
     }
 
@@ -330,7 +480,8 @@ void AudioLoader::LoadFE(bool)
  */
 void AudioLoader::UnloadFE()
 {
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         return;
     }
 
@@ -347,15 +498,99 @@ void AudioLoader::UnloadFE()
 /**
  * Offset/Address/Size: 0x1F54 | 0x80145D20 | size: 0x108
  */
-void AudioLoader::LoadFEAudioData(bool)
+void AudioLoader::LoadFEAudioData(bool bAsync)
 {
+    bool bAlreadyLoaded = false;
+    if (sebringAudioGroups[0].uLoadOrder > -1 && sebringAudioGroups[0].stackEnum > -1)
+    {
+        bAlreadyLoaded = true;
+    }
+
+    if (!bAlreadyLoaded)
+    {
+        if (!gbDisableAudio)
+        {
+            bool isInited;
+            if (gbDisableAudio)
+            {
+                isInited = false;
+            }
+            else
+            {
+                isInited = Audio::IsInited();
+            }
+
+            if (isInited)
+            {
+                PlatAudio::LoadSoundGroup(sebringAudioFileData, 0, 1, bAsync);
+            }
+        }
+    }
+
+    bAlreadyLoaded = false;
+    if (sebringAudioGroups[1].uLoadOrder > -1 && sebringAudioGroups[1].stackEnum > -1)
+    {
+        bAlreadyLoaded = true;
+    }
+
+    if (!bAlreadyLoaded)
+    {
+        if (!gbDisableAudio)
+        {
+            bool isInited;
+            if (gbDisableAudio)
+            {
+                isInited = false;
+            }
+            else
+            {
+                isInited = Audio::IsInited();
+            }
+
+            if (isInited)
+            {
+                PlatAudio::LoadSoundGroup(sebringAudioFileData, 1, 1, bAsync);
+            }
+        }
+    }
+
+    ARQSetChunkSize(0x1000);
 }
 
 /**
  * Offset/Address/Size: 0x1EB8 | 0x80145C84 | size: 0x9C
  */
-void AudioLoader::LoadNintendoDialogueGroup(bool)
+void AudioLoader::LoadNintendoDialogueGroup(bool bAsync)
 {
+    if (gbDisableAudio)
+        return;
+
+    bool bAlreadyLoaded = false;
+    if (sebringAudioGroups[3].uLoadOrder > -1 && sebringAudioGroups[3].stackEnum > -1)
+    {
+        bAlreadyLoaded = true;
+    }
+
+    if (bAlreadyLoaded)
+        return;
+
+    if (gbDisableAudio)
+        return;
+
+    bool isInited;
+    if (gbDisableAudio)
+    {
+        isInited = false;
+    }
+    else
+    {
+        isInited = Audio::IsInited();
+    }
+
+    if (!isInited)
+        return;
+
+    PlatAudio::LoadSoundGroup(sebringAudioFileData, 3, 1, bAsync);
 }
 
 /**
@@ -391,33 +626,42 @@ void AudioLoader::LoadNLGDialogueGroup(bool bAsync)
  */
 void AudioLoader::LoadFEButtonSoundGroup()
 {
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         return;
     }
 
     bool alreadyLoaded = false;
-    if (sebringAudioGroups[2].uLoadOrder > -1) {
-        if (sebringAudioGroups[2].stackEnum > -1) {
+    if (sebringAudioGroups[2].uLoadOrder > -1)
+    {
+        if (sebringAudioGroups[2].stackEnum > -1)
+        {
             alreadyLoaded = true;
         }
     }
 
-    if (alreadyLoaded) {
+    if (alreadyLoaded)
+    {
         return;
     }
 
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         return;
     }
 
     bool isInited;
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         isInited = false;
-    } else {
+    }
+    else
+    {
         isInited = Audio::IsInited();
     }
 
-    if (!isInited) {
+    if (!isInited)
+    {
         return;
     }
 
@@ -504,9 +748,12 @@ void AudioLoader::ReadEntireSampleFileIntoMem(bool sync)
 {
     gbAsyncLoadEntireSampleFileIntoMemRequestMade = true;
 
-    if (sync) {
+    if (sync)
+    {
         PlatAudio::ReadEntireSampleFileIntoMemSync(sebringAudioFileData.szSampleFile);
-    } else {
+    }
+    else
+    {
         PlatAudio::ReadEntireSampleFileIntoMem(sebringAudioFileData.szSampleFile);
     }
 }
@@ -518,17 +765,22 @@ void AudioLoader::ResetForNewGame()
 {
     bool isInited;
 
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         isInited = false;
-    } else {
+    }
+    else
+    {
         isInited = Audio::IsInited();
     }
 
-    if (!isInited) {
+    if (!isInited)
+    {
         return;
     }
 
-    if (!gbDisableCrowd) {
+    if (!gbDisableCrowd)
+    {
         CrowdMood::Init();
         CrowdMood::SetMood(CrowdMood::CM_Neutral, 0);
     }
@@ -544,20 +796,25 @@ void AudioLoader::ResetForRematch()
 {
     bool isInited;
 
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         isInited = false;
-    } else {
+    }
+    else
+    {
         isInited = Audio::IsInited();
     }
 
-    if (!isInited) {
+    if (!isInited)
+    {
         return;
     }
 
     CrowdMood::Purge(false);
     Audio::Silence();
 
-    if (!gbDisableCrowd) {
+    if (!gbDisableCrowd)
+    {
         g_pTrackManager->StopAllTracks(false);
         Audio::GetPriorityStream()->m_Track.Stop(0);
         Audio::GetPriorityStream()->Reset();
@@ -565,21 +822,27 @@ void AudioLoader::ResetForRematch()
         CrowdMood::SetMood(CrowdMood::CM_Neutral, 0);
     }
 
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         return;
     }
 
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         isInited = false;
-    } else {
+    }
+    else
+    {
         isInited = Audio::IsInited();
     }
 
-    if (!isInited) {
+    if (!isInited)
+    {
         return;
     }
 
-    if (!Audio::IsWorldSFXLoaded()) {
+    if (!Audio::IsWorldSFXLoaded())
+    {
         return;
     }
 
@@ -596,21 +859,27 @@ void AudioLoader::InitCrowdFromStateTransition()
 {
     bool isInited;
 
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         return;
     }
 
-    if (gbDisableAudio) {
+    if (gbDisableAudio)
+    {
         isInited = false;
-    } else {
+    }
+    else
+    {
         isInited = Audio::IsInited();
     }
 
-    if (isInited == 0) {
+    if (isInited == 0)
+    {
         return;
     }
 
-    if (Audio::IsWorldSFXLoaded() == false) {
+    if (Audio::IsWorldSFXLoaded() == false)
+    {
         return;
     }
 
