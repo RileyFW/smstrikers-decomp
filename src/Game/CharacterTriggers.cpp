@@ -1,4 +1,5 @@
 #include "Game/CharacterTriggers.h"
+#include "Game/AnimInventory.h"
 #include "Game/Player.h"
 #include "Game/Ball.h"
 #include "Game/AI/Fielder.h"
@@ -24,7 +25,11 @@ public:
 };
 
 extern cWorldSFX gCrowdSFX;
+extern cWorldSFX gStadGenSFX;
 } // namespace Audio
+
+extern cCharacter* g_pCharacters[10];
+extern cTeam* g_pTeams[2] __attribute__((section(".data")));
 
 /**
  * Offset/Address/Size: 0x5190 | 0x801A3F40 | size: 0x94
@@ -48,15 +53,57 @@ void UpdateEmitterFromCharacterIdxWithoutAnimController(EmissionController& emit
 /**
  * Offset/Address/Size: 0x50B0 | 0x801A3E60 | size: 0xE0
  */
-void UpdateEmitterFromCharacterIdxWithCoordSys(EmissionController&, int)
+void UpdateEmitterFromCharacterIdxWithCoordSys(EmissionController& ec, int characterIdx)
 {
+    if (ReplayManager::Instance()->mRender != NULL)
+    {
+        DrawableCharacter* pChar = &ReplayManager::Instance()->mRender->mCharacters[characterIdx];
+        nlMatrix4 mRot;
+        nlMakeRotationMatrixZ(mRot, 0.0000958738f * (f32)pChar->mFacingDirection);
+        nlVector3 forward;
+        forward.f.x = mRot.m[0][0];
+        forward.f.y = mRot.m[0][1];
+        forward.f.z = mRot.m[0][2];
+        ec.SetDirection(forward);
+        ec.SetPosition(pChar->mPosition);
+        ec.SetVelocity(pChar->mVelocity);
+        ec.SetPoseAccumulator(*pChar->mPoseAccumulator);
+        ec.SetAnimController(pChar->GetAnimController());
+    }
 }
 
 /**
  * Offset/Address/Size: 0x4FB8 | 0x801A3D68 | size: 0xF8
  */
-void UpdateEmitterFromCharacter(EmissionController&)
+void UpdateEmitterFromCharacter(EmissionController& ec)
 {
+    if (ReplayManager::Instance()->mRender != NULL)
+    {
+        int characterIdx = ec.m_uUserData;
+        if (ReplayManager::Instance()->mRender != NULL)
+        {
+            ReplayManager* mgr1 = ReplayManager::Instance();
+            DrawableCharacter* pChar = &mgr1->mRender->mCharacters[characterIdx];
+            ec.SetPosition(pChar->mPosition);
+            RenderSnapshot* render = ReplayManager::Instance()->mRender;
+            ec.SetVelocity(render->mCharacters[characterIdx].mVelocity);
+            ReplayManager* mgr3 = ReplayManager::Instance();
+            pChar = &mgr3->mRender->mCharacters[characterIdx];
+            ec.SetPoseAccumulator(*pChar->mPoseAccumulator);
+            ReplayManager* mgr4 = ReplayManager::Instance();
+            pChar = &mgr4->mRender->mCharacters[characterIdx];
+            ec.SetAnimController(pChar->GetAnimController());
+        }
+
+        const cCharacter* pCharacter = DrawableCharacter::OnlyRenderingOneCharacter();
+        if (pCharacter != NULL)
+        {
+            if (g_pCharacters[characterIdx] != pCharacter)
+            {
+                ec.Die();
+            }
+        }
+    }
 }
 
 /**
@@ -107,8 +154,21 @@ void CharacterTriggerHandler(unsigned int uParam)
 /**
  * Offset/Address/Size: 0x2A64 | 0x801A1814 | size: 0xB8
  */
-void GetAnimTriggerInfo(cCharacter*, int, bool (*)(float, float, unsigned long, float, void*), void*)
+void GetAnimTriggerInfo(cCharacter* pCharacter, int animIndex, bool (*callback)(float, float, unsigned long, float, void*), void* pData)
 {
+    cSAnim* pAnim = pCharacter->m_pAnimInventory->GetAnim(animIndex);
+    cSAnimCallback* cb = pAnim->m_pCallbackList;
+
+    while (cb != NULL)
+    {
+        cSAnim* pTriggerAnim = (cSAnim*)cb->m_nParam1;
+        float numKeys = (float)pAnim->m_nNumKeys;
+        if (!callback(cb->m_fTime, numKeys / 60.0f, pTriggerAnim->m_uHashID, 30.0f, pData))
+        {
+            break;
+        }
+        cb = cb->next;
+    }
 }
 
 /**
@@ -159,8 +219,29 @@ void EmitBallShot(cPlayer*, eBallShotEffectType, cPlayer*, bool)
 /**
  * Offset/Address/Size: 0x1A44 | 0x801A07F4 | size: 0xCC
  */
-void KillBallShot(const char*, bool)
+void KillBallShot(const char* name, bool kill)
 {
+    Audio::gStadGenSFX.Stop((Audio::eWorldSFX)0xB9, cGameSFX::SFX_STOP_FIRST);
+    Audio::gStadGenSFX.Stop((Audio::eWorldSFX)0xBA, cGameSFX::SFX_STOP_FIRST);
+
+    for (int i = 0; i < 2; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            cFielder* pFielder = g_pTeams[i]->GetFielder(j);
+            if (pFielder)
+            {
+                if (kill)
+                {
+                    pFielder->KillEffect(fxGetGroup(name));
+                }
+                else
+                {
+                    pFielder->EndEffect(fxGetGroup(name));
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -257,8 +338,24 @@ void EmitShootToScoreHyperStrike(cFielder*)
 /**
  * Offset/Address/Size: 0xC04 | 0x8019F9B4 | size: 0x128
  */
-void EmitWindupAtBall(cCharacter*, const char*)
+void EmitWindupAtBall(cCharacter* pCharacter, const char* name)
 {
+    Function<EmissionController&> update2;
+    EmissionController* pController = EmissionManager::Create(fxGetGroup(name), 0);
+    static const nlVector3 velocity = { 0.0f, 0.0f, 0.0f };
+    nlVector3 vel = velocity;
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.0f;
+    {
+        Function<EmissionController&> update;
+        update.mTag = FREE_FUNCTION;
+        update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+        pController->SetUpdateCallback(update);
+    }
+    pCharacter->AttachEffect(pController);
+    update2.mTag = FREE_FUNCTION;
+    update2.mFreeFunction = UpdateEmitterFromBall;
+    pController->SetUpdateCallback(update2);
 }
 
 /**
@@ -284,7 +381,8 @@ void EmitWindupAtCharacter(cCharacter* pCharacter, const char* name)
 /**
  * Offset/Address/Size: 0xA8C | 0x8019F83C | size: 0x74
  */
-void KillWindups(cCharacter* pCharacter) {
+void KillWindups(cCharacter* pCharacter)
+{
     KillWindup(pCharacter, "ball_shot_windup", true);
     KillWindup(pCharacter, "ball_pass_windup", true);
     KillWindup(pCharacter, "ball_sts_windup", true);

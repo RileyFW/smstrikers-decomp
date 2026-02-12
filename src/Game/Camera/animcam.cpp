@@ -1,5 +1,6 @@
 #include "Game/Camera/animcam.h"
 
+#include "NL/nlFile.h"
 #include "Game/Render/depthoffield.h"
 
 /**
@@ -17,22 +18,71 @@ void EnableDofDebug()
 /**
  * Offset/Address/Size: 0xCA4 | 0x801A5898 | size: 0x498
  */
-void LoadAnimCameraData(nlChunk*, nlChunk*, cCameraData*, bool)
+bool LoadAnimCameraData(nlChunk*, nlChunk*, cCameraData*, bool)
 {
+    FORCE_DONT_INLINE;
 }
+
+typedef bool (*LoadAnimCameraDataFn)(nlChunk*, nlChunk*, cCameraData*, const char*);
 
 /**
  * Offset/Address/Size: 0xBF8 | 0x801A57EC | size: 0xAC
  */
-void cAnimCamera::LoadCameraAnimation(nlChunk*, nlChunk*, const char*, bool)
+bool cAnimCamera::LoadCameraAnimation(nlChunk* begin, nlChunk* end, const char* cameraName, bool ownsKeyData)
 {
+    cCameraData* pData;
+    void* mem = nlMalloc(0x24, 8, false);
+    pData = (cCameraData*)mem;
+    if (mem != NULL) {
+        ((cCameraData*)mem)->next = NULL;
+        ((cCameraData*)mem)->m_uHashID = 0;
+        ((cCameraData*)mem)->m_uKeyCount = 0;
+        ((cCameraData*)mem)->cameraPos = NULL;
+        ((cCameraData*)mem)->targetPos = NULL;
+        ((cCameraData*)mem)->cameraRot = NULL;
+        ((cCameraData*)mem)->fFOV = NULL;
+        ((cCameraData*)mem)->fFocalLength = NULL;
+    }
+    pData->m_uHashID = nlStringLowerHash((const char*)end);
+    bool result = ((LoadAnimCameraDataFn)LoadAnimCameraData)((nlChunk*)this, begin, pData, cameraName);
+    nlListAddStart(&m_cameraDataList, pData, (cCameraData**)NULL);
+    return result;
 }
 
 /**
  * Offset/Address/Size: 0xB14 | 0x801A5708 | size: 0xE4
  */
-void cAnimCamera::LoadCameraAnimation(const char*, const char*, bool)
+bool cAnimCamera::LoadCameraAnimation(const char* szFilename, const char* szCameraName, bool ownsKeyData)
 {
+    bool result;
+    unsigned long uSize = 0;
+    nlChunk* end;
+    nlChunk* begin;
+    cCameraData* pCamData;
+    void* pData = nlLoadEntireFile(szFilename, &uSize, 0x20, (eAllocType)0);
+    if (pData == NULL) {
+        return false;
+    }
+    begin = (nlChunk*)((u8*)pData + 8);
+    end = (nlChunk*)((u8*)pData + ((nlChunk*)pData)->m_Size + 8);
+
+    void* mem = nlMalloc(0x24, 8, false);
+    pCamData = (cCameraData*)mem;
+    if (mem != NULL) {
+        ((cCameraData*)mem)->next = NULL;
+        ((cCameraData*)mem)->m_uHashID = 0;
+        ((cCameraData*)mem)->m_uKeyCount = 0;
+        ((cCameraData*)mem)->cameraPos = NULL;
+        ((cCameraData*)mem)->targetPos = NULL;
+        ((cCameraData*)mem)->cameraRot = NULL;
+        ((cCameraData*)mem)->fFOV = NULL;
+        ((cCameraData*)mem)->fFocalLength = NULL;
+    }
+    pCamData->m_uHashID = nlStringLowerHash(szCameraName);
+    result = LoadAnimCameraData(begin, end, pCamData, ownsKeyData);
+    nlListAddStart(&m_cameraDataList, pCamData, (cCameraData**)NULL);
+    operator delete(pData);
+    return result;
 }
 
 /**

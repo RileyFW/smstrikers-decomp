@@ -20,7 +20,7 @@ public:
     /*  0x20 */ bool ownsKeyData;
 }; // total size: 0x24
 
-void LoadAnimCameraData(nlChunk*, nlChunk*, cCameraData*, bool);
+bool LoadAnimCameraData(nlChunk*, nlChunk*, cCameraData*, bool);
 void EnableDofDebug();
 
 class cAnimCamera : public cBaseCamera
@@ -34,8 +34,8 @@ public:
     /* 0x20 */ virtual const nlVector3& GetCameraPosition() const { return m_vecCamera; };
     /* 0x24 */ virtual const nlVector3& GetTargetPosition() const { return m_vecTarget; };
 
-    void LoadCameraAnimation(nlChunk*, nlChunk*, const char*, bool);
-    void LoadCameraAnimation(const char*, const char*, bool);
+    bool LoadCameraAnimation(nlChunk*, nlChunk*, const char*, bool);
+    static bool LoadCameraAnimation(const char*, const char*, bool);
     static void FreeCameraAnimations();
 
     void BuildAnimViewMatrix(nlMatrix4&);
