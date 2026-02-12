@@ -3,7 +3,7 @@
 
 // #include "Game/DB/SaveLoad.h"
 #include <dolphin/card.h>
-#include "NL/nlStaticSortedSlot.h"
+#include "NL/nlSortedSlot.h"
 
 enum INTERNAL_STATE
 {
@@ -46,20 +46,23 @@ struct CARD_INFO
 class MemCardFunctor
 {
 public:
-    MemCardFunctor() {}
+    MemCardFunctor() { }
 
     class MCInternalFunctorBase
     {
     public:
-        MCInternalFunctorBase() : m_pData(NULL) {}
-        virtual ~MCInternalFunctorBase();
+        MCInternalFunctorBase()
+            : m_pData(NULL)
+        {
+        }
+        ~MCInternalFunctorBase();
         virtual void Call(unsigned long, long);
         virtual void Destroy();
 
         /* 0x04 */ void* m_pData;
     };
 
-    template<class T>
+    template <class T>
     class MCMemberFunctor : public MCInternalFunctorBase
     {
     public:
@@ -72,7 +75,7 @@ public:
             m_pfnCB = ((void**)&cb)[2];
             m_pObject = obj;
         }
-        virtual ~MCMemberFunctor();
+        ~MCMemberFunctor();
         virtual void Call(unsigned long, long);
         virtual void Destroy();
 
@@ -118,16 +121,17 @@ public:
         /* 0x24 */ unsigned long TotalHeaderSize;
     }; // total size: 0x28
 
-    void CardRemovedCB(long, long);
-    void MountDoneCB(long, long);
-    void CreateFileDoneCB(long, long);
-    static void FormatDoneCB(long, long);
-    void DeleteFileDoneCB(long, long);
-    void ReadFileDoneCB(long, long);
-    void SetStatusDoneCB(long, long);
-    void CardCheckBrokenDoneCB(long, long);
-    static void CardCheckDoneCB(long, long);
-    void WriteFileDoneCB(long, long);
+    static void CardRemovedCB(long channel, long result);
+    static void MountDoneCB(long channel, long result);
+    static void CreateFileDoneCB(long channel, long result);
+    static void FormatDoneCB(long channel, long result);
+    static void DeleteFileDoneCB(long channel, long result);
+    static void ReadFileDoneCB(long channel, long result);
+    static void SetStatusDoneCB(long channel, long result);
+    static void CardCheckBrokenDoneCB(long channel, long result);
+    static void CardCheckDoneCB(long channel, long result);
+    static void WriteFileDoneCB(long channel, long result);
+
     s32 BeginCardAccess(const MemCardFunctor&);
     void CreateFile(const char*, unsigned long, MemCard::ICON_CONFIG*, MemCard::MC_FILE*&, const MemCardFunctor&);
     void OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*);
@@ -142,22 +146,21 @@ public:
 
     s64 GetSerialID() const;
 
-    INTERNAL_STATE m_State;             // offset 0x0, size 0x4
-    unsigned long m_Slot;               // offset 0x4, size 0x4
-    CARD_STATE m_CardState;             // offset 0x8, size 0x4
-    CARD_INFO m_CardInfo;               // offset 0xC, size 0x10
-    unsigned long m_LastTransferSize;   // offset 0x1C, size 0x4
-    unsigned long m_TargetTransferSize; // offset 0x20, size 0x4
-
-    s32 unk_24;                                  // offset 0x24, size 0x4
-    s64 m_SerialID;                              // offset 0x28, size 0x8
-    MemCardFunctor m_CB[9];                      // offset 0x30, size 0xD8
-    nlStaticSortedSlot<MC_FILE, 16> m_OpenFiles; // offset 0x108, size 0x314
-    MC_FILE* m_pFileCB;                          // offset 0x41C, size 0x4
-    void* m_pDataCB;                             // offset 0x420, size 0x4
-    unsigned long m_GameId;                      // offset 0x424, size 0x4
-    unsigned short m_CompanyId;                  // offset 0x428, size 0x2
-    unsigned char m_CardWorkArea[41472];         // offset 0x42A, size 0xA200
+    /* 0x000  */ INTERNAL_STATE m_State;
+    /* 0x004  */ unsigned long m_Slot;
+    /* 0x008  */ CARD_STATE m_CardState;
+    /* 0x00C  */ CARD_INFO m_CardInfo;
+    /* 0x01C */ unsigned long m_LastTransferSize;
+    /* 0x020 */ unsigned long m_TargetTransferSize;
+    /* 0x024 */ s32 unk_24;
+    /* 0x028 */ s64 m_SerialID;
+    /* 0x030 */ MemCardFunctor m_CB[9];
+    /* 0x108 */ nlStaticSortedSlot<MC_FILE, 16> m_OpenFiles;
+    /* 0x41C */ MC_FILE* m_pFileCB;
+    /* 0x420 */ void* m_pDataCB;
+    /* 0x424 */ unsigned long m_GameId;
+    /* 0x428 */ unsigned short m_CompanyId;
+    /* 0x42A */ unsigned char m_CardWorkArea[41472];
 
     static bool s_InitDone;
 }; // total size: 0xA620

@@ -77,7 +77,6 @@ void MemCard::CreateFileDoneCB(long, long)
  */
 void MemCard::FormatDoneCB(long channel, long result)
 {
-    // Ensure channel uses first param register
     long ch = (long)channel;
     MemCard* card = g_MemCards[ch];
     if (result == 0L)
@@ -91,57 +90,143 @@ void MemCard::FormatDoneCB(long channel, long result)
         card->m_State = IS_IDLE;
         card->m_CardState = CS_IDLE;
     }
-    MemCardFunctor* pFunctor = &card->m_CB[4];
+    MemCardFunctor::MCInternalFunctorBase* pFunctor = (MemCardFunctor::MCInternalFunctorBase*)&card->m_CB[4];
     unsigned long slot = card->m_Slot;
-    unsigned long* vtbl = *(unsigned long**)pFunctor;
-    if ((long)vtbl != 0)
+    if (*(long*)pFunctor != 0)
     {
-        typedef void (*FunctorCall)(MemCardFunctor*, unsigned long, long);
-        FunctorCall fn = (FunctorCall)vtbl[2];
-        fn(pFunctor, slot, result);
+        pFunctor->Call(slot, result);
     }
     else
     {
-        nlPrintf("MemCardFunctor: NOT SET!!!\n");
+        nlPrintf("Trying to call unset MC functor");
     }
 }
 
 /**
  * Offset/Address/Size: 0x3D0 | 0x801CAF10 | size: 0xC8
  */
-void MemCard::DeleteFileDoneCB(long, long)
+void MemCard::DeleteFileDoneCB(long channel, long result)
 {
+    MemCard* card = g_MemCards[channel];
+    CARDFreeBlocks(card->m_Slot, &card->m_CardInfo.FreeBytes, &card->m_CardInfo.FreeFiles);
+    card->m_State = IS_MOUNTED;
+    card->m_CardState = CS_MOUNTED;
+    if (CARDProbeEx(card->m_Slot, &card->m_CardInfo.CardSize, &card->m_CardInfo.SectorSize) != 0)
+    {
+        card->m_State = IS_IDLE;
+        card->m_CardState = CS_IDLE;
+    }
+    CARDFreeBlocks(card->m_Slot, &card->m_CardInfo.FreeBytes, &card->m_CardInfo.FreeFiles);
+    MemCardFunctor::MCInternalFunctorBase* pFunctor = (MemCardFunctor::MCInternalFunctorBase*)&card->m_CB[6];
+    unsigned long slot = card->m_Slot;
+    if (*(long*)pFunctor != 0)
+    {
+        pFunctor->Call(slot, result);
+    }
+    else
+    {
+        nlPrintf("Trying to call unset MC functor");
+    }
 }
 
 /**
  * Offset/Address/Size: 0x328 | 0x801CAE68 | size: 0xA8
  */
-void MemCard::ReadFileDoneCB(long, long)
+void MemCard::ReadFileDoneCB(long channel, long result)
 {
+    MemCard* card = g_MemCards[channel];
+    card->m_State = IS_MOUNTED;
+    card->m_CardState = CS_MOUNTED;
+    if (CARDProbeEx(card->m_Slot, &card->m_CardInfo.CardSize, &card->m_CardInfo.SectorSize) != 0)
+    {
+        card->m_State = IS_IDLE;
+        card->m_CardState = CS_IDLE;
+    }
+    MemCardFunctor::MCInternalFunctorBase* pFunctor = (MemCardFunctor::MCInternalFunctorBase*)&card->m_CB[7];
+    unsigned long slot = card->m_Slot;
+    if (*(long*)pFunctor != 0)
+    {
+        pFunctor->Call(slot, result);
+    }
+    else
+    {
+        nlPrintf("Trying to call unset MC functor");
+    }
 }
 
 /**
  * Offset/Address/Size: 0x1F0 | 0x801CAD30 | size: 0x138
  */
-void MemCard::SetStatusDoneCB(long, long)
+void MemCard::SetStatusDoneCB(long channel, long result)
 {
+    MemCard* card = g_MemCards[channel];
+    s32 err = 0;
+    if (result == 0)
+    {
+        card->m_State = IS_MOUNTED;
+        MC_FILE* file = card->m_pFileCB;
+        void* data = card->m_pDataCB;
+        unsigned long headerSize = file->TotalHeaderSize;
+
+        if (card->m_State != IS_MOUNTED)
+        {
+            err = -100;
+        }
+        else
+        {
+            unsigned long sectorSize = card->m_CardInfo.SectorSize;
+            unsigned long remainder = headerSize % sectorSize;
+            if (remainder != 0)
+            {
+                nlPrintf("MC: Header size (%d) not aligned to sector (%d), rounding to %d\n", headerSize, sectorSize, headerSize + sectorSize - remainder);
+                headerSize += card->m_CardInfo.SectorSize - remainder;
+            }
+            card->m_State = IS_WRITING;
+            card->m_CardState = CS_WRITING;
+            err = CARDWriteAsync(&file->FileInfo, data, headerSize, 0, WriteFileDoneCB);
+            if (err != 0)
+            {
+                card->m_State = IS_MOUNTED;
+                card->m_CardState = CS_MOUNTED;
+            }
+        }
+        if (err != 0)
+        {
+            card->m_State = IS_MOUNTED;
+            card->m_CardState = CS_MOUNTED;
+        }
+    }
+    if (result != 0)
+    {
+        MemCardFunctor::MCInternalFunctorBase* pFunctor = (MemCardFunctor::MCInternalFunctorBase*)&card->m_CB[8];
+        unsigned long slot = card->m_Slot;
+        if (*(long*)pFunctor != 0)
+        {
+            pFunctor->Call(slot, result);
+        }
+        else
+        {
+            nlPrintf("Trying to call unset MC functor");
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0x12C | 0x801CAC6C | size: 0xC4
  */
-void MemCard::CardCheckBrokenDoneCB(long, long)
-{
-}
-
-/**
- * Offset/Address/Size: 0xA8 | 0x801CABE8 | size: 0x84
- * TODO: 93.2% match - mr. r5,r4 vs cmpwi r4,0 (line 8), g_MemCards r4 vs r5 (lines 14/18), vtbl r12 vs r5 (lines 48/4c/54)
- */
-void MemCard::CardCheckDoneCB(long channel, long result)
+void MemCard::CardCheckBrokenDoneCB(long channel, long result)
 {
     MemCard* card = g_MemCards[channel];
-    if (result == 0L)
+    if (result == 0)
+    {
+        CARDFreeBlocks(card->m_Slot, &card->m_CardInfo.FreeBytes, &card->m_CardInfo.FreeFiles);
+    }
+    else
+    {
+        card->m_State = IS_MOUNTED_ERROR;
+        card->m_CardState = CS_MOUNTED_ERROR;
+    }
+    if (result == 0)
     {
         card->m_State = IS_MOUNTED;
         card->m_CardState = CS_MOUNTED;
@@ -151,26 +236,69 @@ void MemCard::CardCheckDoneCB(long channel, long result)
         card->m_State = IS_IDLE;
         card->m_CardState = CS_IDLE;
     }
-    MemCardFunctor* pFunctor = &card->m_CB[1];
+    MemCardFunctor::MCInternalFunctorBase* pFunctor = (MemCardFunctor::MCInternalFunctorBase*)&card->m_CB[1];
     unsigned long slot = card->m_Slot;
-    unsigned long* vtbl = *(unsigned long**)pFunctor;
-    if ((long)vtbl != 0)
+    if (*(long*)pFunctor != 0)
     {
-        typedef void (*FunctorCall)(MemCardFunctor*, unsigned long);
-        FunctorCall fn = (FunctorCall)vtbl[2];
-        fn(pFunctor, slot);
+        pFunctor->Call(slot, result);
     }
     else
     {
-        nlPrintf("MemCardFunctor: NOT SET!!!\n");
+        nlPrintf("Trying to call unset MC functor");
+    }
+}
+
+/**
+ * Offset/Address/Size: 0xA8 | 0x801CABE8 | size: 0x84
+ */
+void MemCard::CardCheckDoneCB(long channel, long result)
+{
+    MemCard* card = g_MemCards[channel];
+    if (result == 0)
+    {
+        card->m_State = IS_MOUNTED;
+        card->m_CardState = CS_MOUNTED;
+    }
+    else
+    {
+        card->m_State = IS_IDLE;
+        card->m_CardState = CS_IDLE;
+    }
+    MemCardFunctor::MCInternalFunctorBase* pFunctor = (MemCardFunctor::MCInternalFunctorBase*)&card->m_CB[1];
+    unsigned long slot = card->m_Slot;
+    if (*(long*)pFunctor != 0)
+    {
+        pFunctor->Call(slot, result);
+    }
+    else
+    {
+        nlPrintf("Trying to call unset MC functor");
     }
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x801CAB40 | size: 0xA8
  */
-void MemCard::WriteFileDoneCB(long, long)
+void MemCard::WriteFileDoneCB(long channel, long result)
 {
+    MemCard* card = g_MemCards[channel];
+    card->m_State = IS_MOUNTED;
+    card->m_CardState = CS_MOUNTED;
+    if (CARDProbeEx(card->m_Slot, &card->m_CardInfo.CardSize, &card->m_CardInfo.SectorSize) != 0)
+    {
+        card->m_State = IS_IDLE;
+        card->m_CardState = CS_IDLE;
+    }
+    MemCardFunctor::MCInternalFunctorBase* pFunctor = (MemCardFunctor::MCInternalFunctorBase*)&card->m_CB[8];
+    unsigned long slot = card->m_Slot;
+    if (*(long*)pFunctor != 0)
+    {
+        pFunctor->Call(slot, result);
+    }
+    else
+    {
+        nlPrintf("Trying to call unset MC functor");
+    }
 }
 
 /**

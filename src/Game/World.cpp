@@ -12,7 +12,8 @@
 #include "NL/glx/glxTexture.h"
 #include "Game/Sys/debug.h"
 #include "Game/Drawable/DrawableObj.h"
-#include "types.h"
+
+#include "NL/gl/glLightUserData.h"
 
 float g_fExponentScale = 128.0f;
 float g_fExponentBase = 8.0f;
@@ -202,38 +203,34 @@ void World::CreateHelperObjFromChunk(nlChunk* chunk)
 
 /**
  * Offset/Address/Size: 0x1B7C | 0x80196840 | size: 0x12C
- * TODO: 97.8% match - extra mr r0,r3/mr r27,r0 instead of direct mr r29,r3 for
- * glUserGetData result, plus r28/r30 and r29/r30 register swap. MWCC register allocator quirk.
  */
 void* World::GetCustomSpecularData(glModelPacket* pPacket, bool bPerm)
 {
     void* pSTSIntensity = m_pSTSIntensity;
     int numLights;
-    u8* pSpec;
-    
+    GLSpecularUserData* pSpec;
+
     u8 glossLevel = (u8)glGetTextureState(pPacket->state.texturestate, GLTS_GlossLevel);
-    
+
     f32 fGloss = (f32)glossLevel;
-    f32 fNorm = fGloss * (1.0f / 255.0f);
+    f32 fNorm = fGloss * 0.015873017f;
     f32 fInv = 1.0f - fNorm;
     f32 fExponent = g_fExponentScale * fInv + g_fExponentBase;
-    
+
     numLights = *(int*)glUserGetData(pSTSIntensity);
-    u32 allocSize = numLights * 0x24 + 4;
+    u32 allocSize = numLights * sizeof(GLSpecularUserData) + 4;
     void* pNewData = glUserAlloc(GLUD_Specular, allocSize, bPerm);
-    
-    u8* pRaw = (u8*)glUserGetData(pNewData);
-    pSpec = pRaw + 4;
+
+    pSpec = (GLSpecularUserData*)glUserGetData(pNewData);
     pSTSIntensity = glUserGetData(pSTSIntensity);
-    
-    memcpy(pRaw, pSTSIntensity, allocSize);
-    
-    int i;
-    for (i = numLights; i > 0; i--) {
-        *(f32*)(pSpec + 0x20) = fExponent;
-        pSpec += 0x24;
+
+    memcpy(pSpec, pSTSIntensity, allocSize);
+
+    for (int i = numLights; i > 0; i--)
+    {
+        pSpec[i].exponent = fExponent;
     }
-    
+
     return pNewData;
 }
 
