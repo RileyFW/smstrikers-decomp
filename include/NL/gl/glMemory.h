@@ -4,7 +4,7 @@
 #include "NL/glx/glxMemory.h"
 
 void glResourceRelease(unsigned long long);
-void glResourceMark();
+unsigned long long glResourceMark();
 void* glFrameAlloc(unsigned long size, eGLMemory type);
 void* glResourceAlloc(unsigned long size, eGLMemory type);
 

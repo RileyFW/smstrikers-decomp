@@ -955,6 +955,7 @@ void cFielder::DoClearBall()
  */
 void cFielder::DoHandleActiveShotMeter()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -1294,8 +1295,57 @@ const LooseBallContactAnimInfo* GetOneTimerLeadGroundContactAnims()
 /**
  * Offset/Address/Size: 0x6C1C | 0x8001FF58 | size: 0x130
  */
-void cFielder::GetOneTimerBallContactAnimInfo(unsigned short, const nlVector3&, const nlVector3&, bool, bool)
+LooseBallContactAnimInfo* cFielder::GetOneTimerBallContactAnimInfo(unsigned short aFutureFacingDirection, const nlVector3& v3FuturePosition, const nlVector3& v3OneTimerTarget, bool bLeadPass, bool bVolleyPass)
 {
+    const LooseBallContactAnimInfo* pBallContactAnimInfo;
+    int nNumContactAnims;
+
+    if (bLeadPass)
+    {
+        if (bVolleyPass)
+        {
+            nNumContactAnims = 4;
+            pBallContactAnimInfo = gOneTimerLeadVolleyContactAnims;
+        }
+        else
+        {
+            nNumContactAnims = 4;
+            pBallContactAnimInfo = gOneTimerLeadGroundContactAnims;
+        }
+    }
+    else
+    {
+        if (bVolleyPass)
+        {
+            nNumContactAnims = 4;
+            pBallContactAnimInfo = gOneTimerIdleVolleyContactAnims;
+        }
+        else
+        {
+            nNumContactAnims = 4;
+            pBallContactAnimInfo = gOneTimerIdleGroundContactAnims;
+        }
+    }
+
+    u16 aNetAngle = (u16)(s32)(10430.378f * nlATan2f(v3OneTimerTarget.f.y - v3FuturePosition.f.y, v3OneTimerTarget.f.x - v3FuturePosition.f.x)) - aFutureFacingDirection;
+
+    LooseBallContactAnimInfo* pBestBallContactAnimInfo = NULL;
+
+    for (int i = 0; i < nNumContactAnims; i++)
+    {
+        if (pBallContactAnimInfo[i].aIncomingAngleMin < pBallContactAnimInfo[i].aIncomingAngleMax)
+        {
+            if ((aNetAngle >= pBallContactAnimInfo[i].aIncomingAngleMin) && (aNetAngle <= pBallContactAnimInfo[i].aIncomingAngleMax))
+            {
+                pBestBallContactAnimInfo = (LooseBallContactAnimInfo*)&pBallContactAnimInfo[i];
+            }
+        }
+        else if ((aNetAngle >= pBallContactAnimInfo[i].aIncomingAngleMin) || (aNetAngle <= pBallContactAnimInfo[i].aIncomingAngleMax))
+        {
+            pBestBallContactAnimInfo = (LooseBallContactAnimInfo*)&pBallContactAnimInfo[i];
+        }
+    }
+    return pBestBallContactAnimInfo;
 }
 
 /**
@@ -1975,9 +2025,42 @@ void cFielder::SetRunningAnimState(float)
 
 /**
  * Offset/Address/Size: 0x4A30 | 0x8001DD6C | size: 0x140
+ * TODO: 99.6% match - r28/r29 regswap in AllocateBlender inline
  */
 void cFielder::SetRunningTurboAnimState()
 {
+    int animIDsArray[3] = {
+        0x0000001B,
+        0x0000001A,
+        0x0000001C,
+    };
+
+    int i;
+    cPN_SAnimController* pChild1;
+    cPN_SingleAxisBlender* pSingleAxisBlender;
+
+    pSingleAxisBlender = CreateSingleAxisBlender(animIDsArray, 3, 1, RunningSABcallback, 0.0f, nullptr);
+
+    pChild1 = (cPN_SAnimController*)pSingleAxisBlender->GetChild(1);
+    pChild1->m_fSynchronizedWeight = 0.0f;
+
+    for (i = 0; i < 3; ++i)
+    {
+        if (i != 1)
+        {
+            cPN_SAnimController* pChild = (cPN_SAnimController*)pSingleAxisBlender->GetChild(i);
+            pChild->m_bIsSynchronized = true;
+            pChild1->m_pSynchronizedController = pChild;
+            pChild1 = pChild;
+        }
+    }
+
+    *m_pAILayer = new (AllocateBlender()) cPN_Blender(*m_pAILayer, pSingleAxisBlender, 0.0f);
+
+    FielderTweaks* pTweaks = ((FielderTweaks*)m_pTweaks);
+    InitMovementRunning(pTweaks->fRunningTurboDirectionSeekSpeed, pTweaks->fRunningTurboDirectionSeekFalloff, pTweaks->fRunningTurboAccel, pTweaks->fRunningTurboDecel);
+
+    mActionRunningVars.bFirstCycleOfTurbo = true;
 }
 
 /**
@@ -2468,8 +2551,96 @@ void cFielder::UseTeamPowerup(cFielder* pTarget)
 /**
  * Offset/Address/Size: 0x1AB4 | 0x8001ADF0 | size: 0x130
  */
-void cFielder::UpdateActionState(float)
+void cFielder::UpdateActionState(float dt)
 {
+    switch (m_eActionState)
+    {
+    case ACTION_DEKE:
+        ActionDeke(dt);
+        break;
+    case ACTION_ELECTROCUTION:
+        ActionElectrocution(dt);
+        break;
+    case ACTION_HIT:
+        ActionHit(dt);
+        break;
+    case ACTION_HIT_REACT:
+        ActionHitReact(dt);
+        break;
+    case ACTION_LATE_ONETIMER_FROM_VOLLEY:
+        ActionLateOneTimerFromVolley(dt);
+        break;
+    case ACTION_IDLE_TURN:
+        ActionIdleTurn(dt);
+        break;
+    case ACTION_LOOSE_BALL_PASS:
+        ActionLooseBallPass(dt);
+        break;
+    case ACTION_LOOSE_BALL_SHOT:
+        ActionLooseBallShot(dt);
+        break;
+    case ACTION_ONETIMER:
+        ActionOneTimer(dt);
+        break;
+    case ACTION_ONETOUCH_PASS_FROM_VOLLEY:
+        ActionOneTouchPassFromVolley(dt);
+        break;
+    case ACTION_PASS:
+        ActionPass(dt);
+        break;
+    case ACTION_POST_WHISTLE:
+        ActionPostWhistle(dt);
+        break;
+    case ACTION_RECEIVE_PASS:
+        ActionReceivePass(dt);
+        break;
+    case ACTION_RUNNING:
+        ActionRunning(dt);
+        break;
+    case ACTION_RUNNING_WB:
+        ActionRunningWB(dt);
+        break;
+    case ACTION_RUNNING_WB_TURBO:
+        ActionRunningWBTurbo(dt);
+        break;
+    case ACTION_RUNNING_WB_TURBO_TURN:
+        ActionRunningWBTurboTurn(dt);
+        break;
+    case ACTION_SHOT:
+        ActionShot(dt);
+        break;
+    case ACTION_SHOOT_TO_SCORE:
+        ActionShootToScore(dt);
+        break;
+    case ACTION_SLIDE_ATTACK:
+        ActionSlideAttack(dt);
+        break;
+    case ACTION_SLIDE_ATTACK_REACT:
+        ActionSlideAttackReact(dt);
+        break;
+    case ACTION_BOMB_REACT:
+        ActionBombReact(dt);
+        break;
+    case ACTION_BANANA_REACT:
+        ActionBananaReact(dt);
+        break;
+    case ACTION_SHELL_REACT:
+        ActionShellReact(dt);
+        break;
+    case ACTION_STS_HIT_REACT:
+        ActionSTSHitReact(dt);
+        break;
+    case ACTION_SQUISH_REACT:
+        ActionSquishReact(dt);
+        break;
+    case ACTION_SLIDE_FAIL_REACT:
+        ActionSlideAttackFailReact(dt);
+        break;
+    case ACTION_WAIT:
+        ActionWait(dt);
+        break;
+    }
+    DoHandleActiveShotMeter();
 }
 
 /**

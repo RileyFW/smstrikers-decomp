@@ -19,7 +19,7 @@ void glplatGetMatrix(unsigned long, nlMatrix4&);
 void glplatFrameAllocNextFrame();
 u32 glplatFrameAlloc(unsigned long, eGLMemory);
 void glplatResourceRelease(unsigned long long);
-void glplatResourceMark();
+unsigned long long glplatResourceMark();
 unsigned long glplatResourceAlloc(unsigned long, eGLMemory);
 bool glxInitMemory();
 void glx_FreeMemory1(const char*);

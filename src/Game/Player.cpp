@@ -86,12 +86,41 @@ nlVector3 cPlayer::GetAIDefNetLocation(const nlVector3* v3ReferencePos)
 
 /**
  * Offset/Address/Size: 0x114 | 0x80057664 | size: 0xE0
+ * TODO: 95.9% match - MWCC ternary register allocation: fmr f0,f3 instead of fmr f3,f0.
+ * Compiler always uses f0 as ternary result dest when yCoord is in f3.
+ * Tried 20+ variations: swapped args (97.3% but fcmpo order wrong), if/else (adds mfcr/rlwinm),
+ * static inline helpers, const qualifiers, different variable ordering - all produce same fmr direction.
+ * Same issue affects GetAIDefNetLocation. Likely inherent MWCC graph-coloring register allocator decision.
  */
 nlVector3 cPlayer::GetAIOffNetLocation(const nlVector3* v3ReferencePos)
 {
-    nlVector3 result = m_pTeam->m_pNet->m_baseLocation;
-    // todo
-    return result;
+    nlVector3 v3NetLocation = m_pTeam->GetOtherNet()->m_baseLocation;
+
+    float yCoord;
+    if (v3ReferencePos != NULL)
+    {
+        yCoord = v3ReferencePos->f.y;
+    }
+    else
+    {
+        yCoord = m_v3Position.f.y;
+    }
+
+    float fNetWidth = 0.5f * cNet::m_fNetWidth;
+
+    if (yCoord < 0.0f)
+    {
+        float negHalf = -1.0f * fNetWidth;
+        yCoord = max_float(yCoord, negHalf);
+        v3NetLocation.f.y = yCoord;
+    }
+    else
+    {
+        yCoord = min_float(yCoord, fNetWidth);
+        v3NetLocation.f.y = yCoord;
+    }
+
+    return v3NetLocation;
 }
 
 /**
@@ -384,9 +413,25 @@ float cPlayer::DoFlashLight(const nlVector3&, unsigned short, float, float, floa
 /**
  * Offset/Address/Size: 0x256C | 0x80059ABC | size: 0x134
  */
-float cPlayer::DoFlashLight(const nlVector3&, const nlVector3&, unsigned short, float, float, float)
+float cPlayer::DoFlashLight(const nlVector3& Position1, const nlVector3& Position2, unsigned short aDirection, float fAngleWeighting, float fIgnoreObjectCloserThanThis, float fIgnoreObjectFartherThanThis)
 {
-    return 0.0f;
+    float dx;
+    float dy = Position2.f.y - Position1.f.y;
+    dx = Position2.f.x - Position1.f.x;
+    float fDistBetween;
+    float dist = nlSqrt(dx * dx + dy * dy, true);
+    fDistBetween = dist;
+    if (dist < fIgnoreObjectCloserThanThis || dist > fIgnoreObjectFartherThanThis)
+    {
+        fDistBetween = 0.0f;
+    }
+
+    u16 targetAngle = (u16)(s32)(10430.378f * nlATan2f(dy, dx));
+    float fDistWeight = 1.0f - fAngleWeighting;
+    s16 angleDiff = aDirection - targetAngle;
+    u16 absAngle = (angleDiff < 0) ? -angleDiff : angleDiff;
+
+    return fDistBetween * fDistWeight + fAngleWeighting * absAngle;
 }
 
 /**

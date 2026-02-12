@@ -1,10 +1,30 @@
 #include "NL/nlTextEscape.h"
 
+extern "C" unsigned long wcstoul(const unsigned short* str, unsigned short** end, int base);
+
 /**
  * Offset/Address/Size: 0x0 | 0x8021251C | size: 0xB0
  */
-void nlEscapeSequence::GetExtendedColour()
+nlColour nlEscapeSequence::GetExtendedColour()
 {
+    unsigned short str[3] = { 0, 0, 0 };
+    nlColour colour;
+
+    if ((int)m_Extended[0] == 0x70)
+    {
+        colour.c[3] = 0;
+        return colour;
+    }
+
+    int channel = 0;
+    for (channel = 0; channel < 3; channel++)
+    {
+        str[0] = m_Extended[channel * 2];
+        str[1] = m_Extended[channel * 2 + 1];
+        colour.c[channel] = (u8)wcstoul(str, 0, 16);
+    }
+    colour.c[3] = 0xFF;
+    return colour;
 }
 
 /**

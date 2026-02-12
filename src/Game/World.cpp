@@ -201,14 +201,21 @@ void World::CreateHelperObjFromChunk(nlChunk* chunk)
     }
 }
 
+static inline void* getUserData(void* p)
+{
+    return glUserGetData(p);
+}
+
 /**
  * Offset/Address/Size: 0x1B7C | 0x80196840 | size: 0x12C
+ * TODO: 98.67% match - r29/r31 register swap (pSpec/pEntries)
  */
 void* World::GetCustomSpecularData(glModelPacket* pPacket, bool bPerm)
 {
-    void* pSTSIntensity = m_pSTSIntensity;
+    u32 allocSize;
+    GLSpecularUserData* pEntries;
     int numLights;
-    GLSpecularUserData* pSpec;
+    void* pSTSIntensity = m_pSTSIntensity;
 
     u8 glossLevel = (u8)glGetTextureState(pPacket->state.texturestate, GLTS_GlossLevel);
 
@@ -218,17 +225,19 @@ void* World::GetCustomSpecularData(glModelPacket* pPacket, bool bPerm)
     f32 fExponent = g_fExponentScale * fInv + g_fExponentBase;
 
     numLights = *(int*)glUserGetData(pSTSIntensity);
-    u32 allocSize = numLights * sizeof(GLSpecularUserData) + 4;
+    allocSize = numLights * sizeof(GLSpecularUserData) + 4;
     void* pNewData = glUserAlloc(GLUD_Specular, allocSize, bPerm);
 
-    pSpec = (GLSpecularUserData*)glUserGetData(pNewData);
+    void* pSpec = getUserData(pNewData);
+    pEntries = (GLSpecularUserData*)((int*)pSpec + 1);
     pSTSIntensity = glUserGetData(pSTSIntensity);
 
     memcpy(pSpec, pSTSIntensity, allocSize);
 
     for (int i = numLights; i > 0; i--)
     {
-        pSpec[i].exponent = fExponent;
+        pEntries->exponent = fExponent;
+        pEntries++;
     }
 
     return pNewData;

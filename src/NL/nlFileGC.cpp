@@ -16,11 +16,36 @@ u8 asyncToVirMemBuffer[0x4000];
 
 /**
  * Offset/Address/Size: 0x0 | 0x801CED54 | size: 0xEC
+ * TODO: 98.6% in scratch - register swap r25/r26/r27 for counter1/counter2/chunkSize.
+ * Scratch limitation: nlReadAsync gets inlined from context (defined later in TU).
+ * In real build nlReadAsync should NOT inline, likely resolving register allocation.
  */
-void nlReadAsyncToVirtualMemory(nlFile* file, void* buffer, int size, ReadAsyncCallback callback, unsigned long alignment,
-    unsigned long length, void* userData)
+void nlReadAsyncToVirtualMemory(nlFile* file, void* buffer, int size, ReadAsyncCallback callback, unsigned long param,
+    unsigned long chunkSize, void* userData)
 {
-    FORCE_DONT_INLINE;
+    int i;
+    for (i = 0; i < 4; i++) {
+        if (nlFileGC::asyncToVirMemBufferLoad[i].numChunksLeft == 0) {
+            unsigned int numChunks = (unsigned int)size / (unsigned int)chunkSize;
+            unsigned long counter2 = i;
+            unsigned long counter1 = i;
+            unsigned int sz = chunkSize;
+            nlFileGC::asyncToVirMemBufferLoad[i].numChunksLeft = numChunks + 1;
+            nlFileGC::asyncToVirMemBufferLoad[i].param = param;
+            nlFileGC::asyncToVirMemBufferLoad[i].callback = callback;
+            nlFileGC::asyncToVirMemBufferLoad[i].size = size;
+            int remainder = size - numChunks * chunkSize;
+            nlFileGC::asyncToVirMemBufferLoad[i].target = (char*)buffer;
+
+            int j;
+            for (j = 0; j < (int)numChunks; j++) {
+                nlReadAsync(file, userData, sz, nlFileGC::AsyncToVirMemBufferCallback, counter1);
+            }
+
+            nlReadAsync(file, userData, remainder, nlFileGC::AsyncToVirMemBufferCallback, counter2);
+            return;
+        }
+    }
 }
 
 /**
@@ -130,6 +155,7 @@ void nlSeek(nlFile* file, unsigned int offset, unsigned long origin)
  */
 void nlReadAsync(nlFile* file, void* buffer, unsigned int size, ReadAsyncCallback callback, unsigned long arg4)
 {
+    FORCE_DONT_INLINE;
     GameCubeReadAsync((GCFile*)file, callback, buffer, (u32)size, arg4);
 }
 
@@ -160,6 +186,7 @@ void GameCubeReadBlocking(GCFile*, void*, unsigned long)
  */
 static void GameCubeReadAsync(GCFile*, ReadAsyncCallback, void*, unsigned long, unsigned long)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

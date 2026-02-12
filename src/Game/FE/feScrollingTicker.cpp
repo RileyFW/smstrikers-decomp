@@ -9,9 +9,44 @@ void ScrollingTickerScene::IsMessengerOpen() const
 
 /**
  * Offset/Address/Size: 0x8 | 0x8009FC60 | size: 0x15C
+ * TODO: 99.66% match - f29/f31 register swap for sx/sz ballClosedScale variables
  */
 void ScrollingTickerScene::CloseMessengerNow()
 {
+    m_pFETweenManager.clearTweensOnObj(this);
+
+    f32 closedY = m_leftBallClosedPos.f.y;
+    f32 open = m_leftBallOpenPos.f.x;
+    f32 x;
+    f32 val = 0.0f;
+
+    x = val * (open - m_leftBallClosedPos.f.x) + m_leftBallClosedPos.f.x;
+    m_leftBall->SetAssetPosition(x, closedY, val);
+
+    open = m_rightBallOpenPos.f.x;
+    x = open - m_rightBallClosedPos.f.x;
+    x = val * x + m_rightBallClosedPos.f.x;
+    m_rightBall->SetAssetPosition(x, closedY, val);
+
+    open = m_grayOpenScale.f.x;
+    x = open - m_grayClosedScale.f.x;
+    x = val * x + m_grayClosedScale.f.x;
+    m_backRectangle->SetAssetScale(x, m_grayOpenScale.f.y, 1.0f);
+
+    f32 sx = m_ballClosedScale.f.x * val;
+    f32 sy = m_ballClosedScale.f.y * val;
+    f32 sz = m_ballClosedScale.f.z * val;
+    m_leftBall->SetAssetScale(sx, sy, sz);
+    m_rightBall->SetAssetScale(sx, sy, sz);
+
+    m_backRectangle->SetAssetScale(
+        m_grayClosedScale.f.x * val,
+        m_grayClosedScale.f.y * val,
+        m_grayClosedScale.f.z * val);
+
+    m_textBox->m_bVisible = false;
+    m_active = 0;
+    SetVisible(false);
 }
 
 /**
@@ -25,12 +60,10 @@ void ScrollingTickerScene::CloseMessenger()
     f32 startScale = 1.0f;
 
     FETweener* scaleTween = m_pFETweenManager.createTween(
-        &endScale, &startScale, 0.3f, 0.1f, 1,
-        TweenFunctions::easeinelastic, this, setScaleTweenCallback);
+        &endScale, &startScale, 0.3f, 0.1f, 1, TweenFunctions::easeinelastic, this, setScaleTweenCallback);
 
     FETweener* sizeTween = m_pFETweenManager.createTween(
-        &endScale, &startScale, 0.15f, 0.0f, 1,
-        TweenFunctions::linear, this, setSizeTweenCallback);
+        &endScale, &startScale, 0.15f, 0.0f, 1, TweenFunctions::linear, this, setSizeTweenCallback);
 
     sizeTween->setNextTween(scaleTween);
     scaleTween->setDoneCallFunc(tickerClosed, this);

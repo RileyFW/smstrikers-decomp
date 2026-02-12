@@ -42,7 +42,7 @@ public:
     void UnselectCameraAnimation();
     void SelectCameraAnimation(const char*);
     bool CameraAnimationExists(const char*) const;
-    void FreeCameraAnimation(const char*);
+    static void FreeCameraAnimation(const char*);
     void Update(float);
     void ManualUpdate(float);
 

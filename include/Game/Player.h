@@ -112,8 +112,8 @@ public:
     void GetClosestOpponentFielder(nlVector3*);
     virtual void CollideWithCharacterCallback(CollisionPlayerPlayerData*);
     virtual void CollideWithBallCallback(cBall*);
-    float DoFlashLight(const nlVector3&, unsigned short, float, float, float);
-    float DoFlashLight(const nlVector3&, const nlVector3&, unsigned short, float, float, float);
+    static float DoFlashLight(const nlVector3&, unsigned short, float, float, float);
+    static float DoFlashLight(const nlVector3&, const nlVector3&, unsigned short, float, float, float);
     virtual void SetAnimID(int);
     void GetAnimatedBallOrientation(nlQuaternion&);
     virtual void Update(float);

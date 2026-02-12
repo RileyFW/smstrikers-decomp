@@ -84,8 +84,7 @@ public:
     /* 0x020 */ struct glModel* m_pModels;
     /* 0x024! */ unsigned long m_uNumModels;
     /* 0x028! */ DLListContainerBase<WorldAnimController*, NewAdapter<DLListEntry<WorldAnimController*> > > m_animControllerList;
-    // todo: class field layout not yet verified
-    /* 0x030! */ void* m_pLightData;
+    /* 0x030 */ void* m_pLightData;
     // /* 0x034 */ void* m_pPlayerNISLightData;
     /* 0x038 */ void* m_pIntensityPerm;
     /* 0x03C */ void* m_pIntensityData;

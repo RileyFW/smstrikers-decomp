@@ -35,7 +35,7 @@ enum MusyXOutputType
 };
 
 bool AddAuxEffect(MusyXEffectType type, void*, bool, unsigned char);
-// void PrintSoundStackInfo();
+void PrintSoundStackInfo();
 // void PrintAvailableARAMMemory();
 void musyXFree(void*);
 void* musyXAlloc(u32);
@@ -215,7 +215,7 @@ bool SetSFXReverbVol(unsigned long, float);
 void SetSFXVolume(unsigned long, float);
 bool StopSFX(unsigned long);
 void PlaySFX(const SFXStartInfo&);
-void UnloadAllSoundGroupsOnStack(AudioFileData&, unsigned long);
+unsigned char UnloadAllSoundGroupsOnStack(AudioFileData&, unsigned long);
 void UnloadAllSoundGroups(AudioFileData&);
 void UnloadSoundGroup(AudioFileData&, unsigned long);
 void LoadSoundGroup(AudioFileData&, unsigned long, unsigned long, bool);
@@ -225,8 +225,8 @@ void Shutdown();
 void Initialize(bool);
 void PurgeSampleFileBuffer();
 void IsEntireSampleFileInMem();
-void ReadEntireSampleFileIntoMemSync(const char*);
-void ReadEntireSampleFileIntoMem(const char*);
+unsigned char ReadEntireSampleFileIntoMemSync(const char*);
+unsigned char ReadEntireSampleFileIntoMem(const char*);
 void UpdateAuxEffectA(MusyXEffectType, void*);
 bool AddAuxEffectA(MusyXEffectType, void*, unsigned char);
 void ShutdownAuxEffectA();

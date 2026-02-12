@@ -1,8 +1,13 @@
 #include "Game/FE/FEResourceManager.h"
+#include "Game/FE/feTextureResource.h"
 #include "NL/nlMemory.h"
 #include "NL/nlString.h"
+#include "NL/gl/glTexture.h"
+#include "NL/nlAVLTreeSlotPool.h"
 
 static BundleFile* s_pOnDemandBundle;
+static unsigned char* s_pResourceLoadBuffer;
+static nlAVLTreeSlotPool<unsigned long, FEResourceHandle*, DefaultKeyCompare<unsigned long> > s_loadedResourceList;
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8020D5A8 | size: 0x60
@@ -242,8 +247,37 @@ void FEResourceManager::UnloadPermanentResourceBundle()
 /**
  * Offset/Address/Size: 0x29C | 0x8020BDDC | size: 0xA8
  */
-void FEResourceManager::TextureResourceLoadComplete(void*, unsigned long, unsigned long)
+void FEResourceManager::TextureResourceLoadComplete(void* pData, unsigned long uParam, unsigned long)
 {
+    FEResourceHandle* pHandle = (FEResourceHandle*)uParam;
+
+    glTextureAdd(pHandle->m_hashID, s_pResourceLoadBuffer, (unsigned long)pData);
+
+    delete[] s_pResourceLoadBuffer;
+    s_pResourceLoadBuffer = NULL;
+
+    ((FETextureResource*)pHandle)->m_glTextureHandle = pHandle->m_hashID;
+
+    u32 key;
+    FEResourceHandle* value;
+    AVLTreeNode* existingNode;
+
+    value = pHandle;
+    key = pHandle->m_hashID;
+
+    s_loadedResourceList.AddAVLNode(
+        (AVLTreeNode**)&s_loadedResourceList.m_Root,
+        &key,
+        &value,
+        &existingNode,
+        s_loadedResourceList.m_NumElements
+    );
+
+    if (existingNode == NULL) {
+        s_loadedResourceList.m_NumElements++;
+    }
+
+    pHandle->m_bValid = true;
 }
 
 /**

@@ -1,4 +1,5 @@
 #include "Game/FE/tlTextInstance.h"
+#include "NL/nlFont.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x802101D8 | size: 0x1C

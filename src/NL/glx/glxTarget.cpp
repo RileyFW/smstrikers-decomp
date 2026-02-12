@@ -28,8 +28,46 @@ bool glx_SharedLock = false;
 /**
  * Offset/Address/Size: 0x0 | 0x801C26DC | size: 0x104
  */
-void glPlatGrabFrameBufferToTexture(unsigned long, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)
+void glPlatGrabFrameBufferToTexture(unsigned long texHandle, unsigned int width, unsigned int height, unsigned int srcX, unsigned int srcY, unsigned int srcW, unsigned int srcH)
 {
+    static GXTexFmt gx_format[] = {
+        GX_TF_RGB565,
+        GX_TF_RGB5A3,
+        GX_TF_CMPR,
+        GX_TF_RGBA8,
+        GX_TF_I8,
+        GX_TF_I4,
+        GX_TF_A8,
+        GX_TF_IA8,
+        (GXTexFmt)GX_TF_C8,
+    };
+
+    bool colorUpdate = gxSetColourUpdate(true);
+    bool alphaUpdate = gxSetAlphaUpdate(true);
+    gxSaveZMode();
+    gxSetZMode(false, GX_LEQUAL, true);
+
+    PlatTexture* tex = glx_GetTex(texHandle, false, true);
+
+    GXSetTexCopySrc(srcX, srcY, srcW, srcH);
+
+    bool mipmap;
+    if (srcW == width * 2 && srcH == height * 2)
+    {
+        mipmap = true;
+    }
+    else
+    {
+        mipmap = false;
+    }
+
+    GXSetTexCopyDst(width, height, gx_format[tex->m_Format], mipmap);
+    GXCopyTex(tex->m_SwizzledData, true);
+    GXPixModeSync();
+
+    gxSetColourUpdate(colorUpdate);
+    gxSetAlphaUpdate(alphaUpdate);
+    gxRestoreZMode();
 }
 
 /**

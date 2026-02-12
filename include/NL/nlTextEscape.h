@@ -1,13 +1,27 @@
 #ifndef _NLTEXTESCAPE_H_
 #define _NLTEXTESCAPE_H_
 
+#include "NL/nlColour.h"
+
+enum ESCAPE_TYPE {
+    ESC_UNKNOWN = 0,
+    ESC_OPENBRACE = 1,
+    ESC_NON_BREAKING_SPACE = 2,
+    ESC_COLOUR = 3,
+    ESC_PARAGRAPH = 4,
+    ESC_COUNT = 5,
+};
 
 class nlEscapeSequence
 {
 public:
-    void GetExtendedColour();
+    nlColour GetExtendedColour();
 
     nlEscapeSequence(const unsigned short*);
+
+    /* 0x00 */ ESCAPE_TYPE m_Type;
+    /* 0x04 */ unsigned short m_Extended[16];
+    /* 0x24 */ const unsigned short* m_pEnd;
 };
 
 

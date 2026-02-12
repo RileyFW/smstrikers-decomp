@@ -4,7 +4,9 @@
 #include "Game/BaseSceneHandler.h"
 #include "Game/FE/FEAudio.h"
 #include "Game/FE/feButtonComponent.h"
+#include "Game/FE/feFinder.h"
 #include "Game/FE/feInput.h"
+#include "Game/FE/fePresentation.h"
 #include "Game/GameInfo.h"
 #include "Game/GameSceneManager.h"
 #include "Game/OverlayManager.h"
@@ -190,7 +192,44 @@ void MoviePlayerScene::OverrideMovieDimensions()
  */
 void LessonMoviePlayerScene::SceneCreated()
 {
+    typedef TLComponentInstance* (*FindComponentByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindComponentByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union {
+        FindComponentByValue byValue;
+        FindComponentByRef byRef;
+    } findComponent;
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8;
+    volatile InlineHasher h7, h6, h5, h4, h3, h2, h1, h0;
+
+    findComponent.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+
     OverrideMovieDimensions();
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+
+    u32 hash = nlStringLowerHash("buttons");
+    h8.m_Hash = hash;
+    h9.m_Hash = hash;
+
+    hash = nlStringLowerHash("Layer");
+    hB.m_Hash = hash;
+    hA.m_Hash = hash;
+
+    mButtonComponent.mButtonInstance = findComponent.byRef(
+        m_pFEPresentation->m_currentSlide,
+        (InlineHasher&)hB, (InlineHasher&)h9, (InlineHasher&)h7, (InlineHasher&)h5, (InlineHasher&)h3, (InlineHasher&)h1);
+
+    mButtonComponent.SetState(ButtonComponent::BS_B_ONLY);
 }
 
 /**

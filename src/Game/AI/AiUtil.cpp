@@ -75,9 +75,67 @@ void MakePerpendicularPlane(const nlVector3& v3Position, const nlVector3& v3Norm
 
 /**
  * Offset/Address/Size: 0x1204 | 0x80006CB0 | size: 0x150
+ * TODO: 96.2% match - register renames for x-component loads (f3/f7/f6 vs f6/f3/f2 at 0x44-0x50)
+ * which cascade into the if-block and post-nlRecipSqrt section.
+ * dy/dx reuse pattern partially fixes first block; remaining diffs are MWCC register allocation.
  */
-bool IsPointInCone(const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&)
+bool IsPointInCone(const nlVector3& v3Point, const nlVector3& v3Pivot, const nlVector3& v3Plane1, const nlVector3& v3Plane2)
 {
+    f32 dy = v3Plane1.f.y;
+    f32 dyLA = dy - v3Pivot.f.y;
+    dy -= v3Point.f.y;
+    f32 dx = v3Plane1.f.x;
+    f32 dxLA = dx - v3Pivot.f.x;
+    dx -= v3Point.f.x;
+
+    f32 distSqA = dxLA * dxLA + dyLA * dyLA;
+    f32 distSqP = dx * dx + dy * dy;
+
+    if (distSqP < distSqA)
+    {
+        f32 dirX = v3Pivot.f.x - v3Point.f.x;
+        f32 zeroVal = 0.0f;
+        f32 dirY = v3Pivot.f.y - v3Point.f.y;
+
+        f32 lenSq = dirX * dirX;
+        f32 perpY = -dirY;
+        lenSq += perpY * perpY;
+        f32 invLen = nlRecipSqrt(zeroVal + lenSq, true);
+
+        f32 normX = invLen * dirX;
+        f32 normY = invLen * perpY;
+
+        f32 dotApexY = v3Pivot.f.y * normX;
+        f32 normZ = invLen * zeroVal;
+        f32 dotLeftY = v3Plane1.f.y * normX;
+        f32 dotRightY = v3Plane2.f.y * normX;
+
+        f32 dotApex = v3Pivot.f.x * normY + dotApexY;
+        dotApex += v3Pivot.f.z * normZ;
+
+        f32 dotLeft = v3Plane1.f.x * normY + dotLeftY;
+        f32 dotRight = v3Plane2.f.x * normY + dotRightY;
+
+        f32 bias = zeroVal + dotApex;
+
+        dotLeft += v3Plane1.f.z * normZ;
+        dotRight += v3Plane2.f.z * normZ;
+
+        nlVector3 normalStore;
+        normalStore.f.x = normY;
+        normalStore.f.y = normX;
+        normalStore.f.z = normZ;
+        *(float*)((u8*)&normalStore + 0xC) = bias;
+
+        f32 sideLeft = dotLeft - bias;
+        f32 sideRight = dotRight - bias;
+
+        if (sideLeft * sideRight < zeroVal)
+        {
+            return true;
+        }
+    }
+
     return false;
 }
 

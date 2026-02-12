@@ -1,15 +1,20 @@
 #include "NL/plat/plataudio.h"
 #include "NL/nlMemory.h"
 #include "NL/nlFile.h"
+#include "NL/nlFileGC.h"
 #include "NL/gl/glMemory.h"
 #include "Game/Sys/debug.h"
+#include "Game/Audio/AudioLoader.h"
 #include "types.h"
 
 extern void nlPrintf(const char*, ...);
 extern u32 sndStackGetAvailableSampleMemory(unsigned long id);
+extern "C" u32 sndStackSetCurrent(u32 id);
 
 static void* gpEntireSampleFileBufferFirstHalf;
 static void* gpEntireSampleFileBufferSecondHalf;
+static unsigned long gEntireSampleFileFirstHalfAllocSize;
+static unsigned long gEntireSampleFileSecondHalfAllocSize;
 static void* gpEntireSampleFileMRAMXferBuffer;
 static u64 gEntireSampleMarker;
 static u8 gAllowSyncReadsPastLoadedData;
@@ -338,9 +343,47 @@ void PlaySFX(const SFXStartInfo&)
 
 /**
  * Offset/Address/Size: 0xF5C | 0x801C5758 | size: 0x120
+ * TODO: 99.38% match - r6/r7 register swap for loop counter vs grp pointer
  */
-void UnloadAllSoundGroupsOnStack(AudioFileData&, unsigned long)
+unsigned char UnloadAllSoundGroupsOnStack(AudioFileData& fileData, unsigned long stackEnum)
 {
+    int i;
+
+    if (!(unsigned char)sndStackSetCurrent(stack_list[stackEnum].id))
+    {
+        tDebugPrintManager::Print(DC_SOUND, "sndStackSetCurrent failed for stack %d\n", stack_list[stackEnum].id);
+        return 0;
+    }
+
+    for (i = 0; (unsigned long)i < stack_list[stackEnum].unkC; i++)
+    {
+        if (!sndPopGroup())
+        {
+            tDebugPrintManager::Print(DC_SOUND, "sndPopGroup failed on stack %d\n", stackEnum);
+            return 0;
+        }
+        PrintSoundStackInfo();
+    }
+
+    stack_list[stackEnum].unkC = 0;
+
+    {
+        SndGroupData* grp;
+        i = 0;
+        while (i < fileData.numSoundGroups)
+        {
+            grp = &fileData.soundGroups[i];
+            if (stackEnum == (unsigned long)grp->stackEnum)
+            {
+                grp->stackEnum = -1;
+                grp->uLoadOrder = -1;
+                grp->loadType = (LoadType)0;
+            }
+            i++;
+        }
+    }
+
+    return 1;
 }
 
 /**
@@ -437,16 +480,87 @@ void IsEntireSampleFileInMem()
 
 /**
  * Offset/Address/Size: 0x1A20 | 0x801C621C | size: 0x124
+ * TODO: 99.5% match - r0/r3 register swap at offsets 0x58-0x70 (first-half alloc size min calculation). MWCC allocates freeMem-0x400 to r0 instead of keeping it in r3. Tried 20+ permutations including variable reordering, type changes, condition flips, ternaries - all produce same 8 register-only diffs.
  */
-void ReadEntireSampleFileIntoMemSync(const char*)
+unsigned char ReadEntireSampleFileIntoMemSync(const char* sampleFile)
 {
+    ARAMTransferHelperLoadEntireFile::s_pFile = nlOpen(sampleFile);
+    if (ARAMTransferHelperLoadEntireFile::s_pFile == NULL)
+    {
+        tDebugPrintManager::Print(DC_SOUND, "ReadEntireSampleFileIntoMem: Could not open file.\n");
+        return 0;
+    }
+
+    gAllowSyncReadsPastLoadedData = 1;
+    unsigned int allocSize;
+    unsigned int fileSize = nlFileSize(ARAMTransferHelperLoadEntireFile::s_pFile, &allocSize);
+    if (fileSize != 0)
+    {
+        gEntireSampleFileFirstHalfAllocSize = glx_GetFreeMemory() - 0x400;
+        unsigned long firstHalfSize = fileSize;
+        if (gEntireSampleFileFirstHalfAllocSize <= fileSize)
+        {
+            firstHalfSize = gEntireSampleFileFirstHalfAllocSize;
+        }
+        gEntireSampleFileFirstHalfAllocSize = firstHalfSize;
+
+        gEntireSampleMarker = glResourceMark();
+        gpEntireSampleFileBufferFirstHalf = glResourceAlloc(gEntireSampleFileFirstHalfAllocSize, GLM_TextureData);
+        *(u32*)gpEntireSampleFileBufferFirstHalf = 0;
+        nlRead(ARAMTransferHelperLoadEntireFile::s_pFile, gpEntireSampleFileBufferFirstHalf, gEntireSampleFileFirstHalfAllocSize);
+
+        fileSize -= gEntireSampleFileFirstHalfAllocSize;
+        unsigned int virtualFree = nlVirtualLargestBlock() - 0x400;
+        if (virtualFree <= fileSize)
+        {
+            fileSize = virtualFree;
+        }
+        gEntireSampleFileSecondHalfAllocSize = fileSize;
+        if (fileSize != 0)
+        {
+            gpEntireSampleFileBufferSecondHalf = nlVirtualAlloc(fileSize, true);
+            *(u32*)gpEntireSampleFileBufferSecondHalf = 0;
+            nlReadToVirtualMemory(ARAMTransferHelperLoadEntireFile::s_pFile, gpEntireSampleFileBufferSecondHalf, gEntireSampleFileSecondHalfAllocSize, 0x80000);
+        }
+    }
+
+    nlClose(ARAMTransferHelperLoadEntireFile::s_pFile);
+    ARAMTransferHelperLoadEntireFile::s_pFile = NULL;
+    return 1;
 }
 
 /**
  * Offset/Address/Size: 0x1B44 | 0x801C6340 | size: 0x100
  */
-void ReadEntireSampleFileIntoMem(const char*)
+unsigned char ReadEntireSampleFileIntoMem(const char* sampleFile)
 {
+    unsigned int allocSize;
+
+    ARAMTransferHelperLoadEntireFile::s_pFile = nlOpen(sampleFile);
+    if (ARAMTransferHelperLoadEntireFile::s_pFile == NULL)
+    {
+        tDebugPrintManager::Print(DC_SOUND, "ReadEntireSampleFileIntoMem: Could not open file.\n");
+        return 0;
+    }
+
+    unsigned long SecondHalfSize = nlFileSize(ARAMTransferHelperLoadEntireFile::s_pFile, &allocSize);
+    if (SecondHalfSize != 0)
+    {
+        gEntireSampleFileFirstHalfAllocSize = glx_GetFreeMemory() - 0x400;
+        gEntireSampleMarker = glResourceMark();
+
+        void* buffer = glResourceAlloc(gEntireSampleFileFirstHalfAllocSize, GLM_TextureData);
+        *(u32*)buffer = 0;
+        nlReadAsync(ARAMTransferHelperLoadEntireFile::s_pFile, buffer, gEntireSampleFileFirstHalfAllocSize, ARAMTransferHelperLoadEntireFile::LoadEntireFileCallback, 0);
+
+        gpEntireSampleFileMRAMXferBuffer = nlMalloc(0x80000, 0x20, true);
+        gEntireSampleFileSecondHalfAllocSize = SecondHalfSize - gEntireSampleFileFirstHalfAllocSize;
+        void* vBuffer = nlVirtualAlloc(gEntireSampleFileSecondHalfAllocSize, true);
+        *(u32*)vBuffer = 0;
+        nlReadAsyncToVirtualMemory(ARAMTransferHelperLoadEntireFile::s_pFile, vBuffer, gEntireSampleFileSecondHalfAllocSize, ARAMTransferHelperLoadEntireFile::LoadEntireFileCallback, 1, 0x80000, gpEntireSampleFileMRAMXferBuffer);
+    }
+
+    return 1;
 }
 
 /**
@@ -611,6 +725,7 @@ void ARAMTransferHelper::sndPushGroupCallback(unsigned long, unsigned long)
  */
 void PrintSoundStackInfo()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

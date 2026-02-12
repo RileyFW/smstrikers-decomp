@@ -19,9 +19,9 @@ void Config::LoadFileAsString(const char*)
 /**
  * Offset/Address/Size: 0x1608 | 0x801D426C | size: 0x54
  */
-// void Config::Set(const char*, const BasicString<char, Detail::TempStringAllocator>&)
-// {
-// }
+void Config::Set(const char*, const BasicString<char, Detail::TempStringAllocator>&)
+{
+}
 
 /**
  * Offset/Address/Size: 0x165C | 0x801D42C0 | size: 0x56C
@@ -46,9 +46,64 @@ void Config::Set(const char*, bool)
 
 /**
  * Offset/Address/Size: 0x1E14 | 0x801D4A78 | size: 0x120
+ * TODO: 86.9% match - r28/r29 register swap in hash probe loop (idx/offset/tvp allocation),
  */
-void Config::Set(const char*, int)
+void Config::Set(const char* tag, int value)
 {
+    const char* p = tag;
+    u32 hash = 0x1505;
+    s32 c;
+    while (c = (s8)*p)
+    {
+        p++;
+        c = nlToUpper((char)c);
+        c = (s8)c;
+        u32 shifted = hash << 5;
+        shifted += c;
+        hash += shifted;
+    }
+    u32 idx = hash & 0x3FF;
+
+    TagValuePair* tvp;
+    while (true)
+    {
+        u32 offset = idx * 12;
+        if (mTvpHash[idx].tag == NULL)
+        {
+            tvp = (TagValuePair*)((char*)mTvpHash + offset);
+            break;
+        }
+        if (nlStrICmp(mTvpHash[idx].tag, tag) == 0)
+        {
+            tvp = (TagValuePair*)((char*)mTvpHash + offset);
+            break;
+        }
+        idx = (idx + 1) & 0x3FF;
+    }
+
+    tvp->type = _INT;
+    tvp->value.i = value;
+    if (tvp->tag != NULL)
+    {
+        return;
+    }
+
+    char* strStart = mStringEnd;
+    s32 ch;
+    while (ch = (s8)*tag)
+    {
+        if (mStringEnd - mStringMemory >= 0x27FF)
+        {
+            break;
+        }
+        ch = nlToUpper((char)ch);
+        *mStringEnd = (char)ch;
+        mStringEnd++;
+        tag++;
+    }
+    *mStringEnd = '\0';
+    mStringEnd++;
+    tvp->tag = strStart;
 }
 
 /**

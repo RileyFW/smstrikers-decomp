@@ -114,6 +114,26 @@ void nlQuatNLerp(nlQuaternion&, const nlQuaternion&, const nlQuaternion&, float)
 /**
  * Offset/Address/Size: 0x0 | 0x801F02FC | size: 0xA8
  */
-void nlInvertRotTransMatrix(nlMatrix4&, const nlMatrix4&)
+void nlInvertRotTransMatrix(nlMatrix4& out, const nlMatrix4& in)
 {
+    nlVector3 negResult;
+    nlVector3 translation;
+    ((u32*)&translation)[0] = *(u32*)&in.m[3][0];
+    ((u32*)&translation)[1] = *(u32*)&in.m[3][1];
+    ((u32*)&translation)[2] = *(u32*)&in.m[3][2];
+
+    nlTransposeMatrix(out, in);
+
+    out.m[2][3] = 0.0f;
+    out.m[1][3] = 0.0f;
+    out.m[0][3] = 0.0f;
+
+    nlMultPosVectorMatrix(negResult, translation, out);
+
+    nlVec3Set(negResult, -1.0f * negResult.f.x, -1.0f * negResult.f.y, -1.0f * negResult.f.z);
+
+    out.m[3][0] = negResult.f.x;
+    out.m[3][1] = negResult.f.y;
+    out.m[3][2] = negResult.f.z;
+    out.m[3][3] = 1.0f;
 }

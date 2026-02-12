@@ -84,7 +84,7 @@ public:
     void ResourceRelease(int);
     void AddModel(unsigned long, glModel*);
     glModel* GetModel(unsigned long);
-    void GetShadowVolume(unsigned long);
+    GLShadowVolume* GetShadowVolume(unsigned long);
     void AddTextureAnim(unsigned long, GLTextureAnim*);
     GLTextureAnim* GetTextureAnim(unsigned long);
     void AddVertexAnim(unsigned long, GLVertexAnim*);

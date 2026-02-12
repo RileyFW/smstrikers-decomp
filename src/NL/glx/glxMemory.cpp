@@ -77,8 +77,9 @@ void glplatResourceRelease(unsigned long long resourceId)
 /**
  * Offset/Address/Size: 0x310 | 0x801B6C38 | size: 0x130
  */
-void glplatResourceMark()
+unsigned long long glplatResourceMark()
 {
+    return 0;
 }
 
 /**

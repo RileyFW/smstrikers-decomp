@@ -168,8 +168,31 @@ bool cAnimCamera::CameraAnimationExists(const char* name) const
 /**
  * Offset/Address/Size: 0x2AC | 0x801A4EA0 | size: 0xA0
  */
-void cAnimCamera::FreeCameraAnimation(const char*)
+void cAnimCamera::FreeCameraAnimation(const char* szCameraName)
 {
+    unsigned long uHashID = nlStringLowerHash(szCameraName);
+    cCameraData* pCameraData = m_cameraDataList;
+    while (pCameraData != NULL)
+    {
+        if (pCameraData->m_uHashID == uHashID)
+        {
+            nlListRemoveElement(&m_cameraDataList, pCameraData, (cCameraData**)NULL);
+            if (pCameraData != NULL)
+            {
+                if (pCameraData->ownsKeyData)
+                {
+                    operator delete[](pCameraData->cameraPos);
+                    operator delete[](pCameraData->targetPos);
+                    operator delete[](pCameraData->cameraRot);
+                    operator delete[](pCameraData->fFOV);
+                    operator delete[](pCameraData->fFocalLength);
+                }
+                operator delete(pCameraData);
+            }
+            return;
+        }
+        pCameraData = pCameraData->next;
+    }
 }
 
 /**

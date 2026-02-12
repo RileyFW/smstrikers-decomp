@@ -11,9 +11,9 @@ void glResourceRelease(unsigned long long arg0)
 /**
  * Offset/Address/Size: 0x20 | 0x801D8FDC | size: 0x20
  */
-void glResourceMark()
+unsigned long long glResourceMark()
 {
-    glplatResourceMark();
+    return glplatResourceMark();
 }
 
 /**

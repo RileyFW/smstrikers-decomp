@@ -15,7 +15,7 @@ class FontManager : public nlSingleton<FontManager>
 public:
     FontManager();
     virtual ~FontManager();
-    void GetFontByHashID(unsigned long);
+    nlFont* GetFontByHashID(unsigned long uHashID);
     void LoadFont(const char*, const char*, const char*);
 
     /* 0x4 */ nlDLListSlotPool<nlFont*> m_fonts;

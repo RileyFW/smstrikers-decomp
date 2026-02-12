@@ -53,9 +53,37 @@ void nlPrintf(const char*, ...);
 
 /**
  * Offset/Address/Size: 0x824 | 0x801CB364 | size: 0xE0
+ * TODO: 94.6% match - r29/r31 register swap (MWCC strength-reduced loop byte offset
+ * gets r31 instead of r29, card pointer gets r29 instead of r31)
  */
-void MemCard::CardRemovedCB(long, long)
+void MemCard::CardRemovedCB(long channel, long result)
 {
+    unsigned long i = 0;
+    unsigned long off = i;
+    MemCard* card = g_MemCards[channel];
+    card->m_State = IS_IDLE;
+    card->m_CardState = CS_IDLE;
+    card->m_LastTransferSize = 0;
+
+    while (i < card->m_OpenFiles.m_EntryCount)
+    {
+        card->m_OpenFiles.FreeEntry(card->m_OpenFiles.m_pEntryLookup[i].pEntry);
+        off += sizeof(EntryLookup<MC_FILE>);
+        i++;
+    }
+    card->m_OpenFiles.FreeLookup();
+    card->m_OpenFiles.m_EntryCount = 0;
+
+    MemCardFunctor::MCInternalFunctorBase* pFunctor = (MemCardFunctor::MCInternalFunctorBase*)&card->m_CB[0];
+    unsigned long slot = card->m_Slot;
+    if (*(long*)pFunctor != 0)
+    {
+        pFunctor->Call(slot, -3);
+    }
+    else
+    {
+        nlPrintf("Trying to call unset MC functor");
+    }
 }
 
 /**
@@ -303,9 +331,45 @@ void MemCard::WriteFileDoneCB(long channel, long result)
 
 /**
  * Offset/Address/Size: 0x12DC | 0x801CAA4C | size: 0xF4
+ * TODO: 78.9% match - instruction scheduling differences in MemCardFunctor
+ * struct copy (lwz/stw interleaving) and CARDMountAsync arg register
+ * allocation (workArea addr in r4 vs CardRemovedCB addr in r4)
  */
-s32 MemCard::BeginCardAccess(const MemCardFunctor&)
+s32 MemCard::BeginCardAccess(const MemCardFunctor& Callback)
 {
+    if (m_State != IS_IDLE)
+    {
+        return -100;
+    }
+
+    m_CB[1] = Callback;
+
+    s32 result = CARDProbeEx(m_Slot, &m_CardInfo.CardSize, &m_CardInfo.SectorSize);
+    if (result != 0)
+    {
+        m_State = IS_IDLE;
+        m_CardState = CS_IDLE;
+    }
+
+    if (result != 0)
+    {
+        return result;
+    }
+
+    m_LastTransferSize = 0;
+    m_TargetTransferSize = CARD_WORKAREA_SIZE;
+
+    m_State = IS_MOUNTING;
+    m_CardState = CS_MOUNTING;
+
+    result = CARDMountAsync(m_Slot, (void*)(((u32)&m_CardWorkArea[CARD_SEG_SIZE - 1]) & ~(CARD_SEG_SIZE - 1)), CardRemovedCB, MountDoneCB);
+    if (result != 0)
+    {
+        m_State = IS_IDLE;
+        m_CardState = CS_IDLE;
+    }
+
+    return result;
 }
 
 /**
@@ -325,8 +389,33 @@ void MemCard::OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*)
 /**
  * Offset/Address/Size: 0xB28 | 0x801CA298 | size: 0xC0
  */
-void MemCard::FormatCard(const MemCardFunctor&)
+long MemCard::FormatCard(const MemCardFunctor& Callback)
 {
+    if (m_State != IS_MOUNTED && m_State != IS_MOUNTED_ERROR)
+    {
+        return -100;
+    }
+
+    struct CopyData
+    {
+        unsigned long a, b, c, d, e, f;
+    };
+    *(CopyData*)&m_CB[4] = *(const CopyData*)&Callback;
+
+    m_State = IS_FORMATTING;
+    m_CardState = CS_FORMATTING;
+
+    m_LastTransferSize = CARDGetXferredBytes(m_Slot);
+    m_TargetTransferSize = 0xA000;
+
+    long Result = CARDFormatAsync(m_Slot, FormatDoneCB);
+    if (Result != 0)
+    {
+        m_State = IS_IDLE;
+        m_CardState = CS_IDLE;
+    }
+
+    return Result;
 }
 
 /**
@@ -346,15 +435,89 @@ void MemCard::InternalReadFile(MemCard::MC_FILE*, void*, unsigned long, unsigned
 /**
  * Offset/Address/Size: 0x740 | 0x801C9EB0 | size: 0x120
  */
-void MemCard::InternalWriteFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&, bool)
+long MemCard::InternalWriteFile(MC_FILE* pFile, void* Buffer, unsigned long Length, unsigned long StartAt, const MemCardFunctor& Callback, bool ResetTransfer)
 {
+    if (m_State != IS_MOUNTED)
+    {
+        return -100;
+    }
+
+    unsigned long sectorSize = m_CardInfo.SectorSize;
+    unsigned long LengthMisalign = Length % sectorSize;
+    if (LengthMisalign != 0)
+    {
+        nlPrintf("MemCard::InternalWriteFile - offset %d not sector aligned (%d), changed to %d\n", Length, sectorSize, Length + sectorSize - LengthMisalign);
+        Length += m_CardInfo.SectorSize - LengthMisalign;
+    }
+
+    struct CopyData
+    {
+        unsigned long a, b, c, d, e, f;
+    };
+    *(CopyData*)&m_CB[8] = *(const CopyData*)&Callback;
+    m_State = IS_WRITING;
+    m_CardState = CS_WRITING;
+
+    if (ResetTransfer)
+    {
+        m_LastTransferSize = CARDGetXferredBytes(m_Slot);
+        m_TargetTransferSize = Length + 0x2000;
+    }
+
+    long Result = CARDWriteAsync((CARDFileInfo*)pFile, Buffer, (s32)Length, (s32)StartAt, WriteFileDoneCB);
+    if (Result != 0)
+    {
+        m_State = IS_MOUNTED;
+        m_CardState = CS_MOUNTED;
+    }
+
+    return Result;
 }
 
 /**
  * Offset/Address/Size: 0x620 | 0x801C9D90 | size: 0x120
+ * TODO: 95.4% match - r3/r5 register swap in search loop (MWCC allocates byte offset
+ * to r3 instead of r5) and r4/r5 swap in copy loop (next vs m_pEntryLookup)
  */
-void MemCard::CloseFile(MemCard::MC_FILE*)
+s32 MemCard::CloseFile(MC_FILE* pFile)
 {
+    EntryLookup<MC_FILE>* pLookup;
+    s32 next;
+    pFile->TotalHeaderSize = 0;
+    s32 result = CARDClose(&pFile->FileInfo);
+    if (result == 0 && pFile != NULL) {
+        long i = 0;
+        long byteOff = i;
+        while ((unsigned long)i < m_OpenFiles.m_EntryCount) {
+            if (m_OpenFiles.m_pEntryLookup[i].pEntry == pFile) {
+                pLookup = &m_OpenFiles.m_pEntryLookup[i];
+                goto found;
+            }
+            byteOff += 8;
+            i++;
+        }
+        pLookup = NULL;
+        found:
+        
+        m_OpenFiles.FreeEntry(pFile);
+        
+        long idx = (pLookup - m_OpenFiles.m_pEntryLookup);
+        unsigned long total = m_OpenFiles.m_EntryCount;
+        
+        while ((unsigned long)idx != total) {
+            next = idx + 1;
+            EntryLookup<MC_FILE>* src = &m_OpenFiles.m_pEntryLookup[next];
+            EntryLookup<MC_FILE>* dst = &m_OpenFiles.m_pEntryLookup[idx];
+            idx = next;
+            unsigned long id = src->Id;
+            MC_FILE* entry = src->pEntry;
+            dst->pEntry = entry;
+            dst->Id = id;
+        }
+        
+        m_OpenFiles.m_EntryCount = m_OpenFiles.m_EntryCount - 1;
+    }
+    return result;
 }
 
 /**

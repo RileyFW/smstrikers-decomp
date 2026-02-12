@@ -9,14 +9,6 @@
 
 #include "Game/FE/tlInstance.h"
 
-struct ScissorBox
-{
-    /* 0x0 */ unsigned short X;
-    /* 0x2 */ unsigned short Y;
-    /* 0x4 */ unsigned short Width;
-    /* 0x6 */ unsigned short Height;
-}; // total size: 0x8
-
 struct FETextLibObjectAttributes
 {
     /* 0x0 */ nlColour EffectColour;

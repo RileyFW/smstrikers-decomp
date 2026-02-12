@@ -21,7 +21,7 @@ struct glStateBundle
 struct gl_StateBitfield
 {
     /* 0x00 */ s32 startBit;
-    /* 0x08 */ s32 numBits;
+    /* 0x04 */ s32 numBits;
 }; // total size: 0x8
 
 class glRasterState

@@ -186,8 +186,65 @@ glModel* GLInventory::GetModel(unsigned long id)
 /**
  * Offset/Address/Size: 0x8FC | 0x801E2B94 | size: 0xC8
  */
-void GLInventory::GetShadowVolume(unsigned long)
+GLShadowVolume* GLInventory::GetShadowVolume(unsigned long id)
 {
+    for (int i = m_nLevel; i >= 0; i--)
+    {
+        bool found;
+        GLShadowVolume** pResult;
+        AVLTreeEntry<unsigned long, GLShadowVolume*>* node = m_pShadowVolumes[i]->m_pItems->m_Root;
+
+        while (node != nullptr)
+        {
+            int cmpResult;
+            if (id == node->key)
+            {
+                cmpResult = 0;
+            }
+            else if (id < node->key)
+            {
+                cmpResult = -1;
+            }
+            else
+            {
+                cmpResult = 1;
+            }
+
+            if (cmpResult == 0)
+            {
+                if (&pResult != nullptr)
+                {
+                    pResult = &node->value;
+                }
+                found = true;
+                goto check_found;
+            }
+            else if (cmpResult < 0)
+            {
+                node = (AVLTreeEntry<unsigned long, GLShadowVolume*>*)node->node.left;
+            }
+            else
+            {
+                node = (AVLTreeEntry<unsigned long, GLShadowVolume*>*)node->node.right;
+            }
+        }
+        found = false;
+    check_found:
+        GLShadowVolume* result;
+        if (found)
+        {
+            result = *pResult;
+        }
+        else
+        {
+            result = nullptr;
+        }
+        if (result != nullptr)
+        {
+            return result;
+        }
+    }
+    return nullptr;
 }
 
 /**
@@ -244,9 +301,65 @@ void GLInventory::AddVertexAnim(unsigned long key, GLVertexAnim* vertexAnim)
 /**
  * Offset/Address/Size: 0x684 | 0x801E291C | size: 0xC8
  */
-GLVertexAnim* GLInventory::GetVertexAnim(unsigned long)
+GLVertexAnim* GLInventory::GetVertexAnim(unsigned long id)
 {
-    return nullptr; // TODO: Implement actual lookup
+    for (int i = m_nLevel; i >= 0; i--)
+    {
+        bool found;
+        GLVertexAnim** pResult;
+        AVLTreeEntry<unsigned long, GLVertexAnim*>* node = m_pVertexAnims[i]->m_pItems->m_Root;
+
+        while (node != nullptr)
+        {
+            int cmpResult;
+            if (id == node->key)
+            {
+                cmpResult = 0;
+            }
+            else if (id < node->key)
+            {
+                cmpResult = -1;
+            }
+            else
+            {
+                cmpResult = 1;
+            }
+
+            if (cmpResult == 0)
+            {
+                if (&pResult != nullptr)
+                {
+                    pResult = &node->value;
+                }
+                found = true;
+                goto check_found;
+            }
+            else if (cmpResult < 0)
+            {
+                node = (AVLTreeEntry<unsigned long, GLVertexAnim*>*)node->node.left;
+            }
+            else
+            {
+                node = (AVLTreeEntry<unsigned long, GLVertexAnim*>*)node->node.right;
+            }
+        }
+        found = false;
+    check_found:
+        GLVertexAnim* result;
+        if (found)
+        {
+            result = *pResult;
+        }
+        else
+        {
+            result = nullptr;
+        }
+        if (result != nullptr)
+        {
+            return result;
+        }
+    }
+    return nullptr;
 }
 
 /**

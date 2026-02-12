@@ -39,7 +39,7 @@ public:
 
     // void Parse(const char*, Config::Parser&);
     void LoadFileAsString(const char*);
-    // void Set(const char*, const BasicString<char, Detail::TempStringAllocator>&);
+    void Set(const char*, const BasicString<char, Detail::TempStringAllocator>&);
     void Set(const char*, const char*);
     void Set(const char*, float);
     void Set(const char*, bool);
