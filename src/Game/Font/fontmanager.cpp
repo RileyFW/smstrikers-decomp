@@ -1,5 +1,9 @@
 #include "Game/Font/fontmanager.h"
+#include "NL/nlBundleFile.h"
+#include "NL/nlMemory.h"
 #include "NL/nlString.h"
+#include "NL/gl/glTexture.h"
+#include "NL/nlBundleFile.h"
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80209CC8 | size: 0x60
@@ -68,7 +72,7 @@ FontManager::~FontManager()
 /**
  * Offset/Address/Size: 0x2A8 | 0x8020993C | size: 0xCC
  */
-nlFont* FontManager::GetFontByHashID(unsigned long uHashID)
+nlFont* FontManager::GetFontByHashID(unsigned long hashID)
 {
     DLListEntry<nlFont*>* head;
     DLListEntry<nlFont*>* entry = nlDLRingGetStart(m_fonts.m_Head);
@@ -76,9 +80,10 @@ nlFont* FontManager::GetFontByHashID(unsigned long uHashID)
 
     while (entry != NULL)
     {
-        if (uHashID == entry->m_data->m_Metrics.FontName)
+        nlFont* font = entry->m_data;
+        if (hashID == font->m_Metrics.FontName)
         {
-            return entry->m_data;
+            return font;
         }
 
         if (nlDLRingIsEnd(head, entry) || entry == NULL)
@@ -91,7 +96,7 @@ nlFont* FontManager::GetFontByHashID(unsigned long uHashID)
         }
     }
 
-    nlPrintf("GetFontByHashID: Hash not found: %d\n", uHashID);
+    nlPrintf("FontManager: Warning, failed to find font 0x%08x\n", hashID);
 
     DLListEntry<nlFont*>* start = nlDLRingGetStart(m_fonts.m_Head);
     if (start == NULL)
@@ -104,6 +109,91 @@ nlFont* FontManager::GetFontByHashID(unsigned long uHashID)
 /**
  * Offset/Address/Size: 0x0 | 0x80209694 | size: 0x2A8
  */
-void FontManager::LoadFont(const char*, const char*, const char*)
+bool FontManager::LoadFont(const char* bundlePath, const char* fontName, const char* fontFileName)
 {
+    BundleFile bundleFile;
+    char nameBuffer[0xFF];
+    nlFont* font = NULL;
+
+    nlStrNCpy(nameBuffer, fontFileName, 0xFF);
+    nlToLower(nameBuffer);
+
+    bundleFile.Open(bundlePath);
+
+    unsigned long fontHash = nlStringHash(fontName);
+
+    BundleFileDirectoryEntry fontEntry;
+    if (!bundleFile.GetFileInfo(fontHash, &fontEntry, true))
+    {
+        return false;
+    }
+
+    char* data = (char*)nlMalloc(fontEntry.m_length, 0x20, true);
+    bundleFile.ReadFile(fontHash, data, fontEntry.m_length);
+
+    font = new (nlMalloc(sizeof(nlFont), 0x8, false)) nlFont();
+
+    unsigned long nameHash = nlStringHash(nameBuffer);
+    font->Load(fontName, data, nameHash);
+
+    delete[] data;
+
+    // Allocate a slot from the font pool
+    if (m_fonts.m_Allocator.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&m_fonts.m_Allocator, sizeof(DLListEntry<nlFont*>));
+    }
+
+    DLListEntry<nlFont*>* slot = NULL;
+    if (m_fonts.m_Allocator.m_FreeList != NULL)
+    {
+        slot = (DLListEntry<nlFont*>*)m_fonts.m_Allocator.m_FreeList;
+        m_fonts.m_Allocator.m_FreeList = m_fonts.m_Allocator.m_FreeList->m_next;
+    }
+
+    if (slot != NULL)
+    {
+        slot->m_next = NULL;
+        slot->m_prev = NULL;
+        slot->m_data = font;
+    }
+
+    nlDLRingAddEnd(&m_fonts.m_Head, slot);
+
+    // Load textures for each page
+    for (unsigned long i = 0; i < font->m_PageCount; i++)
+    {
+        unsigned long textureHash = font->m_TextureHandles[i];
+
+        BundleFileDirectoryEntry dirEntry;
+        bundleFile.GetFileInfo(textureHash, &dirEntry, true);
+
+        BundleFileDirectoryEntry texEntry;
+        if (bundleFile.GetFileInfo(textureHash, &texEntry, true))
+        {
+            char* texData = (char*)nlMalloc(texEntry.m_length, 0x20, true);
+            bundleFile.ReadFile(textureHash, texData, texEntry.m_length);
+            glTextureAdd(textureHash, texData, texEntry.m_length);
+            delete[] texData;
+        }
+
+        if (font->m_TextureType == SplitFX)
+        {
+            unsigned long effectHash = font->m_EffectTextureHandles[i];
+
+            bundleFile.GetFileInfo(effectHash, &dirEntry, true);
+
+            BundleFileDirectoryEntry effectEntry;
+            if (bundleFile.GetFileInfo(effectHash, &effectEntry, true))
+            {
+                char* effectData = (char*)nlMalloc(effectEntry.m_length, 0x20, true);
+                bundleFile.ReadFile(effectHash, effectData, effectEntry.m_length);
+                glTextureAdd(effectHash, effectData, effectEntry.m_length);
+                delete[] effectData;
+            }
+        }
+    }
+
+    bundleFile.Close();
+    return true;
 }

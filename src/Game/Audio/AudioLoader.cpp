@@ -1,4 +1,5 @@
 #include "Game/Audio/AudioLoader.h"
+#include "Game/Audio/SebringSoundDefines.h"
 #include "dolphin/arq.h"
 
 /**
@@ -176,9 +177,50 @@ struct SoundDefineMapType
 
 /**
  * Offset/Address/Size: 0x3F48 | 0x80147D14 | size: 0x14C
+ * TODO: 96% match, something with SebringSoundDefines ref is still wrong...
  */
 void AudioLoader::SetupSoundDefinesAVLTree()
 {
+    u32 numDefines = GetNumSoundDefines();
+    SoundDefinesTable* pDefines = &SebringSoundDefines[0];
+    AVLTreeNode** const ppRoot = (AVLTreeNode**)((char*)&gMusyXSoundDefineMap.m_Root);
+
+    for (u32 i = 0; i < numDefines; pDefines++, i++)
+    {
+        SoundStrToIDNode* p = (SoundStrToIDNode*)nlMalloc(sizeof(SoundStrToIDNode), 8, false);
+        SoundStrToIDNode* newNode = p;
+        p->typeID = -1;
+        p->typeStr = NULL;
+        p->musyxStr = NULL;
+        p->musyxID = -1;
+        p->fVolume = 100.0f;
+        p->fDelay = -1.0f;
+        p->fVolReverb = 100.0f;
+        p->volGrp = -1;
+        p->sfxPriority = 0;
+        p->uHashVal = 0;
+        p->pSoundPropAccessor = NULL;
+        p->bSoundPropTableReloaded = 0;
+        p->pSoundProp = NULL;
+        p->pOwner = NULL;
+        p->lastVoiceID = -1;
+        p->pLastEmitter = NULL;
+        p->m_unk_0x40 = false;
+
+        newNode->musyxID = pDefines->musyxID;
+        newNode->musyxStr = pDefines->musyxStr;
+        newNode->uHashVal = nlStringLowerHash(newNode->musyxStr);
+
+        unsigned int key = newNode->uHashVal;
+        AVLTreeNode* existingNode;
+
+        ((AVLTreeUntemplated*)&gMusyXSoundDefineMap)->AddAVLNode(ppRoot, &key, &newNode, &existingNode, *(unsigned int*)((char*)&gMusyXSoundDefineMap + 0x24));
+
+        if (existingNode == NULL)
+        {
+            (*(unsigned int*)((char*)&gMusyXSoundDefineMap + 0x24))++;
+        }
+    }
 }
 
 /**
@@ -190,17 +232,13 @@ void AudioLoader::SetupCharSoundTypesAVLTree()
 
 /**
  * Offset/Address/Size: 0x3D40 | 0x80147B0C | size: 0xB4
- * TODO: 86% match - prologue lis/addi scheduling: compiler computes addi for
- * gWorldSFXInfo and gWorldSoundTable into temp registers (r0, r3) then moves
- * to saved registers via mr, instead of addi directly into saved registers.
- * This is an inherent MWCC instruction scheduling difference for non-SDA
- * globals used with pointer variables.
+ * TODO: 86% match - prologue lis/addi scheduling
  */
 void AudioLoader::SetupWorldSoundTypesAVLTree()
 {
     SoundStrToIDNode* const pSFXInfoBase = Audio::gWorldSFXInfo;
     const char* const* pSoundTableBase = Audio::gWorldSoundTable;
-    AVLTreeNode** const ppRoot = (AVLTreeNode**)((char*)&gWorldSoundDefineMap + 0x1C);
+    AVLTreeNode** const ppRoot = (AVLTreeNode**)((char*)&gWorldSoundDefineMap.m_Root);
     SoundStrToIDNode* pSFXInfo = pSFXInfoBase;
     const char** pSoundTable = (const char**)pSoundTableBase;
 

@@ -132,15 +132,15 @@ public:
     static void CardCheckDoneCB(long channel, long result);
     static void WriteFileDoneCB(long channel, long result);
 
-    s32 BeginCardAccess(const MemCardFunctor&);
+    long BeginCardAccess(const MemCardFunctor&);
     void CreateFile(const char*, unsigned long, MemCard::ICON_CONFIG*, MemCard::MC_FILE*&, const MemCardFunctor&);
     void OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*);
     long FormatCard(const MemCardFunctor&);
     void DeleteFile(const char*, const MemCardFunctor&);
     long InternalReadFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&);
     long InternalWriteFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&, bool);
-    s32 CloseFile(MemCard::MC_FILE*);
-    s32 FileExists(const char*);
+    long CloseFile(MemCard::MC_FILE*);
+    long FileExists(const char*);
     void WriteFileIconData(MemCard::MC_FILE*, void*, const MemCardFunctor&);
     unsigned long AlignBytesToSectorSize(unsigned long);
 

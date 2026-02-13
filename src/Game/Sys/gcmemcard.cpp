@@ -58,18 +58,14 @@ void nlPrintf(const char*, ...);
  */
 void MemCard::CardRemovedCB(long channel, long result)
 {
-    unsigned long i = 0;
-    unsigned long off = i;
     MemCard* card = g_MemCards[channel];
     card->m_State = IS_IDLE;
     card->m_CardState = CS_IDLE;
     card->m_LastTransferSize = 0;
 
-    while (i < card->m_OpenFiles.m_EntryCount)
+    for (unsigned long i = 0; i < card->m_OpenFiles.m_EntryCount; i++)
     {
         card->m_OpenFiles.FreeEntry(card->m_OpenFiles.m_pEntryLookup[i].pEntry);
-        off += sizeof(EntryLookup<MC_FILE>);
-        i++;
     }
     card->m_OpenFiles.FreeLookup();
     card->m_OpenFiles.m_EntryCount = 0;
@@ -89,15 +85,110 @@ void MemCard::CardRemovedCB(long channel, long result)
 /**
  * Offset/Address/Size: 0x6E0 | 0x801CB220 | size: 0x144
  */
-void MemCard::MountDoneCB(long, long)
+void MemCard::MountDoneCB(long channel, long result)
 {
+    MemCard* card = g_MemCards[channel];
+    CARDGetSerialNo(card->m_Slot, (u64*)&card->m_SerialID);
+
+    switch (result)
+    {
+    case -6: // CARD_RESULT_BROKEN
+        card->m_State = IS_CARDCHECK;
+        result = CARDCheckAsync(card->m_Slot, CardCheckBrokenDoneCB);
+        if (result != 0)
+        {
+            card->m_State = IS_MOUNTED_ERROR;
+            card->m_CardState = CS_MOUNTED_ERROR;
+        }
+        break;
+    case 0: // CARD_RESULT_READY
+        card->m_State = IS_CARDCHECK;
+        CARDFreeBlocks(card->m_Slot, &card->m_CardInfo.FreeBytes, &card->m_CardInfo.FreeFiles);
+        result = CARDCheckAsync(card->m_Slot, CardCheckDoneCB);
+        if (result != 0)
+        {
+            card->m_State = IS_MOUNTED_ERROR;
+            card->m_CardState = CS_MOUNTED_ERROR;
+        }
+        break;
+    case -13: // CARD_RESULT_ENCODING
+        card->m_State = IS_MOUNTED_ERROR;
+        card->m_CardState = CS_MOUNTED_ERROR;
+        break;
+    default:
+        card->m_State = IS_IDLE;
+        card->m_CardState = CS_IDLE;
+        break;
+    }
+
+    if (result != 0)
+    {
+        MemCardFunctor::MCInternalFunctorBase* pFunctor = (MemCardFunctor::MCInternalFunctorBase*)&card->m_CB[1];
+        unsigned long slot = card->m_Slot;
+        if (*(long*)pFunctor != 0)
+        {
+            pFunctor->Call(slot, result);
+        }
+        else
+        {
+            nlPrintf("Trying to call unset MC functor");
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0x540 | 0x801CB080 | size: 0x1A0
  */
-void MemCard::CreateFileDoneCB(long, long)
+void MemCard::CreateFileDoneCB(long channel, long result)
 {
+    MemCard* card = g_MemCards[channel];
+    CARDFreeBlocks(card->m_Slot, &card->m_CardInfo.FreeBytes, &card->m_CardInfo.FreeFiles);
+
+    if (result != 0)
+    {
+        MC_FILE* pFile = card->m_pFileCB;
+        if (pFile != NULL)
+        {
+            EntryLookup<MC_FILE>* pFoundEntry = NULL;
+            for (unsigned long i = 0; i < card->m_OpenFiles.m_EntryCount; i++)
+            {
+                if (card->m_OpenFiles.m_pEntryLookup[i].pEntry == pFile)
+                {
+                    pFoundEntry = &card->m_OpenFiles.m_pEntryLookup[i];
+                    break;
+                }
+            }
+
+            card->m_OpenFiles.FreeEntry(pFile);
+
+            unsigned long idx = pFoundEntry - card->m_OpenFiles.m_pEntryLookup;
+            for (; idx != card->m_OpenFiles.m_EntryCount; idx++)
+            {
+                card->m_OpenFiles.m_pEntryLookup[idx] = card->m_OpenFiles.m_pEntryLookup[idx + 1];
+            }
+            card->m_OpenFiles.m_EntryCount--;
+        }
+        card->m_pFileCB = NULL;
+    }
+
+    card->m_State = IS_MOUNTED;
+    card->m_CardState = CS_MOUNTED;
+    if (CARDProbeEx(card->m_Slot, &card->m_CardInfo.CardSize, &card->m_CardInfo.SectorSize) != 0)
+    {
+        card->m_State = IS_IDLE;
+        card->m_CardState = CS_IDLE;
+    }
+    CARDFreeBlocks(card->m_Slot, &card->m_CardInfo.FreeBytes, &card->m_CardInfo.FreeFiles);
+    MemCardFunctor::MCInternalFunctorBase* pFunctor = (MemCardFunctor::MCInternalFunctorBase*)&card->m_CB[5];
+    unsigned long slot = card->m_Slot;
+    if (*(long*)pFunctor != 0)
+    {
+        pFunctor->Call(slot, result);
+    }
+    else
+    {
+        nlPrintf("Trying to call unset MC functor");
+    }
 }
 
 /**
@@ -389,33 +480,27 @@ void MemCard::OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*)
 /**
  * Offset/Address/Size: 0xB28 | 0x801CA298 | size: 0xC0
  */
-long MemCard::FormatCard(const MemCardFunctor& Callback)
+s32 MemCard::FormatCard(const MemCardFunctor& functor)
 {
     if (m_State != IS_MOUNTED && m_State != IS_MOUNTED_ERROR)
     {
         return -100;
     }
 
-    struct CopyData
-    {
-        unsigned long a, b, c, d, e, f;
-    };
-    *(CopyData*)&m_CB[4] = *(const CopyData*)&Callback;
-
+    m_CB[4] = functor;
     m_State = IS_FORMATTING;
     m_CardState = CS_FORMATTING;
-
     m_LastTransferSize = CARDGetXferredBytes(m_Slot);
     m_TargetTransferSize = 0xA000;
+    s32 result = CARDFormatAsync(m_Slot, FormatDoneCB);
 
-    long Result = CARDFormatAsync(m_Slot, FormatDoneCB);
-    if (Result != 0)
+    if (result != 0)
     {
         m_State = IS_IDLE;
         m_CardState = CS_IDLE;
     }
 
-    return Result;
+    return result;
 }
 
 /**

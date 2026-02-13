@@ -10,7 +10,7 @@
 
 #include "Game/FE/tlInstance.h"
 
-class nlFont;
+#include "NL/nlFont.h"
 
 struct Row
 {
@@ -28,14 +28,6 @@ struct StringDrawInfo
     /* 0x12 */ signed short YOffset;
     /* 0x14 */ Row Rows[17];
 }; // total size: 0x58
-
-struct ScissorBox
-{
-    /* 0x0 */ unsigned short X;
-    /* 0x2 */ unsigned short Y;
-    /* 0x4 */ unsigned short Width;
-    /* 0x6 */ unsigned short Height;
-}; // total size: 0x8
 
 struct FETextLibObjectAttributes
 {

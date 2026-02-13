@@ -10,6 +10,8 @@ struct SoundDefinesTable
     /* 0x8 */ u32 playCount;
 }; // total size: 0xC
 
+extern SoundDefinesTable SebringSoundDefines[];
+
 u32 GetNumSoundDefines();
 
 #endif // _SEBRINGSOUNDDEFINES_H_
