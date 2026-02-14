@@ -2016,39 +2016,44 @@ void cFielder::RunningSABcallback(unsigned int nParam1, cPN_SingleAxisBlender* p
     pSAB->m_fDesiredWeight = pSAB->m_fSmoothedWeight;
 }
 
+inline void cFielder::SetRunLeanSAB(const int* pSABAnims, int nNumSABAnims, int nPrimaryAnim)
+{
+    cPN_SingleAxisBlender* pSAB;
+    cPN_SAnimController* synchingController;
+    int i;
+    cPN_SAnimController* nextController;
+
+    pSAB = CreateSingleAxisBlender(pSABAnims, nNumSABAnims, nPrimaryAnim, RunningSABcallback, 0.0f, nullptr);
+
+    synchingController = (cPN_SAnimController*)pSAB->GetChild(nPrimaryAnim);
+    synchingController->m_fSynchronizedWeight = 0.0f;
+
+    for (i = 0; i < nNumSABAnims; ++i)
+    {
+        if (i != nPrimaryAnim)
+        {
+            nextController = (cPN_SAnimController*)pSAB->GetChild(i);
+            nextController->m_bIsSynchronized = true;
+            synchingController->m_pSynchronizedController = nextController;
+            synchingController = nextController;
+        }
+    }
+
+    *m_pAILayer = new (AllocateBlender()) cPN_Blender(*m_pAILayer, pSAB, 0.0f);
+}
+
 /**
  * Offset/Address/Size: 0x4B70 | 0x8001DEAC | size: 0x138
- * TODO: 99.6% match - r28/r29 regswap in AllocateBlender inline
  */
 void cFielder::SetRunningAnimState(float)
 {
-    int animIDsArray[3] = {
+    int RunningAnims[3] = {
         0x0000001B,
         0x0000001A,
         0x0000001C,
     };
 
-    int i;
-    cPN_SAnimController* pChild1;
-    cPN_SingleAxisBlender* pSingleAxisBlender;
-
-    pSingleAxisBlender = CreateSingleAxisBlender(animIDsArray, 3, 1, RunningSABcallback, 0.0f, nullptr);
-
-    pChild1 = (cPN_SAnimController*)pSingleAxisBlender->GetChild(1);
-    pChild1->m_fSynchronizedWeight = 0.0f;
-
-    for (i = 0; i < 3; ++i)
-    {
-        if (i != 1)
-        {
-            cPN_SAnimController* pChild = (cPN_SAnimController*)pSingleAxisBlender->GetChild(i);
-            pChild->m_bIsSynchronized = true;
-            pChild1->m_pSynchronizedController = pChild;
-            pChild1 = pChild;
-        }
-    }
-
-    *m_pAILayer = new ((u8*)AllocateBlender()) cPN_Blender(*m_pAILayer, pSingleAxisBlender, 0.0f);
+    SetRunLeanSAB(RunningAnims, 3, 1);
 
     FielderTweaks* pTweaks = ((FielderTweaks*)m_pTweaks);
     InitMovementRunning(pTweaks->fRunningDirectionSeekSpeed, pTweaks->fRunningDirectionSeekFalloff, pTweaks->fRunningAccel, pTweaks->fRunningDecel);
@@ -2056,37 +2061,16 @@ void cFielder::SetRunningAnimState(float)
 
 /**
  * Offset/Address/Size: 0x4A30 | 0x8001DD6C | size: 0x140
- * TODO: 99.6% match - r28/r29 regswap in AllocateBlender inline
  */
 void cFielder::SetRunningTurboAnimState()
 {
-    int animIDsArray[3] = {
+    int RunningTurboAnims[3] = {
         0x0000001B,
         0x0000001A,
         0x0000001C,
     };
 
-    int i;
-    cPN_SAnimController* pChild1;
-    cPN_SingleAxisBlender* pSingleAxisBlender;
-
-    pSingleAxisBlender = CreateSingleAxisBlender(animIDsArray, 3, 1, RunningSABcallback, 0.0f, nullptr);
-
-    pChild1 = (cPN_SAnimController*)pSingleAxisBlender->GetChild(1);
-    pChild1->m_fSynchronizedWeight = 0.0f;
-
-    for (i = 0; i < 3; ++i)
-    {
-        if (i != 1)
-        {
-            cPN_SAnimController* pChild = (cPN_SAnimController*)pSingleAxisBlender->GetChild(i);
-            pChild->m_bIsSynchronized = true;
-            pChild1->m_pSynchronizedController = pChild;
-            pChild1 = pChild;
-        }
-    }
-
-    *m_pAILayer = new (AllocateBlender()) cPN_Blender(*m_pAILayer, pSingleAxisBlender, 0.0f);
+    SetRunLeanSAB(RunningTurboAnims, 3, 1);
 
     FielderTweaks* pTweaks = ((FielderTweaks*)m_pTweaks);
     InitMovementRunning(pTweaks->fRunningTurboDirectionSeekSpeed, pTweaks->fRunningTurboDirectionSeekFalloff, pTweaks->fRunningTurboAccel, pTweaks->fRunningTurboDecel);
@@ -2096,38 +2080,16 @@ void cFielder::SetRunningTurboAnimState()
 
 /**
  * Offset/Address/Size: 0x48F8 | 0x8001DC34 | size: 0x138
- * TODO: regswap on r28/r29
  */
 void cFielder::SetRunningWBAnimState(float)
 {
-    int animIDsArray[3] = {
+    int RunningWBAnims[3] = {
         0x0000001B,
         0x0000001A,
         0x0000001C,
     };
 
-    int i;
-    cPN_SAnimController* pChild1;
-    cPN_SingleAxisBlender* pSingleAxisBlender;
-    cPN_SAnimController* pChild;
-
-    pSingleAxisBlender = CreateSingleAxisBlender(animIDsArray, 3, 1, RunningSABcallback, 0.0f, nullptr);
-
-    pChild1 = (cPN_SAnimController*)pSingleAxisBlender->GetChild(1);
-    pChild1->m_fSynchronizedWeight = 0.0f;
-
-    for (i = 0; i < 3; ++i)
-    {
-        if (i != 1)
-        {
-            pChild = (cPN_SAnimController*)pSingleAxisBlender->GetChild(i);
-            pChild->m_bIsSynchronized = true;
-            pChild1->m_pSynchronizedController = pChild;
-            pChild1 = pChild;
-        }
-    }
-
-    *m_pAILayer = new (AllocateBlender()) cPN_Blender(*m_pAILayer, pSingleAxisBlender, 0.0f);
+    SetRunLeanSAB(RunningWBAnims, 3, 1);
 
     FielderTweaks* pTweaks = ((FielderTweaks*)m_pTweaks);
     InitMovementRunning(pTweaks->fRunningWBDirectionSeekSpeed, pTweaks->fRunningWBDirectionSeekFalloff, pTweaks->fRunningWBAccel, pTweaks->fRunningWBDecel);

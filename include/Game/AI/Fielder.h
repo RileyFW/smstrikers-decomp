@@ -256,6 +256,7 @@ public:
     void SetIdleAnimState();
     void SetIdleWBAnimState();
     static void RunningSABcallback(unsigned int, cPN_SingleAxisBlender*);
+    inline void SetRunLeanSAB(const int* pSABAnims, int nNumSABAnims, int nPrimaryAnim);
     void SetRunningAnimState(float);
     void SetRunningTurboAnimState();
     void SetRunningWBAnimState(float);
