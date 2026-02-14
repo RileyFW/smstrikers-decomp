@@ -9,7 +9,7 @@ nlVector3& PositionOf(T* pObject)
     return pObject->m_v3Position;
 }
 
-void GetClosestPointOnSidelines(const nlVector3&);
+nlVector3 GetClosestPointOnSidelines(const nlVector3&);
 char* GetPowerupName(int powerup);
 void SortToMinOrMaxTotalSum(unsigned int*, float (*)[4], bool);
 nlVector3 GetClosestPointOnLineABFromPointC(const nlVector3&, const nlVector3&, const nlVector3&);

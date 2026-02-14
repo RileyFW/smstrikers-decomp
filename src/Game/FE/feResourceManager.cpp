@@ -4,10 +4,13 @@
 #include "NL/nlString.h"
 #include "NL/gl/glTexture.h"
 #include "NL/nlAVLTreeSlotPool.h"
+#include "NL/nlDLListSlotPool.h"
 
 static BundleFile* s_pOnDemandBundle;
 static unsigned char* s_pResourceLoadBuffer;
 static nlAVLTreeSlotPool<unsigned long, FEResourceHandle*, DefaultKeyCompare<unsigned long> > s_loadedResourceList;
+static nlDLListSlotPool<FEResourceHandle*> pendingResourceQueue;
+static FEResourceHandle* s_pCurrentResourceBeingLoaded;
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8020D5A8 | size: 0x60
@@ -210,7 +213,8 @@ bool FEResourceManager::OpenOnDemandResourceBundle(const char* szBundleFileName)
     BundleFile* pBundle = new (nlMalloc(sizeof(BundleFile), 8, false)) BundleFile();
     s_pOnDemandBundle = pBundle;
 
-    if (!pBundle->Open(szBundleFileName)) {
+    if (!pBundle->Open(szBundleFileName))
+    {
         return false;
     }
     return true;
@@ -226,8 +230,30 @@ void FEResourceManager::Initialize()
 /**
  * Offset/Address/Size: 0x72C | 0x8020C26C | size: 0xA0
  */
-void FEResourceManager::QueueResourceLoad(FEResourceHandle*)
+void FEResourceManager::QueueResourceLoad(FEResourceHandle* pHandle)
 {
+    DLListEntry<FEResourceHandle*>* entry = NULL;
+
+    if (pendingResourceQueue.m_Allocator.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&pendingResourceQueue.m_Allocator, sizeof(DLListEntry<FEResourceHandle*>));
+    }
+
+    SlotPoolEntry* freeEntry = pendingResourceQueue.m_Allocator.m_FreeList;
+    if (freeEntry != NULL)
+    {
+        entry = (DLListEntry<FEResourceHandle*>*)freeEntry;
+        pendingResourceQueue.m_Allocator.m_FreeList = freeEntry->m_next;
+    }
+
+    if (entry != NULL)
+    {
+        entry->m_next = NULL;
+        entry->m_prev = NULL;
+        entry->m_data = pHandle;
+    }
+
+    nlDLRingAddEnd(&pendingResourceQueue.m_Head, entry);
 }
 
 /**
@@ -270,10 +296,10 @@ void FEResourceManager::TextureResourceLoadComplete(void* pData, unsigned long u
         &key,
         &value,
         &existingNode,
-        s_loadedResourceList.m_NumElements
-    );
+        s_loadedResourceList.m_NumElements);
 
-    if (existingNode == NULL) {
+    if (existingNode == NULL)
+    {
         s_loadedResourceList.m_NumElements++;
     }
 

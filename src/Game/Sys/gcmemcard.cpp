@@ -427,9 +427,37 @@ void MemCard::DeleteFile(const char*, const MemCardFunctor&)
 
 /**
  * Offset/Address/Size: 0x860 | 0x801C9FD0 | size: 0xD0
+ * TODO: 91.7% match - MWCC struct copy scheduling: compiler pipelines loads
+ * early in 24-byte MemCardFunctor copy (lwz before preceding stw), producing
+ * 8 instruction scheduling diffs. Same issue affects InternalWriteFile.
  */
-void MemCard::InternalReadFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&)
+long MemCard::InternalReadFile(MC_FILE* pFile, void* Buffer, unsigned long Length, unsigned long StartAt, const MemCardFunctor& Callback)
 {
+    if (m_State != IS_MOUNTED)
+    {
+        return -100;
+    }
+
+    unsigned long* dst = (unsigned long*)&m_CB[7];
+    const unsigned long* src = (const unsigned long*)&Callback;
+    for (int i = 0; i < 6; i++)
+    {
+        dst[i] = src[i];
+    }
+    m_State = IS_READING;
+    m_CardState = CS_READING;
+
+    m_LastTransferSize = CARDGetXferredBytes(m_Slot);
+    m_TargetTransferSize = Length;
+
+    long Result = CARDReadAsync((CARDFileInfo*)pFile, Buffer, (s32)Length, (s32)StartAt, ReadFileDoneCB);
+    if (Result != 0)
+    {
+        m_State = IS_MOUNTED;
+        m_CardState = CS_MOUNTED;
+    }
+
+    return Result;
 }
 
 /**
@@ -485,11 +513,14 @@ s32 MemCard::CloseFile(MC_FILE* pFile)
     s32 next;
     pFile->TotalHeaderSize = 0;
     s32 result = CARDClose(&pFile->FileInfo);
-    if (result == 0 && pFile != NULL) {
+    if (result == 0 && pFile != NULL)
+    {
         long i = 0;
         long byteOff = i;
-        while ((unsigned long)i < m_OpenFiles.m_EntryCount) {
-            if (m_OpenFiles.m_pEntryLookup[i].pEntry == pFile) {
+        while ((unsigned long)i < m_OpenFiles.m_EntryCount)
+        {
+            if (m_OpenFiles.m_pEntryLookup[i].pEntry == pFile)
+            {
                 pLookup = &m_OpenFiles.m_pEntryLookup[i];
                 goto found;
             }
@@ -497,14 +528,15 @@ s32 MemCard::CloseFile(MC_FILE* pFile)
             i++;
         }
         pLookup = NULL;
-        found:
-        
+    found:
+
         m_OpenFiles.FreeEntry(pFile);
-        
+
         long idx = (pLookup - m_OpenFiles.m_pEntryLookup);
         unsigned long total = m_OpenFiles.m_EntryCount;
-        
-        while ((unsigned long)idx != total) {
+
+        while ((unsigned long)idx != total)
+        {
             next = idx + 1;
             EntryLookup<MC_FILE>* src = &m_OpenFiles.m_pEntryLookup[next];
             EntryLookup<MC_FILE>* dst = &m_OpenFiles.m_pEntryLookup[idx];
@@ -514,7 +546,7 @@ s32 MemCard::CloseFile(MC_FILE* pFile)
             dst->pEntry = entry;
             dst->Id = id;
         }
-        
+
         m_OpenFiles.m_EntryCount = m_OpenFiles.m_EntryCount - 1;
     }
     return result;

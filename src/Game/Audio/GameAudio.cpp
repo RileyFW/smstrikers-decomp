@@ -2,6 +2,15 @@
 #include "NL/nlString.h"
 #include "types.h"
 
+/**
+ * Offset/Address/Size: 0x2128 | 0x8015366C | size: 0x30
+ */
+bool TrackedSFXPitchFreqTypeCheckCallback(unsigned long sfxID, cGameSFX* pGameSFX)
+{
+    const int volGrp = pGameSFX->mpSFX[sfxID].volGrp;
+    return (bool)(volGrp >= 5 && volGrp <= 19);
+}
+
 inline bool IsVolGrpInRange(unsigned long sfxID, cGameSFX* pGameSFX)
 {
     const int volGrp = pGameSFX->mpSFX[sfxID].volGrp;
@@ -352,8 +361,88 @@ bool TrackedSFXPriorityCallback(SFXPlaySet* pPlaySet, unsigned long priority, cG
 /**
  * Offset/Address/Size: 0x1C78 | 0x801531BC | size: 0x154
  */
-void cGameSFX::SetPitchBendOnAllDialogueSFX(unsigned short)
+bool cGameSFX::SetPitchBendOnAllDialogueSFX(unsigned short pitch)
 {
+    bool result;
+
+    if (pitch > 0x3FFF)
+    {
+        pitch = 0x3FFF;
+    }
+
+    if (!mbCurPlaySetIsValid)
+    {
+        result = true;
+        goto epilogue;
+    }
+
+    {
+        SFXPlaySet* pPlaySet;
+        DLListEntry<SFXPlaySet*>* start = nlDLRingGetStart(mpCurPlaySet.m_Head);
+        DLListEntry<SFXPlaySet*>* head = mpCurPlaySet.m_Head;
+        DLListEntry<SFXPlaySet*>* current = start;
+        unsigned short clampedPitch = (unsigned short)pitch;
+
+        while (current != NULL)
+        {
+            pPlaySet = current->m_data;
+
+            if (nlDLRingIsEnd(head, current) || current == NULL)
+            {
+                current = NULL;
+            }
+            else
+            {
+                current = current->m_next;
+            }
+
+            if (pPlaySet->type == (unsigned long)-1)
+            {
+                continue;
+            }
+
+            if (TrackedSFXPitchFreqTypeCheckCallback != NULL)
+            {
+                if (!TrackedSFXPitchFreqTypeCheckCallback(pPlaySet->type, this))
+                {
+                    continue;
+                }
+            }
+
+            if (pPlaySet->bIs3D)
+            {
+                if (!Audio::IsEmitterActive(pPlaySet->emitter))
+                {
+                    continue;
+                }
+                pPlaySet->voiceID = Audio::GetEmitterVoiceID(pPlaySet->emitter);
+            }
+
+            if (pPlaySet->voiceID == Audio::GetSndIDError())
+            {
+                continue;
+            }
+
+            if (!Audio::IsSFXPlaying(pPlaySet->voiceID))
+            {
+                continue;
+            }
+
+            if (pPlaySet->pitch == clampedPitch)
+            {
+                continue;
+            }
+
+            pPlaySet->pitch = clampedPitch;
+            Audio::SetPitchBendOnSFX(pPlaySet->voiceID, clampedPitch);
+        }
+    }
+
+    result = true;
+
+epilogue:
+    muGroupPitch = pitch;
+    return result;
 }
 
 /**
@@ -462,15 +551,6 @@ bool TrackedSFXFilterFreqTypeCheckCallback(unsigned long sfxID, cGameSFX* pGameS
         return false;
     }
     return true;
-}
-
-/**
- * Offset/Address/Size: 0x2128 | 0x8015366C | size: 0x30
- */
-bool TrackedSFXPitchFreqTypeCheckCallback(unsigned long sfxID, cGameSFX* pGameSFX)
-{
-    const int volGrp = pGameSFX->mpSFX[sfxID].volGrp;
-    return (bool)(volGrp >= 5 && volGrp <= 19);
 }
 
 /**

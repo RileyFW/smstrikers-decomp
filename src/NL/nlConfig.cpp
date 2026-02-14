@@ -39,9 +39,56 @@ void Config::Set(const char*, float)
 
 /**
  * Offset/Address/Size: 0x1CF4 | 0x801D4958 | size: 0x120
+ * TODO: 92.9% match - r28/r29 register swap throughout (idx/offset/tvp allocation),
+ * hash loop *p++ lbz r0 + extra extsb r3,r0 (same as Exists), add operand order swap,
+ * copy loop extsb. r3,r3 vs r0,r3, bge vs blt/b branch pattern
  */
-void Config::Set(const char*, bool)
+void Config::Set(const char* tag, bool value)
 {
+    const char* p = tag;
+    u32 hash = 0x1505;
+    while (*p != 0)
+    {
+        s32 c = (s8)nlToUpper(*p++);
+        hash += (hash << 5) + c;
+    }
+    u32 idx = hash & 0x3FF;
+
+    TagValuePair* tvp;
+    do
+    {
+        u32 offset = idx * 12;
+        if (mTvpHash[idx].tag == NULL || nlStrICmp(mTvpHash[idx].tag, tag) == 0)
+        {
+            tvp = (TagValuePair*)((u8*)mTvpHash + offset);
+            break;
+        }
+        idx++;
+        idx &= 0x3FF;
+    } while (true);
+
+    tvp->type = _BOOL;
+    tvp->value.b = value;
+
+    if (tvp->tag == NULL)
+    {
+        char* dest = mStringEnd;
+        s32 ch;
+        while ((ch = *tag) != 0)
+        {
+            if (mStringEnd - mStringMemory >= 0x27FF)
+            {
+                goto done;
+            }
+            *mStringEnd = nlToUpper((char)ch);
+            tag++;
+            mStringEnd++;
+        }
+        *mStringEnd = 0;
+        mStringEnd++;
+    done:
+        tvp->tag = dest;
+    }
 }
 
 /**
@@ -127,10 +174,35 @@ bool Config::IsBool(const char*, bool&) const
 
 /**
  * Offset/Address/Size: 0x2520 | 0x801D5184 | size: 0xC8
+ * TODO: 97.4% match - *p++ forces lbz into r0 + extra extsb r3,r0 (target loads lbz r3
+ * directly), add operand order swap in hash computation (compiler scheduling)
  */
-bool Config::Exists(const char*) const
+bool Config::Exists(const char* tag) const
 {
-    FORCE_DONT_INLINE;
+    const char* p = tag;
+    u32 hash = 0x1505;
+    while (*p != 0)
+    {
+        s32 c = (s8)nlToUpper(*p++);
+        hash += (hash << 5) + c;
+    }
+    u32 startIdx = hash & 0x3FF;
+
+    TagValuePair* tvpHash = mTvpHash;
+    u32 idx = startIdx;
+    do
+    {
+        if (tvpHash[idx].tag == NULL)
+        {
+            return false;
+        }
+        if (nlStrICmp(tvpHash[idx].tag, tag) == 0)
+        {
+            return true;
+        }
+        idx++;
+        idx &= 0x3FF;
+    } while (idx != startIdx);
     return false;
 }
 

@@ -694,6 +694,45 @@ char* GetPowerupName(int powerup)
 /**
  * Offset/Address/Size: 0x0 | 0x80005AAC | size: 0x134
  */
-void GetClosestPointOnSidelines(const nlVector3&)
+nlVector3 GetClosestPointOnSidelines(const nlVector3& v3Position)
 {
+    nlVector3 v3WallPosition;
+    f32 fSign;
+    f32 fDistToGoalLine;
+    f32 fDistToSideline;
+
+    fDistToGoalLine = (f32)fabs(cField::GetGoalLineX(1U) - (f32)fabs(v3Position.f.x));
+    fDistToSideline = (f32)fabs(cField::GetSidelineY(1U) - (f32)fabs(v3Position.f.y));
+
+    if (fDistToGoalLine <= fDistToSideline)
+    {
+        v3WallPosition.f.y = v3Position.f.y;
+        if (v3Position.f.x >= 0.0f)
+        {
+            fSign = 1.0f;
+        }
+        else
+        {
+            fSign = -1.0f;
+        }
+        f32 fGoalX = cField::GetGoalLineX(1U);
+        v3WallPosition.f.x = fGoalX * fSign;
+    }
+    else
+    {
+        if (v3Position.f.y >= 0.0f)
+        {
+            fSign = 1.0f;
+        }
+        else
+        {
+            fSign = -1.0f;
+        }
+        f32 fSideY = cField::GetSidelineY(1U);
+        v3WallPosition.f.y = fSideY * fSign;
+        v3WallPosition.f.x = v3Position.f.x;
+    }
+
+    v3WallPosition.f.z = 0.0f;
+    return v3WallPosition;
 }

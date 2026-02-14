@@ -128,12 +128,59 @@ unsigned long glSetTextureState(unsigned long long& texture, eGLTextureState sta
     return out;
 }
 
+static inline unsigned long SetTextureStateImpl(unsigned long long* pState, eGLTextureState state, unsigned long value)
+{
+    PackedTextureInfo* pInfo = &packed_texture[state];
+    unsigned long long tex = *pState;
+    unsigned long out = 0;
+    s32 cnt = (s32)out;
+    unsigned long long cmp = (unsigned long long)out;
+    unsigned long one = 1;
+    s32 numBits = pInfo->count;
+
+    for (; cnt < numBits; cnt++)
+    {
+        unsigned long long mask = 1ULL << (cnt + pInfo->start_bit);
+        if ((tex & mask) != cmp)
+        {
+            out |= (one << cnt);
+        }
+    }
+
+    numBits = pInfo->count;
+    cnt = 0;
+    for (; cnt < numBits; cnt++)
+    {
+        unsigned long hi;
+        unsigned long lo;
+        if (value & (1 << cnt))
+        {
+            unsigned long long mask = 1ULL << (cnt + pInfo->start_bit);
+            hi = (unsigned long)(*pState >> 32) | (unsigned long)(mask >> 32);
+            lo = (unsigned long)*pState | (unsigned long)mask;
+        }
+        else
+        {
+            u32 startBit = pInfo->start_bit;
+            unsigned long mask32 = 1UL << (cnt + startBit);
+            unsigned long notMask = ~mask32;
+            lo = (unsigned long)*pState & notMask;
+            hi = (unsigned long)(*pState >> 32) & (unsigned long)((s32)notMask >> 31);
+        }
+        *pState = ((unsigned long long)lo) | ((unsigned long long)hi << 32);
+    }
+
+    return out;
+}
+
 /**
  * Offset/Address/Size: 0x2F8 | 0x801DBF3C | size: 0x118
+ * TODO: 98.9% match - r30/r31 register swap for out vs texHi due to MWCC u64
+ * register allocation interleaving. All instructions match, only register diffs.
  */
 unsigned long glSetTextureState(eGLTextureState state, unsigned long value)
 {
-    return 0;
+    return SetTextureStateImpl(&_textureState.m_State, state, value);
 }
 
 /**

@@ -19,6 +19,14 @@
 
 float g_fPassInterceptNoPickupTimer = 5.0f;
 
+extern int g_nHeadSpinMax;
+extern int g_nHeadTiltMax;
+extern int g_nWarioHeadSpinMax;
+extern int g_nWarioHeadTiltMax;
+extern int g_nWaluigiHeadSpinMax;
+extern float g_fFixedUpdateTick;
+extern u16 g_aOOIConstraint;
+
 /**
  * Offset/Address/Size: 0x0 | 0x80057550 | size: 0x20
  */
@@ -172,8 +180,54 @@ void cPlayer::PrePhysicsUpdate(float)
 /**
  * Offset/Address/Size: 0x5D0 | 0x80057B20 | size: 0x148
  */
-void cPlayer::PlayerHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int)
+void cPlayer::PlayerHeadTrackCallback(unsigned int nSelf, unsigned int, cPoseAccumulator* pPoseAccumulator, unsigned int nJointIndex, int)
 {
+    cPlayer& self = *(cPlayer*)(void*)nSelf;
+    nlMatrix4 m4HeadMatrix;
+
+    nlMultMatrices(m4HeadMatrix, pPoseAccumulator->GetNodeMatrix(nJointIndex), self.m_m4WorldMatrix);
+
+    int nHeadSpinMax = g_nHeadSpinMax;
+    int nHeadTiltMax = g_nHeadTiltMax;
+    eCharacterClass cc = self.m_eCharacterClass;
+
+    if (cc == WARIO)
+    {
+        nHeadSpinMax = g_nWarioHeadSpinMax;
+        nHeadTiltMax = g_nWarioHeadTiltMax;
+    }
+    else if (cc == WALUIGI)
+    {
+        nHeadSpinMax = g_nWaluigiHeadSpinMax;
+    }
+
+    eClassTypes classType = self.m_eClassType;
+    float fSmoothTime;
+    if (classType == GOALIE)
+    {
+        fSmoothTime = 0.1f;
+    }
+    else
+    {
+        fSmoothTime = 0.1f;
+    }
+
+    if (classType == GOALIE)
+    {
+        self.m_pHeadTrack->Update(m4HeadMatrix, m4HeadMatrix, g_fFixedUpdateTick, g_aOOIConstraint, nHeadSpinMax, nHeadTiltMax, fSmoothTime);
+
+        cHeadTrack* pHeadTrack = self.m_pHeadTrack;
+        u16 headSpin = (u16)(int)pHeadTrack->m_fHeadSpin;
+        u16 headTilt = (u16)(int)pHeadTrack->m_fHeadTilt;
+        CalcHeadTrackMatrix(headSpin, headTilt, pPoseAccumulator, nJointIndex);
+    }
+    else
+    {
+        nlMatrix4 m4ConstraintMatrix;
+        nlMultMatrices(m4ConstraintMatrix, pPoseAccumulator->GetNodeMatrix(self.m_nSpine1JointIndex), self.m_m4WorldMatrix);
+
+        self.m_pHeadTrack->Update(m4HeadMatrix, m4HeadMatrix, g_fFixedUpdateTick, g_aOOIConstraint, nHeadSpinMax, nHeadTiltMax, fSmoothTime);
+    }
 }
 
 /**

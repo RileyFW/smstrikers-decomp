@@ -2018,9 +2018,40 @@ void cFielder::RunningSABcallback(unsigned int nParam1, cPN_SingleAxisBlender* p
 
 /**
  * Offset/Address/Size: 0x4B70 | 0x8001DEAC | size: 0x138
+ * TODO: 99.6% match - r28/r29 regswap in AllocateBlender inline
  */
 void cFielder::SetRunningAnimState(float)
 {
+    int animIDsArray[3] = {
+        0x0000001B,
+        0x0000001A,
+        0x0000001C,
+    };
+
+    int i;
+    cPN_SAnimController* pChild1;
+    cPN_SingleAxisBlender* pSingleAxisBlender;
+
+    pSingleAxisBlender = CreateSingleAxisBlender(animIDsArray, 3, 1, RunningSABcallback, 0.0f, nullptr);
+
+    pChild1 = (cPN_SAnimController*)pSingleAxisBlender->GetChild(1);
+    pChild1->m_fSynchronizedWeight = 0.0f;
+
+    for (i = 0; i < 3; ++i)
+    {
+        if (i != 1)
+        {
+            cPN_SAnimController* pChild = (cPN_SAnimController*)pSingleAxisBlender->GetChild(i);
+            pChild->m_bIsSynchronized = true;
+            pChild1->m_pSynchronizedController = pChild;
+            pChild1 = pChild;
+        }
+    }
+
+    *m_pAILayer = new ((u8*)AllocateBlender()) cPN_Blender(*m_pAILayer, pSingleAxisBlender, 0.0f);
+
+    FielderTweaks* pTweaks = ((FielderTweaks*)m_pTweaks);
+    InitMovementRunning(pTweaks->fRunningDirectionSeekSpeed, pTweaks->fRunningDirectionSeekFalloff, pTweaks->fRunningAccel, pTweaks->fRunningDecel);
 }
 
 /**
@@ -2262,9 +2293,62 @@ void cFielder::ShouldIStrafe()
 
 /**
  * Offset/Address/Size: 0x39F8 | 0x8001CD34 | size: 0x14C
+ * TODO: 96.4% match - MWCC caches 0.0f init values for nlVector3 locals and
+ * doesn't re-read from stack after GetAIOffNetLocation/GetAIDefNetLocation
+ * write via hidden return pointer. Causes lfs from @sda_const instead of
+ * lfs from stack in both distance computation blocks.
  */
-void cFielder::ShouldITurboWithoutBall()
+bool cFielder::ShouldITurboWithoutBall()
 {
+    if (m_pMark != NULL)
+    {
+        if (m_pTeam->mpCurrentSituation != SITUATION_OFFENSE)
+        {
+            if (m_pMark->m_fDesiredSpeed > m_pTweaks->fRunningSpeed)
+            {
+                return true;
+            }
+
+            nlVector3 offNet;
+            offNet.f.x = 0.0f;
+            offNet.f.y = 0.0f;
+            offNet.f.z = 0.0f;
+            m_pMark->GetAIOffNetLocation(NULL);
+
+            float dx = m_pMark->m_v3Position.f.x - offNet.f.x;
+            float dy = m_pMark->m_v3Position.f.y - offNet.f.y;
+            float distOff = nlSqrt(dx * dx + dy * dy, true);
+
+            nlVector3 defNet;
+            defNet.f.x = 0.0f;
+            defNet.f.y = 0.0f;
+            defNet.f.z = 0.0f;
+            GetAIDefNetLocation(NULL);
+
+            float dx2 = m_v3Position.f.x - defNet.f.x;
+            float dy2 = m_v3Position.f.y - defNet.f.y;
+            float distDef = nlSqrt(dx2 * dx2 + dy2 * dy2, true);
+
+            if (distOff < distDef)
+            {
+                return true;
+            }
+        }
+    }
+
+    if (-9999.9f == m_fDistanceToDesiredPosition)
+    {
+        float dx = m_v3Position.f.x - m_v3DesiredPosition.f.x;
+        float dy = m_v3Position.f.y - m_v3DesiredPosition.f.y;
+        m_fDistanceToDesiredPosition = nlSqrt(dx * dx + dy * dy, true);
+    }
+
+    if (m_fDistanceToDesiredPosition > 5.0f)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 /**

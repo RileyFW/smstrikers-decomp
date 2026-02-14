@@ -137,7 +137,7 @@ public:
     void OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*);
     long FormatCard(const MemCardFunctor&);
     void DeleteFile(const char*, const MemCardFunctor&);
-    void InternalReadFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&);
+    long InternalReadFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&);
     long InternalWriteFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&, bool);
     s32 CloseFile(MemCard::MC_FILE*);
     s32 FileExists(const char*);

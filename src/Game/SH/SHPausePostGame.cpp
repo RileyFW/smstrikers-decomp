@@ -1,7 +1,10 @@
 #include "Game/SH/SHPausePostGame.h"
 
+#include "Game/Audio/AudioLoader.h"
 #include "Game/BaseGameSceneManager.h"
+#include "Game/DB/StatsTracker.h"
 #include "Game/FE/feManager.h"
+#include "Game/Game.h"
 #include "Game/GameInfo.h"
 #include "Game/OverlayManager.h"
 
@@ -150,6 +153,52 @@ void PausePostGameScene::Update(float)
  */
 void PausePostGameScene::OnSelectRematch()
 {
+    Config& cfg = Config::Global();
+    TagValuePair& tvp = cfg.FindTvp("save_stats");
+    bool saveStats;
+    if (tvp.tag == NULL)
+    {
+        cfg.Set("save_stats", false);
+        saveStats = false;
+    }
+    else
+    {
+        if (tvp.type == _BOOL)
+        {
+            saveStats = LexicalCast<bool, bool>(tvp.value.b);
+        }
+        else if (tvp.type == _INT)
+        {
+            saveStats = LexicalCast<bool, int>(tvp.value.i);
+        }
+        else if (tvp.type == _FLOAT)
+        {
+            saveStats = LexicalCast<bool, float>(tvp.value.f);
+        }
+        else if (tvp.type == _STRING)
+        {
+            saveStats = LexicalCast<bool, const char*>(tvp.value.s);
+        }
+        else
+        {
+            saveStats = false;
+        }
+    }
+
+    if (saveStats)
+    {
+        StatsTracker* tracker = nlSingleton<StatsTracker>::s_pInstance;
+        float gameTime = g_pGame->GetGameTime();
+        tracker->WriteStats(gameTime, -1.0f, NULL);
+    }
+
+    nlSingleton<StatsTracker>::s_pInstance->ResetCurrentStats();
+    nlSingleton<OverlayManager>::s_pInstance->Pop();
+    g_pFEInput->EnableAnalogToDPadMapping(FE_ALL_PADS, false);
+    FrontEnd::ExitWinnerScreen();
+    g_pTrackManager->StopAllTracks(0);
+    g_pGame->BeginGame(true, false);
+    FrontEnd::m_bGameOver = false;
 }
 
 /**
@@ -157,9 +206,12 @@ void PausePostGameScene::OnSelectRematch()
  */
 void PausePostGameScene::OnSelectQuit()
 {
-    if (GameInfoManager::Instance()->GetNumPlayers() > 1) {
+    if (GameInfoManager::Instance()->GetNumPlayers() > 1)
+    {
         OverlayManager::Instance()->Push(OVERLAY_BRAG, SCREEN_NOTHING, true);
-    } else {
+    }
+    else
+    {
         FrontEnd::ReturnToFE();
     }
 }
@@ -173,9 +225,12 @@ void PausePostGameScene::OnSelectChangeTeams()
 {
     GameInfoManager::Instance()->mGoToChooseCaptains = true;
     GameInfoManager::Instance()->mMainUserPadNumber = (eFEINPUT_PAD)gPadThatQuit;
-    if (GameInfoManager::Instance()->GetNumPlayers() > 1) {
+    if (GameInfoManager::Instance()->GetNumPlayers() > 1)
+    {
         OverlayManager::Instance()->Push(OVERLAY_BRAG, SCREEN_NOTHING, true);
-    } else {
+    }
+    else
+    {
         FrontEnd::ReturnToFE();
     }
 }

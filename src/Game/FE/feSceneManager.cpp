@@ -3,9 +3,11 @@
 #include "Game/FE/feRender.h"
 #include "NL/nlDLRing.h"
 #include "NL/nlDLListSlotPool.h"
+#include "NL/nlString.h"
 
 extern FEInput* g_pFEInput;
 
+static SlotPool<PackagePushPopMessage> m_PushPopMessageSlotPool__21PackagePushPopMessage;
 static nlDLListSlotPool<PackagePushPopMessage*> m_pushPopMessageQueue;
 
 /**
@@ -62,8 +64,47 @@ void FESceneManager::QueueScenePop()
 /**
  * Offset/Address/Size: 0x42C | 0x8020DA78 | size: 0x114
  */
-void FESceneManager::QueueScenePush(BaseSceneHandler*, const char*)
+void FESceneManager::QueueScenePush(BaseSceneHandler* pSceneHandler, const char* szFilename)
 {
+    PackagePushPopMessage* msg = nullptr;
+
+    if (m_PushPopMessageSlotPool__21PackagePushPopMessage.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&m_PushPopMessageSlotPool__21PackagePushPopMessage, sizeof(PackagePushPopMessage));
+    }
+
+    if (m_PushPopMessageSlotPool__21PackagePushPopMessage.m_FreeList != NULL)
+    {
+        msg = (PackagePushPopMessage*)m_PushPopMessageSlotPool__21PackagePushPopMessage.m_FreeList;
+        m_PushPopMessageSlotPool__21PackagePushPopMessage.m_FreeList = m_PushPopMessageSlotPool__21PackagePushPopMessage.m_FreeList->m_next;
+    }
+
+    msg->m_bPush = true;
+    msg->m_pSceneHandler = pSceneHandler;
+    nlStrNCpy<char>(msg->m_szFilename, szFilename, 0x40);
+    msg->m_pSceneHandler->m_uHashID = nlStringLowerHash(szFilename);
+
+    DLListEntry<PackagePushPopMessage*>* entry = nullptr;
+
+    if (m_pushPopMessageQueue.m_Allocator.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&m_pushPopMessageQueue.m_Allocator, sizeof(DLListEntry<PackagePushPopMessage*>));
+    }
+
+    if (m_pushPopMessageQueue.m_Allocator.m_FreeList != NULL)
+    {
+        entry = (DLListEntry<PackagePushPopMessage*>*)m_pushPopMessageQueue.m_Allocator.m_FreeList;
+        m_pushPopMessageQueue.m_Allocator.m_FreeList = m_pushPopMessageQueue.m_Allocator.m_FreeList->m_next;
+    }
+
+    if (entry != NULL)
+    {
+        entry->m_next = NULL;
+        entry->m_prev = NULL;
+        entry->m_data = msg;
+    }
+
+    nlDLRingAddEnd(&m_pushPopMessageQueue.m_Head, entry);
 }
 
 /**

@@ -93,7 +93,7 @@ public:
     virtual void PostPhysicsUpdate();
     virtual void PreUpdate(float);
     virtual void PrePhysicsUpdate(float);
-    void PlayerHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int);
+    static void PlayerHeadTrackCallback(unsigned int, unsigned int, cPoseAccumulator*, unsigned int, int);
     cPN_SingleAxisBlender* CreateSingleAxisBlender(const int*, int, int, void (*)(unsigned int, cPN_SingleAxisBlender*), float, cPN_SAnimController*);
     virtual void CollideWithWallCallback(const CollisionPlayerWallData*);
     void SetPowerupAnimState(int);

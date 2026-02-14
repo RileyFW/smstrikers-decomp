@@ -4,9 +4,11 @@
 #include "Game/WorldManager.h"
 #include "Game/Drawable/DrawableObj.h"
 #include "NL/gl/gl.h"
+#include "NL/nlFile.h"
 #include "NL/nlString.h"
 
-class NisPlayer : public InterpreterCore {
+class NisPlayer : public InterpreterCore
+{
 public:
     static NisPlayer* Instance();
     void SetExtraNameFilter(const char*);
@@ -64,12 +66,41 @@ static const char* idleFun = "Idle";
 // {
 // }
 
+Presentation::Presentation()
+    : InterpreterCore(10)
+{
+    mByPassWasSkipped = false;
+    mSkipPressed = false;
+    mInsideByPass = false;
+    mByPassing = false;
+    mWaitingForCharacterDirectionSince = 0.0f;
+    mTimeInFunction = 0.0f;
+    mDisplayLetterBox = 0.0f;
+    mLetterBoxDuration = 0.0f;
+    mLetterBoxEnabled = false;
+    mOverlayDelay = 0.0f;
+    mOverlayDisplayLength = 0.0f;
+    mOverlayDisplayed = false;
+    mOverlayToDisplay = SCENE_INVALID;
+    mInterruptWipe = NULL;
+    mUseInterruptWipe = NULL;
+    mQueuedFunction = NULL;
+    mGoalQuality = HIGHLIGHT_QUALITY_EMPTY;
+    unsigned long fileSize = 0;
+    void* bc = nlLoadEntireFile("presentation.bc", &fileSize, 0x20, AllocateStart);
+    LoadByteCode(bc);
+    nlStrNCpy<char>(mCurrentFunction, idleFun, 64);
+    mIsAllowedToSkip[0] = true;
+    mIsAllowedToSkip[1] = true;
+    mIsAllowedToSkip[2] = true;
+    mIsAllowedToSkip[3] = true;
+}
+
 /**
  * Offset/Address/Size: 0x1E58 | 0x8012663C | size: 0x114
  */
 Presentation& Presentation::Instance()
 {
-    FORCE_DONT_INLINE;
     static Presentation instance;
     return instance;
 }
@@ -77,8 +108,11 @@ Presentation& Presentation::Instance()
 /**
  * Offset/Address/Size: 0x1D18 | 0x801264FC | size: 0x140
  */
-void ReadTrophyTexture(void*, unsigned long, void*)
+void ReadTrophyTexture(void* data, unsigned long size, void* userData)
 {
+    Presentation& inst = Presentation::Instance();
+    inst.mTrophyTextureLoaded = true;
+    glEndLoadTextureBundle(data, size);
 }
 
 /**

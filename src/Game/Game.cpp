@@ -5,10 +5,14 @@
 #include "Game/AI/Fielder.h"
 #include "Game/AI/ScriptAction.h"
 #include "Game/AI/Powerups.h"
+#include "Game/AI/AISandbox.h"
+#include "Game/AI/Scripts/ScriptQuestions.h"
 #include "Game/GameInfo.h"
 #include "Game/Camera/CameraMan.h"
 #include "Game/Camera/GameplayCam.h"
 #include "Game/BasicStadium.h"
+#include "Game/DB/StatsTracker.h"
+#include "Game/Formation.h"
 #include "NL/nlConfig.h"
 #include "NL/nlLexicalCast.h"
 #include "NL/nlMath.h"
@@ -245,6 +249,37 @@ void CreateGame()
  */
 void DestroyGame()
 {
+    Config& cfg = Config::Global();
+    bool bWriteStats = GetConfigBool(cfg, "write_stats", false);
+
+    if (bWriteStats)
+    {
+        nlSingleton<StatsTracker>::s_pInstance->WriteStats(g_pGame->m_fGameDuration, -1.0f, NULL);
+    }
+
+    nlSingleton<ScriptQuestionCache>::DestroyInstance();
+
+    AISandbox* p = nlSingleton<AISandbox>::s_pInstance;
+    if (p != NULL)
+    {
+        if (p != NULL)
+        {
+            delete p;
+        }
+        nlSingleton<AISandbox>::s_pInstance = 0;
+    }
+
+    delete g_pTeams[0];
+    delete g_pTeams[1];
+
+    g_pTeams[1] = NULL;
+    g_pTeams[0] = NULL;
+
+    delete g_pGame;
+
+    g_pGame = NULL;
+
+    FormationManager::UnloadFormationSets();
 }
 
 /**

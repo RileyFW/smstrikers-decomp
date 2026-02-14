@@ -222,7 +222,7 @@ void LoadSoundGroup(AudioFileData&, unsigned long, unsigned long, bool);
 void SetupSoundBuffers(AudioFileData&, bool);
 void StopAllSound();
 void Shutdown();
-void Initialize(bool);
+bool Initialize(bool);
 void PurgeSampleFileBuffer();
 void IsEntireSampleFileInMem();
 unsigned char ReadEntireSampleFileIntoMemSync(const char*);

@@ -29,8 +29,7 @@ enum HighlightQuality
 class Presentation : public InterpreterCore
 {
 public:
-    Presentation()
-        : InterpreterCore(1024) { };
+    Presentation();
     virtual ~Presentation() { };
     virtual void DoFunctionCall(unsigned int);
 
@@ -46,14 +45,6 @@ public:
     void StopOverlay();
     void Reset();
 
-    // /* 0x00 */ u8 pad00[0x24];
-    // /* 0x24 */ char m_szCurrentScript[0x5C];
-    // /* 0x80 */ f32 m_fOverlayStartTime;
-    // /* 0x84 */ f32 m_fOverlayDuration;
-    // /* 0x88 */ bool m_bOverlayActive; -> mOverlayDisplayed
-    // /* 0x89 */ u8 pad89[3];
-    // /* 0x8C */ SceneList m_eOverlayScene;
-
     /* 0x24 */ char mCurrentFunction[64];
     /* 0x64 */ bool mByPassWasSkipped;
     /* 0x65 */ bool mSkipPressed;
@@ -61,20 +52,20 @@ public:
     /* 0x67 */ bool mByPassing;
     /* 0x68 */ float mWaitingForCharacterDirectionSince;
     /* 0x6C */ float mTimeInFunction;
-    /* 0x70 */ float mDelayAfterGreatSave;
+    /* 0x70 */ bool mTrophyTextureLoaded;
     /* 0x74 */ float mDisplayLetterBox;
-    /* 0x78 */ bool mLetterBoxEnabled;
-    u32 m_unk; // something is missing here!
-    /* 0x7C */ float mOverlayDelay;
-    /* 0x80 */ float mOverlayDisplayLength;
-    /* 0x84 */ bool mOverlayDisplayed;
-    /* 0x88 */ SceneList mOverlayToDisplay;
-    /* 0x8C */ const char* mInterruptWipe;
-    /* 0x90 */ const char* mUseInterruptWipe;
-    /* 0x94 */ const char* mQueuedFunction;
-    /* 0x98 */ bool mIsAllowedToSkip[4];
-    /* 0x9C */ HighlightQuality mGoalQuality;
-}; // total size: 0xA0
+    /* 0x78 */ float mLetterBoxDuration;
+    /* 0x7C */ bool mLetterBoxEnabled;
+    /* 0x80 */ float mOverlayDelay;
+    /* 0x84 */ float mOverlayDisplayLength;
+    /* 0x88 */ bool mOverlayDisplayed;
+    /* 0x8C */ SceneList mOverlayToDisplay;
+    /* 0x90 */ const char* mInterruptWipe;
+    /* 0x94 */ const char* mUseInterruptWipe;
+    /* 0x98 */ const char* mQueuedFunction;
+    /* 0x9C */ bool mIsAllowedToSkip[4];
+    /* 0xA0 */ HighlightQuality mGoalQuality;
+}; // total size: 0xA4
 
 // class NISData
 // {

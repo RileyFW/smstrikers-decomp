@@ -1,5 +1,6 @@
 #include "Game/Formation.h"
 
+#include "Game/MathHelpers.h"
 #include "Game/AI/AiUtil.h"
 #include "Game/AI/Fielder.h"
 #include "Game/AI/FuzzyVariant.h"
@@ -459,9 +460,60 @@ void FormationEval::GetKeyPositions(cFielder*, nlVector3&, nlVector3*, bool)
 
 /**
  * Offset/Address/Size: 0x1330 | 0x80039580 | size: 0x158
+ * TODO: 98.78% match - float register allocation: X clamp uses f4/f5/f6 shifted by +1
+ * (target: f5=minX, f6=clampX, f4=maxX; actual: f4=minX, f5=clampX, f6=maxX).
+ * Y clamp uses f0/f3 swapped (target: f0=minY, f3=clampY; actual: f3=minY, f0=clampY).
+ * All 16 diffs are register-only (r markers).
  */
-void FormationEval::CalculateDesiredLocation(nlVector3&, cFielder*, bool)
+void FormationEval::CalculateDesiredLocation(nlVector3& destPosition, cFielder* pFielder, bool bExtrapolate)
 {
+    nlVector3 v3KeyAIPosition;
+    nlVector3 v3KeyFormationAIPosition;
+    nlVector2 v2FormationMin;
+    nlVector2 v2FormationMax;
+
+    GetKeyPositions(pFielder, v3KeyAIPosition, &v3KeyFormationAIPosition, bExtrapolate);
+
+    m_pFormationSpec->CalculateExtents(v2FormationMin, v2FormationMax, *(nlVector2*)&v3KeyFormationAIPosition);
+
+    u32 posIndex = m_iFielderFormationPos[pFielder->m_ID];
+    const FormationSpec* pSpec = m_pFormationSpec;
+
+    f32 maxX = v2FormationMax.f.x;
+    f32 minX = v2FormationMin.f.x;
+
+    const FormationPos* pPos = &pSpec->m_Positions[posIndex];
+
+    f32 locY = v3KeyFormationAIPosition.f.y;
+    f32 locX = v3KeyFormationAIPosition.f.x;
+
+    f32 posLocY = pPos->m_Location.f.y;
+    f32 posLocX = pPos->m_Location.f.x;
+
+    f32 dy = posLocY - locY;
+    f32 dx = posLocX - locX;
+
+    f32 clampX = v3KeyAIPosition.f.x;
+    clampX = (clampX >= minX) ? clampX : minX;
+    clampX = (clampX <= maxX) ? clampX : maxX;
+
+    destPosition.f.x = dx + clampX;
+
+    f32 maxY = v2FormationMax.f.y;
+    f32 clampY = v3KeyAIPosition.f.y;
+    f32 minY = v2FormationMin.f.y;
+
+    clampY = (clampY >= minY) ? clampY : minY;
+    clampY = (clampY <= maxY) ? clampY : maxY;
+
+    destPosition.f.y = dy + clampY;
+    f32 zero = 0.0f;
+    destPosition.f.z = zero;
+
+    if (pFielder->m_pTeam->m_nSide != 0)
+    {
+        nlVec3Set(destPosition, -destPosition.f.x, -destPosition.f.y, zero);
+    }
 }
 
 /**

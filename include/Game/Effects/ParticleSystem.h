@@ -47,7 +47,7 @@ class ParticleSystem : public efNode
 public:
     ParticleSystem(EffectsTemplate*, EffectsSpec*);
     ~ParticleSystem();
-    void ClearViews();
+    static void ClearViews();
     static void AddView(eGLView);
     void UpdateCoordSys();
     void UpdateCoordSys(nlMatrix4&);

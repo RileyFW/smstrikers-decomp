@@ -1,12 +1,61 @@
 #include "Game/Physics/Physics.h"
 
 #include "NL/nlMemory.h"
+#include "Game/Ball.h"
+#include "ode/NLGAdditions.h"
+
+extern PhysicsWorld* g_PhysicsWorld;
+extern nlListContainer<PhysicsObject*> g_NetPhysicsObjects;
+static bool sbDisableCollisionDetection;
+static bool sbNonMovingAABBsInitialized;
 
 /**
  * Offset/Address/Size: 0x0 | 0x80132B10 | size: 0x14C
  */
-void PhysicsUpdate(PhysicsWorld*, float)
+void PhysicsUpdate(PhysicsWorld* pWorld, float fDeltaT)
 {
+    if (!sbDisableCollisionDetection)
+    {
+        pWorld->Collide();
+    }
+
+    if (pWorld == g_PhysicsWorld && !sbDisableCollisionDetection)
+    {
+        int ballFlags = dGeomGetGFlags(g_pBall->m_pPhysicsBall->m_geomID);
+
+        if (!sbNonMovingAABBsInitialized)
+        {
+            ListEntry<PhysicsObject*>* entry = g_NetPhysicsObjects.m_Head;
+            while (entry != NULL)
+            {
+                dGeomComputeAABB(entry->data->m_geomID);
+                entry = entry->next;
+            }
+            sbNonMovingAABBsInitialized = true;
+        }
+        else
+        {
+            ListEntry<PhysicsObject*>* entry = g_NetPhysicsObjects.m_Head;
+            while (entry != NULL)
+            {
+                dGeomMarkAABBAsValid(entry->data->m_geomID);
+                entry = entry->next;
+            }
+        }
+
+        PhysicsAIBall* pPhysicsBall = g_pBall->m_pPhysicsBall;
+        if (pPhysicsBall->m_unk_0x58)
+        {
+            dGeomComputeAABB(pPhysicsBall->m_geomID);
+            g_PhysicsWorld->DoCollisions(pPhysicsBall, g_NetPhysicsObjects);
+        }
+
+        dGeomSetGFlags(g_pBall->m_pPhysicsBall->m_geomID, ballFlags);
+    }
+
+    pWorld->PreUpdate();
+    pWorld->Update(fDeltaT, true);
+    pWorld->PostUpdate();
 }
 
 /**

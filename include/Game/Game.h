@@ -8,11 +8,9 @@
 #include "Game/GameTweaks.h"
 #include "Game/ScriptTuning.h"
 
-void DestroyPowerups();
-void DestroyGame();
-void CreateGame();
-// void nlListRemoveStart<ListEntry<unsigned long>>(ListEntry<unsigned long>**, ListEntry<unsigned long>**);
-// void nlListAddEnd<ListEntry<unsigned long>>(ListEntry<unsigned long>**, ListEntry<unsigned long>**, ListEntry<unsigned long>*);
+static void DestroyPowerups();
+static void DestroyGame();
+static void CreateGame();
 
 class Clock;
 class BaseTarget
@@ -32,11 +30,6 @@ enum eGameState
     GS_GAMEPLAY = 4,
     GS_OVERTIME = 5,
 };
-
-struct SomeStructOrClass
-{
-    // TODO: ...
-}; // total size: 0x0
 
 class cGame
 {

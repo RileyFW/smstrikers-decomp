@@ -281,9 +281,63 @@ int RenderSnapshot::NumDrawableObjects() const
 /**
  * Offset/Address/Size: 0x3DC | 0x801130B0 | size: 0x140
  */
-const nlVector3& RenderSnapshot::GetPositionForDrawableObject(int) const
+nlVector3 RenderSnapshot::GetPositionForDrawableObject(int i) const
 {
-    return mCameraUp;
+    int j;
+
+    if (i == 0)
+    {
+        return mBall.mPosition;
+    }
+
+    int charIndex = i - 1;
+    if (charIndex < 10)
+    {
+        const nlVector3* pos = &mCharacters[charIndex].mPosition;
+        return *pos;
+    }
+
+    int remaining = i - 11;
+
+    if (remaining == 0)
+    {
+        if (mChainChomp.mVisible)
+        {
+            return mChainChomp.mPosition;
+        }
+    }
+    else
+    {
+        remaining--;
+    }
+
+    if (remaining == 0)
+    {
+        if (mBowser.mVisible)
+        {
+            return mBowser.mPosition;
+        }
+    }
+    else
+    {
+        remaining--;
+    }
+
+    for (j = 0, i = 0; i < 150; i++, j++)
+    {
+        if (mPowerups[i].mVisible)
+        {
+            if (remaining == 0)
+            {
+                const nlVector3* pos = &mPowerups[j].mPosition;
+                return *pos;
+            }
+            remaining--;
+        }
+    }
+
+    nlVector3 defaultPos = { 0.0f, 0.0f, 0.0f };
+    return defaultPos;
 }
 
 /**

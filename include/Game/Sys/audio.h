@@ -159,7 +159,7 @@ void SetOutputMode(MusyXOutputType);
 void SetPitchBendOnSFX(unsigned long, unsigned short);
 void SetFilterFreqOnSFX(unsigned long, unsigned short);
 void ActivateFilterOnSFX(unsigned long, bool);
-void SetPitchBendOnAllDialogueSFX(unsigned short);
+bool SetPitchBendOnAllDialogueSFX(unsigned short);
 void ActivateFilterOnAllCurrentSFX(bool);
 void SetVolGroupVolume(int, float, int);
 void SetSFXVolumeGroup(unsigned long, int);

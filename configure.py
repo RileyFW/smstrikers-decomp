@@ -809,7 +809,7 @@ config.libs = [
 
             # Audio
             Object(NonMatching, "Game/Audio/CharacterAudio.cpp"),   
-            Object(NonMatching, "Game/Audio/GameAudio.cpp"),   
+            Object(NonMatching, "Game/Audio/GameAudio.cpp", extra_cflags=["-inline deferred"]),   
             Object(NonMatching, "Game/Audio/audio.cpp"),   
             Object(Matching, "Game/Audio/SebringSoundDefines.cpp" , extra_cflags=["-inline deferred"]),   
             Object(NonMatching, "Game/Audio/SoundEventScript.cpp" , extra_cflags=["-inline deferred"]),   

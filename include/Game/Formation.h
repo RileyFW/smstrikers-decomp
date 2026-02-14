@@ -136,8 +136,9 @@ class FormationManager
 public:
     FormationManager(cTeam*);
     ~FormationManager();
-    void LoadFormationSets();
-    void UnloadFormationSets();
+
+    static void LoadFormationSets();
+    static void UnloadFormationSets();
     FormationSpec* GetFormationSpec(eFormation);
     void Update(float);
     void ChooseNewFormations();

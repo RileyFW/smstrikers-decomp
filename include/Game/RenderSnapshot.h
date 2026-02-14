@@ -30,7 +30,7 @@ public:
     void Free();
     void Grab();
     int NumDrawableObjects() const;
-    const nlVector3& GetPositionForDrawableObject(int) const;
+    nlVector3 GetPositionForDrawableObject(int) const;
     void Invalidate();
     void Render(float) const;
     void RenderDebugInfo(const RenderSnapshot&, const RenderSnapshot&, float) const;

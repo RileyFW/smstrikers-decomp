@@ -268,7 +268,7 @@ public:
     float GetSlideAttackSpeed();
     bool SetDesire(eFielderDesireState, float);
     void ShouldIStrafe();
-    void ShouldITurboWithoutBall();
+    bool ShouldITurboWithoutBall();
     void ShouldIWave();
     void TestCollisionForInvicibility(cFielder*);
     void TestButtonsToQueueActions(float);

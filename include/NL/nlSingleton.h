@@ -16,6 +16,7 @@ public:
 
     static void DestroyInstance()
     {
+        FORCE_DONT_INLINE;
         T* p = s_pInstance;
         if (p)
         {

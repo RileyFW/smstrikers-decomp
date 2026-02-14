@@ -41,9 +41,11 @@ struct SFXPlaySet
     /* 0x14 */ float timeStamp;
     /* 0x18 */ int sfxPriority;
     /* 0x1C */ int groupPriority;
+    /* 0x20 */ unsigned short filterFreq;
+    /* 0x22 */ unsigned short pitch;
 
     static SlotPoolBase m_TrackedSFXSlotPool;
-}; // total size: 0x20
+}; // total size: 0x24
 
 class SoundPropAccessor
 {
@@ -79,7 +81,7 @@ public:
     bool IsKeepingTrackOf(unsigned long, SFXPlaySet**);
     bool ActivateFilterOnAllTrackedSFX(bool);
     void SetFilterFreqOnAllTrackedSFX(unsigned short);
-    void SetPitchBendOnAllDialogueSFX(unsigned short);
+    bool SetPitchBendOnAllDialogueSFX(unsigned short);
     void KeepTrack(SFXEmitter*, const Audio::SoundAttributes&, unsigned long);
     void Stop(unsigned long, cGameSFX::StopFlag);
     void StopEmitter(SFXEmitter*, unsigned long);

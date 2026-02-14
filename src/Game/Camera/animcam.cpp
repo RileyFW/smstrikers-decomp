@@ -2,15 +2,19 @@
 
 #include "NL/nlFile.h"
 #include "Game/Render/depthoffield.h"
+#include "Game/FixedUpdateTask.h"
 
 /**
  * Offset/Address/Size: 0x113C | 0x801A5D30 | size: 0x2C
  */
 void EnableDofDebug()
 {
-    if (DepthOfFieldManager::instance.m_bDebugView) {
+    if (DepthOfFieldManager::instance.m_bDebugView)
+    {
         DepthOfFieldManager::instance.m_bDebugView = 0;
-    } else {
+    }
+    else
+    {
         DepthOfFieldManager::instance.m_bDebugView = 1;
     }
 }
@@ -33,7 +37,8 @@ bool cAnimCamera::LoadCameraAnimation(nlChunk* begin, nlChunk* end, const char* 
     cCameraData* pData;
     void* mem = nlMalloc(0x24, 8, false);
     pData = (cCameraData*)mem;
-    if (mem != NULL) {
+    if (mem != NULL)
+    {
         ((cCameraData*)mem)->next = NULL;
         ((cCameraData*)mem)->m_uHashID = 0;
         ((cCameraData*)mem)->m_uKeyCount = 0;
@@ -60,7 +65,8 @@ bool cAnimCamera::LoadCameraAnimation(const char* szFilename, const char* szCame
     nlChunk* begin;
     cCameraData* pCamData;
     void* pData = nlLoadEntireFile(szFilename, &uSize, 0x20, (eAllocType)0);
-    if (pData == NULL) {
+    if (pData == NULL)
+    {
         return false;
     }
     begin = (nlChunk*)((u8*)pData + 8);
@@ -68,7 +74,8 @@ bool cAnimCamera::LoadCameraAnimation(const char* szFilename, const char* szCame
 
     void* mem = nlMalloc(0x24, 8, false);
     pCamData = (cCameraData*)mem;
-    if (mem != NULL) {
+    if (mem != NULL)
+    {
         ((cCameraData*)mem)->next = NULL;
         ((cCameraData*)mem)->m_uHashID = 0;
         ((cCameraData*)mem)->m_uKeyCount = 0;
@@ -205,6 +212,57 @@ void cAnimCamera::Update(float)
 /**
  * Offset/Address/Size: 0x0 | 0x801A4BF4 | size: 0x150
  */
-void cAnimCamera::ManualUpdate(float)
+void cAnimCamera::ManualUpdate(float dt)
 {
+    if (m_bUseSimulationTime)
+    {
+        float lastTime = m_fLastSimulationTime;
+        float duration = 1.0f;
+        if (lastTime < duration)
+        {
+            m_fLastSimulationTime = FixedUpdateTask::mSimulationTime;
+        }
+        else
+        {
+            float simTime = FixedUpdateTask::mSimulationTime;
+            float delta = simTime - lastTime;
+            if (m_pActiveCameraData != NULL)
+            {
+                duration = (float)(m_pActiveCameraData->m_uKeyCount - 1) / 60.0f;
+            }
+            m_fAnimationTime += (delta * m_fAnimationSpeed) / duration;
+            m_fLastSimulationTime = simTime;
+        }
+    }
+    else
+    {
+        float duration;
+        if (m_pActiveCameraData != NULL)
+        {
+            duration = (float)(m_pActiveCameraData->m_uKeyCount - 1) / 60.0f;
+        }
+        else
+        {
+            duration = 1.0f;
+        }
+        m_fAnimationTime += (dt * m_fAnimationSpeed) / duration;
+    }
+
+    if (m_fAnimationTime >= 1.0f)
+    {
+        if (m_bCyclic)
+        {
+            m_fAnimationTime -= 1.0f;
+        }
+        else
+        {
+            m_fAnimationTime = 1.0f;
+        }
+        if (m_EndOfAnimationCallback != NULL)
+        {
+            m_EndOfAnimationCallback();
+        }
+    }
+
+    BuildAnimViewMatrix(m_matView);
 }

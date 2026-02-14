@@ -10,6 +10,8 @@
 extern void nlPrintf(const char*, ...);
 extern u32 sndStackGetAvailableSampleMemory(unsigned long id);
 extern "C" u32 sndStackSetCurrent(u32 id);
+extern "C" u32 sndStackGetSize(void);
+extern "C" unsigned long sndStackAdd(void* buffer, u32 aramAddr, u32 size);
 
 static void* gpEntireSampleFileBufferFirstHalf;
 static void* gpEntireSampleFileBufferSecondHalf;
@@ -50,6 +52,15 @@ static EffectSettings gDPL2AuxAEffectSettings[0x2];
 static EffectSettings gDPL2AuxBEffectSettings[0x2];
 static s32 gAuxAEffectSettings;
 static s32 gAuxBEffectSettings;
+
+static u32 aramMemArray[2];
+static void* (*const sndHookMalloc)(size_t) = musyXAlloc;
+static void (*const sndHookFree)(void*) = musyXFree;
+
+namespace PlatAudio
+{
+static u32 gPrimaryStackSize;
+}
 
 namespace PlatAudio
 {
@@ -167,13 +178,20 @@ bool IsEmitterActive(SFXEmitter* emitter)
 /**
  * Offset/Address/Size: 0x4F8 | 0x801C4CF4 | size: 0x90
  */
-void Update3DSFXEmitter(SFXEmitter* emitter, const nlVector3& pos, const nlVector3& dir, float volume)
+void Update3DSFXEmitter(SFXEmitter* pSFXEmitter, const nlVector3& position, const nlVector3& direction, float maxVol)
 {
     float var_f0;
-    float temp_f6 = 127.0f * volume;
+    float temp_f6 = 127.0f * maxVol;
 
-    SND_FVECTOR pos_vec = { pos.f.x, pos.f.y, pos.f.z };
-    SND_FVECTOR dir_vec = { dir.f.x, dir.f.y, dir.f.z };
+    SND_FVECTOR svPos;
+    svPos.x = position.f.x;
+    svPos.y = position.f.y;
+    svPos.z = position.f.z;
+
+    SND_FVECTOR svDir;
+    svDir.x = direction.f.x;
+    svDir.y = direction.f.y;
+    svDir.z = direction.f.z;
 
     if (temp_f6 < 0.0f)
     {
@@ -183,8 +201,8 @@ void Update3DSFXEmitter(SFXEmitter* emitter, const nlVector3& pos, const nlVecto
     {
         var_f0 = 0.5f;
     }
-    // bool sndUpdateEmitter(SND_EMITTER* em, SND_FVECTOR* pos, SND_FVECTOR* dir, u8 maxVol, SND_ROOM* room);
-    sndUpdateEmitter(&emitter->emitter, &pos_vec, &dir_vec, (s8)(temp_f6 + var_f0), NULL);
+    temp_f6 += var_f0;
+    sndUpdateEmitter(&pSFXEmitter->emitter, &svPos, &svDir, (u8)(s32)temp_f6, NULL);
 }
 
 /**
@@ -212,9 +230,43 @@ void Update3DSFXListener(SND_LISTENER*, const nlVector3&, const nlVector3&, cons
 /**
  * Offset/Address/Size: 0x954 | 0x801C5150 | size: 0x10C
  */
-void Add3DSFXListener(SND_LISTENER*, const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&, float, float, float, float,
-    bool, float)
+void Add3DSFXListener(SND_LISTENER* li, const nlVector3& pos, const nlVector3& dir, const nlVector3& heading, const nlVector3& up, float front_sur, float back_sur, float vol, float volPosOffset, bool doppler, float soundSpeed)
 {
+    SND_FVECTOR sndPos;
+    sndPos.x = pos.f.x;
+    sndPos.y = pos.f.y;
+    sndPos.z = pos.f.z;
+
+    SND_FVECTOR sndDir;
+    sndDir.x = dir.f.x;
+    sndDir.y = dir.f.y;
+    sndDir.z = dir.f.z;
+
+    SND_FVECTOR sndHeading;
+    sndHeading.x = heading.f.x;
+    sndHeading.y = heading.f.y;
+    sndHeading.z = heading.f.z;
+
+    SND_FVECTOR sndUp;
+    sndUp.x = up.f.x;
+    sndUp.y = up.f.y;
+    sndUp.z = up.f.z;
+
+    f32 rounded = 127.0f * vol;
+    f32 adj;
+    if (rounded < 0.0f)
+    {
+        adj = -0.5f;
+    }
+    else
+    {
+        adj = 0.5f;
+    }
+    rounded += adj;
+
+    u32 flags = doppler ? 1 : 0;
+
+    sndAddListenerEx(li, &sndPos, &sndDir, &sndHeading, &sndUp, front_sur, back_sur, soundSpeed, volPosOffset, flags, (u8)(s32)rounded, NULL);
 }
 
 /**
@@ -443,9 +495,49 @@ void Shutdown()
 
 /**
  * Offset/Address/Size: 0x187C | 0x801C6078 | size: 0x11C
+ * 99.86% match - i diffs only (sndHookMalloc/sndHookFree symbol names vs @495 anonymous label)
  */
-void Initialize(bool)
+bool Initialize(bool bUseDSP)
 {
+    SND_HOOKS hooks;
+
+    tDebugPrintManager::Print(DC_SOUND, "Initializing PlatAudio\n");
+
+    hooks.malloc = sndHookMalloc;
+    hooks.free = sndHookFree;
+
+    ARInit(aramMemArray, 2);
+    ARQInit();
+    AIInit(NULL);
+
+    ARAlloc(gPrimaryStackSize);
+
+    sndSetHooks(&hooks);
+
+    u32 flags = 0;
+    flags |= 0x2;
+    if (bUseDSP)
+    {
+        flags |= 0x1;
+    }
+
+    if (!sndIsInstalled())
+    {
+        sndInit(0x40, 0, 0x40, 1, flags, gPrimaryStackSize);
+    }
+
+    _struct_stack_list_0x10* pStack = &stack_list[1];
+    u32 aramAddr = ARAlloc(pStack->unk8);
+    u32 stackSize = sndStackGetSize();
+    u32* buffer = (u32*)nlMalloc(stackSize, 8, false);
+    pStack->id = sndStackAdd(buffer, aramAddr, pStack->unk8);
+    pStack->unk0 = buffer;
+
+    sndVolume(0x7F, 0, 0xFF);
+    sndOutputMode(SND_OUTPUTMODE_STEREO);
+    PrintSoundStackInfo();
+
+    return true;
 }
 
 /**

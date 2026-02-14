@@ -1,6 +1,7 @@
 #include "dolphin/types.h"
 #include "NL/nlMemory.h"
 #include "NL/glx/glxMemory.h"
+#include "NL/glx/glxTexture.h"
 #include "NL/gl/glMatrix.h"
 #include "NL/gl/glConstant.h"
 #include "NL/nlDebug.h"
@@ -69,9 +70,55 @@ u32 glplatFrameAlloc(unsigned long, eGLMemory)
 
 /**
  * Offset/Address/Size: 0x200 | 0x801B6B28 | size: 0x110
+ * TODO: 87.1% match - loop uses addic./bne instead of mtctr/bdnz (CTR loop),
+ * causing register allocation differences (r8 vs r4 accumulator) and loop setup reordering
  */
 void glplatResourceRelease(unsigned long long resourceId)
 {
+    int level = (int)(resourceId & 0xFFFFFFFF);
+
+    n_phys = (u32)(resourceId >> 32);
+
+    glx_BackupTexMarkerLevel(level);
+    gl_ConstantMarkerBackup(level);
+    glInventory.ResourceRelease(level);
+
+    while ((s32)g_uResourceMarker != level)
+    {
+        g_uResourceMarker--;
+    }
+
+    u32 totalAlloc = 0;
+    u32 totalTex = 0;
+    s32 n = g_uResourceMarker;
+    s32 count = n + 1;
+    GLXMemoryInfo* p = g_uResourceAlloc;
+    if (n >= 0)
+    {
+        do
+        {
+            u32 a = p->m_uBytes[0];
+            u32 b = p->m_uBytes[1];
+            u32 c = p->m_uBytes[2];
+            a = a + b;
+            b = p->m_uBytes[3];
+            a = a + c;
+            u32 e = p->m_uBytes[4];
+            a = a + b;
+            u32 g = p->m_uTexBundle;
+            u32 f = p->m_uBytes[5];
+            a = a + e;
+            u32 tex = e - g;
+            p++;
+            a = a + f;
+            totalAlloc = totalAlloc + a;
+            totalTex = totalTex + tex;
+        } while (--count != 0);
+    }
+
+    f32 fConst = 1.0f / 1024.0f;
+    f32 fMB = (f32)totalAlloc * fConst;
+    tDebugPrintManager::Print(DC_GLPLAT, "res release: %dK tex %dK (%.2fM)\n", totalAlloc >> 10, totalTex >> 10, fMB * fConst);
 }
 
 /**

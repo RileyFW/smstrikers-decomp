@@ -61,6 +61,7 @@ typedef int BOOL;
 #ifdef TARGET_PC
 #include <stddef.h>
 #else
+typedef unsigned long size_t;
 #ifndef NULL
 #define NULL 0
 #endif

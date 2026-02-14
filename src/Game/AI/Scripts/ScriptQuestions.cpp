@@ -1484,10 +1484,65 @@ float CloseToSideline(const nlVector3&, const nlVector2*, bool)
 
 /**
  * Offset/Address/Size: 0x1BD4 | 0x8008065C | size: 0x134
+ * TODO: 90.5% match - callee-saved register allocation shift (r25-r31),
+ *       MWCC graph-coloring quirk - register numbers differ but instruction sequence is correct.
  */
-float NearToSideline(const nlVector3&)
+float NearToSideline(const nlVector3& v3Position)
 {
-    return 0.0f;
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+    const nlVector2* pConfidence = &pFuzzyTweaks->vNearToSidelineDistanceConfidence;
+    if (!pConfidence)
+    {
+        pConfidence = &pFuzzyTweaks->vCloseToSidelineDistanceConfidence;
+    }
+
+    float fScore = 0.0f;
+    int i = 0;
+    u32 posU0 = v3Position.as_u32[0];
+    f32 fZero = fScore;
+    u32 posU1 = v3Position.as_u32[1];
+    u32 posU2 = v3Position.as_u32[2];
+    s32 offset = i;
+    f32 posX = v3Position.f.x;
+    const u8* pBase = (const u8*)cField::mSidelines;
+    f32 posY = v3Position.f.y;
+
+    for (; i < 4; i++, offset += 0xC)
+    {
+        const sSideLinePlane* sideline = (const sSideLinePlane*)(pBase + offset);
+        nlVector3 v3Pt;
+
+        v3Pt.as_u32[2] = posU2;
+        v3Pt.as_u32[0] = posU0;
+        v3Pt.as_u32[1] = posU1;
+        v3Pt.f.z = fZero;
+
+        if (fZero == sideline->vNormal.f.x)
+        {
+            v3Pt.f.y = sideline->fDistance * sideline->vNormal.f.y;
+        }
+        else
+        {
+            v3Pt.f.x = sideline->fDistance * sideline->vNormal.f.x;
+        }
+
+        f32 dx = v3Pt.f.x - posX;
+        f32 dy = v3Pt.f.y - posY;
+        float fDistance = nlSqrt(dx * dx + dy * dy, true);
+
+        float fNormalized = NormalizeVal(fDistance, *pConfidence);
+
+        if (fScore >= fNormalized)
+        {
+            fScore = fScore;
+        }
+        else
+        {
+            fScore = fNormalized;
+        }
+    }
+
+    return fScore;
 }
 
 /**
