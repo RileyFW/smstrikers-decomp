@@ -2,6 +2,7 @@
 #include "Game/Render/AnimatedModelExplodable.h"
 #include "Game/Render/StaticModelExplodable.h"
 #include "NL/nlMath.h"
+#include "NL/nlString.h"
 #include "types.h"
 
 float ExplosionFragment::sfFadeOutTime = 1.0f;
@@ -356,20 +357,31 @@ void SidelineExplodableManager::SetVisibilityOfUnexplodedModels(bool* visibility
 
 /**
  * Offset/Address/Size: 0x650 | 0x801679B0 | size: 0xF4
+ * TODO: 99.51% match - loop body still has f0/f1 register assignment swap on m42/m41/m43 loads
  */
 void SidelineExplodableManager::TriggerExplosions(const nlVector3& pos, float explosionRadius)
 {
     SidelineExplodableNode* node = sSidelineExplodableList.m_pStart;
+    float divisor = 25.0f;
+    float posX;
+    float posY;
+    float posZ;
+    float triggerRadius = 1.2f * explosionRadius;
+    posZ = pos.f.z;
+    posY = pos.f.y;
+    posX = pos.f.x;
+
     while (node != NULL)
     {
-        nlVector3 temp_r3_2 = node->mpExplodable->mExplosionFragments.mData[0].GetPosition();
-        float x = temp_r3_2.f.x - pos.f.x;
-        float y = temp_r3_2.f.y - pos.f.y;
-        float z = temp_r3_2.f.z - pos.f.z;
-        float triggerDist = nlSqrt((x * x) + ((y * y) + (z * z)), true);
-        if (triggerDist < (1.2f * explosionRadius))
+        SidelineExplodable* pExplodable = node->mpExplodable;
+        const nlMatrix4& worldMtx = pExplodable->GetWorldMatrix();
+        float dy = worldMtx.f.m43 - posZ;
+        float dx = worldMtx.f.m41 - posX;
+        float dz = worldMtx.f.m42 - posY;
+        float dist = nlSqrt(dy * dy + (dx * dx + dz * dz), true);
+        if (dist < triggerRadius)
         {
-            node->mpExplodable->mfExplodeTime = triggerDist / 25.0f;
+            pExplodable->mfExplodeTime = dist / divisor;
         }
         node = node->next;
     }
@@ -455,8 +467,40 @@ void SidelineExplosionPhysicsObject::PostUpdate()
 /**
  * Offset/Address/Size: 0xA0 | 0x80167400 | size: 0x134
  */
-void SidelineExplodableManager::AssociateEffectWithNearbyFloatingCamera(EmissionController*)
+void SidelineExplodableManager::AssociateEffectWithNearbyFloatingCamera(EmissionController* pEmissionController)
 {
+    const nlVector3& position = pEmissionController->GetPosition();
+    float bestDist = 1e10f;
+    SidelineExplodableNode* node = sSidelineExplodableList.m_pStart;
+    SidelineExplodable* closest = NULL;
+    const char* floatingCamName = "Cam_\0\0\0\0";
+    
+    while (node != NULL)
+    {
+        const nlMatrix4& mat = node->mpExplodable->GetWorldMatrix();
+        nlVector3 diff;
+        nlVec3Sub(diff, mat.GetTranslation(), position);
+        float dist = diff.GetLengthSq3D();
+        if (closest == NULL || dist < bestDist)
+        {
+            closest = node->mpExplodable;
+            bestDist = dist;
+        }
+        node = node->next;
+    }
+    
+    const nlMatrix4& closestMat = closest->GetWorldMatrix();
+    float cdy = closestMat.m[3][1] - position.f.y;
+    float cdx = closestMat.m[3][0] - position.f.x;
+    float closestDist = cdx * cdx + cdy * cdy;
+    if (closestDist < 10000.0f)
+    {
+        ExplodableCategoryData& catData = closest->GetCategoryData();
+        if (nlStrNCmp<char>(catData.mBaseModelName, floatingCamName, 4) == 0)
+        {
+            closest->mpAssociatedEffect = pEmissionController;
+        }
+    }
 }
 
 /**

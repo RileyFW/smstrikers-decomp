@@ -171,6 +171,64 @@ void NetMeshModelLoader::AddEdge(const glModelPacket&, unsigned short, unsigned 
     FORCE_DONT_INLINE;
 }
 
+extern void AddTriangleFromGeometry__18NetMeshModelLoaderFRC13glModelPacketPUs(
+    NetMeshModelLoader*, const glModelPacket&, unsigned short*);
+
+/**
+ * Offset/Address/Size: 0xA80 | 0x80130BD8 | size: 0x110
+ * TODO: 90.1% match - callee-saved register shift (this/packet/numVerts off by one
+ * r26/r27/r28 vs target r27/r28/r26), inner-loop instruction scheduling differences,
+ * and r6 vs r7 for vertexIndices pointer. All are MWCC register allocator/scheduler
+ * behaviors not controllable from C. Call must remain externalized to avoid inlining.
+ */
+void NetMeshModelLoader::ReadEdgesFromGeometryPacket(const glModelPacket& packet)
+{
+    u16 maxVertex = 0;
+
+    if (packet.primType != 1)
+        return;
+
+    DisplayList* pList = dlGetStruct(packet.indexBuffer);
+
+    s32 i = 2;
+    s32 numVerts = packet.numVertices;
+    while (i < numVerts)
+    {
+        u16 vertexIndices[3];
+        s32 j = 0;
+
+        while (j < 3)
+        {
+            u16* ptr;
+            u16* indices = (u16*)&pList->indices;
+            if (indices[1] != 0)
+            {
+                u16 ns = indices[0];
+                s32 vertOff = i + j - 2;
+                s32 stride = (ns - 1) * 2 + 1;
+                ptr = (u16*)((u8*)pList->list + stride * vertOff + 4);
+            }
+            else
+            {
+                u16 ns = indices[0];
+                s32 vertOff = i + j - 2;
+                s32 stride = ns * 2;
+                ptr = (u16*)((u8*)pList->list + stride * vertOff + 3);
+            }
+
+            vertexIndices[j] = *ptr;
+            if (vertexIndices[j] > maxVertex)
+                maxVertex = vertexIndices[j];
+            j++;
+        }
+
+        AddTriangleFromGeometry__18NetMeshModelLoaderFRC13glModelPacketPUs(this, packet, vertexIndices);
+        i++;
+    }
+
+    ProcessEdges(packet, (s32)maxVertex);
+}
+
 /**
  * Offset/Address/Size: 0xB90 | 0x80130CE8 | size: 0xB4
  */
@@ -190,58 +248,6 @@ void NetMeshModelLoader::AddTriangleFromGeometry(const glModelPacket& packet, un
             AddEdge(packet, vertexIndices[j], vertexIndices[(j + 1) % 3]);
         }
     }
-}
-
-/**
- * Offset/Address/Size: 0xA80 | 0x80130BD8 | size: 0x110
- */
-/**
- * TODO: 89.7% match - register allocation shift: all callee-saved regs
- * off by 1 (e.g. this=r26 instead of r27, packet=r27 instead of r28).
- * Also inner loop vertOff computation order differs (j-2+i vs i+j-2)
- * and stride*vertOff+N add order swapped (addi before add vs add before addi).
- * Likely unavoidable MWCC register allocator quirk.
- */
-void NetMeshModelLoader::ReadEdgesFromGeometryPacket(const glModelPacket& packet)
-{
-    u16 maxVertex = 0;
-    DisplayList* pList;
-
-    if (packet.primType != 1)
-        return;
-
-    pList = dlGetStruct(packet.indexBuffer);
-    s32 numVerts = packet.numVertices;
-
-    for (s32 i = 2; i < numVerts; i++)
-    {
-        u16 vertexIndices[3];
-
-        for (s32 j = 0; j < 3; j++)
-        {
-            u16* ptr;
-            u16 hasColor = ((u16*)&pList->indices)[1];
-            if (hasColor)
-            {
-                u16 ns = ((u16*)&pList->indices)[0];
-                s32 vertOff = i + j - 2;
-                s32 stride = (ns - 1) * 2 + 1;
-                ptr = (u16*)((u8*)pList->list + stride * vertOff + 4);
-            }
-            else
-            {
-                u16 ns = ((u16*)&pList->indices)[0];
-                s32 vertOff = i + j - 2;
-                s32 stride = ns * 2;
-                ptr = (u16*)((u8*)pList->list + stride * vertOff + 3);
-            }
-            vertexIndices[j] = *ptr;
-            if (vertexIndices[j] > maxVertex)
-                maxVertex = vertexIndices[j];
-        }
-        AddTriangleFromGeometry(packet, vertexIndices);
-    }
-    ProcessEdges(packet, (s32)maxVertex);
 }
 
 /**

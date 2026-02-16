@@ -10,6 +10,7 @@
 #include "Game/Field.h"
 #include "Game/AnimInventory.h"
 #include "Game/CharacterTriggers.h"
+#include "Game/Game.h"
 #include "Game/GameTweaks.h"
 #include "Game/Team.h"
 #include "Game/AI/FilteredRandom.h"
@@ -30,8 +31,44 @@ void Goalie::InitActionPostWhistle()
 /**
  * Offset/Address/Size: 0x148 | 0x80042C44 | size: 0x150
  */
-void Goalie::WhackSTSPlayer(cFielder*)
+void Goalie::WhackSTSPlayer(cFielder* pFielder)
 {
+    if (pFielder == NULL)
+    {
+        return;
+    }
+
+    if (pFielder->m_pBall != NULL)
+    {
+        pFielder->ReleaseBall();
+    }
+
+    pFielder->SetFacingDirection(m_aActualFacingDirection + 0x8000);
+    pFielder->InitActionSTSHitReact(this);
+    PlayRandomCharDialogue(CHAR_DIALOGUE_HIT, VECTORS, 100.0f, -1.0f);
+    pFielder->PlayAttackReactionSounds(g_pGame->m_pGameTweaks->unk264);
+
+    nlVector3 v3BallVel;
+    float fBallVelMult = ((GoalieTweaks*)m_pTweaks)->fSTSAttackBallVelMult;
+    float vx = (-fBallVelMult) * m_v3Position.f.x;
+    float vz = (-fBallVelMult) * m_v3Position.f.z;
+    float vy = (-fBallVelMult) * m_v3Position.f.y;
+    v3BallVel.f.x = vx;
+    v3BallVel.f.z = vz;
+    v3BallVel.f.y = vy;
+
+    float yRand = nlRandomf(1.0f, &nlDefaultSeed);
+    if ((u32)nlRandom(100, &nlDefaultSeed) > 50)
+    {
+        yRand *= -1.0f;
+    }
+    v3BallVel.f.y += yRand;
+
+    float zRand = nlRandomf(3.0f, &nlDefaultSeed);
+    v3BallVel.f.z = 2.0f + zRand;
+
+    g_pBall->SetVelocity(v3BallVel, SPINTYPE_FORWARD, NULL);
+    g_pBall->m_tNoPickupTimer.SetSeconds(0.5f);
 }
 
 /**
@@ -399,8 +436,7 @@ bool Goalie::IsTeammateHoardingBall()
             {
                 f32 distThresh = 100.0f;
 
-                if (m_v3Position.CalculateDistanceSquared2D(pOwner->m_v3Position) < distThresh ||
-                    m_v3Position.CalculateDistanceSquared2D(pBall->m_v3Position) < distThresh)
+                if (m_v3Position.CalculateDistanceSquared2D(pOwner->m_v3Position) < distThresh || m_v3Position.CalculateDistanceSquared2D(pBall->m_v3Position) < distThresh)
                 {
                     return true;
                 }
@@ -1133,9 +1169,46 @@ bool Goalie::IsOpponentInSTS()
 
 /**
  * Offset/Address/Size: 0x6388 | 0x80048E84 | size: 0x138
+ * TODO: 99.87% match - f30/f31 register swap at second fabs (offset 0x98/0xa4)
  */
 bool Goalie::IsOpponentBallCarrierInRange()
 {
+    cFielder* pFielder = g_pBall->GetOwnerFielder();
+    if ((pFielder != NULL) && !IsOnSameTeam(pFielder))
+    {
+        if (pFielder->m_eActionState == ACTION_SHOOT_TO_SCORE)
+        {
+            return false;
+        }
+
+        f32 fielderX = pFielder->m_v3Position.f.x;
+        f64 absFielderX = __fabs(fielderX);
+
+        bool inBox;
+        if (((f32)absFielderX > (cField::GetPenaltyBoxX(1U) - 2.0f))
+            && (fielderX * m_v3Position.f.x > 2.0f)
+            && ((fielderX = (float)fabs(pFielder->m_v3Position.f.y)) < (2.0f + cField::GetPenaltyBoxY())))
+        {
+            inBox = true;
+        }
+        else
+        {
+            inBox = false;
+        }
+
+        if (inBox)
+        {
+            SkillTweaks* pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pCurrentlyUpdatingTeam->m_nSide);
+            f32 dy = m_v3Position.f.y - pFielder->m_v3Position.f.y;
+            f32 dx = m_v3Position.f.x - pFielder->m_v3Position.f.x;
+            f32 distSq = pSkillTweaks->fAttackCarrierDistance * pSkillTweaks->fAttackCarrierDistance;
+            if ((dx * dx + dy * dy) < distSq)
+            {
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 
@@ -1319,8 +1392,9 @@ void Goalie::InitiatePanicGrab(cPlayer* pPlayer)
 /**
  * Offset/Address/Size: 0x75B4 | 0x8004A0B0 | size: 0x494
  */
-void Goalie::InitiatePickup()
+bool Goalie::InitiatePickup()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -1515,9 +1589,83 @@ void Goalie::ExecutePounce(cPlayer*, bool)
 
 /**
  * Offset/Address/Size: 0xA01C | 0x8004CB18 | size: 0x15C
+ * TODO: 97.47% match - r3/r4 register swap for jump table base address (MWCC allocator quirk),
+ * causes extra mr r3, r31 before CleanGoalieAction and InitiatePickup calls
  */
-void Goalie::PreCollideWithBallCallback(const dContact&)
+bool Goalie::PreCollideWithBallCallback(const dContact& contact)
 {
+    switch (mGoalieActionState)
+    {
+    case GOALIEACTION_SAVE_SETUP:
+    case GOALIEACTION_SAVE_REPOSITION:
+    case GOALIEACTION_SAVE:
+    case GOALIEACTION_MISS_CHIP_SHOT:
+    case GOALIEACTION_DIVE_RECOVER:
+        if (m_eAnimID == 0x6d)
+        {
+            return false;
+        }
+        if (mpSaveData != NULL && mpSaveData->muSaveType == 0x40000)
+        {
+            return false;
+        }
+        break;
+
+    case GOALIEACTION_LOOSEBALL_SETUP:
+    case GOALIEACTION_LOOSEBALL_CATCH:
+    case GOALIEACTION_LOOSEBALL_PICKUP:
+    case GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING:
+    case GOALIEACTION_LOOSEBALL_PURSUE_ROLLING:
+    case GOALIEACTION_LOOSEBALL_DESPERATE:
+    case GOALIEACTION_GRAB_BALL:
+    {
+        CleanGoalieAction();
+
+        mPrevGoalieActionState = mGoalieActionState;
+        mGoalieActionState = GOALIEACTION_LOOSEBALL_PICKUP;
+        mnSubstate = 0;
+
+        SetAnimState(mpLooseBallInfo->mnAnimID, true, 0.2f, false, false);
+        InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+        mMoveDirection = (eGoalieMoveDirection)0;
+        mfTargetTime = 0.0f;
+        mfWaitTime = 0.5f;
+        mbPickedUp = false;
+
+        {
+            const LooseBallInfo* pInfo = mpLooseBallInfo;
+            f32 pickupDist = pInfo->mfPickupDistance;
+            if (0.3f < pickupDist)
+            {
+                f32 pickupTime = pInfo->mfPickupTime;
+                mfTargetTime = (pickupDist - 0.3f) * pickupTime / pickupDist;
+
+                cPN_SAnimController* pAnim = m_pCurrentAnimController;
+                f32 targetTime = mfTargetTime;
+                f32 curTime = pAnim->m_fTime;
+                pAnim->m_fPrevTime = curTime;
+                pAnim->m_fTime = targetTime;
+            }
+        }
+
+        InitiatePickup();
+        return false;
+    }
+
+    case GOALIEACTION_MOVE:
+    case GOALIEACTION_MOVE_WB:
+    case GOALIEACTION_PRE_CROUCH:
+    case GOALIEACTION_OFFPLAY:
+    case GOALIEACTION_SNAP_BALL:
+        if (InitiatePickup())
+        {
+            return false;
+        }
+        break;
+    }
+
+    return true;
 }
 
 /**

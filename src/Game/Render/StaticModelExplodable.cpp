@@ -58,15 +58,17 @@ StaticModelExplodable::~StaticModelExplodable()
 /**
  * Offset/Address/Size: 0x4C | 0x80165510 | size: 0x18
  */
-void StaticModelExplodable::GetCategoryData() const
+ExplodableCategoryData& StaticModelExplodable::GetCategoryData() const
 {
+    return *(ExplodableCategoryData*)0;
 }
 
 /**
  * Offset/Address/Size: 0x44 | 0x80165508 | size: 0x8
  */
-void StaticModelExplodable::GetWorldMatrix() const
+const nlMatrix4& StaticModelExplodable::GetWorldMatrix() const
 {
+    return mWorldMatrix;
 }
 
 /**

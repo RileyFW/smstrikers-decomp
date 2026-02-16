@@ -1,4 +1,6 @@
 #include "Game/FE/feCaptainGridComponent.h"
+#include "Game/FE/feFinder.h"
+#include "Game/FE/tlComponentInstance.h"
 #include "Game/GameInfo.h"
 
 extern unsigned long CaptainCellItems[];
@@ -19,7 +21,8 @@ void ICaptainGridComponent::MoveHighlightToTarget(eTeamID teamID)
 {
     int position;
 
-    switch (teamID) {
+    switch (teamID)
+    {
     case TEAM_DAISY:
         position = 4;
         break;
@@ -67,21 +70,44 @@ eTeamID ICaptainGridComponent::GetSelectedItem() const
     long i = 0;
     eTeamID result = TEAM_INVALID;
 
-    for (; i < count; pItems += 2, i++) {
-        if (selectedItem != (int)pItems[0]) {
+    for (; i < count; pItems += 2, i++)
+    {
+        if (selectedItem != (int)pItems[0])
+        {
             continue;
         }
-        switch (pItems[0]) {
-            case 0: result = TEAM_DAISY; break;
-            case 1: result = TEAM_DONKEYKONG; break;
-            case 2: result = TEAM_LUIGI; break;
-            case 3: result = TEAM_MARIO; break;
-            case 4: result = TEAM_PEACH; break;
-            case 5: result = TEAM_WARIO; break;
-            case 6: result = TEAM_WALUIGI; break;
-            case 7: result = TEAM_YOSHI; break;
-            case 8: result = TEAM_MYSTERY; break;
-            default: result = TEAM_MARIO; break;
+        switch (pItems[0])
+        {
+        case 0:
+            result = TEAM_DAISY;
+            break;
+        case 1:
+            result = TEAM_DONKEYKONG;
+            break;
+        case 2:
+            result = TEAM_LUIGI;
+            break;
+        case 3:
+            result = TEAM_MARIO;
+            break;
+        case 4:
+            result = TEAM_PEACH;
+            break;
+        case 5:
+            result = TEAM_WARIO;
+            break;
+        case 6:
+            result = TEAM_WALUIGI;
+            break;
+        case 7:
+            result = TEAM_YOSHI;
+            break;
+        case 8:
+            result = TEAM_MYSTERY;
+            break;
+        default:
+            result = TEAM_MARIO;
+            break;
         }
     }
     return result;
@@ -94,7 +120,8 @@ void ICaptainGridComponent::IsValid(eTeamID teamID)
 {
     int position;
 
-    switch (teamID) {
+    switch (teamID)
+    {
     case TEAM_DAISY:
         position = 4;
         break;
@@ -137,7 +164,8 @@ void ICaptainGridComponent::SetValid(eTeamID teamID, bool valid)
 {
     int position;
 
-    switch (teamID) {
+    switch (teamID)
+    {
     case TEAM_DAISY:
         position = 4;
         break;
@@ -180,12 +208,15 @@ extern bool g_e3_Build;
  */
 void ICaptainGridComponent::UpdateSuperTeamIconState()
 {
-    if (g_e3_Build) {
+    if (g_e3_Build)
+    {
         return;
     }
 
-    if (GameInfoManager::Instance()->IsSuperTeamUnlocked()) {
-        if (mMapMenu->IsItemActive(8)) {
+    if (GameInfoManager::Instance()->IsSuperTeamUnlocked())
+    {
+        if (mMapMenu->IsItemActive(8))
+        {
             mMapMenu->SetItemActive(8, true);
             return;
         }
@@ -205,6 +236,37 @@ void ICaptainGridComponent::Update(eFEINPUT_PAD)
  */
 void ICaptainGridComponent::RebuildInstanceTable()
 {
+    TLSlide* slide;
+    int i;
+
+    slide = mParentComponent->GetActiveSlide();
+
+    for (i = 0; i < (int)NUM_CAPTAIN_CELL_ITEMS; i++)
+    {
+        TLInstance* inst = FEFinder<TLInstance, 2>::Find(slide,
+            InlineHasher(nlStringLowerHash((const char*)CaptainCellItems[i * 2 + 1])),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0));
+        mInstanceTable[CaptainCellItems[i * 2]] = inst;
+        mMapMenu->ChangeItem((int)CaptainCellItems[i * 2], mInstanceTable[CaptainCellItems[i * 2]]);
+    }
+
+    if (!g_e3_Build)
+    {
+        if (GameInfoManager::Instance()->IsSuperTeamUnlocked() && mMapMenu->IsItemActive(8))
+        {
+            mMapMenu->SetItemActive(8, true);
+        }
+        else
+        {
+            mMapMenu->SetItemActive(8, false);
+        }
+    }
+
+    mMapMenu->UpdateAllItems();
 }
 
 /**

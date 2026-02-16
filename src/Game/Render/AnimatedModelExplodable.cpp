@@ -75,8 +75,9 @@ AnimatedModelExplodable::~AnimatedModelExplodable()
 /**
  * Offset/Address/Size: 0x30 | 0x8015899C | size: 0x18
  */
-void AnimatedModelExplodable::GetCategoryData() const
+ExplodableCategoryData& AnimatedModelExplodable::GetCategoryData() const
 {
+    return *(ExplodableCategoryData*)0;
 }
 
 /**

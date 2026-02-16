@@ -169,9 +169,31 @@ void cTeam::TogglePowerup(bool bToggle)
 /**
  * Offset/Address/Size: 0x1910 | 0x80065CBC | size: 0x13C
  */
-bool cTeam::IncrementPowerupMeter(float)
+bool cTeam::IncrementPowerupMeter(float fIncrement)
 {
-    return false;
+    int nResult = -1;
+    mfPowerupMeter += fIncrement;
+    if (mfPowerupMeter >= 1.0f)
+    {
+        mfPowerupMeter -= 1.0f;
+        nResult = PowerupBase::AwardPowerup(this);
+    }
+    if (nResult < 0)
+    {
+        bool bHasEmptySlot = false;
+        for (int i = 0; i < 2; i++)
+        {
+            if (GetPowerUpByIndex(i).eType == POWER_UP_NONE)
+            {
+                bHasEmptySlot = true;
+            }
+        }
+        if (!bHasEmptySlot)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**

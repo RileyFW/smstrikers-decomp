@@ -32,9 +32,56 @@ void Config::Set(const char*, const char*)
 
 /**
  * Offset/Address/Size: 0x1BC8 | 0x801D482C | size: 0x12C
+ * TODO: 94.3% match - r28/r30 register swap for hash/idx in probe setup,
+ * r29/r30 register swap for idx/offset and r28/r29 swap for dest/src in copy loop,
+ * nlToUpper<Uc> vs nlToUpper<c> template instantiation (i diff),
+ * bge vs blt/b branch pattern in copy loop
  */
-void Config::Set(const char*, float)
+void Config::Set(const char* tag, float value)
 {
+    TagValuePair* tvp;
+    u32 hash = 0x1505;
+    const char* p = tag;
+    while (*p != 0)
+    {
+        s8 c = (s8)nlToUpper((u8)*p++);
+        hash += (hash << 5) + c;
+    }
+    u32 idx = hash & 0x3FF;
+
+    while (true)
+    {
+        u32 offset = idx * 12;
+        if (mTvpHash[idx].tag == NULL || nlStrICmp(mTvpHash[idx].tag, tag) == 0)
+        {
+            tvp = (TagValuePair*)((u8*)mTvpHash + offset);
+            break;
+        }
+        idx++;
+        idx &= 0x3FF;
+    }
+
+    tvp->type = _FLOAT;
+    tvp->value.f = value;
+
+    if (tvp->tag == NULL)
+    {
+        const char* src = tag;
+        char* dest = mStringEnd;
+        while (*src != 0)
+        {
+            if (mStringEnd - mStringMemory >= 0x27FF)
+            {
+                break;
+            }
+            *mStringEnd = nlToUpper((u8)*src);
+            src++;
+            mStringEnd++;
+        }
+        *mStringEnd = 0;
+        mStringEnd++;
+        tvp->tag = dest;
+    }
 }
 
 /**
@@ -155,12 +202,29 @@ void Config::Set(const char* tag, int value)
 
 /**
  * Offset/Address/Size: 0x1F34 | 0x801D4B98 | size: 0xB8
+ * TODO: 98.9% match - nlToUpper<Uc> vs nlToUpper<c> template instantiation (i diff),
+ * r30/r31 register swap for idx/offset in probe loop (MWCC allocator quirk)
  */
-TagValuePair& Config::FindTvp(const char*)
+TagValuePair& Config::FindTvp(const char* tag)
 {
-    FORCE_DONT_INLINE;
-    static TagValuePair defaultTvp = { nullptr, _BOOL, nullptr };
-    return defaultTvp;
+    u32 hash = 0x1505;
+    const char* p = tag;
+    while (*p != 0)
+    {
+        s8 c = (s8)nlToUpper((u8)*p++);
+        hash = hash + (hash << 5) + c;
+    }
+    u32 idx = hash & 0x3FF;
+
+    while (true)
+    {
+        u32 offset = idx * 12;
+        if (mTvpHash[idx].tag == NULL || nlStrICmp(mTvpHash[idx].tag, tag) == 0)
+        {
+            return *(TagValuePair*)((char*)mTvpHash + offset);
+        }
+        idx = (idx + 1) & 0x3FF;
+    }
 }
 
 /**

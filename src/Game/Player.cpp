@@ -10,6 +10,7 @@
 
 #include "Game/CharacterTemplate.h"
 #include "Game/SAnim/pnFeather.h"
+#include "Game/SAnim/pnSingleAxisBlender.h"
 #include "NL/nlString.h"
 
 #include "Game/DB/StatsTracker.h"
@@ -233,10 +234,35 @@ void cPlayer::PlayerHeadTrackCallback(unsigned int nSelf, unsigned int, cPoseAcc
 /**
  * Offset/Address/Size: 0x718 | 0x80057C68 | size: 0x140
  */
-cPN_SingleAxisBlender* cPlayer::CreateSingleAxisBlender(const int*, int, int, void (*)(unsigned int, cPN_SingleAxisBlender*), float, cPN_SAnimController*)
+cPN_SingleAxisBlender* cPlayer::CreateSingleAxisBlender(const int* pSABAnims, int nNumSABAnims, int nPrimaryAnim, void (*fWeightCB)(unsigned int, cPN_SingleAxisBlender*), float fWeightSeek, cPN_SAnimController* pSynchingController)
 {
-    FORCE_DONT_INLINE;
-    return nullptr;
+    cPN_SAnimController* pNewCurrentAnimController;
+    pNewCurrentAnimController = NULL;
+
+    cPN_SingleAxisBlender* pSAB = new (AllocateSingleAxisBlender()) cPN_SingleAxisBlender(nNumSABAnims, fWeightCB, (unsigned int)this, fWeightSeek);
+
+    const int* pAnims = pSABAnims;
+    for (int i = 0; i < nNumSABAnims; i++)
+    {
+        cPN_SAnimController* pNewController = NewAnimController(*pAnims, false, false, NULL, 0);
+        if (pSynchingController != NULL)
+        {
+            pNewController->m_bIsSynchronized = true;
+            pSynchingController->m_pSynchronizedController = pNewController;
+            pSynchingController = pNewController;
+        }
+        pSAB->SetChild(i, pNewController);
+        if (i == nPrimaryAnim)
+        {
+            pNewCurrentAnimController = pNewController;
+        }
+        pAnims++;
+    }
+
+    SetAnimID(pSABAnims[nPrimaryAnim]);
+    m_pCurrentAnimController = pNewCurrentAnimController;
+
+    return pSAB;
 }
 
 /**

@@ -5,7 +5,10 @@
 #include "NL/nlString.h"
 
 extern GLInventory glInventory;
+extern unsigned long ResolvedWhiteTexture;
 
+static u8 g_bPreview;
+static unsigned long FourTexture;
 static glModel* pCylinder;
 static glModel* pBox;
 int MaxProjectedShadows;
@@ -30,9 +33,56 @@ void ShadowStartup()
 
 /**
  * Offset/Address/Size: 0x1558 | 0x8012458C | size: 0x15C
+ * TODO: 97.13% match - preview loop pkt register r28 vs target r26,
+ *       and MWCC schedules li r3 after conditional li r4 for first glSetRasterState(GLS_Culling, v).
  */
-void RenderShadowModel(unsigned long, glModel*, unsigned long)
+void RenderShadowModel(unsigned long flags, glModel* model, unsigned long matrix)
 {
+    unsigned long fourTex;
+    eGLView view = GLV_Shadow1;
+    if (flags & 1)
+        view = GLV_Shadow0;
+
+    if (matrix == 0xFFFFFFFF)
+        matrix = glGetIdentityMatrix();
+
+    if (g_bPreview) {
+        glModelPacket* pkt = model->packets;
+        while (pkt < model->packets + model->numPackets) {
+            glModelPacket* dup = glModelPacketDup(pkt, true);
+            dup->state.texture[0] = ResolvedWhiteTexture;
+            dup->state.matrix = matrix;
+            glViewAttachPacket(GLV_Unshadowed, dup);
+            pkt++;
+        }
+    } else {
+        glModelPacket* pkt;
+        glModelPacket* dup;
+        s32 pass = 0;
+        fourTex = FourTexture;
+        do {
+            pkt = model->packets;
+            while (pkt < model->packets + model->numPackets) {
+                dup = glModelPacketDup(pkt, true);
+                dup->state.texture[0] = fourTex;
+                dup->state.matrix = matrix;
+                glUnHandleizeRasterState(dup->state.raster);
+
+                u32 v = 1;
+                if (pass == 0) v = 2;
+                glSetRasterState(GLS_Culling, v);
+                glSetRasterState(GLS_DepthWrite, 0);
+
+                glSetRasterState(GLS_AlphaBlend, (pass == 0) ? 2 : 7);
+                glSetRasterState(GLS_ColourWrite, 2);
+
+                dup->state.raster = glHandleizeRasterState();
+                glViewAttachPacket(view, dup);
+                pkt++;
+            }
+            pass++;
+        } while (pass < 2);
+    }
 }
 
 /**

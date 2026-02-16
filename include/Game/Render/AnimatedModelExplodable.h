@@ -23,9 +23,9 @@ public:
     static void CleanUp();
     AnimatedModelExplodable(AnimatedModelExplodableCategory, SkinAnimatedNPC*);
     ~AnimatedModelExplodable();
-    void GetCategoryData() const;
-    const nlMatrix4& GetWorldMatrix() const;
+    virtual ExplodableCategoryData& GetCategoryData() const;
     void SetUnexplodedModelVisibility(bool);
+    virtual const nlMatrix4& GetWorldMatrix() const;
     static bool LoadGeometry();
 
     /* 0x2C */ SkinAnimatedNPC* mpAnimatedNPC;

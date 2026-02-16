@@ -63,9 +63,42 @@ void glplatFrameAllocNextFrame()
 /**
  * Offset/Address/Size: 0x140 | 0x801B6A68 | size: 0xC0
  */
-u32 glplatFrameAlloc(unsigned long, eGLMemory)
+u32 glplatFrameAlloc(unsigned long size, eGLMemory mem)
 {
-    return 0;
+    u32 isLow;
+    switch (mem)
+    {
+    case GLM_Header:
+    case GLM_Matrix:
+    case GLM_IndexData:
+        isLow = 1;
+        break;
+    default:
+        isLow = 0;
+        break;
+    }
+
+    u32(*nf)[2] = (u32(*)[2])n_frame;
+    u32(*pf)[2] = (u32(*)[2])p_frame;
+    u32 out;
+    u32 n = nf[i_frame][isLow];
+    u32 p = pf[i_frame][isLow];
+    u32 sum = p + n + 0x1F;
+    out = sum & ~0x1F;
+    u32 next = size + (out - p);
+
+    if (next > FrameMemSizes[isLow])
+    {
+        OSReport("out of frame memory (%s)\n", szMemoryNames[mem]);
+        nlBreak();
+        out = 0;
+    }
+    else
+    {
+        nf[i_frame][isLow] = next;
+    }
+
+    return out;
 }
 
 /**

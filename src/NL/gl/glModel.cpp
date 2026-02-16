@@ -81,7 +81,60 @@ void* glModelDupArrayNoStreams(const glModel* models, unsigned long count, bool 
  */
 glModel* glModelDupNoStreams(const glModel* src, bool arg2, bool arg3)
 {
-    return NULL;
+    glModel* model;
+    glModelPacket* packets;
+
+    if (arg3)
+    {
+        model = (glModel*)glResourceAlloc(0x10, GLM_Header);
+    }
+    else
+    {
+        model = (glModel*)glFrameAlloc(0x10, GLM_Header);
+    }
+
+    if (model == NULL)
+    {
+        return NULL;
+    }
+
+    if (arg3)
+    {
+        packets = (glModelPacket*)glResourceAlloc(src->numPackets * 0x4A, GLM_Header);
+    }
+    else
+    {
+        packets = (glModelPacket*)glFrameAlloc(src->numPackets * 0x4A, GLM_Header);
+    }
+
+    if (packets == NULL)
+    {
+        return NULL;
+    }
+
+    memcpy(model, src, 0x10);
+    memcpy(packets, src->packets, src->numPackets * 0x4A);
+    model->packets = packets;
+
+    if (arg2)
+    {
+        glModelPacket* dst_pack = packets;
+        glModelPacket* src_pack = src->packets;
+        glModelPacket* last_pack = (glModelPacket*)((u8*)src_pack + src->numPackets * 0x4A);
+
+        while (src_pack < last_pack)
+        {
+            if (src_pack->userData != 0)
+            {
+                dst_pack->userData = 0;
+                glUserDup(dst_pack, src_pack, false);
+            }
+            src_pack = (glModelPacket*)((u8*)src_pack + 0x4A);
+            dst_pack = (glModelPacket*)((u8*)dst_pack + 0x4A);
+        }
+    }
+
+    return model;
 }
 
 /**
@@ -139,9 +192,11 @@ glModel* glModelDup(const glModel* src, bool arg1)
 glModelPacket* glModelPacketDup(const glModelPacket* pPacket, bool bUserDup)
 {
     glModelPacket* pResult = (glModelPacket*)glFrameAlloc(sizeof(glModelPacket), GLM_Header);
-    if (pResult != NULL) {
+    if (pResult != NULL)
+    {
         memcpy(pResult, pPacket, sizeof(glModelPacket));
-        if (bUserDup && pPacket->userData != 0) {
+        if (bUserDup && pPacket->userData != 0)
+        {
             pResult->userData = 0;
             glUserDup(pResult, pPacket, false);
         }

@@ -6,6 +6,8 @@
 #include "NL/nlPrint.h"
 #include "NL/gl/gl.h"
 #include "NL/gl/glConstant.h"
+#include "NL/gl/glState.h"
+#include "NL/gl/glMatrix.h"
 
 struct ProjectedShadowParams {
     nlVector4 vLight;           // 0x00, size 0x10

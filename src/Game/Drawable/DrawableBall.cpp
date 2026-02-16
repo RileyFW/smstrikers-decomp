@@ -20,9 +20,28 @@ void DrawableBall::EvaluateFrom(DrawableCharacter& character)
 
 /**
  * Offset/Address/Size: 0x80 | 0x8011DDD0 | size: 0x140
+ * TODO: 99.19% match on scratch - epilogue scheduling diff (LR restore order)
  */
-void DrawableBall::Blend(const float*, const DrawableBall&, const DrawableBall&)
+void DrawableBall::Blend(const float* alpha, const DrawableBall& a, const DrawableBall& b)
 {
+    mPrevOrientation = mOrientation;
+    nlQuatNLerp(mOrientation, a.mOrientation, b.mOrientation, *alpha);
+
+    const f32 t = *alpha;
+
+    mPosition.f.x = (1.0f - t) * a.mPosition.f.x + t * b.mPosition.f.x;
+    mPosition.f.y = (1.0f - t) * a.mPosition.f.y + t * b.mPosition.f.y;
+    mPosition.f.z = (1.0f - t) * a.mPosition.f.z + t * b.mPosition.f.z;
+
+    mVelocity.f.x = (1.0f - t) * a.mVelocity.f.x + t * b.mVelocity.f.x;
+    mVelocity.f.y = (1.0f - t) * a.mVelocity.f.y + t * b.mVelocity.f.y;
+    mVelocity.f.z = (1.0f - t) * a.mVelocity.f.z + t * b.mVelocity.f.z;
+
+    mVisible = a.mVisible && b.mVisible;
+
+    mOwnerIndex = b.mOwnerIndex;
+    mPrevOwnerIndex = b.mPrevOwnerIndex;
+    mPassTargetIndex = b.mPassTargetIndex;
 }
 
 /**

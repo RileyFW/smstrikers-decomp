@@ -223,11 +223,58 @@ void AudioLoader::SetupSoundDefinesAVLTree()
     }
 }
 
+namespace Audio { extern const char* gCharSoundTable[]; }
+
 /**
  * Offset/Address/Size: 0x3DF4 | 0x80147BC0 | size: 0x154
  */
 void AudioLoader::SetupCharSoundTypesAVLTree()
 {
+    const char* const* pSoundTable = Audio::gCharSoundTable;
+    AVLTreeNode** ppRoot;
+    int i;
+
+    ppRoot = (AVLTreeNode**)((char*)&gCharSoundDefineMap + 0x1C);
+    i = 0;
+
+    do
+    {
+        SoundStrToIDNode* p = (SoundStrToIDNode*)nlMalloc(sizeof(SoundStrToIDNode), 8, false);
+        SoundStrToIDNode* newNode = p;
+        p->typeID = -1;
+        p->typeStr = NULL;
+        p->musyxStr = NULL;
+        p->musyxID = -1;
+        p->fVolume = 100.0f;
+        p->fDelay = -1.0f;
+        p->fVolReverb = 100.0f;
+        p->volGrp = -1;
+        p->sfxPriority = 0;
+        p->uHashVal = 0;
+        p->pSoundPropAccessor = NULL;
+        p->bSoundPropTableReloaded = 0;
+        p->pSoundProp = NULL;
+        p->pOwner = NULL;
+        p->lastVoiceID = -1;
+        p->pLastEmitter = NULL;
+        p->m_unk_0x40 = false;
+
+        newNode->typeID = i;
+        newNode->typeStr = pSoundTable[i];
+        newNode->uHashVal = nlStringLowerHash(newNode->typeStr);
+
+        unsigned int key = newNode->uHashVal;
+        AVLTreeNode* existingNode;
+
+        ((AVLTreeUntemplated*)&gCharSoundDefineMap)->AddAVLNode(ppRoot, &key, &newNode, &existingNode, *(unsigned int*)((char*)&gCharSoundDefineMap + 0x24));
+
+        if (existingNode == NULL)
+        {
+            (*(unsigned int*)((char*)&gCharSoundDefineMap + 0x24))++;
+        }
+
+        i++;
+    } while (i < 173);
 }
 
 /**

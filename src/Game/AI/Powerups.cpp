@@ -257,8 +257,9 @@ void PowerupBase::Update(float dt)
 /**
  * Offset/Address/Size: 0x3DFC | 0x8005E6E8 | size: 0x608
  */
-void PowerupBase::AwardPowerup(cTeam*)
+int PowerupBase::AwardPowerup(cTeam*)
 {
+    return 0;
 }
 
 /**

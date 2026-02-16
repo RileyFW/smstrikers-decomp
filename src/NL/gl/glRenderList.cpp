@@ -11,8 +11,36 @@ void GLRenderList::AttachModel(const glModel*, unsigned long)
 /**
  * Offset/Address/Size: 0x36C | 0x801D962C | size: 0xD4
  */
-void gl_ViewAttachPacket(eGLView, unsigned long, const glModelPacket*)
+void gl_ViewAttachPacket(eGLView view, unsigned long layer, const glModelPacket* pPacket)
 {
+    GLRenderList* pList = gl_ViewGetRenderList(view);
+    const glModelPacket* pKey = pPacket;
+
+    if ((s32)pList->m_unk_0x00 < 0x1A && glRenderBuffer.m_bEnabled && glRenderBuffer.m_bExclusive && !glRenderBuffer.m_bSending)
+    {
+        return;
+    }
+
+    GLTexturePacketTree* pTree = pList->texPacketTree[layer];
+    const unsigned int& one = 1;
+    AVLTreeNode* existingNode;
+    pTree->AddAVLNode((AVLTreeNode**)&pTree->m_Root, &pKey, (void*)&one, &existingNode, pTree->m_NumElements);
+
+    unsigned int* pCount;
+    if (existingNode == NULL)
+    {
+        pTree->m_NumElements++;
+        pCount = NULL;
+    }
+    else
+    {
+        pCount = &((AVLTreeEntry<const glModelPacket*, unsigned int>*)existingNode)->value;
+    }
+
+    if (pCount != NULL)
+    {
+        (*pCount)++;
+    }
 }
 
 /**
@@ -55,10 +83,27 @@ void PacketCallbackManager::DoCallback(const glModelPacket*, unsigned int)
 
 /**
  * Offset/Address/Size: 0x9E0 | 0x801D9CA0 | size: 0x108
+ * TODO: 90.2% match - MWCC loop unrolling uses static offsets instead of
+ * per-iteration addi r3,r3,4 pointer bumps seen in target
  */
 bool GLRenderList::IsEmpty() const
 {
-    return true;
+    if (m_unk_0x04 == GLVSort_Texture)
+    {
+        for (unsigned int layer = 0; layer < 7u; layer++)
+        {
+            if (texPacketTree[layer]->m_Root != NULL)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    if (m_unk_0x04 == GLVSort_TransformedDepth || m_unk_0x04 == GLVSort_TransformedMatrixDepth)
+    {
+        return depthPacketTree->m_Root == NULL;
+    }
+    return packetList->m_Head == NULL;
 }
 
 /**
@@ -68,7 +113,8 @@ void GLRenderList::Compact()
 {
     Clear();
 
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 7; i++)
+    {
         u32* ptr = (u32*)((u8*)this + 0x0C + i * 4);
         SlotPoolBase::BaseFreeBlocks((SlotPoolBase*)(*ptr + 4), 0x14);
     }
@@ -83,9 +129,22 @@ void GLRenderList::Compact()
 /**
  * Offset/Address/Size: 0xB68 | 0x801D9E28 | size: 0xA0
  */
+typedef DLListContainerBase<const glModelPacket*, BasicSlotPool<DLListEntry<const glModelPacket*> > > GLPacketListBase;
+
 void GLRenderList::Clear()
 {
-    FORCE_DONT_INLINE;
+    GLPacketListBase* pList;
+    int i;
+    for (i = 0; i < 7; i++)
+    {
+        texPacketTree[i]->Clear();
+    }
+    depthPacketTree->Clear();
+
+    pList = packetList;
+    nlWalkDLRing(pList->m_Head, pList, &GLPacketListBase::DeleteEntry);
+    pList->m_Head = NULL;
+    uDepthInsertNumber = 0;
 }
 
 /**

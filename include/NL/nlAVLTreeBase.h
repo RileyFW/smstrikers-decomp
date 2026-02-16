@@ -189,13 +189,6 @@ void AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::DeleteEntry(AV
     m_Allocator.Free(entry);
 }
 
-template <typename KeyType, typename ValueType, typename AllocatorType, typename CompareType>
-void AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::Clear()
-{
-    DestroyTree(&AVLTreeBase::DeleteEntry);
-    m_NumElements = 0;
-}
-
 // Fix DestroyTree method signature to match DeleteEntry
 template <typename KeyType, typename ValueType, typename AllocatorType, typename CompareType>
 void AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::DestroyTree(void (AVLTreeBase::*deleteFunc)(AVLTreeEntry<KeyType, ValueType>*))
@@ -309,6 +302,13 @@ void AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::InorderWalk(AV
         (cbClass->*cb)(curr->key, &curr->value);
         InorderWalk((AVLTreeEntry<KeyType, ValueType>*)curr->node.right, cbClass, cb);
     }
+}
+
+template <typename KeyType, typename ValueType, typename AllocatorType, typename CompareType>
+void AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::Clear()
+{
+    DestroyTree(&AVLTreeBase::DeleteEntry);
+    m_NumElements = 0;
 }
 
 #endif // _AVLTREEBASE_H_

@@ -106,6 +106,7 @@ void IChooseCaptain::NameComponent::SetSidekickName(unsigned long id)
  */
 void IChooseCaptain::ComponentState::SetCurrentPhase(Phase phase)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -390,10 +391,67 @@ void IChooseCaptain::PushPlayer(eFEINPUT_PAD pad, int side)
 
 /**
  * Offset/Address/Size: 0x1DC | 0x800BDB78 | size: 0x15C
+ * TODO: 96.1% match - r0/r4 register swap for mIsSinglePlayerInput=false store,
+ *       else entry uses li r3,0/li r4,0 instead of mr r3,r4 (MWCC register reuse)
  */
-void IChooseCaptain::PopPlayer(eFEINPUT_PAD)
+void IChooseCaptain::PopPlayer(eFEINPUT_PAD pad)
 {
-    FORCE_DONT_INLINE;
+    int foundIndex = 0;
+    int idx = 0;
+    for (int i = 0; i < mNumTotalPushedPlayers; i++, idx++)
+    {
+        if (mAllPushedPlayers[i] == pad)
+        {
+            foundIndex = idx;
+            break;
+        }
+    }
+
+    for (int i = foundIndex; i < mNumTotalPushedPlayers - 1; i++)
+    {
+        mAllPushedPlayers[i] = mAllPushedPlayers[i + 1];
+        mAllPushedPlayerSides[i] = mAllPushedPlayerSides[i + 1];
+    }
+
+    mNumTotalPushedPlayers--;
+    mIsSinglePlayerInput = false;
+
+    if (mNumTotalPushedPlayers == 1)
+    {
+        mIsSinglePlayerInput = true;
+    }
+    else
+    {
+        int side1Count = 0;
+        int side0Count = 0;
+        IChooseCaptain* p = this;
+        for (int i = 0; i < mNumTotalPushedPlayers; i++)
+        {
+            if (p->mAllPushedPlayerSides[0] == 0)
+            {
+                side0Count++;
+            }
+            else if (p->mAllPushedPlayerSides[0] == 1)
+            {
+                side1Count++;
+            }
+            p = (IChooseCaptain*)((u8*)p + 4);
+        }
+        if (!side0Count || !side1Count)
+        {
+            mIsSinglePlayerInput = true;
+        }
+    }
+
+    if (mNumTotalPushedPlayers != 0 && mIsSinglePlayerInput && mComponentState[1].mCurrentPhase != PHASE_READY && mComponentState[0].mCurrentPhase != PHASE_READY)
+    {
+        mComponentState[1].SetCurrentPhase(PHASE_IDLE);
+    }
+
+    if (mNumTotalPushedPlayers == 1)
+    {
+        mAllPushedPlayerSides[0] = 0;
+    }
 }
 
 /**

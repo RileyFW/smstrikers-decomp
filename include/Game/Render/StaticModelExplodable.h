@@ -22,9 +22,9 @@ public:
     static void CleanUp();
     StaticModelExplodable(StaticModelExplodableCategory, const nlMatrix4&);
     ~StaticModelExplodable();
-    void GetCategoryData() const;
-    void GetWorldMatrix() const;
+    virtual ExplodableCategoryData& GetCategoryData() const;
     void SetUnexplodedModelVisibility(bool);
+    virtual const nlMatrix4& GetWorldMatrix() const;
 
     static bool LoadGeometry();
     static void CreateExplodablesFromHelperObjects();

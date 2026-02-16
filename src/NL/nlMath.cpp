@@ -259,19 +259,19 @@ void nlSinCos(float* presult_sin, float* presult_cos, unsigned short angle)
  */
 float nlSin(unsigned short angle)
 {
-    float a = (float)angle * (6.283185f / 65536.0f);  // Convert to radians (2*PI / 65536)
+    float a = (float)angle * (6.283185f / 65536.0f); // Convert to radians (2*PI / 65536)
     float flip_sign = 1.0f;
-    float working_a = a;  // Create copy like target
+    float working_a = a; // Create copy like target
 
     // Reduce angle to [-PI/2, PI/2]
-    if (a >= 1.5707963f)  // PI/2
+    if (a >= 1.5707963f) // PI/2
     {
-        working_a = a - 3.14159265f;  // PI
+        working_a = a - 3.14159265f; // PI
     }
-    else if (a >= 4.7123889f)  // 3*PI/2
+    else if (a >= 4.7123889f) // 3*PI/2
     {
-        flip_sign = -flip_sign;  // Use fneg pattern
-        working_a = a - 4.7123889f;  // 3*PI/2
+        flip_sign = -flip_sign;     // Use fneg pattern
+        working_a = a - 4.7123889f; // 3*PI/2
     }
 
     // Taylor series
@@ -287,16 +287,21 @@ float nlSin(unsigned short angle)
  */
 float nlRecipSqrt(float x, bool)
 {
-    if (x > 0.0f) {
+    if (x > 0.0f)
+    {
         // Newton-Raphson reciprocal square root
         float y = __frsqrte(x);
         y = 0.5f * y * (3.0f - x * y * y);
         y = 0.5f * y * (3.0f - x * y * y);
         y = 0.5f * y * (3.0f - x * y * y);
         return y;
-    } else if (x != 0.0f) {
+    }
+    else if (x != 0.0f)
+    {
         return NAN;
-    } else {
+    }
+    else
+    {
         return INFINITY;
     }
 }
@@ -304,37 +309,53 @@ float nlRecipSqrt(float x, bool)
 /**
  * Offset/Address/Size: 0x800 | 0x801D1C74 | size: 0xEC
  */
-float nlSqrt(float arg0, bool arg1)
+float nlSqrt(float x, bool bAccurate)
 {
-    return sqrt(arg0);
+    if (x > 0.0f)
+    {
+        double guess = __frsqrte((double)x);
+        guess = 0.5 * guess * (3.0 - guess * guess * x);
+        if (bAccurate)
+        {
+            guess = 0.5 * guess * (3.0 - guess * guess * x);
+            guess = 0.5 * guess * (3.0 - guess * guess * x);
+        }
+        return (float)(x * guess);
+    }
+    else if (x < 0.0)
+    {
+        return NAN;
+    }
+    else
+    {
+        if (__fpclassifyf(x) == FP_NAN)
+        {
+            return NAN;
+        }
+        return x;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x8EC | 0x801D1D60 | size: 0x84
- * TODO: ~39% match - instruction scheduling differences with -O4,p
+ * TODO: 59.4% match - MWCC pipeline scheduler produces different instruction
+ * ordering and register allocation (r5/r6 swap for mulhwu, r0/r4 for addi,
+ * XOR chain decomposition order, store order). Logic is correct.
  */
 #pragma fp_contract off
 float nlRandomf(float fMin, float fMax, unsigned int* pSeed)
 {
-    float range;
-    float scale;
-    unsigned int seed;
-    unsigned int xored;
-    unsigned int s0;
-    unsigned int s1;
-    unsigned int modResult;
+    uint mixed;
+    uint temp;
+    uint seed;
 
-    range = fMax - fMin;
-    scale = fUnk_504;
+    float range = fMax - fMin;
+    float scale = (1.0f / 2147483647.0f) * range;
     seed = *pSeed;
-    scale *= range;
-    modResult = seed % 0x7FFFFFFFu;
-    xored = seed ^ 0x1D872B41;
-    s0 = xored >> 5;
-    s1 = xored ^ s0;
-    *pSeed = s1 ^ (xored ^ (s1 << 27));
-
-    return fMin + scale * (float)modResult;
+    mixed = seed ^ 0x1D872B41;
+    temp = mixed ^ (mixed >> 5);
+    *pSeed = mixed ^ temp ^ (temp << 27);
+    return fMin + scale * (f32)(seed % 0x7FFFFFFFu);
 }
 #pragma fp_contract on
 

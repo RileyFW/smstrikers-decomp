@@ -202,11 +202,73 @@ void cAnimCamera::FreeCameraAnimation(const char* szCameraName)
     }
 }
 
+static inline float GetSimulationDelta(float lastTime, float& simTime)
+{
+    simTime = FixedUpdateTask::mSimulationTime;
+    return simTime - lastTime;
+}
+
 /**
  * Offset/Address/Size: 0x150 | 0x801A4D44 | size: 0x15C
  */
-void cAnimCamera::Update(float)
+void cAnimCamera::Update(float dt)
 {
+    if (!m_LetManagerDoUpdate)
+    {
+        return;
+    }
+
+    if (m_bUseSimulationTime)
+    {
+        float lastTime = m_fLastSimulationTime;
+        float duration = 1.0f;
+        if (lastTime < duration)
+        {
+            m_fLastSimulationTime = FixedUpdateTask::mSimulationTime;
+        }
+        else
+        {
+            float simTime;
+            float delta = GetSimulationDelta(lastTime, simTime);
+            if (m_pActiveCameraData != NULL)
+            {
+                duration = (float)(m_pActiveCameraData->m_uKeyCount - 1) / 30.0f;
+            }
+            m_fAnimationTime += (delta * m_fAnimationSpeed) / duration;
+            m_fLastSimulationTime = simTime;
+        }
+    }
+    else
+    {
+        float duration;
+        if (m_pActiveCameraData != NULL)
+        {
+            duration = (float)(m_pActiveCameraData->m_uKeyCount - 1) / 60.0f;
+        }
+        else
+        {
+            duration = 0.0f;
+        }
+        m_fAnimationTime += (dt * m_fAnimationSpeed) / duration;
+    }
+
+    if (m_fAnimationTime >= 1.0f)
+    {
+        if (m_bCyclic)
+        {
+            m_fAnimationTime -= 1.0f;
+        }
+        else
+        {
+            m_fAnimationTime = 1.0f;
+        }
+        if (m_EndOfAnimationCallback != NULL)
+        {
+            m_EndOfAnimationCallback();
+        }
+    }
+
+    BuildAnimViewMatrix(m_matView);
 }
 
 /**

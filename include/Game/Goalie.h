@@ -137,7 +137,7 @@ public:
     void Update(float);
     void CollideWithBallCallback(cBall*);
     void CollideWithCharacterCallback(CollisionPlayerPlayerData*);
-    void PreCollideWithBallCallback(const dContact&);
+    bool PreCollideWithBallCallback(const dContact&);
     void ExecutePounce(cPlayer*, bool);
     void InitActionPass(bool);
     void InitActionPassIntercept();
@@ -150,7 +150,7 @@ public:
     void FindDesiredGoaliePosition(nlVector3&, nlVector3&, nlVector3&, unsigned short&, const nlVector3*);
     void ShouldReposition();
     void HandleSTSContact(cBall*);
-    void InitiatePickup();
+    bool InitiatePickup();
     void InitiatePanicGrab(cPlayer*);
     bool IsCloseToPlane(const nlVector3&, const nlVector3&, float);
     bool IsInsideGoalieBox(const nlVector3&, float, float);

@@ -2,6 +2,8 @@
 #include "Game/AnimInventory.h"
 #include "Game/Player.h"
 #include "Game/Ball.h"
+#include "Game/CharacterTemplate.h"
+#include "Game/Game.h"
 #include "Game/AI/Fielder.h"
 #include "Game/AI/Powerups.h"
 #include "Game/ReplayManager.h"
@@ -255,8 +257,29 @@ void EmitSolidRumble(cPlayer* player)
 /**
  * Offset/Address/Size: 0x18D0 | 0x801A0680 | size: 0x148
  */
-void EmitElectrocutionExplosion(cCharacter*)
+void EmitElectrocutionExplosion(cCharacter* pCharacter)
 {
+    if (g_pGame->mbCaptainShotToScoreOn)
+    {
+        return;
+    }
+
+    Function<EmissionController&> update2;
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("electrocution_explosion"), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 1.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.92f;
+    {
+        Function<EmissionController&> update;
+        update.mTag = FREE_FUNCTION;
+        update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+        pController->SetUpdateCallback(update);
+    }
+    pCharacter->AttachEffect(pController);
+    pController->m_uUserData = GetCharacterIndex(pCharacter);
+    update2.mTag = FREE_FUNCTION;
+    update2.mFreeFunction = UpdateEmitterFromCharacter;
+    pController->SetUpdateCallback(update2);
 }
 
 /**
@@ -331,8 +354,29 @@ void EmitGoalieCatch(cPlayer*, const char*, bool)
 /**
  * Offset/Address/Size: 0xD2C | 0x8019FADC | size: 0x150
  */
-void EmitShootToScoreHyperStrike(cFielder*)
+void EmitShootToScoreHyperStrike(cFielder* pFielder)
 {
+    Function1<void, EmissionController&> update2;
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("shoot_to_score_hyper"), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 1.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.92f;
+    {
+        Function<EmissionController&> update;
+        update.mTag = FREE_FUNCTION;
+        update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+        pController->SetUpdateCallback(update);
+    }
+    pFielder->AttachEffect(pController);
+    pController->SetPosition(g_pBall->m_v3Position);
+    update2.mTag = FREE_FUNCTION;
+    update2.mFreeFunction = UpdateEmitterFromBall;
+    pController->SetUpdateCallback(update2);
+    if (update2.mTag == FUNCTOR) {
+        delete update2.mFunctor;
+    }
+    update2.mTag = EMPTY;
+    BeginRumbleAction(RUMBLE_SHOOT_TO_SCORE_HYPER, pFielder->GetGlobalPad());
 }
 
 /**
@@ -409,8 +453,27 @@ void EmitTurbo(cPlayer* player, const char* unused)
 /**
  * Offset/Address/Size: 0x6F0 | 0x8019F4A0 | size: 0x148
  */
-void EmitDust(cPlayer*, const char*)
+void EmitDust(cPlayer* player, const char* name)
 {
+    EmissionController* pController = EmissionManager::Create(fxGetGroup(name), 0);
+    const nlVector3 velocity = { 0.0f, 0.0f, 0.0f };
+    pController->SetVelocity(velocity);
+    pController->m_fGround = 0.0f;
+    {
+        Function<EmissionController&> update2;
+        {
+            Function<EmissionController&> update;
+            update.mTag = FREE_FUNCTION;
+            update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+            pController->SetUpdateCallback(update);
+        }
+        player->AttachEffect(pController);
+        pController->m_uUserData = GetCharacterIndex(player);
+        update2.mTag = FREE_FUNCTION;
+        update2.mFreeFunction = UpdateEmitterFromCharacter;
+        pController->SetUpdateCallback(update2);
+    }
+    BeginRumbleAction((eRumbleActionPreset)0, player->GetGlobalPad());
 }
 
 /**

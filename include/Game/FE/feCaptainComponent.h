@@ -43,7 +43,7 @@ public:
     public:
         static void GotoNextPhase();
         static void GotoPreviousPhase();
-        static void SetCurrentPhase(Phase);
+        void SetCurrentPhase(Phase);
 
         /* 0x0 */ Phase mCurrentPhase;
         /* 0x4 */ IChooseCaptain* mParent;

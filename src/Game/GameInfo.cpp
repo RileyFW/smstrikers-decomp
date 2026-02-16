@@ -615,7 +615,18 @@ void GameInfoManager::SetMode(GameInfoManager::eGameModes)
  */
 unsigned long GameInfoManager::GetMemoryCardDataSize() const
 {
-    return 0L;
+    unsigned long size = mMushroomCupSeries.GetSaveDataSize() + sizeof(UserInfo);
+    size += mFlowerCupSeries.GetSaveDataSize();
+    size += mStarCupSeries.GetSaveDataSize();
+    size += mBowserCupSeries.GetSaveDataSize();
+    size += mBowserCupKnockout.GetSaveDataSize();
+    size += mSuperMushroomCupSeries.GetSaveDataSize();
+    size += mSuperFlowerCupSeries.GetSaveDataSize();
+    size += mSuperStarCupSeries.GetSaveDataSize();
+    size += mSuperBowserCupSeries.GetSaveDataSize();
+    size += mSuperBowserCupKnockout.GetSaveDataSize();
+    size += mCustomTournamentInfo.GetSaveDataSize();
+    return size;
 }
 
 /**

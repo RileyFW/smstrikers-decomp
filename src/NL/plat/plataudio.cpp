@@ -440,9 +440,84 @@ unsigned char UnloadAllSoundGroupsOnStack(AudioFileData& fileData, unsigned long
 
 /**
  * Offset/Address/Size: 0x107C | 0x801C5878 | size: 0x150
+ * TODO: 97.68% match - r29/r30 swap (fileData/offset), r26/r27 swap in pop-group
+ * inner loop, and r6/r7 swap in soundGroups loops (MWCC register allocator quirk)
  */
-void UnloadAllSoundGroups(AudioFileData&)
+unsigned char UnloadAllSoundGroups(AudioFileData& fileData)
 {
+    unsigned long* idPtr;
+    _struct_stack_list_0x10* entry;
+    int i;
+
+    sndSilence();
+
+    char* base = (char*)stack_list;
+    int stackEnum = 1;
+    int offset = 0x10;
+
+    do
+    {
+        entry = (_struct_stack_list_0x10*)(base + offset);
+        unsigned long id = entry->id;
+        idPtr = &entry->id;
+        if (!(unsigned char)sndStackSetCurrent(id))
+        {
+            tDebugPrintManager::Print(DC_SOUND, "sndStackSetCurrent failed for stack %d\n", *idPtr);
+            goto next;
+        }
+
+        {
+            u32* numPtr = &entry->unkC;
+            i = 0;
+            while ((unsigned long)i < *numPtr)
+            {
+                if (!sndPopGroup())
+                {
+                    tDebugPrintManager::Print(DC_SOUND, "sndPopGroup failed on stack %d\n", stackEnum);
+                    goto next;
+                }
+                PrintSoundStackInfo();
+                i++;
+            }
+
+            *numPtr = 0;
+        }
+
+        {
+            SndGroupData* grp;
+            i = 0;
+            while (i < fileData.numSoundGroups)
+            {
+                grp = &fileData.soundGroups[i];
+                if ((unsigned long)stackEnum == (unsigned long)grp->stackEnum)
+                {
+                    grp->stackEnum = -1;
+                    grp->uLoadOrder = -1;
+                    grp->loadType = (LoadType)0;
+                }
+                i++;
+            }
+        }
+
+    next:
+        stackEnum--;
+        offset -= 0x10;
+    } while (stackEnum >= 0);
+
+    {
+        SndGroupData* grp;
+        i = 0;
+        while (i < fileData.numSoundGroups)
+        {
+            grp = &fileData.soundGroups[i];
+            grp->stackEnum = -1;
+            grp->uLoadOrder = -1;
+            grp->loadType = (LoadType)0;
+            i++;
+        }
+    }
+
+    return 1;
 }
 
 /**
@@ -658,8 +733,52 @@ unsigned char ReadEntireSampleFileIntoMem(const char* sampleFile)
 /**
  * Offset/Address/Size: 0x1F1C | 0x801C6718 | size: 0x10C
  */
-void UpdateAuxEffectA(MusyXEffectType, void*)
+bool UpdateAuxEffectA(MusyXEffectType type, void* auxEffectSettings)
 {
+    bool result;
+
+    switch (type)
+    {
+    case MUSYX_EFFECT_NONE:
+        return true;
+    case MUSYX_EFFECT_REVERB:
+        result = sndAuxCallbackUpdateSettingsReverbSTD((SND_AUX_REVERBSTD*)auxEffectSettings);
+        if (!result)
+        {
+            nlPrintf("UpdateAuxEffectA: sndAuxCallbackUpdateSettingsReverbSTD failed.\n");
+            return false;
+        }
+        break;
+    case MUSYX_EFFECT_REVERB_HI:
+        result = sndAuxCallbackUpdateSettingsReverbHI((SND_AUX_REVERBHI*)auxEffectSettings);
+        if (!result)
+        {
+            nlPrintf("UpdateAuxEffectA: sndAuxCallbackUpdateSettingsReverbHI failed.\n");
+            return false;
+        }
+        break;
+    case MUSYX_EFFECT_CHORUS:
+        result = sndAuxCallbackUpdateSettingsChorus((SND_AUX_CHORUS*)auxEffectSettings);
+        if (!result)
+        {
+            nlPrintf("UpdateAuxEffectA: sndAuxCallbackUpdateSettingsChorus failed.\n");
+            return false;
+        }
+        break;
+    case MUSYX_EFFECT_DELAY:
+        result = sndAuxCallbackUpdateSettingsDelay((SND_AUX_DELAY*)auxEffectSettings);
+        if (!result)
+        {
+            nlPrintf("UpdateAuxEffectA: sndAuxCallbackUpdateSettingsDelay failed.\n");
+            return false;
+        }
+        break;
+    default:
+        nlPrintf("UpdateAuxEffectA: Unrecognized effect type.\n");
+        return false;
+    }
+
+    return true;
 }
 
 } // namespace PlatAudio

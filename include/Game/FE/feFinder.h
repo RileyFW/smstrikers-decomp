@@ -6,6 +6,8 @@
 struct InlineHasher
 {
     /* 0x0 */ unsigned long m_Hash;
+    InlineHasher() {}
+    InlineHasher(unsigned long h) : m_Hash(h) {}
 }; // total size: 0x4
 
 template <typename T, int N>

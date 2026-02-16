@@ -97,7 +97,7 @@ public:
     /* 0x1C */ virtual void Update(float);
 
     float GetRadius() const;
-    static void AwardPowerup(cTeam*);
+    static int AwardPowerup(cTeam*);
     void CollisionCallback(PhysicsObject*, PhysicsObject*, const nlVector3&, void*);
     void UpdateTransform();
     void PlayPowerupSound(ePowerUpType, PowerupBase::PowerupSound, const nlVector3&, float);

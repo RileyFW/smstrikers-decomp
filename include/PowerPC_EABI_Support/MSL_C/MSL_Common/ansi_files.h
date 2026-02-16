@@ -128,6 +128,7 @@ extern int __position_file(__file_handle handle, fpos_t * position, int mode, __
 
 
 unsigned int __flush_all(void);
+int __flush_line_buffered_output_files(void);
 void __close_all(void);
 
 #ifdef __cplusplus

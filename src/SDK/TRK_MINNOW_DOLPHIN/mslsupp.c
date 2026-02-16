@@ -1,6 +1,7 @@
 #include "PowerPC_EABI_Support/MetroTRK/trk.h"
 
 extern u32 fn_80228F80(u32, u32);
+extern u32 fn_80228F70(u32, u32, size_t*, unsigned char*);
 
 // DSIOResult __read_file(u32 handle, u8* buffer, size_t* count, void* ref_con);
 // DSIOResult __write_file(u32 handle, u8* buffer, size_t* count, void* ref_con);
@@ -38,13 +39,30 @@ int __read_console(__file_handle file, unsigned char* buffer, size_t* count, __i
     return DS_IOError;
 }
 
-int __TRK_write_console(u32 handle, u8* buffer, size_t* count, void* ref_con)
+int __TRK_write_console(__file_handle file, unsigned char* buffer, size_t* count, __idle_proc idle_fn)
 {
+    u32 r0;
+    size_t countTemp;
+
     if (GetUseSerialIO() == 0)
-    {
         return DS_IOError;
+
+    if (GetTRKConnected() == DS_NoError)
+        return DS_IOError;
+
+    countTemp = *count;
+    r0 = fn_80228F70(DSMSG_WriteFile, 1, &countTemp, buffer);
+    *count = countTemp;
+
+    switch ((u8)r0)
+    {
+    case DS_IONoError:
+        return DS_IONoError;
+    case DS_IOEOF:
+        return DS_IOEOF;
     }
-    return __write_file(DS_Stdout, buffer, count, (__idle_proc)ref_con);
+
+    return DS_IOError;
 }
 
 // DSIOResult __read_file(u32 handle, u8* buffer, size_t* count, void* ref_con)

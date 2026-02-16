@@ -210,12 +210,35 @@ unsigned long glGetTextureState(unsigned long long texture, eGLTextureState text
     return out;
 }
 
+static inline unsigned long GetTextureStateImpl(unsigned long long* pTexture, eGLTextureState texturestate)
+{
+    PackedTextureInfo* pInfo = &packed_texture[texturestate];
+    s32 numBits = pInfo->count;
+    unsigned long long texture = *pTexture;
+    s32 cnt = 0;
+    unsigned long out = 0;
+    cnt = (s32)out;
+    unsigned long one = 1;
+    unsigned long long cmp = (unsigned long long)out;
+
+    for (; cnt < numBits; cnt++)
+    {
+        unsigned long long mask = 1ULL << (cnt + pInfo->start_bit);
+        if ((texture & mask) != cmp)
+        {
+            out |= (one << cnt);
+        }
+    }
+
+    return out;
+}
+
 /**
  * Offset/Address/Size: 0x4AC | 0x801DC0F0 | size: 0x9C
  */
-unsigned long glGetTextureState(eGLTextureState)
+unsigned long glGetTextureState(eGLTextureState texturestate)
 {
-    return 0;
+    return GetTextureStateImpl(&_textureState.m_State, texturestate);
 }
 
 /**

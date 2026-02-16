@@ -25,7 +25,16 @@ class ExplodableCategoryData
 {
 public:
     void LoadGeometry();
-};
+
+    /* 0x00 */ const char* mBaseModelName;
+    /* 0x04 */ const char* mFragmentModelName;
+    /* 0x08 */ const char* mUnexplodedModelName;
+    /* 0x0C */ int mNumFragmentModels;
+    /* 0x10 */ unsigned long mUnexplodedModel;
+    /* 0x14 */ unsigned long mFragmentModelList[40];
+    /* 0xB4 */ int mNumStationaryFragments;
+    /* 0xB8 */ nlMatrix4 mInitialTransforms[40];
+}; // total size: 0xAB8
 
 class ExplosionFragment
 {
@@ -54,9 +63,11 @@ class SidelineExplodable
 public:
     SidelineExplodable();
     virtual ~SidelineExplodable();
+    virtual ExplodableCategoryData& GetCategoryData() const;
     virtual void Allocate();
-    virtual void Update(float);
-    virtual void Initialize(int);
+    void Update(float);
+    void Initialize(int);
+    virtual const nlMatrix4& GetWorldMatrix() const;
     void Explode();
     void DestroyAllActiveFragments(bool);
     void FindExplosionAngleRange(unsigned short&, unsigned short&) const;
@@ -117,11 +128,11 @@ public:
     static int GetNumExplodables();
     static void GetVisibilityOfExplodableModels(bool* visibility, int numExplodables);
     static void SetVisibilityOfUnexplodedModels(bool* visibility, int numExplodables);
-    void TriggerExplosions(const nlVector3&, float);
+    static void TriggerExplosions(const nlVector3&, float);
     static void DestroyAllActiveFragments(bool renewExplodables);
     static void RemoveSidelineExplodable(SidelineExplodable*);
     static ExplosionFragment* GetFragmentFromHandle(unsigned short);
-    void AssociateEffectWithNearbyFloatingCamera(EmissionController*);
+    static void AssociateEffectWithNearbyFloatingCamera(EmissionController*);
     static void UnAssociateEffectWithNearbyFloatingCamera(EmissionController* pEmissionController);
 
     static ExplosionFragment** sFragmentLookupTable;
