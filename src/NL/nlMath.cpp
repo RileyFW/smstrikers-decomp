@@ -198,51 +198,53 @@ float nlTan(unsigned short angle)
 
 /**
  * Offset/Address/Size: 0x460 | 0x801D18D4 | size: 0x12C
+ * TODO: 96.33% match - MWCC keeps clamped rad in f6 instead of f7 through NR/compare path,
+ *       causing widespread f-register allocation differences in polynomial/sqrt sequence
  */
-float nlACos(float arg0)
+unsigned short nlACos(float x)
 {
-    f32 temp_f1;
-    f32 temp_f1_2;
-    f32 temp_f1_3;
-    f32 temp_f2;
-    f32 temp_f8;
-    f32 var_f0;
-    f32 var_f7;
+    u8 complement = (x < 0.0f);
+    f32 y, temp, sqrtVal, rad;
 
-    temp_f8 = 1.0f - fabs(arg0);
-    var_f7 = 2.0f * temp_f8;
-    if (var_f7 >= 0.00001f)
+    x = 1.0f - (f32)fabs(x);
+
+    temp = 0.015098966f * x + 0.005516444f;
+    y = x * temp + 0.047654245f;
+    y = x * y + 0.16391061f;
+    y = x * y + 2.0002916f;
+    y = x * y + -0.000007239284f;
+
+    rad = 2.0f * x;
+
+    rad = (rad >= 0.00001f) ? rad : 0.00001f;
+
+    if (rad > 0.0f)
     {
+        f32 t = (f32)__frsqrte(rad);
+        f32 t2 = 0.5f * t * -(rad * (t * t) - 3.0f);
+        f32 t3 = 0.5f * t2 * -(rad * (t2 * t2) - 3.0f);
+        sqrtVal = 0.5f * t3 * -(rad * (t3 * t3) - 3.0f);
     }
     else
     {
-        var_f7 = 0.00001f;
+        f32 zero = 0.0f;
+        if (rad != zero)
+        {
+            sqrtVal = *(f32*)&__float_nan;
+        }
+        else
+        {
+            sqrtVal = *(f32*)&__float_huge;
+        }
     }
-    if (var_f7 > 0.0f)
+
+    rad = y * sqrtVal;
+
+    if (complement)
     {
-        temp_f1 = __frsqrte(var_f7);
-        temp_f1_2 = 0.5f * temp_f1 * -((var_f7 * (temp_f1 * temp_f1)) - 3.0f);
-        temp_f1_3 = 0.5f * temp_f1_2 * -((var_f7 * (temp_f1_2 * temp_f1_2)) - 3.0f);
-        var_f0 = 0.5f * temp_f1_3 * -((var_f7 * (temp_f1_3 * temp_f1_3)) - 3.0f);
+        return (unsigned short)(s32)(10430.378f * (3.1415927f - rad));
     }
-    else if (var_f7 != 0.0f)
-    {
-        var_f0 = *(float*)&__float_nan;
-    }
-    else
-    {
-        var_f0 = *(float*)&__float_huge;
-    }
-    temp_f2
-        = ((temp_f8
-               * ((temp_f8 * ((temp_f8 * ((temp_f8 * ((0.015098966f * temp_f8) + 0.005516444f)) + 0.047654245f)) + 0.16391061f)) + 2.0002916f))
-              + -0.000007239284f)
-        * var_f0;
-    // if ((M2C_ERROR(/* unknown instruction: mfcr $r0 */) >> 0x1F) != 0)
-    {
-        return 10430.378f * (3.1415927f - temp_f2);
-    }
-    return 10430.378f * temp_f2;
+    return (unsigned short)(s32)(10430.378f * rad);
 }
 
 /**

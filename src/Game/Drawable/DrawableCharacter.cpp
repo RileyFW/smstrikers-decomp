@@ -1,6 +1,7 @@
 #include "Game/Drawable/DrawableCharacter.h"
 #include "Game/Character.h"
 #include "Game/Player.h"
+#include "Game/Team.h"
 #include "Game/AI/HeadTrack.h"
 #include "Game/PoseAccumulator.h"
 
@@ -144,8 +145,36 @@ void DrawableCharacter::BuildNodeMatrices()
 /**
  * Offset/Address/Size: 0x26C4 | 0x8011B574 | size: 0x130
  */
-void DrawableCharacter::Render(cCharacter&) const
+void DrawableCharacter::Render(cCharacter& character) const
 {
+    if (!mVisible)
+    {
+        return;
+    }
+
+    character.PoseSkinMesh(mPoseAccumulator);
+
+    if (mCharacter->m_pPropModel != NULL)
+    {
+        nlMatrix4& nodeMatrix = mPoseAccumulator->GetNodeMatrix(character.m_nPropJointIndex);
+        mCharacter->m_pPropModel->m_worldMatrix = nodeMatrix;
+    }
+
+    cCharacter* renderOnly = spRenderOnlyThisCharacter;
+    if (renderOnly != NULL && renderOnly != &character)
+    {
+        if (!sbRenderOpposingGoalieToo)
+        {
+            return;
+        }
+        cTeam* otherTeam = ((cPlayer*)renderOnly)->m_pTeam->GetOtherTeam();
+        if (&character != (cCharacter*)otherTeam->GetGoalie())
+        {
+            return;
+        }
+    }
+
+    SendToGl(character);
 }
 
 /**
@@ -160,6 +189,7 @@ void FindBoundingSphereAccurate(nlVector3*, float*, int, const nlVector3*)
  */
 void DrawableCharacter::SendToGl(const cCharacter&) const
 {
+    FORCE_DONT_INLINE;
 }
 
 // /**

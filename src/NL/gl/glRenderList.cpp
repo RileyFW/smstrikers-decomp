@@ -61,8 +61,9 @@ void PacketCallbackManager::ListCallback(const glModelPacket** pPacketPtr)
 /**
  * Offset/Address/Size: 0x6F8 | 0x801D99B8 | size: 0x28
  */
-void PacketCallbackManager::DepthCallback(const DepthPacketPair&, unsigned int*)
+void PacketCallbackManager::DepthCallback(const DepthPacketPair& key, unsigned int* count)
 {
+    DoCallback(key.packet, *count);
 }
 
 /**

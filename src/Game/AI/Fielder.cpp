@@ -8,6 +8,7 @@
 #include "Game/Ball.h"
 #include "Game/BasicStadium.h"
 #include "Game/CharacterTriggers.h"
+#include "Game/FixedUpdateTask.h"
 #include "Game/Game.h"
 #include "Game/GameInfo.h"
 #include "Game/Render/Bowser.h"
@@ -961,22 +962,28 @@ void cFielder::DoHandleActiveShotMeter()
 /**
  * Offset/Address/Size: 0x8A18 | 0x80021D54 | size: 0x290
  */
-void cFielder::DoLooseBallContactFromIdle(nlVector3&, float&, nlVector3&, float&, unsigned short, const LooseBallContactAnimInfo*)
+bool cFielder::DoLooseBallContactFromIdle(nlVector3&, float&, nlVector3&, float&, unsigned short, const LooseBallContactAnimInfo*)
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x87A8 | 0x80021AE4 | size: 0x270
  */
-void cFielder::DoLooseBallContactFromRun(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&)
+bool cFielder::DoLooseBallContactFromRun(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&)
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x84AC | 0x800217E8 | size: 0x2FC
  */
-void cFielder::DoLooseBallContactFromRunVolley(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&)
+bool cFielder::DoLooseBallContactFromRunVolley(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&)
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
@@ -2318,6 +2325,67 @@ bool cFielder::ShouldITurboWithoutBall()
  */
 void cFielder::ShouldIWave()
 {
+    cFielder* pOwner = g_pBall->GetOwnerFielder();
+    if (pOwner == NULL)
+    {
+        return;
+    }
+
+    if (g_pBall->GetOwnerFielder() == this)
+    {
+        return;
+    }
+
+    if (!IsOnSameTeam(g_pBall->GetOwnerFielder()))
+    {
+        return;
+    }
+
+    if (m_nPowerupAnimID < 0 && ((cPoseNode*)m_pPowerupLayer)->GetChild(1) == NULL)
+    {
+        if (g_pBall->GetOwnerFielder()->DoCalcCanDoPerfectPass(this, m_v3Position))
+        {
+            SetPowerupAnimState(99);
+
+            static float fTimer;
+            static s8 init;
+
+            if (!init)
+            {
+                fTimer = 0.0f;
+                init = true;
+            }
+
+            if (FixedUpdateTask::mSimulationTime < fTimer)
+            {
+                fTimer = 0.0f;
+            }
+
+            if (fTimer != 0.0f)
+            {
+                if (FixedUpdateTask::mSimulationTime - fTimer < 3.0f)
+                {
+                    return;
+                }
+            }
+
+            fTimer = FixedUpdateTask::mSimulationTime;
+            PlayRandomCharDialogue(CHAR_DIALOGUE_WAVE, VECTORS, 1.0f, 0.5f);
+        }
+    }
+    else
+    {
+        if (((cPoseNode*)m_pPowerupLayer)->GetChild(1) != NULL)
+        {
+            if (m_nPowerupAnimID < 0)
+            {
+                if (!g_pBall->GetOwnerFielder()->DoCalcCanDoPerfectPass(this, m_v3Position))
+                {
+                    ClearPowerupAnimState(false);
+                }
+            }
+        }
+    }
 }
 
 /**

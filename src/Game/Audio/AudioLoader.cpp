@@ -1,5 +1,7 @@
 #include "Game/Audio/AudioLoader.h"
 #include "Game/Audio/SebringSoundDefines.h"
+#include "Game/Audio/SoundEventScript.h"
+#include "Game/Sys/debug.h"
 #include "dolphin/arq.h"
 
 /**
@@ -223,7 +225,10 @@ void AudioLoader::SetupSoundDefinesAVLTree()
     }
 }
 
-namespace Audio { extern const char* gCharSoundTable[]; }
+namespace Audio
+{
+extern const char* gCharSoundTable[];
+}
 
 /**
  * Offset/Address/Size: 0x3DF4 | 0x80147BC0 | size: 0x154
@@ -758,6 +763,7 @@ void AudioLoader::LoadFEButtonSoundGroup()
  */
 void AudioLoader::LoadPermanentSoundGroups(bool)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -765,6 +771,54 @@ void AudioLoader::LoadPermanentSoundGroups(bool)
  */
 void AudioLoader::LoadInGame()
 {
+    if (gbDisableAudio)
+    {
+        return;
+    }
+
+    bool bLoaded = false;
+    if (sebringAudioGroups[1].uLoadOrder > -1 && sebringAudioGroups[1].stackEnum > -1)
+    {
+        bLoaded = true;
+    }
+
+    if (bLoaded)
+    {
+        if (!PlatAudio::UnloadSoundGroup(sebringAudioFileData, 1))
+        {
+            tDebugPrintManager::Print(DC_SOUND, "LoadInGame: Failed to unload sound group 1\n");
+        }
+    }
+
+    bLoaded = false;
+    if (sebringAudioGroups[0].uLoadOrder > -1 && sebringAudioGroups[0].stackEnum > -1)
+    {
+        bLoaded = true;
+    }
+
+    if (bLoaded)
+    {
+        if (!PlatAudio::UnloadSoundGroup(sebringAudioFileData, 0))
+        {
+            tDebugPrintManager::Print(DC_SOUND, "LoadInGame: Failed to unload sound group 0\n");
+        }
+    }
+
+    LoadPermanentSoundGroups(false);
+    Audio::LoadInGameSFX();
+    Audio::gWorldSFX.Init();
+    Audio::gPowerupSFX.Init();
+    Audio::gStadGenSFX.Init();
+
+    if (!gbDisableCrowd)
+    {
+        Audio::gCrowdSFX.Init();
+    }
+
+    LoadInGameAudioData();
+    Audio::LoadWorldSFX();
+    ARQSetChunkSize(0x1000);
+    SoundEventScript::CreateInstance();
 }
 
 /**
@@ -823,6 +877,7 @@ void AudioLoader::LoadStadiumSpecificSoundGroups(eStadiumID)
  */
 void AudioLoader::LoadInGameAudioData()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

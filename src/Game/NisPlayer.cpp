@@ -259,8 +259,44 @@ void NisPlayer::TargetToIndex(NisTarget, int, NisWinnerType) const
 /**
  * Offset/Address/Size: 0xC4 | 0x80114DA0 | size: 0x130
  */
-void NisPlayer::IsMirrored(NisTarget, const char*, NisWinnerType) const
+bool NisPlayer::IsMirrored(NisTarget target, const char* name, NisWinnerType winnerType) const
 {
+    if (target == NIS_TARGET_LOSER_CAPTAIN || target == NIS_TARGET_WINNER_CAPTAIN || target == NIS_TARGET_WINNER_SIDEKICK || target == NIS_TARGET_LOSER_GOALIE || target == NIS_TARGET_WINNER_GOALIE || target == NIS_TARGET_LOSER_SIDEKICK)
+    {
+        bool mirrored = true;
+        if (strstr(name, "_goal_") == NULL && strstr(name, "goalie_loser") == NULL)
+        {
+            mirrored = false;
+        }
+
+        if (mWinnerSide[winnerType] == 0)
+        {
+            return mirrored;
+        }
+        else
+        {
+            return !mirrored;
+        }
+    }
+    else
+    {
+        if (strstr(name, "home") != NULL || strstr(name, "run_to_center") != NULL)
+        {
+            if (target == NIS_TARGET_AWAY_CAPTAIN)
+            {
+                return true;
+            }
+            if (target == NIS_TARGET_AWAY_SIDEKICK)
+            {
+                return true;
+            }
+            if (target == NIS_TARGET_NONE)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 /**

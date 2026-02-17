@@ -241,12 +241,41 @@ unsigned long glGetTextureState(eGLTextureState texturestate)
     return GetTextureStateImpl(&_textureState.m_State, texturestate);
 }
 
+static inline unsigned long glExtractRasterBits(unsigned long raster, gl_StateBitfield* p, s32* pn)
+{
+    unsigned long out = 0;
+    for (s32 i = 0; i < *pn; i++)
+    {
+        if (raster & (1u << (i + p->startBit)))
+        {
+            out |= (1u << i);
+        }
+    }
+    return out;
+}
+
 /**
  * Offset/Address/Size: 0x548 | 0x801DC18C | size: 0xBC
  */
-u32 glSetRasterState(unsigned long&, eGLState, unsigned long)
+u32 glSetRasterState(unsigned long& raster, eGLState state, unsigned long value)
 {
-    return 0;
+    gl_StateBitfield* p = &packed_raster[state];
+    s32* pn = &p->numBits;
+    unsigned long out = glExtractRasterBits(raster, p, pn);
+
+    for (s32 i = 0; i < *pn; i++)
+    {
+        if (value & (1u << i))
+        {
+            raster |= (1u << (i + p->startBit));
+        }
+        else
+        {
+            raster &= ~(1u << (i + p->startBit));
+        }
+    }
+
+    return out;
 }
 
 /**

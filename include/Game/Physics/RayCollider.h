@@ -14,9 +14,11 @@ public:
     virtual bool DoCollide(CollisionSpace*);
 
     /* 0x04 */ dGeomID m_rayID;
-    /* 0x08 */ PhysicsObject* m_unk_0x08;
-    /* 0x08 */ u8 m_padding[28];
-    /* 0x28 */ u8 m_unk_0x28;
+    /* 0x08 */ PhysicsObject* m_collidedObj;
+    /* 0x0C */ nlVector3 m_contactPos;
+    /* 0x18 */ nlVector3 m_contactNormal;
+    /* 0x24 */ f32 m_contactDepth;
+    /* 0x28 */ bool m_hasCollision;
 };
 
 #endif // _RAYCOLLIDER_H_

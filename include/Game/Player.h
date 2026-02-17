@@ -15,6 +15,7 @@ class CollisionPlayerWallData;
 #include "Game/AI/AIPad.h"
 class CollisionPlayerPlayerData;
 class SpaceSearch;
+class cFielder;
 class cSHierarchy;
 class cAnimInventory;
 class CharacterPhysicsData;
@@ -109,11 +110,11 @@ public:
     void SetAIPad(cAIPad*);
     void PlayAttackReactionSounds(float);
     void PickupBall(cBall*);
-    void GetClosestOpponentFielder(nlVector3*);
+    cFielder* GetClosestOpponentFielder(nlVector3*);
     virtual void CollideWithCharacterCallback(CollisionPlayerPlayerData*);
     virtual void CollideWithBallCallback(cBall*);
-    static float DoFlashLight(const nlVector3&, unsigned short, float, float, float);
-    static float DoFlashLight(const nlVector3&, const nlVector3&, unsigned short, float, float, float);
+    float DoFlashLight(const nlVector3&, unsigned short, float, float, float);
+    float DoFlashLight(const nlVector3&, const nlVector3&, unsigned short, float, float, float);
     virtual void SetAnimID(int);
     void GetAnimatedBallOrientation(nlQuaternion&);
     virtual void Update(float);

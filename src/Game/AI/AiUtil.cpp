@@ -675,8 +675,61 @@ nlVector3 GetClosestPointOnLineABFromPointC(const nlVector3& a, const nlVector3&
 /**
  * Offset/Address/Size: 0x160 | 0x80005C0C | size: 0x184
  */
-void SortToMinOrMaxTotalSum(unsigned int*, float (*)[4], bool)
+void SortToMinOrMaxTotalSum(unsigned int* result, float (*data)[4], bool findMin)
 {
+    f32 bestSum;
+
+    if (findMin)
+    {
+        bestSum = 100000.0f;
+    }
+    else
+    {
+        bestSum = -100000.0f;
+    }
+
+    for (s32 i = 0; i < 4; i++)
+    {
+        f32 sum = data[0][i];
+        for (s32 j = 0; j < 4; j++)
+        {
+            if (j == i)
+                continue;
+            f32 save2 = sum;
+            sum += data[1][j];
+            for (s32 k = 0; k < 4; k++)
+            {
+                if (k == j)
+                    continue;
+                if (k == i)
+                    continue;
+                f32 save3 = sum;
+                sum += data[2][k];
+                for (s32 l = 0; l < 4; l++)
+                {
+                    if (l == k)
+                        continue;
+                    if (l == j)
+                        continue;
+                    if (l == i)
+                        continue;
+                    f32 save4 = sum;
+                    sum += data[3][l];
+                    if ((findMin && sum < bestSum) || (!findMin && sum > bestSum))
+                    {
+                        result[0] = i;
+                        result[1] = j;
+                        result[2] = k;
+                        result[3] = l;
+                        bestSum = sum;
+                    }
+                    sum = save4;
+                }
+                sum = save3;
+            }
+            sum = save2;
+        }
+    }
 }
 
 /**

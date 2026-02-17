@@ -617,7 +617,6 @@ static void EXIIntrruptHandler(__OSInterrupt interrupt, OSContext* context)
     ASSERTLINE(1071, 0 <= chan && chan < MAX_CHAN);
     exi = &Ecb[chan];
     EXIClearInterrupts(chan, 1, 0, 0);
-
     callback = exi->exiCallback;
     if (callback)
     {

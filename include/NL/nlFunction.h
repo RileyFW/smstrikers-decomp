@@ -27,21 +27,26 @@ public:
     };
 }; // total size: 0x8
 
-// template <typename T>
-// class Function1
-// {
-//     enum Tag mTag; // offset 0x0, size 0x4
-//     union
-//     {                                 // inferred
-//         void (*mFreeFunction)(T*);    // offset 0x4, size 0x4
-//         struct FunctorBase* mFunctor; // offset 0x4, size 0x4
-//     };
-// }; // total size: 0x8
-
 template <typename ReturnType>
 class Function0
 {
 public:
+    struct FunctorBase
+    {
+        virtual ~FunctorBase() { };
+        virtual FunctorBase* fnc_0x8() = 0;
+        virtual FunctorBase* fnc_0x10() = 0;
+    };
+
+    template <typename BindType>
+    struct FunctorImpl : public FunctorBase
+    {
+        BindType mBind;
+        virtual ~FunctorImpl() { }
+        virtual FunctorBase* fnc_0x8() { return 0; }
+        virtual FunctorBase* fnc_0x10() { return 0; }
+    };
+
     enum Tag mTag; // offset 0x0, size 0x4
     union
     {
@@ -57,7 +62,8 @@ class Function : public Function1<void, T>
 public:
     ~Function()
     {
-        if (mTag == FUNCTOR) {
+        if (mTag == FUNCTOR)
+        {
             delete mFunctor;
         }
         mTag = EMPTY;
@@ -72,11 +78,23 @@ class Function<FnVoidVoid> : public Function0<void>
 public:
     ~Function()
     {
-        if (mTag == FUNCTOR) {
+        if (mTag == FUNCTOR)
+        {
             delete mFunctor;
         }
         mTag = EMPTY;
     }
 }; // total size: 0x8
+
+// Bind template
+template <typename R, typename F, typename A>
+struct BindExp1
+{
+    F mFuncPtr;
+    A mArg;
+};
+
+template <typename R, typename F, typename A>
+BindExp1<R, F, A> Bind(F fn, const A& arg);
 
 #endif // _FEFUNCTION_H_

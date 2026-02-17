@@ -21,16 +21,17 @@ union Value
     /* 0x0 */ float f;
 };
 
-struct TagValuePair
-{
-    /* 0x00 */ const char* tag;
-    /* 0x04 */ Type type;
-    /* 0x08 */ Value value;
-};
-
 class Config
 {
 public:
+    struct TagValuePair
+    {
+        TagValuePair();
+        /* 0x00 */ const char* tag;
+        /* 0x04 */ Type type;
+        /* 0x08 */ Value value;
+    };
+
     enum AllocateWhere
     {
         ALLOCATE_LOW = 0,
@@ -133,6 +134,8 @@ public:
     // TagValuePair::TagValuePair();
     // Set<BasicString<char, Detail::TempStringAllocator>>(const char*, BasicString<char, Detail::TempStringAllocator>);
 }; // total size: 0xC
+
+typedef Config::TagValuePair TagValuePair;
 
 // class SetTagValuePair
 // {

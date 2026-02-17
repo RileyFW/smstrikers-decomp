@@ -4,7 +4,9 @@
 #include "Game/AI/FilteredRandom.h"
 #include "Game/AI/Fuzzy.h"
 
+#include "Game/AI/AvoidController.h"
 #include "Game/AI/Fielder.h"
+#include "Game/AnimInventory.h"
 
 extern FuzzyVariant fvNotSet;
 
@@ -214,8 +216,48 @@ void cFielder::DesireOneTimer(float)
 /**
  * Offset/Address/Size: 0x2D08 | 0x80033A8C | size: 0x158
  */
-void cFielder::InitDesireReceivePassFromIdle(const LooseBallContactAnimInfo*, unsigned short, bool)
+void cFielder::InitDesireReceivePassFromIdle(const LooseBallContactAnimInfo* pAnimInfo, unsigned short aAngle, bool bVolley)
 {
+    m_DesireReceivePassSharedVars.aDesiredFacingDirection = aAngle;
+    m_DesireReceivePassSharedVars.nReceivePassAnim = pAnimInfo->nAnimID;
+
+    cSAnim* pAnim = m_pAnimInventory->GetAnim(pAnimInfo->nAnimID);
+    unsigned int nNumKeys = pAnim->m_nNumKeys;
+
+    float fDesiredTime;
+
+    m_DesireReceivePassSharedVars.fReceivePassAnimTime = pAnimInfo->fAnimContactFrame / (float)nNumKeys;
+    m_DesireReceivePassSharedVars.iAttemptOneTouchShot = 0;
+    m_DesireReceivePassSharedVars.bFailedToInitOneTouchShot = false;
+    m_DesireReceivePassSharedVars.iAttemptOneTouchPass = 0;
+    m_DesireReceivePassSharedVars.bVolleyPassReceive = bVolley;
+    m_DesireReceivePassSharedVars.pOneTouchPassTarget = NULL;
+
+    bool savedTiltForce = g_pBall->m_pPhysicsBall->m_bUseTiltForce;
+    g_pBall->m_pPhysicsBall->m_bUseTiltForce = false;
+
+    bool result = DoLooseBallContactFromIdle(
+        m_DesireReceivePassSharedVars.v3DesiredPosition,
+        m_DesireReceivePassSharedVars.fDesiredTime,
+        m_DesireReceivePassSharedVars.v3BallPosition,
+        fDesiredTime,
+        aAngle,
+        pAnimInfo);
+
+    g_pBall->m_pPhysicsBall->m_bUseTiltForce = savedTiltForce;
+
+    if (result)
+    {
+        SetDesire(FIELDERDESIRE_RECEIVE_PASS_FROM_IDLE, 1.0f);
+        SetDesireDuration(0.0f, false);
+        InitActionIdleTurn(aAngle);
+        m_eDesireSubState = 0;
+        SetNoPickUpTime(0.0f);
+        g_pBall->SetPassTargetTimer(fDesiredTime);
+        g_pBall->SetPassTarget(this, m_DesireReceivePassSharedVars.v3BallPosition, bVolley);
+        m_DesireCommonVars.fMisc = fDesiredTime;
+        m_pAvoidance->SetThingsToAvoid(0);
+    }
 }
 
 /**

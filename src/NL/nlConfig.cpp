@@ -278,14 +278,23 @@ void Config::LoadFromFile(const char*)
 }
 
 /**
+ * Offset/Address/Size: 0x2834 | 0x801D5498 | size: 0xCC
+ */
+Config::Config(Config::AllocateWhere allocateWhere)
+{
+    mTvpHash = new (nlMalloc(sizeof(TagValuePair) * 1024 + 0x10, 8, false)) TagValuePair[1024];
+    char* mem = (char*)nlMalloc(0x2800, 8, false);
+    mStringMemory = mem;
+    mStringEnd = mem;
+    mem[0x27FF] = '\0';
+}
+
+/**
  * Offset/Address/Size: 0x2720 | 0x801D5384 | size: 0xAC
  */
 Config& Config::Global()
 {
-    FORCE_DONT_INLINE;
-    // return *sGlobal;
-
-    static Config sGlobal;
+    static Config sGlobal(ALLOCATE_LOW);
     return sGlobal;
 }
 
@@ -293,13 +302,6 @@ Config& Config::Global()
  * Offset/Address/Size: 0x27CC | 0x801D5430 | size: 0x68
  */
 Config::~Config()
-{
-}
-
-/**
- * Offset/Address/Size: 0x2834 | 0x801D5498 | size: 0xCC
- */
-Config::Config(Config::AllocateWhere location)
 {
 }
 

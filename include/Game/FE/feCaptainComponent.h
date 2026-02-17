@@ -41,8 +41,8 @@ public:
     class ComponentState
     {
     public:
-        static void GotoNextPhase();
-        static void GotoPreviousPhase();
+        void GotoNextPhase();
+        void GotoPreviousPhase();
         void SetCurrentPhase(Phase);
 
         /* 0x0 */ Phase mCurrentPhase;
@@ -83,7 +83,7 @@ public:
     }
 
     /* 0x00 */ ComponentState mComponentState[2];                   // size 0x18
-    /* 0x18 */ bool mIsSinglePlayerInput;                           // size 0x1
+    /* 0x18 */ unsigned char mIsSinglePlayerInput;                  // size 0x1
     /* 0x1C */ eFEINPUT_PAD mAllPushedPlayers[4];                   // size 0x10
     /* 0x2C */ int mAllPushedPlayerSides[4];                        // size 0x10
     /* 0x3C */ int mNumTotalPushedPlayers;                          // size 0x4

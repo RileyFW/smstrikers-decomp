@@ -174,8 +174,41 @@ void cPlayer::PreUpdate(float dt)
 /**
  * Offset/Address/Size: 0x488 | 0x800579D8 | size: 0x148
  */
-void cPlayer::PrePhysicsUpdate(float)
+void cPlayer::PrePhysicsUpdate(float dt)
 {
+    m_pPoseAccumulator->SetBuildNodeMatrixCallback(m_nHeadJointIndex, PlayerHeadTrackCallback, (unsigned int)this, 0);
+
+    bool poseLocal = false;
+    if (m_eClassType != GOALIE || m_v3Position.f.x * g_pBall->m_v3Position.f.x > 0.0f)
+    {
+        poseLocal = true;
+    }
+
+    if (poseLocal)
+    {
+        PoseLocalSpace();
+    }
+
+    m_pPoseAccumulator->SetBuildNodeMatrixCallback(m_nHeadJointIndex, NULL, 0, 0);
+
+    if (m_pBall != NULL)
+    {
+        m_pBall->m_pPhysicsBall->EnableCollisions();
+        m_pPhysicsCharacter->ContainObject(m_pBall->m_pPhysicsBall);
+    }
+
+    if (m_pBall != NULL)
+    {
+        nlVector3 jointPos = GetJointPosition(m_nBallJointIndex);
+        float physZ = m_pPhysicsCharacter->GetPosition().f.z;
+        jointPos.f.z -= physZ;
+        m_pPhysicsCharacter->m_SubObject.SetSubObjectPosition(jointPos, PhysicsObject::RELATIVE_TO_PARENT);
+    }
+
+    if (poseLocal)
+    {
+        m_pPhysicsCharacter->UpdatePose(m_pPoseAccumulator, m_v3Position.f.z);
+    }
 }
 
 /**
@@ -450,9 +483,45 @@ void cPlayer::PickupBall(cBall*)
 
 /**
  * Offset/Address/Size: 0x2298 | 0x800597E8 | size: 0x138
+ * TODO: 99.23% match - r28/r30 register swap: compiler assigns r30 to pOtherTeam (longer live range) instead of pPosition (DWARF confirms pPosition should be r30). Likely compiler version difference.
  */
-void cPlayer::GetClosestOpponentFielder(nlVector3*)
+cFielder* cPlayer::GetClosestOpponentFielder(nlVector3* pPosition)
 {
+    f32 fMinDist = HUGE_VALF;
+    cTeam* pOtherTeam = m_pTeam->GetOtherTeam();
+    cPlayer* pClosest = NULL;
+
+    nlVector3 refPos;
+    if (pPosition == NULL)
+    {
+        refPos = m_v3Position;
+    }
+    else
+    {
+        refPos = *pPosition;
+    }
+
+    f32 refX = refPos.f.x;
+    f32 refY = refPos.f.y;
+
+    for (int i = 0; i < 4; i++)
+    {
+        cPlayer* pPlayer = pOtherTeam->GetPlayer(i);
+        if (pPlayer == this)
+        {
+            continue;
+        }
+        f32 dx = refX - pPlayer->m_v3Position.f.x;
+        f32 dy = refY - pPlayer->m_v3Position.f.y;
+        f32 dist = dx * dx + dy * dy;
+        if (dist < fMinDist)
+        {
+            pClosest = pPlayer;
+            fMinDist = dist;
+        }
+    }
+
+    return (cFielder*)pClosest;
 }
 
 /**
@@ -485,9 +554,35 @@ void cPlayer::CollideWithBallCallback(cBall* pBall)
 /**
  * Offset/Address/Size: 0x2438 | 0x80059988 | size: 0x134
  */
-float cPlayer::DoFlashLight(const nlVector3&, unsigned short, float, float, float)
+float cPlayer::DoFlashLight(const nlVector3& Position, unsigned short aDirection, float fAngleWeighting, float fIgnoreObjectCloserThanThis, float fIgnoreObjectFartherThanThis)
 {
-    return 0.0f;
+    float fDistBetween;
+    float dx;
+    float dy = Position.f.y - m_v3Position.f.y;
+    dx = Position.f.x - m_v3Position.f.x;
+
+    float fSqrt = nlSqrt(dx * dx + dy * dy, true);
+    fDistBetween = fSqrt;
+
+    if (fSqrt < fIgnoreObjectCloserThanThis || fSqrt > fIgnoreObjectFartherThanThis)
+    {
+        fDistBetween = 0.0f;
+    }
+
+    float fConverted = 10430.37835f * nlATan2f(dy, dx);
+    float fInvWeight = 1.0f - fAngleWeighting;
+    s16 angleDiff = (s16)(aDirection - (u16)(s32)fConverted);
+    s32 angleAbs;
+    if (angleDiff < 0)
+    {
+        angleAbs = -angleDiff;
+    }
+    else
+    {
+        angleAbs = angleDiff;
+    }
+
+    return fDistBetween * fInvWeight + fAngleWeighting * (f32)(u16)angleAbs;
 }
 
 /**

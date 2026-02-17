@@ -6,6 +6,8 @@
 #include "NL/gl/glConstant.h"
 #include "NL/nlDebug.h"
 #include "dolphin/os.h"
+#include "dolphin/gx/GXGeometry.h"
+#include "dolphin/gx/GXTexture.h"
 #include "Game/Sys/debug.h"
 #include "Game/GL/GLInventory.h"
 
@@ -58,6 +60,22 @@ void glplatGetMatrix(unsigned long addr, nlMatrix4& matrix)
  */
 void glplatFrameAllocNextFrame()
 {
+    if (glx_MemoryDump)
+    {
+        tDebugPrintManager::Print(DC_GLPLAT, "phys %dK frame %dK virt %dK\n", n_phys >> 10, n_frame[i_frame * 2] >> 10, n_frame[i_frame * 2 + 1] >> 10);
+
+        tDebugPrintManager::Print(DC_GLPLAT, "free %dK real %dK virt %dK\n", (ResourceMemSize - n_phys) >> 10, (FrameMemSizes[0] - n_frame[i_frame * 2]) >> 10, (FrameMemSizes[1] - n_frame[i_frame * 2 + 1]) >> 10);
+
+        glx_MemoryDump = false;
+    }
+
+    u32 newFrame = i_frame ^ 1;
+    i_frame = newFrame;
+    n_frame[newFrame * 2] = 0;
+    n_frame[newFrame * 2 + 1] = 0;
+
+    GXInvalidateVtxCache();
+    GXInvalidateTexAll();
 }
 
 /**
@@ -156,10 +174,65 @@ void glplatResourceRelease(unsigned long long resourceId)
 
 /**
  * Offset/Address/Size: 0x310 | 0x801B6C38 | size: 0x130
+ * TODO: 81.3% match - Known MWCC limitation: do/while(--count) with complex
+ * loop body (7 lwz + adds) produces addic./bne instead of mtctr/bdnz; also
+ * or operand order swap at line 24 (r4,r0 vs r0,r4). See mwcc-patterns.md.
  */
 unsigned long long glplatResourceMark()
 {
-    return 0;
+    int texLevel = glx_GetTexMarkerLevel();
+    unsigned long long resourceId = texLevel | ((unsigned long long)n_phys << 32);
+
+    glx_AdvanceTexMarkerLevel();
+    gl_ConstantMarkerAdvance();
+    glInventory.ResourceMark();
+
+    s32* resourceMarker = (s32*)&g_uResourceMarker;
+    s32 newMarker = *resourceMarker;
+    newMarker = newMarker + 1;
+    GLXMemoryInfo* p = g_uResourceAlloc;
+    u32 totalAlloc = 0;
+    u32 totalTex = totalAlloc;
+    *resourceMarker = newMarker;
+
+    GLXMemoryInfo* entry = &p[newMarker];
+    entry->m_uBytes[0] = 0;
+    entry->m_uBytes[1] = 0;
+    entry->m_uBytes[2] = 0;
+    entry->m_uBytes[3] = 0;
+    entry->m_uBytes[4] = 0;
+    entry->m_uBytes[5] = 0;
+    entry->m_uTexBundle = 0;
+
+    u32 count = (u32)(newMarker + 1);
+    if (newMarker >= 0)
+    {
+        do
+        {
+            u32 a = p->m_uBytes[0];
+            u32 b = p->m_uBytes[1];
+            u32 c = p->m_uBytes[2];
+            a = a + b;
+            b = p->m_uBytes[3];
+            a = a + c;
+            u32 e = p->m_uBytes[4];
+            a = a + b;
+            u32 g = p->m_uTexBundle;
+            u32 f = p->m_uBytes[5];
+            a = a + e;
+            u32 tex = e - g;
+            p++;
+            a = a + f;
+            totalAlloc = totalAlloc + a;
+            totalTex = totalTex + tex;
+        } while (--count);
+    }
+
+    f32 fConst = 1.0f / 1024.0f;
+    f32 fMB = (f32)totalAlloc * fConst;
+    tDebugPrintManager::Print(DC_GLPLAT, "res mark: %dK tex %dK (%.2fM)\n", totalAlloc >> 10, totalTex >> 10, fMB * fConst);
+
+    return resourceId;
 }
 
 /**

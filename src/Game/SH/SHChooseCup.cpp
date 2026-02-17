@@ -1,6 +1,7 @@
 #include "Game/SH/SHChooseCup.h"
 #include "Game/GameInfo.h"
 #include "Game/GameSceneManager.h"
+#include "Game/FE/fePopupMenu.h"
 
 // /**
 //  * Offset/Address/Size: 0x2C4 | 0x800DCE10 | size: 0xBC
@@ -158,11 +159,40 @@ void confirmedNewCup(bool isSuperCup)
     }
 }
 
+typedef BindExp1<void, void (*)(bool), bool> BindExp1_vfb;
+typedef Function0<void>::FunctorImpl<BindExp1_vfb> FunctorImpl_vfb;
+
 /**
  * Offset/Address/Size: 0x1F64 | 0x800DC1E8 | size: 0x154
+ * TODO: 86.6% match - -inline deferred file, scratch uses -inline auto.
+ * Bind hidden struct return pointer not generated; placement new duplicate beq;
+ * Create by-value vs by-ref mangling difference. All caused by compiler flag mismatch.
  */
-void startNewCup(bool)
+void startNewCup(bool isSuperCup)
 {
+    FEPopupMenu* pPopup = (FEPopupMenu*)nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_POPUP_MENU, SCREEN_NOTHING, false);
+
+    {
+        BindExp1_vfb bindResult = Bind<void, void (*)(bool), bool>(confirmedNewCup, isSuperCup);
+
+        Function<FnVoidVoid> yes;
+        yes.mTag = FUNCTOR;
+        FunctorImpl_vfb* functor = (FunctorImpl_vfb*)nlMalloc(sizeof(FunctorImpl_vfb), 8, false);
+        if (functor != NULL)
+        {
+            functor = new (functor) FunctorImpl_vfb();
+            functor->mBind.mFuncPtr = bindResult.mFuncPtr;
+            functor->mBind.mArg = bindResult.mArg;
+        }
+        yes.mFunctor = functor;
+
+        Function<FnVoidVoid> no;
+        no.mTag = FREE_FUNCTION;
+        no.mFreeFunction = FEPopupMenu::Nothing;
+
+        pPopup->Create(POPUP_REALLY_OVERWRITE, yes, no);
+    }
+    *(u8*)((u8*)pPopup + 0xAA4) = 0;
 }
 
 /**

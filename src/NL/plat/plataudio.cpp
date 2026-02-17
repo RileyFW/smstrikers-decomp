@@ -397,7 +397,7 @@ void PlaySFX(const SFXStartInfo&)
  * Offset/Address/Size: 0xF5C | 0x801C5758 | size: 0x120
  * TODO: 99.38% match - r6/r7 register swap for loop counter vs grp pointer
  */
-unsigned char UnloadAllSoundGroupsOnStack(AudioFileData& fileData, unsigned long stackEnum)
+bool UnloadAllSoundGroupsOnStack(AudioFileData& fileData, unsigned long stackEnum)
 {
     int i;
 
@@ -435,7 +435,7 @@ unsigned char UnloadAllSoundGroupsOnStack(AudioFileData& fileData, unsigned long
         }
     }
 
-    return 1;
+    return true;
 }
 
 /**
@@ -443,7 +443,7 @@ unsigned char UnloadAllSoundGroupsOnStack(AudioFileData& fileData, unsigned long
  * TODO: 97.68% match - r29/r30 swap (fileData/offset), r26/r27 swap in pop-group
  * inner loop, and r6/r7 swap in soundGroups loops (MWCC register allocator quirk)
  */
-unsigned char UnloadAllSoundGroups(AudioFileData& fileData)
+bool UnloadAllSoundGroups(AudioFileData& fileData)
 {
     unsigned long* idPtr;
     _struct_stack_list_0x10* entry;
@@ -517,14 +517,16 @@ unsigned char UnloadAllSoundGroups(AudioFileData& fileData)
         }
     }
 
-    return 1;
+    return true;
 }
 
 /**
  * Offset/Address/Size: 0x11CC | 0x801C59C8 | size: 0x184
  */
-void UnloadSoundGroup(AudioFileData&, unsigned long)
+bool UnloadSoundGroup(AudioFileData&, unsigned long)
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**

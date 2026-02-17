@@ -1,4 +1,5 @@
 #include "Game/GameAudio.h"
+#include "Game/Sys/debug.h"
 #include "NL/nlString.h"
 #include "types.h"
 
@@ -238,8 +239,65 @@ bool cGameSFX::StopTrackedSFX(SFXPlaySet* pPlaySet)
 /**
  * Offset/Address/Size: 0xC84 | 0x801521C8 | size: 0x150
  */
-void cGameSFX::StopEmitter(SFXEmitter*, unsigned long)
+void cGameSFX::StopEmitter(SFXEmitter* pSFXEmitter, unsigned long type)
 {
+    if (pSFXEmitter == NULL)
+    {
+        return;
+    }
+
+    for (s32 i = 0; i < 0x40; i++)
+    {
+        SFXEmitter* pEmitter = Audio::GetEmitter(i);
+        if (pEmitter == NULL || pSFXEmitter != pEmitter)
+        {
+            continue;
+        }
+
+        if ((type != 0 && pSFXEmitter->soundType != type) || pSFXEmitter->pOwner != this)
+        {
+            tDebugPrintManager::Print(DC_SOUND, "StopEmitter - emitter found but wrong owner or type\n");
+            return;
+        }
+
+        // Match found
+        pSFXEmitter->bIsStopping = true;
+        unsigned char bResult = Audio::Remove3DSFXEmitter(pSFXEmitter);
+        if (!bResult)
+        {
+            return;
+        }
+
+        pSFXEmitter->bKeepTrack = true;
+        pSFXEmitter->soundType = (unsigned long)-1;
+        pSFXEmitter->fTimeStamp = -1.0f;
+        pSFXEmitter->bIsStopping = false;
+        pSFXEmitter->bInUse = false;
+        pSFXEmitter->bIsFilterOn = false;
+        pSFXEmitter->m_unk_0x5F = false;
+        pSFXEmitter->pPhysObj = NULL;
+        pSFXEmitter->pOwner = NULL;
+        pSFXEmitter->pos.pvPos = NULL;
+        pSFXEmitter->dir.pvDir = NULL;
+        pSFXEmitter->pos.vPos.f.x = 0.0f;
+        pSFXEmitter->pos.vPos.f.y = 0.0f;
+        pSFXEmitter->pos.vPos.f.z = 0.0f;
+        pSFXEmitter->dir.vDir.f.x = 0.0f;
+        pSFXEmitter->dir.vDir.f.y = 0.0f;
+        pSFXEmitter->dir.vDir.f.z = 0.0f;
+        pSFXEmitter->posUpdateMethod = (PosUpdateMethod)0;
+
+        if (pSFXEmitter->pMIDIControllerInfo != NULL)
+        {
+            if (pSFXEmitter->pMIDIControllerInfo->paraArray != NULL)
+            {
+                delete[] pSFXEmitter->pMIDIControllerInfo->paraArray;
+            }
+            delete pSFXEmitter->pMIDIControllerInfo;
+        }
+        pSFXEmitter->pMIDIControllerInfo = NULL;
+        return;
+    }
 }
 
 /**

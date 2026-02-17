@@ -7,6 +7,7 @@
 #include "Game/FE/feButtonComponent.h"
 #include "Game/FE/feCaptainGridComponent.h"
 #include "Game/FE/feScrollText.h"
+#include "Game/FE/feFinder.h"
 #include "Game/FE/feSidekickGridComponent.h"
 #include "Game/FE/tlComponentInstance.h"
 

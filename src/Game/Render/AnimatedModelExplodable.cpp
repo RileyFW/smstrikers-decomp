@@ -1,11 +1,14 @@
 #include "Game/Render/AnimatedModelExplodable.h"
 
-struct AnimatedModelExplodableList {
+struct AnimatedModelExplodableList
+{
     SidelineExplodableNode* m_pStart;
     SidelineExplodableNode* m_pEnd;
 };
 
 static AnimatedModelExplodableList sAnimatedModelExplodableList;
+ExplodableCategoryData AnimatedModelExplodable::sCategoryData[NUM_ANIMATED_MODEL_EXPLODABLE_CATEGORIES];
+u8 AnimatedModelExplodable::bIsModelLoaded[2];
 
 void RemoveSidelineExplodable(SidelineExplodable*);
 
@@ -40,14 +43,17 @@ void AnimatedModelExplodable::CleanUp()
     SlotPoolBase* pPool = &SidelineExplodableManager::sSidelineExplodableNodeSlotPool;
     SidelineExplodableNode** pTail = &sAnimatedModelExplodableList.m_pEnd;
     SidelineExplodableNode* node;
-    while ((node = sAnimatedModelExplodableList.m_pStart) != NULL) {
+    while ((node = sAnimatedModelExplodableList.m_pStart) != NULL)
+    {
         nlListRemoveStart<SidelineExplodableNode>(&sAnimatedModelExplodableList.m_pStart, pTail);
         SidelineExplodable* pExplodable = node->mpExplodable;
-        if (pExplodable != NULL) {
+        if (pExplodable != NULL)
+        {
             RemoveSidelineExplodable(pExplodable);
         }
         pExplodable = node->mpExplodable;
-        if (pExplodable != NULL) {
+        if (pExplodable != NULL)
+        {
             typedef void (*VDtor)(SidelineExplodable*, s32);
             VDtor fn = (VDtor)((*(unsigned long**)pExplodable)[2]);
             fn(pExplodable, 1);
@@ -77,7 +83,7 @@ AnimatedModelExplodable::~AnimatedModelExplodable()
  */
 ExplodableCategoryData& AnimatedModelExplodable::GetCategoryData() const
 {
-    return *(ExplodableCategoryData*)0;
+    return sCategoryData[mCategory];
 }
 
 /**
@@ -100,6 +106,7 @@ void AnimatedModelExplodable::SetUnexplodedModelVisibility(bool)
  */
 bool AnimatedModelExplodable::LoadGeometry()
 {
-    FORCE_DONT_INLINE;
-    return false;
+    bIsModelLoaded[0] = 0;
+    bIsModelLoaded[1] = 0;
+    return true;
 }

@@ -197,9 +197,9 @@ public:
     void ShootBallDueToContact(unsigned short);
     void DoClearBall();
     void DoHandleActiveShotMeter();
-    void DoLooseBallContactFromIdle(nlVector3&, float&, nlVector3&, float&, unsigned short, const LooseBallContactAnimInfo*);
-    void DoLooseBallContactFromRun(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&);
-    void DoLooseBallContactFromRunVolley(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&);
+    bool DoLooseBallContactFromIdle(nlVector3&, float&, nlVector3&, float&, unsigned short, const LooseBallContactAnimInfo*);
+    bool DoLooseBallContactFromRun(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&);
+    bool DoLooseBallContactFromRunVolley(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&);
     void DoPenaltyCardBooking(cFielder*, ePenaltyType);
     void DoPositioningInterceptBall();
     void DoAwardPowerupStuff(eAwardPowerupType, float);

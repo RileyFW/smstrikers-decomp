@@ -56,6 +56,10 @@ public:
 class UserEffectSpec
 {
 public:
+    virtual ~UserEffectSpec();
+    virtual void fn_0x08();
+    virtual void Render(const nlVector3** pVectors, s32 view);
+    virtual bool IsFinished();
 };
 
 class EffectsGroup

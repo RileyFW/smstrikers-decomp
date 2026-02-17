@@ -84,6 +84,7 @@
  */
 void IChooseCaptain::ComponentState::GotoNextPhase()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -91,6 +92,7 @@ void IChooseCaptain::ComponentState::GotoNextPhase()
  */
 void IChooseCaptain::ComponentState::GotoPreviousPhase()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -367,9 +369,91 @@ void IChooseCaptain::FindAliveHumanPlayers()
 
 /**
  * Offset/Address/Size: 0x388 | 0x800BDD24 | size: 0x158
+ * TODO: 94.9% match - r3/r6 register swap in first loop (numSide1 counter vs
+ * array pointer), stb r5 vs stb r0 for mIsSinglePlayerInput=false
  */
-void IChooseCaptain::SetupForLastPhase(eFEINPUT_PAD)
+/**
+ * Offset/Address/Size: 0x3DC | 0x800BDD24 | size: 0x158
+ * TODO: 94.5% match - r3/r6 register swap in first loop (numSide1 vs array base pointer),
+ * r3/r5 register swap in second loop (ptr vs idx), and stb r0 vs stb r5 for mIsSinglePlayerInput.
+ * File uses -inline deferred which may cause different register allocation in scratch.
+ */
+void IChooseCaptain::SetupForLastPhase(eFEINPUT_PAD pad)
 {
+    int numSide0 = 0;
+    mIsSinglePlayerInput = false;
+
+    if (mNumTotalPushedPlayers == 1)
+    {
+        mIsSinglePlayerInput = true;
+    }
+    else
+    {
+        int numSide1 = numSide0;
+        for (int i = 0; i < mNumTotalPushedPlayers; i++)
+        {
+            if (mAllPushedPlayerSides[i] == 0)
+            {
+                numSide0++;
+            }
+            else if (mAllPushedPlayerSides[i] == 1)
+            {
+                numSide1++;
+            }
+        }
+        if (numSide0 == 0 || numSide1 == 0)
+        {
+            mIsSinglePlayerInput = true;
+        }
+    }
+
+    if (mIsSinglePlayerInput)
+    {
+        mComponentState[1].GotoPreviousPhase();
+        return;
+    }
+
+    if (pad == FE_ALL_PADS)
+    {
+        mComponentState[0].GotoPreviousPhase();
+        mComponentState[1].GotoPreviousPhase();
+        return;
+    }
+
+    int side;
+    if (mIsSinglePlayerInput)
+    {
+        if (mComponentState[0].mCurrentPhase < PHASE_READY)
+        {
+            side = 0;
+        }
+        else
+        {
+            side = 1;
+        }
+    }
+    else
+    {
+        for (int i = 0; i < mNumTotalPushedPlayers; i++)
+        {
+            if (mAllPushedPlayers[i] == pad)
+            {
+                side = mAllPushedPlayerSides[i];
+                goto found;
+            }
+        }
+        side = -1;
+    }
+
+found:
+    if (side == -1)
+    {
+        mComponentState[1].GotoPreviousPhase();
+    }
+    else
+    {
+        mComponentState[side].GotoPreviousPhase();
+    }
 }
 
 /**

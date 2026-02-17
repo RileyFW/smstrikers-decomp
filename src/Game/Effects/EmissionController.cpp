@@ -8,6 +8,13 @@
 
 extern int numLingeringSystems;
 
+struct EmissionFunctor
+{
+    virtual ~EmissionFunctor() { };
+    virtual void __cl(EmissionController&) = 0;
+    virtual FunctorBase* fnc_0x10() = 0;
+};
+
 /**
  * Offset/Address/Size: 0xF2C | 0x801F881C | size: 0x104
  */
@@ -130,6 +137,50 @@ void EmissionController::SetAnimController(const cPN_SAnimController& animContro
  */
 void EmissionController::Die()
 {
+    ParticleSystem* p = (ParticleSystem*)m_Systems.m_headNode;
+    while (p != NULL)
+    {
+        p->Die();
+        p = (ParticleSystem*)p->m_nextNode;
+    }
+
+    if (mFinishedCallback.mTag != EMPTY)
+    {
+        if (mFinishedCallback.mTag == FREE_FUNCTION)
+        {
+            mFinishedCallback.mFreeFunction(*this);
+        }
+        else
+        {
+            ((EmissionFunctor*)mFinishedCallback.mFunctor)->__cl(*this);
+        }
+
+        Function1<void, EmissionController&> empty;
+        empty.mTag = EMPTY;
+
+        if (mFinishedCallback.mTag == FUNCTOR)
+        {
+            delete mFinishedCallback.mFunctor;
+        }
+
+        mFinishedCallback.mTag = EMPTY;
+        mFinishedCallback.mTag = empty.mTag;
+
+        if (mFinishedCallback.mTag == FREE_FUNCTION)
+        {
+            mFinishedCallback.mFreeFunction = empty.mFreeFunction;
+        }
+        else if (mFinishedCallback.mTag == FUNCTOR)
+        {
+            mFinishedCallback.mFunctor = empty.mFunctor->fnc_0x10();
+        }
+
+        if (empty.mTag == FUNCTOR)
+        {
+            delete empty.mFunctor;
+        }
+        *(volatile int*)&empty.mTag = EMPTY;
+    }
 }
 
 /**
@@ -197,9 +248,64 @@ void* fxLoadEntireFileHigh(const char* filename, unsigned long* fileSize)
 
 /**
  * Offset/Address/Size: 0x150 | 0x801F7A40 | size: 0x138
+ * TODO: 98.21% match - register allocation r29/r31/r30 vs r31/r30/r29.
  */
 void EmissionController::Render()
 {
+    struct UserEffectInfo
+    {
+        nlVector3* pv3Position;
+        nlVector3* pv3Direction;
+    };
+
+    if (m_bDisabled)
+    {
+        return;
+    }
+
+    ParticleSystem* sys = (ParticleSystem*)m_Systems.m_headNode;
+    f32 lingerThreshold = 0.0f;
+
+    while (sys != NULL)
+    {
+        EffectsSpec* spec = sys->m_pSpec;
+        bool isLingering = (spec == NULL || spec->m_fLingerStart > lingerThreshold);
+
+        s32 view;
+        if (isLingering)
+        {
+            view = 0x12;
+        }
+        else
+        {
+            view = m_GlView;
+        }
+
+        if (sys->m_bVisible)
+        {
+            sys->RenderAllParticles((eGLView)view);
+        }
+
+        sys = (ParticleSystem*)sys->m_nextNode;
+    }
+
+    if (m_nUserEffects > 0)
+    {
+        UserEffectInfo info;
+        info.pv3Position = &m_vPosition;
+        info.pv3Direction = &m_vDirection;
+        s32 i = 0;
+        s32 j = 0;
+        while (i < m_nUserEffects)
+        {
+            if (!m_pUserEffects[j]->IsFinished())
+            {
+                m_pUserEffects[j]->Render((const nlVector3**)&info, (s32)(s8)m_GlView);
+            }
+            j++;
+            i++;
+        }
+    }
 }
 
 /**

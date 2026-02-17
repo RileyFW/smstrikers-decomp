@@ -1,4 +1,5 @@
 #include "Game/Drawable/DrawableSkinModel.h"
+#include "Game/World/worldanim.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x80122D5C | size: 0x60
@@ -17,8 +18,9 @@ void DrawableSkinModel::Draw()
 /**
  * Offset/Address/Size: 0x0 | 0x80122F2C | size: 0x24
  */
-void DrawableSkinModel::SetAnimation(const char*, unsigned long)
+void DrawableSkinModel::SetAnimation(const char* szAnimationName, unsigned long playMode)
 {
+    m_pAnimController->SetAnimation(szAnimationName, (ePlayMode)playMode);
 }
 
 /**

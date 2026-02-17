@@ -121,6 +121,7 @@
  */
 void LessonTickerDoneCB()
 {
+    SetTickerLesson(-1);
 }
 
 /**
