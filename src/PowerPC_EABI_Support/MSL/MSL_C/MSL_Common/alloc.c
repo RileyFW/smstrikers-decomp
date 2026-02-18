@@ -1,6 +1,9 @@
 #include "types.h"
 #include "alloc.h"
 #include "critical_regions.h"
+#include <string.h>
+
+void __sys_free(void*);
 
 typedef struct Block
 {
@@ -139,9 +142,9 @@ static void Block_construct(Block* ths, u32 size)
 {
 }
 
-void Block_subBlock(void)
+SubBlock* Block_subBlock(Block* ths, u32 size)
 {
-    // UNUSED FUNCTION
+    FORCE_DONT_INLINE;
 }
 
 void Block_link(Block* ths, SubBlock* sb)
@@ -344,12 +347,56 @@ void* allocate_from_var_pools(__mem_pool_obj* pool_obj, u32 size)
 }
 
 /**
- * @note Address: N/A
+ * @note Address: 0x8022B944
  * @note Size: 0xD8
  */
-void soft_allocate_from_var_pools(void)
+void* soft_allocate_from_var_pools(Block** start_ptr, u32 size, u32* max_free_size)
 {
-    // UNUSED FUNCTION
+    Block* bp;
+    SubBlock* sb;
+
+    size = (size + 0xf) & ~7;
+    if (size < 0x50)
+    {
+        size = 0x50;
+    }
+
+    *max_free_size = 0;
+    bp = *start_ptr;
+
+    if (bp == NULL)
+    {
+        return NULL;
+    }
+
+    do
+    {
+        if (size <= bp->max_size)
+        {
+            sb = Block_subBlock(bp, size);
+            if (sb != NULL)
+            {
+                *start_ptr = bp;
+                goto found;
+            }
+        }
+
+        if (bp->max_size > 8)
+        {
+            u32 free_size = bp->max_size - 8;
+            if (*max_free_size < free_size)
+            {
+                *max_free_size = free_size;
+            }
+        }
+
+        bp = bp->next;
+    } while (bp != *start_ptr);
+
+    return NULL;
+
+found:
+    return (char*)sb + 8;
 }
 
 /**

@@ -59,7 +59,6 @@ public:
     NSNMessengerScene();
     ~NSNMessengerScene();
 
-    virtual void OpenMessenger();
     virtual void OpenMessengerNow();
     virtual void SetDisplayMessage(const char*);
     virtual void SetDisplayMessage(const BasicString<unsigned short, Detail::TempStringAllocator>&);
@@ -68,6 +67,7 @@ public:
     virtual void CloseMessengerNow();
     virtual bool IsMessengerOpen() const;
 
+    virtual void OpenMessenger();
     virtual void SceneCreated();
     virtual void Update(float);
 

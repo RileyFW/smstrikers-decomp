@@ -337,13 +337,17 @@ void SaveLoad::StartMemoryCardIDCheck(int slot, void (*callback)(long))
  */
 #pragma push
 #pragma opt_propagation off
-int SaveLoad::GetSaveBlockSize(int) {
-    int numBlocks = 0;
+int SaveLoad::GetSaveBlockSize(int)
+{
     int dataSize = nlSingleton<GameInfoManager>::s_pInstance->GetMemoryCardDataSize();
-    dataSize += 12;
-    int blocks = (dataSize + 0x1FFF) >> 13;
-    if (dataSize > 0) {
-        for (int i = 0; i < blocks; i++) {
+    int numBlocks = 0;
+
+    if ((dataSize += 12) > 0)
+    {
+        int blocks = (u32)(dataSize + 0x1FFF) >> 13;
+        int i = blocks;
+        while (i-- > 0)
+        {
             numBlocks++;
         }
     }
@@ -361,17 +365,22 @@ int SaveLoad::GetSaveBlockSize(int) {
     IconCfg.IconFormat = 2;
     IconCfg.IconSpeeds[0] = 3;
 
-    int bannerSize = IconCfg.BannerFormat * 0xC00;
-    int iconSize = (IconCfg.IconFormat << 10) * IconCfg.IconCount;
-    int bannerClut = (IconCfg.BannerFormat < 2) ? 512 : 0;
-    int iconClut = (IconCfg.IconCount <= 0) ? 512 : 0;
+    int iconFormat = IconCfg.IconFormat;
+    int iconCount = IconCfg.IconCount;
+
+    int iconSize = (iconFormat << 10) * iconCount;
+    int bannerClut = (iconFormat < 2) ? 0x200 : 0;
+    int bannerSize = iconFormat * 0xC00;
+    int iconClut = (iconCount <= 0) ? 0x200 : 0;
 
     IconCfg.HeaderSize = bannerClut + bannerSize + iconSize + iconClut + 0x40;
 
-    dataSize = IconCfg.HeaderSize;
-    blocks = (dataSize + 0x1FFF) >> 13;
-    if (dataSize > 0) {
-        for (int i = 0; i < blocks; i++) {
+    if ((dataSize = (int)IconCfg.HeaderSize) > 0)
+    {
+        int blocks = (u32)(dataSize + 0x1FFF) >> 13;
+        int i = blocks;
+        while (i-- > 0)
+        {
             numBlocks++;
         }
     }
