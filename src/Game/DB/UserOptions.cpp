@@ -178,52 +178,7 @@ void AudioSettings::InitializeDefaults()
     //     }
     // }
 
-    // Create a BasicString to hold the mode string from config
-    BasicString<char, Detail::TempStringAllocator> modeString;
-
-    // Get the mode string from config
-    const char* modeStr = "STEREO"; // cfg.Get<const char*>("Mode", "STEREO");
-
-    // Create a BasicString from the const char*
-    if (modeStr)
-    {
-        u32 len = strlen(modeStr);
-        modeString.m_data = (char*)nlMalloc(len + 1, 8, true);
-        if (modeString.m_data)
-        {
-            strcpy(modeString.m_data, modeStr);
-            modeString.m_size = len;
-            modeString.m_capacity = len + 1;
-            modeString.m_refCount = 1;
-        }
-    }
-
-    if (modeString == "STEREO")
-    {
-        this->Mode = STEREO;
-    }
-    else if (modeString == "MONO")
-    {
-        this->Mode = MONO;
-    }
-    else if (modeString == "DOLBY")
-    {
-        this->Mode = DOLBY;
-    }
-    else
-    {
-        this->Mode = (eAudioMode)(OSGetSoundMode() == 0);
-    }
-
-    // Clean up the BasicString
-    if (modeString.m_data)
-    {
-        modeString.m_refCount--;
-        if (modeString.m_refCount == 0)
-        {
-            nlFree(modeString.m_data);
-        }
-    }
+    FORCE_DONT_INLINE;
 }
 
 /**

@@ -204,31 +204,33 @@ BasicString<char, Detail::TempStringAllocator> BaseGameSceneManager::GetFileName
 {
     const char* src = SceneEntryTable[(u32)scene].sceneName;
 
-    // Create BasicString using the template
+    BasicStringInternal* data = (BasicStringInternal*)nlMalloc(0x10, 8, true);
+    if (data)
+    {
+        data->mData = nullptr;
+        data->mSize = 0;
+        data->mCapacity = 0;
+
+        const char* p = src;
+        while (*p != '\0')
+        {
+            data->mSize++;
+            p++;
+        }
+
+        data->mData = (char*)nlMalloc(data->mSize + 1, 8, true);
+        data->mCapacity = data->mSize + 1;
+
+        for (u32 i = 0; i < (u32)data->mSize; i++)
+        {
+            data->mData[i] = src[i];
+        }
+        data->mData[data->mSize] = '\0';
+        data->mRefCount = 1;
+    }
+
     BasicString<char, Detail::TempStringAllocator> result;
-
-    // Calculate string length
-    u32 length = 0;
-    const char* p = src;
-    while (*p != '\0')
-    {
-        ++p;
-        ++length;
-    }
-
-    // Allocate memory for the string (including null terminator)
-    result.m_capacity = length + 1;
-    result.m_data = (char*)Detail::TempStringAllocator::allocate(result.m_capacity);
-    result.m_size = length;
-    result.m_refCount = 1;
-
-    // Copy the string data
-    for (u32 i = 0; i < length; i++)
-    {
-        result.m_data[i] = src[i];
-    }
-    result.m_data[length] = '\0';
-
+    result.m_data = data;
     return result;
 }
 

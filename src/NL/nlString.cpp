@@ -1,5 +1,6 @@
 #include "NL/nlString.h"
 #include <string.h>
+#include <dolphin/os/OSCache.h>
 
 /**
  * Offset/Address/Size: 0x0 | 0x801D2638 | size: 0x48
@@ -22,11 +23,34 @@ void nlStrToWcs(const char* str, unsigned short* wstr, unsigned long maxLen)
 
 /**
  * Offset/Address/Size: 0x48 | 0x801D2680 | size: 0x140
- * TODO: implement without memset
  */
-void nlZeroMemory(void* buffer, unsigned long size)
+void nlZeroMemory(void* p, unsigned long numBytes)
 {
-    memset(buffer, 0, size);
+    if (numBytes >= 0x80) {
+        unsigned long addr = (unsigned long)p;
+        unsigned long endr = addr + numBytes;
+        unsigned long startAddr = (addr + 0x1F) & ~0x1F;
+        unsigned long endAddr = endr & ~0x1F;
+
+        // Zero leading unaligned bytes
+        while (addr < startAddr) {
+            *(unsigned char*)addr = 0;
+            addr++;
+        }
+
+        // DCZeroRange for aligned middle
+        if (endAddr > startAddr) {
+            DCZeroRange((void*)startAddr, endAddr - startAddr);
+        }
+
+        // Zero trailing unaligned bytes
+        while (endAddr < endr) {
+            *(unsigned char*)endAddr = 0;
+            endAddr++;
+        }
+    } else {
+        memset(p, 0, numBytes);
+    }
 }
 
 /**

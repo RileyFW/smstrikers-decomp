@@ -12,9 +12,9 @@ public:
     /* 0x10 */ virtual void Draw();
     void SetAnimation(const char*, unsigned long);
     void SetAnimationSpeed(float);
-    void GetAnimationTime();
+    float GetAnimationTime();
     void SetAnimationTime(float);
-    void GetAnimationDuration();
+    float GetAnimationDuration();
 
     /* 0x9C */ void* m_pField9C;
     /* 0xA0 */ void* m_pFieldA0;

@@ -38,11 +38,11 @@ class BasicString;
 
 // Format function for single float argument (no variadic templates)
 template <typename StringType>
-void Format(StringType& result, const StringType& format, float value);
+void Format(StringType& result, const StringType& format, const float& value);
 
 // Format function for two float arguments
 template <typename StringType>
-void Format(StringType& result, const StringType& format, float value1, float value2);
+void Format(StringType& result, const StringType& format, const float& value1, const float& value2);
 
 // Detail namespace with TempStringAllocator
 namespace Detail
@@ -62,97 +62,73 @@ public:
 };
 } // namespace Detail
 
-// BasicString template class
+// BasicString data storage struct
+struct BasicStringInternal
+{
+    char* mData;      // offset 0x0 - the actual char* buffer
+    int mSize;        // offset 0x4
+    int mCapacity;    // offset 0x8
+    int mRefCount;    // offset 0xC
+};
+
+// BasicString template class - total size: 0x4 (pointer to BasicStringInternal)
 template <typename CharT, typename Allocator>
 class BasicString
 {
 public:
-    CharT* m_data;
-    u32 m_size;
-    u32 m_capacity;
-    u32 m_refCount;
+    BasicStringInternal* m_data; // offset 0x0 - pointer to data struct
 
     BasicString()
         : m_data(nullptr)
-        , m_size(0)
-        , m_capacity(0)
-        , m_refCount(1)
     {
     }
 
-    ~BasicString()
-    {
-        if (m_refCount > 0)
-        {
-            m_refCount--;
-            if (m_refCount == 0)
-            {
-                if (m_data)
-                {
-                    Allocator::deallocate(m_data);
-                }
-            }
-        }
-    }
+    ~BasicString();
 
     const CharT* c_str() const
     {
-        return m_data ? m_data : (const CharT*)"";
+        static CharT emptyString = '\0';
+        return m_data ? m_data->mData : &emptyString;
     }
 
     u32 size() const
     {
-        return m_size;
-    }
-
-    u32 capacity() const
-    {
-        return m_capacity;
+        return m_data ? m_data->mSize : 0;
     }
 };
 
+template <typename CharT, typename Allocator>
+BasicString<CharT, Allocator>::~BasicString()
+{
+    if (m_data)
+    {
+        m_data->mRefCount--;
+        if (m_data->mRefCount == 0)
+        {
+            if (m_data)
+            {
+                delete[] m_data->mData;
+            }
+            if (m_data)
+            {
+                nlFree(m_data);
+            }
+        }
+    }
+}
+
 // Format template function for single float argument
 template <typename StringType>
-void Format(StringType& result, const StringType& format, float value)
+void Format(StringType& result, const StringType& format, const float& value)
 {
-    // Simple implementation that replaces {0} with the float value
-    const char* formatStr = format.c_str();
-    u32 formatLen = format.size();
-
-    // For now, just copy the format string as-is
-    // In a real implementation, this would parse the format string and substitute arguments
-    result.m_size = formatLen;
-    result.m_capacity = formatLen + 1;
-    result.m_data = (char*)Detail::TempStringAllocator::allocate(result.m_capacity);
-
-    for (u32 i = 0; i < formatLen; i++)
-    {
-        result.m_data[i] = formatStr[i];
-    }
-    result.m_data[formatLen] = '\0';
-    result.m_refCount = 1;
+    FORCE_DONT_INLINE;
 }
 
 // Format template function for two float arguments
 template <typename StringType>
-void Format(StringType& result, const StringType& format, float value1, float value2)
+void Format(StringType& result, const StringType& format, const float& value1, const float& value2)
 {
-    // Simple implementation that replaces {0} and {1} with the float values
-    const char* formatStr = format.c_str();
-    u32 formatLen = format.size();
-
-    // For now, just copy the format string as-is
-    // In a real implementation, this would parse the format string and substitute arguments
-    result.m_size = formatLen;
-    result.m_capacity = formatLen + 1;
-    result.m_data = (char*)Detail::TempStringAllocator::allocate(result.m_capacity);
-
-    for (u32 i = 0; i < formatLen; i++)
-    {
-        result.m_data[i] = formatStr[i];
-    }
-    result.m_data[formatLen] = '\0';
-    result.m_refCount = 1;
+    FORCE_DONT_INLINE;
 }
 
 // Forward declaration for the operator== function
@@ -164,22 +140,17 @@ bool operator==(const BasicString<CharT, Allocator>& lhs, const char* rhs);
 template <>
 bool operator== <char, Detail::TempStringAllocator>(const BasicString<char, Detail::TempStringAllocator>& lhs, const char* rhs)
 {
-    // Handle null pointer cases
     if (!rhs)
     {
-        return lhs.m_data == nullptr || lhs.m_size == 0;
+        return lhs.m_data == nullptr || lhs.m_data->mSize == 0;
     }
 
-    if (!lhs.m_data)
+    if (!lhs.m_data || !lhs.m_data->mData)
     {
         return *rhs == '\0';
     }
 
-    // Get the string data from BasicString
-    const char* lhsStr = lhs.c_str();
-
-    // Use the existing strcmp function for comparison
-    return strcmp(lhsStr, rhs) == 0;
+    return strcmp(lhs.m_data->mData, rhs) == 0;
 }
 #endif
 

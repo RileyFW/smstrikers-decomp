@@ -26,27 +26,31 @@ void DrawableSkinModel::SetAnimation(const char* szAnimationName, unsigned long 
 /**
  * Offset/Address/Size: 0x24 | 0x80122F50 | size: 0xC
  */
-void DrawableSkinModel::SetAnimationSpeed(float)
+void DrawableSkinModel::SetAnimationSpeed(float fSpeed)
 {
+    m_pAnimController->m_fSpeed = fSpeed;
 }
 
 /**
  * Offset/Address/Size: 0x30 | 0x80122F5C | size: 0x24
  */
-void DrawableSkinModel::GetAnimationTime()
+float DrawableSkinModel::GetAnimationTime()
 {
+    return m_pAnimController->GetAnimationTime();
 }
 
 /**
  * Offset/Address/Size: 0x54 | 0x80122F80 | size: 0x24
  */
-void DrawableSkinModel::SetAnimationTime(float)
+void DrawableSkinModel::SetAnimationTime(float fTime)
 {
+    m_pAnimController->SetAnimationTime(fTime);
 }
 
 /**
  * Offset/Address/Size: 0x78 | 0x80122FA4 | size: 0x24
  */
-void DrawableSkinModel::GetAnimationDuration()
+float DrawableSkinModel::GetAnimationDuration()
 {
+    return m_pAnimController->GetAnimationDuration();
 }

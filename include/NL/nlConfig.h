@@ -38,8 +38,16 @@ public:
         ALLOCATE_HIGH = 1,
     };
 
-    // void Parse(const char*, Config::Parser&);
-    void LoadFileAsString(const char*);
+    struct Parser
+    {
+        virtual void TagValuePair(const BasicString<char, Detail::TempStringAllocator>&, const BasicString<char, Detail::TempStringAllocator>&) { FORCE_DONT_INLINE; }
+        virtual void Section(const BasicString<char, Detail::TempStringAllocator>&) { FORCE_DONT_INLINE; }
+        virtual void Comment() { FORCE_DONT_INLINE; }
+        virtual void EmptyLine() { FORCE_DONT_INLINE; }
+    }; // total size: 0x4
+
+    void Parse(const char*, Parser&);
+    static BasicString<char, Detail::TempStringAllocator> LoadFileAsString(const char*);
     void Set(const char*, const BasicString<char, Detail::TempStringAllocator>&);
     void Set(const char*, const char*);
     void Set(const char*, float);
@@ -137,14 +145,21 @@ public:
 
 typedef Config::TagValuePair TagValuePair;
 
-// class SetTagValuePair
-// {
-// public:
-//     SetTagValuePair::Comment(const BasicString<char, Detail::TempStringAllocator>&);
-//     SetTagValuePair::Section(const BasicString<char, Detail::TempStringAllocator>&);
-//     SetTagValuePair::TagValuePair(const BasicString<char, Detail::TempStringAllocator>&, const BasicString<char,
-//     Detail::TempStringAllocator>&);
-// };
+struct SetTagValuePair : public Config::Parser
+{
+    /* 0x04 */ BasicString<char, Detail::TempStringAllocator> mCurrentSection;
+    /* 0x08 */ Config& mConfig;
+    /* 0x0C */ bool mTweaked;
+    /* 0x10 */ float mTweakMinValue;
+    /* 0x14 */ float mTweakMaxValue;
+    /* 0x18 */ float mTweakIncrement;
+
+    SetTagValuePair(Config& cfg) : mConfig(cfg), mTweaked(false) {}
+
+    virtual void TagValuePair(const BasicString<char, Detail::TempStringAllocator>&, const BasicString<char, Detail::TempStringAllocator>&);
+    virtual void Section(const BasicString<char, Detail::TempStringAllocator>&);
+    virtual void Comment();
+}; // total size: 0x1C
 
 // class BasicString<char, Detail
 // {

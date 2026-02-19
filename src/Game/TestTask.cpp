@@ -28,7 +28,7 @@ TestTask::TestTask()
     mRunUnitTests = false;
     mFrameRateTestFailure = false;
     mRunFrameRateTest = false;
-    mMinimumFrameRate = 20.0f;
+    mMinimumFrameRate = 10.0f;
 }
 
 /**
@@ -36,11 +36,11 @@ TestTask::TestTask()
  */
 void TestTask::Initialize()
 {
-    mTestTimeOut = GetConfigFloat(Config::Global(), "test/time_out_sec", 0.0f);
-    mRunUnitTests = GetConfigBool(Config::Global(), "test/run_unit_tests", false);
-    mRunSmokeTest = GetConfigBool(Config::Global(), "test/run_smoke_test", false);
-    mRunFrameRateTest = GetConfigBool(Config::Global(), "test/run_frame_rate_test", false);
-    mMinimumFrameRate = GetConfigFloat(Config::Global(), "test/minimum_frame_rate", 20.0f);
+    mTestTimeOut = GetConfigFloat(Config::Global(), "test/time_out_sec ", 10.0f);
+    mRunUnitTests = GetConfigBool(Config::Global(), "test/unit_tests", false);
+    mRunSmokeTest = GetConfigBool(Config::Global(), "test/smoke", false);
+    mRunFrameRateTest = GetConfigBool(Config::Global(), "test/frame_rate", false);
+    mMinimumFrameRate = GetConfigFloat(Config::Global(), "test/frame_rate_min", 20.0f);
 
     if (GetConfigBool(Config::Global(), "test/enable", false))
     {
@@ -77,7 +77,6 @@ void TestTask::RunSmokeTest(float)
 {
     if (mRunSmokeTest)
     {
-
         if (mTestTimeOut <= 0.0f)
         {
             void* debugFile = nlOpenFileDebug(smokeTestSuccessOutput, false, false);
@@ -88,67 +87,45 @@ void TestTask::RunSmokeTest(float)
                 nlCloseFileDebug(debugFile);
             }
 
-            // Create a BasicString for formatting
-            BasicString<char, Detail::TempStringAllocator>* formatString = (BasicString<char, Detail::TempStringAllocator>*)nlMalloc(0x10, 8, true);
-            if (formatString)
+            BasicStringInternal* data = (BasicStringInternal*)nlMalloc(0x10, 8, true);
+            if (data)
             {
                 const char* formatTemplate = "SUCCESS: smoke test successful, didn't crash for {0} seconds";
-                formatString->m_data = nullptr;
-                formatString->m_size = 0;
-                formatString->m_capacity = 0;
+                data->mData = nullptr;
+                data->mSize = 0;
+                data->mCapacity = 0;
 
                 const char* p = formatTemplate;
                 while (*p != '\0')
                 {
-                    formatString->m_size++;
+                    data->mSize++;
                     p++;
                 }
-                formatString->m_size++; // Include null terminator
+                data->mSize++;
 
-                formatString->m_data = (char*)nlMalloc(formatString->m_size, 8, true);
-                formatString->m_capacity = formatString->m_size;
+                data->mData = (char*)nlMalloc(data->mSize + 1, 8, true);
+                data->mCapacity = data->mSize;
 
-                // Copy the format template
-                for (int i = 0; i < formatString->m_size - 1; i++)
+                for (int i = 0; i < data->mSize; i++)
                 {
-                    formatString->m_data[i] = formatTemplate[i];
+                    data->mData[i] = formatTemplate[i];
                 }
-                formatString->m_data[formatString->m_size - 1] = '\0';
-                formatString->m_refCount = 1;
+                data->mRefCount = 1;
             }
 
-            float configValue = GetConfigFloat(Config::Global(), "test/time_out_sec ", 1.0f);
+            float configValue = GetConfigFloat(Config::Global(), "test/time_out_sec ", 10.0f);
+
+            BasicString<char, Detail::TempStringAllocator> formatString;
+            formatString.m_data = data;
 
             BasicString<char, Detail::TempStringAllocator> formattedString;
-            Format(formattedString, *formatString, configValue);
+            Format(formattedString, formatString, configValue);
 
             if (mTestLog)
             {
                 nlWriteLineDebug(mTestLog, formattedString.c_str(), false);
-                nlWriteLineDebug(mTestLog, "\n", false); // Additional debug message
+                nlWriteLineDebug(mTestLog, "\n", false);
                 nlFlushFileDebug(mTestLog);
-            }
-
-            if (formatString)
-            {
-                formatString->m_refCount--;
-                if (formatString->m_refCount == 0)
-                {
-                    if (formatString->m_data)
-                    {
-                        nlFree(formatString->m_data);
-                    }
-                    nlFree(formatString);
-                }
-            }
-
-            if (formattedString.m_refCount == 0)
-            {
-                if (formattedString.m_data)
-                {
-                    nlFree(formattedString.m_data);
-                }
-                nlFree(&formattedString);
             }
         }
     }
@@ -159,90 +136,59 @@ void TestTask::RunSmokeTest(float)
  */
 void TestTask::RunFrameRateTest(float dt)
 {
-    // Check if frame rate test is enabled
     if (!mRunFrameRateTest)
     {
         return;
     }
 
-    // Calculate frame rate threshold: 1.0f / mMinimumFrameRate
     float frameRateThreshold = 1.0f / mMinimumFrameRate;
 
-    // Check if current frame time exceeds threshold (frame rate too low)
     if (dt > frameRateThreshold)
     {
-        // Mark frame rate test as failed
         mFrameRateTestFailure = true;
 
-        // Create format string for failure message
-        BasicString<char, Detail::TempStringAllocator>* formatString = (BasicString<char, Detail::TempStringAllocator>*)nlMalloc(0x10, 8, true);
-        if (formatString)
+        BasicStringInternal* data = (BasicStringInternal*)nlMalloc(0x10, 8, true);
+        if (data)
         {
-            const char* formatTemplate = "FAILURE: frame rate test failed, frame time {0} exceeds threshold {1}";
-            formatString->m_data = nullptr;
-            formatString->m_size = 0;
-            formatString->m_capacity = 0;
+            const char* formatTemplate = "FAILURE: frame rate dropped below {0}, namely {1}";
+            data->mData = nullptr;
+            data->mSize = 0;
+            data->mCapacity = 0;
 
-            // Calculate string length
             const char* p = formatTemplate;
             while (*p != '\0')
             {
-                formatString->m_size++;
+                data->mSize++;
                 p++;
             }
-            formatString->m_size++; // Include null terminator
+            data->mSize++;
 
-            // Allocate memory for string data
-            formatString->m_data = (char*)nlMalloc(formatString->m_size, 8, true);
-            formatString->m_capacity = formatString->m_size;
+            data->mData = (char*)nlMalloc(data->mSize + 1, 8, true);
+            data->mCapacity = data->mSize;
 
-            // Copy the format template
-            for (int i = 0; i < formatString->m_size - 1; i++)
+            for (int i = 0; i < data->mSize; i++)
             {
-                formatString->m_data[i] = formatTemplate[i];
+                data->mData[i] = formatTemplate[i];
             }
-            formatString->m_data[formatString->m_size - 1] = '\0';
-            formatString->m_refCount = 1;
+            data->mRefCount = 1;
         }
 
-        // Format the failure message with frame time and threshold
-        BasicString<char, Detail::TempStringAllocator> formattedString;
-        Format(formattedString, *formatString, dt, mMinimumFrameRate);
+        float actualFrameRate = 1.0f / dt;
 
-        // Write to debug log if available
+        BasicString<char, Detail::TempStringAllocator> formatString;
+        formatString.m_data = data;
+
+        BasicString<char, Detail::TempStringAllocator> formattedString;
+        Format(formattedString, formatString, mMinimumFrameRate, actualFrameRate);
+
         if (mTestLog)
         {
             nlWriteLineDebug(mTestLog, formattedString.c_str(), false);
             nlWriteLineDebug(mTestLog, "\n", false);
             nlFlushFileDebug(mTestLog);
         }
-
-        // Clean up format string
-        if (formatString)
-        {
-            formatString->m_refCount--;
-            if (formatString->m_refCount == 0)
-            {
-                if (formatString->m_data)
-                {
-                    nlFree(formatString->m_data);
-                }
-                nlFree(formatString);
-            }
-        }
-
-        // Clean up formatted string
-        if (formattedString.m_refCount == 0)
-        {
-            if (formattedString.m_data)
-            {
-                nlFree(formattedString.m_data);
-            }
-            nlFree(&formattedString);
-        }
     }
 
-    // Check if test timeout has expired and frame rate test hasn't failed yet
     if (mTestTimeOut <= 0.0f && !mFrameRateTestFailure)
     {
         void* debugFile = nlOpenFileDebug(frameRateTestSuccessOutput, false, false);
@@ -253,67 +199,43 @@ void TestTask::RunFrameRateTest(float dt)
             nlCloseFileDebug(debugFile);
         }
 
-        // Create format string for success message
-        BasicString<char, Detail::TempStringAllocator>* formatString = (BasicString<char, Detail::TempStringAllocator>*)nlMalloc(0x10, 8, true);
-        if (formatString)
+        BasicStringInternal* data = (BasicStringInternal*)nlMalloc(0x10, 8, true);
+        if (data)
         {
-            const char* formatTemplate = "SUCCESS: frame rate test successful, maintained {0} FPS";
-            formatString->m_data = nullptr;
-            formatString->m_size = 0;
-            formatString->m_capacity = 0;
+            const char* formatTemplate = "SUCCES: frame rate test successful, never dropped below {0}";
+            data->mData = nullptr;
+            data->mSize = 0;
+            data->mCapacity = 0;
 
-            // Calculate string length
             const char* p = formatTemplate;
             while (*p != '\0')
             {
-                formatString->m_size++;
+                data->mSize++;
                 p++;
             }
-            formatString->m_size++; // Include null terminator
+            data->mSize++;
 
-            // Allocate memory for string data
-            formatString->m_data = (char*)nlMalloc(formatString->m_size, 8, true);
-            formatString->m_capacity = formatString->m_size;
+            data->mData = (char*)nlMalloc(data->mSize + 1, 8, true);
+            data->mCapacity = data->mSize;
 
-            // Copy the format template
-            for (int i = 0; i < formatString->m_size - 1; i++)
+            for (int i = 0; i < data->mSize; i++)
             {
-                formatString->m_data[i] = formatTemplate[i];
+                data->mData[i] = formatTemplate[i];
             }
-            formatString->m_data[formatString->m_size - 1] = '\0';
-            formatString->m_refCount = 1;
+            data->mRefCount = 1;
         }
 
+        BasicString<char, Detail::TempStringAllocator> formatString;
+        formatString.m_data = data;
+
         BasicString<char, Detail::TempStringAllocator> formattedString;
-        Format(formattedString, *formatString, mMinimumFrameRate);
+        Format(formattedString, formatString, mMinimumFrameRate);
 
         if (mTestLog)
         {
             nlWriteLineDebug(mTestLog, formattedString.c_str(), false);
             nlWriteLineDebug(mTestLog, "\n", false);
             nlFlushFileDebug(mTestLog);
-        }
-
-        if (formatString)
-        {
-            formatString->m_refCount--;
-            if (formatString->m_refCount == 0)
-            {
-                if (formatString->m_data)
-                {
-                    nlFree(formatString->m_data);
-                }
-                nlFree(formatString);
-            }
-        }
-
-        if (formattedString.m_refCount == 0)
-        {
-            if (formattedString.m_data)
-            {
-                nlFree(formattedString.m_data);
-            }
-            nlFree(&formattedString);
         }
     }
 }

@@ -114,7 +114,7 @@ public:
     unsigned long GetMemoryCardDataSize() const;
     void GetMemoryCardData(void*);
     void SetMemoryCardData(void*);
-    void CheckSaveIDChanged(void*);
+    u8 CheckSaveIDChanged(void*);
     bool HasTrophy(eTrophyType) const;
     void GetMilestoneLevel(eTrophyType) const;
     bool IsInRegularCupMode() const;

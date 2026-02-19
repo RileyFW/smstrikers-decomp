@@ -2,18 +2,43 @@
 
 // static Config* sGlobal = nullptr;
 
+// Inline destructor specialization for BasicString<char, TempStringAllocator>
+// used in LoadFromFile - generates the double-null-check + nlFree-inside-outer pattern
+template <>
+inline BasicString<char, Detail::TempStringAllocator>::~BasicString()
+{
+    BasicStringInternal* d = m_data;
+    if (d != nullptr)
+    {
+        if (--d->mRefCount == 0)
+        {
+            if (d != nullptr)
+            {
+                if (d != nullptr)
+                    operator delete[](d->mData);
+                if (d != nullptr)
+                    nlFree(d);
+            }
+        }
+    }
+}
+
 /**
  * Offset/Address/Size: 0x0 | 0x801D2C64 | size: 0x13EC
  */
-// void Config::Parse(const char*, Config::Parser&)
-// {
-// }
+void Config::Parse(const char*, Config::Parser&)
+{
+    FORCE_DONT_INLINE;
+}
 
 /**
  * Offset/Address/Size: 0x13EC | 0x801D4050 | size: 0x21C
  */
-void Config::LoadFileAsString(const char*)
+BasicString<char, Detail::TempStringAllocator> Config::LoadFileAsString(const char*)
 {
+    FORCE_DONT_INLINE;
+    BasicString<char, Detail::TempStringAllocator> s;
+    return s;
 }
 
 /**
@@ -273,8 +298,12 @@ bool Config::Exists(const char* tag) const
 /**
  * Offset/Address/Size: 0x25E8 | 0x801D524C | size: 0x138
  */
-void Config::LoadFromFile(const char*)
+void Config::LoadFromFile(const char* filename)
 {
+    const BasicString<char, Detail::TempStringAllocator>& s = LoadFileAsString(filename);
+    const char* str = s.c_str();
+    SetTagValuePair stvp(*this);
+    Parse(str, stvp);
 }
 
 /**
@@ -315,17 +344,18 @@ Config::~Config()
 /**
  * Offset/Address/Size: 0x2904 | 0x801D5568 | size: 0x94
  */
-// SetTagValuePair::Section(const BasicString<char, Detail::TempStringAllocator>&)
-// {
-// }
+void SetTagValuePair::Section(const BasicString<char, Detail::TempStringAllocator>&)
+{
+    FORCE_DONT_INLINE;
+}
 
 /**
  * Offset/Address/Size: 0x2998 | 0x801D55FC | size: 0x218
  */
-// SetTagValuePair::TagValuePair(const BasicString<char, Detail::TempStringAllocator>&, const BasicString<char,
-// Detail::TempStringAllocator>&)
-// {
-// }
+void SetTagValuePair::TagValuePair(const BasicString<char, Detail::TempStringAllocator>&, const BasicString<char, Detail::TempStringAllocator>&)
+{
+    FORCE_DONT_INLINE;
+}
 
 /**
  * Offset/Address/Size: 0x0 | 0x801D5814 | size: 0x4

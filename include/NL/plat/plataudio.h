@@ -224,7 +224,7 @@ void StopAllSound();
 void Shutdown();
 bool Initialize(bool);
 void PurgeSampleFileBuffer();
-void IsEntireSampleFileInMem();
+bool IsEntireSampleFileInMem();
 unsigned char ReadEntireSampleFileIntoMemSync(const char*);
 unsigned char ReadEntireSampleFileIntoMem(const char*);
 bool UpdateAuxEffectA(MusyXEffectType, void*);
@@ -248,7 +248,17 @@ public:
 class ARAMTransferHelper
 {
 public:
-    void sndPushGroupCallback(unsigned long, unsigned long);
+    static void* sndPushGroupCallback(unsigned long, unsigned long);
+
+    unsigned char* m_pARAMXferBlockBaseAddress; // offset 0x0
+    unsigned long m_uCachedDataOffset;           // offset 0x4
+    unsigned char* m_pDiskCacheBaseAddress;      // offset 0x8
+    unsigned long m_uFileSize;                   // offset 0xC
+
+    static ARAMTransferHelper* m_pARAMHelper;
+    static unsigned char m_bFileOpened;
+    static nlFile* m_pFile;
+    static const char* m_szFileName;
 };
 
 #endif // _PLATAUDIO_H_

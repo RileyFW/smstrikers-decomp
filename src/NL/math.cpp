@@ -107,8 +107,25 @@ void nlQuatInverse(nlQuaternion& out, const nlQuaternion& in)
 /**
  * Offset/Address/Size: 0xA8 | 0x801F03A4 | size: 0x140
  */
-void nlQuatNLerp(nlQuaternion&, const nlQuaternion&, const nlQuaternion&, float)
+void nlQuatNLerp(nlQuaternion& out, const nlQuaternion& q1, const nlQuaternion& q2, float t)
 {
+    float dot = nlQuatDot(q1, q2);
+    if (dot > 0.0f)
+    {
+        out.f.x = t * (q2.f.x - q1.f.x) + q1.f.x;
+        out.f.y = t * (q2.f.y - q1.f.y) + q1.f.y;
+        out.f.z = t * (q2.f.z - q1.f.z) + q1.f.z;
+        out.f.w = t * (q2.f.w - q1.f.w) + q1.f.w;
+    }
+    else
+    {
+        out.f.x = t * (-q2.f.x - q1.f.x) + q1.f.x;
+        out.f.y = t * (-q2.f.y - q1.f.y) + q1.f.y;
+        out.f.z = t * (-q2.f.z - q1.f.z) + q1.f.z;
+        out.f.w = t * (-q2.f.w - q1.f.w) + q1.f.w;
+    }
+    float fOneOverSqrt = nlRecipSqrt(nlQuatDot(out, out), true);
+    nlQuatScale(out, out, fOneOverSqrt);
 }
 
 /**

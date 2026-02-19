@@ -23,7 +23,7 @@ public:
 class ScrollingTickerScene : public FEIMessenger, public BaseSceneHandler
 {
 public:
-    void IsMessengerOpen() const;
+    bool IsMessengerOpen() const;
     void CloseMessengerNow();
     void CloseMessenger();
     void OpenMessengerNow();

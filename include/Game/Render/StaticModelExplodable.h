@@ -29,6 +29,7 @@ public:
     static bool LoadGeometry();
     static void CreateExplodablesFromHelperObjects();
     static nlList<SidelineExplodableNode> sStaticModelExplodableList;
+    static ExplodableCategoryData sCategoryData[NUM_STATIC_MODEL_EXPLODABLE_CATEGORIES];
 
     /* 0x2C */ DrawableObject* m_pUnexplodedModel;
     /* 0x30 */ StaticModelExplodableCategory mCategory;

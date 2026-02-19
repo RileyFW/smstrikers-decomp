@@ -226,57 +226,71 @@ void ScreenTransitionManager::DeleteAllTransitions()
 /**
  * Offset/Address/Size: 0x5A4 | 0x80205694 | size: 0x178
  */
+/**
+ * TODO: 96.0% match - remaining r29/r30 swap between this and nameData in MWCC register allocation.
+ */
 void ScreenTransitionManager::AddTransitionToMap(char* name, ScreenTransition* pTransition)
 {
-    AVLTreeNode* outNode = nullptr;
     u32 transitionHash = glHash(name);
+    BasicStringInternal* nameStringData;
+    AVLTreeNode* outNode;
 
-    m_TransitionMap.AddAVLNode((AVLTreeNode**)&m_TransitionMap.m_Root, &transitionHash, pTransition, &outNode, m_TransitionMap.m_NumElements);
+    m_TransitionMap.AddAVLNode((AVLTreeNode**)&m_TransitionMap.m_Root, &transitionHash, &pTransition, &outNode, m_TransitionMap.m_NumElements);
 
     if (outNode == nullptr)
     {
         m_TransitionMap.m_NumElements++;
     }
 
-    BasicString<char, Detail::TempStringAllocator>* nameString = nullptr;
+    BasicStringInternal* nameData = (BasicStringInternal*)nlMalloc(16, 8, true);
 
-    nameString = (BasicString<char, Detail::TempStringAllocator>*)nlMalloc(16, 8, true);
-
-    if (nameString != nullptr)
+    if (nameData != nullptr)
     {
-        nameString->m_data = nullptr;
-        nameString->m_size = 0;
-        nameString->m_capacity = 0;
-        nameString->m_refCount = 1;
+        nameData->mData = nullptr;
+        nameData->mSize = 0;
+        nameData->mCapacity = 0;
 
         const char* namePtr = name;
-        while (*namePtr != '\0')
+        while ((s8)*namePtr++ != 0)
         {
-            nameString->m_size++;
-            namePtr++;
+            nameData->mSize++;
         }
 
-        nameString->m_size++;
+        nameData->mSize++;
 
-        nameString->m_data = (char*)nlMalloc(nameString->m_size, 8, true);
-        nameString->m_capacity = nameString->m_size;
+        nameData->mData = (char*)nlMalloc(nameData->mSize + 1, 8, true);
+        nameData->mCapacity = nameData->mSize;
 
-        for (int i = 0; i < nameString->m_size - 1; i++)
+        s32 i = 0;
+        while (i < nameData->mSize)
         {
-            nameString->m_data[i] = name[i];
+            nameData->mData[i] = *name;
+            name++;
+            i++;
         }
-        nameString->m_data[nameString->m_size - 1] = '\0';
 
-        m_Transitions.push_back(*nameString);
+        nameData->mRefCount = 1;
+    }
 
-        nameString->m_refCount--;
-        if (nameString->m_refCount == 0)
+    nameStringData = nameData;
+    m_Transitions.push_back(*(BasicString<char, Detail::TempStringAllocator>*)&nameStringData);
+
+    nameData = nameStringData;
+    if (nameData != nullptr)
+    {
+        if (--nameData->mRefCount == 0)
         {
-            if (nameString->m_data != nullptr)
+            if (nameData != nullptr)
             {
-                delete[] nameString->m_data;
+                if (nameData != nullptr)
+                {
+                    delete[] nameData->mData;
+                }
+                if (nameData != nullptr)
+                {
+                    nlFree(nameData);
+                }
             }
-            nlFree(nameString);
         }
     }
 }

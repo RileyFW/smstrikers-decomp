@@ -1539,7 +1539,7 @@ config.libs = [
             Object(NonMatching, "SDK/TRK_MINNOW_DOLPHIN/__exception.s"),
 
             Object(NonMatching, "SDK/TRK_MINNOW_DOLPHIN/targimpl.c"),
-            Object(NonMatching, "SDK/TRK_MINNOW_DOLPHIN/mslsupp.c", extra_cflags=["-enum int"]),
+            Object(Matching, "SDK/TRK_MINNOW_DOLPHIN/mslsupp.c", extra_cflags=["-enum int"]),
         ]
     ),  
 ]

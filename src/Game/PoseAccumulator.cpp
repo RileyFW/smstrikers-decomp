@@ -604,8 +604,8 @@ void cPoseAccumulator::MultNodeMatrices(const nlMatrix4* arg0)
  */
 void cPoseAccumulator::SetBuildNodeMatrixCallback(int idx, BuildNodeMatrixFn fn, unsigned int a, unsigned int b)
 {
-    cBuildNodeMatrixCallbackInfo& cb = m_cb.mData[idx];
-    cb.fn = fn;
-    cb.a = a;
-    cb.b = b;
+    int offset = idx * (int)sizeof(cBuildNodeMatrixCallbackInfo);
+    *(BuildNodeMatrixFn*)((char*)m_cb.mData + offset) = fn;
+    *(unsigned int*)((char*)m_cb.mData + offset + 4) = a;
+    *(unsigned int*)((char*)m_cb.mData + offset + 8) = b;
 }

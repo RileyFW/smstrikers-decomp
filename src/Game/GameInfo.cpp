@@ -646,8 +646,9 @@ void GameInfoManager::SetMemoryCardData(void*)
 /**
  * Offset/Address/Size: 0x61DC | 0x8017B880 | size: 0x1C
  */
-void GameInfoManager::CheckSaveIDChanged(void*)
+u8 GameInfoManager::CheckSaveIDChanged(void* pData)
 {
+    return ((UserInfo*)pData)->mSaveID != mUserInfo.mSaveID;
 }
 
 /**

@@ -314,8 +314,9 @@ void EmitUnFreeze(cPlayer*)
 /**
  * Offset/Address/Size: 0x1400 | 0x801A01B0 | size: 0x20
  */
-void ElectrocutionFinishedCallback(EmissionController&)
+void ElectrocutionFinishedCallback(EmissionController& ec)
 {
+    g_pCharacters[ec.m_uUserData]->m_pEffectsTexturing = NULL;
 }
 
 /**
@@ -372,7 +373,8 @@ void EmitShootToScoreHyperStrike(cFielder* pFielder)
     update2.mTag = FREE_FUNCTION;
     update2.mFreeFunction = UpdateEmitterFromBall;
     pController->SetUpdateCallback(update2);
-    if (update2.mTag == FUNCTOR) {
+    if (update2.mTag == FUNCTOR)
+    {
         delete update2.mFunctor;
     }
     update2.mTag = EMPTY;
@@ -526,15 +528,50 @@ void EmitChainBite(cFielder* pFielder)
 /**
  * Offset/Address/Size: 0x17C | 0x8019EF2C | size: 0x14C
  */
-void EmitTackleImpact(cPlayer*)
+void EmitTackleImpact(cPlayer* pCharacter)
 {
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("tackle_impact"), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 1.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.02f;
+    {
+        Function<EmissionController&> update2;
+        {
+            Function<EmissionController&> update;
+            update.mTag = FREE_FUNCTION;
+            update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+            pController->SetUpdateCallback(update);
+        }
+        pCharacter->AttachEffect(pController);
+        pController->m_uUserData = GetCharacterIndex(pCharacter);
+        update2.mTag = FREE_FUNCTION;
+        update2.mFreeFunction = UpdateEmitterFromCharacter;
+        pController->SetUpdateCallback(update2);
+    }
+    BeginRumbleAction(RUMBLE_SOLID_CONTACT, pCharacter->GetGlobalPad());
 }
 
 /**
  * Offset/Address/Size: 0x44 | 0x8019EDF4 | size: 0x138
  */
-void EmitSlideTackleTrail(cCharacter*)
+void EmitSlideTackleTrail(cCharacter* pCharacter)
 {
+    Function<EmissionController&> update2;
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("SLIDE_TRAIL"), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 0.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.0f;
+    {
+        Function<EmissionController&> update;
+        update.mTag = FREE_FUNCTION;
+        update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+        pController->SetUpdateCallback(update);
+    }
+    pCharacter->AttachEffect(pController);
+    pController->m_uUserData = GetCharacterIndex(pCharacter);
+    update2.mTag = FREE_FUNCTION;
+    update2.mFreeFunction = UpdateEmitterFromCharacter;
+    pController->SetUpdateCallback(update2);
 }
 
 /**

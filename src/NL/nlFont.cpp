@@ -12,6 +12,7 @@ void nlFont::GetCharWidth(unsigned short, unsigned short) const
  */
 void nlFont::DisableScissorBox() const
 {
+    m_bScissorBox = false;
 }
 
 /**

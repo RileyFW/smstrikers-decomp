@@ -3,8 +3,9 @@
 /**
  * Offset/Address/Size: 0x0 | 0x8009FC58 | size: 0x8
  */
-void ScrollingTickerScene::IsMessengerOpen() const
+bool ScrollingTickerScene::IsMessengerOpen() const
 {
+    return m_bVisible;
 }
 
 /**
@@ -139,8 +140,11 @@ void ScrollingTickerScene::tickerClosed(void* scene)
 /**
  * Offset/Address/Size: 0xEB8 | 0x800A0B10 | size: 0x18
  */
-void ScrollingTickerScene::tickerOpened(void*)
+void ScrollingTickerScene::tickerOpened(void* pScene)
 {
+    ScrollingTickerScene* scene = (ScrollingTickerScene*)pScene;
+    scene->m_active = 1;
+    scene->m_textScroller->m_msgTime = 0.0f;
 }
 
 /**

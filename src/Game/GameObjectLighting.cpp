@@ -4,7 +4,8 @@
 #include "NL/gl/glState.h"
 #include "types.h"
 
-struct StadiumLightingParams {
+struct StadiumLightingParams
+{
     u32 lightRamp;
     u8 pad[0x38];
 };
@@ -37,11 +38,14 @@ void* GetInGameLightData()
     return NULL;
 }
 
+bool gAlwaysUseCameraRelativeCharacterLighting;
+
 /**
  * Offset/Address/Size: 0xAFC | 0x8012B338 | size: 0x8
  */
-void AlwaysUseCameraRelativeCharacterLighting()
+bool AlwaysUseCameraRelativeCharacterLighting()
 {
+    return gAlwaysUseCameraRelativeCharacterLighting;
 }
 
 /**
@@ -56,6 +60,7 @@ void InitializeGameObjectLighting()
  */
 void UpdateGameObjectLighting()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

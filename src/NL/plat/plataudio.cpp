@@ -25,6 +25,12 @@ static u8 gAllowSyncReadsPastLoadedData;
 // static u32 m_uFileSize__32ARAMTransferHelperLoadEntireFile;
 // static nlFile* s_pFile__32ARAMTransferHelperLoadEntireFile;
 
+// ARAMTransferHelper static members
+ARAMTransferHelper* ARAMTransferHelper::m_pARAMHelper;
+unsigned char ARAMTransferHelper::m_bFileOpened;
+nlFile* ARAMTransferHelper::m_pFile;
+const char* ARAMTransferHelper::m_szFileName;
+
 #include <dolphin/ai.h>
 #include <dolphin/arq.h>
 
@@ -643,8 +649,9 @@ void PurgeSampleFileBuffer()
 /**
  * Offset/Address/Size: 0x1A0C | 0x801C6208 | size: 0x14
  */
-void IsEntireSampleFileInMem()
+bool IsEntireSampleFileInMem()
 {
+    return gpEntireSampleFileBufferSecondHalf != NULL;
 }
 
 /**
@@ -929,8 +936,54 @@ void ARAMTransferHelperLoadEntireFile::sndPushGroupCallback(unsigned long, unsig
 /**
  * Offset/Address/Size: 0x1DD4 | 0x801C65D0 | size: 0x148
  */
-void ARAMTransferHelper::sndPushGroupCallback(unsigned long, unsigned long)
+void* ARAMTransferHelper::sndPushGroupCallback(unsigned long arg0, unsigned long arg1)
 {
+    unsigned long uSize = arg1;
+    unsigned char* pARAMBlock = ARAMTransferHelper::m_pARAMHelper->m_pARAMXferBlockBaseAddress;
+    unsigned long uOffset = arg0;
+
+    while (uSize != 0)
+    {
+        if (uOffset >= ARAMTransferHelper::m_pARAMHelper->m_uCachedDataOffset && uOffset < ARAMTransferHelper::m_pARAMHelper->m_uCachedDataOffset + 0x20000)
+        {
+            if (!ARAMTransferHelper::m_bFileOpened)
+            {
+                ARAMTransferHelper::m_pFile = nlOpen(ARAMTransferHelper::m_szFileName);
+                ARAMTransferHelper::m_bFileOpened = 1;
+            }
+
+            unsigned long uOffsetInBlock = uOffset - ARAMTransferHelper::m_pARAMHelper->m_uCachedDataOffset;
+            unsigned long uRemainingInCache = 0x20000 - uOffsetInBlock;
+            unsigned long uCopySize = uSize;
+            if (uRemainingInCache <= uSize)
+                uCopySize = uRemainingInCache;
+
+            memcpy(pARAMBlock, ARAMTransferHelper::m_pARAMHelper->m_pDiskCacheBaseAddress + uOffsetInBlock, uCopySize);
+            uSize -= uCopySize;
+            uOffset += uCopySize;
+            pARAMBlock += uCopySize;
+        }
+        else
+        {
+            if (!ARAMTransferHelper::m_bFileOpened)
+            {
+                ARAMTransferHelper::m_pFile = nlOpen(ARAMTransferHelper::m_szFileName);
+                ARAMTransferHelper::m_bFileOpened = 1;
+            }
+
+            unsigned long uSeekPosition = uOffset & ~0x1FFFF;
+            nlSeek(ARAMTransferHelper::m_pFile, uSeekPosition, 0);
+
+            nlFile* pFile = ARAMTransferHelper::m_pFile;
+            unsigned long uFileRemaining = ARAMTransferHelper::m_pARAMHelper->m_uFileSize - uSeekPosition;
+            unsigned char* pDiskCache = ARAMTransferHelper::m_pARAMHelper->m_pDiskCacheBaseAddress;
+            unsigned long uReadSize = uFileRemaining < 0x20000 ? uFileRemaining : (unsigned long)0x20000;
+            nlRead(pFile, pDiskCache, uReadSize);
+            ARAMTransferHelper::m_pARAMHelper->m_uCachedDataOffset = uSeekPosition;
+        }
+    }
+
+    return ARAMTransferHelper::m_pARAMHelper->m_pARAMXferBlockBaseAddress;
 }
 
 /**

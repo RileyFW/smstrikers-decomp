@@ -101,6 +101,7 @@ CreditScene::~CreditScene()
  */
 void CreditScene::SceneCreated()
 {
+    SetupForPhase();
 }
 
 /**
@@ -133,6 +134,7 @@ void CreditScene::Update(float dt)
  */
 void CreditScene::SetupForPhase()
 {
+    FORCE_DONT_INLINE;
     *(u8*)&mTimeElapsed = 0;
     *(f32*)&mCreditParser.mFileSize = 0.0f;
 
@@ -201,7 +203,8 @@ void CreditScene::SetupForNLGMovie()
 
     typedef TLImageInstance* (*FindByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
     typedef TLImageInstance* (*FindByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
-    union {
+    union
+    {
         FindByValue byValue;
         FindByRef byRef;
     } findImg;

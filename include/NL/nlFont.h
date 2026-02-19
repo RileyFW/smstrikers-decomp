@@ -74,7 +74,7 @@ public:
     /* 0x004 */ unsigned long m_TextureHandles[16];
     /* 0x044 */ unsigned long m_EffectTextureHandles[16];
     /* 0x084 */ TextureType m_TextureType;
-    /* 0x088 */ unsigned char m_bScissorBox;
+    /* 0x088 */ mutable unsigned char m_bScissorBox;
     /* 0x08A */ ScissorBox m_scissorBox;
     /* 0x094 */ Distribution m_Distribution;
     /* 0x098 */ unsigned long m_CharacterSet;

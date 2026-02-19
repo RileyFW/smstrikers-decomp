@@ -12,6 +12,28 @@ class NisPlayer : public InterpreterCore
 public:
     static NisPlayer* Instance();
     void SetExtraNameFilter(const char*);
+    void Reset();
+};
+
+class Wiper
+{
+public:
+    static Wiper& Instance();
+    void Reset();
+};
+
+class ReplayChoreo : public InterpreterCore
+{
+public:
+    static ReplayChoreo& Instance();
+    void Reset();
+};
+
+class ReplayManager
+{
+public:
+    static ReplayManager* Instance();
+    void Flush();
 };
 
 extern unsigned long cupTrophyHash;
@@ -235,4 +257,46 @@ void CupWinStingerDone()
  */
 void Presentation::Reset()
 {
+    mIsAllowedToSkip[0] = true;
+    mIsAllowedToSkip[1] = true;
+    mIsAllowedToSkip[2] = true;
+    mIsAllowedToSkip[3] = true;
+
+    FixedUpdateTask::mTimeScale = 1.0f;
+    const char* functionName = idleFun;
+    ParticleUpdateTask::SetTimeScale(1.0f);
+
+    if (nlStrCmp<char>(idleFun, mCurrentFunction) != 0 && nlStrCmp<char>(idleFun, functionName) != 0)
+    {
+        mQueuedFunction = functionName;
+    }
+    else
+    {
+        nlStrNCpy<char>(mCurrentFunction, functionName, 64);
+        mSkipPressed = false;
+        mInsideByPass = false;
+        mByPassing = false;
+        mInterruptWipe = 0;
+        mUseInterruptWipe = 0;
+        mTimeInFunction = 0.0f;
+
+        NisPlayer::Instance()->SetExtraNameFilter("");
+        CallFunction(nlStringHash(functionName));
+    }
+
+    mQueuedFunction = 0;
+    mOverlayDisplayed = false;
+    if (mOverlayDisplayed)
+    {
+        nlSingleton<OverlayManager>::s_pInstance->SetVisible(mOverlayToDisplay, false, false);
+    }
+    mOverlayDisplayed = false;
+    mOverlayToDisplay = SCENE_INVALID;
+    mOverlayDisplayLength = 0.0f;
+    mOverlayDelay = 0.0f;
+
+    Wiper::Instance().Reset();
+    NisPlayer::Instance()->Reset();
+    ReplayChoreo::Instance().Reset();
+    ReplayManager::Instance()->Flush();
 }

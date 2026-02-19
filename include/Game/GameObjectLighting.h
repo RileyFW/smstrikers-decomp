@@ -6,7 +6,7 @@
 u32 GetGameObjectLightRamp();
 void UpdateGameObjectLighting();
 void InitializeGameObjectLighting();
-void AlwaysUseCameraRelativeCharacterLighting();
+bool AlwaysUseCameraRelativeCharacterLighting();
 void* GetInGameLightData();
 void* GetCameraRelativeLightData();
 

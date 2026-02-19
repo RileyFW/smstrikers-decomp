@@ -63,8 +63,11 @@ void TournSetParamsScene::Update(float)
 /**
  * Offset/Address/Size: 0xB90 | 0x800E0564 | size: 0x10
  */
-void TournSetParamsScene::SetInitialParams(bool, int, int)
+void TournSetParamsScene::SetInitialParams(bool isLeagueMode, int numTeams, int numGames)
 {
+    m_isLeagueMode = isLeagueMode;
+    m_numTeams = numTeams;
+    m_numGames = numGames;
 }
 
 /**

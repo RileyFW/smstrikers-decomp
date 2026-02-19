@@ -348,8 +348,45 @@ void EmissionManager::Replay(LoadFrame&)
 /**
  * Offset/Address/Size: 0x11C | 0x801F8A3C | size: 0x130
  */
+
 void EmissionManager::Replay(SaveFrame& frame)
 {
+    if (!m_bRecording)
+    {
+        if (controllers != nullptr)
+        {
+            EmissionController* current = (EmissionController*)(controllers->m_headNode);
+            while (current != nullptr)
+            {
+                EmissionController* next = (EmissionController*)(current->m_nextNode);
+                eGLView glView = (eGLView)current->m_GlView;
+                if ((defaultView == glView) && (current->m_uUserData + 0x21530000 != 0x0000BEEF))
+                {
+                    controllers->Remove(current);
+                    delete current;
+                }
+                current = next;
+            }
+        }
+        m_bRecording = true;
+    }
+
+    int numEffects = controllers->m_numNodes;
+    Replayable<0>(frame, numEffects);
+
+    EmissionController* current = (EmissionController*)(controllers->m_headNode);
+    while (current != nullptr)
+    {
+        if (defaultView == current->m_GlView)
+        {
+            unsigned short id = current->m_Id;
+            unsigned long group = (unsigned long)current->m_pGroup;
+            Replayable<0>(frame, id);
+            Replayable<0>(frame, group);
+            Replayable<0>(frame, *current);
+        }
+        current = (EmissionController*)(current->m_nextNode);
+    }
 }
 
 /**

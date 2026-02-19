@@ -2,6 +2,7 @@
 #include "Game/Drawable/DrawableObj.h"
 
 nlList<SidelineExplodableNode> StaticModelExplodable::sStaticModelExplodableList;
+ExplodableCategoryData StaticModelExplodable::sCategoryData[NUM_STATIC_MODEL_EXPLODABLE_CATEGORIES];
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80165D2C | size: 0x138
@@ -60,7 +61,7 @@ StaticModelExplodable::~StaticModelExplodable()
  */
 ExplodableCategoryData& StaticModelExplodable::GetCategoryData() const
 {
-    return *(ExplodableCategoryData*)0;
+    return sCategoryData[mCategory];
 }
 
 /**

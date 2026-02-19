@@ -13,6 +13,7 @@ class DrawablePowerup;
 class CrowdManager;
 class EmissionManager;
 class DrawableNetMesh;
+class EmissionController;
 class RenderSnapshot;
 
 class WriteByteStream
@@ -89,6 +90,18 @@ template <>
 void Replayable<0, SaveFrame, float>(SaveFrame& frame, float& value);
 template <>
 void Replayable<0, LoadFrame, float>(LoadFrame& frame, float& value);
+
+template <>
+void Replayable<0, SaveFrame, int>(SaveFrame& frame, int& value);
+template <>
+void Replayable<0, LoadFrame, int>(LoadFrame& frame, int& value);
+
+template <>
+void Replayable<0, SaveFrame, unsigned short>(SaveFrame& frame, unsigned short& value);
+template <>
+void Replayable<0, SaveFrame, unsigned long>(SaveFrame& frame, unsigned long& value);
+template <>
+void Replayable<0, SaveFrame, EmissionController>(SaveFrame& frame, EmissionController& controller);
 
 template <int N, typename FrameType, typename T>
 void Replayable(FrameType& frame, T& drawable)

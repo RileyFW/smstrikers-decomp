@@ -614,8 +614,50 @@ bool TrackedSFXFilterFreqTypeCheckCallback(unsigned long sfxID, cGameSFX* pGameS
 /**
  * Offset/Address/Size: 0x2158 | 0x8015369C | size: 0x150
  */
-bool cGameSFX::IsKeepingTrackOf(unsigned long sfxID, SFXPlaySet** pPlaySet)
+bool cGameSFX::IsKeepingTrackOf(unsigned long type, SFXPlaySet** pGrabTrackedSFX)
 {
+    if (pGrabTrackedSFX != NULL) {
+        *pGrabTrackedSFX = NULL;
+    }
+
+    if (!mbCurPlaySetIsValid) {
+        return false;
+    }
+
+    DLListEntry<SFXPlaySet*>* head = mpCurPlaySet.m_Head;
+    DLListEntry<SFXPlaySet*>* current = nlDLRingGetStart(head);
+    head = mpCurPlaySet.m_Head;
+
+    while (current != NULL) {
+        SFXPlaySet* pTrackedSFX = current->m_data;
+
+        if (pTrackedSFX->type == type) {
+            if (pTrackedSFX->bIs3D && pTrackedSFX->emitter != NULL && Audio::IsEmitterActive(pTrackedSFX->emitter)) {
+                pTrackedSFX->voiceID = Audio::GetEmitterVoiceID(pTrackedSFX->emitter);
+            }
+
+            if ((pTrackedSFX->delay < 0.0f && pTrackedSFX->bIs3D && pTrackedSFX->voiceID == (unsigned long)Audio::GetSndIDError()) || Audio::IsSFXPlaying(pTrackedSFX->voiceID)) {
+                if (pGrabTrackedSFX != NULL) {
+                    *pGrabTrackedSFX = pTrackedSFX;
+                }
+                return true;
+            }
+
+            if (pTrackedSFX->delay >= 0.0f) {
+                if (pGrabTrackedSFX != NULL) {
+                    *pGrabTrackedSFX = pTrackedSFX;
+                }
+                return true;
+            }
+        }
+
+        if (nlDLRingIsEnd(head, current) || current == NULL) {
+            current = NULL;
+        } else {
+            current = current->m_next;
+        }
+    }
+
     return false;
 }
 

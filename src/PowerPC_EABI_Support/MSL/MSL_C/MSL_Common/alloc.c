@@ -332,18 +332,57 @@ static Block* __unlink(__mem_pool_obj* pool_obj, Block* bp)
  * @note Address: N/A
  * @note Size: 0xB4
  */
-void link_new_block(void)
+Block* link_new_block(__mem_pool_obj* pool_obj, u32 size)
 {
-    // UNUSED FUNCTION
+    FORCE_DONT_INLINE;
 }
 
 /**
- * @note Address: N/A
+ * @note Address: 0x8022BA1C
  * @note Size: 0xDC
  */
-void* allocate_from_var_pools(__mem_pool_obj* pool_obj, u32 size)
+static void* allocate_from_var_pools(__mem_pool_obj* pool_obj, u32 size)
 {
-    // UNUSED FUNCTION
+    Block* bp;
+    SubBlock* sb;
+
+    size = (size + 0xf) & ~7;
+    if (size < 0x50)
+    {
+        size = 0x50;
+    }
+
+    bp = pool_obj->start_ != NULL ? pool_obj->start_ : link_new_block(pool_obj, size);
+
+    if (bp == NULL)
+    {
+        return NULL;
+    }
+
+    do
+    {
+        if (size <= bp->max_size)
+        {
+            sb = Block_subBlock(bp, size);
+            if (sb != NULL)
+            {
+                pool_obj->start_ = bp;
+                goto done;
+            }
+        }
+
+        bp = bp->next;
+    } while (bp != pool_obj->start_);
+
+    bp = link_new_block(pool_obj, size);
+    if (bp == NULL)
+    {
+        return NULL;
+    }
+
+    sb = Block_subBlock(bp, size);
+done:
+    return (char*)sb + 8;
 }
 
 /**

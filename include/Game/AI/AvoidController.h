@@ -28,10 +28,10 @@ public:
     void UseMinimumAvoidance(cPlayer*);
     nlVector3& GetLastRepulsionVector(eAvoidableThings);
     void Update(float);
-    void CalcFielderRepulsionVector(nlVector3&);
-    void CalcPowerupRepulsionVector(nlVector3&);
-    void CalcDesiredVelocityToAvoidSideline(nlVector2&, const nlVector2&, const nlVector2&, const nlVector2&, const nlVector2&);
-    void CalcDesiredVelocityToAvoidCorner(nlVector2&, const sCornerSegment&, const nlVector2&, const nlVector2&);
+    bool CalcFielderRepulsionVector(nlVector3&);
+    bool CalcPowerupRepulsionVector(nlVector3&);
+    bool CalcDesiredVelocityToAvoidSideline(nlVector2&, const nlVector2&, const nlVector2&, const nlVector2&, const nlVector2&);
+    bool CalcDesiredVelocityToAvoidCorner(nlVector2&, const sCornerSegment&, const nlVector2&, const nlVector2&);
     void AvoidSidelines();
     void ApplyRepulsionVector(nlVector3);
 

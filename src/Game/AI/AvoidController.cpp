@@ -116,29 +116,33 @@ void AvoidController::Update(float)
 /**
  * Offset/Address/Size: 0x1060 | 0x800086B4 | size: 0x25C
  */
-void AvoidController::CalcFielderRepulsionVector(nlVector3&)
+bool AvoidController::CalcFielderRepulsionVector(nlVector3&)
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0xE08 | 0x8000845C | size: 0x258
  */
-void AvoidController::CalcPowerupRepulsionVector(nlVector3&)
+bool AvoidController::CalcPowerupRepulsionVector(nlVector3&)
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0xC30 | 0x80008284 | size: 0x1D8
  */
-void AvoidController::CalcDesiredVelocityToAvoidSideline(nlVector2&, const nlVector2&, const nlVector2&, const nlVector2&, const nlVector2&)
+bool AvoidController::CalcDesiredVelocityToAvoidSideline(nlVector2&, const nlVector2&, const nlVector2&, const nlVector2&, const nlVector2&)
 {
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x8C8 | 0x80007F1C | size: 0x368
  */
-void AvoidController::CalcDesiredVelocityToAvoidCorner(nlVector2&, const sCornerSegment&, const nlVector2&, const nlVector2&)
+bool AvoidController::CalcDesiredVelocityToAvoidCorner(nlVector2&, const sCornerSegment&, const nlVector2&, const nlVector2&)
 {
+    return false;
 }
 
 /**
