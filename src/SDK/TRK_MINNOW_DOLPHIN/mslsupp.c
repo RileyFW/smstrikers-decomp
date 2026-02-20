@@ -1,20 +1,23 @@
 #include "PowerPC_EABI_Support/MetroTRK/trk.h"
 
+extern u32 fn_80228F78(u32, u32, u8, __file_handle*);
 extern u32 fn_80228F80(u32, u32);
 extern u32 fn_80228F70(u32, u32, size_t*, unsigned char*);
+extern u32 fn_80228F88(u32, u32, fpos_t*, u8);
 
-int __read_file(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn)
+DSIOResult __read_console(__file_handle file, unsigned char* buffer, size_t* count, __idle_proc idle_fn)
 {
     u32 r0;
     size_t countTemp;
 
-    if (GetTRKConnected() == 0)
-    {
+    if (GetUseSerialIO() == 0)
         return DS_IOError;
-    }
+
+    if (GetTRKConnected() == DS_NoError)
+        return DS_IOError;
 
     countTemp = *count;
-    r0 = fn_80228F70(DSMSG_ReadFile, file, &countTemp, buf);
+    r0 = fn_80228F70(DSMSG_ReadFile, 0, &countTemp, buffer);
     *count = countTemp;
 
     switch ((u8)r0)
@@ -28,7 +31,7 @@ int __read_file(__file_handle file, unsigned char* buf, size_t* count, __idle_pr
     return DS_IOError;
 }
 
-int __TRK_write_console(__file_handle file, unsigned char* buffer, size_t* count, __idle_proc idle_fn)
+DSIOResult __TRK_write_console(__file_handle file, unsigned char* buffer, size_t* count, __idle_proc idle_fn)
 {
     u32 r0;
     size_t countTemp;
@@ -54,115 +57,7 @@ int __TRK_write_console(__file_handle file, unsigned char* buffer, size_t* count
     return DS_IOError;
 }
 
-// DSIOResult __read_file(u32 handle, u8* buffer, size_t* count, void* ref_con)
-// {
-//     return __access_file(handle, buffer, count, ref_con, DSMSG_ReadFile);
-// }
-
-// DSIOResult __write_file(u32 handle, u8* buffer, size_t* count, void* ref_con)
-// {
-//     return __access_file(handle, buffer, count, ref_con, DSMSG_WriteFile);
-// }
-
-// void __open_file(void)
-// {
-//     // UNUSED FUNCTION
-// }
-
-// DSIOResult __close_file(u32 handle, u8* buffer, size_t* count, void* ref_con)
-// {
-//     u32 r0;
-
-//     if (GetTRKConnected() == DS_NoError)
-//     {
-//         return DS_IOError;
-//     }
-
-//     r0 = TRKCloseFile(DSMSG_CloseFile, handle);
-
-//     switch ((u8)r0)
-//     {
-//     case DS_IONoError:
-//         return DS_IONoError;
-//     case DS_IOEOF:
-//         return DS_IOEOF;
-//     }
-
-//     return DS_IOError;
-// }
-
-// void __position_file(void)
-// {
-//     // UNUSED FUNCTION
-// }
-
-// void convertFileMode(void)
-// {
-//     // UNUSED FUNCTION
-// }
-
-// DSIOResult __access_file(u32 handle, u8* buffer, size_t* count, void* ref_con, MessageCommandID cmd)
-// {
-//     size_t countTemp;
-//     u32 r0;
-
-//     if (GetTRKConnected() == DS_NoError)
-//     {
-//         return DS_IOError;
-//     }
-
-//     countTemp = *count;
-//     r0 = TRKAccessFile(cmd, handle, &countTemp, buffer);
-//     *count = countTemp;
-
-//     switch ((u8)r0)
-//     {
-//     case DS_IONoError:
-//         return DS_IONoError;
-//     case DS_IOEOF:
-//         return DS_IOEOF;
-//     }
-
-//     return DS_IOError;
-// }
-
-// void __open_temp_file(void)
-// {
-//     // UNUSED FUNCTION
-// }
-
-int __close_console(__file_handle file)
-{
-    u32 r0;
-
-    if (GetTRKConnected() == 0)
-    {
-        return DS_IOError;
-    }
-
-    r0 = fn_80228F80(DSMSG_CloseFile, file);
-
-    switch ((u8)r0)
-    {
-    case DS_IONoError:
-        return DS_IONoError;
-    case DS_IOEOF:
-        return DS_IOEOF;
-    }
-
-    return DS_IOError;
-}
-int __write_console(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn)
-{
-    return 0;
-}
-
-// int __read_console(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn)
-// {
-//     return 0;
-// }
-
-int __close_file(__file_handle file)
+DSIOResult __close_console(__file_handle file)
 {
     u32 r0;
 
@@ -184,12 +79,180 @@ int __close_file(__file_handle file)
     return DS_IOError;
 }
 
-int __write_file(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn)
+DSIOResult __read_file(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn)
 {
-    return 0;
+    u32 r0;
+    size_t countTemp;
+
+    if (GetTRKConnected() == 0)
+    {
+        return DS_IOError;
+    }
+
+    countTemp = *count;
+    r0 = fn_80228F70(DSMSG_ReadFile, file, &countTemp, buf);
+    *count = countTemp;
+
+    switch ((u8)r0)
+    {
+    case DS_IONoError:
+        return DS_IONoError;
+    case DS_IOEOF:
+        return DS_IOEOF;
+    }
+
+    return DS_IOError;
 }
 
-int __position_file(__file_handle handle, fpos_t* position, int mode, __idle_proc idle_proc)
+DSIOResult __write_file(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn)
 {
-    return 0;
+    u32 r0;
+    size_t countTemp;
+
+    if (GetTRKConnected() == 0)
+    {
+        return DS_IOError;
+    }
+
+    countTemp = *count;
+    r0 = fn_80228F70(DSMSG_WriteFile, file, &countTemp, buf);
+    *count = countTemp;
+
+    switch ((u8)r0)
+    {
+    case DS_IONoError:
+        return DS_IONoError;
+    case DS_IOEOF:
+        return DS_IOEOF;
+    }
+
+    return DS_IOError;
+}
+
+DSIOResult __open_file(const char* name, file_modes mode, __file_handle* handle)
+{
+    u32 r0;
+    u8 openMode;
+    u8 ioMode;
+    u8 binaryIO;
+    u8 trk_mode;
+
+    if (GetTRKConnected() == 0)
+    {
+        return DS_IOError;
+    }
+
+    trk_mode = 0;
+    openMode = mode.open_mode;
+    ioMode = mode.io_mode;
+    binaryIO = mode.binary_io;
+
+    switch (openMode)
+    {
+    case 0:
+        trk_mode |= 0x01;
+        break;
+    case 2:
+        trk_mode |= 0x02;
+        break;
+    case 1:
+        trk_mode |= 0x04;
+        break;
+    }
+
+    switch (ioMode)
+    {
+    case 1:
+        trk_mode |= 0x01;
+        break;
+    case 2:
+        trk_mode |= 0x02;
+        break;
+    case 6:
+        trk_mode |= 0x04;
+        break;
+    case 3:
+        trk_mode |= 0x12;
+        break;
+    case 7:
+        trk_mode |= 0x07;
+        break;
+    }
+
+    if (binaryIO == 1)
+    {
+        trk_mode |= 0x08;
+    }
+
+    r0 = fn_80228F78(DSMSG_OpenFile, (u32)name, (u8)trk_mode, handle);
+
+    switch ((u8)r0)
+    {
+    case DS_IONoError:
+        return DS_IONoError;
+    case DS_IOEOF:
+        return DS_IOEOF;
+    }
+
+    return DS_IOError;
+}
+
+DSIOResult __close_file(__file_handle file)
+{
+    u32 r0;
+
+    if (GetTRKConnected() == 0)
+    {
+        return DS_IOError;
+    }
+
+    r0 = fn_80228F80(DSMSG_CloseFile, file);
+
+    switch ((u8)r0)
+    {
+    case DS_IONoError:
+        return DS_IONoError;
+    case DS_IOEOF:
+        return DS_IOEOF;
+    }
+
+    return DS_IOError;
+}
+
+DSIOResult __position_file(__file_handle handle, fpos_t* position, int mode, __idle_proc idle_proc)
+{
+    u32 r0;
+    u32 modeConverted;
+
+    modeConverted = 0;
+
+    if (GetTRKConnected() == 0)
+    {
+        return DS_IOError;
+    }
+
+    if (mode == 0)
+    {
+        modeConverted = 0;
+    }
+    else if (mode == 1)
+    {
+        modeConverted = 1;
+    }
+    else if (mode == 2)
+    {
+        modeConverted = 2;
+    }
+
+    r0 = fn_80228F88(DSMSG_PositionFile, handle, position, (u8)modeConverted);
+
+    switch ((u8)r0)
+    {
+    case DS_IONoError:
+        return DS_IONoError;
+    case DS_IOEOF:
+        return DS_IOEOF;
+    }
+
+    return DS_IOError;
 }

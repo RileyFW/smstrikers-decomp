@@ -2,6 +2,7 @@
 #define _MSL_COMMON_ANSI_FILES_H
 
 #include "stddef.h"
+#include "PowerPC_EABI_Support/MetroTRK/trkenum.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,10 +76,10 @@ typedef struct _file_states {
 } file_states;
 
 typedef void (*__idle_proc)(void);
-typedef int (*__pos_proc)(__file_handle file, fpos_t* position, int mode, __idle_proc idle_proc);
-typedef int (*__io_proc)(__file_handle file, unsigned char* buff, size_t* count,
+typedef DSIOResult (*__pos_proc)(__file_handle file, fpos_t* position, int mode, __idle_proc idle_proc);
+typedef DSIOResult (*__io_proc)(__file_handle file, unsigned char* buff, size_t* count,
                          __idle_proc idle_proc);
-typedef int (*__close_proc)(__file_handle file);
+typedef DSIOResult (*__close_proc)(__file_handle file);
 
 typedef struct _FILE {
     /* 0x00 */ __file_handle handle;
@@ -117,14 +118,14 @@ typedef struct _files {
 #define _IOFBF 2
 
 extern files __files;
-extern int __close_console(__file_handle file);
-extern int __write_console(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn);
-extern int __read_console(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn);
+extern DSIOResult __close_console(__file_handle file);
+extern DSIOResult __write_console(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn);
+extern DSIOResult __read_console(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn);
 
-extern int __close_file(__file_handle file);
-extern int __write_file(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn);
-extern int __read_file(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn);
-extern int __position_file(__file_handle handle, fpos_t * position, int mode, __idle_proc idle_proc);
+extern DSIOResult __close_file(__file_handle file);
+extern DSIOResult __write_file(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn);
+extern DSIOResult __read_file(__file_handle file, unsigned char* buf, size_t* count, __idle_proc idle_fn);
+extern DSIOResult __position_file(__file_handle handle, fpos_t * position, int mode, __idle_proc idle_proc);
 
 
 unsigned int __flush_all(void);

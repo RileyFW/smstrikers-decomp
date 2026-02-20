@@ -15,7 +15,7 @@ int fclose(FILE* file) {
     close_result = (*file->close_fn)(file->handle);
 
     file->file_mode.file_kind = __closed_file;
-    file->handle = NULL;
+    file->handle = 0;
 
     if (file->file_state.free_buffer)
         free((FILE*)file->buffer);

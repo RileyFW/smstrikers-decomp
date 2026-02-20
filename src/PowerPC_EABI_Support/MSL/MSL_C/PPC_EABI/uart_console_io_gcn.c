@@ -3,9 +3,9 @@
 
 int InitializeUART(size_t);
 int WriteUARTN(unsigned char*, size_t);
-int __TRK_write_console(__file_handle handle, unsigned char* buffer, size_t* count, __idle_proc idle_fn);
+DSIOResult __TRK_write_console(__file_handle handle, unsigned char* buffer, size_t* count, __idle_proc idle_fn);
 
-int __write_console(__file_handle handle, unsigned char* buffer, size_t* count, __idle_proc idle_fn) {
+DSIOResult __write_console(__file_handle handle, unsigned char* buffer, size_t* count, __idle_proc idle_fn) {
     static int initialized;
 
     if ((OSGetConsoleType() & 0x20000000) == 0) {
