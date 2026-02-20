@@ -24,6 +24,7 @@ static u8 gAllowSyncReadsPastLoadedData;
 // ARAMTransferHelperLoadEntireFile static members
 // static u32 m_uFileSize__32ARAMTransferHelperLoadEntireFile;
 // static nlFile* s_pFile__32ARAMTransferHelperLoadEntireFile;
+ARAMTransferHelperLoadEntireFile* ARAMTransferHelperLoadEntireFile::m_pARAMHelper;
 
 // ARAMTransferHelper static members
 ARAMTransferHelper* ARAMTransferHelper::m_pARAMHelper;
@@ -929,8 +930,56 @@ void ARAMTransferHelperLoadEntireFile::LoadEntireFileCallback(nlFile* pFile, voi
 /**
  * Offset/Address/Size: 0x1C98 | 0x801C6494 | size: 0x13C
  */
-void ARAMTransferHelperLoadEntireFile::sndPushGroupCallback(unsigned long, unsigned long)
+void* ARAMTransferHelperLoadEntireFile::sndPushGroupCallback(unsigned long uOffset, unsigned long uSize)
 {
+    unsigned long uRemSize = uSize;
+    unsigned char* pARAMBlock = ARAMTransferHelperLoadEntireFile::m_pARAMHelper->m_pARAMXferBlockBaseAddress;
+
+    while (uRemSize != 0)
+    {
+        unsigned long uCopySize = uRemSize < 0x20000 ? uRemSize : (unsigned long)0x20000;
+
+        if (uOffset > gEntireSampleFileFirstHalfAllocSize + gEntireSampleFileSecondHalfAllocSize)
+        {
+            nlRead(ARAMTransferHelperLoadEntireFile::s_pFile, pARAMBlock, uCopySize);
+        }
+        else
+        {
+            unsigned long totalBufSize = gEntireSampleFileFirstHalfAllocSize + gEntireSampleFileSecondHalfAllocSize;
+            if (uOffset + uCopySize > totalBufSize)
+            {
+                unsigned long firstCopySize = totalBufSize - uOffset;
+                unsigned char* pSrc = (unsigned char*)gpEntireSampleFileBufferSecondHalf + (uOffset - gEntireSampleFileFirstHalfAllocSize);
+                memcpy(pARAMBlock, pSrc, firstCopySize);
+                nlRead(ARAMTransferHelperLoadEntireFile::s_pFile, pARAMBlock + firstCopySize, uCopySize - firstCopySize);
+            }
+        }
+
+        {
+            unsigned long firstHalfSize = gEntireSampleFileFirstHalfAllocSize;
+            if (uOffset > firstHalfSize)
+            {
+                unsigned char* pSrc2 = (unsigned char*)gpEntireSampleFileBufferSecondHalf + (uOffset - firstHalfSize);
+                memcpy(pARAMBlock, pSrc2, uCopySize);
+            }
+            else if (uOffset + uCopySize > firstHalfSize)
+            {
+                unsigned long firstCopySize2 = firstHalfSize - uOffset;
+                memcpy(pARAMBlock, (unsigned char*)gpEntireSampleFileBufferFirstHalf + uOffset, firstCopySize2);
+                memcpy(pARAMBlock + firstCopySize2, gpEntireSampleFileBufferSecondHalf, uCopySize - firstCopySize2);
+            }
+            else
+            {
+                memcpy(pARAMBlock, (unsigned char*)gpEntireSampleFileBufferFirstHalf + uOffset, uCopySize);
+            }
+        }
+
+        uRemSize -= uCopySize;
+        uOffset += uCopySize;
+        pARAMBlock += uCopySize;
+    }
+
+    return ARAMTransferHelperLoadEntireFile::m_pARAMHelper->m_pARAMXferBlockBaseAddress;
 }
 
 /**

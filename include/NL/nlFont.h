@@ -54,12 +54,21 @@ public:
 
     struct KernPair
     {
-        /* 0x0 */ unsigned short A;
-        /* 0x2 */ unsigned short B;
+        union
+        {
+            struct
+            {
+                /* 0x0 */ unsigned short A;
+                /* 0x2 */ unsigned short B;
+            } s;
+            /* 0x0 */ unsigned long hash;
+        };
         /* 0x4 */ int Kern;
+
+        operator unsigned long() const { return hash; }
     }; // total size: 0x8
 
-    void GetCharWidth(unsigned short, unsigned short) const;
+    unsigned long GetCharWidth(unsigned short FontChar, unsigned short PrevFontChar) const;
     void DisableScissorBox() const;
     // void SetScissorBox(const nlFont::ScissorBox&) const;
     // void DrawString(eGLView, const FontCharString&, const nlVector2&, const nlColour&, const nlColour&, int, nlFont::TextPass, bool, unsigned long*, nlColour*) const;

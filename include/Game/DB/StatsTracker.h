@@ -138,7 +138,7 @@ public:
     void WriteStats(float, float, const char*);
     void AwardCup(eUserGameResult);
     void WriteCurrentlyPlaying() const;
-    void MoveTeamBUp(TeamStats, TeamStats);
+    bool MoveTeamBUp(TeamStats, TeamStats);
 
     /* 0x000 */ BasicGameInfo* mBasicGameInfo;
     /* 0x004 */ EventHandler* mEventHandler;

@@ -30,8 +30,8 @@ public:
     bool DoAbort(cFielder*);
     sDesireParams& GetLastDesireParams();
     sPlayParams& GetLastPlayParams();
-    void QueueActionSetDesire(int, float, float, FuzzyVariant, FuzzyVariant);
-    void QueueActionSetPlay(int, float, float);
+    ScriptAction* QueueActionSetDesire(int, float, float, FuzzyVariant, FuzzyVariant);
+    ScriptAction* QueueActionSetPlay(int, float, float);
     void FindDesireAction(int, FuzzyVariant, FuzzyVariant);
     bool SelectAction(eScriptActionSelection, float);
 

@@ -166,7 +166,7 @@ public:
     void CalculateNewDesire();
     bool CanDoCaptainShootToScore();
     bool CanLooseBallShoot();
-    void CanLooseBallPass();
+    bool CanLooseBallPass();
     bool CanReceivePass();
     void SetMark(cFielder*);
     bool CollideWithShellCallback(ePowerupSize, bool, const nlVector3&, const nlVector3&);

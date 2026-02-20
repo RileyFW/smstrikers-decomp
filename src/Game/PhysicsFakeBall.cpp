@@ -1,5 +1,7 @@
 #include "Game/Physics/PhysicsFakeBall.h"
 #include "Game/Physics/PhysicsPlane.h"
+#include "Game/Physics/Physics.h"
+#include "Game/FixedUpdateTask.h"
 #include "NL/nlDLRing.h"
 #include "NL/nlDLListSlotPool.h"
 
@@ -25,9 +27,81 @@ void FakeBallWorld::FindBallIntercept(const nlVector3&, float, float, nlVector3&
 
 /**
  * Offset/Address/Size: 0x484 | 0x80137870 | size: 0x1E4
+ * TODO: 99.6% match - remaining diffs are register allocation for iterator
+ *       (r28/r29 swap) and x/y load-store ordering in velocity copy.
  */
-void FakeBallWorld::GetNextBallPosition(nlVector3&)
+void FakeBallWorld::GetNextBallPosition(nlVector3& v3BallPos)
 {
+    if (mpCacheIterator->m_current != NULL)
+    {
+        DLListEntry<BallCacheInfo*>* entry = mpCacheIterator->m_current;
+        BallCacheInfo* info = entry->m_data;
+        v3BallPos = info->mv3Position;
+
+        nlDLListIterator<DLListEntry<BallCacheInfo*> >* iter = mpCacheIterator;
+        if (nlDLRingIsEnd(iter->m_head, iter->m_current) || iter->m_current == NULL)
+        {
+            iter->m_current = NULL;
+        }
+        else
+        {
+            iter->m_current = iter->m_current->m_next;
+        }
+        return;
+    }
+
+    float tick = FixedUpdateTask::GetPhysicsUpdateTick();
+    FakeBallWorld* predictWorld = mpPredictWorld;
+    PhysicsUpdate(predictWorld->mpPhysicsWorld, tick);
+
+    SlotPool<BallCacheInfo>* bciPool = &BallCacheInfo::mBallCacheInfoSlotPool;
+    predictWorld = mpPredictWorld;
+    mfLastCacheTime += tick;
+    BallCacheInfo* newInfo = NULL;
+    PhysicsObject* physObj = predictWorld->mpPhysicsBall;
+
+    if (bciPool->m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock((SlotPoolBase*)bciPool, sizeof(BallCacheInfo));
+    }
+    if (bciPool->m_FreeList != NULL)
+    {
+        newInfo = (BallCacheInfo*)bciPool->m_FreeList;
+        bciPool->m_FreeList = bciPool->m_FreeList->m_next;
+    }
+
+    newInfo->mfTime = mfLastCacheTime;
+    newInfo->mv3Position = physObj->GetPosition();
+
+    nlVector3& vel = physObj->GetLinearVelocity();
+    s32 vx = (s32)vel.as_u32[0];
+    nlDLListSlotPool<BallCacheInfo*>* cacheList = &mBallCacheList;
+    s32 vy = (s32)vel.as_u32[1];
+    DLListEntry<BallCacheInfo*>* newEntry = NULL;
+    newInfo->mv3LinearVelocity.as_u32[0] = (u32)vx;
+    newInfo->mv3LinearVelocity.as_u32[1] = (u32)vy;
+    newInfo->mv3LinearVelocity.as_u32[2] = vel.as_u32[2];
+
+    if (cacheList->m_Allocator.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock((SlotPoolBase*)&cacheList->m_Allocator, sizeof(DLListEntry<BallCacheInfo*>));
+    }
+    if (cacheList->m_Allocator.m_FreeList != NULL)
+    {
+        newEntry = (DLListEntry<BallCacheInfo*>*)cacheList->m_Allocator.m_FreeList;
+        cacheList->m_Allocator.m_FreeList = cacheList->m_Allocator.m_FreeList->m_next;
+    }
+
+    if (newEntry != NULL)
+    {
+        newEntry->m_next = NULL;
+        newEntry->m_prev = NULL;
+        newEntry->m_data = newInfo;
+    }
+
+    nlDLRingAddEnd(&mBallCacheList.m_Head, newEntry);
+
+    v3BallPos = newInfo->mv3Position;
 }
 
 /**

@@ -4,6 +4,7 @@
 #include <string.h>
 
 void __sys_free(void*);
+void* __sys_alloc(u32);
 
 typedef struct Block
 {
@@ -102,8 +103,7 @@ static int initialized = 0;
 
 static SubBlock* SubBlock_merge_prev(SubBlock*, SubBlock**);
 static void SubBlock_merge_next(SubBlock*, SubBlock**);
-
-static const u32 fix_pool_sizes[] = { 4, 12, 20, 36, 52, 68 };
+static Block* link_new_block(__mem_pool_obj*, u32);
 
 #define SubBlock_size(ths)  ((ths)->size & 0xFFFFFFF8)
 #define SubBlock_block(ths) ((Block*)((u32)((ths)->block) & ~0x1))
@@ -135,11 +135,14 @@ static const u32 fix_pool_sizes[] = { 4, 12, 20, 36, 52, 68 };
 
 #define Block_empty(ths) (_sb = (SubBlock*)((char*)(ths) + 16)), SubBlock_is_free(_sb) && SubBlock_size(_sb) == Block_size((ths)) - 24
 
+static const u32 fix_pool_sizes[] = {4, 12, 20, 36, 52, 68};
+
 #define fix_var_flag    0x01
 #define this_alloc_flag 0x02
 
 static void Block_construct(Block* ths, u32 size)
 {
+    FORCE_DONT_INLINE;
 }
 
 SubBlock* Block_subBlock(Block* ths, u32 size)
@@ -329,12 +332,43 @@ static Block* __unlink(__mem_pool_obj* pool_obj, Block* bp)
 }
 
 /**
- * @note Address: N/A
+ * @note Address: 0x8022BAF8
  * @note Size: 0xB4
  */
-Block* link_new_block(__mem_pool_obj* pool_obj, u32 size)
+static Block* link_new_block(__mem_pool_obj* pool_obj, u32 size)
 {
-    FORCE_DONT_INLINE;
+    Block* block;
+
+    size = (size + 0x1f) & ~7;
+    if (size < 0x10000)
+    {
+        size = 0x10000;
+    }
+
+    block = (Block*)__sys_alloc(size);
+    if (block == NULL)
+    {
+        return NULL;
+    }
+
+    Block_construct(block, size);
+
+    if (pool_obj->start_ != NULL)
+    {
+        block->prev = pool_obj->start_->prev;
+        block->prev->next = block;
+        block->next = pool_obj->start_;
+        pool_obj->start_->prev = block;
+        pool_obj->start_ = block;
+    }
+    else
+    {
+        pool_obj->start_ = block;
+        block->prev = block;
+        block->next = block;
+    }
+
+    return block;
 }
 
 /**

@@ -239,10 +239,13 @@ class ARAMTransferHelperLoadEntireFile
 {
 public:
     static void LoadEntireFileCallback(nlFile*, void*, unsigned int, unsigned long);
-    static void sndPushGroupCallback(unsigned long, unsigned long);
+    static void* sndPushGroupCallback(unsigned long, unsigned long);
+
+    unsigned char* m_pARAMXferBlockBaseAddress; // offset 0x0
 
     static u32 m_uFileSize;
     static nlFile* s_pFile;
+    static ARAMTransferHelperLoadEntireFile* m_pARAMHelper;
 };
 
 class ARAMTransferHelper
@@ -251,9 +254,9 @@ public:
     static void* sndPushGroupCallback(unsigned long, unsigned long);
 
     unsigned char* m_pARAMXferBlockBaseAddress; // offset 0x0
-    unsigned long m_uCachedDataOffset;           // offset 0x4
-    unsigned char* m_pDiskCacheBaseAddress;      // offset 0x8
-    unsigned long m_uFileSize;                   // offset 0xC
+    unsigned long m_uCachedDataOffset;          // offset 0x4
+    unsigned char* m_pDiskCacheBaseAddress;     // offset 0x8
+    unsigned long m_uFileSize;                  // offset 0xC
 
     static ARAMTransferHelper* m_pARAMHelper;
     static unsigned char m_bFileOpened;

@@ -24,7 +24,7 @@ class FakeBallWorld
 {
 public:
     void FindBallIntercept(const nlVector3&, float, float, nlVector3&, nlVector3&, float&, float&, float);
-    void GetNextBallPosition(nlVector3&);
+    static void GetNextBallPosition(nlVector3&);
     void ResetBallIterator();
     void GetPredictedPosAtDistance(float, nlVector3&, nlVector3&);
     void GetPredictedHeightLimitTime(float, float, nlVector3&, nlVector3&, bool);

@@ -207,15 +207,87 @@ sPlayParams& cDecisionEntity::GetLastPlayParams()
 /**
  * Offset/Address/Size: 0x9D4 | 0x80018930 | size: 0x3E0
  */
-void cDecisionEntity::QueueActionSetDesire(int, float, float, FuzzyVariant, FuzzyVariant)
+ScriptAction* cDecisionEntity::QueueActionSetDesire(int, float, float, FuzzyVariant, FuzzyVariant)
 {
+    FORCE_DONT_INLINE;
+    return NULL;
 }
+
+extern "C" ScriptAction* __ct__12ScriptActionF17eScriptActionTypef(ScriptAction*, eScriptActionType, float);
 
 /**
  * Offset/Address/Size: 0x830 | 0x8001878C | size: 0x1A4
  */
-void cDecisionEntity::QueueActionSetPlay(int, float, float)
+ScriptAction* cDecisionEntity::QueueActionSetPlay(int ePlayType, float fConfidence, float fDuration)
 {
+    ScriptAction* action = NULL;
+
+    if (ScriptAction::m_ScriptActionSlotPool.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&ScriptAction::m_ScriptActionSlotPool, sizeof(ScriptAction));
+    }
+
+    if (ScriptAction::m_ScriptActionSlotPool.m_FreeList != NULL)
+    {
+        action = (ScriptAction*)ScriptAction::m_ScriptActionSlotPool.m_FreeList;
+        ScriptAction::m_ScriptActionSlotPool.m_FreeList = ScriptAction::m_ScriptActionSlotPool.m_FreeList->m_next;
+    }
+
+    if (action != NULL)
+        action = __ct__12ScriptActionF17eScriptActionTypef(action, SAT_SET_PLAY, fConfidence);
+
+    action->m_sPlayParams.ePlayType = ePlayType;
+    ScriptAction* prev = NULL;
+    action->m_sPlayParams.fDuration = fDuration;
+
+    ScriptAction* cur = m_lQueuedActions.m_pStart;
+
+    if (cur == NULL)
+    {
+        nlListAddStart<ScriptAction>(&m_lQueuedActions.m_pStart, action, &m_lQueuedActions.m_pEnd);
+        goto done;
+    }
+
+    for (; cur != NULL; prev = cur, cur = cur->next)
+    {
+        float newConf = action->m_fConfidence;
+        float curConf = cur->m_fConfidence;
+        int cmp;
+        if (curConf == newConf)
+            cmp = 0;
+        else if (curConf > newConf)
+            cmp = -1;
+        else
+            cmp = 1;
+
+        if (cmp > 0)
+        {
+            if (prev == NULL)
+            {
+                nlListAddStart<ScriptAction>(&m_lQueuedActions.m_pStart, action, &m_lQueuedActions.m_pEnd);
+            }
+            else if (prev == m_lQueuedActions.m_pEnd)
+            {
+                nlListAddEnd<ScriptAction>(&m_lQueuedActions.m_pStart, &m_lQueuedActions.m_pEnd, action);
+            }
+            else
+            {
+                ScriptAction* next = prev->next;
+                prev->next = action;
+                action->next = next;
+            }
+            break;
+        }
+    }
+
+    if (cur == NULL)
+    {
+        nlListAddEnd<ScriptAction>(&m_lQueuedActions.m_pStart, &m_lQueuedActions.m_pEnd, action);
+    }
+
+done:
+    m_pLastQueuedAction = action;
+    return action;
 }
 
 /**

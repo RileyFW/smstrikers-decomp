@@ -1,6 +1,7 @@
 #include "Game/Render/StaticModelExplodable.h"
 #include "Game/Drawable/DrawableObj.h"
 
+u8 StaticModelExplodable::bIsModelLoaded[2];
 nlList<SidelineExplodableNode> StaticModelExplodable::sStaticModelExplodableList;
 ExplodableCategoryData StaticModelExplodable::sCategoryData[NUM_STATIC_MODEL_EXPLODABLE_CATEGORIES];
 
@@ -93,5 +94,7 @@ void StaticModelExplodable::SetUnexplodedModelVisibility(bool visible)
  */
 bool StaticModelExplodable::LoadGeometry()
 {
-    return false;
+    bIsModelLoaded[0] = 0;
+    bIsModelLoaded[1] = 0;
+    return true;
 }

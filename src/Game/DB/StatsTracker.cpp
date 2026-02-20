@@ -293,6 +293,42 @@ void StatsTracker::WriteCurrentlyPlaying() const
 /**
  * Offset/Address/Size: 0x0 | 0x80181560 | size: 0x148
  */
-void StatsTracker::MoveTeamBUp(TeamStats, TeamStats)
+bool StatsTracker::MoveTeamBUp(TeamStats b, TeamStats a)
 {
+    s32 bGoals = b.mPlayerTotalStats.mNumGoalsFor;
+    s32 aGoals = a.mPlayerTotalStats.mNumGoalsFor;
+    if (aGoals > bGoals) return true;
+    if (bGoals > aGoals) return false;
+
+    s32 bShots = b.mPlayerTotalStats.mNumShotsOnGoal;
+    s32 aShots = a.mPlayerTotalStats.mNumShotsOnGoal;
+    if (aShots > bShots) return true;
+    if (bShots > aShots) return false;
+
+    s32 bHits = b.mPlayerTotalStats.mNumHitsMade;
+    s32 aHits = a.mPlayerTotalStats.mNumHitsMade;
+    if (aHits > bHits) return true;
+    if (bHits > aHits) return false;
+
+    s32 bInterSteals = b.mPlayerTotalStats.mNumPassesIntercepted + b.mPlayerTotalStats.mNumSteals;
+    s32 aInterSteals = a.mPlayerTotalStats.mNumPassesIntercepted + a.mPlayerTotalStats.mNumSteals;
+    if (aInterSteals > bInterSteals) return true;
+    if (bInterSteals > aInterSteals) return false;
+
+    s32 bPU = b.mPlayerTotalStats.mNumPowerupsUsed;
+    s32 aPU = a.mPlayerTotalStats.mNumPowerupsUsed;
+    if (aPU > bPU) return true;
+    if (bPU > aPU) return false;
+
+    s32 bPP = b.mPlayerTotalStats.mNumPerfectPasses;
+    s32 aPP = a.mPlayerTotalStats.mNumPerfectPasses;
+    if (aPP > bPP) return true;
+    if (bPP > aPP) return false;
+
+    s32 bBP = b.mPlayerTotalStats.mNumButtonPresses;
+    s32 aBP = a.mPlayerTotalStats.mNumButtonPresses;
+    if (aBP > bBP) return true;
+    if (bBP > aBP) return false;
+
+    return (s32)a.mTeamIndex < (s32)b.mTeamIndex;
 }

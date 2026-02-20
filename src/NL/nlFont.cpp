@@ -1,10 +1,60 @@
 #include "NL/nlFont.h"
+#include "NL/nlBSearch.h"
+#include "NL/nlString.h"
 
 /**
  * Offset/Address/Size: 0x0 | 0x8021093C | size: 0x144
+ * TODO: 98.46% match - instruction scheduling: compiler hoists lwz loads
+ * of m_pKernTable/m_KernTableSize before sth writes to stack KernPair struct
  */
-void nlFont::GetCharWidth(unsigned short, unsigned short) const
+unsigned long nlFont::GetCharWidth(unsigned short FontChar, unsigned short PrevFontChar) const
 {
+    const GlyphInfo* pGlyph;
+    unsigned short c = FontChar;
+
+    if (c > 0x7F)
+    {
+        pGlyph = &m_pExtendedGlyphs[c - 0x80];
+    }
+    else
+    {
+        pGlyph = &m_GlyphLookup[c - 0x20];
+    }
+
+    if (pGlyph->UnicodeChar == 0xFFFF)
+    {
+        nlPrintf("nlFont::GetCharWidth: unknown char 0x%x\n", (unsigned short)FontChar);
+    }
+
+    signed char offset = pGlyph->Offset;
+    unsigned short prevChar = PrevFontChar;
+    unsigned char advance = pGlyph->Advance;
+    unsigned long ret = advance + offset;
+
+    if (prevChar != 0)
+    {
+        const GlyphInfo* pPrevGlyph;
+        if (prevChar > 0x7F)
+        {
+            pPrevGlyph = &m_pExtendedGlyphs[prevChar - 0x80];
+        }
+        else
+        {
+            pPrevGlyph = &m_GlyphLookup[prevChar - 0x20];
+        }
+
+        if (pPrevGlyph->HasKernPairs)
+        {
+            KernPair kp = { { PrevFontChar, FontChar }, 0 };
+            KernPair* pFoundKP = nlBSearch<KernPair, KernPair>(kp, m_pKernTable, m_KernTableSize);
+            if (pFoundKP != NULL)
+            {
+                ret += pFoundKP->Kern;
+            }
+        }
+    }
+
+    return (unsigned long)(ret * m_Metrics.Spacing);
 }
 
 /**

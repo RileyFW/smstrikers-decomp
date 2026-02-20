@@ -97,8 +97,9 @@ const nlMatrix4& AnimatedModelExplodable::GetWorldMatrix() const
 /**
  * Offset/Address/Size: 0x18 | 0x80158984 | size: 0xC
  */
-void AnimatedModelExplodable::SetUnexplodedModelVisibility(bool)
+void AnimatedModelExplodable::SetUnexplodedModelVisibility(bool isVisible)
 {
+    mpAnimatedNPC->mbIsVisible = isVisible;
 }
 
 /**

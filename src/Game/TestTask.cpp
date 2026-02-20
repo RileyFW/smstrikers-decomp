@@ -72,6 +72,7 @@ void TestTask::Run(float dt)
 
 /**
  * Offset/Address/Size: 0x424 | 0x8016CD20 | size: 0x2CC
+ * TODO: 90.1% scratch match; remaining diffs are mostly r29/r30/r31 allocation.
  */
 void TestTask::RunSmokeTest(float)
 {
@@ -79,10 +80,11 @@ void TestTask::RunSmokeTest(float)
     {
         if (mTestTimeOut <= 0.0f)
         {
-            void* debugFile = nlOpenFileDebug(smokeTestSuccessOutput, false, false);
+            const char* output = smokeTestSuccessOutput;
+            void* debugFile = nlOpenFileDebug(output, false, false);
             if (debugFile)
             {
-                nlWriteLineDebug(debugFile, smokeTestSuccessOutput, false);
+                nlWriteLineDebug(debugFile, output, false);
                 nlFlushFileDebug(debugFile);
                 nlCloseFileDebug(debugFile);
             }
@@ -91,7 +93,7 @@ void TestTask::RunSmokeTest(float)
             if (data)
             {
                 const char* formatTemplate = "SUCCESS: smoke test successful, didn't crash for {0} seconds";
-                data->mData = nullptr;
+                data->mData = 0;
                 data->mSize = 0;
                 data->mCapacity = 0;
 
@@ -113,19 +115,55 @@ void TestTask::RunSmokeTest(float)
                 data->mRefCount = 1;
             }
 
+            BasicStringInternal* formatData = data;
             float configValue = GetConfigFloat(Config::Global(), "test/time_out_sec ", 10.0f);
+            BasicStringInternal* formattedData;
 
-            BasicString<char, Detail::TempStringAllocator> formatString;
-            formatString.m_data = data;
-
-            BasicString<char, Detail::TempStringAllocator> formattedString;
-            Format(formattedString, formatString, configValue);
+            Format(*(BasicString<char, Detail::TempStringAllocator>*)&formattedData,
+                   *(BasicString<char, Detail::TempStringAllocator>*)&formatData, configValue);
 
             if (mTestLog)
             {
-                nlWriteLineDebug(mTestLog, formattedString.c_str(), false);
+                nlWriteLineDebug(mTestLog,
+                    ((BasicString<char, Detail::TempStringAllocator>*)&formattedData)->c_str(), false);
                 nlWriteLineDebug(mTestLog, "\n", false);
                 nlFlushFileDebug(mTestLog);
+            }
+
+            if (formattedData)
+            {
+                if (--formattedData->mRefCount == 0)
+                {
+                    if (formattedData)
+                    {
+                        if (formattedData)
+                        {
+                            delete[] formattedData->mData;
+                        }
+                        if (formattedData)
+                        {
+                            nlFree(formattedData);
+                        }
+                    }
+                }
+            }
+
+            if (formatData)
+            {
+                if (--formatData->mRefCount == 0)
+                {
+                    if (formatData)
+                    {
+                        if (formatData)
+                        {
+                            delete[] formatData->mData;
+                        }
+                        if (formatData)
+                        {
+                            nlFree(formatData);
+                        }
+                    }
+                }
             }
         }
     }
@@ -133,6 +171,7 @@ void TestTask::RunSmokeTest(float)
 
 /**
  * Offset/Address/Size: 0x0 | 0x8016C8FC | size: 0x424
+ * TODO: 88.2% scratch match; remaining diffs are mostly r29/r30/r31 allocation.
  */
 void TestTask::RunFrameRateTest(float dt)
 {
@@ -151,7 +190,7 @@ void TestTask::RunFrameRateTest(float dt)
         if (data)
         {
             const char* formatTemplate = "FAILURE: frame rate dropped below {0}, namely {1}";
-            data->mData = nullptr;
+            data->mData = 0;
             data->mSize = 0;
             data->mCapacity = 0;
 
@@ -173,28 +212,67 @@ void TestTask::RunFrameRateTest(float dt)
             data->mRefCount = 1;
         }
 
+        BasicStringInternal* formatData = data;
         float actualFrameRate = 1.0f / dt;
+        BasicStringInternal* formattedData;
 
-        BasicString<char, Detail::TempStringAllocator> formatString;
-        formatString.m_data = data;
-
-        BasicString<char, Detail::TempStringAllocator> formattedString;
-        Format(formattedString, formatString, mMinimumFrameRate, actualFrameRate);
+        Format(*(BasicString<char, Detail::TempStringAllocator>*)&formattedData,
+               *(BasicString<char, Detail::TempStringAllocator>*)&formatData,
+               mMinimumFrameRate,
+               actualFrameRate);
 
         if (mTestLog)
         {
-            nlWriteLineDebug(mTestLog, formattedString.c_str(), false);
+            nlWriteLineDebug(mTestLog,
+                             ((BasicString<char, Detail::TempStringAllocator>*)&formattedData)->c_str(), false);
             nlWriteLineDebug(mTestLog, "\n", false);
             nlFlushFileDebug(mTestLog);
+        }
+
+        if (formattedData)
+        {
+            if (--formattedData->mRefCount == 0)
+            {
+                if (formattedData)
+                {
+                    if (formattedData)
+                    {
+                        delete[] formattedData->mData;
+                    }
+                    if (formattedData)
+                    {
+                        nlFree(formattedData);
+                    }
+                }
+            }
+        }
+
+        if (formatData)
+        {
+            if (--formatData->mRefCount == 0)
+            {
+                if (formatData)
+                {
+                    if (formatData)
+                    {
+                        delete[] formatData->mData;
+                    }
+                    if (formatData)
+                    {
+                        nlFree(formatData);
+                    }
+                }
+            }
         }
     }
 
     if (mTestTimeOut <= 0.0f && !mFrameRateTestFailure)
     {
-        void* debugFile = nlOpenFileDebug(frameRateTestSuccessOutput, false, false);
+        const char* output = frameRateTestSuccessOutput;
+        void* debugFile = nlOpenFileDebug(output, false, false);
         if (debugFile)
         {
-            nlWriteLineDebug(debugFile, frameRateTestSuccessOutput, false);
+            nlWriteLineDebug(debugFile, output, false);
             nlFlushFileDebug(debugFile);
             nlCloseFileDebug(debugFile);
         }
@@ -203,7 +281,7 @@ void TestTask::RunFrameRateTest(float dt)
         if (data)
         {
             const char* formatTemplate = "SUCCES: frame rate test successful, never dropped below {0}";
-            data->mData = nullptr;
+            data->mData = 0;
             data->mSize = 0;
             data->mCapacity = 0;
 
@@ -225,17 +303,55 @@ void TestTask::RunFrameRateTest(float dt)
             data->mRefCount = 1;
         }
 
-        BasicString<char, Detail::TempStringAllocator> formatString;
-        formatString.m_data = data;
+        BasicStringInternal* formatData = data;
+        BasicStringInternal* formattedData;
 
-        BasicString<char, Detail::TempStringAllocator> formattedString;
-        Format(formattedString, formatString, mMinimumFrameRate);
+        Format(*(BasicString<char, Detail::TempStringAllocator>*)&formattedData,
+               *(BasicString<char, Detail::TempStringAllocator>*)&formatData,
+               mMinimumFrameRate);
 
         if (mTestLog)
         {
-            nlWriteLineDebug(mTestLog, formattedString.c_str(), false);
+            nlWriteLineDebug(mTestLog,
+                             ((BasicString<char, Detail::TempStringAllocator>*)&formattedData)->c_str(), false);
             nlWriteLineDebug(mTestLog, "\n", false);
             nlFlushFileDebug(mTestLog);
+        }
+
+        if (formattedData)
+        {
+            if (--formattedData->mRefCount == 0)
+            {
+                if (formattedData)
+                {
+                    if (formattedData)
+                    {
+                        delete[] formattedData->mData;
+                    }
+                    if (formattedData)
+                    {
+                        nlFree(formattedData);
+                    }
+                }
+            }
+        }
+
+        if (formatData)
+        {
+            if (--formatData->mRefCount == 0)
+            {
+                if (formatData)
+                {
+                    if (formatData)
+                    {
+                        delete[] formatData->mData;
+                    }
+                    if (formatData)
+                    {
+                        nlFree(formatData);
+                    }
+                }
+            }
         }
     }
 }

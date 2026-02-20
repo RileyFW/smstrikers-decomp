@@ -225,9 +225,55 @@ bool cFielder::CanLooseBallShoot()
 
 /**
  * Offset/Address/Size: 0xC468 | 0x800257A4 | size: 0x1E0
+ * TODO: 99.79% match - remaining f8/f9 register allocation swap in the
+ * contactTime computation block.
  */
-void cFielder::CanLooseBallPass()
+bool cFielder::CanLooseBallPass()
 {
+    if ((g_pBall->m_pOwner == NULL)
+        && (g_pBall->m_pPassTarget == NULL)
+        && (g_pBall->m_tShotTimer.m_uPackedTime == 0)
+        && (g_pBall->m_unk_0xA6 == 0))
+    {
+        u32 nNumKeys = m_pAnimInventory->GetAnim(gOneTimerLeadGroundContactAnims[0].nAnimID)->m_nNumKeys;
+        const cBall* pBall = g_pBall;
+        float ratio = gOneTimerLeadGroundContactAnims[0].fAnimContactFrame / (float)nNumKeys;
+        float frames = (float)nNumKeys / 30.0f;
+        float contactTime = ratio * frames;
+
+        nlVector3 v3PredictedPos;
+        nlVec3Set(v3PredictedPos,
+            (contactTime * pBall->m_v3Velocity.f.x) + pBall->m_v3Position.f.x,
+            (contactTime * pBall->m_v3Velocity.f.y) + pBall->m_v3Position.f.y,
+            (contactTime * pBall->m_v3Velocity.f.z) + pBall->m_v3Position.f.z);
+
+        s16 facingDelta = GetFacingDeltaToPosition(v3PredictedPos);
+        u16 uFacingDelta = (facingDelta < 0) ? -facingDelta : facingDelta;
+
+        float fLooseBallRadius = InterpolateRangeClamped(1.75f, 2.75f, 32768.0f, 16384.0f, uFacingDelta);
+
+        if (g_pBall->m_v3Velocity.f.z < 0.0f)
+        {
+            if (v3PredictedPos.f.z < 1.0f)
+            {
+                float fDeltaX = v3PredictedPos.f.x - m_v3Position.f.x;
+                float fDeltaY = v3PredictedPos.f.y - m_v3Position.f.y;
+                float fDistanceSquared = fDeltaX * fDeltaX + fDeltaY * fDeltaY;
+
+                if (fDistanceSquared < fLooseBallRadius * fLooseBallRadius)
+                {
+                    float fMyScore = AbleToInterceptBall(this);
+                    float fHisScore = AbleToInterceptBall(m_pTeam->GetOtherTeam()->GetStriker());
+
+                    if (((float)fabs(fHisScore - fMyScore) > 0.03f) && (fMyScore > fHisScore))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
 
 /**
