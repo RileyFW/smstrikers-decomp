@@ -142,18 +142,11 @@ if not config.non_matching:
     config.asm_dir = None
 
 # Tool versions
-# config.binutils_tag = "2.42-1"
-# config.compilers_tag = "20250520"
-# config.dtk_tag = "v1.6.1"
-# config.objdiff_tag = "v3.0.0"
-# config.sjiswrap_tag = "v1.2.1"
-# config.wibo_tag = "0.6.16"
-
 config.binutils_tag = "2.42-1"
-config.compilers_tag = "20250812"
-config.dtk_tag = "v1.7.6"
-config.objdiff_tag = "v3.4.5"
-config.sjiswrap_tag = "v1.2.1"
+config.compilers_tag = "20251118"
+config.dtk_tag = "v1.8.0"
+config.objdiff_tag = "v3.5.1"
+config.sjiswrap_tag = "v1.2.2"
 config.wibo_tag = "0.7.0"
 
 # Project
@@ -275,7 +268,7 @@ cflags_dolphin = [
     "-maxerrors 1",
     "-nosyspath",
     "-char signed",
-    "-O4,p",
+    # "-O4,p",
     "-sym on",
     "-inline auto",
     f"-DVERSION={version_num}",
@@ -540,6 +533,26 @@ def ODELib(lib_name: str, objects: Objects, cflags=cflags_ode) -> Library:
     )
 
 
+def DolphinLib_O3(lib_name: str, objects: Objects, cflags=cflags_dolphin) -> Library:
+    return Lib (
+        lib_name,
+        objects,
+        includes=[
+            *includes_base,
+            "src/Dolphin",
+        ],
+        system_includes=[
+            *system_includes_base,
+            "include/Dolphin",
+        ],
+        mw_version="GC/1.2.5n",
+        cflags=[
+            *cflags,
+            "-O3,p",
+        ],        
+        category="sdk",
+    )
+
 def DolphinLib(lib_name: str, objects: Objects, cflags=cflags_dolphin) -> Library:
     return Lib (
         lib_name,
@@ -553,7 +566,10 @@ def DolphinLib(lib_name: str, objects: Objects, cflags=cflags_dolphin) -> Librar
             "include/Dolphin",
         ],
         mw_version="GC/1.2.5n",
-        cflags=cflags,
+        cflags=[
+            *cflags,
+            "-O4,p",
+        ],        
         category="sdk",
     )
 
@@ -1322,6 +1338,13 @@ config.libs = [
             Object(Matching, "Dolphin/thp/THPAudio.c"),
         ]
     ),
+    DolphinLib_O3(
+        "Dolfin SDK",
+        [
+            # Dolphin/OS
+            Object(NonMatching, "Dolphin/exi/EXIBios.c"),
+        ]
+    ),
     DolphinLib(
         "Dolfin SDK",
         [
@@ -1396,7 +1419,7 @@ config.libs = [
             Object(Matching, "Dolphin/dvd/fstload.c"),         
 
             # Dolphin/EXI
-            Object(NonMatching, "Dolphin/exi/EXIBios.c", extra_cflags=["-O3,p"]),
+            # Object(NonMatching, "Dolphin/exi/EXIBios.c", extra_cflags=["-O3,p"]),
             Object(Matching, "Dolphin/exi/EXIUart.c"),
 
             # Dolphin/GX

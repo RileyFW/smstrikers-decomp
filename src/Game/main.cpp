@@ -6,9 +6,6 @@
 #include "Game/Effects/ParticleSystem.h"
 #include "Game/Transitions/ModelTransition.h"
 
-// static int g_Region __attribute__((section(".sdata2"))) = 1;
-static int const g_Region = 1;
-
 static bool g_bProfiling = false;
 static bool g_bTweaking = false;
 static bool g_e3_Build = false;
@@ -88,5 +85,6 @@ static void Initialize()
 
 int GetRegion()
 {
-    return g_Region;
+    static const int g_Region = 1;
+    return (int)&g_Region;
 }
