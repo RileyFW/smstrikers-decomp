@@ -38,7 +38,7 @@ protected:
 public:
     static void KillOldest(int, bool);
     void Replay(SaveFrame&);
-    static void Replay(LoadFrame&);
+    void Replay(LoadFrame&);
     static void AddError(const char*, ...);
     static void ResetLingerers();
     static void Destroy(unsigned long, const EffectsGroup*);

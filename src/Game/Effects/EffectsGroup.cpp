@@ -247,6 +247,7 @@ nlAVLTree<unsigned long, EffectsTerrainSpec*, DefaultKeyCompare<unsigned long> >
 
 /**
  * Offset/Address/Size: 0xFC8 | 0x801F3A10 | size: 0x38
+ * TODO: 98.6% match - r3/r5 register swap for pTerrainIDs pointer (leaf function register allocation artifact)
  */
 bool EffectsTerrainSpec::HasTerrain(unsigned long terrainID) const
 {

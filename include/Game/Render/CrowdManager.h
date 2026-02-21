@@ -3,8 +3,7 @@
 
 #include "types.h"
 
-// #include "Game/Replay.h"
-#include "Game/ReplaySpecializations.h"
+#include "Game/Replay.h"
 #include "Game/Sys/eventman.h"
 
 enum eCrowdState
@@ -45,5 +44,7 @@ public:
 
     static CrowdManager instance;
 }; // total size: 0xA0
+
+#include "Game/ReplaySpecializations.h"
 
 #endif // _CROWDMANAGER_H_

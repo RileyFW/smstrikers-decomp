@@ -35,8 +35,8 @@ void* GetCameraRelativeLightData()
  */
 void* GetInGameLightData()
 {
-    FORCE_DONT_INLINE;
-    return NULL;
+    extern void* g_pInGameLightData;
+    return g_pInGameLightData;
 }
 
 bool gAlwaysUseCameraRelativeCharacterLighting;

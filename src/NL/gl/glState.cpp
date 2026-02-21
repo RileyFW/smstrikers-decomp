@@ -332,15 +332,9 @@ u32 glGetRasterState(unsigned long raster, eGLState state)
  */
 u32 glGetRasterState(eGLState state)
 {
-    u32 out = 0;
-    for (s32 cnt = 0; cnt < packed_raster[state].numBits; cnt++)
-    {
-        if (_state.m_State & (1u << (unsigned int)(packed_raster[state].startBit + cnt)))
-        {
-            out |= (1u << (unsigned int)cnt);
-        }
-    }
-    return out;
+    gl_StateBitfield* p = &packed_raster[state];
+    s32* pn = &p->numBits;
+    return glExtractRasterBits(_state.m_State, p, pn);
 }
 
 /**

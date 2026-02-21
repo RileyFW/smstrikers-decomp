@@ -1558,7 +1558,7 @@ config.libs = [
 
             # NonMatchin...
             Object(NonMatching, "SDK/TRK_MINNOW_DOLPHIN/main.c"),
-            Object(NonMatching, "SDK/TRK_MINNOW_DOLPHIN/main_gdev.c"),
+            Object(NonMatching, "SDK/TRK_MINNOW_DOLPHIN/main_gdev.c", extra_cflags=["-sdatathreshold 8"]),
             Object(NonMatching, "SDK/TRK_MINNOW_DOLPHIN/__exception.s"),
 
             Object(NonMatching, "SDK/TRK_MINNOW_DOLPHIN/targimpl.c"),

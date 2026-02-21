@@ -198,53 +198,44 @@ CharT* nlStrNCpy(CharT* str1, const CharT* str2, unsigned long len)
 }
 
 /**
- * Offset/Address/Size: 0x0 | 0x8000DEFC | size: 0x40
- * void nlStrNCat<char>(char*, const char*, const char*, unsigned long)
+ * Offset/Address/Size: 0x0 | 0x8000DEFC | size: 0x90
+ * CharT* nlStrNCat<char>(char*, const char*, const char*, unsigned long)
  */
 template <typename CharT>
-void nlStrNCat(CharT* dest, const CharT* src1, const CharT* src2, unsigned long maxLen)
-// void nlStrNCat<c>__FPcPCcPCcUl(u8 *arg0, u8 *arg1, u8 *arg2, u32 arg3)
-{
-    unsigned long count = 0;
-    CharT* destPtr = dest;
-    const CharT* src1Ptr = src1;
-    const CharT* src2Ptr = src2;
-    CharT* destWritePtr;
-    CharT tempChar;
+CharT* nlStrNCat(CharT* dest, const CharT* a, const CharT* b, unsigned long maxsize) {
+    CharT* p;
+    unsigned long n = 0;
 
-    // Copy characters from src1
-    while (*src1Ptr != static_cast<CharT>(0))
-    {
-        tempChar = *src1Ptr;
-        count++;
-        src1Ptr++;
-        *destPtr = tempChar;
-        destPtr++;
-        if (count >= maxLen)
-        {
-            dest[maxLen - 1] = static_cast<CharT>(0);
-            return;
-        }
+    goto entry1;
+body1:
+    *p++ = *a++;
+    n++;
+    if (n >= maxsize) {
+        dest[maxsize - 1] = (CharT)0;
+        return dest;
     }
+    goto test1;
+entry1:
+    p = dest;
+test1:
+    if (*a) goto body1;
 
-    // Copy characters from src2
-    destWritePtr = &dest[count];
-    while (*src2Ptr != static_cast<CharT>(0))
-    {
-        tempChar = *src2Ptr;
-        count++;
-        src2Ptr++;
-        *destWritePtr = tempChar;
-        destWritePtr++;
-        if (count >= maxLen)
-        {
-            dest[maxLen - 1] = static_cast<CharT>(0);
-            return;
-        }
+    goto entry2;
+body2:
+    *p++ = *b++;
+    n++;
+    if (n >= maxsize) {
+        dest[maxsize - 1] = (CharT)0;
+        return dest;
     }
+    goto test2;
+entry2:
+    p = &dest[n];
+test2:
+    if (*b) goto body2;
 
-    // Null terminate
-    dest[count] = static_cast<CharT>(0);
+    dest[n] = (CharT)0;
+    return dest;
 }
 
 #endif // _NLSTRING_H_

@@ -158,13 +158,34 @@ public:
 }; // total size: 0x8
 
 template <typename T>
-void nlListRemoveElement(T** head, T* node, T** tail)
+T* nlListRemoveElement(T** head, T* element, T** tail)
 {
-    T* next = node->next;
-    if (next == node)
-    {
-        *head = NULL;
+    if (head == NULL) return NULL;
+
+    if (*head == element) {
+        if (tail != NULL && *tail == *head) {
+            *tail = NULL;
+        }
+        T* first = *head;
+        *head = first->next;
+        return NULL;
     }
+
+    T* prev = *head;
+    T* current = prev->next;
+    while (current != NULL) {
+        if (current == element) {
+            prev->next = current->next;
+            if (tail == NULL) return prev;
+            if (*tail == current) {
+                *tail = prev;
+            }
+            return prev;
+        }
+        prev = current;
+        current = current->next;
+    }
+    return NULL;
 }
 
 template <typename T>

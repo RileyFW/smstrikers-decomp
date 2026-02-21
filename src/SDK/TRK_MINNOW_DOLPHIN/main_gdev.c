@@ -2,17 +2,15 @@
 #include "PowerPC_EABI_Support/MetroTRK/custconn/CircleBuffer.h"
 #include "dolphin/Amc/AmcExi2Stubs.h"
 #include "dolphin/db.h"
+#include "types.h"
 
 #define GDEV_BUF_SIZE (0x500)
 
 static CircleBuffer gRecvCB;
 static u8 gRecvBuf[GDEV_BUF_SIZE];
-static BOOL gIsInitialized;
 
-/**
- * @note Address: 0x800C14C0
- * @note Size: 0x88
- */
+static BOOL gIsInitialized = FALSE;
+
 int gdev_cc_initialize(void* flagOut, __OSInterruptHandler handler)
 {
     MWTRACE(1, "CALLING EXI2_Init\n");

@@ -9,6 +9,18 @@
 class cCameraData
 {
 public:
+    ~cCameraData()
+    {
+        if (ownsKeyData)
+        {
+            delete[] cameraPos;
+            delete[] targetPos;
+            delete[] cameraRot;
+            delete[] fFOV;
+            delete[] fFocalLength;
+        }
+    }
+
     /*  0x00 */ cCameraData* next;
     /*  0x04 */ unsigned long m_uHashID;
     /*  0x08 */ unsigned long m_uKeyCount;

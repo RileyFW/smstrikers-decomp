@@ -218,44 +218,29 @@ void AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::PostorderTrave
 }
 
 template <typename KeyType, typename ValueType, typename AllocatorType, typename CompareType>
-int AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::CompareNodes(AVLTreeNode* node1, AVLTreeNode* node2)
+int AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::CompareNodes(AVLTreeNode* a, AVLTreeNode* b)
 {
-    u32 b;
-    u32 a;
-
-    a = *(u32*)((char*)node1 + 0xC);
-    b = *(u32*)((char*)node2 + 0xC);
-
-    if (a == b)
-        return 0;
-
-    if (a < b)
-        return -1;
-
-    if (a > b)
-        return 1;
-
-    return 1;
+    int result;
+    const KeyType& keyA = CastUp(a)->key;
+    const KeyType& keyB = CastUp(b)->key;
+    if (keyA == keyB)
+        result = 0;
+    else if (keyA < keyB)
+        result = -1;
+    else
+        result = 1;
+    return result;
 }
 
 template <typename KeyType, typename ValueType, typename AllocatorType, typename CompareType>
 int AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::CompareKey(void* key, AVLTreeNode* node)
 {
-    u32 b;
-    u32 a;
-
-    a = *(u32*)key;
-    b = *(u32*)((char*)node + 0xC);
-
-    if (a == b)
+    if (*(KeyType*)key == CastUp(node)->key)
         return 0;
-
-    if (a < b)
+    if (*(KeyType*)key < CastUp(node)->key)
         return -1;
-
-    if (a > b)
+    if (*(KeyType*)key > CastUp(node)->key)
         return 1;
-
     return 1;
 }
 

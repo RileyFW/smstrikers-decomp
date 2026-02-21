@@ -31,11 +31,13 @@ int World::CompareNameToGenericName(const char* str1, const char* str2)
 
 /**
  * Offset/Address/Size: 0x5C | 0x80194D20 | size: 0x44
+ * TODO: 96.5% match - lwz r5,0x120(r3) scheduled 2 insns early due to -inline deferred in scratch
  */
-void World::GetHashIdForGenericName(const char* str) const
+unsigned long World::GetHashIdForGenericName(const char* name) const
 {
-    nlStrNCpy<char>((char*)this + *(int*)((u8*)this + 0x120) + 0xe0, str, (unsigned long)0x40 - *(int*)((u8*)this + 0x120));
-    nlStringLowerHash((const char*)this + 0xe0);
+    int len = m_WorldNameLength;
+    nlStrNCpy<char>((char*)this + len + 0xe0, name, (unsigned long)(0x40 - len));
+    return nlStringLowerHash((const char*)this + 0xe0);
 }
 
 /**

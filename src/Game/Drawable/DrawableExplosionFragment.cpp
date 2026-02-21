@@ -101,16 +101,32 @@ void DrawableExplosionFragment::Grab()
  * Offset/Address/Size: 0x0 | 0x8011FA30 | size: 0x7C
  */
 template <>
-void DrawableExplosionFragment::Replay<LoadFrame>(LoadFrame&)
+void DrawableExplosionFragment::Replay<LoadFrame>(LoadFrame& frame)
 {
+    Replayable<3>(frame, mVisible);
+    if (mVisible)
+    {
+        Replayable<3>(frame, mFragmentModelHash);
+        Replayable<3>(frame, mPosition);
+        Replayable<3>(frame, mOrientation);
+        Replayable<3>(frame, mOpacity);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x7C | 0x8011FAAC | size: 0x7C
  */
 template <>
-void DrawableExplosionFragment::Replay<SaveFrame>(SaveFrame&)
+void DrawableExplosionFragment::Replay<SaveFrame>(SaveFrame& frame)
 {
+    Replayable<3>(frame, mVisible);
+    if (mVisible)
+    {
+        Replayable<3>(frame, mFragmentModelHash);
+        Replayable<3>(frame, mPosition);
+        Replayable<3>(frame, mOrientation);
+        Replayable<3>(frame, mOpacity);
+    }
 }
 
 /**

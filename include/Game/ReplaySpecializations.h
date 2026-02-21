@@ -41,9 +41,11 @@ void Replayable<1, SaveFrame, int>(SaveFrame& frame, int& value)
 {
     if (frame.mInterval == 1)
     {
-        char temp = value ? 1 : 0;
-        memcpy(frame.mStream.mStorage, &temp, 1);
-        frame.mStream.mStorage += 1;
+        if (frame.mInterval == 1)
+        {
+            memcpy(frame.mStream.mStorage, &value, sizeof(int));
+            frame.mStream.mStorage += sizeof(int);
+        }
     }
 }
 
@@ -52,12 +54,11 @@ void Replayable<1, LoadFrame, int>(LoadFrame& frame, int& value)
 {
     if (frame.mInterval == 1)
     {
-        char temp = 0;
-        memcpy(&temp, frame.mStream.mStorage, 1);
-        value = (temp != 0);
-        char* storage = const_cast<char*>(frame.mStream.mStorage);
-        storage += 1;
-        frame.mStream.mStorage = storage;
+        if (frame.mInterval == 1)
+        {
+            memcpy(&value, frame.mStream.mStorage, sizeof(int));
+            frame.mStream.mStorage += sizeof(int);
+        }
     }
 }
 
@@ -99,37 +100,73 @@ void ReplayableImpl(FrameType& frame, T& manager)
 template <>
 void Replayable<1, LoadFrame, CrowdManager>(LoadFrame& frame, CrowdManager& manager)
 {
-    ReplayableImpl<1>(frame, manager);
+    if (frame.mInterval == 1)
+    {
+        if (frame.mInterval == 1)
+        {
+            manager.Replay(frame);
+        }
+    }
 }
 
 template <>
 void Replayable<1, SaveFrame, CrowdManager>(SaveFrame& frame, CrowdManager& manager)
 {
-    ReplayableImpl<1>(frame, manager);
+    if (frame.mInterval == 1)
+    {
+        if (frame.mInterval == 1)
+        {
+            manager.Replay(frame);
+        }
+    }
 }
 
 template <>
 void Replayable<3, LoadFrame, EmissionManager>(LoadFrame& frame, EmissionManager& manager)
 {
-    ReplayableImpl<3>(frame, manager);
+    if (frame.mInterval == 3)
+    {
+        if (frame.mInterval == 3)
+        {
+            manager.Replay(frame);
+        }
+    }
 }
 
 template <>
 void Replayable<3, SaveFrame, EmissionManager>(SaveFrame& frame, EmissionManager& manager)
 {
-    ReplayableImpl<3>(frame, manager);
+    if (frame.mInterval == 3)
+    {
+        if (frame.mInterval == 3)
+        {
+            manager.Replay(frame);
+        }
+    }
 }
 
 template <>
 void Replayable<1, LoadFrame, DrawableNetMesh>(LoadFrame& frame, DrawableNetMesh& manager)
 {
-    ReplayableImpl<1>(frame, manager);
+    if (frame.mInterval == 1)
+    {
+        if (frame.mInterval == 1)
+        {
+            manager.Replay(frame);
+        }
+    }
 }
 
 template <>
 void Replayable<1, SaveFrame, DrawableNetMesh>(SaveFrame& frame, DrawableNetMesh& manager)
 {
-    ReplayableImpl<1>(frame, manager);
+    if (frame.mInterval == 1)
+    {
+        if (frame.mInterval == 1)
+        {
+            manager.Replay(frame);
+        }
+    }
 }
 
 #endif // _REPLAYSPECIALIZATIONS_H_

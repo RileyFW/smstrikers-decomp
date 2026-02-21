@@ -104,13 +104,51 @@ struct Cup : public BaseCup
     virtual signed char* GetRoundResults(int round) { return &mRoundResults[round]; };
     virtual void* SerializeData(void* dst) const
     {
-        // TODO: Implement
-        return nullptr;
+        memcpy(dst, &mUserSelectedTeam, 4);
+        dst = (u8*)dst + 4;
+        memcpy(dst, &mUserSelectedSidekick, 4);
+        dst = (u8*)dst + 4;
+        memcpy(dst, &mRoundNumber, 2);
+        dst = (u8*)dst + 2;
+        memcpy(dst, &mGameNumber, 2);
+        dst = (u8*)dst + 2;
+        memcpy(dst, &mHumanTeams, 2);
+        dst = (u8*)dst + 2;
+        memcpy(dst, &mCupStarted, 1);
+        dst = (u8*)dst + 1;
+        memcpy(dst, &mCupSettings, sizeof(mCupSettings));
+        dst = (u8*)dst + sizeof(mCupSettings);
+        memcpy(dst, mGameInfo, sizeof(mGameInfo));
+        dst = (u8*)dst + sizeof(mGameInfo);
+        memcpy(dst, mTeamStats, sizeof(mTeamStats));
+        dst = (u8*)dst + sizeof(mTeamStats);
+        memcpy(dst, mRoundResults, sizeof(mRoundResults));
+        dst = (u8*)dst + sizeof(mRoundResults);
+        return dst;
     }
     virtual void* DeserializeData(void* src)
     {
-        // TODO: Implement
-        return nullptr;
+        memcpy(&mUserSelectedTeam, src, 4);
+        src = (u8*)src + 4;
+        memcpy(&mUserSelectedSidekick, src, 4);
+        src = (u8*)src + 4;
+        memcpy(&mRoundNumber, src, 2);
+        src = (u8*)src + 2;
+        memcpy(&mGameNumber, src, 2);
+        src = (u8*)src + 2;
+        memcpy(&mHumanTeams, src, 2);
+        src = (u8*)src + 2;
+        memcpy(&mCupStarted, src, 1);
+        src = (u8*)src + 1;
+        memcpy(&mCupSettings, src, sizeof(mCupSettings));
+        src = (u8*)src + sizeof(mCupSettings);
+        memcpy(mGameInfo, src, sizeof(mGameInfo));
+        src = (u8*)src + sizeof(mGameInfo);
+        memcpy(mTeamStats, src, sizeof(mTeamStats));
+        src = (u8*)src + sizeof(mTeamStats);
+        memcpy(mRoundResults, src, sizeof(mRoundResults));
+        src = (u8*)src + sizeof(mRoundResults);
+        return src;
     }
     virtual int GetSaveDataSize() const { return 0x1B; };
 
@@ -129,13 +167,51 @@ struct Knockout : public BaseCup
     virtual signed char* GetRoundResults(int round) { return &mRoundResults[round]; };
     virtual void* SerializeData(void* dst) const
     {
-        // TODO: Implement
-        return nullptr;
+        memcpy(dst, &mUserSelectedTeam, 4);
+        dst = (u8*)dst + 4;
+        memcpy(dst, &mUserSelectedSidekick, 4);
+        dst = (u8*)dst + 4;
+        memcpy(dst, &mRoundNumber, 2);
+        dst = (u8*)dst + 2;
+        memcpy(dst, &mGameNumber, 2);
+        dst = (u8*)dst + 2;
+        memcpy(dst, &mHumanTeams, 2);
+        dst = (u8*)dst + 2;
+        memcpy(dst, &mCupStarted, 1);
+        dst = (u8*)dst + 1;
+        memcpy(dst, &mCupSettings, sizeof(mCupSettings));
+        dst = (u8*)dst + sizeof(mCupSettings);
+        memcpy(dst, mGameInfo, sizeof(mGameInfo));
+        dst = (u8*)dst + sizeof(mGameInfo);
+        memcpy(dst, mTeamStats, sizeof(mTeamStats));
+        dst = (u8*)dst + sizeof(mTeamStats);
+        memcpy(dst, mRoundResults, sizeof(mRoundResults));
+        dst = (u8*)dst + sizeof(mRoundResults);
+        return dst;
     }
     virtual void* DeserializeData(void* src)
     {
-        // TODO: Implement
-        return nullptr;
+        memcpy(&mUserSelectedTeam, src, 4);
+        src = (u8*)src + 4;
+        memcpy(&mUserSelectedSidekick, src, 4);
+        src = (u8*)src + 4;
+        memcpy(&mRoundNumber, src, 2);
+        src = (u8*)src + 2;
+        memcpy(&mGameNumber, src, 2);
+        src = (u8*)src + 2;
+        memcpy(&mHumanTeams, src, 2);
+        src = (u8*)src + 2;
+        memcpy(&mCupStarted, src, 1);
+        src = (u8*)src + 1;
+        memcpy(&mCupSettings, src, sizeof(mCupSettings));
+        src = (u8*)src + sizeof(mCupSettings);
+        memcpy(mGameInfo, src, sizeof(mGameInfo));
+        src = (u8*)src + sizeof(mGameInfo);
+        memcpy(mTeamStats, src, sizeof(mTeamStats));
+        src = (u8*)src + sizeof(mTeamStats);
+        memcpy(mRoundResults, src, sizeof(mRoundResults));
+        src = (u8*)src + sizeof(mRoundResults);
+        return src;
     }
     virtual int GetSaveDataSize() const { return 0x1B; };
 

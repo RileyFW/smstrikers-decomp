@@ -14,7 +14,7 @@ float nlRecipSqrt(float, bool);
 float nlSqrt(float, bool);
 float nlRandomf(float, float, unsigned int*);
 float nlRandomf(float, unsigned int*);
-int nlRandom(unsigned int, unsigned int*);
+unsigned int nlRandom(unsigned int, unsigned int*);
 void nlSetRandomSeed(unsigned int, unsigned int*);
 void nlInitRandom();
 

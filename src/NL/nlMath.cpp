@@ -476,17 +476,16 @@ float nlRandomf(float fMax, unsigned int* pSeed)
 /**
  * Offset/Address/Size: 0x9EC | 0x801D1E60 | size: 0x34
  */
-int nlRandom(uint param_1, uint* param_2)
+uint nlRandom(uint range, uint* seed)
 {
-    uint uVar1;
-    uint uVar2;
-    uint uVar3;
+    uint next;
+    uint temp;
 
-    uVar1 = *param_2;
-    uVar2 = uVar1 ^ 0x1d872b41;
-    uVar3 = uVar2 ^ (uVar2 >> 5);
-    *param_2 = uVar2 ^ uVar3 ^ (uVar3 << 0x1b);
-    return uVar1 - (uVar1 / param_1) * param_1;
+    uint result = *seed % range;
+    next = *seed ^ 0x1d872b41;
+    temp = next ^ (next >> 5);
+    *seed = temp ^ (next ^ (temp << 0x1b));
+    return result;
 }
 
 /**

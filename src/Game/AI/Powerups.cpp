@@ -146,6 +146,8 @@ void PowerupCreateAndThrow(cFielder*, ePowerUpType, int, Bowser*)
 
 /**
  * Offset/Address/Size: 0x4EB4 | 0x8005F7A0 | size: 0x4C
+ * TODO: 97.9% match - r4/r5 register swap (strength reduction assigns loop pointer to r4 instead of r5). Persists regardless of code structure changes.
+ * File uses -inline deferred.
  */
 PowerupBase* FindPowerUp(unsigned long hashOfDrawable)
 {

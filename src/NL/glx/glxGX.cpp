@@ -44,20 +44,23 @@ bool gxSetCoPlanar(bool coplanar)
 
 /**
  * Offset/Address/Size: 0x48 | 0x801C1530 | size: 0x54
- * TODO: 98% match. Register swap r5/r6 and stack offset swap 0x8/0xc.
+ * TODO: 99.38% match. Stack offset swap 0x8/0xc around GXSetChanAmbColor arg copy.
  */
 nlColour gxSetChanAmbColour(int chan, const nlColour& color)
 {
-    nlColour* pMat = &gx_ambColour[chan];
-    nlColour prev = *pMat;
+    u32* amb = (u32*)gx_ambColour;
+    u32 prev = amb[chan];
+    u32 col = *(u32*)&color;
     nlColour temp;
-    if (prev != color)
+
+    if (prev != col)
     {
+        amb[chan] = *(volatile u32*)&color;
         temp = color;
-        *(volatile u32*)pMat = *(volatile u32*)&color;
         GXSetChanAmbColor((GXChannelID)chan, *(GXColor*)&temp);
     }
-    return prev;
+
+    return *(nlColour*)&prev;
 }
 
 /**

@@ -119,7 +119,8 @@ void glplatMatrixPerspective(nlMatrix4& matrix, float fovY, float aspect, float 
  */
 void glplatMatrixOrthographicCentered(nlMatrix4& matrix, float width, float height, float near, float far)
 {
-    C_MTXOrtho(matrix.m, 0.5f * height, 0.5f * -height, 0.5f * -width, 0.5f * width, near, far);
+    float half = 0.5f;
+    C_MTXOrtho(matrix.m, height * half, -height * half, -width * half, width * half, near, far);
 }
 
 /**

@@ -103,6 +103,27 @@ void Replayable<0, SaveFrame, unsigned long>(SaveFrame& frame, unsigned long& va
 template <>
 void Replayable<0, SaveFrame, EmissionController>(SaveFrame& frame, EmissionController& controller);
 
+template <>
+void Replayable<3, LoadFrame, bool>(LoadFrame& frame, bool& value);
+template <>
+void Replayable<3, SaveFrame, bool>(SaveFrame& frame, bool& value);
+template <>
+void Replayable<3, LoadFrame, float>(LoadFrame& frame, float& value);
+template <>
+void Replayable<3, SaveFrame, float>(SaveFrame& frame, float& value);
+template <>
+void Replayable<3, LoadFrame, unsigned long>(LoadFrame& frame, unsigned long& value);
+template <>
+void Replayable<3, SaveFrame, unsigned long>(SaveFrame& frame, unsigned long& value);
+template <>
+void Replayable<3, LoadFrame, nlVector3>(LoadFrame& frame, nlVector3& value);
+template <>
+void Replayable<3, SaveFrame, nlVector3>(SaveFrame& frame, nlVector3& value);
+template <>
+void Replayable<3, LoadFrame, nlQuaternion>(LoadFrame& frame, nlQuaternion& value);
+template <>
+void Replayable<3, SaveFrame, nlQuaternion>(SaveFrame& frame, nlQuaternion& value);
+
 template <int N, typename FrameType, typename T>
 void Replayable(FrameType& frame, T& drawable)
 {

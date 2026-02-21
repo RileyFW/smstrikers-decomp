@@ -5,9 +5,9 @@ extern bool g_e3_Build;
 /**
  * Offset/Address/Size: 0x0 | 0x800D8554 | size: 0x2C
  */
-void IChooseCaptain::SetPhaseReady(int)
+void IChooseCaptain::SetPhaseReady(int homeaway)
 {
-    FORCE_DONT_INLINE;
+    mComponentState[homeaway].SetCurrentPhase(PHASE_READY);
 }
 
 // /**

@@ -31,12 +31,10 @@ public:
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x8016C650 | size: 0x9C
-//  */
-// void nlListRemoveElement<ElectricFenceData>(ElectricFenceData**, ElectricFenceData*, ElectricFenceData**)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x8016C650 | size: 0x9C
+ */
+template ElectricFenceData* nlListRemoveElement<ElectricFenceData>(ElectricFenceData**, ElectricFenceData*, ElectricFenceData**);
 
 /**
  * Offset/Address/Size: 0x1370 | 0x8016C3A0 | size: 0x2B0

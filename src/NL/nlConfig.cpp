@@ -23,8 +23,8 @@ BasicString<char, Detail::TempStringAllocator> Config::LoadFileAsString(const ch
 /**
  * Offset/Address/Size: 0x1608 | 0x801D426C | size: 0x54
  */
-void Config::Set(const char*, const BasicString<char, Detail::TempStringAllocator>&)
-{
+void Config::Set(const char* key, const BasicString<char, Detail::TempStringAllocator>& value) {
+    Set(key, value.c_str());
 }
 
 /**

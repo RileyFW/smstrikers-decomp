@@ -269,25 +269,32 @@ static inline unsigned int FakeRuntimeZero()
 
 /**
  * Offset/Address/Size: 0x17D0 | 0x80065B7C | size: 0x54
+ * TODO: 97.6% match - r0/r6 register swap (MWCC register allocator quirk)
  */
-void cTeam::SetCurrentPowerUp(ePowerUpType newType, int count)
+#pragma push
+#pragma opt_propagation off
+void cTeam::SetCurrentPowerUp(ePowerUpType eNewPowerUpType, int nnumOfPowerups)
 {
-    unsigned char usedFirstSlot = 0;
+    int a;
+    unsigned char bGivenNewPowerup = 0;
+    a = 1;
+
     if (m_ePowerupList[0].eType == POWER_UP_NONE && FakeRuntimeZero() == 0)
     {
-        m_ePowerupList[0].eType = newType;
-        usedFirstSlot = 1;
-        m_ePowerupList[0].nnumOfPowerups = count;
-        m_ePowerupList[0].bIsNew = true;
+        m_ePowerupList[0].eType = eNewPowerUpType;
+        bGivenNewPowerup = 1;
+        m_ePowerupList[0].nnumOfPowerups = nnumOfPowerups;
+        m_ePowerupList[0].bIsNew = a;
     }
 
-    if (m_ePowerupList[1].eType == POWER_UP_NONE && !usedFirstSlot)
+    if (m_ePowerupList[1].eType == POWER_UP_NONE && !bGivenNewPowerup)
     {
-        m_ePowerupList[1].eType = newType;
-        m_ePowerupList[1].nnumOfPowerups = count;
-        m_ePowerupList[1].bIsNew = true;
+        m_ePowerupList[1].eType = eNewPowerUpType;
+        m_ePowerupList[1].nnumOfPowerups = nnumOfPowerups;
+        m_ePowerupList[1].bIsNew = a;
     }
 }
+#pragma pop
 
 /**
  * Offset/Address/Size: 0x17B0 | 0x80065B5C | size: 0x20

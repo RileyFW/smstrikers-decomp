@@ -62,7 +62,7 @@ public:
     /* 0x30 */ virtual bool DoInitialize() = 0;
 
     int CompareNameToGenericName(const char*, const char*);
-    void GetHashIdForGenericName(const char*) const;
+    unsigned long GetHashIdForGenericName(const char*) const;
     void GetShadowLight(const nlVector3&, float);
     bool AddDrawableObject(unsigned long, DrawableObject*);
     HelperObject* FindHelperObject(unsigned long uHashId);
@@ -94,13 +94,8 @@ public:
     /* 0x060! */ nlAVLTree<unsigned long, DrawableObject*, DefaultKeyCompare<unsigned long> > m_hyperSTSDrawableMap; // verified
     /* 0x070 */ nlAVLTree<unsigned long, HelperObject*, DefaultKeyCompare<unsigned long> > m_helperMap;
     /* 0x080 */ nlVector4 m_frustumPlane[6];
-    /* 0x0D4 */ char m_WorldNamePrefix[48]; // instead of 64 because frustum seems to be 6 not 5 planes
-    /* 0x114 */ int m_WorldNameLength;
-    /* 0x118 */ unsigned long m_WorldLightRamp;
-    /* 0x11C */ unsigned long m_ObjectLightRamp;
-    /* 0x120 */ unsigned long m_PlayerLightRamp_;
-    /* 0x124 */ unsigned long m_STSLightRamp;
-    // /* 0x128 */ unsigned long m_PlayerNISLightRamp;
+    /* 0x0E0 */ char m_WorldNamePrefix[64];
+    /* 0x120 */ int m_WorldNameLength;
     /* 0x124 */ u32 m_LightRampTexA;
     /* 0x128 */ u32 m_LightRampTexB;
     /* 0x12C */ u32 m_PlayerLightRampTex;

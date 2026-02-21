@@ -30,13 +30,13 @@ void dGeomCollideAABBs(dxGeom* arg0, dxGeom* arg1, void* arg2, void (*arg3)(void
         {
             aabb_0 = arg0->aabb;
             aabb_1 = arg1->aabb;
-            if (   !(aabb_0[0] > aabb_1[1]) 
-                && !(aabb_0[1] < aabb_1[0]) 
+            if (!(aabb_0[0] > aabb_1[1])
+                && !(aabb_0[1] < aabb_1[0])
                 && !(aabb_0[2] > aabb_1[3])
-                && !(aabb_0[3] < aabb_1[2]) 
-                && !(aabb_0[4] > aabb_1[5]) 
+                && !(aabb_0[3] < aabb_1[2])
+                && !(aabb_0[4] > aabb_1[5])
                 && !(aabb_0[5] < aabb_1[4])
-                && (arg0->AABBTest(arg1, aabb_1) != 0) 
+                && (arg0->AABBTest(arg1, aabb_1) != 0)
                 && (arg1->AABBTest(arg0, aabb_0) != 0))
             {
                 arg3(arg2, arg0, arg1);
@@ -106,11 +106,15 @@ void dVector3Set(float* v, float x, float y, float z)
 /**
  * Offset/Address/Size: 0x214 | 0x802244DC | size: 0x24
  */
-void dExtractColumn3(float* arg0, const float* arg1, int col)
+void dExtractColumn3(float* __restrict arg0, const float* __restrict arg1, int col)
 {
-    arg0[0] = *(float*)(arg1+col);
-    arg0[1] = *(float*)(arg1+col+4);
-    arg0[2] = *(float*)(arg1+col+8);
+    float v0;
+
+    v0 = arg1[col];
+    arg1 += col;
+    arg0[0] = v0;
+    arg0[1] = arg1[4];
+    arg0[2] = arg1[8];
 }
 
 /**
@@ -128,9 +132,10 @@ void dInvertRigidTransformation(float* param_1, const float* param_2, const floa
     param_1[6] = param_2[9];
     param_1[8] = param_2[2];
     param_1[9] = param_2[6];
-    param_1[10] = param_2[10];;
+    param_1[10] = param_2[10];
+    ;
 
-    dMultiply0(v,param_1,param_3,3,3,1);
+    dMultiply0(v, param_1, param_3, 3, 3, 1);
 
     param_1[3] = v[2] * -1.0f;
     param_1[7] = v[1] * -1.0f;
@@ -138,7 +143,7 @@ void dInvertRigidTransformation(float* param_1, const float* param_2, const floa
     param_1[0xc] = 0.0f;
     param_1[0xd] = 0.0f;
     param_1[0xe] = 0.0f;
-    param_1[0xf] = 1.0f;    
+    param_1[0xf] = 1.0f;
 }
 
 /**
@@ -146,7 +151,7 @@ void dInvertRigidTransformation(float* param_1, const float* param_2, const floa
  */
 void dMultiplyMatrix4Vector4(float* m1, const float* m2, const float* m3)
 {
-    dMultiply0(m1, m2, m3,4, 4, 1);
+    dMultiply0(m1, m2, m3, 4, 4, 1);
 }
 
 /**
@@ -154,14 +159,14 @@ void dMultiplyMatrix4Vector4(float* m1, const float* m2, const float* m3)
  */
 void dMultiplyMatrix3Vector3(float* m1, const float* m2, const float* m3, bool flag)
 {
-    if ((u32)flag == 0) 
+    if ((u32)flag == 0)
     {
-        dMultiply0(m1, m2, m3,3, 3, 1);
+        dMultiply0(m1, m2, m3, 3, 3, 1);
     }
-    else 
+    else
     {
-        dMultiply1(m1,m2,m3,3,3,1);
-    }    
+        dMultiply1(m1, m2, m3, 3, 3, 1);
+    }
 }
 
 /**

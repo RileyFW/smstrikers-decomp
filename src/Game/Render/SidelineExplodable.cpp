@@ -474,7 +474,7 @@ void SidelineExplodableManager::AssociateEffectWithNearbyFloatingCamera(Emission
     SidelineExplodableNode* node = sSidelineExplodableList.m_pStart;
     SidelineExplodable* closest = NULL;
     const char* floatingCamName = "Cam_\0\0\0\0";
-    
+
     while (node != NULL)
     {
         const nlMatrix4& mat = node->mpExplodable->GetWorldMatrix();
@@ -488,7 +488,7 @@ void SidelineExplodableManager::AssociateEffectWithNearbyFloatingCamera(Emission
         }
         node = node->next;
     }
-    
+
     const nlMatrix4& closestMat = closest->GetWorldMatrix();
     float cdy = closestMat.m[3][1] - position.f.y;
     float cdx = closestMat.m[3][0] - position.f.x;
@@ -505,6 +505,8 @@ void SidelineExplodableManager::AssociateEffectWithNearbyFloatingCamera(Emission
 
 /**
  * Offset/Address/Size: 0x70 | 0x801673D0 | size: 0x30
+ * TODO: 97.9% match - r4/r5 register swap for mpExplodable/mpAssociatedEffect temps.
+ * Likely -inline deferred context-dependent register allocation difference.
  */
 void SidelineExplodableManager::UnAssociateEffectWithNearbyFloatingCamera(EmissionController* pEmissionController)
 {

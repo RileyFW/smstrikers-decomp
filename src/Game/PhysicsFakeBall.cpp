@@ -258,13 +258,13 @@ int PhysicsPlane::GetObjectType() const
 
 /**
  * Offset/Address/Size: 0x0 | 0x80139690 | size: 0x3C
+ * TODO: 96% match - stw LR save scheduling: target interleaves after first lwz, compiler places before.
+ * Template instantiation from nlDLRing.h - codegen is functionally correct with a single instruction reorder.
  */
-// void nlWalkDLRing<DLListEntry<BallCacheInfo*>, DLListContainerBase<BallCacheInfo*,
-// BasicSlotPool<DLListEntry<BallCacheInfo*>>>>(DLListEntry<BallCacheInfo*>*, DLListContainerBase<BallCacheInfo*,
-// BasicSlotPool<DLListEntry<BallCacheInfo*>>>*, void (DLListContainerBase<BallCacheInfo*,
-// BasicSlotPool<DLListEntry<BallCacheInfo*>>>::*)(DLListEntry<BallCacheInfo*>*))
-// {
-// }
+template void nlWalkDLRing<DLListEntry<BallCacheInfo*>, BallCacheListBase>(
+    DLListEntry<BallCacheInfo*>* head,
+    BallCacheListBase* callback,
+    void (BallCacheListBase::*callbackFunc)(DLListEntry<BallCacheInfo*>*));
 
 /**
  * Offset/Address/Size: 0x3C | 0x801396CC | size: 0x38

@@ -44,11 +44,7 @@ public:
 
     void Release()
     {
-        FORCE_DONT_INLINE;
-        if (m_pItems != nullptr)
-        {
-            m_pItems->Clear();
-        }
+        m_pItems->Clear();
     }
 
     /* 0x0 */ nlAVLTree<unsigned long, ValueType*, DefaultKeyCompare<unsigned long> >* m_pItems; // offset 0x0, size 0x4

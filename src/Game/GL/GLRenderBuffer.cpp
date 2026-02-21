@@ -34,9 +34,13 @@ u32 glRenderBuffer[4];
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x801E80F8 | size: 0x3C
-//  */
+/**
+ * Offset/Address/Size: 0x0 | 0x801E80F8 | size: 0x3C
+ * TODO: 96% match - compiler instruction scheduling: stw r0,0x24(r1) (LR save)
+ * placed immediately after mflr instead of after first lwz from r5.
+ * Cannot fix via source code - MWCC scheduler heuristic difference.
+ * Implementation is template instantiation from nlDLRing.h:268-273
+ */
 // void nlWalkDLRing<DLListEntry<GLDrawableData*>, DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > > >(DLListEntry<GLDrawableData*>*, DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > >*, void (DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > >::*)(DLListEntry<GLDrawableData*>*))
 // {
 // }

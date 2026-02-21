@@ -12,6 +12,7 @@
 #include "Game/Field.h"
 #include "Game/Physics/PhysicsFakeBall.h"
 #include "NL/nlMath.h"
+#include "Game/MathHelpers.h"
 
 cTeam* g_pCurrentlyUpdatingTeam;
 extern cBall* g_pBall;
@@ -26,12 +27,12 @@ static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
 extern int gOffplayDejected[5];
 
-inline float CalculateDistanceSquared(const nlVector3& pos1, const nlVector3& pos2)
-{
-    nlVector3 delta;
-    nlVec3Sub(delta, pos1, pos2);
-    return nlGetLengthSquared3D(delta.f.x, delta.f.y, delta.f.z);
-}
+// inline float CalculateDistanceSquared(const nlVector3& pos1, const nlVector3& pos2)
+// {
+//     nlVector3 delta;
+//     nlVec3Sub(delta, pos1, pos2);
+//     return nlGetLengthSquared3D(delta.f.x, delta.f.y, delta.f.z);
+// }
 
 inline float CalculateDistanceSquared2D(const nlVector3& pos1, const nlVector3& pos2)
 {
@@ -189,13 +190,7 @@ void Goalie::MoveDirectionCB(unsigned int nParam, cPN_SingleAxisBlender* blender
 void Goalie::MoveWeightCB(unsigned int nParam, cPN_SingleAxisBlender* blender)
 {
     Goalie* pGoalie = (Goalie*)nParam;
-    s16 angle = pGoalie->maLocalAngle;
-    if (angle < 0)
-    {
-        angle = -angle;
-    }
-
-    blender->m_fDesiredWeight = (int)angle / 32768.0f;
+    blender->m_fDesiredWeight = (s32)(u16)abs_s16(pGoalie->maLocalAngle) / 32768.0f;
 }
 
 /**
