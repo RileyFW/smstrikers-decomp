@@ -1,6 +1,7 @@
 #include "NL/plat/plataudio.h"
 #include "NL/nlMemory.h"
 #include "NL/nlFile.h"
+#include "NL/nlTicker.h"
 #include "NL/nlFileGC.h"
 #include "NL/gl/glMemory.h"
 #include "Game/Sys/debug.h"
@@ -64,14 +65,12 @@ static u32 aramMemArray[2];
 static void* (*const sndHookMalloc)(size_t) = musyXAlloc;
 static void (*const sndHookFree)(void*) = musyXFree;
 
+static bool gAreSoundBuffersSetup;
+
 namespace PlatAudio
 {
+
 static u32 gPrimaryStackSize;
-}
-
-namespace PlatAudio
-{
-
 bool gUsingDolbyProLogic2 = false;
 
 /**
@@ -545,9 +544,58 @@ void LoadSoundGroup(AudioFileData&, unsigned long, unsigned long, bool)
 
 /**
  * Offset/Address/Size: 0x1678 | 0x801C5E74 | size: 0x16C
+ * 99.95% match - i diffs only (string pool index differences)
  */
-void SetupSoundBuffers(AudioFileData&, bool)
+void SetupSoundBuffers(AudioFileData& fileData, bool bStream)
 {
+    unsigned long fileSize1;
+    unsigned long fileSize2;
+    unsigned long fileSize3;
+    char* fn;
+    unsigned char* buf;
+
+    u32 uTickStart = nlGetTicker();
+
+    if (!fileData.pool_buffer)
+    {
+        fn = fileData.szPoolFile;
+        buf = (unsigned char*)nlLoadEntireFile(fn, &fileSize1, 0x20, AllocateStart);
+        if (!buf)
+            tDebugPrintManager::Print(DC_SOUND, "Failed to open file %s\n", fn);
+        fileData.pool_buffer = buf;
+    }
+
+    if (!fileData.proj_buffer)
+    {
+        fn = fileData.szProjectFile;
+        buf = (unsigned char*)nlLoadEntireFile(fn, &fileSize2, 0x20, AllocateStart);
+        if (!buf)
+            tDebugPrintManager::Print(DC_SOUND, "Failed to open file %s\n", fn);
+        fileData.proj_buffer = buf;
+    }
+
+    if (!fileData.sdir_buffer)
+    {
+        fn = fileData.szDirFile;
+        buf = (unsigned char*)nlLoadEntireFile(fn, &fileSize3, 0x20, AllocateStart);
+        if (!buf)
+            tDebugPrintManager::Print(DC_SOUND, "Failed to open file %s\n", fn);
+        fileData.sdir_buffer = buf;
+    }
+
+    gAreSoundBuffersSetup = 1;
+
+    u32 uTickEnd = nlGetTicker();
+    f32 fTime = nlGetTickerDifference(uTickStart, uTickEnd);
+
+    if (!bStream)
+    {
+        tDebugPrintManager::Print(DC_SOUND, "Immediate Audio load: %0.3f seconds\n", fTime / 1000.0f);
+    }
+    else
+    {
+        tDebugPrintManager::Print(DC_SOUND, "Setting up MusyX buffers and stream load callback: %0.3f seconds\n", fTime / 1000.0f);
+    }
 }
 
 /**

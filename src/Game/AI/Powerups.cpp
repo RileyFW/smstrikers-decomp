@@ -10,6 +10,7 @@
 #include "Game/Audio/WorldAudio.h"
 #include "NL/nlMath.h"
 #include "NL/nlSlotPool.h"
+#include "NL/nlDebug.h"
 
 int gBobombAnticipationVoiceID = -1;
 PowerupSounds powerupSounds[9]; // size: 0x120, address: 0x802B9C84
@@ -324,9 +325,58 @@ void PowerupBase::UpdateTransform()
 
 /**
  * Offset/Address/Size: 0x2360 | 0x8005CC4C | size: 0x16C
+ * TODO: 99.12% match - r5/r6 register swap in second loop (registry ptr vs j counter)
  */
-void PowerupBase::Init(cFielder*, Bowser*)
+void PowerupBase::Init(cFielder* pFielder, Bowser* pBowser)
 {
+    int i;
+    DrawableObject* pObj;
+    int type = m_eType;
+
+    for (i = 0; i < 25; i++)
+    {
+        if (powerupModelPool.mFree[type][i])
+        {
+            powerupModelPool.mFree[type][i] = false;
+            pObj = powerupModelPool.mObjs[type][i];
+            goto found1;
+        }
+    }
+    pObj = NULL;
+
+found1:
+    m_pDrawableObj = pObj;
+
+    {
+        DrawableObject* pD = m_pDrawableObj;
+        pD->m_uObjectFlags |= 0x100;
+        unsigned long hashID = m_pDrawableObj->m_uHashID;
+        int j = 0;
+
+        for (; j < 25; j++)
+        {
+            if (powerupRegistry.registry[j].hashId == 0)
+            {
+                powerupRegistry.registry[j].hashId = hashID;
+                powerupRegistry.registry[j].powerup = this;
+                goto found2;
+            }
+        }
+        nlBreak();
+    }
+
+found2:
+    PreThrow(pFielder, pBowser);
+
+    m_pThrower = pFielder;
+
+    if (pFielder != NULL)
+    {
+        s32 padID;
+        bool bHasPad = pFielder->GetGlobalPad() != NULL;
+        padID = bHasPad ? pFielder->GetGlobalPad()->m_padIndex : -1;
+        m_nThrowerPadID = padID;
+    }
 }
 
 // /**

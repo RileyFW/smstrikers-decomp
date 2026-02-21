@@ -252,7 +252,93 @@ unsigned short nlACos(float x)
  */
 void nlSinCos(float* presult_sin, float* presult_cos, unsigned short angle)
 {
-    FORCE_DONT_INLINE;
+    float angle_rad = (6.283185f / 65536.0f) * (float)angle;
+    float octants = 1.2732395f * angle_rad;
+    int k = (int)octants;
+    float oct_f = (float)k;
+    float y = angle_rad - 0.7853982f * oct_f;
+
+    float y_squared = y * y;
+    float s0 = -1.0f / 5040.0f;
+    float s1 = 1.0f / 120.0f;
+    float s2 = -1.0f / 6.0f;
+    float c0 = -1.0f / 720.0f;
+    float c1 = 1.0f / 24.0f;
+    float s3 = 1.0f;
+    float c2 = -0.5f;
+    float c3 = 0.99999994f;
+
+    float sin_poly = s0 * y_squared + s1;
+    float cos_poly = c0 * y_squared + c1;
+    float sin_tmp = y_squared * sin_poly + s2;
+    float cos_tmp = y_squared * cos_poly + c2;
+    sin_poly = y_squared * sin_tmp + s3;
+    cos_poly = y_squared * cos_tmp + c3;
+    sin_poly = y * sin_poly;
+
+    float result_cos;
+    float result_sin;
+
+    switch (k & 7)
+    {
+    case 0:
+        result_sin = sin_poly;
+        result_cos = cos_poly;
+        break;
+    case 1:
+    {
+        float c = 0.70710678f;
+        float s_1 = c * sin_poly;
+        float s_2 = c * cos_poly;
+        result_sin = s_1 + s_2;
+        result_cos = s_2 - s_1;
+        break;
+    }
+    case 2:
+        result_sin = cos_poly;
+        result_cos = -sin_poly;
+        break;
+    case 3:
+    {
+        float a = 0.70710678f;
+        float b = -0.70710678f;
+        float t1 = a * cos_poly;
+        float t2 = a * sin_poly;
+        result_sin = b * sin_poly + t1;
+        result_cos = b * cos_poly - t2;
+        break;
+    }
+    case 4:
+        result_sin = -sin_poly;
+        result_cos = -cos_poly;
+        break;
+    case 5:
+    {
+        float c = -0.70710678f;
+        float s_1 = c * sin_poly;
+        float s_2 = c * cos_poly;
+        result_sin = s_1 + s_2;
+        result_cos = s_2 - s_1;
+        break;
+    }
+    case 6:
+        result_sin = -cos_poly;
+        result_cos = sin_poly;
+        break;
+    case 7:
+    {
+        float a = -0.70710678f;
+        float b = 0.70710678f;
+        float t1 = a * cos_poly;
+        float t2 = a * sin_poly;
+        result_sin = b * sin_poly + t1;
+        result_cos = b * cos_poly - t2;
+        break;
+    }
+    }
+
+    *presult_sin = result_sin;
+    *presult_cos = result_cos;
 }
 
 /**

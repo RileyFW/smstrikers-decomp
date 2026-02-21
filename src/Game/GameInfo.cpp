@@ -2,6 +2,11 @@
 #include "dolphin/types.h"
 #include "NL/nlMemory.h"
 
+#include "Game/GameSceneManager.h"
+#include "Game/SH/SHMilestoneTrophy.h"
+#include "Game/SH/SHCupHub.h"
+#include "Game/Audio/WorldAudio.h"
+
 extern bool g_e3_Build;
 
 bool isFreezingUnlocked = false;
@@ -669,8 +674,65 @@ bool GameInfoManager::HasTrophy(eTrophyType trophyType) const
 /**
  * Offset/Address/Size: 0x5F60 | 0x8017B604 | size: 0x160
  */
-void GameInfoManager::GetMilestoneLevel(eTrophyType) const
+eMilestoneColour GameInfoManager::GetMilestoneLevel(eTrophyType trophy) const
 {
+    eMilestoneColour returnValue = INVALID_MILESTONE_COLOUR;
+
+    switch (trophy)
+    {
+    case TROPHY_VETERAN_CUP:
+        if (mUserInfo.mNumGamesPlayed < 25)
+            returnValue = MILESTONE_BLACK;
+        else if (mUserInfo.mNumGamesPlayed < 50)
+            returnValue = MILESTONE_BRONZE;
+        else if (mUserInfo.mNumGamesPlayed < 100)
+            returnValue = MILESTONE_SILVER;
+        else
+            returnValue = MILESTONE_GOLD;
+        break;
+    case TROPHY_SNIPER_CUP:
+        if (mUserInfo.mNumGoalsScored < 75)
+            returnValue = MILESTONE_BLACK;
+        else if (mUserInfo.mNumGoalsScored < 150)
+            returnValue = MILESTONE_BRONZE;
+        else if (mUserInfo.mNumGoalsScored < 300)
+            returnValue = MILESTONE_SILVER;
+        else
+            returnValue = MILESTONE_GOLD;
+        break;
+    case TROPHY_STRIKER_CUP:
+        if (mUserInfo.mNumSTSAttempts < 25)
+            returnValue = MILESTONE_BLACK;
+        else if (mUserInfo.mNumSTSAttempts < 50)
+            returnValue = MILESTONE_BRONZE;
+        else if (mUserInfo.mNumSTSAttempts < 100)
+            returnValue = MILESTONE_SILVER;
+        else
+            returnValue = MILESTONE_GOLD;
+        break;
+    case TROPHY_TACTICIAN_CUP:
+        if (mUserInfo.mNumPerfectPasses < 75)
+            returnValue = MILESTONE_BLACK;
+        else if (mUserInfo.mNumPerfectPasses < 150)
+            returnValue = MILESTONE_BRONZE;
+        else if (mUserInfo.mNumPerfectPasses < 300)
+            returnValue = MILESTONE_SILVER;
+        else
+            returnValue = MILESTONE_GOLD;
+        break;
+    case TROPHY_PARAMEDIC_CUP:
+        if (mUserInfo.mNumHits < 250)
+            returnValue = MILESTONE_BLACK;
+        else if (mUserInfo.mNumHits < 500)
+            returnValue = MILESTONE_BRONZE;
+        else if (mUserInfo.mNumHits < 1000)
+            returnValue = MILESTONE_SILVER;
+        else
+            returnValue = MILESTONE_GOLD;
+        break;
+    }
+
+    return returnValue;
 }
 
 /**
@@ -871,11 +933,70 @@ void GameInfoManager::OnPostCupGameState()
 {
 }
 
+static eTrophyType MILESTONES[5] = {
+    TROPHY_VETERAN_CUP,
+    TROPHY_SNIPER_CUP,
+    TROPHY_STRIKER_CUP,
+    TROPHY_TACTICIAN_CUP,
+    TROPHY_PARAMEDIC_CUP,
+};
+
 /**
  * Offset/Address/Size: 0x23FC | 0x80177AA0 | size: 0x170
+ * TODO: 97.8% match - MWCC emits duplicated li r3,0 in nested/outer else paths instead of tail-merging to branch-shared false assignment
  */
 void GameInfoManager::DetermineNextCupScreen()
 {
+    int i = 0;
+    while (i < 5)
+    {
+        if (mDisplayTrophy[i + 1] == 1)
+        {
+            MilestoneTrophyScene* scene = (MilestoneTrophyScene*)nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_MILESTONE_TROPHY, SCREEN_NOTHING, false);
+            scene->CreateTrophyScene(MILESTONES[i], ButtonComponent::BS_A_ONLY, true);
+            mDisplayTrophy[i + 1] = false;
+            Audio::gWorldSFX.Play(Audio::WORLDSFX_FE_ACCEPT_WARIO, 100.0f, -1.0f, true, 100.0f);
+            return;
+        }
+        i++;
+    }
+
+    if (mCurrentCup->mRoundNumber == -5)
+    {
+        TimeStampCupEnd();
+    }
+
+    bool isSuper;
+    mDisplayTrophy[0] = (isSuper = true);
+    if (mCurrentMode < GM_TOURNAMENT)
+    {
+        if (mCurrentMode >= GM_SUPER_MUSHROOM_CUP)
+        {
+        }
+        else
+        {
+            isSuper = false;
+        }
+    }
+    else
+    {
+        isSuper = false;
+    }
+
+    SceneList nextScene = isSuper ? SCENE_SUPER_CUP_STANDINGS_ANIM : SCENE_CUP_STANDINGS_ANIM;
+    if (mCurrentCup->mRoundNumber == -1)
+    {
+        nextScene = SCENE_CUP_SUPER_TEAM;
+    }
+    if (nextScene != SCENE_CUP_SUPER_TEAM)
+    {
+        CupHubScene* hub = (CupHubScene*)nlSingleton<GameSceneManager>::s_pInstance->Push(nextScene, SCREEN_NOTHING, false);
+        hub->mDoAutoSave = true;
+    }
+    else
+    {
+        nlSingleton<GameSceneManager>::s_pInstance->Push(nextScene, SCREEN_NOTHING, false);
+    }
 }
 
 /**
@@ -890,6 +1011,7 @@ void GameInfoManager::DetermineUserPlacement(Spoil*)
  */
 void GameInfoManager::TimeStampCupEnd()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

@@ -2,6 +2,8 @@
 
 #include "NL/nlTask.h"
 
+static float MESSAGE_DISPLAY_TIME;
+
 /**
  * Offset/Address/Size: 0x0 | 0x800A131C | size: 0x1C0
  */
@@ -100,9 +102,59 @@ void NSNMessengerScene::OpenMessenger()
 
 /**
  * Offset/Address/Size: 0x7B4 | 0x800A1AD0 | size: 0x160
+ * TODO: 99.94% match - scratch emits BaseSceneHandler inline virtual stubs
+ * (InitializeSubHandlers/SetPresentation/SetVisible) before this symbol, so
+ * Update starts at +0x14 and only branch displacements differ.
  */
-void NSNMessengerScene::Update(float)
+void NSNMessengerScene::Update(float fDeltaT)
 {
+    BaseOverlayHandler::Update(fDeltaT);
+
+    if (m_messageDisplaying)
+    {
+        m_messageDisplayTime += fDeltaT;
+        if (m_messageDisplayTime > MESSAGE_DISPLAY_TIME && m_scrollText == NULL
+            && m_messageFinishedCB.mTag != EMPTY)
+        {
+            m_messageDisplaying = false;
+            if (m_messageFinishedCB.mTag == FREE_FUNCTION)
+            {
+                ((void (*)())m_messageFinishedCB.mFreeFunction)();
+            }
+            else
+            {
+                m_messageFinishedCB.mFunctor->fnc_0x8();
+            }
+        }
+    }
+
+    if (m_scrollText != NULL)
+    {
+        m_scrollText->Update(fDeltaT);
+    }
+
+    FEPresentation* pres = m_pFEScene->m_pFEPackage->GetPresentation();
+    TLSlide* slide = pres->m_currentSlide;
+
+    if (m_curState == MS_OPENING || m_curState == MS_CLOSING)
+    {
+        if (slide->m_time >= slide->m_start + slide->m_duration)
+        {
+            switch (m_curState)
+            {
+            case MS_OPENING:
+                OpenMessengerNow();
+                break;
+            case MS_OPEN:
+                break;
+            case MS_CLOSING:
+                CloseMessenger();
+                break;
+            default:
+                break;
+            }
+        }
+    }
 }
 
 /**

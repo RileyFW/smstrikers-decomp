@@ -311,6 +311,8 @@ void EmitUnFreeze(cPlayer*)
 {
 }
 
+static s32 sNumUpdatesBetweenElectrocutionToggles;
+
 /**
  * Offset/Address/Size: 0x1400 | 0x801A01B0 | size: 0x20
  */
@@ -322,8 +324,46 @@ void ElectrocutionFinishedCallback(EmissionController& ec)
 /**
  * Offset/Address/Size: 0x1290 | 0x801A0040 | size: 0x170
  */
-void ElectrocutionUpdateCallback(EmissionController&)
+void ElectrocutionUpdateCallback(EmissionController& ec)
 {
+    cCharacter* pCharacter = g_pCharacters[ec.m_uUserData];
+    s32 charIndex = GetCharacterIndex(pCharacter);
+
+    if (ReplayManager::Instance()->mRender != NULL)
+    {
+        ReplayManager* mgr1 = ReplayManager::Instance();
+        DrawableCharacter* pChar = &mgr1->mRender->mCharacters[charIndex];
+        ec.SetPosition(pChar->mPosition);
+        ReplayManager* mgr2 = ReplayManager::Instance();
+        ec.SetVelocity(mgr2->mRender->mCharacters[charIndex].mVelocity);
+        ReplayManager* mgr3 = ReplayManager::Instance();
+        pChar = &mgr3->mRender->mCharacters[charIndex];
+        ec.SetPoseAccumulator(*pChar->mPoseAccumulator);
+        ReplayManager* mgr4 = ReplayManager::Instance();
+        pChar = &mgr4->mRender->mCharacters[charIndex];
+        ec.SetAnimController(pChar->GetAnimController());
+    }
+
+    static s32 numUpdatesUntilNextToggle = 0;
+    static bool isEffectOn = false;
+
+    if (numUpdatesUntilNextToggle == 0)
+    {
+        if (isEffectOn)
+        {
+            pCharacter->SetElectrocutionTextureEnabled(false);
+        }
+        else
+        {
+            pCharacter->SetElectrocutionTextureEnabled(true);
+        }
+        isEffectOn = !isEffectOn;
+        numUpdatesUntilNextToggle = nlRandom(sNumUpdatesBetweenElectrocutionToggles, &nlDefaultSeed);
+    }
+    else
+    {
+        numUpdatesUntilNextToggle--;
+    }
 }
 
 /**

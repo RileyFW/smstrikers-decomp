@@ -83,7 +83,44 @@ public:
     {
     }
 
-    ~BasicString();
+    BasicString(const BasicString& other)
+    {
+        BasicStringInternal* data;
+        if (other.m_data)
+        {
+            other.m_data->mRefCount++;
+            data = other.m_data;
+        }
+        else
+        {
+            data = nullptr;
+        }
+        m_data = data;
+    }
+
+    ~BasicString()
+    {
+        if (m_data)
+        {
+            BasicStringInternal* data = m_data;
+            if (--data->mRefCount == 0)
+            {
+                if (data)
+                {
+                    if (data)
+                    {
+                        delete[] data->mData;
+                    }
+                    if (data)
+                    {
+                        nlFree(data);
+                    }
+                }
+            }
+        }
+    }
+
+    BasicString& operator=(BasicString other);
 
     const CharT* c_str() const
     {
@@ -96,26 +133,6 @@ public:
         return m_data ? m_data->mSize : 0;
     }
 };
-
-template <typename CharT, typename Allocator>
-BasicString<CharT, Allocator>::~BasicString()
-{
-    if (m_data)
-    {
-        m_data->mRefCount--;
-        if (m_data->mRefCount == 0)
-        {
-            if (m_data)
-            {
-                delete[] m_data->mData;
-            }
-            if (m_data)
-            {
-                nlFree(m_data);
-            }
-        }
-    }
-}
 
 // Format template function for single float argument
 template <typename StringType>

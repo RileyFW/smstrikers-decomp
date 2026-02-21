@@ -214,7 +214,79 @@ void ChooseCaptainsSceneV2::ChangeSceneType(ChooseCaptainsSceneV2::SceneType sce
  */
 void ChooseCaptainsSceneV2::ResetForCHOOSECAPTAINS()
 {
-    FORCE_DONT_INLINE;
+    typedef TLComponentInstance* (*FindCompByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindCompByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union FindUnion
+    {
+        FindCompByValue byValue;
+        FindCompByRef byRef;
+    };
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+
+    volatile InlineHasher hB2, hA2;
+    volatile InlineHasher h92, h82, h72, h62, h52, h42, h32, h22, h12, h02;
+
+    FindUnion findComp;
+    findComp.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+
+    u32 hash = nlStringLowerHash("CHOOSE_SIDE");
+    h8.m_Hash = hash;
+    h9.m_Hash = hash;
+
+    hash = nlStringLowerHash("Layer");
+    hB.m_Hash = hash;
+    hA.m_Hash = hash;
+
+    TLComponentInstance* comp = findComp.byRef(m_pFEPresentation->m_currentSlide, (InlineHasher&)hB, (InlineHasher&)h9, (InlineHasher&)h7, (InlineHasher&)h5, (InlineHasher&)h3, (InlineHasher&)h1);
+
+    comp->m_bVisible = false;
+    mTicker->SetDisplayMessage((unsigned long)0x4B67A61F);
+
+    h02.m_Hash = 0;
+    h1.m_Hash = 0;
+    h22.m_Hash = 0;
+    h3.m_Hash = 0;
+    h42.m_Hash = 0;
+    h5.m_Hash = 0;
+    h62.m_Hash = 0;
+    h7.m_Hash = 0;
+
+    FindUnion findComp2;
+    findComp2.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+
+    hash = nlStringLowerHash("buttons");
+    h82.m_Hash = hash;
+    h92.m_Hash = hash;
+
+    hash = nlStringLowerHash("Layer");
+    hB2.m_Hash = hash;
+    hA2.m_Hash = hash;
+
+    TLComponentInstance* buttonsComp = findComp2.byRef(m_pFEPresentation->m_currentSlide, (InlineHasher&)hB2, (InlineHasher&)h92, (InlineHasher&)h7, (InlineHasher&)h5, (InlineHasher&)h3, (InlineHasher&)h1);
+
+    mButtons.mButtonInstance = buttonsComp;
+    mButtons.SetState(ButtonComponent::BS_A_AND_B);
+
+    mChooseCaptain.MoveHighlightToCurrentCaptain(0);
+    mChooseCaptain.SetupNameComponentToCurrentCaptain(0);
+    mChooseCaptain.MoveHighlightToCurrentCaptain(1);
+
+    if (mChooseCaptain.mNumTotalPushedPlayers > 1)
+    {
+        mChooseCaptain.SetupNameComponentToCurrentCaptain(1);
+    }
 }
 
 /**

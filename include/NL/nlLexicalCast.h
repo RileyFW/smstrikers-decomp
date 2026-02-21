@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "strtold.h"
+#include "NL/nlBasicString.h"
 
 // Primary template declaration (not defined/omited yet)
 template <typename To, typename From>
@@ -34,6 +35,9 @@ template <>
 bool LexicalCast<bool, float>(const float& value);
 template <>
 bool LexicalCast<bool, const char*>(const char* const& value);
+
+template <>
+BasicString<char, Detail::TempStringAllocator> LexicalCast<BasicString<char, Detail::TempStringAllocator>, int>(const int& value);
 
 #ifdef NL_LEXICALCAST_DEFINE
 

@@ -7,6 +7,7 @@
 class FEIMessenger
 {
 public:
+    virtual ~FEIMessenger() {}
     virtual void OpenMessengerNow() = 0;
     virtual void SetDisplayMessage(const char*) = 0;
     virtual void SetDisplayMessage(const BasicString<unsigned short, Detail::TempStringAllocator>&) = 0;

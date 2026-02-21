@@ -65,7 +65,7 @@ void dGeomComputeAABB(dxGeom* geomID)
 /**
  * Offset/Address/Size: 0x194 | 0x8022445C | size: 0x34
  */
-void dVector3Add(float* v1, const float* v2)
+void dVector3Add(float* __restrict v1, const float* __restrict v2)
 {
     v1[0] += v2[0];
     v1[1] += v2[1];

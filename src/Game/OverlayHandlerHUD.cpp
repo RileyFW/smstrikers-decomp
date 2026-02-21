@@ -1,6 +1,7 @@
 #include "Game/OverlayHandlerHUD.h"
 #include "Game/Team.h"
 #include "Game/FE/tlComponentInstance.h"
+#include "NL/nlLexicalCast.h"
 
 extern cTeam* g_pTeams[];
 
@@ -258,6 +259,16 @@ void HUDOverlay::DisplayNewScore()
  */
 void HUDOverlay::ResetScores()
 {
+    for (int i = 0; i < 2; i++)
+    {
+        mScore[i] = 0;
+        mNewScore[i] = 0;
+        BasicString<char, Detail::TempStringAllocator> scoreStr = LexicalCast<BasicString<char, Detail::TempStringAllocator>, int>(mScore[i]);
+        nlStrToWcs(scoreStr.c_str(), mScoreBuffer[i], 0x20);
+        m_pTextInstanceScore[0][i]->SetString(mScoreBuffer[i]);
+        m_pTextInstanceScore[1][i]->SetString(mScoreBuffer[i]);
+    }
+    mStartScoreAnimation = false;
 }
 
 /**

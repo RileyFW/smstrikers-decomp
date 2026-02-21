@@ -116,7 +116,7 @@ public:
     void SetMemoryCardData(void*);
     u8 CheckSaveIDChanged(void*);
     bool HasTrophy(eTrophyType) const;
-    void GetMilestoneLevel(eTrophyType) const;
+    eMilestoneColour GetMilestoneLevel(eTrophyType) const;
     bool IsInRegularCupMode() const;
     bool IsInSuperCupMode() const;
     bool IsInCupMode() const;

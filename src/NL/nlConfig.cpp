@@ -2,27 +2,6 @@
 
 // static Config* sGlobal = nullptr;
 
-// Inline destructor specialization for BasicString<char, TempStringAllocator>
-// used in LoadFromFile - generates the double-null-check + nlFree-inside-outer pattern
-template <>
-inline BasicString<char, Detail::TempStringAllocator>::~BasicString()
-{
-    BasicStringInternal* d = m_data;
-    if (d != nullptr)
-    {
-        if (--d->mRefCount == 0)
-        {
-            if (d != nullptr)
-            {
-                if (d != nullptr)
-                    operator delete[](d->mData);
-                if (d != nullptr)
-                    nlFree(d);
-            }
-        }
-    }
-}
-
 /**
  * Offset/Address/Size: 0x0 | 0x801D2C64 | size: 0x13EC
  */
@@ -344,9 +323,9 @@ Config::~Config()
 /**
  * Offset/Address/Size: 0x2904 | 0x801D5568 | size: 0x94
  */
-void SetTagValuePair::Section(const BasicString<char, Detail::TempStringAllocator>&)
+void SetTagValuePair::Section(const BasicString<char, Detail::TempStringAllocator>& section)
 {
-    FORCE_DONT_INLINE;
+    mCurrentSection = section;
 }
 
 /**
