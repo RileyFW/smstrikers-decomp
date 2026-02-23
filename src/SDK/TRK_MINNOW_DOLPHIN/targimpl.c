@@ -645,8 +645,7 @@ DSError TRKTargetSupportRequest()
     }
     else if (commandId == DSMSG_OpenFile)
     {
-        error = HandleOpenFileSupportRequest(gTRKCPUState.Default.GPR[4], gTRKCPUState.Default.GPR[5] & 0xff, gTRKCPUState.Default.GPR[6],
-                                             &ioResult);
+        error = HandleOpenFileSupportRequest(gTRKCPUState.Default.GPR[4], gTRKCPUState.Default.GPR[5] & 0xff, gTRKCPUState.Default.GPR[6], &ioResult);
 
         if (ioResult == DS_IONoError && error != DS_NoError)
         {
@@ -682,8 +681,7 @@ DSError TRKTargetSupportRequest()
     else
     {
         length = (size_t*)gTRKCPUState.Default.GPR[5];
-        error = TRKSuppAccessFile(gTRKCPUState.Default.GPR[4], (u8*)gTRKCPUState.Default.GPR[6], length, &ioResult, TRUE,
-                                  commandId == DSMSG_ReadFile);
+        error = TRKSuppAccessFile(gTRKCPUState.Default.GPR[4], (u8*)gTRKCPUState.Default.GPR[6], length, &ioResult, TRUE, commandId == DSMSG_ReadFile);
 
         if (ioResult == DS_IONoError && error != DS_NoError)
         {

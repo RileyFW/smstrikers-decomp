@@ -97,7 +97,8 @@ HelperObject* World::FindHelperObject(unsigned long uHashID)
  * The target uses a bool found flag pattern (li r0,1 / li r0,0 / clrlwi.)
  * which the native AVLTreeBase::FindGet (returning ValueType*) does not produce.
  */
-struct DrawableMapFindHelper {
+struct DrawableMapFindHelper
+{
     char pad[0x8];
     AVLTreeEntry<unsigned long, DrawableObject*>* m_Root;
 

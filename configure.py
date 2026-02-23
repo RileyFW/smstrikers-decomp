@@ -824,7 +824,7 @@ config.libs = [
             Object(Matching, "Game/TerrainTypes.cpp"),
 
             # Audio
-            Object(NonMatching, "Game/Audio/CharacterAudio.cpp"),   
+            Object(NonMatching, "Game/Audio/CharacterAudio.cpp", extra_cflags=["-inline deferred"]),   
             Object(NonMatching, "Game/Audio/GameAudio.cpp", extra_cflags=["-inline deferred"]),   
             Object(NonMatching, "Game/Audio/audio.cpp"),   
             Object(Matching, "Game/Audio/SebringSoundDefines.cpp" , extra_cflags=["-inline deferred"]),   
@@ -1557,7 +1557,7 @@ config.libs = [
             Object(Matching, "SDK/TRK_MINNOW_DOLPHIN/MWCriticalSection_gc.cpp"),
 
             # NonMatchin...
-            Object(NonMatching, "SDK/TRK_MINNOW_DOLPHIN/main.c"),
+            Object(NonMatching, "SDK/TRK_MINNOW_DOLPHIN/main.c", extra_cflags=["-sdatathreshold 8"]),
             Object(NonMatching, "SDK/TRK_MINNOW_DOLPHIN/main_gdev.c", extra_cflags=["-sdatathreshold 8"]),
             Object(NonMatching, "SDK/TRK_MINNOW_DOLPHIN/__exception.s"),
 
