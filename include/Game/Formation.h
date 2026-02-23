@@ -81,7 +81,7 @@ class FormationEval
 public:
     virtual ~FormationEval();
     virtual void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
-    virtual void GetKeyPlayer();
+    virtual cPlayer* GetKeyPlayer();
     virtual void GetKeyPositions(cFielder*, nlVector3&, nlVector3*, bool);
     virtual float GetWeight();
     virtual float IsFielderInPosition(cFielder*, nlVector3, bool);

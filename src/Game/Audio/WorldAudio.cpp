@@ -2,11 +2,11 @@
 
 extern unsigned int nlDefaultSeed;
 
-Audio::eWorldSFX ohBigSFX[3] __attribute__((section(".rodata"))) = { Audio::CROWDSFX_EVENT_OH_SMALL4, Audio::CROWDSFX_EVENT_CLAP_BIG, Audio::CROWDSFX_EVENT_CLAP_SMALL };
-Audio::eWorldSFX ohSmallSFX[4] __attribute__((section(".rodata"))) = { Audio::CROWDSFX_EVENT_JEER_BIG, Audio::CROWDSFX_EVENT_JEER_SMALL, Audio::CROWDSFX_EVENT_BOO_SMALL1, Audio::CROWDSFX_EVENT_BOO_SMALL2 };
-Audio::eWorldSFX yeahSmallSFX[3] __attribute__((section(".rodata"))) = { Audio::CROWDSFX_EVENT_OH_BIG2, Audio::CROWDSFX_EVENT_OH_BIG3, Audio::CROWDSFX_EVENT_OH_SMALL1 };
-Audio::eWorldSFX booSmallSFX[3] __attribute__((section(".rodata"))) = { Audio::BALLSFX_HEADER, Audio::BALLSFX_CHEST, Audio::BALLSFX_KICK };
-Audio::eWorldSFX booBigSFX[3] __attribute__((section(".rodata"))) = { Audio::BALLSFX_KICK_ONETIMER, Audio::BALLSFX_KICK_S2S_CAPT, Audio::BALLSFX_PASS };
+const Audio::eWorldSFX ohBigSFX[3] __attribute__((section(".rodata"))) = { Audio::CROWDSFX_EVENT_OH_SMALL4, Audio::CROWDSFX_EVENT_CLAP_BIG, Audio::CROWDSFX_EVENT_CLAP_SMALL };
+const Audio::eWorldSFX ohSmallSFX[4] __attribute__((section(".rodata"))) = { Audio::CROWDSFX_EVENT_JEER_BIG, Audio::CROWDSFX_EVENT_JEER_SMALL, Audio::CROWDSFX_EVENT_BOO_SMALL1, Audio::CROWDSFX_EVENT_BOO_SMALL2 };
+const Audio::eWorldSFX yeahSmallSFX[3] __attribute__((section(".rodata"))) = { Audio::CROWDSFX_EVENT_OH_BIG2, Audio::CROWDSFX_EVENT_OH_BIG3, Audio::CROWDSFX_EVENT_OH_SMALL1 };
+const Audio::eWorldSFX booSmallSFX[3] __attribute__((section(".rodata"))) = { Audio::BALLSFX_HEADER, Audio::BALLSFX_CHEST, Audio::BALLSFX_KICK };
+const Audio::eWorldSFX booBigSFX[3] __attribute__((section(".rodata"))) = { Audio::BALLSFX_KICK_ONETIMER, Audio::BALLSFX_KICK_S2S_CAPT, Audio::BALLSFX_PASS };
 
 namespace Audio
 {

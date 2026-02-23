@@ -6,17 +6,17 @@
 
 #define GDEV_BUF_SIZE (0x500)
 
-static CircleBuffer gRecvCB;
-static u8 gRecvBuf[GDEV_BUF_SIZE];
+extern CircleBuffer gRecvCB_80346D50;
+extern u8 gRecvBuf[GDEV_BUF_SIZE];
 
-static BOOL gIsInitialized = FALSE;
+extern BOOL gIsInitialized;
 
 int gdev_cc_initialize(void* flagOut, __OSInterruptHandler handler)
 {
     MWTRACE(1, "CALLING EXI2_Init\n");
     DBInitComm(flagOut, (int*)handler);
     MWTRACE(1, "DONE CALLING EXI2_Init\n");
-    CircleBufferInitialize(&gRecvCB, gRecvBuf, GDEV_BUF_SIZE);
+    CircleBufferInitialize(&gRecvCB_80346D50, gRecvBuf, GDEV_BUF_SIZE);
     return 0;
 }
 
@@ -74,7 +74,7 @@ int gdev_cc_read(u8* data, int size)
 
     p1 = size;
     p2 = size;
-    while ((u32)CBGetBytesAvailableForRead(&gRecvCB) < p2)
+    while ((u32)CBGetBytesAvailableForRead(&gRecvCB_80346D50) < p2)
     {
         retval = 0;
         poll = DBQueryData();
@@ -83,14 +83,14 @@ int gdev_cc_read(u8* data, int size)
             retval = DBRead(buff, p2);
             if (retval == 0)
             {
-                CircleBufferWriteBytes(&gRecvCB, buff, poll);
+                CircleBufferWriteBytes(&gRecvCB_80346D50, buff, poll);
             }
         }
     }
 
     if (retval == 0)
     {
-        CircleBufferReadBytes(&gRecvCB, data, p1);
+        CircleBufferReadBytes(&gRecvCB_80346D50, data, p1);
     }
     else
     {
@@ -171,9 +171,9 @@ int gdev_cc_peek()
         return 0;
     }
 
-    if (DBRead(buff, poll) == 0)
+    if ((int)DBRead(buff, poll) == 0)
     {
-        CircleBufferWriteBytes(&gRecvCB, buff, poll);
+        CircleBufferWriteBytes(&gRecvCB_80346D50, buff, poll);
     }
     else
     {

@@ -333,31 +333,30 @@ unsigned long GetLOCSidekickName(eSidekickID sidekickid)
     return 0x094D126F;
 }
 
-/**
- * Offset/Address/Size: 0x1184 | 0x800A4240 | size: 0x70
- * TODO: 98.57% match - r4/r5 register swap, MWCC allocator quirk
- */
-unsigned long GetLOCTeamName(eTeamID teamID)
+static inline eCharacterClass TeamIDToCharacterClass(const eTeamID& teamID)
 {
     u32* table;
     s32 i;
-    s32 characterClass;
 
-    table = (u32*)TeamID2CharacterClassTable;
-    for (i = 0; i < 9; i++)
+    for (i = 0, table = (u32*)TeamID2CharacterClassTable; i < 9; table += 2, i++)
     {
         if ((s32)teamID == (s32)*table)
         {
-            characterClass = TeamID2CharacterClassTable[i][1];
-            goto found;
+            return (eCharacterClass)TeamID2CharacterClassTable[i][1];
         }
-        table += 2;
     }
-    characterClass = -1;
-found:
-    if (characterClass != -1)
+    return CHARACTER_CLASS_INVALID;
+}
+
+/**
+ * Offset/Address/Size: 0x1184 | 0x800A4240 | size: 0x70
+ */
+unsigned long GetLOCTeamName(eTeamID teamID)
+{
+    eCharacterClass cc = TeamIDToCharacterClass(teamID);
+    if (cc != CHARACTER_CLASS_INVALID)
     {
-        return CCToStringName[characterClass];
+        return CCToStringName[cc];
     }
     return 0x094D126F;
 }

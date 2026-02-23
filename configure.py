@@ -1259,7 +1259,7 @@ config.libs = [
             Object(NonMatching, "NL/plat/platpad.cpp"),
             # Ext/Math
             Object(NonMatching, "NL/plat/platvmath.cpp"),
-            Object(NonMatching, "NL/plat/platqmath.cpp"),
+            Object(Matching, "NL/plat/platqmath.cpp"),
             # Ext/Audio
             Object(NonMatching, "NL/plat/plataudio.cpp"),
 

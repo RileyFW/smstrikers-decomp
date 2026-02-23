@@ -204,11 +204,62 @@ dxJoint* dJointCreateCharacter(dxWorld* world, dxJointGroup* jointGroup)
     return createJoint(world, jointGroup, &__dcharacter_vtable);
 }
 
+static inline dReal nlgDot(const dReal* a, const dReal* b)
+{
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
 /**
  * Offset/Address/Size: 0x41C | 0x802246E4 | size: 0x160
  */
-void characterGetInfo2(dxJointCharacter*, dxJoint::Info2*)
+void characterGetInfo2(dxJointCharacter* j, dxJoint::Info2* info)
 {
+    // Row 0: angular identity
+    info->J1a[0] = 1;
+    info->c[0] = 0;
+    info->lo[0] = -dInfinity;
+    info->hi[0] = dInfinity;
+
+    // Row 1
+    {
+        int row = info->rowskip + 1;
+        info->J1a[row] = 1;
+    }
+    info->c[1] = 0;
+    info->lo[1] = -dInfinity;
+    info->hi[1] = dInfinity;
+
+    // Row 2
+    {
+        int row = info->rowskip * 2 + 2;
+        info->J1a[row] = 1;
+    }
+    info->c[2] = 0;
+    info->lo[2] = -dInfinity;
+    info->hi[2] = dInfinity;
+
+    // Row 3: linear Jacobian = body R * direction
+    dxBody* body = ((dxJoint*)j)->node[0].body;
+    dReal* R = (dReal*)((u8*)body + 0xB8);
+    unsigned int jStart = info->rowskip * 3;
+
+    dReal v0 = nlgDot(R, j->m_unk_0x50);
+    dReal v1 = nlgDot(R + 4, j->m_unk_0x50);
+    dReal v2 = nlgDot(R + 8, j->m_unk_0x50);
+
+    info->J1l[jStart] = v0;
+    {
+        unsigned int idx = jStart + 1;
+        info->J1l[idx] = v1;
+    }
+    {
+        unsigned int idx = jStart + 2;
+        info->J1l[idx] = v2;
+    }
+
+    info->c[3] = 0;
+    info->lo[3] = -dInfinity;
+    info->hi[3] = dInfinity;
 }
 
 /**

@@ -56,6 +56,8 @@ public:
     static BlurHandler* m_activeBlurHandler;
 };
 
+template<> void nlDeleteRing<BlurHandler>(BlurHandler** head);
+
 // class SlotPool<BlurHandler>
 // {
 // public:

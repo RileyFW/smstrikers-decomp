@@ -78,11 +78,17 @@ void EventManager::Create(unsigned long count, unsigned long size)
 #pragma push
 #pragma optimization_level 1
 #pragma optimize_for_size on
+#pragma scheduling off
 EventHandler* EventManager::AddEventHandler(EventCallback pEventHandlerFunc, void* pParam, unsigned long uDestinationMask)
 {
     EventHandler* eventHandler = (EventHandler*)nlMalloc(0x14, 8, 0);
-    eventHandler->set(pEventHandlerFunc, uDestinationMask, pParam);
-    nlDLRingAddEnd<EventHandler>(&m_handlers, eventHandler);
+    EventHandler** head = &m_handlers;
+
+    eventHandler->m_pCBFunction = pEventHandlerFunc;
+    EventHandler* element = eventHandler;
+    eventHandler->m_uDestinationMask = uDestinationMask;
+    eventHandler->m_pCBParam = pParam;
+    nlDLRingAddEnd<EventHandler>(head, element);
     return eventHandler;
 }
 #pragma pop

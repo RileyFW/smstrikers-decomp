@@ -447,8 +447,62 @@ void FormationEval::SortPlayers(const nlVector2*)
 /**
  * Offset/Address/Size: 0x1630 | 0x80039880 | size: 0x168
  */
-void FormationEval::GetKeyPlayer()
+cPlayer* FormationEval::GetKeyPlayer()
 {
+    if (m_pKeyPlayer != NULL) {
+        return m_pKeyPlayer;
+    }
+
+    cTeam* team = m_pFormationManager->m_pTeam;
+    cPlayer* otherCarrier;
+    cPlayer* pKeyPlayer;
+
+    {
+        cPlayer* temp = Fuzzy::GetStrategicBallCarrier(team).mData.pPlayer;
+        pKeyPlayer = temp;
+    }
+
+    if (pKeyPlayer == NULL) {
+        pKeyPlayer = g_pBall->GetOwnerGoalie();
+    }
+
+    if (pKeyPlayer == NULL) {
+        otherCarrier = Fuzzy::GetStrategicBallCarrier(team->GetOtherTeam()).mData.pPlayer;
+
+        if (otherCarrier != NULL) {
+            for (int i_fielder = 0; i_fielder < 4; i_fielder++) {
+                cFielder* pFielder = team->GetFielder(i_fielder);
+                if (pFielder->m_pMark == (cFielder*)otherCarrier) {
+                    pKeyPlayer = pFielder;
+                    break;
+                }
+            }
+        } else {
+            pKeyPlayer = Fuzzy::GetBestBallInterceptor(team).mData.pPlayer;
+        }
+    }
+
+    if (pKeyPlayer == NULL) {
+        for (int i_fielder = 0; i_fielder < 4; i_fielder++) {
+            if (team->GetFielder(i_fielder)->GetGlobalPad() != NULL) {
+                pKeyPlayer = team->GetFielder(i_fielder);
+                break;
+            }
+        }
+    }
+
+    if (pKeyPlayer == NULL) {
+        if (m_eFormationType == FTYPE_DEFENSIVE) {
+            pKeyPlayer = team->GetRearMostFielder();
+        } else if (m_eFormationType == FTYPE_OFFENSIVE) {
+            pKeyPlayer = team->GetFrontMostFielder();
+        } else {
+            pKeyPlayer = team->GetStriker();
+        }
+    }
+
+    m_pKeyPlayer = pKeyPlayer;
+    return pKeyPlayer;
 }
 
 /**

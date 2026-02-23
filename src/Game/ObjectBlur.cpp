@@ -458,3 +458,35 @@ bool BlurHandler::ConstructViewOrientedPoints(nlVector3& topPoint, nlVector3& bo
     bottomPoint.f.z = pZ_2 - perp.f.z;
     return true;
 }
+
+/**
+ * Offset/Address/Size: 0xC58 | 0x8016342C | size: 0x94
+ */
+template <>
+void nlDeleteRing<BlurHandler>(BlurHandler** head)
+{
+    extern SlotPool<BlurHandler> m_BlurHandlerSlotPool__11BlurHandler;
+    BlurHandler* element;
+    BlurHandler* next;
+
+    BlurHandler* headPtr = *head;
+    if (headPtr != NULL)
+    {
+        element = headPtr->m_next;
+        for (;;)
+        {
+            next = element->m_next;
+            if (element != NULL) {
+                delete[] element->m_pointRingBuffer;
+                element->m_next = (BlurHandler*)m_BlurHandlerSlotPool__11BlurHandler.m_FreeList;
+                m_BlurHandlerSlotPool__11BlurHandler.m_FreeList = (SlotPoolEntry*)element;
+            }
+            if (element == *head)
+            {
+                break;
+            }
+            element = next;
+        }
+        *head = NULL;
+    }
+}

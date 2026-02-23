@@ -25,6 +25,7 @@ void EnableDofDebug()
 bool LoadAnimCameraData(nlChunk*, nlChunk*, cCameraData*, bool)
 {
     FORCE_DONT_INLINE;
+    return false;
 }
 
 typedef bool (*LoadAnimCameraDataFn)(nlChunk*, nlChunk*, cCameraData*, const char*);

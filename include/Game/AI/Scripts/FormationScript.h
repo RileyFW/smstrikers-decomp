@@ -7,6 +7,8 @@
 class Fuzzy
 {
 public:
+    static FuzzyVariant GetStrategicBallCarrier(cTeam*);
+    static FuzzyVariant GetBestBallInterceptor(cTeam*);
     static FuzzyVariant GetBestDefensiveFormation(cTeam*);
     static FuzzyVariant GetBestOffensiveFormation(cTeam*);
     static FuzzyVariant GetBestBallFormationSet(cTeam*);

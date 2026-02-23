@@ -367,19 +367,21 @@ GLVertexAnim* GLInventory::GetVertexAnim(unsigned long id)
  */
 void GLInventory::AddMaterialList(unsigned long key, GLMaterialList* materialList)
 {
-    deleting_GLInventory<GLMaterialList>* pMaterialLists = m_pMaterialLists[m_nLevel];
-    AVLTreeNode** existingNode = nullptr;
+    unsigned long k = key;
+    GLMaterialList* value = materialList;
+    nlAVLTree<unsigned long, GLMaterialList*, DefaultKeyCompare<unsigned long> >* pItems = m_pMaterialLists[m_nLevel]->m_pItems;
+    AVLTreeNode* existingNode;
 
-    u32 result = pMaterialLists->m_pItems->AddAVLNode(
-        (AVLTreeNode**)&pMaterialLists->m_pItems->m_Root,
-        &key,
-        &materialList,
-        existingNode,
-        0);
+    pItems->AddAVLNode(
+        (AVLTreeNode**)&pItems->m_Root,
+        &k,
+        &value,
+        &existingNode,
+        pItems->m_NumElements);
 
-    if (existingNode == nullptr)
+    if (existingNode == NULL)
     {
-        pMaterialLists->m_pItems->m_NumElements++;
+        pItems->m_NumElements++;
     }
 }
 
