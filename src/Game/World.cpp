@@ -93,15 +93,53 @@ HelperObject* World::FindHelperObject(unsigned long uHashID)
 }
 
 /**
+ * Helper struct for inlining FindGet with bool return to match target assembly.
+ * The target uses a bool found flag pattern (li r0,1 / li r0,0 / clrlwi.)
+ * which the native AVLTreeBase::FindGet (returning ValueType*) does not produce.
+ */
+struct DrawableMapFindHelper {
+    char pad[0x8];
+    AVLTreeEntry<unsigned long, DrawableObject*>* m_Root;
+
+    inline bool FindGet(unsigned long key, DrawableObject*** foundValue) const
+    {
+        AVLTreeEntry<unsigned long, DrawableObject*>* node = m_Root;
+        while (node != NULL)
+        {
+            int cmpResult;
+            if (key == node->key)
+                cmpResult = 0;
+            else if (key < node->key)
+                cmpResult = -1;
+            else
+                cmpResult = 1;
+            if (cmpResult == 0)
+            {
+                if (foundValue != NULL)
+                    *foundValue = &node->value;
+                return true;
+            }
+            else
+            {
+                if (cmpResult < 0)
+                    node = (AVLTreeEntry<unsigned long, DrawableObject*>*)node->node.left;
+                else
+                    node = (AVLTreeEntry<unsigned long, DrawableObject*>*)node->node.right;
+            }
+        }
+        return false;
+    }
+};
+
+/**
  * Offset/Address/Size: 0x3A8 | 0x8019506C | size: 0x8C
  */
 DrawableObject* World::FindDrawableObject(unsigned long uHashID)
 {
-    AVLTreeEntry<unsigned long, DrawableObject*>* pEntry = m_drawableMap.Find(uHashID);
-    if (pEntry != nullptr)
-    {
-        return pEntry->value;
-    }
+    DrawableObject** foundValue;
+    bool found = ((DrawableMapFindHelper*)&m_drawableMap)->FindGet(uHashID, &foundValue);
+    if (found)
+        return *foundValue;
     return nullptr;
 }
 
