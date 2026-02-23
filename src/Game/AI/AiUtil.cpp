@@ -359,36 +359,38 @@ bool TestCollision(float rp, const nlVector3& p1, const nlVector3& p2, float rq,
 /**
  * Offset/Address/Size: 0xD90 | 0x8000683C | size: 0x64
  */
-float Exp(float x)
+float Exp(float k)
 {
     float result = 1.0f;
-    float neg_x = -x;
+    float negk = -k;
     float c0 = 0.24999869f;
     float c1 = 0.031257585f;
-    float x_power;
+    float powk;
     float c2 = 0.0025913713f;
     float c3 = 0.000171562f;
     float c4 = 0.0000054302f;
     float c5 = 0.0000006906f;
-    float temp;
+    float t0;
+    float t1;
+    float t2;
 
-    result = c0 * neg_x + result;
-    x_power = neg_x * neg_x;
-    result = c1 * x_power + result;
-    x_power *= neg_x;
-    result = c2 * x_power + result;
-    x_power *= neg_x;
-    result = c3 * x_power + result;
-    x_power *= neg_x;
-    result = c4 * x_power + result;
-    x_power *= neg_x;
-    result = c5 * x_power + result;
+    result = c0 * negk + result;
+    powk = negk * negk;
+    result = c1 * powk + result;
+    powk *= negk;
+    result = c2 * powk + result;
+    powk *= negk;
+    result = c3 * powk + result;
+    powk *= negk;
+    result = c4 * powk + result;
+    powk *= negk;
+    result = c5 * powk + result;
 
-    temp = result * result;
-    temp = result * temp;
-    temp = result * temp;
+    t0 = result * result;
+    t1 = result * t0;
+    t2 = result * t1;
 
-    return 1.0f / temp;
+    return 1.0f / t2;
 }
 
 /**

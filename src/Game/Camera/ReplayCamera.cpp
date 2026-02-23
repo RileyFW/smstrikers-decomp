@@ -101,9 +101,8 @@ void ReplayCamera::CutTo(ReplayCameraPosition camPos)
     mFrozen = false;
     mNoDampenForOneUpdate = true;
     mCamPos = camPos;
-    mPosition = GetPosition(camPos, -1.0f);
-    // nlVec3Set(mPosition, position.f.x, position.f.y, position.f.z);
-    mFov = GetFov(camPos);
+    mPosition = GetPosition(mCamPos, -1.0f);
+    mFov = GetFov(mCamPos);
 }
 
 /**

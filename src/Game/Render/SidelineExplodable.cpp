@@ -408,13 +408,14 @@ void SidelineExplodableManager::RemoveSidelineExplodable(SidelineExplodable* pSi
     SidelineExplodableNode* node = sSidelineExplodableList.m_pStart;
     while (node != NULL)
     {
+        SidelineExplodableNode* nextnode = node->next;
         if (node->mpExplodable == pSidelineExplodable)
         {
             nlListRemoveElement<SidelineExplodableNode>(&sSidelineExplodableList.m_pStart, node, &sSidelineExplodableList.m_pEnd);
-            node->mpExplodable = (SidelineExplodable*)sSidelineExplodableNodeSlotPool.m_FreeList->m_next;
-            sSidelineExplodableNodeSlotPool.m_FreeList = (SlotPoolEntry*)node;
+            ((SlotPoolEntry*)node)->m_next = SidelineExplodableNode::sSidelineExplodableNodeSlotPool.m_FreeList;
+            SidelineExplodableNode::sSidelineExplodableNodeSlotPool.m_FreeList = (SlotPoolEntry*)node;
         }
-        node = node->next;
+        node = nextnode;
     }
 }
 

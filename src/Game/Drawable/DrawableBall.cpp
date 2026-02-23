@@ -141,6 +141,24 @@ DrawableCharacter* DrawableBall::IndexToPlayer(int index) const
 template <>
 void DrawableBall::Replay<LoadFrame>(LoadFrame& frame)
 {
+    Replayable<1, LoadFrame, FloatCompressor<-127, 127, 7> >(frame, FloatCompressor<-127, 127, 7>(mPosition.f.x));
+    Replayable<1, LoadFrame, FloatCompressor<-127, 127, 7> >(frame, FloatCompressor<-127, 127, 7>(mPosition.f.y));
+    Replayable<1, LoadFrame, FloatCompressor<-127, 127, 7> >(frame, FloatCompressor<-127, 127, 7>(mPosition.f.z));
+
+    Replayable<1, LoadFrame, FloatCompressor<-1, 1, 13> >(frame, FloatCompressor<-1, 1, 13>(mOrientation.f.x));
+    Replayable<1, LoadFrame, FloatCompressor<-1, 1, 13> >(frame, FloatCompressor<-1, 1, 13>(mOrientation.f.y));
+    Replayable<1, LoadFrame, FloatCompressor<-1, 1, 13> >(frame, FloatCompressor<-1, 1, 13>(mOrientation.f.z));
+    Replayable<1, LoadFrame, FloatCompressor<-1, 1, 13> >(frame, FloatCompressor<-1, 1, 13>(mOrientation.f.w));
+
+    Replayable<1, LoadFrame, FloatCompressor<-127, 127, 5> >(frame, FloatCompressor<-127, 127, 5>(mVelocity.f.x));
+    Replayable<1, LoadFrame, FloatCompressor<-127, 127, 5> >(frame, FloatCompressor<-127, 127, 5>(mVelocity.f.y));
+    Replayable<1, LoadFrame, FloatCompressor<-127, 127, 5> >(frame, FloatCompressor<-127, 127, 5>(mVelocity.f.z));
+
+    Replayable<1, LoadFrame, bool>(frame, mVisible);
+    Replayable<1, LoadFrame, char>(frame, (char&)mOwnerIndex);
+    Replayable<1, LoadFrame, char>(frame, (char&)mPrevOwnerIndex);
+    Replayable<1, LoadFrame, char>(frame, (char&)mPassTargetIndex);
+    Replayable<1, LoadFrame, char>(frame, (char&)mLastTouchIndex);
 }
 
 /**

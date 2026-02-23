@@ -1711,8 +1711,41 @@ void cFielder::CalculateStrafeDirection(unsigned short, unsigned short)
 /**
  * Offset/Address/Size: 0x5DF0 | 0x8001F12C | size: 0x164
  */
-void cFielder::CalcPointOnPerimeter(nlVector3&, const nlVector3&, float)
+void cFielder::CalcPointOnPerimeter(nlVector3& dest, const nlVector3& fromPoint, float fFutureTimeDelta)
 {
+    float fMinDistance = 1.0f + m_pTweaks->fPhysCapsuleRadius;
+    nlVector3 v3Position;
+
+    if (fFutureTimeDelta > 0.0f) {
+        v3Position.f.x = m_v3Position.f.x + fFutureTimeDelta * m_v3Velocity.f.x;
+        v3Position.f.y = m_v3Position.f.y + fFutureTimeDelta * m_v3Velocity.f.y;
+        v3Position.f.z = m_v3Position.f.z + fFutureTimeDelta * m_v3Velocity.f.z;
+    } else {
+        v3Position = m_v3Position;
+    }
+
+    float dx = fromPoint.f.x - v3Position.f.x;
+    float dy = fromPoint.f.y - v3Position.f.y;
+    float dz = fromPoint.f.z - v3Position.f.z;
+    dest.f.x = dx;
+    dest.f.y = dy;
+    dest.f.z = dz;
+
+    float fInvLen = nlRecipSqrt(dest.f.x * dest.f.x + dest.f.y * dest.f.y + dest.f.z * dest.f.z, true);
+
+    float nx = fInvLen * dest.f.x;
+    float nz = fInvLen * dest.f.z;
+    float ny = fInvLen * dest.f.y;
+    dest.f.x = nx;
+    dest.f.y = ny;
+    dest.f.z = nz;
+
+    float rx = v3Position.f.x + fMinDistance * dest.f.x;
+    float rz = v3Position.f.z + fMinDistance * dest.f.z;
+    float ry = v3Position.f.y + fMinDistance * dest.f.y;
+    dest.f.x = rx;
+    dest.f.y = ry;
+    dest.f.z = rz;
 }
 
 /**

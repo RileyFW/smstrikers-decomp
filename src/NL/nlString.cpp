@@ -55,15 +55,15 @@ void nlZeroMemory(void* p, unsigned long numBytes)
 
 /**
  * Offset/Address/Size: 0x188 | 0x801D27C0 | size: 0x64
- * TODO: 97.4% match - lbz/slwi instruction scheduling diff (compiler hoists load)
+ * TODO: 97.4% match - lbz/slwi instruction scheduling swap in loop body (compiler scheduler difference)
  */
 u32 nlStringLowerHash(const char* str)
 {
-    unsigned long h = -1;
+    u32 h = (u32)-1;
     while (*str)
     {
-        h = h + (h << 5);
-        h = h + nlToLower<unsigned char>(*(++str));
+        h += h << 5;
+        h += nlToLower<unsigned char>(*str++);
     }
     return h;
 }

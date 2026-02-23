@@ -124,7 +124,7 @@ void glplatBeginFrame()
         s32 diff = 720 - glx_VIWidth;
         prev_VIWidth = glx_VIWidth;
         glx_rmode.viWidth = (s16)glx_VIWidth;
-        glx_rmode.viXOrigin = (s16)((diff + (s32)((u32)diff >> 31)) >> 1);
+        glx_rmode.viXOrigin = (s16)(diff / 2);
         VIConfigure(&glx_rmode);
         VIFlush();
     }

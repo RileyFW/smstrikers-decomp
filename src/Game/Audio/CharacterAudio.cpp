@@ -299,6 +299,24 @@ void cCharacterSFX::StopMovementLoop()
  */
 void cCharacterSFX::StartMovementLoop()
 {
+    if (!mbInited)
+        return;
+
+    if (IsPlayingRandomCharDialogue(CHAR_DIALOGUE_ELECTROCUTE))
+        return;
+
+    StopPlayingAllRandomCharDialogue();
+
+    // Setup sound attributes for movement loop
+    Audio::SoundAttributes sndAtr;
+    sndAtr.Init();
+    sndAtr.me_ClassType = 1;
+    sndAtr.SetSoundType(0x3E, true);
+    sndAtr.UsePhysObj(mpPhysObj);
+    sndAtr.mf_ReturnEmitterOnPlay = true;
+    sndAtr.mb_NoPhasingFilter = false;
+
+    mpMovementLoopSound = (SFXEmitter*)Play(sndAtr);
 }
 
 /**
@@ -482,7 +500,7 @@ void cCharacterSFX::Stop(eCharSFX sfxType, cGameSFX::StopFlag flag)
 /**
  * Offset/Address/Size: 0x114C | 0x8014D4F0 | size: 0x7C
  */
-int cCharacterSFX::Play(SoundAttributes& attrs)
+unsigned long cCharacterSFX::Play(SoundAttributes& attrs)
 {
     attrs.me_ClassType = 1;
     attrs.mi_EmitterGroup = mGroup;

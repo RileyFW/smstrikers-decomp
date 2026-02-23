@@ -157,15 +157,13 @@ void dMultiplyMatrix4Vector4(float* m1, const float* m2, const float* m3)
 /**
  * Offset/Address/Size: 0x340 | 0x80224608 | size: 0x88
  */
-void dMultiplyMatrix3Vector3(float* m1, const float* m2, const float* m3, bool flag)
+void dMultiplyMatrix3Vector3(float* result, const float* R, const float* v, bool transposeMatrix)
 {
-    if ((u32)flag == 0)
-    {
-        dMultiply0(m1, m2, m3, 3, 3, 1);
+    if (!transposeMatrix) {
+        dMultiply0(result, R, v, 3, 3, 1);
     }
-    else
-    {
-        dMultiply1(m1, m2, m3, 3, 3, 1);
+    if (transposeMatrix) {
+        dMultiply1(result, R, v, 3, 3, 1);
     }
 }
 

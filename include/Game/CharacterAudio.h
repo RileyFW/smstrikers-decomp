@@ -220,7 +220,7 @@ public:
     cCharacterSFX();
     virtual ~cCharacterSFX();
     virtual void Init();
-    virtual int Play(Audio::SoundAttributes&);
+    virtual unsigned long Play(Audio::SoundAttributes&);
 
     void Stop(Audio::eCharSFX, cGameSFX::StopFlag);
     void PlayRandomCharDialogue(CharDialogueType, PosUpdateMethod, float, float, bool);

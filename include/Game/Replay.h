@@ -52,9 +52,24 @@ public:
     /* 0x10 */ float mNonBlendableAheadOfFrame;
 }; // total size: 0x14
 
+template <int MIN, int MAX, int BITS>
+class FloatCompressor
+{
+public:
+    FloatCompressor(float& f)
+        : mF(f)
+    {
+    }
+
+    /* 0x0 */ float& mF;
+}; // total size: 0x4
+
 // Forward declaration of generic template (needed before specializations)
 template <int N, typename FrameType, typename T>
 void Replayable(FrameType& frame, T& manager);
+
+template <int N, typename FrameType, typename T>
+void Replayable(FrameType& frame, const T& manager);
 
 template <>
 void Replayable<1, LoadFrame, CrowdManager>(LoadFrame& frame, CrowdManager& manager);
@@ -76,6 +91,10 @@ template <>
 void Replayable<0, SaveFrame, bool>(SaveFrame& frame, bool& value);
 template <>
 void Replayable<1, SaveFrame, bool>(SaveFrame& frame, bool& value);
+template <>
+void Replayable<1, LoadFrame, char>(LoadFrame& frame, char& value);
+template <>
+void Replayable<1, SaveFrame, char>(SaveFrame& frame, char& value);
 template <>
 void Replayable<1, LoadFrame, nlVector3>(LoadFrame& frame, nlVector3& value);
 template <>

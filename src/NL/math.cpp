@@ -25,14 +25,15 @@ void nlPolarToCartesian(float& x, float& y, unsigned short angle, float radius)
 
 /**
  * Offset/Address/Size: 0x46C | 0x801F0768 | size: 0x68
+ * TODO: 84.4% match - MWCC register coalescing/scheduling difference: target
+ * copies polar ptr to r5 and loads float before u16; our compiler uses r6 for
  */
-void nlPolarToCartesian(nlVector3& result, const nlPolar& polar)
+void nlPolarToCartesian(nlVector3& v, const nlPolar& polar)
 {
-    float radius = polar.r;
-    u16 angle = (u16)polar.a;
-    nlSinCos(&result.f.y, &result.f.x, angle);
-    result.f.x *= radius;
-    result.f.y *= radius;
+    f32 radius = polar.r;
+    nlSinCos(&v.f.y, &v.f.x, polar.a);
+    v.f.x *= radius;
+    v.f.y *= radius;
 }
 /**
  * Offset/Address/Size: 0x3EC | 0x801F06E8 | size: 0x80
