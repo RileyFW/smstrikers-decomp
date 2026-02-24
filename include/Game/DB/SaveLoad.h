@@ -10,13 +10,13 @@ class SaveLoad
 {
 public:
     static bool CardBusy();
-    static void StartSave(int, void (*)(long));
-    void StartLoad(int, void (*)(long), bool, bool);
+    static long StartSave(int, void (*)(long));
+    static long StartLoad(int, void (*)(long), bool, bool);
     bool DidGameIDChange();
-    static void StartDelete(int, void (*)(long));
-    static void StartFormat(int, void (*)(long));
-    static void StartFileExistsCheck(int, void (*)(long));
-    static void StartMemoryCardIDCheck(int, void (*)(long));
+    static long StartDelete(int, void (*)(long));
+    static long StartFormat(int, void (*)(long));
+    static long StartFileExistsCheck(int, void (*)(long));
+    static long StartMemoryCardIDCheck(int, void (*)(long));
     int GetSaveBlockSize(int);
     void HasEnoughFreeSpace(int);
     void FreeAllCallbackMemory();

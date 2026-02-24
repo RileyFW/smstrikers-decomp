@@ -38,7 +38,8 @@ void QueueResourceLoadCallback::Callback(FEResourceHandle* handle)
 void FEScene::UnloadPackage()
 {
     UnloadResourceCallback unloadResourceCallback;
-    nlWalkRing<FEResourceHandle, UnloadResourceCallback>(&m_feSceneResourceHandle, &unloadResourceCallback, &UnloadResourceCallback::Callback);
+    unloadResourceCallback.m_resourceManager = FEResourceManager::Instance();
+    nlWalkRing<FEResourceHandle, UnloadResourceCallback>(m_pFEPackage->m_pResourceList, &unloadResourceCallback, &UnloadResourceCallback::Callback);
     FEResourceManager::Instance()->UnloadResource(&m_feSceneResourceHandle);
 }
 

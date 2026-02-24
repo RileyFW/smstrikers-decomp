@@ -3,14 +3,22 @@
 
 #include "Game/FE/fePresentation.h"
 
+class FELibObject;
+class FEResourceHandle;
+class TLComponent;
+
 class FEPackage
 {
 public:
     void Update(float);
     FEPresentation* GetPresentation() const;
 
-    /* 0x0 */ char pad0[4];
-    /* 0x4 */ FEPresentation* m_presentation;
-};
+    /* 0x00 */ TLComponent* m_pComponentList;
+    /* 0x04 */ FEPresentation* m_pFEPresentation;
+    /* 0x08 */ FEResourceHandle* m_pResourceList;
+    /* 0x0C */ FELibObject* m_pFEObjectLibrary;
+    /* 0x10 */ unsigned long m_uUniqueID;
+    /* 0x14 */ unsigned long m_uResourceCount;
+}; // total size: 0x18
 
 #endif // _FEPACKAGE_H_

@@ -1477,9 +1477,85 @@ float FarToTheirGoalie(cPlayer* pPlayer)
 /**
  * Offset/Address/Size: 0x1D08 | 0x80080790 | size: 0x170
  */
-float CloseToSideline(const nlVector3&, const nlVector2*, bool)
+float CloseToSideline(const nlVector3& v3Position, const nlVector2* vDistanceConfidence, bool bInvert)
 {
-    return 0.0f;
+    if (vDistanceConfidence == NULL)
+    {
+        vDistanceConfidence = &g_pGame->m_pFuzzyTweaks->vCloseToSidelineDistanceConfidence;
+    }
+
+    float fScore;
+    if (bInvert)
+    {
+        fScore = 1.0f;
+    }
+    else
+    {
+        fScore = 0.0f;
+    }
+
+    int i = 0;
+    u32 posU0 = v3Position.as_u32[0];
+    f32 fZero = 0.0f;
+    u32 posU1 = v3Position.as_u32[1];
+    u32 posU2 = v3Position.as_u32[2];
+    s32 offset = i;
+    f32 posX = v3Position.f.x;
+    const u8* pBase = (const u8*)cField::mSidelines;
+    f32 posY = v3Position.f.y;
+
+    for (; i < 4; i++, offset += 0xC)
+    {
+        const sSideLinePlane* sideline = (const sSideLinePlane*)(pBase + offset);
+        nlVector3 v3SidelinePos;
+
+        v3SidelinePos.as_u32[2] = posU2;
+        v3SidelinePos.as_u32[0] = posU0;
+        v3SidelinePos.as_u32[1] = posU1;
+        v3SidelinePos.f.z = fZero;
+
+        if (fZero == sideline->vNormal.f.x)
+        {
+            v3SidelinePos.f.y = sideline->fDistance * sideline->vNormal.f.y;
+        }
+        else
+        {
+            v3SidelinePos.f.x = sideline->fDistance * sideline->vNormal.f.x;
+        }
+
+        f32 dx = v3SidelinePos.f.x - posX;
+        f32 dy = v3SidelinePos.f.y - posY;
+        float fDistance = nlSqrt(dx * dx + dy * dy, true);
+
+        if (bInvert)
+        {
+            float fNormalized = NormalizeVal(fDistance, *vDistanceConfidence);
+
+            if (fScore <= fNormalized)
+            {
+                fScore = fScore;
+            }
+            else
+            {
+                fScore = fNormalized;
+            }
+        }
+        else
+        {
+            float fNormalized = NormalizeVal(fDistance, *vDistanceConfidence);
+
+            if (fScore >= fNormalized)
+            {
+                fScore = fScore;
+            }
+            else
+            {
+                fScore = fNormalized;
+            }
+        }
+    }
+
+    return fScore;
 }
 
 /**

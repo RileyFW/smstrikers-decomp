@@ -41,6 +41,9 @@ Progress
 
 ![progress overview](https://decomp.dev/projects/989774797.svg?mode=overview&version=G4QE01)
 
+Track the project decompilation progress and explore the interactive graph on [decomp.dev](https://decomp.dev/yannicksuter/smstrikers-decomp).
+
+
 Contributing
 ============
 

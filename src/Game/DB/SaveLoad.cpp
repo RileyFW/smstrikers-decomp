@@ -161,7 +161,7 @@ void LoadMemoryCardIconData()
 /**
  * Offset/Address/Size: 0x10D4 | 0x8018AA30 | size: 0x108
  */
-void SaveLoad::StartSave(int slot, void (*callback)(long))
+long SaveLoad::StartSave(int slot, void (*callback)(long))
 {
     nlPrintf("StartSave\n");
 
@@ -189,6 +189,8 @@ void SaveLoad::StartSave(int slot, void (*callback)(long))
     {
         InOperation = false;
     }
+
+    return result;
 }
 
 // /**
@@ -201,8 +203,9 @@ void SaveLoad::StartSave(int slot, void (*callback)(long))
 /**
  * Offset/Address/Size: 0xBFC | 0x8018A558 | size: 0x28C
  */
-void SaveLoad::StartLoad(int, void (*)(long), bool, bool)
+long SaveLoad::StartLoad(int, void (*)(long), bool, bool)
 {
+    return 0;
 }
 
 /**
@@ -223,7 +226,7 @@ bool SaveLoad::DidGameIDChange()
 /**
  * Offset/Address/Size: 0xA54 | 0x8018A3B0 | size: 0xBC
  */
-void SaveLoad::StartDelete(int slot, void (*callback)(long))
+long SaveLoad::StartDelete(int slot, void (*callback)(long))
 {
     nlPrintf("StartDelete\n");
 
@@ -240,6 +243,8 @@ void SaveLoad::StartDelete(int slot, void (*callback)(long))
     {
         InOperation = false;
     }
+
+    return result;
 }
 
 // /**
@@ -252,7 +257,7 @@ void SaveLoad::StartDelete(int slot, void (*callback)(long))
 /**
  * Offset/Address/Size: 0x844 | 0x8018A1A0 | size: 0xBC
  */
-void SaveLoad::StartFormat(int slot, void (*callback)(long))
+long SaveLoad::StartFormat(int slot, void (*callback)(long))
 {
     nlPrintf("StartFormat\n");
 
@@ -269,6 +274,8 @@ void SaveLoad::StartFormat(int slot, void (*callback)(long))
     {
         InOperation = false;
     }
+
+    return result;
 }
 
 // /**
@@ -281,7 +288,7 @@ void SaveLoad::StartFormat(int slot, void (*callback)(long))
 /**
  * Offset/Address/Size: 0x520 | 0x80189E7C | size: 0xCC
  */
-void SaveLoad::StartFileExistsCheck(int slot, void (*callback)(long))
+long SaveLoad::StartFileExistsCheck(int slot, void (*callback)(long))
 {
     nlPrintf("StartFileExistsCheck\n");
 
@@ -299,6 +306,8 @@ void SaveLoad::StartFileExistsCheck(int slot, void (*callback)(long))
     {
         InOperation = false;
     }
+
+    return result;
 }
 
 // /**
@@ -311,7 +320,7 @@ void SaveLoad::StartFileExistsCheck(int slot, void (*callback)(long))
 /**
  * Offset/Address/Size: 0x390 | 0x80189CEC | size: 0xCC
  */
-void SaveLoad::StartMemoryCardIDCheck(int slot, void (*callback)(long))
+long SaveLoad::StartMemoryCardIDCheck(int slot, void (*callback)(long))
 {
     nlPrintf("StartMemoryCardIDCheck\n");
 
@@ -329,6 +338,8 @@ void SaveLoad::StartMemoryCardIDCheck(int slot, void (*callback)(long))
     {
         InOperation = false;
     }
+
+    return result;
 }
 
 /**

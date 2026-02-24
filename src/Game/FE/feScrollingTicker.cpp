@@ -76,9 +76,52 @@ void ScrollingTickerScene::CloseMessenger()
 
 /**
  * Offset/Address/Size: 0x258 | 0x8009FEB0 | size: 0x16C
+ * TODO: 99.45% match - f0/f1 register swap in first SetAssetPosition block
+ *       (fsubs f0 vs f1), and f29/f31 swap for sx/sz ball scale variables.
+ *       Both are MWCC register allocator differences shared with CloseMessengerNow.
  */
 void ScrollingTickerScene::OpenMessengerNow()
 {
+    m_pFETweenManager.clearTweens();
+
+    f32 closedY = m_leftBallClosedPos.f.y;
+    f32 open = m_leftBallOpenPos.f.x;
+    f32 x;
+    f32 val = 1.0f;
+    f32 leftClosedX = m_leftBallClosedPos.f.x;
+
+    x = open - leftClosedX;
+    x = val * x + leftClosedX;
+    m_leftBall->SetAssetPosition(x, closedY, 0.0f);
+
+    open = m_rightBallOpenPos.f.x;
+    x = open - m_rightBallClosedPos.f.x;
+    x = val * x + m_rightBallClosedPos.f.x;
+    m_rightBall->SetAssetPosition(x, closedY, 0.0f);
+
+    open = m_grayOpenScale.f.x;
+    x = open - m_grayClosedScale.f.x;
+    x = val * x + m_grayClosedScale.f.x;
+    m_backRectangle->SetAssetScale(x, m_grayOpenScale.f.y, 1.0f);
+
+    f32 sz;
+    f32 sy;
+    f32 sx;
+    sx = m_ballClosedScale.f.x * val;
+    sy = m_ballClosedScale.f.y * val;
+    sz = m_ballClosedScale.f.z * val;
+    m_leftBall->SetAssetScale(sx, sy, sz);
+    m_rightBall->SetAssetScale(sx, sy, sz);
+
+    m_backRectangle->SetAssetScale(
+        m_grayClosedScale.f.x * val,
+        m_grayClosedScale.f.y * val,
+        m_grayClosedScale.f.z * val);
+
+    m_textBox->m_bVisible = true;
+    SetVisible(true);
+    m_active = 1;
+    m_textScroller->m_msgTime = 0.0f;
 }
 
 /**

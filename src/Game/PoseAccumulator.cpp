@@ -414,6 +414,9 @@ void cPoseAccumulator::BlendRotAroundZ(int idx, unsigned short angle, float w)
 
 /**
  * Offset/Address/Size: 0x3DC | 0x801EB97C | size: 0x8C
+ * TODO: 98.1% match - register allocation mismatch for index vs entry pointer.
+ * Compiler keeps mulli temp in r6 and entry pointer in r7 (target is opposite),
+ * so the function body uses r7 where target uses r6.
  */
 void cPoseAccumulator::BlendScale(int idx, const nlVector3* v, float w, bool /*unused*/)
 {
@@ -426,10 +429,9 @@ void cPoseAccumulator::BlendScale(int idx, const nlVector3* v, float w, bool /*u
     float t = w / e->fAccumulatedWeight;
     float inv = 1.0f - t;
 
-    nlVec3Set(e->s,
-        inv * e->s.f.x + t * v->f.x,
-        inv * e->s.f.y + t * v->f.y,
-        inv * e->s.f.z + t * v->f.z);
+    e->s.f.x = inv * e->s.f.x + t * v->f.x;
+    e->s.f.y = inv * e->s.f.y + t * v->f.y;
+    e->s.f.z = inv * e->s.f.z + t * v->f.z;
 
     e = m_scale.mData + idx;
     e->bIdentity = false;

@@ -5,7 +5,7 @@
  */
 FEPresentation* FEPackage::GetPresentation() const
 {
-    return m_presentation;
+    return m_pFEPresentation;
 }
 
 /**
@@ -13,5 +13,5 @@ FEPresentation* FEPackage::GetPresentation() const
  */
 void FEPackage::Update(float deltaTime)
 {
-    m_presentation->Update(deltaTime);
+    m_pFEPresentation->Update(deltaTime);
 }

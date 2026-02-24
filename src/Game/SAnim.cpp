@@ -119,7 +119,25 @@ void cSAnim::CreateCallback(float time, unsigned int param1, void (*funcCallback
 /**
  * Offset/Address/Size: 0x0 | 0x801E9214 | size: 0x160
  */
-float cSAnim::GetMorphWeight(int index, float t) const
+float cSAnim::GetMorphWeight(int channel, float fTime) const
 {
-    return 0.0f;
+    const u8* keys = m_pMorphKeys;
+    int numKeys = m_pNumMorphKeys[channel];
+    int i = 0;
+
+    for (i = 0; i < channel; i++)
+    {
+        keys += m_pNumMorphKeys[channel];
+    }
+
+    if (numKeys == 1 || fTime == 1.0f)
+    {
+        float weight = (float)keys[numKeys - 1] / 255.0f;
+        return weight;
+    }
+
+    float fRealIndex = fTime * (float)(numKeys - 1);
+    int nIndex = (int)fRealIndex;
+    float fWeightB = fRealIndex - (float)nIndex;
+    return (1.0f - fWeightB) * ((float)keys[nIndex] / 255.0f) + fWeightB * ((float)keys[nIndex + 1] / 255.0f);
 }

@@ -388,23 +388,40 @@ void GLInventory::AddMaterialList(unsigned long key, GLMaterialList* materialLis
 /**
  * Offset/Address/Size: 0x548 | 0x801E27E0 | size: 0xC8
  */
-GLMaterialList* GLInventory::GetMaterialList(unsigned long key)
+GLMaterialList* GLInventory::GetMaterialList(unsigned long id)
 {
-    GLMaterialList* result = nullptr;
-
-    for (int level = m_nLevel; level >= 0; level--)
+    for (int i = m_nLevel; i >= 0; i--)
     {
-        deleting_GLInventory<GLMaterialList>* pMaterialLists = m_pMaterialLists[level];
-        AVLTreeEntry<unsigned long, GLMaterialList*>* node = pMaterialLists->m_pItems->m_Root;
+        bool found;
+        GLMaterialList** pResult;
+        AVLTreeEntry<unsigned long, GLMaterialList*>* node = m_pMaterialLists[i]->m_pItems->m_Root;
 
         while (node != nullptr)
         {
-            if (key == node->key)
+            int cmpResult;
+            if (id == node->key)
             {
-                result = node->value;
-                break;
+                cmpResult = 0;
             }
-            else if (key < node->key)
+            else if (id < node->key)
+            {
+                cmpResult = -1;
+            }
+            else
+            {
+                cmpResult = 1;
+            }
+
+            if (cmpResult == 0)
+            {
+                if (&pResult != nullptr)
+                {
+                    pResult = &node->value;
+                }
+                found = true;
+                goto check_found;
+            }
+            else if (cmpResult < 0)
             {
                 node = (AVLTreeEntry<unsigned long, GLMaterialList*>*)node->node.left;
             }
@@ -413,14 +430,23 @@ GLMaterialList* GLInventory::GetMaterialList(unsigned long key)
                 node = (AVLTreeEntry<unsigned long, GLMaterialList*>*)node->node.right;
             }
         }
-
+        found = false;
+    check_found:
+        GLMaterialList* result;
+        if (found)
+        {
+            result = *pResult;
+        }
+        else
+        {
+            result = nullptr;
+        }
         if (result != nullptr)
         {
-            break;
+            return result;
         }
     }
-
-    return result;
+    return nullptr;
 }
 
 /**

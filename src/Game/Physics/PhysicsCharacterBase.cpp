@@ -77,8 +77,33 @@ int PhysicsCharacterBase::GetNumBoneVolumePoints(bool includeEndpoints) const
 /**
  * Offset/Address/Size: 0x864 | 0x801FF360 | size: 0x16C
  */
-void PhysicsCharacterBase::GetBoneVolumePoints(nlVector3*, bool)
+void PhysicsCharacterBase::GetBoneVolumePoints(nlVector3* points, bool includeEndpoints)
 {
+    for (ListEntry<PhysicsBoneVolume*>* entry = m_BoneVolumes.m_Head; entry != NULL; entry = entry->next)
+    {
+        PhysicsBoneVolume* boneVolume = entry->data;
+        nlVector3 pos;
+        boneVolume->m_pObject->GetPosition(&pos);
+
+        if (includeEndpoints)
+        {
+            f32 radius = 1.0f;
+            nlVec3Set(points[0], radius + pos.f.x, radius + pos.f.y, radius + pos.f.z);
+            nlVec3Set(points[1], pos.f.x - radius, pos.f.y - radius, pos.f.z - radius);
+            points += 2;
+        }
+        else
+        {
+            f32 radius = 1.0f;
+            nlVec3Set(points[0], radius + pos.f.x, pos.f.y, pos.f.z);
+            nlVec3Set(points[1], pos.f.x - radius, pos.f.y, pos.f.z);
+            nlVec3Set(points[2], pos.f.x, radius + pos.f.y, pos.f.z);
+            nlVec3Set(points[3], pos.f.x, pos.f.y - radius, pos.f.z);
+            nlVec3Set(points[4], pos.f.x, pos.f.y, radius + pos.f.z);
+            nlVec3Set(points[5], pos.f.x, pos.f.y, pos.f.z - radius);
+            points += 6;
+        }
+    }
 }
 
 /**

@@ -300,6 +300,7 @@ void CheckResults()
 bool PushNoCardMessage()
 {
     FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
@@ -356,7 +357,8 @@ void SaveLoadScene::SetupForAboutAutoSave()
     typedef TLComponentInstance* (*FindByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
     typedef TLComponentInstance* (*FindByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
 
-    union {
+    union
+    {
         FindByValue byValue;
         FindByRef byRef;
     } findFunc;
@@ -414,12 +416,14 @@ void SaveLoadScene::SetupForAboutAutoSave()
  */
 void SaveLoadScene::UpdateForAboutToSaveSlide()
 {
-    if (PushNoCardMessage()) {
+    if (PushNoCardMessage())
+    {
         SceneCreated();
         return;
     }
 
-    if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x100, false, NULL)) {
+    if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x100, false, NULL))
+    {
         SceneCreated();
 
         gSceneTypeStackDepth = 0;
@@ -431,9 +435,11 @@ void SaveLoadScene::UpdateForAboutToSaveSlide()
         ResetTask::s_resetPaused = true;
     }
 
-    if (mButtonComponent != NULL) {
+    if (mButtonComponent != NULL)
+    {
         TLComponentInstance* inst = mButtonComponent->mButtonInstance;
-        if (inst != NULL) {
+        if (inst != NULL)
+        {
             inst->m_bVisible = true;
         }
     }
@@ -451,6 +457,66 @@ void SaveLoadScene::HandleSaveLoadFinishedResult()
  */
 void SaveLoadScene::StartSaveNow()
 {
+    if (mInstance == NULL)
+    {
+        return;
+    }
+
+    eSaveLoad sceneType = gSceneTypeStack[gSceneTypeStackDepth - 1];
+    if (sceneType != ST_SAVE)
+    {
+        return;
+    }
+
+    if (gSaveLoadStarted)
+    {
+        return;
+    }
+
+    if (mInstance->m_pFEPresentation->m_currentSlide == mInstance->mAboutAutoSaveSlide)
+    {
+        return;
+    }
+
+    gSaveLoadStarted = true;
+    gSaveLoadFinished = false;
+    gCallbackMade = false;
+
+    switch (sceneType)
+    {
+    case ST_SAVE:
+        gResult = SaveLoad::StartSave(0, SaveLoadCallback);
+        break;
+    case ST_LOAD:
+        gResult = SaveLoad::StartLoad(0, SaveLoadCallback, true, false);
+        break;
+    case ST_GAMESAVEIDTEST:
+        gResult = SaveLoad::StartMemoryCardIDCheck(0, SaveLoadCallback);
+        break;
+    case ST_DELETE:
+        gResult = SaveLoad::StartDelete(0, SaveLoadCallback);
+        break;
+    case ST_FORMAT:
+        gResult = SaveLoad::StartFormat(0, SaveLoadCallback);
+        break;
+    case ST_ASK_SAVE:
+        gResult = SaveLoad::StartFileExistsCheck(0, SaveLoadCallback);
+        break;
+    case ST_ASK_LOAD:
+        gResult = SaveLoad::StartLoad(0, SaveLoadCallback, false, false);
+        break;
+    case ST_CHECKING:
+        gSaveLoadFinished = true;
+        gCallbackMade = false;
+        break;
+    case ST_ABOUT_AUTOSAVE:
+        gResult = SaveLoad::StartFileExistsCheck(0, SaveLoadCallback);
+        break;
+    case ST_CONFIRM_FORMAT:
+        break;
+    case ST_SHOULD_LOAD_OR_SAVE:
+        break;
+    }
 }
 
 /**

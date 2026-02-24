@@ -41,8 +41,45 @@ Goalie::~Goalie()
 /**
  * Offset/Address/Size: 0xB598 | 0x8004E094 | size: 0x17C
  */
-void Goalie::Update(float)
+void Goalie::Update(float dt)
 {
+    cPlayer::Update(dt);
+
+    if (mbDoHeadTrack)
+    {
+        if (m_pBall == NULL)
+        {
+            m_pHeadTrack->m_bTrackOOI = true;
+            m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+        }
+        else if (mGoalieActionState == GOALIEACTION_LOOSEBALL_PICKUP && mpLooseBallInfo != NULL && mpLooseBallInfo->mAnimType == LOOSEBALL_ANIM_KICK && mpPassTarget != NULL)
+        {
+            m_pHeadTrack->m_bTrackOOI = true;
+            m_pHeadTrack->m_v3OOI = mpPassTarget->m_v3Position;
+        }
+        else
+        {
+            m_pHeadTrack->m_bTrackOOI = false;
+        }
+    }
+    else
+    {
+        m_pHeadTrack->m_bTrackOOI = false;
+    }
+
+    UpdateActionState(dt);
+    mFatigue.Update(dt);
+    cCharacter::Update(dt);
+
+    if (!mbIsPosed)
+    {
+        PoseLocalSpace();
+        m_pPhysicsCharacter->UpdatePose(m_pPoseAccumulator, m_v3Position.f.z);
+        m_pPhysicsCharacter->GetCharacterPositionXY(&m_v3Position);
+        CreateWorldMatrix();
+        AdjustPoseMatrices();
+        mbIsPosed = true;
+    }
 }
 
 /**
@@ -160,6 +197,52 @@ void Goalie::InitActionPass(bool)
  */
 void Goalie::InitActionPassIntercept()
 {
+    CleanGoalieAction();
+
+    mPrevGoalieActionState = mGoalieActionState;
+    mGoalieActionState = GOALIEACTION_PASS_INTERCEPT;
+    mnSubstate = 0;
+    muBallDeflectCount = g_pBall->m_bBallDeflectCount;
+
+    if (mfWaitTime <= 0.0f)
+    {
+        CleanGoalieAction();
+
+        mPrevGoalieActionState = mGoalieActionState;
+        mGoalieActionState = GOALIEACTION_SAVE;
+        mnSubstate = 0;
+
+        PlayBlendedAnims(mBlendInfo.mfStartTime, -1);
+
+        m_pPhysicsCharacter->m_CanCollideWithBall = 1;
+
+        mnOffplayPending = GOALIE_OFFPLAY_NONE;
+        mbBallImpacted = false;
+
+        Event* pEvent = g_pEventManager->CreateValidEvent(0x13, 0x38);
+        GoalieSaveData* pSaveData = new ((u8*)pEvent + 0x10) GoalieSaveData();
+
+        pSaveData->pGoalie = this;
+        pSaveData->v3BallVelocity = v3Zero;
+        pSaveData->fWowFactor = 0.0f;
+        pSaveData->isSTS = 0;
+
+        pSaveData->saveType = g_pBall->m_uGoalType;
+        pSaveData->pShooter = g_pBall->m_pShooter;
+
+        if (mpSaveData != NULL)
+        {
+            pSaveData->padding = mpSaveData->muSaveType;
+        }
+        else
+        {
+            pSaveData->padding = 3;
+        }
+    }
+    else
+    {
+        mnSubstate = 4;
+    }
 }
 
 /**

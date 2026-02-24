@@ -253,10 +253,10 @@ void nlMakeScaleMatrix(nlMatrix4& m, float sx, float sy, float sz)
 }
 
 /**
- * Helper stub retained to preserve translation unit ordering.
- * Initializes fixed constants used by platform vmath code.
+ * Stub only for field order; unreferenced so the linker drops it.
+ * Forces emission of specific constants/operations so the compiler lays out the related fields to match the original binary.
  */
-void platvmath_ordering_stub(float& sx, float& sy, float& sz)
+void platvmath_stub(float& sx, float& sy, float& sz)
 {
     sy = 1.0f;
     sx = 0.0f;

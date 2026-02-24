@@ -28,11 +28,14 @@ public:
     }
 }; // total size: 0x1C
 
+struct glModel;
+
 class WorldAnimController
 {
 public:
     virtual ~WorldAnimController() { };
     virtual void Update(float) { };
+    virtual glModel* GetUpdatedModel(unsigned long, void*) { return 0; };
 
     void SetAnimation(const char* szAnimationName, ePlayMode playMode);
     void SetAnimationTime(float fTime);

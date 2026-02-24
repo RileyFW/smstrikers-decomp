@@ -388,8 +388,43 @@ void EmitBallWallHit(const char* name)
 /**
  * Offset/Address/Size: 0xE7C | 0x8019FC2C | size: 0x178
  */
-void EmitGoalieCatch(cPlayer*, const char*, bool)
+void EmitGoalieCatch(cPlayer* pPlayer, const char* name, bool bRumble)
 {
+    EmissionController* pController = EmissionManager::Create(fxGetGroup(name), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 1.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.0f;
+    {
+        Function<EmissionController&> update;
+        update.mTag = FREE_FUNCTION;
+        update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+        pController->SetUpdateCallback(update);
+    }
+    pPlayer->AttachEffect(pController);
+    pController->SetPosition(g_pBall->m_v3Position);
+
+    if (bRumble)
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            cTeam* pTeam = g_pTeams[i];
+            if (pTeam != NULL)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    cFielder* pFielder = pTeam->GetFielder(j);
+                    if (pFielder != NULL)
+                    {
+                        BeginRumbleAction(RUMBLE_SHOOT_TO_SCORE, pFielder->GetGlobalPad());
+                    }
+                }
+            }
+        }
+    }
+
+    Event* pEvent = g_pEventManager->CreateValidEvent(0x12, 0x38);
+    GoalieSaveData* pSaveData = new ((u8*)pEvent + 0x10) GoalieSaveData();
+    pSaveData->pGoalie = pPlayer;
 }
 
 /**
@@ -521,8 +556,30 @@ void EmitDust(cPlayer* player, const char* name)
 /**
  * Offset/Address/Size: 0x570 | 0x8019F320 | size: 0x180
  */
-void EmitMushroom(cFielder*)
+void EmitMushroom(cFielder* pFielder)
 {
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("mushroom"), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 0.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.0f;
+    {
+        Function<EmissionController&> update2;
+        {
+            Function<EmissionController&> update;
+            update.mTag = FREE_FUNCTION;
+            update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+            pController->SetUpdateCallback(update);
+        }
+        pFielder->AttachEffect(pController);
+        pController->m_uUserData = GetCharacterIndex(pFielder);
+        update2.mTag = FREE_FUNCTION;
+        update2.mFreeFunction = UpdateEmitterFromCharacter;
+        pController->SetUpdateCallback(update2);
+    }
+    PowerupBase::PlayPowerupSound(POWER_UP_MUSHROOM, PowerupBase::PWRUP_SOUND_ACTIVATE, pFielder->m_pPhysicsCharacter, 1.0f);
+    pFielder->StopSFX(Audio::CHARSFX_PWRUP_MUSH_IN_EFFECT);
+    pFielder->Play3DSFX(Audio::CHARSFX_PWRUP_MUSH_IN_EFFECT, (PosUpdateMethod)1, 1.0f);
+    tDebugPrintManager::Print(DC_SOUND, "***EmitMushroom()***\n");
 }
 
 /**

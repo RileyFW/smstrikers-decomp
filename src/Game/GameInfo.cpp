@@ -611,8 +611,95 @@ bool GameInfoManager::IsUserQualified(GameInfoManager::eGameModes) const
 /**
  * Offset/Address/Size: 0x6794 | 0x8017BE38 | size: 0x174
  */
-void GameInfoManager::SetMode(GameInfoManager::eGameModes)
+void GameInfoManager::SetMode(GameInfoManager::eGameModes mode)
 {
+    mCurrentMode = mode;
+    mCupMatchRequirement = RESULT_INVALID;
+    mIsInStrikers101Mode = false;
+    mDidRoundJustEnd = false;
+    mUserLastResults[mode] = RESULT_INVALID;
+
+    switch (mCurrentMode)
+    {
+    case GM_FRIENDLY:
+        mCurrentCup = &mMushroomCupSeries;
+        mDoingKnockout = false;
+        return;
+
+    case GM_MUSHROOM_CUP:
+        mCurrentCup = &mFlowerCupSeries;
+        mDoingKnockout = false;
+        return;
+
+    case GM_FLOWER_CUP:
+        mCurrentCup = &mStarCupSeries;
+        mDoingKnockout = false;
+        return;
+
+    case GM_STAR_CUP:
+        mCurrentCup = &mBowserCupSeries;
+        mDoingKnockout = false;
+
+        if (mCurrentCup->mRoundNumber == -5 && mBowserCupKnockout.mRoundNumber != -5)
+        {
+            mPreviousCup = mCurrentCup;
+            mCurrentCup = &mBowserCupKnockout;
+            mDoingKnockout = true;
+        }
+
+        return;
+
+    case GM_BOWSER_CUP:
+        mCurrentCup = &mSuperMushroomCupSeries;
+        mDoingKnockout = false;
+        return;
+
+    case GM_SUPER_MUSHROOM_CUP:
+        mCurrentCup = &mSuperFlowerCupSeries;
+        mDoingKnockout = false;
+        return;
+
+    case GM_SUPER_FLOWER_CUP:
+        mCurrentCup = &mSuperStarCupSeries;
+        mDoingKnockout = false;
+        return;
+
+    case GM_SUPER_STAR_CUP:
+        mCurrentCup = &mSuperBowserCupSeries;
+        mDoingKnockout = false;
+
+        if (mCurrentCup->mRoundNumber == -5 && mSuperBowserCupKnockout.mRoundNumber != -5)
+        {
+            mPreviousCup = mCurrentCup;
+            mCurrentCup = &mSuperBowserCupKnockout;
+            mDoingKnockout = true;
+        }
+
+        return;
+
+    case GM_TOURNAMENT:
+        mCurrentCup = mCustomTournamentInfo.m_cup;
+
+        if (mCustomTournamentInfo.m_tournMode == TM_LEAGUE)
+        {
+            mDoingKnockout = false;
+        }
+        else
+        {
+            mDoingKnockout = true;
+        }
+
+        if (!mCurrentCup->mCupStarted)
+        {
+            mCurrentCup->mUserSelectedTeam = TEAM_INVALID;
+        }
+
+        return;
+
+    default:
+        mCurrentCup = NULL;
+        return;
+    }
 }
 
 /**

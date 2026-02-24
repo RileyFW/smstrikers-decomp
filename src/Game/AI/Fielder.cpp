@@ -24,6 +24,22 @@
 #include "NL/nlSlotPool.h"
 #include "math.h"
 
+namespace Audio
+{
+enum eWorldSFX
+{
+    WORLDSFX_DUMMY = 0,
+};
+
+class cWorldSFX : public cGameSFX
+{
+public:
+    void Stop(eWorldSFX, cGameSFX::StopFlag);
+};
+
+extern cWorldSFX gCrowdSFX;
+} // namespace Audio
+
 extern bool g_e3_Build;
 
 const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
@@ -855,7 +871,87 @@ bool cFielder::IsPreparingForOneTimer() const
  */
 void cFielder::CleanUpAction()
 {
-    FORCE_DONT_INLINE;
+    switch (m_eActionState)
+    {
+    case ACTION_DEKE:
+        Audio::gCrowdSFX.Stop((Audio::eWorldSFX)0x9F, cGameSFX::SFX_STOP_FIRST);
+        break;
+
+    case ACTION_ELECTROCUTION:
+        m_pCurrentAnimController->m_fPlaybackSpeedScale = 0.0f;
+        break;
+
+    case ACTION_HIT:
+        m_v3Position.f.z = 0.0f;
+        m_v3Velocity.f.z = 0.0f;
+        break;
+
+    case ACTION_LOOSE_BALL_PASS:
+        m_pPhysicsCharacter->m_CanCollideWithWall = true;
+        SetNoPickUpTime(0.0f);
+        mActionLooseBallPassVars.bVolleyPass = false;
+        break;
+
+    case ACTION_LOOSE_BALL_SHOT:
+        m_pPhysicsCharacter->m_CanCollideWithWall = true;
+        SetNoPickUpTime(0.0f);
+        mActionLooseBallShotVars.bIsChipShot = false;
+        break;
+
+    case ACTION_SHOT:
+        EndBlur();
+        mActionShotVars.bIsChipShot = false;
+        break;
+
+    case ACTION_PASS:
+        mActionPassingVars.pPassTarget = NULL;
+        mActionPassingVars.bVolleyPass = false;
+        break;
+
+    case ACTION_RUNNING:
+        mActionRunningVars.eLastStrafeDirection = STRAFE_IDLE;
+        break;
+
+    case ACTION_RUNNING_WB:
+        m_eLastPadAction = PAD_NONE;
+        break;
+
+    case ACTION_RUNNING_WB_TURBO:
+        m_eLastPadAction = PAD_NONE;
+        if (m_ePowerup != POWER_UP_MUSHROOM)
+        {
+            EndBlur();
+        }
+        break;
+
+    case ACTION_SHOOT_TO_SCORE:
+        CleanActionShootToScore();
+        break;
+
+    case ACTION_LATE_ONETIMER_FROM_VOLLEY:
+        mActionShotVars.bIsChipShot = false;
+        break;
+
+    case ACTION_SLIDE_ATTACK:
+        Audio::gCrowdSFX.Stop((Audio::eWorldSFX)0x9F, cGameSFX::SFX_STOP_FIRST);
+        KillSlideTackleTrail(this);
+        StopSFX(Audio::CHARSFX_SLIDE);
+        break;
+
+    case ACTION_SLIDE_ATTACK_REACT:
+        KillDaze(this);
+        break;
+
+    case ACTION_BOMB_REACT:
+    case ACTION_SHELL_REACT:
+    case ACTION_BANANA_REACT:
+    case ACTION_STS_HIT_REACT:
+    case ACTION_SQUISH_REACT:
+    default:
+        break;
+    }
+
+    m_eActionState = ACTION_NEED_ACTION;
 }
 
 /**
@@ -1716,11 +1812,14 @@ void cFielder::CalcPointOnPerimeter(nlVector3& dest, const nlVector3& fromPoint,
     float fMinDistance = 1.0f + m_pTweaks->fPhysCapsuleRadius;
     nlVector3 v3Position;
 
-    if (fFutureTimeDelta > 0.0f) {
+    if (fFutureTimeDelta > 0.0f)
+    {
         v3Position.f.x = m_v3Position.f.x + fFutureTimeDelta * m_v3Velocity.f.x;
         v3Position.f.y = m_v3Position.f.y + fFutureTimeDelta * m_v3Velocity.f.y;
         v3Position.f.z = m_v3Position.f.z + fFutureTimeDelta * m_v3Velocity.f.z;
-    } else {
+    }
+    else
+    {
         v3Position = m_v3Position;
     }
 
@@ -1770,6 +1869,7 @@ void cFielder::ClearVolleyPass()
  */
 void cFielder::CleanActionShootToScore()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

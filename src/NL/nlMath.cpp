@@ -375,16 +375,16 @@ float nlSin(unsigned short angle)
  */
 float nlRecipSqrt(float x, bool)
 {
-    if (x > 0.0f)
+    float zero = 0.0f;
+    if (x > zero)
     {
-        // Newton-Raphson reciprocal square root
         float y = __frsqrte(x);
-        y = 0.5f * y * (3.0f - x * y * y);
-        y = 0.5f * y * (3.0f - x * y * y);
-        y = 0.5f * y * (3.0f - x * y * y);
+        y = 0.5f * y * (3.0f - y * y * x);
+        y = 0.5f * y * (3.0f - y * y * x);
+        y = 0.5f * y * (3.0f - y * y * x);
         return y;
     }
-    else if (x != 0.0f)
+    else if (x != zero)
     {
         return NAN;
     }

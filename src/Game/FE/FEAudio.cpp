@@ -187,12 +187,24 @@ void FEAudio::BuildAnimAudioEventLookup()
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x8009FB74 | size: 0x84
-//  */
-// void nlStrICmp<char>(const char*, const char*)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x8009FB74 | size: 0x84
+ * TODO: 85.9% match - extra extsb emitted before both nlToUpper<c> calls.
+ */
+template <>
+int nlStrICmp(const char* str1, const char* str2)
+{
+    char c1;
+    char c2;
+
+    do
+    {
+        c1 = nlToUpper<char>(*str1++);
+        c2 = nlToUpper<char>(*str2++);
+    } while ((c1 != 0) && (c2 != 0) && (c1 == c2));
+
+    return c1 - c2;
+}
 
 // /**
 //  * Offset/Address/Size: 0x84 | 0x8009FBF8 | size: 0x40

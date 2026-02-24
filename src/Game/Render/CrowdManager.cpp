@@ -8,6 +8,7 @@
 #include "NL/gc/gcSwizzler.h"
 #include "NL/glx/glxTexture.h"
 #include "NL/nlMath.h"
+#include "NL/nlPrint.h"
 #include "NL/nlString.h"
 
 #include "Game/ReplaySpecializations.h"
@@ -112,9 +113,59 @@ void CrowdBundleLoad_cb(void*, unsigned long, void*)
 }
 /**
  * Offset/Address/Size: 0x5A0 | 0x8016441C | size: 0x16C
+ * TODO: 99.9% match - single remaining diff is fmuls operand order
+ *       (`fmuls f0,f1,f0` target vs `fmuls f0,f0,f1` current) in the
+ *       frameValue multiply after unsigned int-to-float conversion.
  */
-void CrowdManager::SetState(eCrowdState, bool)
+void CrowdManager::SetState(eCrowdState state, bool force)
 {
+    if (state == m_State && !force)
+    {
+        return;
+    }
+
+    m_State = state;
+    const char* szBundle = NULL;
+    m_fTime = 0.0f;
+
+    switch (m_State)
+    {
+    case Crowd_Idle:
+        szBundle = "idle";
+        break;
+    case Crowd_Happy:
+        szBundle = "idle";
+        break;
+    case Crowd_Excited:
+        szBundle = "excited";
+        break;
+    default:
+        break;
+    }
+
+    char szFilename[64];
+    if (m_szStadium[0] == '\0')
+    {
+        nlSNPrintf(szFilename, 64, "crowd/%s", szBundle);
+    }
+    else
+    {
+        nlSNPrintf(szFilename, 64, "crowd/%s/%s", m_szStadium, szBundle);
+    }
+
+    glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
+
+    m_nCurrentFrame = 0;
+    nlStrNCpy(m_szTexture, "idle/idle", 64);
+
+    float frameValue = (float)(u32)m_nCurrentFrame;
+    frameValue = 0.125f * frameValue;
+    nlVector4 frameVector = {};
+    frameVector.f.x = frameValue;
+    frameVector.f.y = frameValue;
+    frameVector.f.z = frameValue;
+    frameVector.f.w = frameValue;
+    glConstantSet("crowd/frame", frameVector);
 }
 
 /**
