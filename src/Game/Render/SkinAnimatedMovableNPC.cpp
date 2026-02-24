@@ -2,14 +2,6 @@
 #include "Game/AI/AiUtil.h"
 #include "Game/SAnim/pnSAnimController.h"
 
-static inline void _unk(float a, float b, float c, double d)
-{
-    a = 0.f;
-    b = 1.f;
-    c = 0.0000958738f;
-    d = 4503599627370496;
-}
-
 /**
  * Offset/Address/Size: 0x3A4 | 0x80165414 | size: 0xA8
  */
@@ -129,4 +121,16 @@ void SkinAnimatedMovableNPC::AnimMoveSeek(float speed, float turnRate, float see
     u16 newDir = SeekDirection(maFacingDirection, maDesiredFacingDirection, turnRate, seekRate, speed);
     AnimTranslate(speed, applyPhysics);
     maFacingDirection = newDir;
+}
+
+/**
+ * Stub only for field order; unreferenced so the linker drops it.
+ * Forces emission of specific constants/operations so the compiler lays out the related fields to match the original binary.
+ */
+void SkinAnimatedMovableNPC_stub(float& a, float& b, float& c, double& d)
+{
+    a = 0.f;
+    b = 1.f;
+    c = 0.0000958738f;
+    d = 4503599627370496;
 }
