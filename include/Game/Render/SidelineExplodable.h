@@ -64,9 +64,10 @@ public:
     SidelineExplodable();
     virtual ~SidelineExplodable();
     virtual ExplodableCategoryData& GetCategoryData() const;
-    virtual void Allocate();
+    void Allocate();
     void Update(float);
     void Initialize(int);
+    virtual void SetUnexplodedModelVisibility(bool isVisible);
     virtual const nlMatrix4& GetWorldMatrix() const;
     void Explode();
     void DestroyAllActiveFragments(bool);

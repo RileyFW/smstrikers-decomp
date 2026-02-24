@@ -353,13 +353,73 @@ void GoalieSave::AddAreaToGrid(SaveData*)
  */
 void GoalieSave::AddSegmentToGrid(SaveData*, SaveData*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x20C | 0x8005362C | size: 0x184
  */
-void GoalieSave::AddChainToGrid(SaveData*, bool)
+void GoalieSave::AddChainToGrid(SaveData* pSaveData, bool bVertical)
 {
+    SaveData* pEnd;
+    int dir;
+    int oppdir;
+
+    if (bVertical)
+    {
+        dir = 0;
+        oppdir = 1;
+    }
+    else
+    {
+        dir = 2;
+        oppdir = 3;
+    }
+
+    SaveData* p = pSaveData;
+    while (p != NULL)
+    {
+        pEnd = p;
+        p = p->mpConnectedSaveData[oppdir];
+    }
+
+    pSaveData->mv3GroupMaxCoords = pSaveData->mv3SavePos;
+    pSaveData->mv3GroupMinCoords = pSaveData->mv3SavePos;
+
+    SaveData* pCur = pEnd;
+    SaveData* pLast;
+
+    while (pCur != NULL)
+    {
+        if (pCur->mv3SavePos.f.x > pSaveData->mv3GroupMaxCoords.f.x)
+            pSaveData->mv3GroupMaxCoords.f.x = pCur->mv3SavePos.f.x;
+        if (pCur->mv3SavePos.f.y > pSaveData->mv3GroupMaxCoords.f.y)
+            pSaveData->mv3GroupMaxCoords.f.y = pCur->mv3SavePos.f.y;
+        if (pCur->mv3SavePos.f.z > pSaveData->mv3GroupMaxCoords.f.z)
+            pSaveData->mv3GroupMaxCoords.f.z = pCur->mv3SavePos.f.z;
+
+        if (pCur->mv3SavePos.f.x < pSaveData->mv3GroupMinCoords.f.x)
+            pSaveData->mv3GroupMinCoords.f.x = pCur->mv3SavePos.f.x;
+        if (pCur->mv3SavePos.f.y < pSaveData->mv3GroupMinCoords.f.y)
+            pSaveData->mv3GroupMinCoords.f.y = pCur->mv3SavePos.f.y;
+        if (pCur->mv3SavePos.f.z < pSaveData->mv3GroupMinCoords.f.z)
+            pSaveData->mv3GroupMinCoords.f.z = pCur->mv3SavePos.f.z;
+
+        pLast = pCur;
+        SaveData* next = pCur->mpConnectedSaveData[dir];
+        pCur = next;
+        if (next != NULL)
+        {
+            AddSegmentToGrid(pLast, next);
+        }
+    }
+
+    while (pLast != NULL)
+    {
+        pLast->mv3GroupMaxCoords = pSaveData->mv3GroupMaxCoords;
+        pLast->mv3GroupMinCoords = pSaveData->mv3GroupMinCoords;
+        pLast = pLast->mpConnectedSaveData[oppdir];
+    }
 }
 
 /**

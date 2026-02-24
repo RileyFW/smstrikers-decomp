@@ -23,32 +23,31 @@ float RandomChance(float fChance)
     return FGREATER(fChance, GetRandomFloat());
 }
 
+static inline float sub_f(float a, float b)
+{
+    return a - b;
+}
+
 /**
  * Offset/Address/Size: 0x7C | 0x8003C32C | size: 0x7C
  */
 float FGREATER(float f1, float f2)
 {
-    float diff = f1 - f2;
-    float result = 0.0f;
-    if (diff > 0.0f)
+    float fDelta = sub_f(f1, f2);
+    float fScore = 0.0f;
+
+    if (fDelta > 0.0f)
     {
-        float scale = 1.0f - f1;
-        scale = (scale >= f2) ? f2 : scale;
-        scale = (scale <= 0.5f) ? scale : 0.5f;
+        f2 = sub_f(1.0f, f2);
+        f2 = (f2 >= f1) ? f2 : f1;
+        f2 = (f2 <= 0.5f) ? f2 : 0.5f;
 
-        result = diff / scale;
-        result = (result >= 0.0f) ? 0.0f : result;
-        if (result <= 1.0f)
-        {
-            result = 1.0f;
-        }
+        f1 = fDelta / f2;
+        f1 = (f1 >= 0.0f) ? f1 : 0.0f;
+        fScore = (f1 <= 1.0f) ? f1 : 1.0f;
     }
-    return result;
-}
 
-static inline float sub_f(float a, float b)
-{
-    return a - b;
+    return fScore;
 }
 
 /**

@@ -89,30 +89,16 @@ CharT nlToUpper(CharT c)
 template <typename CharT>
 int nlStrICmp(const CharT* str1, const CharT* str2)
 {
-    s8 temp_r31;
-    s8 temp_r3;
-    CharT* var_r29;
-    CharT* var_r30;
-    u8 temp_r3_2;
-    u8 temp_r3_3;
+    CharT c1;
+    CharT c2;
 
-    var_r30 = (CharT*)str1;
-    var_r29 = (CharT*)str2;
-loop_1:
-    temp_r3_2 = *var_r29;
-    var_r29 += 1;
-    temp_r31 = nlToUpper<CharT>(temp_r3_2);
-    temp_r3_3 = *var_r30;
-    var_r30 += 1;
-    temp_r3 = nlToUpper<CharT>(temp_r3_3);
-    if ((temp_r31 != 0) && (temp_r3 != 0))
+    do
     {
-        if (temp_r31 == temp_r3)
-        {
-            goto loop_1;
-        }
-    }
-    return temp_r31 - temp_r3;
+        c1 = nlToUpper<CharT>(*str1++);
+        c2 = nlToUpper<CharT>(*str2++);
+    } while (c1 != 0 && c2 != 0 && c1 == c2);
+
+    return c1 - c2;
 }
 
 /**
@@ -202,7 +188,8 @@ CharT* nlStrNCpy(CharT* str1, const CharT* str2, unsigned long len)
  * CharT* nlStrNCat<char>(char*, const char*, const char*, unsigned long)
  */
 template <typename CharT>
-CharT* nlStrNCat(CharT* dest, const CharT* a, const CharT* b, unsigned long maxsize) {
+CharT* nlStrNCat(CharT* dest, const CharT* a, const CharT* b, unsigned long maxsize)
+{
     CharT* p;
     unsigned long n = 0;
 
@@ -210,7 +197,8 @@ CharT* nlStrNCat(CharT* dest, const CharT* a, const CharT* b, unsigned long maxs
 body1:
     *p++ = *a++;
     n++;
-    if (n >= maxsize) {
+    if (n >= maxsize)
+    {
         dest[maxsize - 1] = (CharT)0;
         return dest;
     }
@@ -218,13 +206,15 @@ body1:
 entry1:
     p = dest;
 test1:
-    if (*a) goto body1;
+    if (*a)
+        goto body1;
 
     goto entry2;
 body2:
     *p++ = *b++;
     n++;
-    if (n >= maxsize) {
+    if (n >= maxsize)
+    {
         dest[maxsize - 1] = (CharT)0;
         return dest;
     }
@@ -232,7 +222,8 @@ body2:
 entry2:
     p = &dest[n];
 test2:
-    if (*b) goto body2;
+    if (*b)
+        goto body2;
 
     dest[n] = (CharT)0;
     return dest;

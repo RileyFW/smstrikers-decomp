@@ -613,9 +613,10 @@ void Shutdown()
 {
     sndQuit();
 
+    u32 length;
     for (int i = 0; i < 2; i++)
     {
-        ARFree(stack_list[i].unk0);
+        ARFree(&length);
         delete stack_list[i].unk0;
         stack_list[i].unk0 = NULL;
     }

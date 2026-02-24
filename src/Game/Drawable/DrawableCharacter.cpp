@@ -14,6 +14,25 @@ bool DrawableCharacter::sbRenderOpposingGoalieToo = false;
 template <>
 void DrawableCharacter::Replay<SaveFrame>(SaveFrame& frame)
 {
+    Replayable<1>(frame, (unsigned char&)mDirt);
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mPosition.f.x));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mPosition.f.y));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mPosition.f.z));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mBip01Position.f.x));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mBip01Position.f.y));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mBip01Position.f.z));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mHeadPosition.f.x));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mHeadPosition.f.y));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mHeadPosition.f.z));
+    Replayable<1>(frame, FloatCompressor<-512, 512, 8>(mVelocity.f.x));
+    Replayable<1>(frame, FloatCompressor<-512, 512, 8>(mVelocity.f.y));
+    Replayable<1>(frame, FloatCompressor<-512, 512, 8>(mVelocity.f.z));
+    Replayable<1>(frame, mVisible);
+    Replayable<1>(frame, mFacingDirection);
+    Replayable<1>(frame, mHeadSpin);
+    Replayable<1>(frame, mHeadTilt);
+    Replayable<1>(frame, (unsigned long&)mEffectsTexturing);
+    ReplayablePolymorphic<1>(frame, mPoseTree);
 }
 
 /**
@@ -75,8 +94,39 @@ cPN_SAnimController& DrawableCharacter::GetAnimController() const
 /**
  * Offset/Address/Size: 0x2A1C | 0x8011B8CC | size: 0x17C
  */
-void DrawableCharacter::Grab(cCharacter&)
+void DrawableCharacter::Grab(cCharacter& character)
 {
+    mCharacter = &character;
+    mBowser = NULL;
+    mPosition = character.m_v3Position;
+    mBip01Position = character.GetJointPosition(character.m_nBip01JointIndex_0xA4);
+    mHeadPosition = character.GetJointPosition(character.m_nHeadJointIndex);
+    mHeight = mBip01Position.f.z;
+    mVelocity = character.m_v3Velocity;
+    mFacingDirection = character.m_aActualFacingDirection;
+    mHeadSpin = (unsigned short)character.m_pHeadTrack->m_fHeadSpin;
+    mHeadTilt = (unsigned short)character.m_pHeadTrack->m_fHeadTilt;
+    mPoseTree = character.m_pPoseTree;
+    mVisible = true;
+    mDirt = (unsigned char)(255.0f * character.m_Dirt);
+
+    if (mPoseAccumulator == NULL)
+    {
+        cPoseAccumulator* p = (cPoseAccumulator*)nlMalloc(sizeof(cPoseAccumulator), 8, false);
+        p = new (p) cPoseAccumulator(*character.m_pPoseAccumulator);
+        mPoseAccumulator = p;
+    }
+    else
+    {
+        *mPoseAccumulator = *character.m_pPoseAccumulator;
+    }
+
+    EffectsTexturing* tex = character.m_pEffectsTexturing;
+    if (tex == NULL)
+    {
+        tex = fxGetTexturing(eFXTex_Nothing);
+    }
+    mEffectsTexturing = tex;
 }
 
 /**

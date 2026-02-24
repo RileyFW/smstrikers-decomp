@@ -65,7 +65,7 @@ nlColour gxSetChanAmbColour(int chan, const nlColour& color)
 
 /**
  * Offset/Address/Size: 0x9C | 0x801C1584 | size: 0x54
- * TODO: 98% match. Register swap r5/r6 and stack offset swap 0x8/0xc.
+ * TODO: 99.38% match. Stack offset swap 0x8/0xc around GXSetChanMatColor arg copy.
  */
 nlColour gxSetChanMatColour(int chan, const nlColour& color)
 {
@@ -74,8 +74,8 @@ nlColour gxSetChanMatColour(int chan, const nlColour& color)
     nlColour temp;
     if (prev != color)
     {
-        temp = color;
         *(volatile u32*)pMat = *(volatile u32*)&color;
+        temp = color;
         GXSetChanMatColor((GXChannelID)chan, *(GXColor*)&temp);
     }
     return prev;

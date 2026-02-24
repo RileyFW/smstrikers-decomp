@@ -1,5 +1,7 @@
 #include "Game/SH/SHMilestoneTrophy.h"
 
+#include "Game/FE/feFinder.h"
+
 // /**
 //  * Offset/Address/Size: 0x1058 | 0x800D0DD8 | size: 0x118
 //  */
@@ -179,4 +181,97 @@ void MilestoneTrophyScene::CreateTrophyScene(eTrophyType trophy, ButtonComponent
  */
 void MilestoneTrophyScene::ChangeSlides()
 {
+    typedef TLComponentInstance* (*FindCompByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindCompByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    FEPresentation* pres = m_pFEPresentation;
+    f32 starTime;
+
+    volatile unsigned long hB, hA;
+    volatile unsigned long h9, h8;
+    volatile unsigned long h7, h6, h5, h4, h3, h2, h1, h0;
+
+    if (mFirstSlideChange)
+    {
+        union
+        {
+            FindCompByValue byValue;
+            FindCompByRef byRef;
+        } findComp;
+
+        h0 = 0;
+        h1 = 0;
+        h2 = 0;
+        h3 = 0;
+        h4 = 0;
+        h5 = 0;
+        h6 = 0;
+        h7 = 0;
+
+        unsigned long hash = nlStringLowerHash("star rotation");
+        h8 = hash;
+        h9 = hash;
+
+        hash = nlStringLowerHash("Layer");
+        hB = hash;
+        hA = hash;
+
+        findComp.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+        TLSlide* slide = pres->m_currentSlide;
+        TLComponentInstance* starComp = findComp.byRef(
+            slide,
+            (InlineHasher&)hB,
+            (InlineHasher&)h9,
+            (InlineHasher&)h7,
+            (InlineHasher&)h5,
+            (InlineHasher&)h3,
+            (InlineHasher&)h1);
+        starTime = starComp->GetActiveSlide()->m_time;
+    }
+
+    pres->SetActiveSlide("CHANGE");
+    pres->Update(0.0f);
+
+    if (mFirstSlideChange)
+    {
+        union
+        {
+            FindCompByValue byValue;
+            FindCompByRef byRef;
+        } findComp;
+        volatile unsigned long g7, g6;
+        volatile unsigned long g5, g4, g3, g2, g1, g0;
+
+        g0 = 0;
+        h1 = 0;
+        g1 = 0;
+        h3 = 0;
+        g2 = 0;
+        h5 = 0;
+        g3 = 0;
+        h7 = 0;
+
+        unsigned long hash = nlStringLowerHash("star rotation");
+        g4 = hash;
+        g5 = hash;
+
+        hash = nlStringLowerHash("Layer");
+        g7 = hash;
+        g6 = hash;
+
+        findComp.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+        TLSlide* slide = pres->m_currentSlide;
+        TLComponentInstance* starComp = findComp.byRef(
+            slide,
+            (InlineHasher&)g7,
+            (InlineHasher&)g5,
+            (InlineHasher&)h7,
+            (InlineHasher&)h5,
+            (InlineHasher&)h3,
+            (InlineHasher&)h1);
+        starComp->Update(starTime);
+        mFirstSlideChange = false;
+    }
+
+    SceneCreated();
 }

@@ -236,19 +236,25 @@ void Goalie::RunWeightCB(unsigned int nParam, cPN_SingleAxisBlender* blender)
 
     s16 diff = (s16)(pGoalie->m_aDesiredFacingDirection - pGoalie->m_aActualFacingDirection);
 
-    s16 minClampedDiff = -0x31C4;
-    if (diff >= -0x31C4)
+    s16 minClampedDiff;
+    if (diff < -0x31C4)
+    {
+        minClampedDiff = -0x31C4;
+    }
+    else
     {
         minClampedDiff = diff;
     }
 
-    s16 clampedDiff = 0x31C4;
-    if (minClampedDiff <= 0x31C4)
+    s16 clampedDiff;
+    if (minClampedDiff > 0x31C4)
+    {
+        clampedDiff = 0x31C4;
+    }
+    else
     {
         clampedDiff = minClampedDiff;
     }
-
-    // s16 clampedDiff = ClampMax(ClampMin(diff, -0x31C4), 0x31C4);
 
     blender->m_fDesiredWeight = (float)(clampedDiff + 0x31C4) / 25480.0f;
 }

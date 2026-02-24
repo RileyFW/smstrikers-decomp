@@ -189,19 +189,22 @@ void FEAudio::BuildAnimAudioEventLookup()
 
 /**
  * Offset/Address/Size: 0x0 | 0x8009FB74 | size: 0x84
- * TODO: 85.9% match - extra extsb emitted before both nlToUpper<c> calls.
+ * TODO: 87.7% match - MWCC emits extsb r3,r0 before each bl nlToUpper<c>__Fc
+ * (sign-extending char arg), but target loads directly into r3 with lbz.
+ * Also minor scheduling diff with -O4,p (lbz for 2nd str moved before mr r31).
+ * Compiler char sign-extension ABI quirk - not fixable with code changes.
  */
 template <>
-int nlStrICmp(const char* str1, const char* str2)
+int nlStrICmp(const char* a, const char* b)
 {
     char c1;
     char c2;
 
     do
     {
-        c1 = nlToUpper<char>(*str1++);
-        c2 = nlToUpper<char>(*str2++);
-    } while ((c1 != 0) && (c2 != 0) && (c1 == c2));
+        c1 = nlToUpper<char>(*a++);
+        c2 = nlToUpper<char>(*b++);
+    } while (c1 != 0 && c2 != 0 && c1 == c2);
 
     return c1 - c2;
 }

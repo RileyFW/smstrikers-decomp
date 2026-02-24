@@ -340,18 +340,18 @@ void SidelineExplodableManager::GetVisibilityOfExplodableModels(bool* visibility
  */
 void SidelineExplodableManager::SetVisibilityOfUnexplodedModels(bool* visibility, int numExplodables)
 {
+    bool* visibilityPtr = visibility;
     SidelineExplodableNode* node = sSidelineExplodableList.m_pStart;
-    int i = 0;
 
     while (node != NULL)
     {
-        node->mpExplodable->DestroyAllActiveFragments(visibility[i]);
+        node->mpExplodable->SetUnexplodedModelVisibility(*visibilityPtr);
         if (node->mpExplodable->mpAssociatedEffect != NULL)
         {
-            node->mpExplodable->mpAssociatedEffect->m_bDisabled = !visibility[i];
+            node->mpExplodable->mpAssociatedEffect->m_bDisabled = !*visibilityPtr;
         }
-        i++;
         node = node->next;
+        visibilityPtr++;
     }
 }
 
@@ -460,9 +460,64 @@ bool SidelineExplosionPhysicsObject::SetContactInfo(dContact* contact, PhysicsOb
 
 /**
  * Offset/Address/Size: 0x1D4 | 0x80167534 | size: 0x164
+ * TODO: 99.55% match - floating-point register allocation mismatch (f3/f4/f5)
+ * in angular velocity normalization/scaling around nlVec3Scale.
  */
 void SidelineExplosionPhysicsObject::PostUpdate()
 {
+    nlVector3 angularVelocity;
+    GetAngularVelocity(&angularVelocity);
+
+    float lenSq = angularVelocity.f.x * angularVelocity.f.x + angularVelocity.f.y * angularVelocity.f.y + angularVelocity.f.z * angularVelocity.f.z;
+    if (lenSq > 100.0f)
+    {
+        float recip = nlRecipSqrt(lenSq, true);
+
+        angularVelocity.f.z = recip * angularVelocity.f.z;
+        angularVelocity.f.y = recip * angularVelocity.f.y;
+        angularVelocity.f.x = recip * angularVelocity.f.x;
+
+        nlVec3Scale(angularVelocity, angularVelocity, 10.0f);
+        SetAngularVelocity(angularVelocity);
+    }
+
+    nlVector3 position = GetPosition();
+    bool changed = false;
+
+    if (position.f.x > 100.0f)
+    {
+        position.f.x = 100.0f;
+        changed = true;
+    }
+
+    if (position.f.x < -100.0f)
+    {
+        position.f.x = -100.0f;
+        changed = true;
+    }
+
+    if (position.f.y > 100.0f)
+    {
+        position.f.y = 100.0f;
+        changed = true;
+    }
+
+    if (position.f.y < -100.0f)
+    {
+        position.f.y = -100.0f;
+        changed = true;
+    }
+
+    if (position.f.z > 100.0f)
+    {
+        position.f.z = 100.0f;
+        changed = true;
+    }
+
+    if (changed)
+    {
+        SetPosition(position, WORLD_COORDINATES);
+    }
 }
 
 /**

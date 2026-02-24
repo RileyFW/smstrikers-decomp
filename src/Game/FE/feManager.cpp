@@ -6,6 +6,8 @@
 #include "Game/Game.h"
 #include "Game/GameInfo.h"
 #include "Game/OverlayManager.h"
+#include "Game/RumbleActions.h"
+#include "Game/SH/SHPause.h"
 #include "Game/Sys/eventman.h"
 #include "NL/glx/glxSwap.h"
 #include "NL/nlTask.h"
@@ -65,12 +67,67 @@ void FrontEnd::ExitMenuState()
 /**
  * Offset/Address/Size: 0x5B0 | 0x80095234 | size: 0x188
  */
-void FrontEnd::EnterMenuState(FrontEnd::MenuEnterType)
+void FrontEnd::EnterMenuState(FrontEnd::MenuEnterType menuType)
 {
+    int i;
+    cGlobalPad* globalPad;
+    nlTaskManager* taskManager;
+
+    m_bInPauseMenuState = true;
+    m_menuType = menuType;
+    m_feStatePrevious = m_feStateCurrent;
+    taskManager = nlTaskManager::m_pInstance;
+    if (taskManager->m_CurrState != taskManager->m_PendingState)
+    {
+        m_lastTaskState = taskManager->m_PendingState;
+    }
+    else
+    {
+        m_lastTaskState = taskManager->m_CurrState;
+    }
+    for (i = 0; i < 4; i++)
+    {
+        globalPad = g_pFEInput->GetGlobalPad((eFEINPUT_PAD)i);
+        if (globalPad != NULL)
+        {
+            StopRumbleAction(globalPad);
+        }
+    }
+    nlTaskManager::SetNextState(1);
+    if (nlSingleton<OverlayManager>::s_pInstance->IsOnStack(SCENE_SUPER_LOADING))
+    {
+        nlSingleton<OverlayManager>::s_pInstance->Pop();
+        nlSingleton<FESceneManager>::s_pInstance->ForceImmediateStackProcessing();
+    }
+    switch (m_menuType)
+    {
+    case MET_PAUSE:
+        if (nlSingleton<GameInfoManager>::s_pInstance->mIsInStrikers101Mode)
+        {
+            nlSingleton<OverlayManager>::s_pInstance->Push(IGSCENE_STRIKERS_101_PAUSE, SCREEN_NOTHING, false);
+        }
+        else
+        {
+            nlSingleton<OverlayManager>::s_pInstance->Push(IGSCENE_PAUSE, SCREEN_NOTHING, false);
+        }
+        PauseMenuScene::mControllingInput = FE_ALL_PADS;
+        break;
+    case MET_CHOOSESIDES:
+        nlSingleton<OverlayManager>::s_pInstance->Push(IGSCENE_CHOOSE_SIDES, SCREEN_NOTHING, false);
+        PauseMenuScene::mControllingInput = FE_ALL_PADS;
+        break;
+    case MET_END:
+    default:
+        break;
+    }
+    m_feStatePending = FE_ALL_PADS;
+    g_pEventManager->CreateValidEvent(0, 0x14);
+    g_pFEInput->EnableAnalogToDPadMapping(FE_ALL_PADS, true);
 }
 
 // Helper class to work around MWCC codegen for virtual destructor calls
-class CameraDeleter {
+class CameraDeleter
+{
 public:
     virtual void DestroyWith(int);
 };
@@ -83,7 +140,8 @@ void FrontEnd::ExitWinnerScreen()
     CameraDeleter* cam;
     cCameraManager::PopCameraWithTransition(1.0f, eCT_EASE_IN, 0);
     cam = (CameraDeleter*)m_pPauseMenuCamera;
-    if (cam) {
+    if (cam)
+    {
         cam->DestroyWith(1);
     }
     m_pPauseMenuCamera = 0;
@@ -99,7 +157,8 @@ void FrontEnd::ExitWinnerScreen()
 void FrontEnd::EnterStartScreen(bool)
 {
     bool isInStrikers101 = false;
-    if (GameInfoManager::s_pInstance->mIsInStrikers101Mode) {
+    if (GameInfoManager::s_pInstance->mIsInStrikers101Mode)
+    {
         isInStrikers101 = true;
     }
     g_pGame->BeginGame(false, isInStrikers101);
@@ -152,22 +211,22 @@ void FrontEnd::FEEventHandler(Event* pEvent, void* pParam)
 {
     switch (pEvent->m_uEventID)
     {
-        case 3:
-            m_bGameOver = true;
-            m_feStatePending = 5;
-            break;
-        case 9:
-            m_feStatePending = 3;
-            break;
-        case 0x1C:
-            if (nlSingleton<OverlayManager>::s_pInstance != NULL)
+    case 3:
+        m_bGameOver = true;
+        m_feStatePending = 5;
+        break;
+    case 9:
+        m_feStatePending = 3;
+        break;
+    case 0x1C:
+        if (nlSingleton<OverlayManager>::s_pInstance != NULL)
+        {
+            if (nlSingleton<OverlayManager>::s_pInstance->IsOnStack(SCENE_SUPER_LOADING))
             {
-                if (nlSingleton<OverlayManager>::s_pInstance->IsOnStack(SCENE_SUPER_LOADING))
-                {
-                    nlSingleton<OverlayManager>::s_pInstance->Pop();
-                    nlSingleton<FESceneManager>::s_pInstance->ForceImmediateStackProcessing();
-                }
+                nlSingleton<OverlayManager>::s_pInstance->Pop();
+                nlSingleton<FESceneManager>::s_pInstance->ForceImmediateStackProcessing();
             }
-            break;
+        }
+        break;
     }
 }

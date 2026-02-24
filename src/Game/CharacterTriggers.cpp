@@ -307,8 +307,30 @@ void EmitFreeze(cPlayer*)
 /**
  * Offset/Address/Size: 0x1420 | 0x801A01D0 | size: 0x178
  */
-void EmitUnFreeze(cPlayer*)
+void EmitUnFreeze(cPlayer* pCharacter)
 {
+    pCharacter->Play3DSFX((Audio::eCharSFX)0x20, (PosUpdateMethod)2, 1.0f);
+    pCharacter->KillEffect(fxGetGroup("freeze"));
+    pCharacter->m_pEffectsTexturing = NULL;
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("unfreeze_explosion"), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 1.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.0f;
+    {
+        Function<EmissionController&> update2;
+        {
+            Function<EmissionController&> update;
+            update.mTag = FREE_FUNCTION;
+            update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+            pController->SetUpdateCallback(update);
+        }
+        pCharacter->AttachEffect(pController);
+        pController->m_uUserData = GetCharacterIndex(pCharacter);
+        update2.mTag = FREE_FUNCTION;
+        update2.mFreeFunction = UpdateEmitterFromCharacter;
+        pController->SetUpdateCallback(update2);
+    }
+    BeginRumbleAction((eRumbleActionPreset)1, pCharacter->GetGlobalPad());
 }
 
 static s32 sNumUpdatesBetweenElectrocutionToggles;
@@ -596,8 +618,31 @@ void KillMushroom(cFielder* pFielder)
 /**
  * Offset/Address/Size: 0x388 | 0x8019F138 | size: 0x188
  */
-void EmitStar(cFielder*)
+void EmitStar(cFielder* pFielder)
 {
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("star"), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 0.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.0f;
+    {
+        Function<EmissionController&> update2;
+        {
+            Function<EmissionController&> update;
+            update.mTag = FREE_FUNCTION;
+            update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+            pController->SetUpdateCallback(update);
+        }
+        pFielder->AttachEffect(pController);
+        pController->m_uUserData = GetCharacterIndex(pFielder);
+        update2.mTag = FREE_FUNCTION;
+        update2.mFreeFunction = UpdateEmitterFromCharacter;
+        pController->SetUpdateCallback(update2);
+    }
+    PowerupBase::PlayPowerupSound(POWER_UP_STAR, PowerupBase::PWRUP_SOUND_ACTIVATE, pFielder->m_pPhysicsCharacter, 1.0f);
+    pFielder->StopSFX(Audio::CHARSFX_PWRUP_STAR_IN_EFFECT);
+    pFielder->Play3DSFX(Audio::CHARSFX_PWRUP_STAR_IN_EFFECT, (PosUpdateMethod)1, 1.0f);
+    pFielder->m_pEffectsTexturing = fxGetTexturing(eFXTex_Star);
+    tDebugPrintManager::Print(DC_SOUND, "***EmitStar()***\n");
 }
 
 /**

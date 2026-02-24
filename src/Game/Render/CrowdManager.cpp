@@ -79,8 +79,55 @@ u32 CrowdManager::GetTextureHandle(unsigned long) const
 /**
  * Offset/Address/Size: 0x79C | 0x80164618 | size: 0x17C
  */
-void CrowdManager::Replay(LoadFrame&)
+void CrowdManager::Replay(LoadFrame& frame)
 {
+    int replayState = 0;
+    Replayable<1, LoadFrame, int>(frame, replayState);
+
+    if (replayState != (int)m_State)
+    {
+        m_State = (eCrowdState)replayState;
+        const char* szBundle = NULL;
+        m_fTime = 0.0f;
+
+        switch (m_State)
+        {
+        case Crowd_Idle:
+            szBundle = "idle";
+            break;
+        case Crowd_Happy:
+            szBundle = "idle";
+            break;
+        case Crowd_Excited:
+            szBundle = "excited";
+            break;
+        default:
+            break;
+        }
+
+        char szFilename[64];
+        if (m_szStadium[0] == '\0')
+        {
+            nlSNPrintf(szFilename, 64, "crowd/%s", szBundle);
+        }
+        else
+        {
+            nlSNPrintf(szFilename, 64, "crowd/%s/%s", m_szStadium, szBundle);
+        }
+
+        glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
+
+        m_nCurrentFrame = 0;
+        nlStrNCpy(m_szTexture, "idle/idle", 64);
+
+        float frameValue = (float)(u32)m_nCurrentFrame / 8.0f;
+        nlVector4 frameVector = {};
+        frameVector.f.x = frameValue;
+        frameVector.f.y = frameValue;
+        frameVector.f.z = frameValue;
+        frameVector.f.w = frameValue;
+        glConstantSet("crowd/frame", frameVector);
+    }
 }
 
 /**

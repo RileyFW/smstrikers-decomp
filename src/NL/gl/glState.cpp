@@ -1,6 +1,7 @@
 #include "NL/gl/gl.h"
 
 #include "NL/gl/glState.h"
+#include "NL/gl/glMatrix.h"
 #include "NL/nlMemory.h"
 
 typedef struct PackedTextureInfo
@@ -23,9 +24,87 @@ static gl_StateBitfield packed_raster[GLS_Num];
 
 /**
  * Offset/Address/Size: 0x0 | 0x801DBC44 | size: 0x184
+ * TODO: 99.43% match - remaining register allocation differences in the final
+ * _bundle setup block (r4/r5/r6 around bundle base, invalid, and 0xF0 mask).
  */
-void glSetDefaultState(bool)
+void glSetDefaultState(bool setRasterDefaults)
 {
+    _state.m_State = defaultRasterState;
+    _textureState.m_State = defaultTextureState;
+
+    if (setRasterDefaults)
+    {
+        s32 startBit = packed_raster[0].startBit;
+        s32 numBits = packed_raster[0].numBits;
+        s32 i;
+
+        for (i = numBits; i > 0; i--)
+        {
+        }
+
+        for (i = 0; i < numBits; i++)
+        {
+            if ((1u << i) & 1u)
+            {
+                _state.m_State = _state.m_State | (1u << startBit);
+            }
+            else
+            {
+                _state.m_State = _state.m_State & ~(1u << startBit);
+            }
+            startBit++;
+        }
+
+        {
+            s32 startBit2 = packed_raster[1].startBit;
+            s32 numBits2 = packed_raster[1].numBits;
+
+            for (i = numBits2; i > 0; i--)
+            {
+            }
+
+            for (i = 0; i < numBits2; i++)
+            {
+                if ((1u << i) & 1u)
+                {
+                    _state.m_State = _state.m_State | (1u << startBit2);
+                }
+                else
+                {
+                    _state.m_State = _state.m_State & ~(1u << startBit2);
+                }
+                startBit2++;
+            }
+        }
+    }
+
+    _bundle.raster = _state.m_State;
+    _bundle.texturestate = _textureState.m_State;
+    _bundle.program = (u32)-1;
+    _bundle.matrix = glGetIdentityMatrix();
+
+    {
+        volatile glStateBundle* p = &_bundle;
+        u32 invalid = (u32)-1;
+        u8 texconfig = p->texconfig;
+        u8 mF8 = texconfig & 0xF8;
+        u8 mF0 = texconfig & 0xF0;
+
+        p->texconfig = texconfig & 0xFE;
+        p->texconfig = texconfig & 0xFC;
+        p->texconfig = mF8;
+        p->texconfig = mF0;
+        p->texconfig = (u8)(mF0 & 0xE0);
+
+        p->texture[0] = invalid;
+        p->texture[1] = invalid;
+        p->texture[2] = invalid;
+        p->texture[3] = invalid;
+        p->texture[4] = invalid;
+
+        p->texconfig = (u8)(mF0 & 0xC0);
+        p->texture[5] = invalid;
+    }
 }
 
 /**

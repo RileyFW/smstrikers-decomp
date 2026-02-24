@@ -143,6 +143,22 @@ void Replayable<3, LoadFrame, nlQuaternion>(LoadFrame& frame, nlQuaternion& valu
 template <>
 void Replayable<3, SaveFrame, nlQuaternion>(SaveFrame& frame, nlQuaternion& value);
 
+template <>
+void Replayable<1, SaveFrame, unsigned char>(SaveFrame& frame, unsigned char& value);
+template <>
+void Replayable<1, LoadFrame, unsigned char>(LoadFrame& frame, unsigned char& value);
+template <>
+void Replayable<1, SaveFrame, unsigned short>(SaveFrame& frame, unsigned short& value);
+template <>
+void Replayable<1, LoadFrame, unsigned short>(LoadFrame& frame, unsigned short& value);
+template <>
+void Replayable<1, SaveFrame, unsigned long>(SaveFrame& frame, unsigned long& value);
+template <>
+void Replayable<1, LoadFrame, unsigned long>(LoadFrame& frame, unsigned long& value);
+
+template <int N, typename FrameType, typename T>
+void ReplayablePolymorphic(FrameType& frame, T*& ptr);
+
 template <int N, typename FrameType, typename T>
 void Replayable(FrameType& frame, T& drawable)
 {

@@ -65,7 +65,7 @@ struct TransAccum
 class cPoseAccumulator
 {
 public:
-    cPoseAccumulator(const cPoseAccumulator&) { };
+    cPoseAccumulator(const cPoseAccumulator&);
     cPoseAccumulator(cSHierarchy* hierarchy, bool withSecondary);
     void Pose(const cPoseNode&, const nlMatrix4&);
     void InitAccumulators();
@@ -83,7 +83,7 @@ public:
     void MultNodeMatrices(const nlMatrix4*);
     void SetBuildNodeMatrixCallback(int, BuildNodeMatrixFn, unsigned int, unsigned int);
 
-    void operator=(const cPoseAccumulator&) { return; };
+    void operator=(const cPoseAccumulator&);
 
     /* 0x00 */ cSHierarchy* m_BaseSHierarchy;
     /* 0x04 */ Vector<nlMatrix4, DefaultAllocator> m_NodeMatrices;
