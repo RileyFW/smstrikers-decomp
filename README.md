@@ -13,7 +13,7 @@ See https://decomp.dev/api for an API overview.
 -->
 [Code Progress]: https://decomp.dev/yannicksuter/smstrikers-decomp.svg?mode=shield&measure=code&label=Code
 [Data Progress]: https://decomp.dev/yannicksuter/smstrikers-decomp.svg?mode=shield&measure=data&label=Data
-[Link Progress]: https://decomp.dev/yannicksuter/smstrikers-decomp.svg?mode=shield&measure=complete_code_percent&label=complete_code_percent
+[Link Progress]: https://decomp.dev/yannicksuter/smstrikers-decomp.svg?mode=shield&measure=complete_code_percent&label=Linked
 [progress]: https://decomp.dev/yannicksuter/smstrikers-decomp
 <!--
 Replace with your Discord server's ID and invite URL.
