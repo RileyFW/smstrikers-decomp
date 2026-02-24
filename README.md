@@ -36,6 +36,11 @@ Decompilation is the process of reverse-engineering compiled machine code back i
 
 For interesting discoveries and insights found during the decompilation process, check out [Fun Facts](FunFacts.md).
 
+Progress
+========
+
+![progress overview](https://decomp.dev/projects/989774797.svg?mode=overview&version=G4QE01)
+
 Contributing
 ============
 
