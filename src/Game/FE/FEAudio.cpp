@@ -161,12 +161,40 @@ void FEAudio::BuildAnimAudioEventLookup()
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x54 | 0x8009FA54 | size: 0x8C
-//  */
-// void nlBSearch<AnimAudioEventLookup, unsigned long>(const unsigned long&, AnimAudioEventLookup*, int)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x54 | 0x8009FA54 | size: 0x8C
+ */
+template <>
+AnimAudioEventLookup* nlBSearch(const unsigned long& key, AnimAudioEventLookup* base, int count)
+{
+    unsigned long keyVal = (unsigned long)key;
+    int high = count - 1;
+    int low = -1;
+
+    while ((high - low) > 1)
+    {
+        int mid = (high + low) / 2;
+        if (base[mid].hash > keyVal)
+            high = mid;
+        else
+            low = mid;
+    }
+
+    unsigned long cmpKey = *(const volatile unsigned long*)&key;
+
+    unsigned long highHash = base[high].hash;
+    if (highHash == cmpKey)
+        return &base[high];
+
+    if (low == -1)
+        return 0;
+
+    unsigned long lowHash = base[low].hash;
+    if (lowHash == cmpKey)
+        return &base[low];
+
+    return 0;
+}
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8009FAE0 | size: 0x68

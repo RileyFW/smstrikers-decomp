@@ -597,6 +597,28 @@ def DolphinLib(lib_name: str, objects: Objects, cflags=cflags_dolphin) -> Librar
             "include/Dolphin",
         ],
         mw_version="GC/1.2.5n",
+        # mw_version="GC/1.3.2",
+        cflags=[
+            *cflags,
+            "-O4,p",
+        ],        
+        category="sdk",
+    )
+
+def DolphinLib132(lib_name: str, objects: Objects, cflags=cflags_dolphin) -> Library:
+    return Lib (
+        lib_name,
+        objects,
+        includes=[
+            *includes_base,
+            "src/Dolphin",
+        ],
+        system_includes=[
+            *system_includes_base,
+            "include/Dolphin",
+        ],
+        # mw_version="GC/1.2.5n",
+        mw_version="GC/1.3.2",
         cflags=[
             *cflags,
             "-O4,p",
@@ -1492,14 +1514,20 @@ config.libs = [
 
             # Dolphin/VI
             Object(Matching, "Dolphin/vi/vi.c"),
+        ],
+    ),
 
+    DolphinLib132(
+        "VM",
+        [
             # Dolphin/vm.a
-            Object(NonMatching, "Dolphin/vm.a/VM.c"),
+            Object(Matching, "Dolphin/vm.a/VM.c"),
             Object(NonMatching, "Dolphin/vm.a/VMPageReplacement.c"),
             Object(NonMatching, "Dolphin/vm.a/VMMapping.c"),
             Object(NonMatching, "Dolphin/vm.a/VMBase.c"),
         ],
-    ),
+    ),    
+
 
     DolphinLib(
         "amcstubs",

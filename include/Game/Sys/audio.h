@@ -153,6 +153,7 @@ bool Remove3DSFXEmitter(SFXEmitter*);
 void Add3DSFXEmitter(const EmitterStartInfo&);
 void GetFreeEmitter(unsigned long&);
 SFXEmitter* GetEmitter(unsigned long);
+extern SND_LISTENER gListener;
 void SetListenerActive(bool);
 bool IsListenerActive();
 void SetOutputMode(MusyXOutputType);

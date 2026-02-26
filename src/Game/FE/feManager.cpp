@@ -6,6 +6,7 @@
 #include "Game/Game.h"
 #include "Game/GameInfo.h"
 #include "Game/OverlayManager.h"
+#include "Game/Render/Presentation.h"
 #include "Game/RumbleActions.h"
 #include "Game/SH/SHPause.h"
 #include "Game/Sys/eventman.h"
@@ -36,6 +37,61 @@ void FrontEnd::ReturnToFE()
  */
 void FrontEnd::UpdateForGame(float)
 {
+    if (m_bGameOver)
+        return;
+
+    if (!m_bInPauseMenuState && m_pauseDelay <= 0.0f)
+    {
+        nlTaskManager* taskManager = nlTaskManager::m_pInstance;
+        if (taskManager->m_CurrState != 1 && taskManager->m_PendingState == taskManager->m_CurrState)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (g_pFEInput->JustPressed((eFEINPUT_PAD)i, 0x1000, false, NULL))
+                {
+                    m_hitStartPad = i;
+                    EnterMenuState(MET_PAUSE);
+                }
+                if (m_bInPauseMenuState)
+                    break;
+            }
+        }
+    }
+
+    if (Presentation::Instance().DuringEndOfGamePresentation())
+    {
+        DontCheckForControllerRemovalHack = 1;
+    }
+
+    if (DontCheckForControllerRemovalHack)
+        return;
+
+    if (m_bInPauseMenuState)
+        return;
+
+    if (!(m_pauseDelay <= 0.0f))
+        return;
+
+    if (nlTaskManager::m_pInstance->m_CurrState == 1)
+        return;
+
+    if (nlSingleton<GameInfoManager>::s_pInstance->mIsInStrikers101Mode && !AlreadyStartedStrikers101Menu)
+        return;
+
+    for (int i = 0; i < 4; i++)
+    {
+        bool curConnected = g_pFEInput->IsConnected((eFEINPUT_PAD)i);
+        if (m_ctrlConnectedState[i] == 1 && !curConnected)
+        {
+            if (nlSingleton<GameInfoManager>::s_pInstance->GetPlayingSide((unsigned short)i) != -1)
+            {
+                EnterMenuState(MET_CHOOSESIDES);
+            }
+        }
+        m_ctrlConnectedState[i] = curConnected;
+        if (m_bInPauseMenuState)
+            break;
+    }
 }
 
 /**

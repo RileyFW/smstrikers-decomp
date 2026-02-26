@@ -195,6 +195,76 @@ void World::Render()
  */
 void World::HandleCameraSwitch()
 {
+    typedef AVLTreeEntry<unsigned long, DrawableObject*> Entry;
+
+    struct NodeStack
+    {
+        Entry** data;
+        u32 count;
+    };
+
+    NodeStack* stack;
+    Entry* node;
+
+    stack = (NodeStack*)nlMalloc(sizeof(NodeStack), 8, false);
+    if (stack != NULL)
+    {
+        u32 numElements = m_drawableMap.m_NumElements;
+        node = m_drawableMap.m_Root;
+        stack->data = (Entry**)nlMalloc((numElements + 1) * sizeof(Entry*), 8, false);
+        stack->count = 0;
+
+        if (node != NULL)
+        {
+            while (node->node.left != NULL)
+            {
+                stack->data[stack->count] = node;
+                stack->count++;
+                node = (Entry*)node->node.left;
+            }
+            stack->data[stack->count] = node;
+            stack->count++;
+        }
+    }
+
+    f32 maxVal = 1.0f;
+    f32 minVal = 0.0f;
+
+    while (stack->count > 0)
+    {
+        DrawableObject* pObject = stack->data[stack->count - 1]->value;
+
+        pObject->m_translucency = maxVal;
+        if (pObject->m_translucency < minVal)
+        {
+            pObject->m_translucency = minVal;
+        }
+        if (pObject->m_translucency > maxVal)
+        {
+            pObject->m_translucency = maxVal;
+        }
+
+        stack->count--;
+
+        Entry* right = (Entry*)stack->data[stack->count]->node.right;
+        if (right != NULL)
+        {
+            while (right->node.left != NULL)
+            {
+                stack->data[stack->count] = right;
+                stack->count++;
+                right = (Entry*)right->node.left;
+            }
+            stack->data[stack->count] = right;
+            stack->count++;
+        }
+    }
+
+    if (stack != NULL)
+    {
+        delete[] stack->data;
+        delete stack;
+    }
 }
 
 /**

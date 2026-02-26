@@ -127,9 +127,17 @@ void Replayable<3, LoadFrame, bool>(LoadFrame& frame, bool& value);
 template <>
 void Replayable<3, SaveFrame, bool>(SaveFrame& frame, bool& value);
 template <>
+void Replayable<3, LoadFrame, char>(LoadFrame& frame, char& value);
+template <>
+void Replayable<3, SaveFrame, char>(SaveFrame& frame, char& value);
+template <>
 void Replayable<3, LoadFrame, float>(LoadFrame& frame, float& value);
 template <>
 void Replayable<3, SaveFrame, float>(SaveFrame& frame, float& value);
+template <>
+void Replayable<3, LoadFrame, unsigned short>(LoadFrame& frame, unsigned short& value);
+template <>
+void Replayable<3, SaveFrame, unsigned short>(SaveFrame& frame, unsigned short& value);
 template <>
 void Replayable<3, LoadFrame, unsigned long>(LoadFrame& frame, unsigned long& value);
 template <>

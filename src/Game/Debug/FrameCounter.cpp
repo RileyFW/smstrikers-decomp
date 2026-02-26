@@ -1,6 +1,9 @@
 #include "Game/Debug/FrameCounter.h"
+#include "Game/Debug/TimeRegions.h"
 
+#include "NL/nlDebugFile.h"
 #include "NL/nlMemory.h"
+#include "NL/nlPrint.h"
 #include "NL/nlTicker.h"
 
 int FrameCounter::NUM_FRAMES_TO_AVERAGE_OVER = 0x1E;
@@ -74,8 +77,31 @@ void FrameCounter::FinishTiming()
 /**
  * Offset/Address/Size: 0xED8 | 0x801FDA74 | size: 0x1A0
  */
-void FrameCounter::WriteFrameRateStatsToFile(const char*)
+void FrameCounter::WriteFrameRateStatsToFile(const char* fileName)
 {
+    char buf[128];
+    void* file = nlOpenFileDebug("framerate_stats.txt", false, true);
+    nlWriteLineDebug(file, fileName, false);
+    nlWriteLineDebug(file, "========================================", false);
+    nlWriteLineDebug(file, "Region                          AvgTime     Percentage", false);
+    nlWriteLineDebug(file, "------                          -------     ----------", false);
+    nlWriteLineDebug(file, "==========================================", false);
+
+    ListEntry<TimeRegion*>* entry = TimeRegion::sTimeRegionList.m_Head;
+    while (entry != NULL)
+    {
+        TimeRegion* region = entry->data;
+        float ratio = (float)region->m_unk10 / (float)region->m_unk14;
+        float avgTime = region->m_fThreshold / (float)region->m_unk14;
+        float pct = 100.0f * (1.0f - ratio);
+
+        nlSNPrintf(buf, 128, "  %-30s  %8.2f  %8.2f%%\n", region->m_unk14, region->m_pName, pct, avgTime);
+        nlWriteLineDebug(file, buf, false);
+
+        entry = entry->next;
+    }
+
+    nlCloseFileDebug(file);
 }
 
 /**

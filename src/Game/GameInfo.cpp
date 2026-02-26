@@ -955,9 +955,41 @@ void GameInfoManager::OnPostGameState()
 
 /**
  * Offset/Address/Size: 0x4E7C | 0x8017A520 | size: 0x190
+ * TODO: 95.75% match - persistent r4/r5 register swap in the unrolled pad-side loop,
+ *       plus one remaining lwzx/stw ordering difference in the DifficultyMap writeback.
  */
 void GameInfoManager::ApplyDifficultySettings()
 {
+    static eDifficultyID DifficultyMap[5][2];
+    unsigned char humansOnSide[2] = {0, 0};
+    int i;
+    GameplaySettings::eSkillLevel skillLevel;
+
+    for (i = 0; i < 4; i++) {
+        s16 padSide = mGameInfo[mCurrentMode]->mPadSides[(unsigned short)i];
+        if (padSide == 0) {
+            humansOnSide[0] = 1;
+        } else if (padSide == 1) {
+            humansOnSide[1] = 1;
+        }
+    }
+
+    if (mIsInStrikers101Mode) {
+        skillLevel = GameplaySettings::TRAINING;
+    } else {
+        GameplaySettings* settings;
+        if (mUseCurGameSettings) {
+            settings = &mCurGameGameplayOptions;
+        } else if (mCurrentMode == GM_FRIENDLY || mCurrentMode == GM_DEMO) {
+            settings = &mUserInfo.mGameplayOptions;
+        } else {
+            settings = &mCurrentCup->mCupSettings;
+        }
+        skillLevel = settings->SkillLevel;
+    }
+
+    mCurrentDifficulty[0] = DifficultyMap[skillLevel][humansOnSide[0] ? 0 : 1];
+    mCurrentDifficulty[1] = DifficultyMap[skillLevel][humansOnSide[1] ? 0 : 1];
 }
 
 /**

@@ -1,5 +1,6 @@
 
 #include "Game/Sys/audio.h"
+#include "Game/Game.h"
 #include "Game/GameAudio.h"
 #include "Game/Audio/WorldAudio.h"
 #include "Game/Audio/AudioLoader.h"
@@ -101,6 +102,53 @@ float MasterVolume::GetVolume(MasterVolume::VOLUME_GROUP group)
  */
 void FadeFilterFromCurrentToZero()
 {
+    FadeAudioData* node;
+
+    f32 t = (f32)gWorldSFX.muGroupFilterFreq / 16383.0f;
+    if (t > 0.0f)
+    {
+        node = g_pFadeList;
+        while (node != NULL)
+        {
+            s32 type = *(s32*)node;
+            if (!(type != 2 && type != 3 && !(type == 2 && ((s32*)node)[1] == 0)))
+            {
+                nlListRemoveElement<FadeAudioData>(&g_pFadeList, node, NULL);
+                FadeAudioData* next = node->next;
+                delete node;
+                node = next;
+            }
+            else
+            {
+                node = node->next;
+            }
+        }
+        GameTweaks* tweaks = g_pGame->m_pGameTweaks;
+        FadeFilter(t, tweaks->unk210, tweaks->unk20C, 0.0f);
+    }
+
+    if (gbPitchBent)
+    {
+        t = (f32)gWorldSFX.muGroupPitch / 8191.0f;
+        node = g_pFadeList;
+        while (node != NULL)
+        {
+            s32 type = *(s32*)node;
+            if (!(type != 2 && type != 3 && !(type == 3 && ((s32*)node)[1] == 0)))
+            {
+                nlListRemoveElement<FadeAudioData>(&g_pFadeList, node, NULL);
+                FadeAudioData* next = node->next;
+                delete node;
+                node = next;
+            }
+            else
+            {
+                node = node->next;
+            }
+        }
+        GameTweaks* tweaks = g_pGame->m_pGameTweaks;
+        PitchBend(t, tweaks->unk224, tweaks->unk20C, 0.0f);
+    }
 }
 
 /**

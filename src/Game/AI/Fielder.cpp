@@ -1644,19 +1644,10 @@ bool cFielder::IsFallenDown(float fThreshold) const
  */
 bool cFielder::IsHitting() const
 {
-    bool isHitting = false;
-    // float fAnimTime;
-
     const cPN_SAnimController* pAnimController = m_pCurrentAnimController;
     const float fAnimTime = 30.0f * pAnimController->m_fTime * (pAnimController->m_pSAnim->m_nNumKeys / 30.0f);
+    bool isHitting = ((m_tFrozenTimer.m_uPackedTime == 0) && (m_eActionState == ACTION_HIT) && (fAnimTime >= 4.0f) && (fAnimTime <= 14.0f));
 
-    if ((m_tFrozenTimer.m_uPackedTime == 0) && m_eActionState == ACTION_HIT)
-    {
-        if (fAnimTime >= 4.0f && fAnimTime <= 14.0f)
-        {
-            isHitting = true;
-        }
-    }
     return isHitting;
 }
 

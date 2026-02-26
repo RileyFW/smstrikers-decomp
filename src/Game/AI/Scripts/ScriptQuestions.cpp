@@ -1233,18 +1233,83 @@ float OpenToMyNet(cFielder* pFielder)
     return OpenToPosition(pFielder->m_v3Position, pFielder->GetAIDefNetLocation(NULL), NULL, pFielder, NULL, true);
 }
 
+static float InBetween(const nlVector3& v3InBetweenPos, const nlVector3& v3A, const nlVector3& v3B)
+{
+    nlVector3 v3Intercept = GetClosestPointOnLineABFromPointC(v3A, v3InBetweenPos, v3B);
+
+    bool atA = (v3A.f.x == v3Intercept.f.x && v3A.f.y == v3Intercept.f.y && v3A.f.z == v3Intercept.f.z);
+    if (atA)
+    {
+        goto ReturnZero;
+    }
+
+    {
+        bool atInBetween = (v3InBetweenPos.f.x == v3Intercept.f.x && v3InBetweenPos.f.y == v3Intercept.f.y && v3InBetweenPos.f.z == v3Intercept.f.z);
+        if (!atInBetween)
+        {
+            goto Compute;
+        }
+    }
+
+ReturnZero:
+    return 0.0f;
+
+Compute:
+    float dx1 = v3A.f.x - v3Intercept.f.x;
+    float dy1 = v3A.f.y - v3Intercept.f.y;
+    float distA = nlSqrt(dx1 * dx1 + dy1 * dy1, true);
+
+    FuzzyTweaks* pFuzzyTweaks = g_pGame->m_pFuzzyTweaks;
+    float fMaxConeWidth = InterpolateRangeClamped(pFuzzyTweaks->vInBetweenConeWidth, pFuzzyTweaks->vInBetweenInterceptRange, distA);
+
+    float dy2 = v3Intercept.f.y - v3B.f.y;
+    float dx2 = v3Intercept.f.x - v3B.f.x;
+
+    return InterpolateRangeClamped(1.0f, 0.0f, 0.0f, fMaxConeWidth, nlSqrt(dx2 * dx2 + dy2 * dy2, true));
+}
+
 /**
  * Offset/Address/Size: 0x25DC | 0x80081064 | size: 0x1A4
  */
-void InBetweenMyNetAnd(cFielder*, cFielder*)
+float InBetweenMyNetAnd(cFielder* pFielder1, cFielder* pFielder2)
 {
+    if (pFielder1 == NULL)
+    {
+        return 0.0f;
+    }
+    if (pFielder2 == NULL)
+    {
+        return 0.0f;
+    }
+
+    cNet* pNet = pFielder1->m_pTeam->m_pNet;
+    nlVector3* fielderPos = &pFielder1->m_v3Position;
+    nlVector3* targetPos = &pFielder2->m_v3Position;
+    nlVector3* netPos = &pNet->m_baseLocation;
+
+    return InBetween(*netPos, *targetPos, *fielderPos);
 }
 
 /**
  * Offset/Address/Size: 0x2438 | 0x80080EC0 | size: 0x1A4
  */
-void InBetweenMyNetAnd(cFielder*, cBall*)
+float InBetweenMyNetAnd(cFielder* pFielder, cBall* pBall)
 {
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+    if (pBall == NULL)
+    {
+        return 0.0f;
+    }
+
+    cNet* pNet = pFielder->m_pTeam->m_pNet;
+    nlVector3* fielderPos = &pFielder->m_v3Position;
+    nlVector3* ballPos = &pBall->m_v3Position;
+    nlVector3* netPos = &pNet->m_baseLocation;
+
+    return InBetween(*netPos, *ballPos, *fielderPos);
 }
 
 /**
@@ -1723,8 +1788,58 @@ float FacingSideline(cFielder* pFielder)
 /**
  * Offset/Address/Size: 0x187C | 0x80080304 | size: 0x19C
  */
-void StuckOnSidelines(cFielder*)
+float StuckOnSidelines(cFielder* pFielder)
 {
+    if (!pFielder)
+        return 0.0f;
+
+    bool sidelineUnavoidable = pFielder->m_pAvoidance->m_SidelineUnavoidable;
+
+    float sidelineRepulsion;
+    if (!pFielder)
+    {
+        sidelineRepulsion = 0.0f;
+    }
+    else
+    {
+        nlVector3 repulsionVec = pFielder->m_pAvoidance->GetLastRepulsionVector(AVOID_FIELDERS);
+        float magnitude = nlSqrt(repulsionVec.f.x * repulsionVec.f.x + repulsionVec.f.y * repulsionVec.f.y + repulsionVec.f.z * repulsionVec.f.z, true);
+        sidelineRepulsion = NormalizeVal(magnitude, g_pGame->m_pFuzzyTweaks->vAvoidFieldersRepulsionConfidence);
+    }
+
+    float powerupRepulsion;
+    if (!pFielder)
+    {
+        powerupRepulsion = 0.0f;
+    }
+    else
+    {
+        nlVector3 repulsionVec = pFielder->m_pAvoidance->GetLastRepulsionVector(AVOID_POWERUPS);
+        float magnitude = nlSqrt(repulsionVec.f.x * repulsionVec.f.x + repulsionVec.f.y * repulsionVec.f.y + repulsionVec.f.z * repulsionVec.f.z, true);
+        powerupRepulsion = NormalizeVal(magnitude, g_pGame->m_pFuzzyTweaks->vAvoidPowerupsRepulsionConfidence);
+    }
+
+    float flagVal = sidelineUnavoidable ? 1.0f : 0.0f;
+
+    powerupRepulsion = (powerupRepulsion >= sidelineRepulsion) ? powerupRepulsion : sidelineRepulsion;
+    flagVal = (flagVal >= powerupRepulsion) ? flagVal : powerupRepulsion;
+
+    float stuckBit;
+    if (!pFielder)
+    {
+        stuckBit = 0.0f;
+    }
+    else if (pFielder->m_pAvoidance->m_CurrentlyAvoiding & AVOID_SIDELINES)
+    {
+        stuckBit = 1.0f;
+    }
+    else
+    {
+        stuckBit = 0.0f;
+    }
+
+    stuckBit = (stuckBit <= flagVal) ? stuckBit : flagVal;
+    return stuckBit;
 }
 
 /**
@@ -2718,7 +2833,7 @@ float InOffensiveZone(cPlayer* pPlayer)
 float InDefensiveZoneOfPlayer(cBall* pBall, cPlayer* pPlayer)
 {
     nlVector3 aiLoc;
-    if ((pBall == NULL) && (pPlayer != NULL))
+    if ((pBall == NULL) || (pPlayer == NULL))
     {
         return 0.0f;
     }
@@ -2736,7 +2851,7 @@ float InDefensiveZoneOfPlayer(cBall* pBall, cPlayer* pPlayer)
 float InOffensiveZoneOfPlayer(cBall* pBall, cPlayer* pPlayer)
 {
     nlVector3 aiLoc;
-    if ((pBall == NULL) && (pPlayer != NULL))
+    if ((pBall == NULL) || (pPlayer == NULL))
     {
         return 0.0f;
     }

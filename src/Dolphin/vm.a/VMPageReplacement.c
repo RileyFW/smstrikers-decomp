@@ -1,7 +1,7 @@
 #include <dolphin/types.h>
 
 static u32 g_vmFreePagesExist = 1;
-static u32 g_vmPageReplacementPolicy = 1;
+static s32 g_vmPageReplacementPolicy = 1;
 static u32 g_vmNextPageToSwap;
 
 u32 __VMGetNumPagesInMRAM(void);

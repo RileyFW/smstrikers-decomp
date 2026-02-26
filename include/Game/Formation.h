@@ -98,15 +98,18 @@ public:
     /* 0x18 */ unsigned int m_iFielderFormationPos[4];
 }; // total size: 0x28
 
-class FormationBallPosition
+class FormationBallPosition : public FormationEval
 {
 public:
     ~FormationBallPosition();
-    void Update(float);
-    void SelectClosestBallFormations(const nlVector2&);
     void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
     float GetWeight();
-};
+    void Update(float);
+    void SelectClosestBallFormations(const nlVector2&);
+
+    /* 0x28 */ const FormationSet* m_pFormationSet;
+    /* 0x2C */ FormationBallPosition* m_pNextClosestFormation;
+}; // total size: 0x30
 
 class FormationOffensive : public FormationEval
 {

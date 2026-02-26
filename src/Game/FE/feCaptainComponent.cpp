@@ -503,9 +503,43 @@ void IChooseCaptain::CheckForDisconnectedHumanPlayers()
 
 /**
  * Offset/Address/Size: 0x4E0 | 0x800BDE7C | size: 0x190
+ * TODO: 99.95% match - remaining `bl` immediate mismatch on `SetCurrentPhase` call
+ * (likely enum/signature mangling drift for `ComponentState::Phase`).
  */
 void IChooseCaptain::FindAliveHumanPlayers()
 {
+    for (int i = 0; i < 4; i++)
+    {
+        eFEINPUT_PAD pad = (eFEINPUT_PAD)i;
+
+        if (g_pFEInput->IsAutoPressed(pad, 0xB, true, NULL) || g_pFEInput->IsAutoPressed(pad, 0xC, true, NULL)
+            || g_pFEInput->IsAutoPressed(pad, 0xD, true, NULL) || g_pFEInput->IsAutoPressed(pad, 0xE, true, NULL)
+            || g_pFEInput->JustPressed(pad, 0x100, false, NULL))
+        {
+            int numPushedPlayers = mNumTotalPushedPlayers;
+
+            if (!IsPlayerPushed(i))
+            {
+                int side = numPushedPlayers & 1;
+                if (mComponentState[side].mCurrentPhase == PHASE_IDLE)
+                {
+                    mComponentState[side].SetCurrentPhase(PHASE_CHOOSING_CAPTAIN);
+                }
+
+                mAllPushedPlayers[mNumTotalPushedPlayers] = (eFEINPUT_PAD)i;
+                if (side != -1)
+                {
+                    mAllPushedPlayerSides[mNumTotalPushedPlayers] = side;
+                }
+                else
+                {
+                    mAllPushedPlayerSides[mNumTotalPushedPlayers] = mNumTotalPushedPlayers & 1;
+                }
+
+                mNumTotalPushedPlayers++;
+            }
+        }
+    }
 }
 
 /**

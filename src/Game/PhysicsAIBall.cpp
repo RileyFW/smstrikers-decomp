@@ -24,9 +24,59 @@ bool PhysicsAIBall::IsBallOutsideNet(const nlVector3& v3Pos)
 /**
  * Offset/Address/Size: 0x84 | 0x80133AB8 | size: 0x1A0
  */
-bool PhysicsAIBall::DidBallJustEnterNet(const nlVector3&, nlVector3)
+bool PhysicsAIBall::DidBallJustEnterNet(const nlVector3& oldPos, nlVector3 newPos)
 {
-    FORCE_DONT_INLINE;
+    f64 absOldX = (float)fabs(oldPos.f.x);
+    f32 absNewX = (float)fabs(newPos.f.x);
+    f32 radius = g_pBall->m_pPhysicsBall->GetRadius();
+    f32 goalLineX = cField::GetGoalLineX((unsigned int)1);
+    f32 threshold = (goalLineX + radius) - 0.2f;
+    nlVector3 impactPos;
+
+    if (((f32)absOldX < threshold) && (absNewX >= threshold))
+    {
+        f32 xDelta = newPos.f.x - oldPos.f.x;
+
+        if ((float)fabs(xDelta) > 0.001f)
+        {
+            f32 planeX;
+            if (newPos.f.x > 0.0f)
+            {
+                planeX = threshold;
+            }
+            else
+            {
+                planeX = -threshold;
+            }
+
+            f32 oldX = oldPos.f.x;
+            f32 t = (planeX - oldX) / xDelta;
+            xDelta = 1.0f - t;
+
+            impactPos.f.x = (xDelta * oldX) + (t * newPos.f.x);
+            impactPos.f.y = (xDelta * oldPos.f.y) + (t * newPos.f.y);
+            impactPos.f.z = (xDelta * oldPos.f.z) + (t * newPos.f.z);
+        }
+        else
+        {
+            impactPos = newPos;
+        }
+
+        if ((impactPos.f.z > 0.0f) && (impactPos.f.z < cNet::m_fNetHeight))
+        {
+            f32 netWidth = cNet::m_fNetWidth;
+            f32 halfScale = 0.5f;
+            if ((impactPos.f.y > (halfScale * -netWidth)) && (impactPos.f.y < (halfScale * netWidth)))
+            {
+                return true;
+            }
+        }
+    }
+
+    /**
+     * TODO: 97.40% match - function prologue keeps `mr r31, r4` before
+     * first `lfs` instead of the target's interleaved argument save/load order.
+     */
     return false;
 }
 

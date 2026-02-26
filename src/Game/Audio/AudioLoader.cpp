@@ -1,6 +1,8 @@
 #include "Game/Audio/AudioLoader.h"
 #include "Game/Audio/SebringSoundDefines.h"
 #include "Game/Audio/SoundEventScript.h"
+#include "Game/Camera/CameraMan.h"
+#include "Game/Game.h"
 #include "Game/Sys/debug.h"
 #include "dolphin/arq.h"
 
@@ -830,9 +832,65 @@ void AudioLoader::UnloadInGame()
 
 /**
  * Offset/Address/Size: 0x1170 | 0x80144F3C | size: 0x19C
+ * TODO: 99.90% match - symbol name diffs only (static const kUpVec generates named label vs anonymous @NNNN in target). Actual instructions identical.
  */
 void AudioLoader::SetupPostPhysicsCameraLoad()
 {
+    if (AudioLoader::gbDisableAudio)
+    {
+        return;
+    }
+
+    if (AudioLoader::gbDisableAudio || Audio::IsListenerActive())
+    {
+        goto setupCharStadiumSoundTable;
+    }
+
+    nlVector3 up;
+    nlVector3 heading;
+    nlVector3 cameraPos;
+    nlVector3 targetPos;
+    nlVector3 vel = { { 0.0f, 0.0f, 0.0f } };
+
+    cBaseCamera* camera = nlDLRingGetStart(cCameraManager::m_cameraStack);
+    targetPos = camera->GetTargetPosition();
+
+    camera = nlDLRingGetStart(cCameraManager::m_cameraStack);
+    cameraPos = camera->GetCameraPosition();
+
+    float dx, dy, dz;
+    dy = targetPos.f.y - cameraPos.f.y;
+    dx = targetPos.f.x - cameraPos.f.x;
+    dz = targetPos.f.z - cameraPos.f.z;
+
+    float recipLen = nlRecipSqrt(dx * dx + dy * dy + dz * dz, true);
+
+    heading.f.x = recipLen * dx;
+    heading.f.y = recipLen * dy;
+    heading.f.z = recipLen * dz;
+
+    static const nlVector3 kUpVec = { { 0.0f, 0.0f, 1.0f } };
+    up = kUpVec;
+
+    GameTweaks* tweaks = g_pGame->m_pGameTweaks;
+
+    PlatAudio::Add3DSFXListener(
+        &Audio::gListener,
+        cameraPos,
+        up,
+        heading,
+        vel,
+        tweaks->unk1F0,
+        tweaks->unk1F4,
+        0.0f,
+        tweaks->unk1FC,
+        false,
+        tweaks->unk1F8);
+
+    Audio::SetListenerActive(true);
+
+setupCharStadiumSoundTable:
+    ((void (*)())AudioLoader::SetupCharStadiumSoundTable)();
 }
 
 /**

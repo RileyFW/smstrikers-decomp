@@ -9,12 +9,12 @@
 typedef void (*VMLogStatsCallback)(u32 faultAddr, u32 mainAddr, u32 pageIndex, u32 elapsed, u32 wroteBack);
 typedef void (*VMSwapPageInCallback)(u32 virtualAddr);
 
-static u32 g_vmSizeVMMainMemory;
-static u32 g_vmBaseVMMainMemory;
-static u32 g_vmSizeVMARAM;
-static u32 g_vmNumPagesInMRAM;
-static VMLogStatsCallback g_cbLogStats;
 static u32 g_vmInitialized;
+static VMLogStatsCallback g_cbLogStats;
+static u32 g_vmNumPagesInMRAM;
+static u32 g_vmSizeVMARAM;
+static u32 g_vmBaseVMMainMemory;
+static u32 g_vmSizeVMMainMemory;
 
 static u32 g_vmBaseVMARAM = 0x4000;
 
@@ -58,7 +58,7 @@ void VMInit(uintptr_t baseAddr, size_t initialCommitSize, uintptr_t limitAddr)
 {
     BOOL oldInterrupts;
 
-    if (g_vmInitialized != 0)
+    if ((s32)g_vmInitialized != 0)
     {
         return;
     }
@@ -108,17 +108,23 @@ void __VMAllocMRAMSwapSpace(void)
 void __VMSwapPageIn(u32 faultAddr)
 {
     u32 startTicks;
-    u32 endTicks;
     u32 virtualPage;
-    u32 pageIndex;
     u32 mainAddr;
-    u32 previousVirtualPage;
+    u32 wroteBack;
+    u32 pageIndex;
+    s32 hadARInterrupt;
     BOOL oldInterrupts;
-    u16 hadARInterrupt;
-    u32 wroteBack = 0;
+    u32 previousVirtualPage;
 
-    startTicks = __VMReadSwapTimeUnits();
+    {
+        u64 time = OSGetTime();
+        u32 divisor = ((*(volatile u32*)0x800000F8 >> 2) / 125000);
+
+        time <<= 3;
+        startTicks = (u32)((s64)time / divisor);
+    }
     virtualPage = faultAddr & ~0xFFF;
+    wroteBack = 0;
 
     pageIndex = __VMGetPageToReplace();
     mainAddr = g_vmBaseVMMainMemory + (pageIndex << 12);
@@ -169,7 +175,10 @@ void __VMSwapPageIn(u32 faultAddr)
 
     if (g_cbLogStats != NULL)
     {
-        endTicks = __VMReadSwapTimeUnits();
-        g_cbLogStats(faultAddr, mainAddr, pageIndex, endTicks - startTicks, wroteBack);
+        u64 time = OSGetTime();
+        u32 divisor = ((*(volatile u32*)0x800000F8 >> 2) / 125000);
+
+        time <<= 3;
+        g_cbLogStats(faultAddr, mainAddr, pageIndex, (u32)((s64)time / divisor) - startTicks, wroteBack);
     }
 }

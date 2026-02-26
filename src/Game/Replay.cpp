@@ -133,9 +133,51 @@ float Replay::TimeOfLastOccurence(unsigned int events) const
 
 /**
  * Offset/Address/Size: 0x49C | 0x80213D48 | size: 0x17C
+ * TODO: 98.53% match - r4/r5 register swap for mFree->mBegin/mSize loads
+ * in merge section. Likely -inline deferred vs -inline auto register
+ * allocation difference.
  */
 void Replay::NewFrame()
 {
+    while (mFree->mSize < mMaxFrameSize)
+    {
+        Frame* next = mFree->mNext;
+
+        if (next->mReelIdx > 0)
+        {
+            do
+            {
+                if (mReels[0].mBegin == mFree->mNext)
+                {
+                    mReels[0].mBegin = Next(mReels[0].mBegin, 0);
+                }
+                mFree = mFree->mNext;
+            } while (mFree->mReelIdx > 0);
+            mFree->mReelIdx = -1;
+        }
+        else
+        {
+            if (mReels[0].mBegin == next)
+            {
+                mReels[0].mBegin = Next(mReels[0].mBegin, 0);
+            }
+
+            if (mFree->mBegin + mFree->mSize == mFree->mNext->mBegin)
+            {
+                Frame* nextFrame = mFree->mNext;
+                mFree->mSize += nextFrame->mSize;
+                mFree->mNext = nextFrame->mNext;
+                mFree->mReelIdx = -1;
+                ((SlotPoolEntry*)nextFrame)->m_next = mSlotPool.m_FreeList;
+                mSlotPool.m_FreeList = (SlotPoolEntry*)nextFrame;
+            }
+            else
+            {
+                mFree = mFree->mNext;
+                mFree->mReelIdx = -1;
+            }
+        }
+    }
 }
 
 /**

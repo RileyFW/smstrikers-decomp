@@ -8,8 +8,10 @@
 #include "Game/FE/tlTextInstance.h"
 #include "Game/GameInfo.h"
 #include "Game/Game.h"
+#include "NL/nlPrint.h"
 
 extern FEInput* g_pFEInput;
+extern nlColour MenuHighliteColour;
 
 namespace DoubleHighlite
 {
@@ -342,9 +344,84 @@ void PauseMenuScene::Update(float)
 /**
  * Offset/Address/Size: 0xD0 | 0x800AD5C8 | size: 0x198
  */
-void PauseMenuScene::TransitionOut(PauseMenuScene::TransitionType)
+void PauseMenuScene::TransitionOut(PauseMenuScene::TransitionType newtype)
 {
-    FORCE_DONT_INLINE;
+    mIsInTransition = true;
+    mTransitionTo = newtype;
+
+    if (mTransitionTo == TT_OUT)
+    {
+        FEPresentation* presentation = m_pFEScene->m_pFEPackage->GetPresentation();
+        presentation->SetActiveSlide("menu in2");
+        presentation->Update(0.0f);
+
+        int i;
+        for (i = 0; i < mMenuItems.mNumItemsAdded; i++)
+        {
+            typedef TLInstance* (*FindByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+            typedef TLInstance* (*FindByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+            union
+            {
+                FindByValue byValue;
+                FindByRef byRef;
+            } find;
+            find.byValue = FEFinder<TLInstance, 4>::Find<TLSlide>;
+
+            char menuname[64];
+            nlSNPrintf(menuname, 64, "MENU ITEM%d", i + 1);
+
+            volatile InlineHasher hB, hA;
+            volatile InlineHasher h9, h8;
+            volatile InlineHasher h7, h6, h5, h4, h3, h2, h1, h0;
+
+            h0.m_Hash = 0;
+            h1.m_Hash = 0;
+            h2.m_Hash = 0;
+            h3.m_Hash = 0;
+            h4.m_Hash = 0;
+            h5.m_Hash = 0;
+            h6.m_Hash = 0;
+            h7.m_Hash = 0;
+
+            unsigned long hash = nlStringLowerHash(menuname);
+            h8.m_Hash = hash;
+            h9.m_Hash = hash;
+
+            hash = nlStringLowerHash("Layer");
+            hB.m_Hash = hash;
+            hA.m_Hash = hash;
+
+            TLInstance* instance = find.byRef(
+                presentation->m_currentSlide,
+                (InlineHasher&)hB,
+                (InlineHasher&)h9,
+                (InlineHasher&)h7,
+                (InlineHasher&)h5,
+                (InlineHasher&)h3,
+                (InlineHasher&)h1);
+
+            TLComponentInstance* compinstance = (TLComponentInstance*)instance;
+
+            if (i == mMenuItems.mCurrentIndex)
+            {
+                compinstance->SetActiveSlide("out");
+                compinstance->Update(0.0f);
+
+                TLComponentInstance* highlite = (TLComponentInstance*)FindComponent(compinstance->GetActiveSlide(), "highlite");
+                highlite->SetActiveSlide("out");
+                highlite->Update(0.0f);
+                highlite->SetAssetColour(MenuHighliteColour);
+            }
+            else
+            {
+                compinstance->SetActiveSlide("out");
+                compinstance->Update(0.0f);
+
+                TLComponentInstance* highlite = (TLComponentInstance*)FindComponent(compinstance->GetActiveSlide(), "highlite");
+                highlite->m_bVisible = false;
+            }
+        }
+    }
 }
 
 /**

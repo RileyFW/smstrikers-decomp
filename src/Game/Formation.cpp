@@ -449,7 +449,8 @@ void FormationEval::SortPlayers(const nlVector2*)
  */
 cPlayer* FormationEval::GetKeyPlayer()
 {
-    if (m_pKeyPlayer != NULL) {
+    if (m_pKeyPlayer != NULL)
+    {
         return m_pKeyPlayer;
     }
 
@@ -462,41 +463,57 @@ cPlayer* FormationEval::GetKeyPlayer()
         pKeyPlayer = temp;
     }
 
-    if (pKeyPlayer == NULL) {
+    if (pKeyPlayer == NULL)
+    {
         pKeyPlayer = g_pBall->GetOwnerGoalie();
     }
 
-    if (pKeyPlayer == NULL) {
+    if (pKeyPlayer == NULL)
+    {
         otherCarrier = Fuzzy::GetStrategicBallCarrier(team->GetOtherTeam()).mData.pPlayer;
 
-        if (otherCarrier != NULL) {
-            for (int i_fielder = 0; i_fielder < 4; i_fielder++) {
+        if (otherCarrier != NULL)
+        {
+            for (int i_fielder = 0; i_fielder < 4; i_fielder++)
+            {
                 cFielder* pFielder = team->GetFielder(i_fielder);
-                if (pFielder->m_pMark == (cFielder*)otherCarrier) {
+                if (pFielder->m_pMark == (cFielder*)otherCarrier)
+                {
                     pKeyPlayer = pFielder;
                     break;
                 }
             }
-        } else {
+        }
+        else
+        {
             pKeyPlayer = Fuzzy::GetBestBallInterceptor(team).mData.pPlayer;
         }
     }
 
-    if (pKeyPlayer == NULL) {
-        for (int i_fielder = 0; i_fielder < 4; i_fielder++) {
-            if (team->GetFielder(i_fielder)->GetGlobalPad() != NULL) {
+    if (pKeyPlayer == NULL)
+    {
+        for (int i_fielder = 0; i_fielder < 4; i_fielder++)
+        {
+            if (team->GetFielder(i_fielder)->GetGlobalPad() != NULL)
+            {
                 pKeyPlayer = team->GetFielder(i_fielder);
                 break;
             }
         }
     }
 
-    if (pKeyPlayer == NULL) {
-        if (m_eFormationType == FTYPE_DEFENSIVE) {
+    if (pKeyPlayer == NULL)
+    {
+        if (m_eFormationType == FTYPE_DEFENSIVE)
+        {
             pKeyPlayer = team->GetRearMostFielder();
-        } else if (m_eFormationType == FTYPE_OFFENSIVE) {
+        }
+        else if (m_eFormationType == FTYPE_OFFENSIVE)
+        {
             pKeyPlayer = team->GetFrontMostFielder();
-        } else {
+        }
+        else
+        {
             pKeyPlayer = team->GetStriker();
         }
     }
@@ -620,8 +637,53 @@ FormationBallPosition::~FormationBallPosition()
 /**
  * Offset/Address/Size: 0x930 | 0x80038B80 | size: 0x168
  */
-void FormationBallPosition::Update(float)
+void FormationBallPosition::Update(float fDeltaT)
 {
+    nlVector3 v3AIBallLoc;
+
+    m_pKeyPlayer = NULL;
+
+    if (m_SortTimer.Countdown(fDeltaT, 0.0f))
+    {
+        if (g_pBall->m_pOwner != NULL)
+        {
+            v3AIBallLoc = g_pBall->m_pOwner->m_v3Position;
+        }
+        else if (g_pBall->m_pPassTarget != NULL)
+        {
+            v3AIBallLoc = g_pBall->m_pPassTarget->m_v3Position;
+        }
+        else
+        {
+            v3AIBallLoc = g_pBall->m_v3Position;
+        }
+
+        if (m_pFormationManager->m_pTeam->m_nSide != 0)
+        {
+            float negY = -v3AIBallLoc.f.y;
+            float negX = -v3AIBallLoc.f.x;
+            v3AIBallLoc.f.z = 0.0f;
+            v3AIBallLoc.f.x = negX;
+            v3AIBallLoc.f.y = negY;
+        }
+
+        nlVector2 vAIBallLoc = *(const nlVector2*)&v3AIBallLoc;
+
+        SelectClosestBallFormations(vAIBallLoc);
+
+        if (m_pFormationSpec != NULL)
+        {
+            SortPlayers((const nlVector2*)&v3Zero);
+        }
+
+        if (m_pNextClosestFormation != NULL)
+        {
+            m_pNextClosestFormation->SortPlayers((const nlVector2*)&v3Zero);
+        }
+
+        float fRandom = nlRandomf(0.2f, &nlDefaultSeed);
+        m_SortTimer.SetSeconds(0.4f + fRandom);
+    }
 }
 
 /**
@@ -629,6 +691,7 @@ void FormationBallPosition::Update(float)
  */
 void FormationBallPosition::SelectClosestBallFormations(const nlVector2&)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

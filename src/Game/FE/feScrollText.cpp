@@ -1,5 +1,35 @@
 #include "Game/FE/feScrollText.h"
 
+struct LOCHeader
+{
+    char Thumbprint[4];
+    unsigned long Version;
+    unsigned long Language;
+    unsigned long StringCount;
+    unsigned long Flags;
+};
+
+class nlLocalization
+{
+public:
+    struct StringLookup
+    {
+        unsigned long HashValue;
+        unsigned long StringOffset;
+    };
+
+    LOCHeader* m_pFile;
+    StringLookup* m_LookupTable;
+    unsigned short* m_FirstString;
+};
+
+extern void* g_pLocalization;
+extern const unsigned short LocalizationTableNotFound[];
+extern const unsigned short MissingLocString[];
+
+template <typename T, typename U>
+T* nlBSearch(const U&, T*, int);
+
 /**
  * Offset/Address/Size: 0x0 | 0x800C89D4 | size: 0x38
  */
@@ -26,15 +56,156 @@ void FEScrollText::Update(float)
 /**
  * Offset/Address/Size: 0x1C8 | 0x800C8B9C | size: 0x198
  */
-void FEScrollText::SetDisplayMessage(const char*)
+void FEScrollText::SetDisplayMessage(const char* id)
 {
+    nlLocalization* loc = (nlLocalization*)g_pLocalization;
+    unsigned long hash = nlStringLowerHash(id);
+    const unsigned short* text;
+
+    if (loc->m_LookupTable == 0)
+    {
+        text = LocalizationTableNotFound;
+    }
+    else
+    {
+        nlLocalization::StringLookup* lookup = nlBSearch<nlLocalization::StringLookup, unsigned long>(hash, loc->m_LookupTable, loc->m_pFile->StringCount);
+        if (lookup != 0)
+        {
+            text = loc->m_FirstString + lookup->StringOffset;
+        }
+        else
+        {
+            text = MissingLocString;
+        }
+    }
+
+    BasicStringInternal* data = (BasicStringInternal*)nlMalloc(0x10, 8, true);
+    if (data != 0)
+    {
+        data->mData = 0;
+        data->mSize = 0;
+        data->mCapacity = 0;
+
+        const unsigned short* ptr = text;
+        while (*ptr++ != 0)
+        {
+            data->mSize++;
+        }
+
+        data->mSize++;
+        data->mData = (char*)nlMalloc((data->mSize + 1) * 2, 8, true);
+        data->mCapacity = data->mSize;
+
+        int i = 0;
+        int j = i;
+        while (i < data->mSize)
+        {
+            *(unsigned short*)(data->mData + j) = *text;
+            i++;
+            text++;
+            j += 2;
+        }
+
+        data->mRefCount = 1;
+    }
+
+    BasicStringInternal* msgData = data;
+    SetDisplayMessage(*(const BasicString<unsigned short, Detail::TempStringAllocator>*)&msgData);
+
+    data = msgData;
+    if (data != 0)
+    {
+        if (--data->mRefCount == 0)
+        {
+            if (data != 0)
+            {
+                if (data != 0)
+                {
+                    delete[] data->mData;
+                }
+                if (data != 0)
+                {
+                    nlFree(data);
+                }
+            }
+        }
+    }
+}
+
+static inline const unsigned short* LookupLocText(unsigned long hash)
+{
+    nlLocalization* loc = (nlLocalization*)g_pLocalization;
+    if (loc->m_LookupTable == 0)
+    {
+        return LocalizationTableNotFound;
+    }
+    nlLocalization::StringLookup* lookup = nlBSearch<nlLocalization::StringLookup, unsigned long>(hash, loc->m_LookupTable, loc->m_pFile->StringCount);
+    if (lookup != 0)
+    {
+        return loc->m_FirstString + lookup->StringOffset;
+    }
+    return MissingLocString;
 }
 
 /**
  * Offset/Address/Size: 0x360 | 0x800C8D34 | size: 0x190
+ * TODO: 95.4% match - MWCC register allocation: this→r31/text→r29 instead of this→r29/text→r31, li r5,0 instead of mr r5,r4
  */
-void FEScrollText::SetDisplayMessage(unsigned long)
+void FEScrollText::SetDisplayMessage(unsigned long hash)
 {
+    const unsigned short* text = LookupLocText(hash);
+
+    BasicStringInternal* data = (BasicStringInternal*)nlMalloc(0x10, 8, true);
+    if (data != 0)
+    {
+        data->mData = 0;
+        data->mSize = 0;
+        data->mCapacity = 0;
+
+        const unsigned short* ptr = text;
+        while (*ptr++ != 0)
+        {
+            data->mSize++;
+        }
+
+        data->mSize++;
+        data->mData = (char*)nlMalloc((data->mSize + 1) * 2, 8, true);
+        data->mCapacity = data->mSize;
+
+        int i = 0;
+        int j = i;
+        while (i < data->mSize)
+        {
+            *(unsigned short*)(data->mData + j) = *text;
+            i++;
+            text++;
+            j += 2;
+        }
+
+        data->mRefCount = 1;
+    }
+
+    BasicStringInternal* msgData = data;
+    SetDisplayMessage(*(const BasicString<unsigned short, Detail::TempStringAllocator>*)&msgData);
+
+    data = msgData;
+    if (data != 0)
+    {
+        if (--data->mRefCount == 0)
+        {
+            if (data != 0)
+            {
+                if (data != 0)
+                {
+                    delete[] data->mData;
+                }
+                if (data != 0)
+                {
+                    nlFree(data);
+                }
+            }
+        }
+    }
 }
 
 /**

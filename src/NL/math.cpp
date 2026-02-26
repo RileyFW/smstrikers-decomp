@@ -37,12 +37,13 @@ void nlPolarToCartesian(nlVector3& v, const nlPolar& polar)
 }
 /**
  * Offset/Address/Size: 0x3EC | 0x801F06E8 | size: 0x80
- * TODO: 95.3% match - stack slot offsets differ for sin/cos variables
+ * TODO: 96.2% match - MWCC instruction scheduling: target loads lfs (polar.r)
+ * before lhz (polar.a), our compiler schedules lhz before lfs
  */
 void nlAddPolarToCartesian(nlVector3& result, const nlPolar& polar)
 {
-    float radius = polar.r;
-    float sin_val, cos_val;
+    f32 radius = polar.r;
+    f32 cos_val, sin_val;
     nlSinCos(&sin_val, &cos_val, polar.a);
     cos_val *= radius;
     sin_val *= radius;
