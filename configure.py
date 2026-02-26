@@ -506,6 +506,37 @@ def GameLib(lib_name: str, objects: Objects) -> Library:
         category="game",
     )
 
+def GameLib13(lib_name: str, objects: Objects) -> Library:
+    return Lib(
+        lib_name,
+        objects,
+        includes=[
+            *includes_base,
+            "src/ode",
+            "extern/musyx/include",
+        ],
+        system_includes=[
+            *system_includes_base,
+        ],
+        # mw_version="GC/2.0",
+        mw_version="GC/1.3",
+        # mw_version="GC/1.2.5n",
+        cflags=[
+            *cflags_base,
+            "-pool off",
+            "-DdNODEBUG=ON",
+            "-DdIDESINGLE",
+            "-DdSINGLE=1",
+            "-DdTHREADING_INTF_DISABLED",
+            "-DHAVE_MALLOC_H=1",
+            "-DdODE_SMStricker_Patch"
+            "-DMUSY_VERSION_MAJOR=2",
+            "-DMUSY_VERSION_MINOR=0",
+            "-DMUSY_VERSION_PATCH=3",
+        ],            
+        category="game",
+    )
+
 
 def ODELib(lib_name: str, objects: Objects, cflags=cflags_ode) -> Library:
     return Lib(
@@ -1044,7 +1075,7 @@ config.libs = [
             Object(NonMatching, "Game/SH/SHTournTeamSetup.cpp", extra_cflags=["-inline deferred"]),            
 
             # GFX
-            Object(NonMatching, "Game/Drawable/DrawableObj.cpp", extra_cflags=["-inline deferred"]),
+            # Object(NonMatching, "Game/Drawable/DrawableObj.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableNetMesh.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableCharacter.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableBall.cpp"),
@@ -1305,6 +1336,14 @@ config.libs = [
             Object(NonMatching, "NL/gl/glPlat.cpp"),
         ],
     ),
+
+    GameLib13(
+        "NL (Next Level Library)",
+        [
+            Object(Matching, "Game/Drawable/DrawableObj.cpp", extra_cflags=["-inline deferred"]),
+        ],
+    ),
+
     ODELib(
         "Open Dynamics Engine (ODE)",
         [

@@ -246,8 +246,49 @@ IChooseCaptain::~IChooseCaptain()
 /**
  * Offset/Address/Size: 0x1B4C | 0x800BF4E8 | size: 0x194
  */
-void IChooseCaptain::Initialize(const char*, const char*)
+void IChooseCaptain::Initialize(const char* captainfilename, const char*)
 {
+    int i;
+
+    for (i = 0; i < 2; i++)
+    {
+        mAsyncImage[i][0] = new (0x20, true) AsyncImage(captainfilename, NULL);
+        mAsyncImage[i][1] = new (0x20, true) AsyncImage(captainfilename, NULL);
+        mAsyncImage[i][2] = new (0x20, true) AsyncImage(captainfilename, NULL);
+    }
+
+    mAllPushedPlayers[0] = FE_ALL_PADS;
+    mAllPushedPlayerSides[0] = -1;
+    mAllPushedPlayers[1] = FE_ALL_PADS;
+    mAllPushedPlayerSides[1] = -1;
+    mAllPushedPlayers[2] = FE_ALL_PADS;
+    mAllPushedPlayerSides[2] = -1;
+    mAllPushedPlayers[3] = FE_ALL_PADS;
+    mAllPushedPlayerSides[3] = -1;
+    mNumTotalPushedPlayers = 0;
+
+    mHomeAwayTeam[0] = nlSingleton<GameInfoManager>::s_pInstance->GetTeam(0);
+    mHomeAwayTeam[1] = nlSingleton<GameInfoManager>::s_pInstance->GetTeam(1);
+    mHomeAwaySidekicks[0] = nlSingleton<GameInfoManager>::s_pInstance->GetSidekick(0);
+    mHomeAwaySidekicks[1] = nlSingleton<GameInfoManager>::s_pInstance->GetSidekick(1);
+
+    mDidSwapCaptains[1] = false;
+    mDidSwapCaptains[0] = false;
+    mDidSwapSidekicks[1] = false;
+    mDidSwapSidekicks[0] = false;
+
+    mComponentState[0].mCurrentPhase = PHASE_IDLE;
+    mComponentState[0].mParent = this;
+    mComponentState[0].mHomeAway = 0;
+    mComponentState[1].mCurrentPhase = PHASE_IDLE;
+    mComponentState[1].mParent = this;
+    mComponentState[1].mHomeAway = 1;
+
+    mCaptainSoundDelay[0] = 0.0f;
+    mCaptainSoundDelay[1] = 0.0f;
+
+    mLastCaptainSelectSoundStrPlayed[0] = NULL;
+    mLastCaptainSelectSoundStrPlayed[1] = NULL;
 }
 
 /**

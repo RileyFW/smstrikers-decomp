@@ -217,8 +217,68 @@ void ShaderSkinMesh::GetPoseMatrices(GLSkinMeshMatrix*)
 /**
  * Offset/Address/Size: 0x76C | 0x801E0DB0 | size: 0x17C
  */
-void ShaderSkinMesh::SetPoseMatrices(int, GLSkinMeshMatrix*)
+struct EqualFirstCompare {
+    int operator()(unsigned long key1, unsigned long key2) const {
+        if (key1 == key2) return 0;
+        if (key1 < key2) return -1;
+        return 1;
+    }
+};
+
+inline bool avlFindCheck(AVLTreeEntry<unsigned long, SkinMatrix>* node, unsigned long key, SkinMatrix*& outValue)
 {
+    while (node != NULL) {
+        int cmpResult = EqualFirstCompare()(key, node->key);
+        if (cmpResult == 0) {
+            if (&outValue != NULL) {
+                outValue = &node->value;
+            }
+            return true;
+        } else {
+            if (cmpResult < 0) {
+                node = (AVLTreeEntry<unsigned long, SkinMatrix>*)node->node.left;
+            } else {
+                node = (AVLTreeEntry<unsigned long, SkinMatrix>*)node->node.right;
+            }
+        }
+    }
+    return false;
+}
+
+void ShaderSkinMesh::SetPoseMatrices(int num, GLSkinMeshMatrix* pMatrices)
+{
+    AVLTreeNode** poseRoot = (AVLTreeNode**)&poseMatrices.m_Root;
+    int i = 0;
+    for (; i < num; i++) {
+        SkinMatrix* foundValue;
+        unsigned long boneID = pMatrices[i].boneID;
+
+        if (avlFindCheck(boneMatrices.m_Root, boneID, foundValue)) {
+            SkinMatrix skinMatrix;
+            skinMatrix.Set(pMatrices[i].matrix);
+
+            AVLTreeNode* existingNode;
+            poseMatrices.AddAVLNode(
+                poseRoot,
+                (void*)&boneID,
+                (void*)&skinMatrix,
+                &existingNode,
+                poseMatrices.m_NumElements
+            );
+
+            SkinMatrix* dest;
+            if (existingNode == NULL) {
+                poseMatrices.m_NumElements++;
+                dest = NULL;
+            } else {
+                dest = &((AVLTreeEntry<unsigned long, SkinMatrix>*)existingNode)->value;
+            }
+            foundValue = dest;
+            if (foundValue != NULL) {
+                *foundValue = skinMatrix;
+            }
+        }
+    }
 }
 
 /**

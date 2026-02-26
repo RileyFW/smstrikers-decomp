@@ -25,7 +25,68 @@ public:
 
     void Release()
     {
-        FORCE_DONT_INLINE;
+        typedef AVLTreeEntry<unsigned long, ValueType*> Entry;
+        typedef nlAVLTree<unsigned long, ValueType*, DefaultKeyCompare<unsigned long> > Tree;
+
+        struct NodeStack
+        {
+            Entry** data;
+            u32 count;
+        };
+
+        NodeStack* stack;
+        Entry* node;
+        Tree* tree = m_pItems;
+
+        stack = (NodeStack*)nlMalloc(sizeof(NodeStack), 8, false);
+        if (stack != NULL)
+        {
+            u32 numElements = tree->m_NumElements;
+            node = tree->m_Root;
+            stack->data = (Entry**)nlMalloc((numElements + 1) * sizeof(Entry*), 8, false);
+            stack->count = 0;
+
+            if (node != NULL)
+            {
+                while (node->node.left != NULL)
+                {
+                    stack->data[stack->count] = node;
+                    stack->count++;
+                    node = (Entry*)node->node.left;
+                }
+                stack->data[stack->count] = node;
+                stack->count++;
+            }
+        }
+
+        while (stack->count != 0)
+        {
+            Entry* top = stack->data[stack->count - 1];
+            nlFree(top->value);
+            stack->count--;
+
+            Entry* current = stack->data[stack->count];
+            Entry* right = (Entry*)current->node.right;
+            if (right != NULL)
+            {
+                while (right->node.left != NULL)
+                {
+                    stack->data[stack->count] = right;
+                    stack->count++;
+                    right = (Entry*)right->node.left;
+                }
+                stack->data[stack->count] = right;
+                stack->count++;
+            }
+        }
+
+        if (stack != NULL)
+        {
+            delete[] stack->data;
+            delete stack;
+        }
+
+        m_pItems->Clear();
     }
 
     /* 0x0 */ nlAVLTree<unsigned long, ValueType*, DefaultKeyCompare<unsigned long> >* m_pItems; // offset 0x0, size 0x4
@@ -63,7 +124,63 @@ public:
 
     void Release()
     {
-        FORCE_DONT_INLINE;
+        typedef AVLTreeEntry<unsigned long, ValueType*> Entry;
+
+        struct NodeStack
+        {
+            Entry** array;
+            u32 count;
+        };
+
+        nlAVLTree<unsigned long, ValueType*, DefaultKeyCompare<unsigned long> >* tree = m_pItems;
+        NodeStack* pStack = (NodeStack*)nlMalloc(sizeof(NodeStack), 8, false);
+        if (pStack != NULL)
+        {
+            u32 numElements = tree->m_NumElements;
+            Entry* node = tree->m_Root;
+            pStack->array = (Entry**)nlMalloc((numElements + 1) * sizeof(Entry*), 8, false);
+            pStack->count = 0;
+
+            if (node != NULL)
+            {
+                while (node->node.left != NULL)
+                {
+                    pStack->array[pStack->count] = node;
+                    pStack->count++;
+                    node = (Entry*)node->node.left;
+                }
+                pStack->array[pStack->count] = node;
+                pStack->count++;
+            }
+        }
+
+        while (pStack->count > 0)
+        {
+            Entry* top = pStack->array[pStack->count - 1];
+            delete top->value;
+            pStack->count--;
+
+            Entry* right = (Entry*)pStack->array[pStack->count]->node.right;
+            if (right != NULL)
+            {
+                while (right->node.left != NULL)
+                {
+                    pStack->array[pStack->count] = right;
+                    pStack->count++;
+                    right = (Entry*)right->node.left;
+                }
+                pStack->array[pStack->count] = right;
+                pStack->count++;
+            }
+        }
+
+        if (pStack != NULL)
+        {
+            delete[] pStack->array;
+            delete pStack;
+        }
+
+        m_pItems->Clear();
     }
 
     /* 0x0 */ nlAVLTree<unsigned long, ValueType*, DefaultKeyCompare<unsigned long> >* m_pItems;

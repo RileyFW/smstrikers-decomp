@@ -403,7 +403,7 @@ int SaveLoad::GetSaveBlockSize(int)
 /**
  * Offset/Address/Size: 0xD8 | 0x80189A34 | size: 0x18C
  */
-void SaveLoad::HasEnoughFreeSpace(int)
+u8 SaveLoad::HasEnoughFreeSpace(int)
 {
 }
 

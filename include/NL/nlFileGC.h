@@ -6,6 +6,13 @@
 
 #include "NL/nlArrayAllocator.h"
 
+enum GCFileSystem
+{
+    eGC_UNKNOWN = 0,
+    eGC_TDEV = 1,
+    eGC_DVDOPEN = 2,
+};
+
 class GCFile;
 enum eReadState
 {
@@ -84,6 +91,11 @@ struct AsyncToVirMemBufferLoad
 class GCFile : public nlFile
 {
 public:
+    GCFile()
+    {
+        PendingAsync.m_Count = 0;
+        m_Position = 0;
+    }
     virtual ~GCFile();
     virtual u32 FileSize(unsigned int*) = 0;
     virtual void Read(void*, unsigned int);
@@ -106,11 +118,30 @@ struct CURRENT_READ
 class TDEVChunkFile : public GCFile
 {
 public:
+    TDEVChunkFile(_FILE* fp)
+        : m_pFile(fp)
+    {
+    }
     virtual ~TDEVChunkFile();
     virtual u32 FileSize(unsigned int*);
     virtual s32 GetReadStatus();
     virtual void ReadAsync(void*, unsigned long, unsigned long);
     virtual u32 GetDiscPosition();
+
+    void* operator new(size_t)
+    {
+        nlArrayAllocator<TDEVChunkFile>* alloc = s_pAllocator;
+        TDEVChunkFile* ptr = alloc->m_pFree;
+        if (ptr == NULL)
+        {
+            ptr = NULL;
+        }
+        else
+        {
+            alloc->m_pFree = *(TDEVChunkFile**)ptr;
+        }
+        return ptr;
+    }
 
     void operator delete(void* ptr)
     {
@@ -128,11 +159,27 @@ public:
 class DolphinFile : public GCFile
 {
 public:
+    DolphinFile(s32 entryNum) { DVDFastOpen(entryNum, &m_fileInfo); }
     virtual ~DolphinFile();
     virtual u32 FileSize(unsigned int*);
     virtual s32 GetReadStatus();
     virtual void ReadAsync(void*, unsigned long, unsigned long);
     virtual u32 GetDiscPosition();
+
+    void* operator new(size_t)
+    {
+        nlArrayAllocator<DolphinFile>* alloc = s_pAllocator;
+        DolphinFile* ptr = alloc->m_pFree;
+        if (ptr == NULL)
+        {
+            ptr = NULL;
+        }
+        else
+        {
+            alloc->m_pFree = *(DolphinFile**)ptr;
+        }
+        return ptr;
+    }
 
     void operator delete(void* ptr)
     {

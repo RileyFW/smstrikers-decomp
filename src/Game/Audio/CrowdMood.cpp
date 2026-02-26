@@ -2,6 +2,7 @@
 #include "Game/Audio/WorldAudio.h"
 #include "Game/Sys/GCStream.h"
 
+#include "NL/nlConfig.h"
 #include "NL/nlString.h"
 
 extern void ___blank(const char*, ...);
@@ -100,6 +101,7 @@ unsigned char CrowdMood::IsStreamLocked()
  */
 void ChangeCrowdVolume(float)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -107,6 +109,7 @@ void ChangeCrowdVolume(float)
  */
 void MoodDefFromBlend(float*, MOOD_DEFINITION&)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -121,6 +124,7 @@ void PlayVocal(const CROWD_VOCAL_DEFINITION&, CROWD_STATE::VOCALIZATION_STATE&, 
  */
 void PlayMoodDef(MOOD_DEFINITION&)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -234,8 +238,30 @@ void CrowdMood::InitiateFastCrowdTransition()
 /**
  * Offset/Address/Size: 0x65C | 0x8014DD70 | size: 0x18C
  */
-void CrowdMood::SetCrowdVolume(unsigned long, unsigned long)
+void CrowdMood::SetCrowdVolume(unsigned long Volume, unsigned long FadeTime)
 {
+    MOOD_DEFINITION MoodDef;
+    unsigned char crowdOff = GetConfigBool(Config::Global(), "CrowdOff", false);
+
+    if (crowdOff == 1)
+    {
+        g_CrowdState.CrowdVolume = 0.0f;
+        MoodDefFromBlend(g_CrowdState.CurrentMoodBlend, MoodDef);
+        PlayMoodDef(MoodDef);
+        return;
+    }
+
+    if (FadeTime == 0)
+    {
+        ChangeCrowdVolume((float)Volume / 100.0f);
+    }
+    else
+    {
+        g_CrowdState.VolumeFade.StartVol = g_CrowdState.CrowdVolume;
+        g_CrowdState.VolumeFade.EndVol = (float)Volume / 100.0f;
+        g_CrowdState.VolumeFade.Time = (float)FadeTime / 1000.0f;
+        g_CrowdState.VolumeFade.Interp = 0.0f;
+    }
 }
 
 /**

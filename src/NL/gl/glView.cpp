@@ -6,8 +6,7 @@
 #include "NL/nlMemory.h"
 #include <string.h>
 
-bool gl_ViewEnable[34] = { true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
+bool gl_ViewEnable[34] = { true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
 glView* views[34];
 
 /**
@@ -247,21 +246,22 @@ void gl_ViewStartup()
 /**
  * Offset/Address/Size: 0x470 | 0x801DE914 | size: 0xA8
  */
-void gl_ViewIterate(eGLView view, glViewPacketCallback callback)
+#pragma opt_common_subs off
+void gl_ViewIterate(eGLView view, glViewPacketCallback cb)
 {
-    glView* view_ptr = views[view];
-    if (view_ptr->m_preIterateCallback != NULL)
+    if (views[view]->m_preIterateCallback != NULL)
     {
-        view_ptr->m_preIterateCallback(view, 1);
+        views[view]->m_preIterateCallback(view, 1);
     }
 
-    view_ptr->renderList->Iterate(view, callback);
+    views[view]->renderList->Iterate(view, cb);
 
-    if (view_ptr->m_postIterateCallback != NULL)
+    if (views[view]->m_postIterateCallback != NULL)
     {
-        view_ptr->m_postIterateCallback(view, 0);
+        views[view]->m_postIterateCallback(view, 0);
     }
 }
+#pragma opt_common_subs on
 
 /**
  * Offset/Address/Size: 0x518 | 0x801DE9BC | size: 0x54

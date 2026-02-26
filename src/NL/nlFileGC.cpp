@@ -7,6 +7,7 @@
 #include <string.h>
 
 static AsyncManager* s_pAsyncManager;
+static GCFileSystem fileSystem;
 
 namespace nlFileGC
 {
@@ -24,8 +25,10 @@ void nlReadAsyncToVirtualMemory(nlFile* file, void* buffer, int size, ReadAsyncC
     unsigned long chunkSize, void* userData)
 {
     int i;
-    for (i = 0; i < 4; i++) {
-        if (nlFileGC::asyncToVirMemBufferLoad[i].numChunksLeft == 0) {
+    for (i = 0; i < 4; i++)
+    {
+        if (nlFileGC::asyncToVirMemBufferLoad[i].numChunksLeft == 0)
+        {
             unsigned int numChunks = (unsigned int)size / (unsigned int)chunkSize;
             unsigned long counter2 = i;
             unsigned long counter1 = i;
@@ -38,7 +41,8 @@ void nlReadAsyncToVirtualMemory(nlFile* file, void* buffer, int size, ReadAsyncC
             nlFileGC::asyncToVirMemBufferLoad[i].target = (char*)buffer;
 
             int j;
-            for (j = 0; j < (int)numChunks; j++) {
+            for (j = 0; j < (int)numChunks; j++)
+            {
                 nlReadAsync(file, userData, sz, nlFileGC::AsyncToVirMemBufferCallback, counter1);
             }
 
@@ -206,10 +210,67 @@ void nlFlushFileCash()
 
 /**
  * Offset/Address/Size: 0x19EC | 0x801D0740 | size: 0x18C
+ * TODO: 96.5% match - r29/r31 register mismatch for result/file values, plus
+ * extra mr r0,r3 shuttles in ftell/return paths and a shifted branch layout.
  */
-nlFile* nlOpen(const char*)
+nlFile* nlOpen(const char* fileName)
 {
-    return NULL;
+    s32 entryNum;
+    _FILE* fp;
+    nlFile* file;
+
+    if (fileSystem == eGC_TDEV)
+    {
+        nlFile* result;
+
+        fp = fopen(fileName, "rb");
+        if (fp == NULL)
+        {
+            result = NULL;
+        }
+        else
+        {
+            result = (nlFile*)ftell(fp);
+            fseek(fp, 0, 2);
+            unsigned long size = ftell(fp);
+            fseek(fp, (unsigned long)result, 0);
+
+            if (size == 0xFFFFFFFF)
+            {
+                result = NULL;
+            }
+            else
+            {
+                result = new TDEVChunkFile(fp);
+                while (fp == NULL)
+                {
+                }
+            }
+        }
+
+        file = result;
+    }
+    else
+    {
+        nlFile* result;
+
+        entryNum = DVDConvertPathToEntrynum(fileName);
+        if (entryNum == -1)
+        {
+            result = NULL;
+        }
+        else
+        {
+            result = new DolphinFile(entryNum);
+            while (result == NULL)
+            {
+            }
+        }
+
+        file = result;
+    }
+
+    return file;
 }
 
 /**
@@ -283,20 +344,24 @@ TDEVChunkFile::~TDEVChunkFile()
 
 /**
  * Offset/Address/Size: 0x90 | 0x801D0C64 | size: 0x8C
- * TODO: 84.4% match - uses 3 registers (r29-r31) instead of 4 (r28-r31)
  */
+static inline unsigned int FileSize_helper(_FILE* pFile)
+{
+    unsigned long uPos = ftell(pFile);
+    fseek(pFile, 0, 2);
+    unsigned long uSize = ftell(pFile);
+    fseek(pFile, uPos, 0);
+    return uSize;
+}
+
 u32 TDEVChunkFile::FileSize(unsigned int* pSize)
 {
-    _FILE* file = m_pFile;
-    u32 currentPosition = ftell(file);
-    fseek(file, 0, 2);
-    u32 fileSize = ftell(file);
-    fseek(file, currentPosition, 0);
+    unsigned long Size = FileSize_helper(m_pFile);
     if (pSize != NULL)
     {
-        *pSize = fileSize;
+        *pSize = Size;
     }
-    return fileSize;
+    return Size;
 }
 
 /**

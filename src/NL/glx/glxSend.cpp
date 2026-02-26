@@ -1,6 +1,7 @@
 #include "NL/glx/glxSend.h"
 
 #include "NL/glx/glxSend.h"
+#include "dolphin/gx/GXGeometry.h"
 #include "dolphin/gx/GXLighting.h"
 #include "dolphin/gx/GXEnum.h"
 #include "NL/gl/glLightUserData.h"
@@ -10,6 +11,7 @@
 extern bool glx_ReloadPointLights;
 extern bool g_bAllowLighting;
 extern u32 glx_prevLightMask;
+extern u32 glx_NumIndices;
 
 static u32 gxLights[4] = {
     0x00000001,
@@ -109,11 +111,100 @@ void glx_LoadLight(GLLightUserData* pLight, _GXLightID lightId)
     FORCE_DONT_INLINE;
 }
 
+static u32 gx_texattr[] = {
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+};
+
 /**
  * Offset/Address/Size: 0x22A0 | 0x801BBDA0 | size: 0x194
  */
-void glx_SwitchStreams(const glModelPacket*)
+void glx_SwitchStreams(const glModelPacket* pPacket)
 {
+    static u32 gx_streams[] = {
+        9,
+        10,
+        11,
+        0xFF,
+        0xFF,
+        0xFF,
+        0xFF,
+        0xFF,
+        0xFF,
+        0xFF,
+        0xFF,
+        26,
+        0xFF,
+    };
+
+    glModelStream* stream = pPacket->streams;
+    glModelStream* end = stream + pPacket->numStreams;
+
+    GXClearVtxDesc();
+    glx_NumIndices = 0;
+
+    while (stream < end)
+    {
+        if (stream->id == 12)
+        {
+            GXSetVtxDesc(GX_VA_PNMTXIDX, GX_DIRECT);
+            glx_NumIndices++;
+            stream++;
+            continue;
+        }
+
+        s32 attr = gx_streams[stream->id];
+        if (attr == 0xFF)
+        {
+            attr = gx_texattr[stream->id - 3];
+        }
+
+        if (attr != 0xFF)
+        {
+            if (stream->address == 0)
+            {
+                GXSetVtxDesc((GXAttr)attr, GX_DIRECT);
+            }
+            else
+            {
+                GXSetArray((GXAttr)attr, (void*)stream->address, stream->stride);
+                GXSetVtxDesc((GXAttr)attr, GX_INDEX16);
+                glx_NumIndices++;
+            }
+        }
+
+        if (stream->id == 1)
+        {
+            if (stream->stride == 12)
+            {
+                GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
+            }
+            else
+            {
+                GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_S8, 6);
+            }
+        }
+
+        if (stream->id == 0)
+        {
+            if (stream->stride == 12)
+            {
+                GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+            }
+            else
+            {
+                GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 8);
+            }
+        }
+
+        stream++;
+    }
 }
 
 /**

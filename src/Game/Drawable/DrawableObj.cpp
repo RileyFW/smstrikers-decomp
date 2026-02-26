@@ -45,11 +45,7 @@ DrawableObject::~DrawableObject()
 
 /**
  * Offset/Address/Size: 0x2C | 0x8011FC9C | size: 0x90
- * TODO: 86.72% match - compiler uses f0 for loads/stores instead of f1 (lines 2c-48),
- * and epilogue order differs (lines 78-80). With #pragma scheduling off.
  */
-#pragma push
-#pragma scheduling off
 nlMatrix4& DrawableObject::GetWorldMatrix() const
 {
     if (!m_worldMatrixUpToDate)
@@ -57,14 +53,10 @@ nlMatrix4& DrawableObject::GetWorldMatrix() const
         nlMatrix4 rot_mtx;
         nlQuatToMatrix(rot_mtx, m_orientation);
 
-        float tx = m_translation.f.x;
-        float one = 1.0f;
-        rot_mtx.m[3][0] = tx;
-        float ty = m_translation.f.y;
-        rot_mtx.m[3][1] = ty;
-        float tz = m_translation.f.z;
-        rot_mtx.m[3][2] = tz;
-        rot_mtx.m[3][3] = one;
+        rot_mtx.m[3][0] = m_translation.f.x;
+        rot_mtx.m[3][1] = m_translation.f.y;
+        rot_mtx.m[3][2] = m_translation.f.z;
+        rot_mtx.m[3][3] = 1.0f;
 
         nlMatrix4 scale_mtx;
         float s = m_scale;
@@ -74,21 +66,6 @@ nlMatrix4& DrawableObject::GetWorldMatrix() const
     }
     return *(nlMatrix4*)&m_worldMatrix;
 }
-#pragma pop
-
-// if (this->unk44 == 0)
-// {
-//     nlQuatToMatrix__FR9nlMatrix4RC12nlQuaternion(&sp48, &this->unk48);
-//     sp78 = this->unk58;
-//     sp7C = this->unk5C;
-//     sp80 = this->unk60;
-//     sp84 = 1.0f;
-//     temp_f1 = this->unk64;
-//     nlMakeScaleMatrix__FR9nlMatrix4fff(&sp8, temp_f1, temp_f1, temp_f1);
-//     nlMultMatrices__FR9nlMatrix4RC9nlMatrix4RC9nlMatrix4(&this->unk4, &sp8, &sp48);
-//     this->unk44 = 1;
-// }
-// return &this->unk4;
 
 /**
  * Offset/Address/Size: 0x0 | 0x8011FC70 | size: 0x2C

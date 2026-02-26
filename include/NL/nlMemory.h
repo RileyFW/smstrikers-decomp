@@ -31,6 +31,11 @@ void nlFree(void* ptr);
 void* nlMalloc(unsigned long size, unsigned int alignment, bool atEnd);
 void* nlMalloc(unsigned long);
 void* operator new(unsigned long);
+
+inline void* operator new(unsigned long size, unsigned int alignment, bool atEnd)
+{
+    return nlMalloc(size, alignment, atEnd);
+}
 void operator delete[](void* ptr);
 void operator delete(void* ptr);
 unsigned int nlVirtualTotalFree();

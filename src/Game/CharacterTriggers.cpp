@@ -300,8 +300,29 @@ void KillDaze(cPlayer* player)
 /**
  * Offset/Address/Size: 0x1598 | 0x801A0348 | size: 0x164
  */
-void EmitFreeze(cPlayer*)
+void EmitFreeze(cPlayer* pCharacter)
 {
+    pCharacter->Play3DSFX((Audio::eCharSFX)0x1f, (PosUpdateMethod)2, 1.0f);
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("freeze"), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 1.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.0f;
+    {
+        Function<EmissionController&> update2;
+        {
+            Function<EmissionController&> update;
+            update.mTag = FREE_FUNCTION;
+            update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+            pController->SetUpdateCallback(update);
+        }
+        pCharacter->AttachEffect(pController);
+        pController->m_uUserData = GetCharacterIndex(pCharacter);
+        update2.mTag = FREE_FUNCTION;
+        update2.mFreeFunction = UpdateEmitterFromCharacter;
+        pController->SetUpdateCallback(update2);
+    }
+    BeginRumbleAction(RUMBLE_SHOT_CONTACT, pCharacter->GetGlobalPad());
+    pCharacter->m_pEffectsTexturing = fxGetTexturing(eFXTex_Freeze);
 }
 
 /**

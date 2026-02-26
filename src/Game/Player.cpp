@@ -17,6 +17,7 @@
 #include "Game/Effects/EffectsGroup.h"
 #include "Game/CharacterTriggers.h"
 #include "Game/Game.h"
+#include "Game/Audio/WorldAudio.h"
 
 float g_fPassInterceptNoPickupTimer = 5.0f;
 
@@ -470,8 +471,52 @@ void cPlayer::SetAIPad(cAIPad*)
 /**
  * Offset/Address/Size: 0x1E20 | 0x80059370 | size: 0x18C
  */
-void cPlayer::PlayAttackReactionSounds(float)
+void cPlayer::PlayAttackReactionSounds(float fScale)
 {
+    Audio::cCharacterSFX* pSFX = m_pCharacterSFX;
+
+    Audio::gCrowdSFX.Stop(Audio::CROWDSFX_EVENT_OH_SMALL3, cGameSFX::SFX_STOP_FIRST);
+
+    if (pSFX->IsKeepingTrackOf(Audio::CHARSFX_HIT_BODY, NULL))
+    {
+        pSFX->Stop(Audio::CHARSFX_HIT_BODY, cGameSFX::SFX_STOP_FIRST);
+    }
+    else if (pSFX->IsKeepingTrackOf(Audio::CHARSFX_HIT_BODY_BONE, NULL))
+    {
+        pSFX->Stop(Audio::CHARSFX_HIT_BODY_BONE, cGameSFX::SFX_STOP_FIRST);
+    }
+
+    Audio::SoundAttributes attrs;
+    attrs.Init();
+
+    if (fScale >= g_pGame->m_pGameTweaks->unk240 && m_eClassType != GOALIE)
+    {
+        attrs.SetSoundType(Audio::CHARSFX_HIT_BODY_BONE, true);
+    }
+    else
+    {
+        attrs.SetSoundType(Audio::CHARSFX_HIT_BODY, true);
+    }
+
+    attrs.UseStationaryPosVector(m_v3Position);
+
+    attrs.mf_Volume = fScale;
+    if (0.0f != fScale)
+    {
+        SoundStrToIDNode& node = m_pCharacterSFX->mpSFX[attrs.mu_Type];
+        attrs.mf_Volume *= node.fVolume;
+    }
+
+    PlaySFX(attrs);
+
+    if (!pSFX->IsPlayingRandomCharDialogue(CHAR_DIALOGUE_ELECTROCUTE))
+    {
+        pSFX->StopPlayingAllRandomCharDialogue();
+        if (m_eCharacterClass != MYSTERY)
+        {
+            PlayRandomCharDialogue(1, VECTORS, fScale, 1.0f);
+        }
+    }
 }
 
 /**

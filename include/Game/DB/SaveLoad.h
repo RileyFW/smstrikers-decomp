@@ -18,7 +18,7 @@ public:
     static long StartFileExistsCheck(int, void (*)(long));
     static long StartMemoryCardIDCheck(int, void (*)(long));
     int GetSaveBlockSize(int);
-    void HasEnoughFreeSpace(int);
+    static u8 HasEnoughFreeSpace(int);
     void FreeAllCallbackMemory();
     static void RememberCurrentMemCardSerialID(int);
 };

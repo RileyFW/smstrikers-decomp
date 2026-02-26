@@ -12,8 +12,8 @@ public:
     SoundEventScript()
         : InterpreterCore(0xA)
     {
-        u32 fileSize;
         pByteCode = NULL;
+        u32 fileSize = 0;
         // InterpreterCore::m_Header = 0;
         pByteCode = nlLoadEntireFile("audio/soundevents.byte_code", &fileSize, 0x20, AllocateStart);
         LoadByteCode(pByteCode);

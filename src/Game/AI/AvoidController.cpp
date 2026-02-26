@@ -64,47 +64,28 @@ void AvoidController::UseMinimumAvoidance(cPlayer* player)
     m_pIgnoreThisPlayer = player;
 }
 
+static int AvoidableEnumToIndex(eAvoidableThings avoidable)
+{
+    if (avoidable == AVOID_EVERYTHING)
+    {
+        return 5;
+    }
+    for (int i = 0; i < NUM_AVOIDABLES; i++)
+    {
+        if ((1 << i) & (int)avoidable)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
 /**
  * Offset/Address/Size: 0x2188 | 0x800097DC | size: 0xB8
  */
 nlVector3& AvoidController::GetLastRepulsionVector(eAvoidableThings things)
 {
-    int index;
-
-    if (things == AVOID_EVERYTHING) // 0x1F
-    {
-        index = 5;
-    }
-    else if ((AVOID_FIELDERS)&things) // 0x01
-    {
-        index = 0;
-    }
-    else if (AVOID_GOALIES & things) // 0x02
-    {
-        index = 1;
-    }
-    else if (AVOID_POWERUPS & things) // 0x04
-    {
-        index = 2;
-    }
-    else if (AVOID_SIDELINES & things) // 0x08
-    {
-        index = 3;
-    }
-    else if (AVOID_BOWSER & things) // 0x10
-    {
-        index = 4;
-    }
-    else if (0x20 & things) // bit 5 - also maps to index 5
-    {
-        index = 5;
-    }
-    else
-    {
-        index = -1;
-    }
-
-    return m_LastRepulsionVector[index];
+    return m_LastRepulsionVector[AvoidableEnumToIndex(things)];
 }
 /**
  * Offset/Address/Size: 0x12BC | 0x80008910 | size: 0xECC

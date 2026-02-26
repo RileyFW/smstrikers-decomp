@@ -34,7 +34,12 @@ public:
 }; // total size: 0x8
 
 class cPoseAccumulator;
-class GLSkinMeshMatrix;
+
+struct GLSkinMeshMatrix
+{
+    unsigned long boneID;  // offset 0x0
+    nlMatrix4 matrix;      // offset 0x4
+}; // total size: 0x44
 
 class GLSkinMesh
 {

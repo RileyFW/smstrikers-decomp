@@ -274,6 +274,35 @@ void HUDOverlay::ResetScores()
 /**
  * Offset/Address/Size: 0x0 | 0x800F62E0 | size: 0x188
  */
-void HUDOverlay::SwapPowerUps(int)
+void HUDOverlay::SwapPowerUps(int homeAway)
 {
+    int temp = mNumFlareCycles[homeAway][0];
+    mNumFlareCycles[homeAway][0] = mNumFlareCycles[homeAway][1];
+    mNumFlareCycles[homeAway][1] = temp;
+
+    f32 time0 = m_pComponentFlares[homeAway][0]->GetActiveSlide()->m_time;
+    f32 time1 = m_pComponentFlares[homeAway][1]->GetActiveSlide()->m_time;
+
+    m_pComponentFlares[homeAway][0]->SetActiveSlide("Slide1");
+    m_pComponentFlares[homeAway][0]->Update(time1);
+    m_pComponentFlares[homeAway][1]->SetActiveSlide("Slide1");
+    m_pComponentFlares[homeAway][1]->Update(time0);
+
+    for (int i = 0; i < 2; i++)
+    {
+        if (mNumFlareCycles[homeAway][i] == -1)
+        {
+            m_pImageFlares[0][homeAway][i]->m_bVisible = false;
+            m_pImageFlares[1][homeAway][i]->m_bVisible = false;
+            m_pImagePowerUps[0][homeAway][i]->m_bVisible = true;
+            m_pImagePowerUps[1][homeAway][i]->m_bVisible = true;
+        }
+        else
+        {
+            m_pImageFlares[0][homeAway][i]->m_bVisible = true;
+            m_pImageFlares[1][homeAway][i]->m_bVisible = true;
+            m_pImagePowerUps[0][homeAway][i]->m_bVisible = false;
+            m_pImagePowerUps[1][homeAway][i]->m_bVisible = false;
+        }
+    }
 }

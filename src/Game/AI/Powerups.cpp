@@ -571,6 +571,59 @@ void RedShell::Destroy(bool bSilent)
  */
 void RedShell::SeekTarget()
 {
+    float fCurrSpeed;
+    float dx, dy;
+    float newVelY, newVelX;
+    nlVector3 v3NewVelocity;
+
+    cFielder* target = m_pTarget;
+    if (target == NULL)
+    {
+        return;
+    }
+
+    const nlVector3& targetPos = ((cCharacter*)target)->m_v3Position;
+    dy = targetPos.f.y - m_v3Position.f.y;
+    dx = targetPos.f.x - m_v3Position.f.x;
+
+    float distSq = dy * dy + dx * dx;
+
+    // Dead call - result discarded but compiler doesn't optimize it away
+    nlSqrt(distSq, true);
+
+    float invDist = 1.0f / nlSqrt(distSq, true);
+    dx = invDist * dx;
+    dy = invDist * dy;
+
+    fCurrSpeed = nlGetLength2D(m_v3Velocity.f.x, m_v3Velocity.f.y);
+
+    // TODO: 99.3% match - MWCC compiler scheduling difference: decomp.me loads x-component
+    // (lower struct offset) before y-component, but target binary loads y first. This causes
+    // cascading register swaps (f2/f3, f29/f30) throughout the function. All remaining diffs
+    // are offset/register swaps from this root cause.
+    float turnRate = 5.0f;
+    float steerY = turnRate * dy;
+    float steerX = turnRate * dx;
+    newVelY = steerY + m_v3Velocity.f.y;
+    newVelX = steerX + m_v3Velocity.f.x;
+
+    float newSpeed = nlSqrt(newVelY * newVelY + newVelX * newVelX, true);
+    float invNewSpeed = 1.0f / newSpeed;
+    float normNewVelY = invNewSpeed * newVelY;
+    float normNewVelX = invNewSpeed * newVelX;
+
+    float dot = normNewVelY * dy + normNewVelX * dx;
+    if (dot < 0.0f)
+    {
+        m_pTarget = NULL;
+    }
+    else
+    {
+        nlVec3Set(v3NewVelocity, fCurrSpeed * normNewVelX, fCurrSpeed * normNewVelY, 0.0f);
+        m_v3Velocity = v3NewVelocity;
+        m_pPhysicsObject->SetLinearVelocity(v3NewVelocity);
+        m_pPhysicsObject->SetLinearVelocity(m_v3Velocity);
+    }
 }
 
 /**

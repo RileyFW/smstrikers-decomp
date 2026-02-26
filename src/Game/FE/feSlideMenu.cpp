@@ -15,32 +15,44 @@ void FESlideMenu::UpdatePresentation()
  */
 bool FESlideMenu::PrevItem()
 {
-    if (m_lockInput) {
+    if (m_lockInput)
+    {
         return false;
     }
 
     u8 idx = m_currentSlide;
     bool changed = true;
 
-    if (idx == 0) {
-        if (m_doWrapAround) {
+    if (idx == 0)
+    {
+        if (m_doWrapAround)
+        {
             m_currentSlide = m_size - 1;
-        } else {
+        }
+        else
+        {
             changed = false;
         }
-    } else {
+    }
+    else
+    {
         m_currentSlide = idx - 1;
     }
 
-    if (changed) {
+    if (changed)
+    {
         m_pMenuComp->SetActiveSlide(m_menuItems[m_currentSlide].ItemSlide);
 
         MenuItem* item = &m_menuItems[m_currentSlide];
         s32 tag = item->ItemCBFuncs[1].mTag;
-        if (tag != EMPTY) {
-            if (tag == FREE_FUNCTION) {
+        if (tag != EMPTY)
+        {
+            if (tag == FREE_FUNCTION)
+            {
                 ((void (*)(MenuItem*))item->ItemCBFuncs[1].mFreeFunction)(item);
-            } else {
+            }
+            else
+            {
                 item->ItemCBFuncs[1].mFunctor->fnc_0x8();
             }
         }
@@ -60,9 +72,9 @@ bool FESlideMenu::NextItem()
     {
         return false;
     }
-    
+
     bool didChange = true;
-    
+
     if (m_currentSlide == m_size - 1)
     {
         // At end of menu
@@ -79,14 +91,14 @@ bool FESlideMenu::NextItem()
     {
         m_currentSlide++;
     }
-    
+
     if (didChange)
     {
         m_pMenuComp->SetActiveSlide(m_menuItems[m_currentSlide].ItemSlide);
-        
+
         MenuItem* item = &m_menuItems[m_currentSlide];
         int funcType = item->ItemCBFuncs[1].mTag;
-        
+
         if (funcType == 0)
         {
             // No callback
@@ -94,19 +106,19 @@ bool FESlideMenu::NextItem()
         else if (funcType == 1)
         {
             // Direct function call
-            void (*fn)() = (void(*)())item->ItemCBFuncs[1].mFreeFunction;
+            void (*fn)() = (void (*)())item->ItemCBFuncs[1].mFreeFunction;
             fn();
         }
         else
         {
             // Virtual call through functor - use inline chained access
             FunctorBase* functor = item->ItemCBFuncs[1].mFunctor;
-            ((void(*)(FunctorBase*))(*(unsigned long**)functor)[3])(functor);
+            ((void (*)(FunctorBase*))(*(unsigned long**)functor)[3])(functor);
         }
-        
+
         return true;
     }
-    
+
     return false;
 }
 
@@ -154,32 +166,43 @@ void FESlideMenu::SetSlideByIndex(unsigned char index)
 
 /**
  * Offset/Address/Size: 0x2A4 | 0x80096EF8 | size: 0x84
- * TODO: 85.6% match - double beq pattern from switch/enum optimization not reproducible
  */
 bool FESlideMenu::ApplyFunction()
 {
-    if (m_lockInput) {
+    if (m_lockInput)
+    {
         return false;
     }
 
-    FESlideMenu* item = (FESlideMenu*)((char*)this + m_currentSlide * 0x14);
-    int tag = *(int*)((char*)item + 4);
+    MenuItem* item = &m_menuItems[m_currentSlide];
+    int tag = item->ItemCBFuncs[0].mTag;
 
-    if (tag == EMPTY) {
-        return false;
+    if (tag == EMPTY)
+    {
+        goto ret0;
     }
 
-    if (tag != EMPTY) {
-        if (tag == FREE_FUNCTION) {
-            void (*func)(FESlideMenu*) = *(void (**)(FESlideMenu*))((char*)item + 8);
-            func(item);
-        } else {
-            FunctorBase* fobj = *(FunctorBase**)((char*)item + 8);
-            fobj->fnc_0x8();
-        }
+    if (tag == EMPTY)
+    {
+        goto ret1;
     }
 
+    if (tag != FREE_FUNCTION)
+    {
+        goto functor;
+    }
+
+    ((void (*)(MenuItem*))item->ItemCBFuncs[0].mFreeFunction)(item);
+    goto ret1;
+
+functor:
+    item->ItemCBFuncs[0].mFunctor->fnc_0x8();
+
+ret1:
     return true;
+
+ret0:
+    return false;
 }
 
 /**
