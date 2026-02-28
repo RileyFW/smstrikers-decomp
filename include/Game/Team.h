@@ -124,6 +124,6 @@ public:
     /* 0x94 */ Timer mtBallInterceptTimer;
 }; // total size: 0x98
 
-// extern cTeam* g_pTeams[2];
+extern cTeam* g_pTeams[];
 
 #endif // _CTEAM_H_

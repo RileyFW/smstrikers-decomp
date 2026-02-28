@@ -184,9 +184,22 @@ void Audio::CreatePriorityStreams()
 
 /**
  * Offset/Address/Size: 0xDC | 0x8014B8F4 | size: 0x1A0
+ * TODO: 98.98% match - stack temporary allocation swap (sp+0x08 vs sp+0x10 for
+ * Function0<void> copy param and Function<FnVoidVoid> result)
  */
 void Audio::DestroyPriorityStreams()
 {
+    PriorityStream* ps;
+    if ((ps = g_pPriorityStream) != NULL)
+    {
+        AudioStreamTrack::StreamTrack& track = ps->m_Track;
+        {
+            Function0<void> f0;
+            track.m_IdleCallback = Function<FnVoidVoid>(f0);
+        }
+        delete ps;
+    }
+    g_pPriorityStream = NULL;
 }
 
 /**

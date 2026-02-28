@@ -221,9 +221,56 @@ void FakeBallWorld::InvalidateBallCache()
 
 /**
  * Offset/Address/Size: 0x1F14 | 0x80139300 | size: 0x198
+ * TODO: 99.66% match - world ptr in r30 vs r28 (MWCC register allocator quirk)
  */
 void FakeBallWorld::Destroy()
 {
+    if (mpPredictWorld != NULL)
+    {
+        FakeBallWorld* world = mpPredictWorld;
+        if (world != NULL)
+        {
+            delete world->mpPhysicsBall;
+            delete world->mpGroundPlane;
+            delete world->mpCollisionSpace;
+            delete world->mpPhysicsWorld;
+            delete world;
+        }
+        mpPredictWorld = NULL;
+    }
+
+    if (mBallCacheList.m_Head != NULL)
+    {
+        DLListEntry<BallCacheInfo*>* start = nlDLRingGetStart(mBallCacheList.m_Head);
+        DLListEntry<BallCacheInfo*>* end = mBallCacheList.m_Head;
+        DLListEntry<BallCacheInfo*>* current = start;
+
+        while (current != NULL)
+        {
+            BallCacheInfo* data = current->m_data;
+            ((SlotPoolEntry*)data)->m_next = BallCacheInfo::mBallCacheInfoSlotPool.m_FreeList;
+            BallCacheInfo::mBallCacheInfoSlotPool.m_FreeList = (SlotPoolEntry*)data;
+
+            if (nlDLRingIsEnd(end, current) || current == NULL)
+            {
+                current = NULL;
+            }
+            else
+            {
+                current = current->m_next;
+            }
+        }
+
+        nlWalkDLRing<DLListEntry<BallCacheInfo*>, BallCacheListBase>(
+            mBallCacheList.m_Head,
+            (BallCacheListBase*)&mBallCacheList,
+            (void (BallCacheListBase::*)(DLListEntry<BallCacheInfo*>*))&BallCacheListBase::DeleteEntry);
+        mBallCacheList.m_Head = NULL;
+    }
+
+    mfLastCacheTime = -1.0f;
+    SlotPoolBase::BaseFreeBlocks((SlotPoolBase*)&mBallCacheList, sizeof(DLListEntry<BallCacheInfo*>));
+    SlotPoolBase::BaseFreeBlocks((SlotPoolBase*)&BallCacheInfo::mBallCacheInfoSlotPool, sizeof(BallCacheInfo));
 }
 
 /**

@@ -274,10 +274,7 @@ EffectsTemplate* fxGetTemplate(unsigned long key)
     int cmpResult;
     bool found;
 
-    // node = pTemplateMap->m_Root;
-
-    // while (node != nullptr)
-    for (node = pTemplateMap->m_Root; node != nullptr;)
+    for (node = pTemplateMap->m_Root; node != nullptr || (found = false, false);)
     {
         if (key == node->key)
         {
@@ -292,7 +289,6 @@ EffectsTemplate* fxGetTemplate(unsigned long key)
             cmpResult = 1;
         }
 
-        found = false;
         if (cmpResult == 0)
         {
             if (&resultPtr != nullptr)
@@ -302,16 +298,13 @@ EffectsTemplate* fxGetTemplate(unsigned long key)
             found = true;
             break;
         }
+        else if (cmpResult < 0)
+        {
+            node = (AVLTreeEntry<unsigned long, EffectsTemplate*>*)node->node.left;
+        }
         else
         {
-            if (cmpResult < 0)
-            {
-                node = (AVLTreeEntry<unsigned long, EffectsTemplate*>*)node->node.left;
-            }
-            else
-            {
-                node = (AVLTreeEntry<unsigned long, EffectsTemplate*>*)node->node.right;
-            }
+            node = (AVLTreeEntry<unsigned long, EffectsTemplate*>*)node->node.right;
         }
     }
 

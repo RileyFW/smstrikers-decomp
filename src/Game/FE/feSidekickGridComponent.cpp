@@ -3,7 +3,8 @@
 #include "Game/FE/feFinder.h"
 #include "Game/FE/tlComponentInstance.h"
 
-struct CellItem {
+struct CellItem
+{
     int mIconType;
     const char* mIconName;
 };
@@ -27,22 +28,23 @@ void ISidekickGridComponent::SetVisibleInstanceTable(bool visible)
 void ISidekickGridComponent::MoveHighlightToTarget(eSidekickID id)
 {
     int item;
-    switch (id) {
-        case SK_TOAD:
-            item = 0;
-            break;
-        case SK_HAMMERBROS:
-            item = 1;
-            break;
-        case SK_BIRDO:
-            item = 2;
-            break;
-        case SK_KOOPA:
-            item = 3;
-            break;
-        default:
-            item = 0;
-            break;
+    switch (id)
+    {
+    case SK_TOAD:
+        item = 0;
+        break;
+    case SK_HAMMERBROS:
+        item = 1;
+        break;
+    case SK_BIRDO:
+        item = 2;
+        break;
+    case SK_KOOPA:
+        item = 3;
+        break;
+    default:
+        item = 0;
+        break;
     }
     mMapMenu->SetSelectedItem(item);
 }
@@ -54,7 +56,8 @@ eSidekickID ISidekickGridComponent::GetSelectedItem() const
 {
     int position = mMapMenu->GetSelectedItem();
 
-    switch (position) {
+    switch (position)
+    {
     case 0:
         return SK_TOAD;
     case 1:
@@ -83,7 +86,8 @@ void ISidekickGridComponent::RebuildInstanceTable()
     typedef TLInstance* (*FindByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
     typedef TLInstance* (*FindByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
 
-    union {
+    union
+    {
         FindByValue byValue;
         FindByRef byRef;
     } findInst;
@@ -92,7 +96,8 @@ void ISidekickGridComponent::RebuildInstanceTable()
 
     TLSlide* activeslide = mParentComponent->GetActiveSlide();
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         volatile InlineHasher hB, hA, h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
 
         h0.m_Hash = 0;
@@ -130,6 +135,58 @@ void ISidekickGridComponent::RebuildInstanceTable()
  */
 void ISidekickGridComponent::BuildMapMenu()
 {
+    // TODO: 91.79% match - remaining diff is register allocation in the grid AddItem loop.
+    TLSlide* activeslide = mParentComponent->GetActiveSlide();
+
+    mInstanceTable = (TLInstance**)nlMalloc(0x10, 8, false);
+
+    for (int i = 0; i < 4; i++)
+    {
+        TLInstance* inst = FEFinder<TLInstance, 2>::Find(
+            activeslide,
+            InlineHasher(nlStringLowerHash(SidekickCellItems[i].mIconName)),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0));
+
+        mInstanceTable[SidekickCellItems[i].mIconType] = inst;
+    }
+
+    for (int i = 0, itemIndexBase = 0; i < 2; i++, itemIndexBase += 2)
+    {
+        int itemIndex = itemIndexBase;
+
+        for (int j = 0; j < 2; j++, itemIndex++)
+        {
+            int leftIndex = itemIndex - 1;
+            if (((itemIndex % 2) - 1) < 0)
+            {
+                leftIndex = itemIndex + 1;
+            }
+
+            int rightIndex = itemIndex + 1;
+            if (((itemIndex % 2) + 1) >= 2)
+            {
+                rightIndex = itemIndex - 1;
+            }
+
+            int oppositeIndex = (itemIndex + 2) % 4;
+            int iconType = SidekickCellItems[itemIndex].mIconType;
+
+            mMapMenu->AddItem(
+                iconType,
+                mInstanceTable[iconType],
+                SidekickCellItems[leftIndex].mIconType,
+                SidekickCellItems[rightIndex].mIconType,
+                SidekickCellItems[oppositeIndex].mIconType,
+                SidekickCellItems[oppositeIndex].mIconType,
+                true);
+        }
+    }
+
+    mMapMenu->SetSelectedItem(SidekickCellItems[0].mIconType);
 }
 
 /**

@@ -80,7 +80,7 @@ public:
     float GetSFXVolReverb(unsigned long) const;
     bool IsKeepingTrackOf(unsigned long, SFXPlaySet**);
     bool ActivateFilterOnAllTrackedSFX(bool);
-    void SetFilterFreqOnAllTrackedSFX(unsigned short);
+    bool SetFilterFreqOnAllTrackedSFX(unsigned short);
     bool SetPitchBendOnAllDialogueSFX(unsigned short);
     void KeepTrack(SFXEmitter*, const Audio::SoundAttributes&, unsigned long);
     void Stop(unsigned long, cGameSFX::StopFlag);

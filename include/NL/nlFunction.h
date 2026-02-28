@@ -54,6 +54,30 @@ public:
         FunctorBase* mFunctor;         // offset 0x4, size 0x4
     };
 
+    Function0() { mTag = EMPTY; }
+
+    Function0(const Function0& other)
+        : mTag(other.mTag)
+    {
+        if (mTag == FREE_FUNCTION)
+        {
+            mFreeFunction = other.mFreeFunction;
+        }
+        else if (mTag == FUNCTOR)
+        {
+            mFunctor = other.mFunctor->fnc_0x10();
+        }
+    }
+
+    ~Function0()
+    {
+        if (mTag == FUNCTOR)
+        {
+            delete mFunctor;
+        }
+        mTag = EMPTY;
+    }
+
 }; // total size: 0x8
 
 template <typename T>
@@ -76,13 +100,31 @@ template <>
 class Function<FnVoidVoid> : public Function0<void>
 {
 public:
-    ~Function()
+    Function()
+        : Function0<void>()
+    {
+    }
+
+    template <typename T>
+    Function(T);
+
+    Function& operator=(const Function& other)
     {
         if (mTag == FUNCTOR)
         {
             delete mFunctor;
         }
         mTag = EMPTY;
+        mTag = other.mTag;
+        if (mTag == FREE_FUNCTION)
+        {
+            mFreeFunction = other.mFreeFunction;
+        }
+        else if (mTag == FUNCTOR)
+        {
+            mFunctor = other.mFunctor->fnc_0x10();
+        }
+        return *this;
     }
 }; // total size: 0x8
 

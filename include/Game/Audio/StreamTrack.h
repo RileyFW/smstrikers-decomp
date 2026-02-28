@@ -1,6 +1,8 @@
 #ifndef _STREAMTRACK_H_
 #define _STREAMTRACK_H_
 
+#include "NL/nlFunction.h"
+
 namespace MasterVolume
 {
 enum VOLUME_GROUP
@@ -43,8 +45,8 @@ class StreamTrack
 {
 public:
     void Update(float);
-    // void PlayStream(unsigned long, float, bool, unsigned long, unsigned long, const char*, Audio::MasterVolume::VOLUME_GROUP);
-    // void QueueStream(unsigned long, float, bool, unsigned long, const char*, Audio::MasterVolume::VOLUME_GROUP);
+    void PlayStream(unsigned long, float, bool, unsigned long, unsigned long, const char*, MasterVolume::VOLUME_GROUP);
+    void QueueStream(unsigned long, float, bool, unsigned long, const char*, MasterVolume::VOLUME_GROUP);
     // void ProcessNewHeadStream();
     // void StopHead(unsigned long);
     void Stop(unsigned long);
@@ -55,7 +57,17 @@ public:
     // void Pause(unsigned long, bool);
     void Resume();
     // void AttachStream(GCAudioStreaming::StereoAudioStream*, Audio::MasterVolume::VOLUME_GROUP, unsigned long, unsigned long, bool, bool);
-};
+
+    /* 0x00 */ TrackManagerBase& m_TrackMgr;
+    /* 0x04 */ char _pad_0x04[0x58]; // DLListContainerBase m_QueuedStreams
+    /* 0x5C */ unsigned long m_LPFFreq;
+    /* 0x60 */ unsigned char m_LPFOn : 1;
+    /* 0x60 */ unsigned char m_InFakePause : 1;
+    /* 0x60 */ unsigned char m_TrackOwnsStreams : 1;
+    /* 0x64 */ unsigned long m_State; // enum TRACK_STATE
+    /* 0x68 */ MasterVolume::VOLUME_GROUP m_VolumeGroup;
+    /* 0x6C */ Function<FnVoidVoid> m_IdleCallback;
+}; // total size: 0x74
 
 } // namespace AudioStreamTrack
 

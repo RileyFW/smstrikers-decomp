@@ -142,8 +142,46 @@ void UpdateEmitterFromBall(EmissionController& emitter)
 /**
  * Offset/Address/Size: 0x4D18 | 0x801A3AC8 | size: 0x1B4
  */
-void EmitGeneric(cCharacter*, const char*, const char*)
+void EmitGeneric(cCharacter* pCharacter, const char* baseName, const char* characterName)
 {
+    // TODO: 99.08% match - remaining `i` diffs are literal/constant pool offsets in scratch context.
+    EffectsGroup* pGroup;
+
+    if (characterName != NULL)
+    {
+        char effectName[0x100];
+        nlStrNCat<char>(effectName, characterName, "_", 0x100);
+        nlStrNCat<char>(effectName, effectName, baseName, 0x100);
+        nlStrNCat<char>(effectName, effectName, "_", 0x100);
+        nlStrNCat<char>(effectName, effectName, "grass", 0x100);
+
+        pGroup = fxGetGroup(effectName);
+        if (pGroup == NULL && characterName[0] != '\0')
+        {
+            char fallbackName[0x100];
+            nlStrNCat<char>(fallbackName, "", "_", 0x100);
+            nlStrNCat<char>(fallbackName, fallbackName, baseName, 0x100);
+            nlStrNCat<char>(fallbackName, fallbackName, "_", 0x100);
+            nlStrNCat<char>(fallbackName, fallbackName, "grass", 0x100);
+            pGroup = fxGetGroup(fallbackName);
+        }
+    }
+    else
+    {
+        pGroup = fxGetGroup(baseName);
+    }
+
+    EmissionController* pControl = EmissionManager::Create(pGroup, 0);
+    const nlVector3 v3Direction = { 0.0f, 0.0f, 1.0f };
+    pControl->SetVelocity(v3Direction);
+    pControl->m_fGround = 0.02f;
+    {
+        Function<EmissionController&> update;
+        update.mTag = FREE_FUNCTION;
+        update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+        pControl->SetUpdateCallback(update);
+    }
+    pCharacter->AttachEffect(pControl);
 }
 
 /**
@@ -285,8 +323,43 @@ void EmitElectrocutionExplosion(cCharacter* pCharacter)
 /**
  * Offset/Address/Size: 0x1738 | 0x801A04E8 | size: 0x198
  */
-void EmitDaze(cPlayer*)
+void EmitDaze(cPlayer* pCharacter)
 {
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("dazed"), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 1.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.0f;
+
+    {
+        Function<EmissionController&> update2;
+        {
+            Function<EmissionController&> update;
+            update.mTag = FREE_FUNCTION;
+            update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+            pController->SetUpdateCallback(update);
+        }
+        pCharacter->AttachEffect(pController);
+        pController->m_uUserData = GetCharacterIndex(pCharacter);
+        update2.mTag = FREE_FUNCTION;
+        update2.mFreeFunction = UpdateEmitterFromCharacter;
+        pController->SetUpdateCallback(update2);
+    }
+
+    pCharacter->m_pCharacterSFX->StopPlayingAllRandomCharDialogue();
+
+    if (pCharacter->m_eClassType == GOALIE)
+    {
+        Audio::SoundAttributes attrs;
+        attrs.Init();
+        attrs.SetSoundType(0x36, true);
+        attrs.UseStationaryPosVector(pCharacter->m_v3Position);
+        attrs.m_unk_0x7B = true;
+        pCharacter->PlaySFX(attrs);
+    }
+    else
+    {
+        pCharacter->Play3DSFX((Audio::eCharSFX)0x36, (PosUpdateMethod)2, 1.0f);
+    }
 }
 
 /**

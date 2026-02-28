@@ -1952,9 +1952,32 @@ void cFielder::SetWindupWBAnimState()
 
 /**
  * Offset/Address/Size: 0x5464 | 0x8001E7A0 | size: 0x1B4
+ * Match: 99.91% - all i diffs (SDA offsets / static symbol naming only)
  */
 void cFielder::SetStartWBAnimState()
 {
+    static int RunWBStartAnims[4] = { 0, 0x37, 0x38, 0x39 };
+
+    int nAnimState = ((m_aDesiredFacingDirection - m_aActualFacingDirection + 0x2000) >> 14) & 3;
+
+    if (nAnimState != 0)
+    {
+        SetAnimState(RunWBStartAnims[nAnimState], true, 0.15f, false, false);
+
+        s16 turnAdjust = CalcAnimTurnAdjust(m_aActualFacingDirection, m_aDesiredFacingDirection, m_eAnimID);
+        InitMovementFromAnim(turnAdjust, v3Zero, 1.0f, false);
+
+        m_pCurrentAnimController->m_fPlaybackSpeedScale = 1.5f;
+    }
+    else
+    {
+        int RunningWBAnims[3] = { 0x1B, 0x1A, 0x1C };
+
+        SetRunLeanSAB(RunningWBAnims, 3, 1);
+
+        FielderTweaks* pTweaks = (FielderTweaks*)m_pTweaks;
+        InitMovementRunning(pTweaks->fRunningWBDirectionSeekSpeed, pTweaks->fRunningWBDirectionSeekFalloff, pTweaks->fRunningWBAccel, pTweaks->fRunningWBDecel);
+    }
 }
 
 /**

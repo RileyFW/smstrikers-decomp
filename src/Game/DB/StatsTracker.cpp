@@ -113,7 +113,8 @@ void StatsTracker::ResetCurrentStats()
     mNumConsecutiveGamesPlayed = mNumConsecutiveGamesPlayed + 1;
 
     i = 0;
-    do {
+    do
+    {
         memset(&mCurrentUserStats[i], 0, sizeof(PlayerStats));
         mCurrentUserStats[i].mRecordType.mControllerID = i;
         mCurrentUserStats[i].mType = TYPE_USER;
@@ -153,6 +154,7 @@ void StatsTracker::eventHandler(Event*, void*)
  */
 void StatsTracker::TrackStat(ePlayerStats, int, int, int, int, int, int)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -174,6 +176,7 @@ void StatsTracker::GetSortedTeamStats(TeamStats*, int, int*, int)
  */
 void StatsTracker::CompileEndOfGameStats()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -214,9 +217,70 @@ void StatsTracker::AddMilestoneUserStat(ePlayerStats, int)
 /**
  * Offset/Address/Size: 0x1AE0 | 0x80183040 | size: 0x1A8
  */
-void StatsTracker::TrackWinner(int)
+#pragma push
+#pragma bool off
+void StatsTracker::TrackWinner(int forfeitSide)
 {
+    int scoreLeft;
+    int scoreRight;
+    int startScoreLeft;
+    int startScoreRight;
+    unsigned char wasForfeit;
+    long winningSide;
+
+    wasForfeit = 0;
+    startScoreLeft = g_pTeams[0]->m_nScore;
+    startScoreRight = g_pTeams[1]->m_nScore;
+    scoreLeft = startScoreLeft;
+    scoreRight = startScoreRight;
+
+    if (forfeitSide == 0)
+    {
+        scoreLeft = -5;
+        if (startScoreRight < 3)
+        {
+            nlSingleton<StatsTracker>::s_pInstance->TrackStat(STATS_GOALS_FOR, 1, 0, 0, 0, 3 - startScoreRight, 0);
+            scoreRight = 3;
+        }
+        wasForfeit = 1;
+    }
+    else if (forfeitSide == 1)
+    {
+        scoreRight = -5;
+        if (startScoreLeft < 3)
+        {
+            nlSingleton<StatsTracker>::s_pInstance->TrackStat(STATS_GOALS_FOR, 0, 0, 0, 0, 3 - startScoreLeft, 0);
+            scoreLeft = 3;
+        }
+        wasForfeit = 1;
+    }
+
+    winningSide = scoreRight >= scoreLeft;
+
+    if (!mHasGameEnded)
+    {
+        if (nlSingleton<GameInfoManager>::s_pInstance->IsInCupOrTournamentMode())
+        {
+            if (mIsOvertime && !wasForfeit)
+            {
+                nlSingleton<StatsTracker>::s_pInstance->TrackStat(STATS_OT_WIN, winningSide, 0, scoreLeft, scoreRight, 0, 0);
+                nlSingleton<GameInfoManager>::s_pInstance->SetRoundResult(1, winningSide);
+            }
+            else
+            {
+                nlSingleton<StatsTracker>::s_pInstance->TrackStat(STATS_WIN, winningSide, 0, scoreLeft, scoreRight, 0, 0);
+                nlSingleton<GameInfoManager>::s_pInstance->SetRoundResult(0, winningSide);
+            }
+            nlSingleton<StatsTracker>::s_pInstance->CompileEndOfGameStats();
+        }
+        else
+        {
+            nlSingleton<StatsTracker>::s_pInstance->mNumGamesWon[winningSide]++;
+        }
+        mHasGameEnded = 1;
+    }
 }
+#pragma pop
 
 /**
  * Offset/Address/Size: 0x540 | 0x80181AA0 | size: 0x15A0
@@ -297,38 +361,52 @@ bool StatsTracker::MoveTeamBUp(TeamStats b, TeamStats a)
 {
     s32 bGoals = b.mPlayerTotalStats.mNumGoalsFor;
     s32 aGoals = a.mPlayerTotalStats.mNumGoalsFor;
-    if (aGoals > bGoals) return true;
-    if (bGoals > aGoals) return false;
+    if (aGoals > bGoals)
+        return true;
+    if (bGoals > aGoals)
+        return false;
 
     s32 bShots = b.mPlayerTotalStats.mNumShotsOnGoal;
     s32 aShots = a.mPlayerTotalStats.mNumShotsOnGoal;
-    if (aShots > bShots) return true;
-    if (bShots > aShots) return false;
+    if (aShots > bShots)
+        return true;
+    if (bShots > aShots)
+        return false;
 
     s32 bHits = b.mPlayerTotalStats.mNumHitsMade;
     s32 aHits = a.mPlayerTotalStats.mNumHitsMade;
-    if (aHits > bHits) return true;
-    if (bHits > aHits) return false;
+    if (aHits > bHits)
+        return true;
+    if (bHits > aHits)
+        return false;
 
     s32 bInterSteals = b.mPlayerTotalStats.mNumPassesIntercepted + b.mPlayerTotalStats.mNumSteals;
     s32 aInterSteals = a.mPlayerTotalStats.mNumPassesIntercepted + a.mPlayerTotalStats.mNumSteals;
-    if (aInterSteals > bInterSteals) return true;
-    if (bInterSteals > aInterSteals) return false;
+    if (aInterSteals > bInterSteals)
+        return true;
+    if (bInterSteals > aInterSteals)
+        return false;
 
     s32 bPU = b.mPlayerTotalStats.mNumPowerupsUsed;
     s32 aPU = a.mPlayerTotalStats.mNumPowerupsUsed;
-    if (aPU > bPU) return true;
-    if (bPU > aPU) return false;
+    if (aPU > bPU)
+        return true;
+    if (bPU > aPU)
+        return false;
 
     s32 bPP = b.mPlayerTotalStats.mNumPerfectPasses;
     s32 aPP = a.mPlayerTotalStats.mNumPerfectPasses;
-    if (aPP > bPP) return true;
-    if (bPP > aPP) return false;
+    if (aPP > bPP)
+        return true;
+    if (bPP > aPP)
+        return false;
 
     s32 bBP = b.mPlayerTotalStats.mNumButtonPresses;
     s32 aBP = a.mPlayerTotalStats.mNumButtonPresses;
-    if (aBP > bBP) return true;
-    if (bBP > aBP) return false;
+    if (aBP > bBP)
+        return true;
+    if (bBP > aBP)
+        return false;
 
     return (s32)a.mTeamIndex < (s32)b.mTeamIndex;
 }

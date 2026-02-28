@@ -32,7 +32,7 @@ public:
     void SetExtraNameFilter(const char*);
     void ResetEffects();
     bool IsMirrored(NisTarget, const char*, NisWinnerType) const;
-    void TargetToIndex(NisTarget, int, NisWinnerType) const;
+    int TargetToIndex(NisTarget, int, NisWinnerType) const;
     void EventHandler(Event*);
     void PlayCharacterDirection();
     void Load(const char*, NisTarget, NisUseStadiumOffset, NisUseFilter, NisWinnerType);

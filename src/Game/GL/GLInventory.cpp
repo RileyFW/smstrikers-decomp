@@ -1,4 +1,5 @@
 #include "Game/GL/GLInventory.h"
+#include "NL/glx/glxLoadModel.h"
 
 GLInventory glInventory;
 
@@ -475,10 +476,147 @@ void GLInventory::AddSkinData(unsigned long key, nlChunk* skinData)
 
 /**
  * Offset/Address/Size: 0x334 | 0x801E25CC | size: 0x1A0
+ * TODO: 96.39% match - remaining diff is register allocation/branch layout in the two AVL-search loops.
  */
-GLSkinMesh* GLInventory::MakeSkinMesh(unsigned long)
+GLSkinMesh* GLInventory::MakeSkinMesh(unsigned long hashID)
 {
-    return nullptr;
+    int i = m_nLevel;
+    nlChunk* pChunk;
+
+    for (; i >= 0; i--)
+    {
+        bool found;
+        nlChunk** pResult;
+        AVLTreeEntry<unsigned long, nlChunk*>* node = m_pSkinData[i]->m_pItems->m_Root;
+
+        while (node != nullptr)
+        {
+            int cmpResult;
+
+            if (hashID == node->key)
+            {
+                cmpResult = 0;
+            }
+            else if (hashID < node->key)
+            {
+                cmpResult = -1;
+            }
+            else
+            {
+                cmpResult = 1;
+            }
+
+            if (cmpResult == 0)
+            {
+                if (&pResult != nullptr)
+                {
+                    pResult = &node->value;
+                }
+                found = true;
+                goto check_skin_found;
+            }
+            else if (cmpResult < 0)
+            {
+                node = (AVLTreeEntry<unsigned long, nlChunk*>*)node->node.left;
+            }
+            else
+            {
+                node = (AVLTreeEntry<unsigned long, nlChunk*>*)node->node.right;
+            }
+        }
+
+        found = false;
+    check_skin_found:
+        nlChunk* result;
+
+        if (found)
+        {
+            result = *pResult;
+        }
+        else
+        {
+            result = nullptr;
+        }
+
+        if (result != nullptr)
+        {
+            pChunk = result;
+            goto skin_found;
+        }
+    }
+
+    pChunk = nullptr;
+
+skin_found:
+    glModel* pModel;
+
+    i = m_nLevel;
+    for (; i >= 0; i--)
+    {
+        bool found;
+        glModel** pResult;
+        AVLTreeEntry<unsigned long, glModel*>* node = m_pModels[i]->m_pItems->m_Root;
+
+        while (node != nullptr)
+        {
+            int cmpResult;
+
+            if (hashID == node->key)
+            {
+                cmpResult = 0;
+            }
+            else if (hashID < node->key)
+            {
+                cmpResult = -1;
+            }
+            else
+            {
+                cmpResult = 1;
+            }
+
+            if (cmpResult == 0)
+            {
+                if (&pResult != nullptr)
+                {
+                    pResult = &node->value;
+                }
+                found = true;
+                goto check_model_found;
+            }
+            else if (cmpResult < 0)
+            {
+                node = (AVLTreeEntry<unsigned long, glModel*>*)node->node.left;
+            }
+            else
+            {
+                node = (AVLTreeEntry<unsigned long, glModel*>*)node->node.right;
+            }
+        }
+
+        found = false;
+    check_model_found:
+        glModel* result;
+
+        if (found)
+        {
+            result = *pResult;
+        }
+        else
+        {
+            result = nullptr;
+        }
+
+        if (result != nullptr)
+        {
+            pModel = result;
+            goto model_found;
+        }
+    }
+
+    pModel = nullptr;
+
+model_found:
+    return glx_MakeSkinMesh(pChunk, pModel);
 }
 
 /**

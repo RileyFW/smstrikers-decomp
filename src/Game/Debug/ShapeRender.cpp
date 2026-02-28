@@ -1,7 +1,12 @@
 #include "Game/Debug/ShapeRender.h"
 
+#include "Game/GL/gluMeshWriter.h"
+
 #include "NL/gl/glDraw2.h"
+#include "NL/gl/glMatrix.h"
 #include "NL/gl/glState.h"
+
+extern const u32 WhiteTexture;
 
 /**
  * Offset/Address/Size: 0x149C | 0x801FC72C | size: 0x418
@@ -34,8 +39,41 @@ void ShapeRender::DrawSpherePrimitive(const nlMatrix4&, float, const nlColour&) 
 /**
  * Offset/Address/Size: 0x930 | 0x801FBBC0 | size: 0x190
  */
-void ShapeRender::DrawLine3D(const nlVector3&, const nlVector3&, const nlColour&, bool) const
+void ShapeRender::DrawLine3D(const nlVector3& p0, const nlVector3& p1, const nlColour& colour, bool bWithDepth) const
 {
+    GLMeshWriter writer;
+
+    glSetDefaultState(bWithDepth);
+    glSetCurrentMatrix(glGetIdentityMatrix());
+    glSetCurrentTexture(WhiteTexture, GLTT_Diffuse);
+    glSetCurrentProgram(glGetProgram("3d unlit"));
+
+    const eGLStream streams[3] = { GLStream_Position, GLStream_Colour, GLStream_Diffuse };
+
+    if (writer.Begin(2, GLP_LineList, 3, streams, false))
+    {
+        nlVector2 uv0;
+        nlVector2 uv1;
+
+        writer.Colour(colour);
+        uv0.f.x = 0.0f;
+        uv0.f.y = 0.0f;
+        ((GLMeshWriterCore*)&writer)->Texcoord(uv0);
+        writer.Vertex(p0);
+
+        writer.Colour(colour);
+        uv1.f.x = 0.0f;
+        uv1.f.y = 0.0f;
+        ((GLMeshWriterCore*)&writer)->Texcoord(uv1);
+        writer.Vertex(p1);
+
+        if (!writer.End())
+        {
+            return;
+        }
+
+        glViewAttachModel(m_eView, 2, writer.GetModel());
+    }
 }
 
 /**

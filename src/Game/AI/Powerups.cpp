@@ -125,9 +125,73 @@ static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 /**
  * Offset/Address/Size: 0x5EBC | 0x800607A8 | size: 0x1A0
  */
-cFielder* FindPowerupTarget(cFielder*, Bowser*)
+cFielder* FindPowerupTarget(cFielder* pThrower, Bowser* pBowser)
 {
-    return nullptr;
+    float fBestScore = 99999.9f;
+    cFielder* pBestCandidate = NULL;
+    cTeam* pTeam;
+    unsigned short aDirection;
+    int i;
+    float fTempScore;
+    cFielder* pCandidate;
+
+    if (pThrower != NULL)
+    {
+        pTeam = pThrower->m_pTeam->GetOtherTeam();
+        aDirection = pThrower->m_aActualFacingDirection;
+    }
+    else
+    {
+        int team = nlRandom(2, &nlDefaultSeed);
+        pTeam = g_pTeams[team];
+        aDirection = pBowser->maFacingDirection;
+    }
+
+    for (i = 0; i < 4; i++)
+    {
+        fTempScore = 99999.9f;
+        pCandidate = pTeam->GetFielder(i);
+
+        if (!pCandidate->IsFallenDown(0.0f) && !pCandidate->IsFrozen())
+        {
+            if (pThrower != NULL)
+            {
+                if (pThrower->m_pController != NULL)
+                {
+                    float fMag = pThrower->m_pController->GetMovementStickMagnitude();
+                    if (fMag)
+                    {
+                        aDirection = pThrower->m_pController->GetMovementStickDirection();
+                    }
+                }
+                fTempScore = pThrower->DoFlashLight(
+                    pCandidate->m_v3Position, aDirection, g_pGame->m_pGameTweaks->fAngleWeighting, 0.0f, 9999.0f);
+            }
+            else
+            {
+                fTempScore = cPlayer::DoFlashLight(
+                    pBowser->mv3Position, pCandidate->m_v3Position, aDirection, g_pGame->m_pGameTweaks->fAngleWeighting, 0.0f, 9999.0f);
+            }
+        }
+
+        if (g_pBall->GetOwnerFielder() == pCandidate || g_pBall->GetPassTargetFielder() == pCandidate)
+        {
+            fTempScore = 0.0f;
+        }
+
+        if (fTempScore < fBestScore)
+        {
+            pBestCandidate = pCandidate;
+            fBestScore = fTempScore;
+        }
+    }
+
+    if (pBestCandidate == NULL)
+    {
+        pBestCandidate = pTeam->GetStriker();
+    }
+
+    return pBestCandidate;
 }
 
 /**
@@ -172,6 +236,8 @@ PowerupBase* FindPowerUp(unsigned long hashOfDrawable)
 
 /**
  * Offset/Address/Size: 0x4B68 | 0x8005F454 | size: 0x98
+ * TODO: 96.8% match - lwz r5 / li r4 instruction scheduling swap on first Initialize call only.
+ *       Compiler scheduler quirk with stwu (mNum=0 store) interaction.
  */
 void InitializePowerups()
 {

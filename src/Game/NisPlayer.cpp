@@ -103,13 +103,54 @@ bool NisPlayer::WorldIsFrozen() const
  */
 void NisPlayer::HandleAsyncs()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x2DA4 | 0x80117A80 | size: 0x1C0
  */
-void NisPlayer::Update(float)
+void NisPlayer::Update(float deltaT)
 {
+    HandleAsyncs();
+
+    for (int i = 0; i < 4; i++)
+    {
+        if (mLoadQueue[i] != NULL)
+        {
+            mLoadQueue[i]->mTime += deltaT;
+        }
+    }
+
+    if (nlTaskManager::m_pInstance->m_CurrState == 0x100)
+    {
+        float animTime = mCamera.m_fAnimationTime;
+        if (mCamera.m_pActiveCameraData != NULL)
+        {
+            mCamera.ManualUpdate(deltaT);
+        }
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (mPlaying[i] == NULL)
+                continue;
+
+            mPlaying[i]->Update(deltaT);
+
+            float duration;
+            if (mCamera.m_pActiveCameraData != NULL)
+            {
+                duration = (float)(mCamera.m_pActiveCameraData->m_uKeyCount - 1) / 30.0f;
+            }
+            else
+            {
+                duration = 0.0f;
+            }
+
+            mPlaying[i]->UpdateTriggers(animTime, mCamera.m_fAnimationTime, duration);
+
+            mCamera.m_OffsetPos = mPlaying[i]->Offset();
+        }
+    }
 }
 
 /**
@@ -252,8 +293,65 @@ void NisPlayer::EventHandler(Event*)
 /**
  * Offset/Address/Size: 0x1F4 | 0x80114ED0 | size: 0x17C
  */
-void NisPlayer::TargetToIndex(NisTarget, int, NisWinnerType) const
+int NisPlayer::TargetToIndex(NisTarget target, int idx, NisWinnerType wt) const
 {
+    if (target == NIS_TARGET_HOME_CAPTAIN)
+    {
+        return idx;
+    }
+    if (target == NIS_TARGET_AWAY_CAPTAIN)
+    {
+        return idx + 4;
+    }
+    if (target == NIS_TARGET_HOME_SIDEKICK)
+    {
+        return idx + 1;
+    }
+    if (target == NIS_TARGET_AWAY_SIDEKICK)
+    {
+        return idx + 5;
+    }
+    if (target == NIS_TARGET_HOME_GOALIE)
+    {
+        return 8;
+    }
+    if (target == NIS_TARGET_AWAY_GOALIE)
+    {
+        return 9;
+    }
+    if (target == NIS_TARGET_LOSER_SIDEKICK)
+    {
+        if (mWinnerSide[wt] == 0)
+        {
+            return idx + 5;
+        }
+        return idx + 1;
+    }
+    if (target == NIS_TARGET_WINNER_SIDEKICK)
+    {
+        if (mWinnerSide[wt] == 0)
+        {
+            return idx + 1;
+        }
+        return idx + 5;
+    }
+    if (target == NIS_TARGET_LOSER_GOALIE)
+    {
+        return (mWinnerSide[wt] == 0) ? 9 : 8;
+    }
+    if (target == NIS_TARGET_WINNER_GOALIE)
+    {
+        return (mWinnerSide[wt] == 0) ? 9 : 8;
+    }
+    if (target == NIS_TARGET_WINNER_CAPTAIN)
+    {
+        return (mWinnerSide[wt] == 0) ? 0 : 4;
+    }
+    if (target == NIS_TARGET_LOSER_CAPTAIN)
+    {
+        return (mWinnerSide[wt] == 0) ? 4 : 0;
+    }
+    return (target == NIS_TARGET_NONE) ? idx : 0;
 }
 
 /**

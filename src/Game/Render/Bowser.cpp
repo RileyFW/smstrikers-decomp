@@ -1,7 +1,11 @@
 #include "Game/Render/Bowser.h"
+#include "Game/SAnim/pnFeather.h"
+#include "Game/SAnim/pnBlender.h"
+#include "Game/AI/AiUtil.h"
 #include "Game/AI/HeadTrack.h"
 #include "Game/AI/Powerups.h"
 #include "Game/AI/Fielder.h"
+#include "Game/Field.h"
 #include "Game/Ball.h"
 #include "Game/Sys/eventman.h"
 #include "Game/ReplayManager.h"
@@ -85,8 +89,59 @@ void Bowser::ActionStomp()
 /**
  * Offset/Address/Size: 0x2314 | 0x8015B088 | size: 0x1A0
  */
-void Bowser::ActionDescend(float)
+void Bowser::ActionDescend(float fBlendTime)
 {
+    cPN_SAnimController* controller = NULL;
+    cPoseNode* poseNode;
+
+    mAnimID = 1;
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&cPN_SAnimController::m_SAnimControllerSlotPool, sizeof(cPN_SAnimController));
+    }
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList != NULL)
+    {
+        controller = (cPN_SAnimController*)cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList;
+        cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList = cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList->m_next;
+    }
+
+    controller = new (controller) cPN_SAnimController(mpAnim[1], (const AnimRetarget*)0, PM_HOLD, (void (*)(unsigned int, cPN_SAnimController*))0, (unsigned int)0, (bool)0);
+
+    if (mpFeatherBlender->GetChild(0) != NULL)
+    {
+        if (fBlendTime > 0.0f)
+        {
+            poseNode = NULL;
+
+            if (cPN_Blender::m_BlenderSlotPool.m_FreeList == NULL)
+            {
+                SlotPoolBase::BaseAddNewBlock(&cPN_Blender::m_BlenderSlotPool, sizeof(cPN_Blender));
+            }
+
+            if (cPN_Blender::m_BlenderSlotPool.m_FreeList != NULL)
+            {
+                poseNode = (cPN_Blender*)cPN_Blender::m_BlenderSlotPool.m_FreeList;
+                cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
+            }
+
+            poseNode = new ((cPN_Blender*)poseNode) cPN_Blender(*mpFeatherBlender->GetChildPtr(0), controller, fBlendTime);
+        }
+        else
+        {
+            delete mpFeatherBlender->GetChild(0);
+            poseNode = controller;
+        }
+    }
+    else
+    {
+        poseNode = controller;
+    }
+
+    mpFeatherBlender->SetChild(0, poseNode);
+    mpAnimController = controller;
+    meBowserState = BOWSER_STATE_FALL;
 }
 
 /**
@@ -127,8 +182,53 @@ void Bowser::ActionLeave()
 /**
  * Offset/Address/Size: 0x1384 | 0x8015A0F8 | size: 0x1B0
  */
-void Bowser::Move(float)
+void Bowser::Move(float fDeltaT)
 {
+    float speed = nlSqrt(mv3Velocity.f.x * mv3Velocity.f.x + mv3Velocity.f.y * mv3Velocity.f.y + mv3Velocity.f.z * mv3Velocity.f.z, true);
+
+    float newSpeed = SeekSpeed(speed, mfDesiredSpeed, 100.0f, 200.0f, fDeltaT);
+
+    maFacingDirection = SeekDirection(maFacingDirection, maDesiredFacingDirection, 0.05f, 0.5f, fDeltaT);
+
+    nlVector3 vel;
+    nlVector3 newPos;
+    nlPolarToCartesian(vel.f.x, vel.f.y, maDesiredFacingDirection, newSpeed);
+    vel.f.z = mv3Velocity.f.z;
+    mv3Velocity = vel;
+
+    newPos = mv3Position;
+    newPos.f.x += vel.f.x * fDeltaT;
+    newPos.f.y += vel.f.y * fDeltaT;
+
+    float goalLineX = cField::GetGoalLineX(1U);
+    float limitX = goalLineX - 5.0f;
+    if ((float)fabs(newPos.f.x) > limitX)
+    {
+        if (newPos.f.x > 0.0f)
+        {
+            newPos.f.x = limitX;
+        }
+        else
+        {
+            newPos.f.x = -limitX;
+        }
+    }
+
+    float sidelineY = cField::GetSidelineY(1U);
+    float limitY = sidelineY - 5.0f;
+    if ((float)fabs(newPos.f.y) > limitY)
+    {
+        if (newPos.f.y < 0.0f)
+        {
+            newPos.f.y = -limitY;
+        }
+        else
+        {
+            newPos.f.y = limitY;
+        }
+    }
+
+    SetPosition(newPos);
 }
 
 /**

@@ -525,8 +525,85 @@ cPlayer* FormationEval::GetKeyPlayer()
 /**
  * Offset/Address/Size: 0x1488 | 0x800396D8 | size: 0x1A8
  */
-void FormationEval::GetKeyPositions(cFielder*, nlVector3&, nlVector3*, bool)
+void FormationEval::GetKeyPositions(cFielder* pFielder, nlVector3& v3KeyAIPosition, nlVector3* pKeyFormationAIPosition, bool bExtrapolate)
 {
+    cPlayer* keyPlayer = GetKeyPlayer();
+
+    if (keyPlayer == pFielder)
+    {
+        FormationManager* mgr = m_pFormationManager;
+        f32 x = mgr->m_v2AIFielderCenter.f.x;
+        f32 y = mgr->m_v2AIFielderCenter.f.y;
+        v3KeyAIPosition.f.x = x;
+        v3KeyAIPosition.f.y = y;
+        v3KeyAIPosition.f.z = 0.0f;
+
+        if (pKeyFormationAIPosition != NULL)
+        {
+            const FormationSpec* spec = m_pFormationSpec;
+            f32 cx = spec->m_v2Center.f.x;
+            f32 cy = spec->m_v2Center.f.y;
+            pKeyFormationAIPosition->f.x = cx;
+            pKeyFormationAIPosition->f.y = cy;
+            pKeyFormationAIPosition->f.z = 0.0f;
+        }
+    }
+    else
+    {
+        if (bExtrapolate)
+        {
+            f32 t = 0.5f;
+            f32 rz = keyPlayer->m_v3Position.f.z + t * keyPlayer->m_v3Velocity.f.z;
+            f32 rx = keyPlayer->m_v3Position.f.x + t * keyPlayer->m_v3Velocity.f.x;
+            f32 ry = keyPlayer->m_v3Position.f.y + t * keyPlayer->m_v3Velocity.f.y;
+            v3KeyAIPosition.f.x = rx;
+            v3KeyAIPosition.f.y = ry;
+            v3KeyAIPosition.f.z = rz;
+        }
+        else
+        {
+            v3KeyAIPosition = keyPlayer->m_v3Position;
+        }
+
+        if (pFielder->m_pTeam->m_nSide != 0)
+        {
+            f32 nx = -v3KeyAIPosition.f.x;
+            f32 ny = -v3KeyAIPosition.f.y;
+            v3KeyAIPosition.f.x = nx;
+            v3KeyAIPosition.f.y = ny;
+            v3KeyAIPosition.f.z = 0.0f;
+        }
+
+        if (pKeyFormationAIPosition != NULL)
+        {
+            if (m_pFormationSpec->m_iKeyIndex > -1)
+            {
+                nlVector2& keyLoc = m_pFormationSpec->GetKeyLocation();
+                f32 lx = keyLoc.f.x;
+                f32 ly = keyLoc.f.y;
+                pKeyFormationAIPosition->f.x = lx;
+                pKeyFormationAIPosition->f.y = ly;
+                pKeyFormationAIPosition->f.z = 0.0f;
+            }
+            else
+            {
+                pKeyFormationAIPosition->f.x = 1.0f;
+                pKeyFormationAIPosition->f.y = 0.0f;
+                pKeyFormationAIPosition->f.z = 0.0f;
+
+                if (keyPlayer->m_eClassType != GOALIE)
+                {
+                    u32 posIndex = m_iFielderFormationPos[keyPlayer->m_ID];
+                    const FormationPos* pPos = &m_pFormationSpec->m_Positions[posIndex];
+                    f32 px = pPos->m_Location.f.x;
+                    f32 py = pPos->m_Location.f.y;
+                    pKeyFormationAIPosition->f.x = px;
+                    pKeyFormationAIPosition->f.y = py;
+                    pKeyFormationAIPosition->f.z = 0.0f;
+                }
+            }
+        }
+    }
 }
 
 /**

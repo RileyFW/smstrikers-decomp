@@ -10,6 +10,7 @@
 #include "Game/Physics/PhysicsBanana.h"
 #include "Game/Physics/PhysicsCharacter.h"
 #include "Game/Physics/PhysicsAIBall.h"
+#include "Game/AI/AiUtil.h"
 
 const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 const nlVector3 gv3HomePosition = { 0.0f, 0.0f, 10.0f };
@@ -186,11 +187,69 @@ bool ChainChomp::IsHidden() const
     return meChainChompState == CHAIN_STATE_HIDDEN;
 }
 
+static bool AvoidSidelines(ChainChomp* pChomp)
+{
+    nlVector3 v3WallPosition = GetClosestPointOnSidelines(pChomp->mv3Position);
+    float dy = v3WallPosition.f.y - pChomp->mv3Position.f.y;
+    float dx = v3WallPosition.f.x - pChomp->mv3Position.f.x;
+    float fDist = nlSqrt(dx * dx + dy * dy, true);
+    if (fDist < 3.0f)
+    {
+        return true;
+    }
+    return false;
+}
+
 /**
  * Offset/Address/Size: 0x204 | 0x8015DF08 | size: 0x1A8
  */
-void ChainChomp::Move(float)
+void ChainChomp::Move(float fDeltaT)
 {
+    nlPolar aChainSpeed;
+    nlVector3 v3NewVelocity;
+    float fSeekSpeed;
+
+    fSeekSpeed = 60000.0f;
+
+    if (meChainChompState == CHAIN_STATE_FALL)
+    {
+        fSeekSpeed = 180000.0f;
+        mfDesiredSpeed = g_pGame->m_pGameTweaks->fChainChompSpeed;
+        goto after_speed;
+    }
+    else if (meChainChompState == CHAIN_STATE_RECOVER)
+    {
+        fSeekSpeed = 300000.0f;
+        goto after_speed;
+    }
+    else if (meChainChompState != CHAIN_STATE_LEAVE)
+    {
+        if (AvoidSidelines(this))
+        {
+            float fHalf = 0.5f;
+            fSeekSpeed = 180000.0f;
+            mfDesiredSpeed = g_pGame->m_pGameTweaks->fChainChompSpeed * fHalf;
+            goto after_speed;
+        }
+    }
+
+    mfDesiredSpeed = g_pGame->m_pGameTweaks->fChainChompSpeed;
+after_speed:
+
+    nlCartesianToPolar(aChainSpeed, mv3Velocity);
+
+    if (aChainSpeed.r < 0.05f)
+    {
+        aChainSpeed.a = maFacingDirection;
+    }
+
+    float fNewSpeed = SeekSpeed(aChainSpeed.r, mfDesiredSpeed, 25.0f, 45.0f, fDeltaT);
+
+    maFacingDirection = SeekDirection(aChainSpeed.a, maDesiredFacingDirection, fSeekSpeed, 3000.0f, fDeltaT);
+
+    nlPolarToCartesian(v3NewVelocity.f.x, v3NewVelocity.f.y, maFacingDirection, fNewSpeed);
+    v3NewVelocity.f.z = mv3Velocity.f.z;
+    mv3Velocity = v3NewVelocity;
 }
 
 /**

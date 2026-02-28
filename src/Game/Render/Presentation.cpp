@@ -27,6 +27,9 @@ class ReplayChoreo : public InterpreterCore
 public:
     static ReplayChoreo& Instance();
     void Reset();
+
+    u8 _pad[0x2D0 - 0x24];
+    int mNumHighlights; // offset 0x2D0, size 0x4
 };
 
 class ReplayManager
@@ -34,6 +37,21 @@ class ReplayManager
 public:
     static ReplayManager* Instance();
     void Flush();
+};
+
+class GameInfoManager : public nlSingleton<GameInfoManager>
+{
+public:
+    u8 _pad[0x4959];
+    bool mIsInStrikers101Mode;
+};
+
+class GoalOverlay
+{
+public:
+    void SetHighlightNumber(int);
+    void DoMatchEndOverlay();
+    void DoCupWinOverlay();
 };
 
 extern unsigned long cupTrophyHash;
@@ -226,8 +244,63 @@ void Presentation::EventHandler(Event*)
 /**
  * Offset/Address/Size: 0x3D0 | 0x80124BB4 | size: 0x1AC
  */
-void Presentation::PlayOverlay(const char*, float, float)
+void Presentation::PlayOverlay(const char* name, float delay, float length)
 {
+    if (nlSingleton<GameInfoManager>::s_pInstance->mIsInStrikers101Mode)
+    {
+        return;
+    }
+
+    if (mOverlayDisplayed)
+    {
+        nlSingleton<OverlayManager>::s_pInstance->SetVisible(mOverlayToDisplay, false, false);
+    }
+
+    mOverlayDisplayed = false;
+    mOverlayToDisplay = SCENE_INVALID;
+    mOverlayDisplayLength = 0.0f;
+    mOverlayDelay = 0.0f;
+
+    if (nlStrCmp<char>("goal", name) == 0)
+    {
+        mOverlayToDisplay = OVERLAY_GOAL;
+        mOverlayDelay = delay;
+        mOverlayDisplayLength = length;
+        mOverlayDisplayed = false;
+        return;
+    }
+
+    if (nlStrCmp<char>("highlight", name) == 0)
+    {
+        mOverlayToDisplay = OVERLAY_GOAL;
+        mOverlayDelay = delay;
+        mOverlayDisplayLength = length;
+        mOverlayDisplayed = false;
+        GoalOverlay* scene = (GoalOverlay*)nlSingleton<OverlayManager>::s_pInstance->GetScene(mOverlayToDisplay);
+        scene->SetHighlightNumber(ReplayChoreo::Instance().mNumHighlights);
+        return;
+    }
+
+    if (nlStrCmp<char>("end", name) == 0)
+    {
+        mOverlayToDisplay = OVERLAY_GOAL;
+        mOverlayDelay = delay;
+        mOverlayDisplayLength = length;
+        mOverlayDisplayed = false;
+        GoalOverlay* scene = (GoalOverlay*)nlSingleton<OverlayManager>::s_pInstance->GetScene(mOverlayToDisplay);
+        scene->DoMatchEndOverlay();
+        return;
+    }
+
+    if (nlStrCmp<char>("cup", name) == 0)
+    {
+        mOverlayToDisplay = OVERLAY_GOAL;
+        mOverlayDelay = delay;
+        mOverlayDisplayLength = length;
+        mOverlayDisplayed = false;
+        GoalOverlay* scene = (GoalOverlay*)nlSingleton<OverlayManager>::s_pInstance->GetScene(mOverlayToDisplay);
+        scene->DoCupWinOverlay();
+    }
 }
 
 /**

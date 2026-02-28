@@ -441,10 +441,88 @@ ExplosionFragment* SidelineExplodableManager::GetFragmentFromHandle(unsigned sho
 
 /**
  * Offset/Address/Size: 0x358 | 0x801676B8 | size: 0x1B0
+ * TODO: 99.68% match - remaining diffs are floating-point register allocation
+ * in relative velocity length-squared computation (f1/f3/f4 assignment around fsubs/fmuls).
  */
+struct SwizzledVelocityProxy
+{
+    float y_field;
+    float x_field;
+    float z_field;
+};
+
+struct CharacterVelocityProxy
+{
+    u8 _pad0[0x30];
+    SwizzledVelocityProxy m_v3Velocity;
+};
+
+struct PhysicsCharacterProxy
+{
+    u8 _pad0[0x8C];
+    CharacterVelocityProxy* m_pAICharacter;
+};
+
+extern void* __vt__9EventData[];
+extern void* __vt__36CollisionExplosionFragmentPlayerData[];
+
 ContactType SidelineExplosionPhysicsObject::Contact(PhysicsObject* other, dContact* contact, int what, PhysicsObject* otherObject)
 {
-    return NO_CONTACT;
+    if (mpExplosionFragment->mfRemainingLifespan < (0.5f * ExplosionFragment::sfFadeOutTime))
+    {
+        return NO_CONTACT;
+    }
+
+    if (other->GetObjectType() == 0x1C)
+    {
+        return NO_CONTACT;
+    }
+
+    if (other->GetObjectType() == 0x19)
+    {
+        return NO_CONTACT;
+    }
+
+    if ((other->GetObjectType() == 0x0E) || (other->GetObjectType() == 0x0D))
+    {
+        CollisionExplosionFragmentPlayerData* eventData;
+        CharacterVelocityProxy* player = ((PhysicsCharacterProxy*)other->m_parentObject)->m_pAICharacter;
+
+        if (player != NULL)
+        {
+            nlVector3* linearVelocity = &GetLinearVelocity();
+            float deltaX = linearVelocity->f.x - player->m_v3Velocity.y_field;
+            float deltaY = linearVelocity->f.y - player->m_v3Velocity.x_field;
+            float deltaZ = linearVelocity->f.z - player->m_v3Velocity.z_field;
+            float deltaSq = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+
+            if (deltaSq > 36.0f)
+            {
+                eventData = (CollisionExplosionFragmentPlayerData*)(&g_pEventManager->CreateValidEvent(0x31, 0x34)->m_data);
+
+                if (eventData != NULL)
+                {
+                    *(void**)eventData = __vt__9EventData;
+                    *(void**)eventData = __vt__36CollisionExplosionFragmentPlayerData;
+                }
+
+                eventData->pPlayer = (cFielder*)player;
+
+                float y;
+                float z;
+                z = contact->geom.pos[2];
+                y = contact->geom.pos[1];
+                float x = contact->geom.pos[0];
+
+                eventData->v3CollisionLocation.f.x = x;
+                eventData->v3CollisionLocation.f.y = y;
+                eventData->v3CollisionLocation.f.z = z;
+                eventData->v3CollisionVelocity = GetLinearVelocity();
+            }
+        }
+    }
+
+    return TWO_WAY_CONTACT;
 }
 
 /**

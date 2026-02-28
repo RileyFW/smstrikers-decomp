@@ -119,8 +119,33 @@ ReplayManager::~ReplayManager()
  */
 ReplayManager* ReplayManager::Instance()
 {
-    static ReplayManager instance;
-    return &instance;
+    extern void __ct__13cFollowCameraFQ213cFollowCamera12FollowTarget(cFollowCamera*, cFollowCamera::FollowTarget);
+
+    static s8 init;
+    static char rm[sizeof(ReplayManager)];
+    static DestructorChain chain;
+
+    if (!init)
+    {
+        ReplayManager* instance = reinterpret_cast<ReplayManager*>(rm);
+
+        __construct_array(instance, __ct__14RenderSnapshotFv, __dt__14RenderSnapshotFv, sizeof(RenderSnapshot), 3);
+        instance->mCurrent = instance->mSnapshots;
+        instance->mPrevious = instance->mSnapshots + 1;
+        instance->mRender = 0;
+        __ct__13cFollowCameraFQ213cFollowCamera12FollowTarget(&instance->mDebugCamera, cFollowCamera::FOLLOW_SELECTABLE);
+        instance->mEvents = 0;
+        instance->mSpeed = 1.0f;
+        instance->mSpeedUp = 0.0f;
+        instance->mDeltaTime = 0.0f;
+        instance->mTime = 0.0f;
+        instance->mReplay = 0;
+        instance->mMemory = 0;
+        __register_global_object(instance, __dt__13ReplayManagerFv, &chain);
+        init = 1;
+    }
+
+    return reinterpret_cast<ReplayManager*>(rm);
 }
 
 /**

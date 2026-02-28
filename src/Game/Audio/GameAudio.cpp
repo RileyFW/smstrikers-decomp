@@ -18,6 +18,8 @@ inline bool IsVolGrpInRange(unsigned long sfxID, cGameSFX* pGameSFX)
     return (volGrp >= 5 && volGrp <= 19);
 }
 
+bool TrackedSFXFilterFreqTypeCheckCallback(unsigned long sfxID, cGameSFX* pGameSFX);
+
 /**
  * Offset/Address/Size: 0x0 | 0x80151544 | size: 0x8D8
  */
@@ -506,8 +508,108 @@ epilogue:
 /**
  * Offset/Address/Size: 0x1DCC | 0x80153310 | size: 0x194
  */
-void cGameSFX::SetFilterFreqOnAllTrackedSFX(unsigned short)
+bool cGameSFX::SetFilterFreqOnAllTrackedSFX(unsigned short freq)
 {
+    bool result;
+
+    if (freq > 0x3FFF)
+    {
+        freq = 0x3FFF;
+    }
+
+    if (!mbCurPlaySetIsValid)
+    {
+        result = true;
+        goto epilogue;
+    }
+
+    {
+        SFXPlaySet* pPlaySet;
+        DLListEntry<SFXPlaySet*>* start = nlDLRingGetStart(mpCurPlaySet.m_Head);
+        DLListEntry<SFXPlaySet*>* head = mpCurPlaySet.m_Head;
+        DLListEntry<SFXPlaySet*>* current = start;
+        unsigned short clampedFreq = (unsigned short)freq;
+        unsigned long sfxType;
+
+        while (current != NULL)
+        {
+            pPlaySet = current->m_data;
+
+            if (nlDLRingIsEnd(head, current) || current == NULL)
+            {
+                current = NULL;
+            }
+            else
+            {
+                current = current->m_next;
+            }
+
+            sfxType = pPlaySet->type;
+            if (sfxType == (unsigned long)-1)
+            {
+                continue;
+            }
+
+            if (TrackedSFXFilterFreqTypeCheckCallback != NULL)
+            {
+                bool shouldApply;
+                eClassType classType = GetClassType();
+                if (classType == WORLD && sfxType == 0xBB)
+                {
+                    shouldApply = false;
+                }
+                else
+                {
+                    bool isInRange = IsVolGrpInRange(sfxType, this);
+                    if (isInRange)
+                    {
+                        shouldApply = false;
+                    }
+                    else
+                    {
+                        shouldApply = true;
+                    }
+                }
+                if (!shouldApply)
+                {
+                    continue;
+                }
+            }
+
+            if (pPlaySet->bIs3D)
+            {
+                if (!Audio::IsEmitterActive(pPlaySet->emitter))
+                {
+                    continue;
+                }
+                pPlaySet->voiceID = Audio::GetEmitterVoiceID(pPlaySet->emitter);
+            }
+
+            if (pPlaySet->voiceID == Audio::GetSndIDError())
+            {
+                continue;
+            }
+
+            if (!Audio::IsSFXPlaying(pPlaySet->voiceID))
+            {
+                continue;
+            }
+
+            if (pPlaySet->filterFreq == clampedFreq)
+            {
+                continue;
+            }
+
+            pPlaySet->filterFreq = clampedFreq;
+            Audio::SetFilterFreqOnSFX(pPlaySet->voiceID, clampedFreq);
+        }
+    }
+
+    result = true;
+
+epilogue:
+    muGroupFilterFreq = freq;
+    return result;
 }
 
 /**
@@ -616,11 +718,13 @@ bool TrackedSFXFilterFreqTypeCheckCallback(unsigned long sfxID, cGameSFX* pGameS
  */
 bool cGameSFX::IsKeepingTrackOf(unsigned long type, SFXPlaySet** pGrabTrackedSFX)
 {
-    if (pGrabTrackedSFX != NULL) {
+    if (pGrabTrackedSFX != NULL)
+    {
         *pGrabTrackedSFX = NULL;
     }
 
-    if (!mbCurPlaySetIsValid) {
+    if (!mbCurPlaySetIsValid)
+    {
         return false;
     }
 
@@ -628,32 +732,42 @@ bool cGameSFX::IsKeepingTrackOf(unsigned long type, SFXPlaySet** pGrabTrackedSFX
     DLListEntry<SFXPlaySet*>* current = nlDLRingGetStart(head);
     head = mpCurPlaySet.m_Head;
 
-    while (current != NULL) {
+    while (current != NULL)
+    {
         SFXPlaySet* pTrackedSFX = current->m_data;
 
-        if (pTrackedSFX->type == type) {
-            if (pTrackedSFX->bIs3D && pTrackedSFX->emitter != NULL && Audio::IsEmitterActive(pTrackedSFX->emitter)) {
+        if (pTrackedSFX->type == type)
+        {
+            if (pTrackedSFX->bIs3D && pTrackedSFX->emitter != NULL && Audio::IsEmitterActive(pTrackedSFX->emitter))
+            {
                 pTrackedSFX->voiceID = Audio::GetEmitterVoiceID(pTrackedSFX->emitter);
             }
 
-            if ((pTrackedSFX->delay < 0.0f && pTrackedSFX->bIs3D && pTrackedSFX->voiceID == (unsigned long)Audio::GetSndIDError()) || Audio::IsSFXPlaying(pTrackedSFX->voiceID)) {
-                if (pGrabTrackedSFX != NULL) {
+            if ((pTrackedSFX->delay < 0.0f && pTrackedSFX->bIs3D && pTrackedSFX->voiceID == (unsigned long)Audio::GetSndIDError()) || Audio::IsSFXPlaying(pTrackedSFX->voiceID))
+            {
+                if (pGrabTrackedSFX != NULL)
+                {
                     *pGrabTrackedSFX = pTrackedSFX;
                 }
                 return true;
             }
 
-            if (pTrackedSFX->delay >= 0.0f) {
-                if (pGrabTrackedSFX != NULL) {
+            if (pTrackedSFX->delay >= 0.0f)
+            {
+                if (pGrabTrackedSFX != NULL)
+                {
                     *pGrabTrackedSFX = pTrackedSFX;
                 }
                 return true;
             }
         }
 
-        if (nlDLRingIsEnd(head, current) || current == NULL) {
+        if (nlDLRingIsEnd(head, current) || current == NULL)
+        {
             current = NULL;
-        } else {
+        }
+        else
+        {
             current = current->m_next;
         }
     }

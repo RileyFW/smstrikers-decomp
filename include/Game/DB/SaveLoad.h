@@ -112,11 +112,16 @@ public:
     /* 0x10 */ unsigned char m_MustFreeMemory;
 }; // total size: 0x14
 
-// class IconDataCache
-// {
-// public:
-//     ~IconDataCache();
-// };
+struct IconDataCache
+{
+    /* 0x00 */ MemCard::ICON_CONFIG mIconConfig;
+    /* 0x10 */ MemCard::ICON_DATA_INFO mIconDataInfo;
+    /* 0x40 */ void* mIconHdrBuffer;
+    /* 0x44 */ void* mIconBuffer;
+    /* 0x48 */ void* mBannerBuffer;
+}; // total size: 0x4C
+
+extern IconDataCache gIconDataCache;
 
 // class MemCardFunctor
 // {

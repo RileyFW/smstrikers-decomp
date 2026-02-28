@@ -46,11 +46,51 @@ void FEScrollText::ApplyNewTextInstancePointer(TLTextInstance* controltext, floa
     text->m_OverloadedAttributes.BoxSize = boxSize;
     text->m_OverloadFlags |= 0x4;
 }
+static float TEXT_TIME;
+
 /**
  * Offset/Address/Size: 0x38 | 0x800C8A0C | size: 0x190
  */
-void FEScrollText::Update(float)
+void FEScrollText::Update(float fDeltaT)
 {
+    if (m_textFont == NULL)
+    {
+        SetDisplayMessage(m_message);
+        if (m_textFont == NULL)
+            return;
+    }
+
+    m_controlText->m_bVisible = true;
+    m_msgTime += fDeltaT;
+
+    float pixPerSec = (float)m_width / TEXT_TIME;
+
+    feVector3 pos = m_controlText->GetPosition();
+
+    float x = (float)(m_pos + m_width / 2);
+
+    x = x - m_msgTime * pixPerSec;
+
+    m_controlText->SetAssetPosition(x, pos.f.y, pos.f.z);
+
+    if (x + (float)m_messageWidth < m_leftEdge)
+    {
+        if (m_messageFinishedCB.mTag != EMPTY)
+        {
+            if (m_messageFinishedCB.mTag == FREE_FUNCTION)
+            {
+                ((void (*)())m_messageFinishedCB.mFreeFunction)();
+            }
+            else
+            {
+                m_messageFinishedCB.mFunctor->fnc_0x8();
+            }
+        }
+        else
+        {
+            m_msgTime = 0.0f;
+        }
+    }
 }
 
 /**
@@ -213,6 +253,7 @@ void FEScrollText::SetDisplayMessage(unsigned long hash)
  */
 void FEScrollText::SetDisplayMessage(const BasicString<unsigned short, Detail::TempStringAllocator>&)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

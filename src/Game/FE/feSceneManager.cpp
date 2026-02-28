@@ -54,11 +54,105 @@ void FESceneManager::RenderActiveScenes()
 {
 }
 
+static inline bool IsObjectQueuedForPop(BaseSceneHandler* pSceneHandler)
+{
+    DLListEntry<PackagePushPopMessage*>* msgEntry = nlDLRingGetStart(m_pushPopMessageQueue.m_Head);
+    DLListEntry<PackagePushPopMessage*>* msgHead = m_pushPopMessageQueue.m_Head;
+
+    while (msgEntry != NULL)
+    {
+        PackagePushPopMessage* pMsg = msgEntry->m_data;
+        if (pMsg->m_pSceneHandler == pSceneHandler && pMsg->m_bPush == false)
+        {
+            return true;
+        }
+
+        if (nlDLRingIsEnd(msgHead, msgEntry) || msgEntry == NULL)
+        {
+            msgEntry = NULL;
+        }
+        else
+        {
+            msgEntry = msgEntry->m_next;
+        }
+    }
+
+    return false;
+}
+
 /**
  * Offset/Address/Size: 0x284 | 0x8020D8D0 | size: 0x1A8
+ * TODO: 98.82% match - register allocation differences only (r diffs).
+ * msg/queueHeadAddr swapped (r31/r30), inner loop vars rotated (r28/r26, r25/r29).
+ * MWCC inlines IsObjectQueuedForPop but allocates hoisted static address register
+ * before caller variables, causing systematic register reordering.
  */
 void FESceneManager::QueueScenePop()
 {
+    PackagePushPopMessage* msg;
+    DLListEntry<PackagePushPopMessage*>* entry;
+
+    msg = NULL;
+
+    if (m_PushPopMessageSlotPool__21PackagePushPopMessage.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&m_PushPopMessageSlotPool__21PackagePushPopMessage, sizeof(PackagePushPopMessage));
+    }
+
+    if (m_PushPopMessageSlotPool__21PackagePushPopMessage.m_FreeList != NULL)
+    {
+        msg = (PackagePushPopMessage*)m_PushPopMessageSlotPool__21PackagePushPopMessage.m_FreeList;
+        m_PushPopMessageSlotPool__21PackagePushPopMessage.m_FreeList = m_PushPopMessageSlotPool__21PackagePushPopMessage.m_FreeList->m_next;
+    }
+
+    msg->m_szFilename[0] = 0;
+    msg->m_pSceneHandler = NULL;
+    msg->m_bPush = false;
+
+    DLListEntry<BaseSceneHandler*>* sceneEntry = nlDLRingGetStart(m_sceneHandlerStack.m_Head);
+    DLListEntry<BaseSceneHandler*>* headEntry = m_sceneHandlerStack.m_Head;
+
+    while (sceneEntry != NULL)
+    {
+        BaseSceneHandler* pSceneHandler = sceneEntry->m_data;
+
+        if (!IsObjectQueuedForPop(pSceneHandler))
+        {
+            msg->m_pSceneHandler = sceneEntry->m_data;
+            break;
+        }
+
+        if (nlDLRingIsEnd(headEntry, sceneEntry) || sceneEntry == NULL)
+        {
+            sceneEntry = NULL;
+        }
+        else
+        {
+            sceneEntry = sceneEntry->m_next;
+        }
+    }
+
+    entry = NULL;
+
+    if (m_pushPopMessageQueue.m_Allocator.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&m_pushPopMessageQueue.m_Allocator, sizeof(DLListEntry<PackagePushPopMessage*>));
+    }
+
+    if (m_pushPopMessageQueue.m_Allocator.m_FreeList != NULL)
+    {
+        entry = (DLListEntry<PackagePushPopMessage*>*)m_pushPopMessageQueue.m_Allocator.m_FreeList;
+        m_pushPopMessageQueue.m_Allocator.m_FreeList = m_pushPopMessageQueue.m_Allocator.m_FreeList->m_next;
+    }
+
+    if (entry != NULL)
+    {
+        entry->m_next = NULL;
+        entry->m_prev = NULL;
+        entry->m_data = msg;
+    }
+
+    nlDLRingAddEnd(&m_pushPopMessageQueue.m_Head, entry);
 }
 
 /**

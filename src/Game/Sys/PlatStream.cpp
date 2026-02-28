@@ -1,8 +1,16 @@
 #include "Game/Sys/PlatStream.h"
 #include "Game/Sys/GCStream.h"
+#include "NL/nlSortedSlot.h"
+
+extern "C"
+{
+    void sndStreamMixParameterEx(unsigned long stid, unsigned char vol, unsigned char pan, unsigned char span, unsigned char auxa, unsigned char auxb);
+    void sndStreamDeactivate(unsigned long stid);
+}
 
 extern GCAudioStreaming::AudioBufferMgr g_BufferMgr;
 
+static nlStaticSortedSlot<GCAudioStreaming::AudioStream*, 7> g_Streams;
 static bool g_StreamingInitd;
 
 // /**
@@ -85,7 +93,72 @@ bool PlatAudio::IsStreamingInited()
 
 /**
  * Offset/Address/Size: 0x0 | 0x801C70C4 | size: 0x1BC
+ * TODO: 84.9% match - volatile counters force stack spill (stmw r27) but add
+ * extra reloads. Without volatile, MWCC allocates counters to NV regs (stmw r23).
+ * Remaining diffs: r29/r30 register swap (stream vs compiler-generated offset),
+ * volatile extra lwz after stw, ble vs beq for cmplwi 0 (volatile interaction).
+ * DWARF shows loop counter named "stream" (unsigned long) in r28.
  */
 void PlatAudio::StopAllStreams()
 {
+    using namespace GCAudioStreaming;
+
+    AudioStream* stream;
+    AudioStreamBuffer* buffer;
+    unsigned long i = 0;
+
+    while (i < g_Streams.m_EntryCount)
+    {
+        stream = *g_Streams.m_pEntryLookup[i].pEntry;
+        stream->m_Flags &= ~(1 << SF_Play);
+        if (stream->m_State == SS_Playing)
+        {
+            volatile unsigned long j = 0;
+            buffer = NULL;
+            if (stream->m_BufferCount > 0)
+                buffer = stream->m_Buffers[0];
+            while (buffer != NULL)
+            {
+                buffer->m_Volume = 0;
+                sndStreamMixParameterEx(buffer->m_StreamId, buffer->m_Volume, buffer->m_Pan, buffer->m_SurroundPan, 0, 0);
+                sndStreamDeactivate(buffer->m_StreamId);
+                stream->m_State = SS_Warm;
+                j++;
+                if (j < stream->m_BufferCount)
+                    buffer = stream->m_Buffers[j];
+                else
+                    buffer = NULL;
+            }
+            stream->m_StreamPos = 0;
+            stream->m_State = SS_Warm;
+        }
+        stream->CancelPendingReads();
+        if (stream->m_Flags & (1 << SF_CoolOnStop))
+        {
+            stream->m_Flags &= ~(1 << SF_CoolOnStop);
+            if (stream->m_State > SS_Initd)
+            {
+                unsigned long flags = stream->m_Flags;
+                flags &= ~(1 << SF_SeriousStop);
+                flags |= (1 << SF_SeriousStop);
+                stream->m_Flags = flags;
+                volatile unsigned long k = 0;
+                buffer = NULL;
+                if (stream->m_BufferCount > 0)
+                    buffer = stream->m_Buffers[0];
+                while (buffer != NULL)
+                {
+                    stream->m_BuffMgr.FreeBuffer(buffer);
+                    stream->m_Buffers[k] = NULL;
+                    k++;
+                    if (k < stream->m_BufferCount)
+                        buffer = stream->m_Buffers[k];
+                    else
+                        buffer = NULL;
+                }
+                stream->m_State = SS_Initd;
+            }
+        }
+        i++;
+    }
 }

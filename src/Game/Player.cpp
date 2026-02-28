@@ -18,8 +18,11 @@
 #include "Game/CharacterTriggers.h"
 #include "Game/Game.h"
 #include "Game/Audio/WorldAudio.h"
+#include "Game/Physics/PhysicsColumn.h"
 
 float g_fPassInterceptNoPickupTimer = 5.0f;
+
+static u8 sbNoBallPickups;
 
 extern int g_nHeadSpinMax;
 extern int g_nHeadTiltMax;
@@ -149,10 +152,60 @@ bool cPlayer::CanPickupBallFromPass(cBall* pBall)
 
 /**
  * Offset/Address/Size: 0x284 | 0x800577D4 | size: 0x1B0
+ * TODO: 99.44% match - MWCC scheduling keeps one extra li r30,0 after
+ * extsh r0,r3 instead of at 0x158 before the TestCollision beq.
  */
 bool cPlayer::CanPickupBall(cBall* pBall)
 {
-    return false;
+    cPlayer* const self = this;
+
+    if (sbNoBallPickups)
+    {
+        return false;
+    }
+
+    if (!g_pGame->IsGameplayOrOvertime())
+    {
+        return false;
+    }
+
+    bool bDoPickUp = false;
+    float speedSq = pBall->m_v3Velocity.f.x * pBall->m_v3Velocity.f.x
+                  + pBall->m_v3Velocity.f.y * pBall->m_v3Velocity.f.y
+                  + pBall->m_v3Velocity.f.z * pBall->m_v3Velocity.f.z;
+
+    if (pBall->m_pOwner == NULL && pBall->m_tNoPickupTimer.m_uPackedTime == 0)
+    {
+        if (speedSq <= 900.0f || pBall->m_pPassTarget == self)
+        {
+            if (self->m_tNoPickupPassInterceptTimer.m_uPackedTime == 0
+                && self->m_tNoPickupTimer.m_uPackedTime == 0
+                && self->m_eAnimID != 0x12 && self->m_eAnimID != 0x13)
+            {
+                float fPhysicsRadius = 0.0f;
+                self->m_pPhysicsCharacter->m_pPlayerPlayerColumn->GetRadius(&fPhysicsRadius);
+
+                nlVector3 v3PrevPlayerPos = self->m_v3PrevPosition;
+                nlVector3 v3PlayerPos = self->m_v3Position;
+                v3PlayerPos.f.z = 0.0f;
+                v3PrevPlayerPos.f.z = 0.0f;
+
+                if (TestCollision(fPhysicsRadius, v3PrevPlayerPos, v3PlayerPos, 0.0f, pBall->m_v3PrevPosition, pBall->m_v3Position))
+                {
+                    s16 delta;
+                    delta = self->GetFacingDeltaToPosition(g_pBall->m_v3Position);
+                    bDoPickUp = false;
+                    u16 absDelta = (u16)((delta < 0) ? -delta : delta);
+                    if (absDelta < 0x4000)
+                    {
+                        bDoPickUp = true;
+                    }
+                }
+            }
+        }
+    }
+
+    return bDoPickUp;
 }
 
 /**
@@ -670,8 +723,41 @@ void cPlayer::SetAnimID(int animID)
 /**
  * Offset/Address/Size: 0x26FC | 0x80059C4C | size: 0x190
  */
-void cPlayer::GetAnimatedBallOrientation(nlQuaternion&)
+void cPlayer::GetAnimatedBallOrientation(nlQuaternion& qRetval)
 {
+    cSAnim* pSAnim = m_pCurrentAnimController->m_pSAnim;
+    float time = m_pCurrentAnimController->m_fTime;
+    int sanimBallNode = m_pCurrentAnimController->RemapNode(m_nBallJointIndex);
+
+    RotAccum* rot = &m_pPoseAccumulator->m_rot.mData[m_nBallJointIndex];
+    rot->q.f.x = 0.0f;
+    rot->q.f.y = 0.0f;
+    rot->q.f.z = 0.0f;
+    rot->q.f.w = 1.0f;
+    rot->quatAccumulatedWeight = 0.0f;
+    rot->rotAroundZ = 0;
+    rot->rotAroundZAccumulatedWeight = 0.0f;
+    rot->bIdentity = true;
+
+    pSAnim->BlendRot(m_nBallJointIndex, sanimBallNode, time, 1.0f, m_pPoseAccumulator, m_pCurrentAnimController->m_bMirror);
+
+    nlQuaternion qAnimated = rot->q;
+    nlQuaternion qFacing;
+    nlVector3 v3Up = { 0.0f, 0.0f, 1.0f };
+    nlQuaternion qOrient;
+    nlQuaternion startInverse;
+
+    nlMakeQuat(qFacing, v3Up, 0.0000958738f * (float)m_aActualFacingDirection);
+    nlMultQuat(qOrient, qFacing, qAnimated);
+
+    if (m_ResetBaseBallOrientation)
+    {
+        nlQuatInverse(startInverse, qOrient);
+        nlMultQuat(m_BaseBallOrientation, startInverse, g_pBall->m_qOrientation);
+        m_ResetBaseBallOrientation = false;
+    }
+
+    nlMultQuat(qRetval, qOrient, m_BaseBallOrientation);
 }
 
 /**

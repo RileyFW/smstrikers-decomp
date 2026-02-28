@@ -2,6 +2,36 @@
 
 #include "NL/nlTask.h"
 
+struct LOCHeader
+{
+    char Thumbprint[4];
+    unsigned long Version;
+    unsigned long Language;
+    unsigned long StringCount;
+    unsigned long Flags;
+};
+
+class nlLocalization
+{
+public:
+    struct StringLookup
+    {
+        unsigned long HashValue;
+        unsigned long StringOffset;
+    };
+
+    LOCHeader* m_pFile;
+    StringLookup* m_LookupTable;
+    unsigned short* m_FirstString;
+};
+
+extern void* g_pLocalization;
+extern const unsigned short LocalizationTableNotFound[];
+extern const unsigned short MissingLocString[];
+
+template <typename T, typename U>
+T* nlBSearch(const U&, T*, int);
+
 static float MESSAGE_DISPLAY_TIME;
 
 /**
@@ -42,11 +72,86 @@ void NSNMessengerScene::CloseMessenger()
     m_curState = MS_CLOSING;
 }
 
+static inline const unsigned short* LookupLocText(const char* locMessage)
+{
+    unsigned long hash = nlStringLowerHash(locMessage);
+    nlLocalization* loc = (nlLocalization*)g_pLocalization;
+    if (loc->m_LookupTable == 0)
+    {
+        return LocalizationTableNotFound;
+    }
+    nlLocalization::StringLookup* lookup = nlBSearch<nlLocalization::StringLookup, unsigned long>(hash, loc->m_LookupTable, loc->m_pFile->StringCount);
+    if (lookup != 0)
+    {
+        return loc->m_FirstString + lookup->StringOffset;
+    }
+    return MissingLocString;
+}
+
+static inline void CopyWideString(BasicStringInternal* data, const unsigned short* text)
+{
+    data->mData = 0;
+    data->mSize = 0;
+    data->mCapacity = 0;
+
+    const unsigned short* ptr = text;
+    while (*ptr++ != 0)
+    {
+        data->mSize++;
+    }
+
+    data->mSize++;
+    data->mData = (char*)nlMalloc((data->mSize + 1) * 2, 8, true);
+    data->mCapacity = data->mSize;
+
+    int j = 0;
+    int i = j;
+    while (i < data->mSize)
+    {
+        *(unsigned short*)(data->mData + j) = *text;
+        i++;
+        text++;
+        j += 2;
+    }
+
+    data->mRefCount = 1;
+}
+
 /**
  * Offset/Address/Size: 0x274 | 0x800A1590 | size: 0x1A4
+ * TODO: 96.24% match - r29/r30 register swap for this/data, li r5,0/mr r4,r5 instead of li r4,0/mr r5,r4
  */
-void NSNMessengerScene::SetDisplayMessage(const char*)
+void NSNMessengerScene::SetDisplayMessage(const char* locMessage)
 {
+    const unsigned short* text = LookupLocText(locMessage);
+
+    BasicStringInternal* data = (BasicStringInternal*)nlMalloc(0x10, 8, true);
+    if (data != 0)
+    {
+        CopyWideString(data, text);
+    }
+
+    BasicStringInternal* msgData = data;
+    SetDisplayMessage(*(const BasicString<unsigned short, Detail::TempStringAllocator>*)&msgData);
+
+    data = msgData;
+    if (data != 0)
+    {
+        if (--data->mRefCount == 0)
+        {
+            if (data != 0)
+            {
+                if (data != 0)
+                {
+                    delete[] data->mData;
+                }
+                if (data != 0)
+                {
+                    nlFree(data);
+                }
+            }
+        }
+    }
 }
 
 /**

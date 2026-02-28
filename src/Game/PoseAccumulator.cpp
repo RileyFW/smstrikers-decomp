@@ -390,6 +390,11 @@ void cPoseAccumulator::BlendRot(int idx, const nlQuaternion* q, float w, bool fl
     e->bIdentity = false;
 }
 
+static inline RotAccum* GetRotAccum(RotAccum* data, int idx)
+{
+    return data + idx;
+}
+
 /**
  * Offset/Address/Size: 0x468 | 0x801EBA08 | size: 0x94
  */
@@ -398,7 +403,7 @@ void cPoseAccumulator::BlendRotAroundZ(int idx, unsigned short angle, float w)
     if (fabsf(w) < 0.001f)
         return;
 
-    RotAccum* e = &m_rot.mData[idx];
+    RotAccum* e = GetRotAccum(m_rot.mData, idx);
 
     e->rotAroundZAccumulatedWeight += w;
     float t = w / e->rotAroundZAccumulatedWeight;
@@ -408,7 +413,7 @@ void cPoseAccumulator::BlendRotAroundZ(int idx, unsigned short angle, float w)
 
     e->rotAroundZ = e->rotAroundZ + (short)delta;
 
-    e = m_rot.mData + idx;
+    e = GetRotAccum(m_rot.mData, idx);
     e->bIdentity = false;
 }
 
