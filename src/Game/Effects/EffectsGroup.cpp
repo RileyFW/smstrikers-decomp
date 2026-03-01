@@ -410,15 +410,47 @@ bool fxUnloadGroups()
 }
 
 /**
+ * Helper struct for inlining FindGet with bool return to match target assembly.
+ * The target uses a bool found flag pattern (li r0,1 / li r0,0 / clrlwi.)
+ * which the native AVLTreeBase::FindGet (returning ValueType*) does not produce.
+ */
+struct GroupMapFindHelper {
+    char pad[0x8];
+    AVLTreeEntry<unsigned long, EffectsGroup*>* m_Root;
+
+    inline bool FindGet(unsigned long key, EffectsGroup*** foundValue) const {
+        AVLTreeEntry<unsigned long, EffectsGroup*>* node = m_Root;
+        while (node != NULL) {
+            int cmpResult;
+            if (key == node->key)
+                cmpResult = 0;
+            else if (key < node->key)
+                cmpResult = -1;
+            else
+                cmpResult = 1;
+            if (cmpResult == 0) {
+                if (foundValue != NULL)
+                    *foundValue = &node->value;
+                return true;
+            } else {
+                if (cmpResult < 0)
+                    node = (AVLTreeEntry<unsigned long, EffectsGroup*>*)node->node.left;
+                else
+                    node = (AVLTreeEntry<unsigned long, EffectsGroup*>*)node->node.right;
+            }
+        }
+        return false;
+    }
+};
+
+/**
  * Offset/Address/Size: 0x0 | 0x801F2A48 | size: 0xA4
  */
 EffectsGroup* fxGetGroup(const char* name)
 {
-    AVLTreeEntry<unsigned long, EffectsGroup*>* entry = pGroupMap->Find(nlStringHash(name));
-    if (entry != nullptr)
-    {
-        return entry->value;
-    }
-
+    EffectsGroup** foundValue;
+    bool found = ((GroupMapFindHelper*)pGroupMap)->FindGet(nlStringHash(name), &foundValue);
+    if (found)
+        return *foundValue;
     return nullptr;
 }

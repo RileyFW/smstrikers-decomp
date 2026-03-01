@@ -169,22 +169,23 @@ float cDecisionEntity::CallDTF(cFielder* pFielder)
  */
 bool cDecisionEntity::DoAbort(cFielder* pFielder)
 {
+    bool bAbort = false;
     cFielder* pSavedFielder; // r30;
 
-    bool bAbort = false;
     if (m_pAF != NULL)
     {
         pSavedFielder = g_pScriptCurrentFielder;
-        if (g_pScriptCurrentFielder != pFielder)
+        if (pSavedFielder != pFielder)
         {
             FuzzyScriptSetCurrentFielder(pFielder);
         }
         bAbort = m_pAF(this).mData.b;
         if (pSavedFielder != pFielder)
         {
-            FuzzyScriptSetCurrentFielder(g_pScriptCurrentFielder);
+            FuzzyScriptSetCurrentFielder(pSavedFielder);
         }
     }
+
     return bAbort;
 }
 

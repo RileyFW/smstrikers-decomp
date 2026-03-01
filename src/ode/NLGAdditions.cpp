@@ -119,31 +119,40 @@ void dExtractColumn3(float* __restrict arg0, const float* __restrict arg1, int c
 
 /**
  * Offset/Address/Size: 0x238 | 0x80224500 | size: 0xDC
+ * TODO: 93.91% match - prologue instruction scheduling: target interleaves
+ * lfs f0/f1 loads at offsets 8/18 (during prologue setup), our compiler
+ * places them at 24/28 (after prologue). Same instructions, different order.
+ * Likely -inline auto,deferred scheduling pass difference.
  */
 void dInvertRigidTransformation(float* param_1, const float* param_2, const float* param_3)
 {
+    float a = param_2[0], b = param_2[4];
     float v[3];
 
-    param_1[0] = param_2[0];
-    param_1[1] = param_2[4];
-    param_1[2] = param_2[8];
-    param_1[4] = param_2[1];
-    param_1[5] = param_2[5];
-    param_1[6] = param_2[9];
-    param_1[8] = param_2[2];
-    param_1[9] = param_2[6];
-    param_1[10] = param_2[10];
-    ;
+    param_1[0] = a; a = param_2[8];
+    param_1[1] = b; b = param_2[1];
+    param_1[2] = a; a = param_2[5];
+    param_1[4] = b; b = param_2[9];
+    param_1[5] = a; a = param_2[2];
+    param_1[6] = b; b = param_2[6];
+    param_1[8] = a; a = param_2[10];
+    param_1[9] = b;
+    param_1[10] = a;
 
     dMultiply0(v, param_1, param_3, 3, 3, 1);
 
-    param_1[3] = v[2] * -1.0f;
-    param_1[7] = v[1] * -1.0f;
-    param_1[0xb] = v[0] * -1.0f;
-    param_1[0xc] = 0.0f;
-    param_1[0xd] = 0.0f;
-    param_1[0xe] = 0.0f;
-    param_1[0xf] = 1.0f;
+    float neg = -1.0f;
+    v[0] *= neg;
+    v[1] *= neg;
+    v[2] *= neg;
+
+    param_1[3] = v[0];
+    param_1[7] = v[1];
+    param_1[11] = v[2];
+    param_1[12] = 0.0f;
+    param_1[13] = 0.0f;
+    param_1[14] = 0.0f;
+    param_1[15] = 1.0f;
 }
 
 /**

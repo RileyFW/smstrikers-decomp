@@ -6,6 +6,24 @@
 #include "NL/nlString.h"
 
 extern void ___blank(const char*, ...);
+extern "C" void sndStreamMixParameterEx(unsigned long stid, unsigned char vol, unsigned char pan, unsigned char span, unsigned char auxa, unsigned char auxb);
+extern "C" void sndStreamLPFParameter(unsigned long, unsigned long, unsigned long);
+extern "C" void sndStreamDeactivate(unsigned long stid);
+
+struct CROWD_SETTINGS
+{
+    /* 0x000 */ float MoodDecayDelay;
+    /* 0x004 */ float MoodDecayRate;
+    /* 0x008 */ float BlendSpeedNormal;
+    /* 0x00C */ float BlendSpeedFast;
+    /* 0x010 */ float BlendStrictness;
+    /* 0x014 */ float CrowdMasterVolume;
+    /* 0x018 */ char NeutralSampleName[256];
+    /* 0x118 */ char NegativeSampleName[256];
+    /* 0x218 */ char PositiveSampleName[256];
+    /* 0x318 */ char SaturationSampleNames[5][256];
+    /* 0x818 */ unsigned char NoStreaming : 1;
+}; // total size: 0x81C
 
 static bool g_Initd;
 
@@ -14,6 +32,7 @@ void Increment(T& Value);
 
 static bool g_DoDecay = true;
 static bool g_CrowdSFXStopped;
+static CROWD_SETTINGS g_Settings;
 
 CROWD_AUDIO_INIT g_CrowdAudio;
 CROWD_STATE g_CrowdState;
@@ -98,10 +117,85 @@ unsigned char CrowdMood::IsStreamLocked()
 
 /**
  * Offset/Address/Size: 0x3780 | 0x80150E94 | size: 0x1C8
+ * TODO: 96.49% match - two branch-opcode diffs remain in stream setup:
+ *       compiler emits `beq` after `cmplwi m_BufferCount, 0`, target emits `ble`.
  */
-void ChangeCrowdVolume(float)
+void ChangeCrowdVolume(float NewVolume)
 {
-    FORCE_DONT_INLINE;
+    MOOD_DEFINITION MoodDef;
+    g_CrowdState.CrowdVolume = NewVolume * g_Settings.CrowdMasterVolume;
+    MoodDefFromBlend(g_CrowdState.CurrentMoodBlend, MoodDef);
+    PlayMoodDef(MoodDef);
+
+    float zero = 0.0f;
+    if (fabsf(NewVolume - zero) <= 0.01f)
+    {
+        GCAudioStreaming::StereoAudioStream* pChant = g_CrowdAudio.pChantStream;
+        if (pChant != NULL)
+        {
+            if (pChant->m_State >= GCAudioStreaming::SS_Warming)
+            {
+                GCAudioStreaming::AudioStreamBuffer* buf;
+                volatile unsigned long i = (unsigned long)(buf = NULL);
+
+                if (pChant->m_BufferCount > 0)
+                {
+                    buf = pChant->m_Buffers[0];
+                }
+
+                while (buf != NULL)
+                {
+                    buf->m_Volume = 0;
+                    sndStreamMixParameterEx(buf->m_StreamId, buf->m_Volume, buf->m_Pan, buf->m_SurroundPan, 0, 0);
+
+                    unsigned long ci = i + 1;
+                    i = ci;
+                    if (ci < pChant->m_BufferCount)
+                    {
+                        buf = pChant->m_Buffers[ci];
+                    }
+                    else
+                    {
+                        buf = NULL;
+                    }
+                }
+            }
+            pChant->m_Volume = 0;
+        }
+
+        GCAudioStreaming::MonoAudioStream* pHeckle = g_CrowdAudio.pHeckleStream;
+        if (pHeckle != NULL)
+        {
+            if (pHeckle->m_State >= GCAudioStreaming::SS_Warming)
+            {
+                GCAudioStreaming::AudioStreamBuffer* buf;
+                volatile unsigned long i = (unsigned long)(buf = NULL);
+
+                if (pHeckle->m_BufferCount > 0)
+                {
+                    buf = pHeckle->m_Buffers[0];
+                }
+
+                while (buf != NULL)
+                {
+                    buf->m_Volume = 0;
+                    sndStreamMixParameterEx(buf->m_StreamId, buf->m_Volume, buf->m_Pan, buf->m_SurroundPan, 0, 0);
+
+                    unsigned long ci = i + 1;
+                    i = ci;
+                    if (ci < pHeckle->m_BufferCount)
+                    {
+                        buf = pHeckle->m_Buffers[ci];
+                    }
+                    else
+                    {
+                        buf = NULL;
+                    }
+                }
+            }
+            pHeckle->m_Volume = 0;
+        }
+    }
 }
 
 /**
@@ -266,9 +360,95 @@ void CrowdMood::SetCrowdVolume(unsigned long Volume, unsigned long FadeTime)
 
 /**
  * Offset/Address/Size: 0x490 | 0x8014DBA4 | size: 0x1CC
+ * TODO: register allocation differs for LPF flag/state/audio stream pointers,
+ *       and both buffer-count checks still emit `beq` instead of target `ble`.
  */
-void CrowdMood::ActivateLPF(bool)
+void CrowdMood::ActivateLPF(bool Activate)
 {
+    GCAudioStreaming::StereoAudioStream* pChant;
+    GCAudioStreaming::MonoAudioStream* pHeckle;
+
+    if (Activate == g_CrowdState.LPFOn)
+    {
+        return;
+    }
+
+    Audio::ActivateFilterOnSFX(g_CrowdAudio.NeutralVoiceId, Activate);
+    Audio::ActivateFilterOnSFX(g_CrowdAudio.PositiveVoiceId, Activate);
+    Audio::ActivateFilterOnSFX(g_CrowdAudio.NegativeVoiceId, Activate);
+
+    pChant = g_CrowdAudio.pChantStream;
+    if (pChant != NULL && g_CrowdAudio.pHeckleStream != NULL && !g_CrowdState.StreamLocked)
+    {
+        if (pChant->m_State >= GCAudioStreaming::SS_Warming)
+        {
+            GCAudioStreaming::AudioStreamBuffer* buf;
+            volatile unsigned long i = (unsigned long)(buf = NULL);
+
+            if (pChant->m_BufferCount > 0)
+            {
+                buf = pChant->m_Buffers[0];
+            }
+
+            while (buf != NULL)
+            {
+                if (Activate != buf->m_bLPFOn)
+                {
+                    sndStreamLPFParameter(buf->m_StreamId, Activate, buf->m_LPFFreq);
+                    buf->m_bLPFOn = Activate;
+                }
+
+                unsigned long ci = i + 1;
+                i = ci;
+                if (ci < pChant->m_BufferCount)
+                {
+                    buf = pChant->m_Buffers[ci];
+                }
+                else
+                {
+                    buf = NULL;
+                }
+            }
+        }
+
+        pChant->m_LPFOn = Activate;
+
+        pHeckle = g_CrowdAudio.pHeckleStream;
+        if (pHeckle->m_State >= GCAudioStreaming::SS_Warming)
+        {
+            GCAudioStreaming::AudioStreamBuffer* buf;
+            volatile unsigned long i = (unsigned long)(buf = NULL);
+
+            if (pHeckle->m_BufferCount > 0)
+            {
+                buf = pHeckle->m_Buffers[0];
+            }
+
+            while (buf != NULL)
+            {
+                if (Activate != buf->m_bLPFOn)
+                {
+                    sndStreamLPFParameter(buf->m_StreamId, Activate, buf->m_LPFFreq);
+                    buf->m_bLPFOn = Activate;
+                }
+
+                unsigned long ci = i + 1;
+                i = ci;
+                if (ci < pHeckle->m_BufferCount)
+                {
+                    buf = pHeckle->m_Buffers[ci];
+                }
+                else
+                {
+                    buf = NULL;
+                }
+            }
+        }
+
+        pHeckle->m_LPFOn = Activate;
+    }
+
+    g_CrowdState.LPFOn = Activate;
 }
 
 /**
@@ -277,8 +457,6 @@ void CrowdMood::ActivateLPF(bool)
  *       r28/r30 (g_CrowdState). Extra li for volatile zero-init.
  *       ble- vs beq- for buffer count check.
  */
-extern "C" void sndStreamLPFParameter(unsigned long, unsigned long, unsigned long);
-
 void CrowdMood::SetLPF(unsigned short Frequency)
 {
     GCAudioStreaming::StereoAudioStream* pChant;
@@ -372,9 +550,99 @@ GCAudioStreaming::StereoAudioStream* CrowdMood::LockStream()
 
 /**
  * Offset/Address/Size: 0x104 | 0x8014D818 | size: 0x1B0
+ * TODO: 95.88% match - `cmplwi m_BufferCount, 0` still emits `beq` (target `ble`)
+ *       in both buffer-start checks; second free-buffer loop still has r3/r4 swap.
  */
 void CrowdMood::UnlockStream()
 {
+    GCAudioStreaming::StereoAudioStream* pChant = g_CrowdAudio.pChantStream;
+
+    if (pChant != NULL)
+    {
+        pChant->m_Flags &= ~(1 << GCAudioStreaming::SF_Play);
+
+        if (pChant->m_State == GCAudioStreaming::SS_Playing)
+        {
+            GCAudioStreaming::AudioStreamBuffer* buf;
+            volatile unsigned long i = (unsigned long)(buf = NULL);
+
+            if (pChant->m_BufferCount <= 0)
+            {
+            }
+            else
+            {
+                buf = pChant->m_Buffers[0];
+            }
+
+            while (buf != NULL)
+            {
+                buf->m_Volume = 0;
+                sndStreamMixParameterEx(buf->m_StreamId, buf->m_Volume, buf->m_Pan, buf->m_SurroundPan, 0, 0);
+                sndStreamDeactivate(buf->m_StreamId);
+                pChant->m_State = GCAudioStreaming::SS_Warm;
+
+                unsigned long ci = i + 1;
+                i = ci;
+                if (ci < pChant->m_BufferCount)
+                {
+                    buf = pChant->m_Buffers[ci];
+                }
+                else
+                {
+                    buf = NULL;
+                }
+            }
+
+            pChant->m_StreamPos = 0;
+            pChant->m_State = GCAudioStreaming::SS_Warm;
+        }
+
+        pChant->CancelPendingReads();
+
+        if (pChant->m_Flags & (1 << GCAudioStreaming::SF_CoolOnStop))
+        {
+            pChant->m_Flags &= ~(1 << GCAudioStreaming::SF_CoolOnStop);
+
+            if (pChant->m_State > GCAudioStreaming::SS_Initd)
+            {
+                GCAudioStreaming::AudioStreamBuffer* buf;
+                volatile unsigned long i = (unsigned long)(buf = NULL);
+
+                pChant->m_Flags = (pChant->m_Flags & ~(1 << GCAudioStreaming::SF_SeriousStop)) | (1 << GCAudioStreaming::SF_SeriousStop);
+
+                if (pChant->m_BufferCount <= 0)
+                {
+                }
+                else
+                {
+                    buf = pChant->m_Buffers[0];
+                }
+
+                while (buf != NULL)
+                {
+                    pChant->m_BuffMgr.FreeBuffer(buf);
+
+                    unsigned long bi = i;
+                    unsigned long ci = bi + 1;
+                    i = ci;
+                    pChant->m_Buffers[bi] = NULL;
+
+                    if (ci < pChant->m_BufferCount)
+                    {
+                        buf = pChant->m_Buffers[ci];
+                    }
+                    else
+                    {
+                        buf = NULL;
+                    }
+                }
+
+                pChant->m_State = GCAudioStreaming::SS_Initd;
+            }
+        }
+    }
+
+    g_CrowdState.StreamLocked = false;
 }
 
 /**

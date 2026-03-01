@@ -191,6 +191,34 @@ void StatsTracker::SimulateRemainingGames()
  */
 void StatsTracker::SimulateGame()
 {
+    int goalsFor = 0;
+    int goalsAgainst = 0;
+    int i;
+
+    for (i = 0; i < 15; i++) {
+        int rand = (int)nlRandom(100, &nlDefaultSeed);
+        if (rand < 20) {
+            goalsFor++;
+            s_pInstance->TrackStat(STATS_GOALS_FOR, 0, 0, -1, 0, 1, 0);
+        } else if (rand < 40) {
+            goalsAgainst++;
+            s_pInstance->TrackStat(STATS_GOALS_FOR, 1, 0, -1, 0, 1, 0);
+        }
+    }
+
+    if (goalsFor == goalsAgainst) {
+        if ((int)nlRandom(100, &nlDefaultSeed) < 50) {
+            s_pInstance->TrackStat(STATS_GOALS_FOR, 0, 0, -1, 0, 1, 0);
+            s_pInstance->TrackStat(STATS_OT_WIN, 0, 0, goalsFor + 1, goalsAgainst, 0, 0);
+        } else {
+            s_pInstance->TrackStat(STATS_GOALS_FOR, 1, 0, -1, 0, 1, 0);
+            s_pInstance->TrackStat(STATS_OT_WIN, 1, 0, goalsFor, goalsAgainst + 1, 0, 0);
+        }
+    } else if (goalsFor > goalsAgainst) {
+        s_pInstance->TrackStat(STATS_WIN, 0, 0, goalsFor, goalsAgainst, 0, 0);
+    } else {
+        s_pInstance->TrackStat(STATS_WIN, 1, 0, goalsFor, goalsAgainst, 0, 0);
+    }
 }
 
 /**
@@ -210,8 +238,85 @@ void StatsTracker::AddUserStatByPad(ePlayerStats, int, int)
 /**
  * Offset/Address/Size: 0x1C88 | 0x801831E8 | size: 0x1D4
  */
-void StatsTracker::AddMilestoneUserStat(ePlayerStats, int)
+void StatsTracker::AddMilestoneUserStat(ePlayerStats stat, int amount)
 {
+    GameInfoManager* pGIM = GameInfoManager::Instance();
+
+    switch (stat)
+    {
+        case STATS_GOALS_FOR:
+        {
+            int val = pGIM->mUserInfo.mNumGoalsScored + amount;
+            if (val >= 9999) {
+                pGIM->mUserInfo.mNumGoalsScored = 9999;
+            } else {
+                pGIM->mUserInfo.mNumGoalsScored = val;
+            }
+            if (!pGIM->HasTrophy(TROPHY_SNIPER_CUP) && pGIM->mUserInfo.mNumGoalsScored >= 300)
+            {
+                pGIM->mUserInfo.mTrophies[1] |= 0x02;
+            }
+            break;
+        }
+        case STATS_HITS_MADE:
+        {
+            int val = pGIM->mUserInfo.mNumHits + amount;
+            if (val >= 9999) {
+                pGIM->mUserInfo.mNumHits = 9999;
+            } else {
+                pGIM->mUserInfo.mNumHits = val;
+            }
+            if (!pGIM->HasTrophy(TROPHY_PARAMEDIC_CUP) && pGIM->mUserInfo.mNumHits >= 1000)
+            {
+                pGIM->mUserInfo.mTrophies[1] |= 0x10;
+            }
+            break;
+        }
+        case STATS_PERFECT_PASSES:
+        {
+            int val = pGIM->mUserInfo.mNumPerfectPasses + amount;
+            if (val >= 9999) {
+                pGIM->mUserInfo.mNumPerfectPasses = 9999;
+            } else {
+                pGIM->mUserInfo.mNumPerfectPasses = val;
+            }
+            if (!pGIM->HasTrophy(TROPHY_TACTICIAN_CUP) && pGIM->mUserInfo.mNumPerfectPasses >= 300)
+            {
+                pGIM->mUserInfo.mTrophies[1] |= 0x08;
+            }
+            break;
+        }
+        case STATS_GAMES_PLAYED:
+        {
+            int val = pGIM->mUserInfo.mNumGamesPlayed + amount;
+            if (val >= 9999) {
+                pGIM->mUserInfo.mNumGamesPlayed = 9999;
+            } else {
+                pGIM->mUserInfo.mNumGamesPlayed = val;
+            }
+            if (!pGIM->HasTrophy(TROPHY_VETERAN_CUP) && pGIM->mUserInfo.mNumGamesPlayed >= 100)
+            {
+                pGIM->mUserInfo.mTrophies[1] |= 0x01;
+            }
+            break;
+        }
+        case STATS_STS_ATTEMPTS:
+        {
+            int val = pGIM->mUserInfo.mNumSTSAttempts + amount;
+            if (val >= 9999) {
+                pGIM->mUserInfo.mNumSTSAttempts = 9999;
+            } else {
+                pGIM->mUserInfo.mNumSTSAttempts = val;
+            }
+            if (!pGIM->HasTrophy(TROPHY_STRIKER_CUP) && pGIM->mUserInfo.mNumSTSAttempts >= 100)
+            {
+                pGIM->mUserInfo.mTrophies[1] |= 0x04;
+            }
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 /**

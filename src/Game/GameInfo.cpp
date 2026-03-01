@@ -538,8 +538,9 @@ void GameInfoManager::IncreaseGameNumber(bool shouldIncreaseRound)
 /**
  * Offset/Address/Size: 0x6E20 | 0x8017C4C4 | size: 0x2B8
  */
-void GameInfoManager::GetNumHumanTeams()
+int GameInfoManager::GetNumHumanTeams()
 {
+    return 0;
 }
 
 /**

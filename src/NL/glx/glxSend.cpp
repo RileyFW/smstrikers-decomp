@@ -4,7 +4,13 @@
 #include "dolphin/gx/GXGeometry.h"
 #include "dolphin/gx/GXLighting.h"
 #include "dolphin/gx/GXEnum.h"
+#include "dolphin/gx/GXTransform.h"
+#include "dolphin/mtx.h"
 #include "NL/gl/glLightUserData.h"
+#include "NL/gl/glMatrix.h"
+#include "NL/gl/glUserData.h"
+#include "NL/glx/glxMatrix.h"
+#include "NL/platvmath.h"
 #include "types.h"
 
 // Forward declarations for global variables (these would need to be declared elsewhere)
@@ -42,11 +48,95 @@ void glx_SwitchUserData(const glModelPacket*)
     FORCE_DONT_INLINE;
 }
 
+static eGLView prev_view;
+static u8 glx_InvXpose;
+static u8 glx_InvXposeChar;
+static bool g_bFastSkinPath;
+static bool g_bMtxSkinMath;
+static bool glx_IsCoPlanarView;
+static Mtx gx_mview;
+static nlMatrix4 mview;
+
+struct GLSkinUserData {
+    int reg;
+    float mat[12];
+};
+
 /**
  * Offset/Address/Size: 0x19BC | 0x801BB4BC | size: 0x1D0
  */
-void glud_Skin(void*, const glModelPacket*)
+void glud_Skin(void* pData, const glModelPacket* pPacket)
 {
+    float mSkinConcat[3][4];
+    float mNormFast[3][4];
+    nlMatrix4 nlMat;
+    float tempMtx[3][4];
+    float gxMat[3][4];
+    float mNorm[3][4];
+    u32 numMatrices;
+    u32 i;
+    int slot;
+    GLSkinUserData* pSkin;
+    u8 bInvXpose;
+
+    numMatrices = *(u32*)pData;
+    pSkin = (GLSkinUserData*)((u8*)pData + 4);
+
+    if (prev_view == GLV_Characters)
+        bInvXpose = glx_InvXposeChar;
+    else
+        bInvXpose = glx_InvXpose;
+
+    if (g_bFastSkinPath && g_bMtxSkinMath && !glx_IsCoPlanarView &&
+        pPacket->state.matrix == glGetIdentityMatrix())
+    {
+        // Fast path - use gx_mview directly
+        for (i = 0; i < numMatrices; i++, pSkin++)
+        {
+            PSMTXConcat(gx_mview, *(const Mtx*)pSkin->mat, mSkinConcat);
+            slot = pSkin->reg + 99;
+            GXLoadPosMtxImm(mSkinConcat, (u32)slot);
+            if (bInvXpose)
+            {
+                PSMTXInvXpose(mSkinConcat, mNormFast);
+                GXLoadNrmMtxImm(mNormFast, (u32)slot);
+            }
+            else
+            {
+                GXLoadNrmMtxImm(mSkinConcat, (u32)slot);
+            }
+        }
+    }
+    else
+    {
+        // Slow path
+        for (i = 0; i < numMatrices; i++, pSkin++)
+        {
+            if (g_bMtxSkinMath && !glx_IsCoPlanarView)
+            {
+                glxCopyMatrix(gxMat, *(nlMatrix4*)pPacket->state.matrix);
+                PSMTXConcat(gxMat, gx_mview, tempMtx);
+                PSMTXConcat(tempMtx, *(const Mtx*)pSkin->mat, mSkinConcat);
+            }
+            else
+            {
+                nlMultMatrices(nlMat, *(nlMatrix4*)pPacket->state.matrix, mview);
+                glxCopyMatrix(tempMtx, nlMat);
+                PSMTXConcat(tempMtx, *(const Mtx*)pSkin->mat, mSkinConcat);
+            }
+            slot = pSkin->reg + 99;
+            GXLoadPosMtxImm(mSkinConcat, (u32)slot);
+            if (bInvXpose)
+            {
+                PSMTXInvXpose(mSkinConcat, mNorm);
+                GXLoadNrmMtxImm(mNorm, (u32)slot);
+            }
+            else
+            {
+                GXLoadNrmMtxImm(mSkinConcat, (u32)slot);
+            }
+        }
+    }
 }
 
 /**

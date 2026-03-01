@@ -1771,7 +1771,8 @@ float FacingSideline(cFielder* pFielder)
     {
         float fSin;
         float fCos;
-        nlSinCos(&fSin, &fCos, pFielder->m_aActualFacingDirection);
+        float* pSin = (pSidelineNormal != NULL) ? &fSin : &fSin;
+        nlSinCos(pSin, &fCos, pFielder->m_aActualFacingDirection);
 
         fResult = ((pSidelineNormal->f.x * fCos) + (pSidelineNormal->f.y * fSin));
         fResult = -fResult;

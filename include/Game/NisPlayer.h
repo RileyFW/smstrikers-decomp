@@ -62,7 +62,7 @@ public:
     /* 0xBC68 */ bool mLoadingFromBack;         // offset 0xBC68, size 0x1
     /* 0xBC6C */ int mUsedFromFront;            // offset 0xBC6C, size 0x4
     /* 0xBC70 */ int mUsedFromBack;             // offset 0xBC70, size 0x4
-    /* 0xBC74 */ u8 _padBC74[4];                // alignment padding
+    /* 0xBC74 */ s32 mGoalScorerCharIndex;       // offset 0xBC74, size 0x4
     /* 0xBC78 */ cAnimCamera mCamera;           // offset 0xBC78, size 0xAC
     /* 0xBD24 */ Nis* mNisForTriggerLoading;    // offset 0xBD24, size 0x4
     /* 0xBD28 */ int mWinnerSide[2];            // offset 0xBD28, size 0x8

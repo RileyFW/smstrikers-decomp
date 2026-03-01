@@ -15,6 +15,11 @@ struct EmissionFunctor
     virtual FunctorBase* fnc_0x10() = 0;
 };
 
+struct UserEffectSpecClone : public UserEffectSpec
+{
+    virtual UserEffectSpec* Clone() = 0;
+};
+
 /**
  * Offset/Address/Size: 0xF2C | 0x801F881C | size: 0x104
  */
@@ -71,10 +76,82 @@ EmissionController::EmissionController(EffectsGroup* pEffectsGroup, unsigned sho
 
 /**
  * Offset/Address/Size: 0xD84 | 0x801F8674 | size: 0x1A8
+ * TODO: 99.62% match - remaining register allocation differences in user effect clone loop (r29/r30 swap for pUserSpecs/ofs).
+ * Target: r30=pUserSpecs, r29=ofs, r27=i. Current: r28=pUserSpecs, r30=ofs, r27=i.
+ * Likely `-inline deferred` environment difference; exhaustive permutations tested.
  */
 void EmissionController::InitializeSystemsFromGroup()
 {
-    FORCE_DONT_INLINE;
+    EffectsSpec* pEndSpec;
+    EffectsSpec* pSpec;
+    EffectsSpec* pSpecs;
+    pSpecs = m_pGroup->m_specs;
+    pSpec = pSpecs;
+    pEndSpec = pSpecs + m_pGroup->m_numSpecs;
+
+    while (pSpec < pEndSpec)
+    {
+        if (pSpec->m_eAttach == FXBind_Joint && pSpec->m_uJointID == 0xFFFFFFFF)
+        {
+            pSpec++;
+            continue;
+        }
+
+        EffectsTerrainSpec* pTerrain = pSpec->m_pTerrainSpec;
+        u8 bUseThisSpec = true;
+
+        if (pTerrain != NULL && fxGetTerrain != NULL)
+        {
+            if (!pTerrain->HasTerrain(fxGetTerrain()))
+            {
+                bUseThisSpec = false;
+            }
+        }
+
+        if (bUseThisSpec)
+        {
+            ParticleSystem* pSys = new (nlMalloc(sizeof(ParticleSystem), 8, false)) ParticleSystem(pSpec->m_pTemplate, pSpec);
+
+            pSys->m_fDelay = pSpec->m_fDelay;
+            m_Systems.Append(pSys);
+        }
+
+        pSpec++;
+    }
+
+    m_fGround = 0.015625f;
+    m_aFacing = 0;
+    m_vPosition.f.x = 0.0f;
+    m_vPosition.f.y = 0.0f;
+    m_vPosition.f.z = 0.0f;
+    m_vDirection.f.x = 0.0f;
+    m_vDirection.f.y = 0.0f;
+    m_vDirection.f.z = 1.0f;
+    m_vVelocity.f.x = 0.0f;
+    m_vVelocity.f.y = 0.0f;
+    m_vVelocity.f.z = 0.0f;
+    m_pPose = NULL;
+    m_pAnimController = NULL;
+    m_pUserEffects = NULL;
+    m_nUserEffects = m_pGroup->m_userSpecs;
+
+    if (m_nUserEffects > 0)
+    {
+        int i;
+        int ofs;
+        UserEffectSpec** pUserSpecs = m_pGroup->m_userSpecsPtr;
+        m_pUserEffects = (UserEffectSpec**)nlMalloc(m_nUserEffects * sizeof(UserEffectSpec*), 8, false);
+
+        i = 0;
+        ofs = 0;
+        while (i < m_nUserEffects)
+        {
+            m_pUserEffects[ofs] = ((UserEffectSpecClone*)pUserSpecs[0])->Clone();
+            pUserSpecs++;
+            i++;
+            ofs++;
+        }
+    }
 }
 
 /**

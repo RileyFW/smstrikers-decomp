@@ -74,9 +74,79 @@ void Bowser::ActionThrow()
 
 /**
  * Offset/Address/Size: 0x26DC | 0x8015B450 | size: 0x1C8
+ * TODO: 99.96% match - remaining diff is one call immediate at the
+ * cPN_Blender constructor symbol.
  */
 void Bowser::ActionRoll()
 {
+    EmissionManager::Destroy((unsigned long)this, fxGetGroup("bowser_fire"));
+    g_pEventManager->CreateValidEvent(0x65, 0x14);
+    g_pEventManager->CreateValidEvent(0x61, 0x14);
+
+    meBowserState = BOWSER_STATE_ROLL;
+
+    cPN_SAnimController* controller = NULL;
+    mAnimID = BOWSER_ANIM_ROLL;
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&cPN_SAnimController::m_SAnimControllerSlotPool, sizeof(cPN_SAnimController));
+    }
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList != NULL)
+    {
+        controller = (cPN_SAnimController*)cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList;
+        cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList = cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList->m_next;
+    }
+
+    controller = new (controller) cPN_SAnimController(
+        mpAnim[BOWSER_ANIM_ROLL],
+        (const AnimRetarget*)0,
+        PM_HOLD,
+        (void (*)(unsigned int, cPN_SAnimController*))0,
+        (unsigned int)0,
+        (bool)0
+    );
+
+    cPN_Blender* blender;
+
+    if (mpFeatherBlender->GetChild(0) != NULL)
+    {
+        blender = NULL;
+
+        if (cPN_Blender::m_BlenderSlotPool.m_FreeList == NULL)
+        {
+            SlotPoolBase::BaseAddNewBlock(&cPN_Blender::m_BlenderSlotPool, sizeof(cPN_Blender));
+        }
+
+        if (cPN_Blender::m_BlenderSlotPool.m_FreeList != NULL)
+        {
+            blender = (cPN_Blender*)cPN_Blender::m_BlenderSlotPool.m_FreeList;
+            cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
+        }
+
+        if (blender != NULL)
+        {
+            extern cPN_Blender* __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(cPN_Blender*, cPoseNode*, cPoseNode*, float);
+            blender = __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(blender, *mpFeatherBlender->GetChildPtr(0), controller, 0.5f);
+        }
+    }
+    else
+    {
+        blender = (cPN_Blender*)controller;
+    }
+
+    mpFeatherBlender->SetChild(0, blender);
+    mpAnimController = controller;
+
+    if (g_pBall->GetOwnerFielder() != NULL && !g_pBall->GetOwnerFielder()->IsInvincible())
+    {
+        mpTarget = g_pBall->GetOwnerFielder();
+    }
+    else
+    {
+        mpTarget = FindPowerupTarget((cFielder*)NULL, this);
+    }
 }
 
 /**

@@ -35,6 +35,7 @@ public:
         , m_pModel(other.m_pModel)
         , m_pShadowVolume(other.m_pShadowVolume)
         , m_bVertexAnimated(other.m_bVertexAnimated)
+        , m_bUnknownA5(other.m_bUnknownA5)
         , pAABBDimensions(other.pAABBDimensions) {
         };
     /* 0x04 */ virtual ~DrawableModel() { };
@@ -52,6 +53,7 @@ public:
     /* 0x9C */ glModel* m_pModel;
     /* 0xA0 */ GLShadowVolume* m_pShadowVolume;
     /* 0xA4 */ bool m_bVertexAnimated;
+    /* 0xA5 */ bool m_bUnknownA5;
     /* 0xA8 */ AABBDimensions* pAABBDimensions;
 };
 

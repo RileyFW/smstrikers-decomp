@@ -257,9 +257,56 @@ void cBall::SetVisible(bool visible)
 
 /**
  * Offset/Address/Size: 0x1104 | 0x8000AAD8 | size: 0x1D4
+ * TODO: 99.27% match - FPR register coloring: fSpinRand allocated to f7 instead of f9 (DWARF),
+ *       cascading through cross product temporaries. All instructions and scheduling correct.
  */
-void cBall::SetVelocity(const nlVector3&, eSpinType, const nlVector3*)
+void cBall::SetVelocity(const nlVector3& velocity, eSpinType spin, const nlVector3* pAngularVelocity)
 {
+    nlVector3 v3AngVel;
+
+    m_v3Velocity = velocity;
+    m_pPhysicsBall->SetLinearVelocity(velocity);
+
+    if (spin == SPINTYPE_NONE)
+    {
+        v3AngVel.f.x = 0.0f;
+        v3AngVel.f.y = 0.0f;
+        v3AngVel.f.z = 0.0f;
+    }
+    else if ((spin == SPINTYPE_FORWARD) || (spin == SPINTYPE_BACK))
+    {
+        float fSpinRand = 0.5f + nlRandomf(2.0f, &nlDefaultSeed);
+        if (spin == SPINTYPE_BACK)
+        {
+            fSpinRand *= -1.0f;
+        }
+
+        nlVector3 v3Up = { 0.0f, 0.0f, 0.0f };
+        v3Up.f.z = fSpinRand;
+
+        float velY = velocity.f.y;
+        float velX = velocity.f.x;
+
+        v3AngVel.f.x = (v3Up.f.y * velocity.f.z) - (v3Up.f.z * velY);
+        v3AngVel.f.y = (-v3Up.f.x * velocity.f.z) + (v3Up.f.z * velX);
+        v3AngVel.f.z = (v3Up.f.x * velY) - (v3Up.f.y * velX);
+    }
+    else if (spin == SPINTYPE_ROLLING)
+    {
+        m_pPhysicsBall->CalcAngularFromLinearVelocity(v3AngVel);
+        nlVec3Set(v3AngVel, 0.92f * v3AngVel.f.x, 0.92f * v3AngVel.f.y, 0.92f * v3AngVel.f.z);
+    }
+    else if (spin == SPINTYPE_PARAMETER)
+    {
+        v3AngVel = *pAngularVelocity;
+    }
+
+    m_pPhysicsBall->SetAngularVelocity(v3AngVel);
+    m_pPhysicsBall->SetUseAngularVelocity(true);
+    m_pPhysicsBall->SetRotation(m3Ident);
+    FakeBallWorld::InvalidateBallCache();
+    m_bBallPathChangeCount = m_bBallPathChangeCount + 1;
+    m_v3ShotOrigin = m_v3Position;
 }
 
 /**

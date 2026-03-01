@@ -60,7 +60,7 @@ public:
 class ScriptQuestionCache : public nlSingleton<ScriptQuestionCache>
 {
 public:
-    void Lookup(unsigned long, FuzzyVariant&, const char*);
+    unsigned char Lookup(unsigned long, FuzzyVariant&, const char*);
     const FuzzyVariant& AddToCache(unsigned long, const FuzzyVariant&, const char*);
     void Clear();
 

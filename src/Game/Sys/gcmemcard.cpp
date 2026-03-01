@@ -660,9 +660,34 @@ void MemCard::WriteFileIconData(MemCard::MC_FILE*, void*, const MemCardFunctor&)
 
 /**
  * Offset/Address/Size: 0x24 | 0x801C9794 | size: 0x1E0
+ * TODO: 89.6% match - prologue register allocation differs (r5/r9 and r7/r8 swaps) and
+ * first-loop entry branch compiles as beq (IconCount == 1) instead of target ble (<= 1).
  */
-void MemCard::ICON_CONFIG::GetValidDataInfo(MemCard::ICON_DATA_INFO&) const
+void MemCard::ICON_CONFIG::GetValidDataInfo(MemCard::ICON_DATA_INFO& DataInfo) const
 {
+    unsigned long Icon;
+    unsigned char bannerFormat = BannerFormat;
+    unsigned char iconCountMember = IconCount;
+
+    DataInfo.Comment1Offset = 0;
+    DataInfo.Comment2Offset = 0x20;
+    DataInfo.BannerOffset = 0x40;
+    DataInfo.BannerCLUTOffset = DataInfo.BannerOffset + ((bannerFormat == 1) ? 0xC00 : 0);
+    DataInfo.IconOffset[0] = DataInfo.BannerOffset + bannerFormat * 0xC00 + ((bannerFormat == 1) ? 0x200 : 0);
+
+    unsigned long iconCount = iconCountMember;
+    s32 iconStride = (s32)IconFormat << 10;
+
+    for (Icon = 1; Icon != iconCount; Icon++) {
+        DataInfo.IconOffset[Icon] = DataInfo.IconOffset[Icon - 1] + iconStride;
+    }
+
+    iconCount = IconCount;
+    for (; Icon < 8; Icon++) {
+        DataInfo.IconOffset[Icon] = DataInfo.IconOffset[iconCount - 1];
+    }
+
+    DataInfo.IconCLUTOffset = DataInfo.IconOffset[IconCount - 1] + ((s32)IconFormat << 10);
 }
 
 /**

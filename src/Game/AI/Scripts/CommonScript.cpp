@@ -46,11 +46,105 @@
 // {
 // }
 
+struct StdMapNodeBase
+{
+    void* left;
+    void* right;
+    void* parent;
+};
+
+struct StdMapTree
+{
+    unsigned long x0;
+    StdMapNodeBase x4;
+};
+
+struct StdMapNode
+{
+    StdMapNodeBase base;
+    unsigned long key;
+    FuzzyVariant value;
+};
+
+extern "C" void __find(StdMapNode** outNode, void* tree, const unsigned long* key);
+
 /**
  * Offset/Address/Size: 0xE4 | 0x80079D64 | size: 0x1B4
+ * TODO: Remaining diff is std::tree find call symbol (__find wrapper vs templated std::__tree::find<Ul>)
  */
-void ScriptQuestionCache::Lookup(unsigned long, FuzzyVariant&, const char*)
+unsigned char ScriptQuestionCache::Lookup(unsigned long hash, FuzzyVariant& returnVal, const char* name)
 {
+    FuzzyVariant* pValue;
+    StdMapNode* stdNode;
+
+    mTotalLookups++;
+
+    if (g_bScriptQuestionCachingUseSTD)
+    {
+        __find(&stdNode, &mQuestionCacheMapSTD, &hash);
+
+        StdMapNode* stdFound = stdNode;
+        if ((StdMapNodeBase*)stdFound != &((StdMapTree*)&mQuestionCacheMapSTD)->x4)
+        {
+            mCacheHits++;
+            returnVal = stdFound->value;
+            return 1;
+        }
+    }
+    else
+    {
+        AVLTreeEntry<unsigned long, FuzzyVariant>* node = mQuestionCacheMap.m_Root;
+        unsigned long key = hash;
+        unsigned char found;
+
+        while (node != NULL)
+        {
+            int cmpResult;
+            if (key == node->key)
+            {
+                cmpResult = 0;
+            }
+            else if (key < node->key)
+            {
+                cmpResult = -1;
+            }
+            else
+            {
+                cmpResult = 1;
+            }
+
+            if (cmpResult == 0)
+            {
+                if (&pValue != NULL)
+                {
+                    pValue = &node->value;
+                }
+                found = 1;
+                goto found_done;
+            }
+            if (cmpResult < 0)
+            {
+                node = (AVLTreeEntry<unsigned long, FuzzyVariant>*)node->node.left;
+            }
+            else
+            {
+                node = (AVLTreeEntry<unsigned long, FuzzyVariant>*)node->node.right;
+            }
+        }
+
+        found = 0;
+
+    found_done:
+
+        if (found)
+        {
+            mCacheHits++;
+            returnVal = *pValue;
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 // Stub for find_or_insert result (std::pair<const unsigned long, FuzzyVariant> in map)

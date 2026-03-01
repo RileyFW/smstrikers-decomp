@@ -243,9 +243,33 @@ static nlAVLTreeSlotPool<unsigned long, AABBDimensions, DefaultKeyCompare<unsign
 /**
  * Offset/Address/Size: 0xA2C | 0x80122940 | size: 0xE0
  */
-// void AVLTreeBase<unsigned long, AABBDimensions, BasicSlotPool<AVLTreeEntry<unsigned long, AABBDimensions>>, DefaultKeyCompare<unsigned long>>::AllocateEntry(void*, void*)
-// {
-// }
+AVLTreeNode* AVLTreeBase<unsigned long, AABBDimensions, BasicSlotPool<AVLTreeEntry<unsigned long, AABBDimensions> >, DefaultKeyCompare<unsigned long> >::
+    AllocateEntry(void* key, void* value)
+{
+    AVLTreeBase<unsigned long, AABBDimensions, BasicSlotPool<AVLTreeEntry<unsigned long, AABBDimensions> >, DefaultKeyCompare<unsigned long> >* self = this;
+    unsigned long* keyPtr = (unsigned long*)key;
+    AABBDimensions* valuePtr = (AABBDimensions*)value;
+    AVLTreeEntry<unsigned long, AABBDimensions>* entry = 0;
+
+    if (self->m_Allocator.m_FreeList == 0)
+    {
+        SlotPoolBase::BaseAddNewBlock(&self->m_Allocator, 0x34);
+    }
+
+    if (self->m_Allocator.m_FreeList != 0)
+    {
+        entry = (AVLTreeEntry<unsigned long, AABBDimensions>*)self->m_Allocator.m_FreeList;
+        self->m_Allocator.m_FreeList = ((SlotPoolEntry*)entry)->m_next;
+    }
+
+    entry->node.left = 0;
+    entry->node.right = 0;
+    entry->node.heavy = 0;
+    entry->key = *keyPtr;
+    entry->value = *valuePtr;
+
+    return (AVLTreeNode*)entry;
+}
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80122A20 | size: 0x8
@@ -393,10 +417,18 @@ void DrawableModel::Draw()
 
 /**
  * Offset/Address/Size: 0x10A4 | 0x80120EB0 | size: 0x1C8
+ * TODO: 59.34% match - inlined copy-constructor register allocation differs
+ *       (target alternates r4/r5 loads and uses r0 for vtable addi destination),
+ *       causing a wide instruction-order mismatch across the object field copy.
  */
 DrawableObject* DrawableModel::Clone() const
 {
-    return NULL;
+    DrawableObject* pClone = new (nlMalloc(sizeof(DrawableModel), 8, false)) DrawableModel(*this);
+
+    pClone->m_uObjectFlags |= 0x1;
+    pClone->m_uObjectFlags |= 0x4;
+
+    return pClone;
 }
 
 /**

@@ -1054,11 +1054,109 @@ void cFielder::SetDesireDuration(float duration, bool randomize)
 
 /**
  * Offset/Address/Size: 0x921C | 0x80022558 | size: 0x1D8
+ * TODO: 89.17% match - main block r-diffs (x,y,z sum order causes vel.x early load at a8 vs
+ *   target's dir.x-first pattern); fmuls f4 vs f3 at 0x178 (z-normalize dest register, adding
+ *   fNZ temp to fix this causes MWCC to hoist 2.0f load into normalization section breaking 0x16c);
+ *   cascading register diffs in scaling section + unavoidable SDA21 i-diffs
  */
 void cFielder::ShootBallDueToContact(const nlVector3& aShootDirection)
 {
-    FORCE_DONT_INLINE;
+    bool bBallAwayFromCarrier;
+    if ((m_eActionState == ACTION_RUNNING_WB_TURBO) && ((m_pCurrentAnimController->m_fTime > 0.2f) && (m_pCurrentAnimController->m_fTime < 0.975f)))
+    {
+        bBallAwayFromCarrier = true;
+    }
+    else
+    {
+        bBallAwayFromCarrier = false;
+    }
+    if (bBallAwayFromCarrier)
+    {
+        nlVector3 v3Direction;
+        nlPolarToCartesian(v3Direction.f.x, v3Direction.f.y, m_aActualFacingDirection, m_fActualSpeed);
+        v3Direction.f.z = 0.5f;
+        g_pBall->ShootRelease(v3Direction, SPINTYPE_NONE);
+        return;
+    }
+    if (m_eActionState == ACTION_SHOOT_TO_SCORE)
+    {
+        g_pBall->ShootRelease(v3Zero, SPINTYPE_NONE);
+        return;
+    }
+    nlVector3 v3ReleaseVelocity;
+    nlVec3Add(v3ReleaseVelocity, aShootDirection, m_v3Velocity);
+    if ((aShootDirection.f.y * aShootDirection.f.y + aShootDirection.f.x * aShootDirection.f.x + aShootDirection.f.z * aShootDirection.f.z < 0.001f) || (m_v3Velocity.f.x * m_v3Velocity.f.x + m_v3Velocity.f.y * m_v3Velocity.f.y + m_v3Velocity.f.z * m_v3Velocity.f.z < 0.001f) || (v3ReleaseVelocity.f.x * v3ReleaseVelocity.f.x + v3ReleaseVelocity.f.y * v3ReleaseVelocity.f.y + v3ReleaseVelocity.f.z * v3ReleaseVelocity.f.z < 0.001f))
+    {
+        nlVector3 v3FallbackDirection;
+        nlPolarToCartesian(v3FallbackDirection.f.x, v3FallbackDirection.f.y, m_aActualFacingDirection, 2.0f);
+        v3FallbackDirection.f.z = 0.5f;
+        g_pBall->ShootRelease(v3FallbackDirection, SPINTYPE_NONE);
+        return;
+    }
+    float fRecip = nlRecipSqrt(v3ReleaseVelocity.f.x * v3ReleaseVelocity.f.x + v3ReleaseVelocity.f.y * v3ReleaseVelocity.f.y + v3ReleaseVelocity.f.z * v3ReleaseVelocity.f.z, true);
+    // nlVec3Scale(v3ReleaseVelocity, v3ReleaseVelocity, fRecip);
+    v3ReleaseVelocity.f.z = fRecip * v3ReleaseVelocity.f.z;
+    v3ReleaseVelocity.f.y = fRecip * v3ReleaseVelocity.f.y;
+    v3ReleaseVelocity.f.x = fRecip * v3ReleaseVelocity.f.x;
+
+    float fSpeed = 2.0f + m_fActualSpeed;
+    nlVec3Set(v3ReleaseVelocity, fSpeed * v3ReleaseVelocity.f.x, fSpeed * v3ReleaseVelocity.f.y, fSpeed * v3ReleaseVelocity.f.z);
+    // v3ReleaseVelocity.f.z = fSpeed * v3ReleaseVelocity.f.z;
+    // v3ReleaseVelocity.f.y = fSpeed * v3ReleaseVelocity.f.y;
+    // v3ReleaseVelocity.f.x = fSpeed * v3ReleaseVelocity.f.x;
+    v3ReleaseVelocity.f.z = 0.5f;
+    g_pBall->ShootRelease(v3ReleaseVelocity, SPINTYPE_NONE);
 }
+
+// void cFielder::ShootBallDueToContact(const nlVector3& aShootDirection)
+// {
+//     bool bBallAwayFromCarrier;
+//     if ((m_eActionState == ACTION_RUNNING_WB_TURBO) && ((m_pCurrentAnimController->m_fTime > 0.2f) && (m_pCurrentAnimController->m_fTime < 0.975f)))
+//     {
+//         bBallAwayFromCarrier = true;
+//     }
+//     else
+//     {
+//         bBallAwayFromCarrier = false;
+//     }
+//     if (bBallAwayFromCarrier)
+//     {
+//         nlVector3 v3Direction;
+//         nlPolarToCartesian(v3Direction.f.x, v3Direction.f.y, m_aActualFacingDirection, m_fActualSpeed);
+//         v3Direction.f.z = 0.5f;
+//         g_pBall->ShootRelease(v3Direction, SPINTYPE_NONE);
+//         return;
+//     }
+//     if (m_eActionState == ACTION_SHOOT_TO_SCORE)
+//     {
+//         g_pBall->ShootRelease(v3Zero, SPINTYPE_NONE);
+//         return;
+//     }
+//     nlVector3 v3ReleaseVelocity;
+//     v3ReleaseVelocity.f.x = aShootDirection.f.x + m_v3Velocity.f.x;
+//     v3ReleaseVelocity.f.y = aShootDirection.f.y + m_v3Velocity.f.y;
+//     v3ReleaseVelocity.f.z = aShootDirection.f.z + m_v3Velocity.f.z;
+//     if ((aShootDirection.f.x * aShootDirection.f.x + aShootDirection.f.y * aShootDirection.f.y + aShootDirection.f.z * aShootDirection.f.z < 0.001f) || (m_v3Velocity.f.x * m_v3Velocity.f.x + m_v3Velocity.f.y * m_v3Velocity.f.y + m_v3Velocity.f.z * m_v3Velocity.f.z < 0.001f) || (v3ReleaseVelocity.f.x * v3ReleaseVelocity.f.x + v3ReleaseVelocity.f.y * v3ReleaseVelocity.f.y + v3ReleaseVelocity.f.z * v3ReleaseVelocity.f.z < 0.001f))
+//     {
+//         nlVector3 v3FallbackDirection;
+//         nlPolarToCartesian(v3FallbackDirection.f.x, v3FallbackDirection.f.y, m_aActualFacingDirection, 2.0f);
+//         v3FallbackDirection.f.z = 0.5f;
+//         g_pBall->ShootRelease(v3FallbackDirection, SPINTYPE_NONE);
+//         return;
+//     }
+//     float fRecip = nlRecipSqrt(v3ReleaseVelocity.f.x * v3ReleaseVelocity.f.x + v3ReleaseVelocity.f.y * v3ReleaseVelocity.f.y + v3ReleaseVelocity.f.z * v3ReleaseVelocity.f.z, true);
+//     nlVec3Scale(v3ReleaseVelocity, v3ReleaseVelocity, fRecip);
+//     // v3ReleaseVelocity.f.z = fRecip * v3ReleaseVelocity.f.z;
+//     // v3ReleaseVelocity.f.y = fRecip * v3ReleaseVelocity.f.y;
+//     // v3ReleaseVelocity.f.x = fRecip * v3ReleaseVelocity.f.x;
+
+//     float fSpeed = 2.0f + m_fActualSpeed;
+//     v3ReleaseVelocity.f.z = fSpeed * v3ReleaseVelocity.f.z;
+//     v3ReleaseVelocity.f.y = fSpeed * v3ReleaseVelocity.f.y;
+//     v3ReleaseVelocity.f.x = fSpeed * v3ReleaseVelocity.f.x;
+//     v3ReleaseVelocity.f.z = 0.5f;
+//     g_pBall->ShootRelease(v3ReleaseVelocity, SPINTYPE_NONE);
+// }
 
 /**
  * Offset/Address/Size: 0x918C | 0x800224C8 | size: 0x90

@@ -107,7 +107,7 @@ public:
     void DetermineNextMatchups(int);
     void IncreaseRoundNumber();
     void IncreaseGameNumber(bool);
-    void GetNumHumanTeams();
+    int GetNumHumanTeams();
     BaseCup* GetCup(GameInfoManager::eGameModes);
     bool IsUserQualified(GameInfoManager::eGameModes) const;
     void SetMode(GameInfoManager::eGameModes);

@@ -357,33 +357,39 @@ u32 glSetRasterState(unsigned long& raster, eGLState state, unsigned long value)
     return out;
 }
 
-/**
- * Offset/Address/Size: 0x604 | 0x801DC248 | size: 0xB4
- * TODO: 79.4% match - register allocation differences (r7/r3 for out, r9/r8 for numBits)
- */
-u32 glSetRasterState(eGLState state, unsigned long value)
+static inline unsigned long extractStateBits(unsigned long rasterState, gl_StateBitfield* p, s32 numBits)
 {
-    u32 out = 0;
-    u32 currentState = _state.m_State;
-    s32 cnt = (s32)out;
-
-    for (; cnt < packed_raster[state].numBits; cnt++)
+    unsigned long out = 0;
+    for (s32 i = 0; i < numBits; i++)
     {
-        if (currentState & (1 << (packed_raster[state].startBit + cnt)))
+        if (rasterState & (1u << (i + p->startBit)))
         {
-            out |= (1 << cnt);
+            out |= (1u << i);
         }
     }
+    return out;
+}
 
-    for (cnt = 0; cnt < packed_raster[state].numBits; cnt++)
+/**
+ * Offset/Address/Size: 0x604 | 0x801DC248 | size: 0xB4
+ * TODO: 98.6% match - r6/r7 volatile register swap (out vs currentState).
+ *       MWCC graph coloring artifact, all instructions identical.
+ */
+unsigned long glSetRasterState(eGLState state, unsigned long value)
+{
+    gl_StateBitfield* p = &packed_raster[state];
+    s32 numBits = p->numBits;
+    unsigned long out = extractStateBits(_state.m_State, p, numBits);
+
+    for (s32 i = 0; i < numBits; i++)
     {
-        if (value & (1 << cnt))
+        if (value & (1u << i))
         {
-            _state.m_State = _state.m_State | (1 << (packed_raster[state].startBit + cnt));
+            _state.m_State = _state.m_State | (1u << (i + p->startBit));
         }
         else
         {
-            _state.m_State = _state.m_State & ~(1 << (packed_raster[state].startBit + cnt));
+            _state.m_State = _state.m_State & ~(1u << (i + p->startBit));
         }
     }
 

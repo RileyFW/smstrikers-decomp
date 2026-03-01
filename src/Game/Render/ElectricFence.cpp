@@ -8,7 +8,36 @@ class EmissionManager
 {
 public:
     static void DestroyAll(bool);
+    static bool IsPlaying(unsigned long, const EffectsGroup*);
+    static EmissionController* Create(EffectsGroup*, unsigned short);
 };
+
+class GameTweaks
+{
+public:
+    /* 0x00 */ u8 _pad00[0x138];
+    /* 0x138 */ float fBobombMediumRadius;
+    /* 0x13C */ u8 _pad13C[0x154 - 0x13C];
+    /* 0x154 */ float fPowerupExplosionRadius;
+};
+
+class cGame
+{
+public:
+    virtual ~cGame();
+    /* 0x04 */ GameTweaks* m_pGameTweaks;
+    /* 0x08 */ u8 _pad08[0x40 - 0x08];
+    /* 0x40 */ bool mbCaptainShotToScoreOn;
+};
+
+extern cGame* g_pGame;
+
+class SidelineExplodableManager
+{
+public:
+    static void TriggerExplosions(const nlVector3&, float);
+};
+
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8016C898 | size: 0x64
@@ -90,9 +119,52 @@ void EmitElectricFenceBallEffect(const nlVector3&, const nlVector3&, unsigned lo
 
 /**
  * Offset/Address/Size: 0xAB8 | 0x8016BAE8 | size: 0x1D4
+ * TODO: 97.65% match - r31/r29 register swap for controller/pos (likely -inline deferred flag mismatch)
  */
-void EmitElectricFenceCharacterEffect(const nlVector3&, const nlVector3&, unsigned long)
+void EmitElectricFenceCharacterEffect(const nlVector3& pos, const nlVector3& dir, unsigned long emitterID)
 {
+    if (g_pGame->mbCaptainShotToScoreOn)
+        return;
+
+    if (!EmissionManager::IsPlaying(emitterID, fxGetGroup("fx_electric_fence_char")))
+    {
+        EmissionController* controller = EmissionManager::Create(fxGetGroup("fx_electric_fence_char"), 0);
+        controller->m_uUserData = emitterID;
+        controller->SetPosition(pos);
+
+        float angle = nlATan2f(dir.f.y, dir.f.x);
+        ElectricFenceData* data = NULL;
+        controller->m_aFacing = (u16)(10430.378f * angle);
+
+        if (ElectricFenceData::sElectricFenceDataPool.m_FreeList == NULL)
+        {
+            SlotPoolBase::BaseAddNewBlock(&ElectricFenceData::sElectricFenceDataPool, sizeof(ElectricFenceData));
+        }
+        SlotPoolEntry* freeSlot = ElectricFenceData::sElectricFenceDataPool.m_FreeList;
+        if (freeSlot != NULL)
+        {
+            data = (ElectricFenceData*)freeSlot;
+            ElectricFenceData::sElectricFenceDataPool.m_FreeList = freeSlot->m_next;
+        }
+
+        new (data) ElectricFenceData(controller);
+
+        {
+            Function<EmissionController&> updateCb;
+            updateCb.mTag = FREE_FUNCTION;
+            updateCb.mFreeFunction = RenderElectricFence;
+            controller->SetUpdateCallback(updateCb);
+        }
+
+        {
+            Function<EmissionController&> finishedCb;
+            finishedCb.mTag = FREE_FUNCTION;
+            finishedCb.mFreeFunction = ElectricFenceFinished;
+            controller->SetFinishedCallback(finishedCb);
+        }
+    }
+
+    SidelineExplodableManager::TriggerExplosions(pos, g_pGame->m_pGameTweaks->fBobombMediumRadius * g_pGame->m_pGameTweaks->fPowerupExplosionRadius);
 }
 
 /**
@@ -135,6 +207,7 @@ void FreeElectricFence()
  */
 ElectricFenceData::ElectricFenceData(EmissionController*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

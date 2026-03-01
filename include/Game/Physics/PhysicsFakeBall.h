@@ -52,6 +52,8 @@ public:
 class FakePhysicsBall : public PhysicsBall
 {
 public:
+    FakePhysicsBall(CollisionSpace* cs, PhysicsWorld* pw, float r, FakeBallWorld& w)
+        : PhysicsBall(cs, pw, r), mWorld(w) {}
     virtual ~FakePhysicsBall();
     virtual int GetObjectType() const { return 0x10; };
     virtual ContactType Contact(PhysicsObject*, dContact*, int);

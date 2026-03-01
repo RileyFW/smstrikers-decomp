@@ -1,10 +1,16 @@
 #include "Game/NisPlayer.h"
 #include "Game/Camera/CameraMan.h"
 #include "Game/Character.h"
+#include "Game/CharacterTemplate.h"
 #include "Game/Effects/EmissionManager.h"
+#include "Game/Game.h"
+#include "Game/Goalie.h"
 #include "NL/nlTask.h"
 #include "NL/nlString.h"
 #include "string.h"
+
+extern cCharacter* g_pCharacters[10];
+bool g_ForceDoubleBallTransition;
 
 // /**
 //  * Offset/Address/Size: 0x74 | 0x80118E84 | size: 0x2C
@@ -286,8 +292,77 @@ void NisPlayer::PlayCharacterDirection()
 /**
  * Offset/Address/Size: 0x370 | 0x8011504C | size: 0x1D8
  */
-void NisPlayer::EventHandler(Event*)
+void NisPlayer::EventHandler(Event* event)
 {
+    if (g_pGame == NULL) {
+        return;
+    }
+    if (g_pGame->m_eGameState == 3) {
+        return;
+    }
+
+    if (event->m_uEventID == 5)
+    {
+        GoalScoredData* gsd;
+        if ((s32)event->m_data.GetID() == -1)
+        {
+            nlPrintf("NisPlayer EventHandler invalid data\n");
+            gsd = NULL;
+        }
+        else if ((s32)event->m_data.GetID() != 0x18A)
+        {
+            nlPrintf("NisPlayer EventHandler unexpected data\n");
+            gsd = NULL;
+        }
+        else
+        {
+            gsd = (GoalScoredData*)&event->m_data;
+        }
+
+        if (gsd != NULL)
+        {
+            if (gsd->uGoalType == 6)
+            {
+                g_ForceDoubleBallTransition = 1;
+            }
+
+            if (!gsd->pLastTouch[gsd->uTeamIndex]->IsCaptain())
+            {
+                mGoalScorerCharIndex = GetCharacterIndex(gsd->pLastTouch[gsd->uTeamIndex]);
+            }
+        }
+    }
+
+    if (event->m_uEventID == 0xF)
+    {
+        GoalieSaveData* gsd;
+        if ((s32)event->m_data.GetID() == -1)
+        {
+            nlPrintf("NisPlayer EventHandler invalid data\n");
+            gsd = NULL;
+        }
+        else if ((s32)event->m_data.GetID() != 0x13C)
+        {
+            nlPrintf("NisPlayer EventHandler unexpected data\n");
+            gsd = NULL;
+        }
+        else
+        {
+            gsd = (GoalieSaveData*)&event->m_data;
+        }
+
+        if (gsd != NULL)
+        {
+            if (gsd->pGoalie == g_pCharacters[8])
+            {
+                mWinnerSide[1] = 0;
+            }
+            else
+            {
+                mWinnerSide[1] = 1;
+            }
+        }
+    }
 }
 
 /**

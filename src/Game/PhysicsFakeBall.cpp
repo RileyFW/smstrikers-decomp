@@ -1,9 +1,17 @@
 #include "Game/Physics/PhysicsFakeBall.h"
 #include "Game/Physics/PhysicsPlane.h"
+#include "Game/Physics/PhysicsGroundPlane.h"
 #include "Game/Physics/Physics.h"
 #include "Game/FixedUpdateTask.h"
 #include "NL/nlDLRing.h"
 #include "NL/nlDLListSlotPool.h"
+
+class SimpleCollisionSpace : public CollisionSpace
+{
+public:
+    SimpleCollisionSpace(PhysicsWorld*);
+    virtual ~SimpleCollisionSpace() { };
+};
 
 /**
  * Offset/Address/Size: 0x60 | 0x8013744C | size: 0x38
@@ -276,8 +284,58 @@ void FakeBallWorld::Destroy()
 /**
  * Offset/Address/Size: 0x20AC | 0x80139498 | size: 0x1D8
  */
-void FakeBallWorld::Init(cBall*)
+void FakeBallWorld::Init(cBall* pBall)
 {
+    if (mpPredictWorld == NULL)
+    {
+        FakeBallWorld* world = (FakeBallWorld*)nlMalloc(sizeof(FakeBallWorld), 8, false);
+        if (world != NULL)
+        {
+            world->mpBall = pBall;
+
+            world->mpPhysicsWorld = new (nlMalloc(sizeof(PhysicsWorld), 8, false)) PhysicsWorld();
+            world->mpCollisionSpace = new (nlMalloc(sizeof(SimpleCollisionSpace), 8, false)) SimpleCollisionSpace(world->mpPhysicsWorld);
+
+            world->mpPhysicsWorld->SetCFM(0.001f);
+
+            world->mpGroundPlane = new (nlMalloc(sizeof(PhysicsGroundPlane), 8, false)) PhysicsGroundPlane(world->mpCollisionSpace);
+
+            FakePhysicsBall* ball = new (nlMalloc(sizeof(FakePhysicsBall), 8, false)) FakePhysicsBall(world->mpCollisionSpace, world->mpPhysicsWorld, 0.1f, *world);
+            world->mpPhysicsBall = ball;
+        }
+        mpPredictWorld = world;
+    }
+
+    if (mBallCacheList.m_Head != NULL)
+    {
+        DLListEntry<BallCacheInfo*>* start = nlDLRingGetStart(mBallCacheList.m_Head);
+        DLListEntry<BallCacheInfo*>* end = mBallCacheList.m_Head;
+        DLListEntry<BallCacheInfo*>* current = start;
+
+        while (current != NULL)
+        {
+            BallCacheInfo* data = current->m_data;
+            ((SlotPoolEntry*)data)->m_next = BallCacheInfo::mBallCacheInfoSlotPool.m_FreeList;
+            BallCacheInfo::mBallCacheInfoSlotPool.m_FreeList = (SlotPoolEntry*)data;
+
+            if (nlDLRingIsEnd(end, current) || current == NULL)
+            {
+                current = NULL;
+            }
+            else
+            {
+                current = current->m_next;
+            }
+        }
+
+        nlWalkDLRing<DLListEntry<BallCacheInfo*>, BallCacheListBase>(
+            mBallCacheList.m_Head,
+            (BallCacheListBase*)&mBallCacheList,
+            (void (BallCacheListBase::*)(DLListEntry<BallCacheInfo*>*))&BallCacheListBase::DeleteEntry);
+        mBallCacheList.m_Head = NULL;
+    }
+
+    mfLastCacheTime = -1.0f;
 }
 
 // /**

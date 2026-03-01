@@ -1,5 +1,7 @@
 #include "Game/FE/feNSNMessenger.h"
+#include "Game/FE/feFinder.h"
 
+#include "NL/gl/glStruct.h"
 #include "NL/nlTask.h"
 
 struct LOCHeader
@@ -36,9 +38,83 @@ static float MESSAGE_DISPLAY_TIME;
 
 /**
  * Offset/Address/Size: 0x0 | 0x800A131C | size: 0x1C0
+ * TODO: 99.02% match - constructor call immediate differs and one addic/beq pair remains in delete path
  */
-void NSNMessengerScene::EnableScrolling(bool)
+void NSNMessengerScene::EnableScrolling(bool state)
 {
+    if (state)
+    {
+        typedef TLTextInstance* (*FindTextByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+        typedef TLTextInstance* (*FindTextByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+        union
+        {
+            FindTextByValue byValue;
+            FindTextByRef byRef;
+        } findText;
+
+        unsigned long hash;
+        volatile InlineHasher hB, hA;
+        volatile InlineHasher h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+
+        findText.byValue = FEFinder<TLTextInstance, 3>::Find<TLSlide>;
+
+        h0.m_Hash = 0;
+        h1.m_Hash = 0;
+        h2.m_Hash = 0;
+        h3.m_Hash = 0;
+        h4.m_Hash = 0;
+        h5.m_Hash = 0;
+
+        hash = nlStringLowerHash("msg");
+        h6.m_Hash = hash;
+        h7.m_Hash = hash;
+
+        hash = nlStringLowerHash("Layer");
+        h8.m_Hash = hash;
+        h9.m_Hash = hash;
+
+        hash = nlStringLowerHash("Text");
+        hB.m_Hash = hash;
+        hA.m_Hash = hash;
+
+        TLTextInstance* textinstance = findText.byRef(
+            m_pFEPresentation->m_currentSlide,
+            (InlineHasher&)hB,
+            (InlineHasher&)h9,
+            (InlineHasher&)h7,
+            (InlineHasher&)h5,
+            (InlineHasher&)h3,
+            (InlineHasher&)h1);
+
+        if (m_scrollText == NULL)
+        {
+            extern FEScrollText* __ct__12FEScrollTextFP14TLTextInstanceii(FEScrollText*, TLTextInstance*, int, int);
+
+            gl_ScreenInfo* screeninfo = glGetScreenInfo();
+            FEScrollText* scrolltext;
+            if ((scrolltext = (FEScrollText*)nlMalloc(0x22C, 8, false)) != NULL)
+            {
+                scrolltext = __ct__12FEScrollTextFP14TLTextInstanceii(scrolltext, textinstance, 0, screeninfo->ScreenWidth);
+            }
+            m_scrollText = scrolltext;
+        }
+        else
+        {
+            m_scrollText->ApplyNewTextInstancePointer(textinstance, 8000.0f, 100.0f);
+        }
+    }
+    else
+    {
+        if (m_scrollText != NULL)
+        {
+            if (m_scrollText != NULL)
+            {
+                delete m_scrollText;
+            }
+            m_scrollText = NULL;
+        }
+    }
 }
 
 /**

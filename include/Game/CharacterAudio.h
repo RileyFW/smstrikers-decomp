@@ -223,13 +223,13 @@ public:
     virtual unsigned long Play(Audio::SoundAttributes&);
 
     void Stop(Audio::eCharSFX, cGameSFX::StopFlag);
-    void PlayRandomCharDialogue(CharDialogueType, PosUpdateMethod, float, float, bool);
-    void PlayRandomCharDialogue(CharDialogueType, Audio::SoundAttributes&, bool, unsigned long*);
+    unsigned long PlayRandomCharDialogue(CharDialogueType, PosUpdateMethod, float, float, bool);
+    unsigned long PlayRandomCharDialogue(CharDialogueType, Audio::SoundAttributes&, bool, unsigned long*);
     bool IsPlayingRandomCharDialogue(CharDialogueType);
     void StopPlayingRandomCharDialogue(CharDialogueType);
     void StopPlayingAllRandomCharDialogue();
     int PlayRandomWalkFootstep(float, bool);
-    void PlayNISRandomCharDialogue(CharDialogueType, NisCharacterClass, float, float, bool, const nlVector3*, const nlVector3*, unsigned long*);
+    static unsigned long PlayNISRandomCharDialogue(CharDialogueType, NisCharacterClass, float, float, bool, const nlVector3*, const nlVector3*, unsigned long*);
     static cCharacter* GetCharacterFromNisCharClass(NisCharacterClass charIdentifier);
     void StartMovementLoop();
     void StopMovementLoop();

@@ -93,11 +93,8 @@ bool PlatAudio::IsStreamingInited()
 
 /**
  * Offset/Address/Size: 0x0 | 0x801C70C4 | size: 0x1BC
- * TODO: 84.9% match - volatile counters force stack spill (stmw r27) but add
- * extra reloads. Without volatile, MWCC allocates counters to NV regs (stmw r23).
- * Remaining diffs: r29/r30 register swap (stream vs compiler-generated offset),
- * volatile extra lwz after stw, ble vs beq for cmplwi 0 (volatile interaction).
- * DWARF shows loop counter named "stream" (unsigned long) in r28.
+ * TODO: 95.0% match - r28/r29 induction variable swap remains and both buffer
+ * count zero checks compile to beq with one extra zero-init instruction.
  */
 void PlatAudio::StopAllStreams()
 {
@@ -105,33 +102,42 @@ void PlatAudio::StopAllStreams()
 
     AudioStream* stream;
     AudioStreamBuffer* buffer;
-    unsigned long i = 0;
+    unsigned long streamIndex = 0;
+    unsigned long lookupOffset = 0;
 
-    while (i < g_Streams.m_EntryCount)
+    while (streamIndex < g_Streams.m_EntryCount)
     {
-        stream = *g_Streams.m_pEntryLookup[i].pEntry;
+        stream = *g_Streams.m_pEntryLookup[lookupOffset >> 3].pEntry;
         stream->m_Flags &= ~(1 << SF_Play);
         if (stream->m_State == SS_Playing)
         {
             volatile unsigned long j = 0;
+
             buffer = NULL;
             if (stream->m_BufferCount > 0)
                 buffer = stream->m_Buffers[0];
+
             while (buffer != NULL)
             {
                 buffer->m_Volume = 0;
                 sndStreamMixParameterEx(buffer->m_StreamId, buffer->m_Volume, buffer->m_Pan, buffer->m_SurroundPan, 0, 0);
                 sndStreamDeactivate(buffer->m_StreamId);
+
                 stream->m_State = SS_Warm;
-                j++;
-                if (j < stream->m_BufferCount)
-                    buffer = stream->m_Buffers[j];
-                else
-                    buffer = NULL;
+                {
+                    unsigned long next = j + 1;
+                    j = next;
+                    if (next < stream->m_BufferCount)
+                        buffer = stream->m_Buffers[next];
+                    else
+                        buffer = NULL;
+                }
             }
+
             stream->m_StreamPos = 0;
             stream->m_State = SS_Warm;
         }
+
         stream->CancelPendingReads();
         if (stream->m_Flags & (1 << SF_CoolOnStop))
         {
@@ -142,23 +148,33 @@ void PlatAudio::StopAllStreams()
                 flags &= ~(1 << SF_SeriousStop);
                 flags |= (1 << SF_SeriousStop);
                 stream->m_Flags = flags;
+
                 volatile unsigned long k = 0;
                 buffer = NULL;
                 if (stream->m_BufferCount > 0)
                     buffer = stream->m_Buffers[0];
+
                 while (buffer != NULL)
                 {
                     stream->m_BuffMgr.FreeBuffer(buffer);
-                    stream->m_Buffers[k] = NULL;
-                    k++;
-                    if (k < stream->m_BufferCount)
-                        buffer = stream->m_Buffers[k];
-                    else
-                        buffer = NULL;
+
+                    {
+                        unsigned long idx = k;
+                        stream->m_Buffers[idx] = NULL;
+                        idx = idx + 1;
+                        k = idx;
+                        if (idx < stream->m_BufferCount)
+                            buffer = stream->m_Buffers[idx];
+                        else
+                            buffer = NULL;
+                    }
                 }
+
                 stream->m_State = SS_Initd;
             }
         }
-        i++;
+
+        lookupOffset += 8;
+        streamIndex++;
     }
 }

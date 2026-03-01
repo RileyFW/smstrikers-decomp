@@ -113,9 +113,9 @@ extern files __files =
 
 FILE * __find_unopened_file(void)
 {
-    FILE* file = &__files._stdin;
+    FILE* file = __files._stderr.next_file;
     FILE* last_file;
-	
+
 	while(file != NULL)
 	{
 		if (file->file_mode.file_kind == __closed_file) {

@@ -24,6 +24,7 @@ class cWorldSFX : public cGameSFX
 {
 public:
     void Stop(eWorldSFX, cGameSFX::StopFlag);
+    unsigned long Play(Audio::SoundAttributes&);
 };
 
 extern cWorldSFX gCrowdSFX;
@@ -245,8 +246,47 @@ void EmitBallImpact(cPlayer*, bool)
 /**
  * Offset/Address/Size: 0x2658 | 0x801A1408 | size: 0x1C4
  */
-void EmitBallPass(cPlayer*)
+void EmitBallPass(cPlayer* pPlayer)
 {
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("ball_pass_glow"), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 1.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.0f;
+    {
+        Function<EmissionController&> update;
+        update.mTag = FREE_FUNCTION;
+        update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+        pController->SetUpdateCallback(update);
+    }
+    pPlayer->AttachEffect(pController);
+    pController->SetPosition(g_pBall->m_v3Position);
+
+    Audio::SoundAttributes attrsTrue;
+    if (g_pBall->mbIsPerfectShot)
+    {
+        attrsTrue.Init();
+        attrsTrue.SetSoundType(0xB8, true);
+        attrsTrue.UseStationaryPosVector(pPlayer->m_v3Position);
+        Audio::gStadGenSFX.Play(attrsTrue);
+
+        attrsTrue.Init();
+        attrsTrue.SetSoundType(0xB9, true);
+        attrsTrue.UsePhysObj(g_pBall->m_pPhysicsBall);
+        Audio::gStadGenSFX.Play(attrsTrue);
+    }
+    else
+    {
+        Audio::SoundAttributes attrs;
+        attrs.Init();
+        attrs.SetSoundType(0xB6, true);
+        attrs.UseStationaryPosVector(pPlayer->m_v3Position);
+        Audio::gStadGenSFX.Play(attrs);
+    }
+
+    if (!g_pBall->mbHyperSTS)
+    {
+        pPlayer->PlayRandomCharDialogue(6, (PosUpdateMethod)2, 100.0f, -1.0f);
+    }
 }
 
 /**

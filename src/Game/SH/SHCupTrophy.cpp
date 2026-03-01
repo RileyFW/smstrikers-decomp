@@ -205,11 +205,187 @@ void CupTrophyScene::SceneCreated()
 {
 }
 
+class GameInfoManager
+{
+public:
+    unsigned char _pad[0x4C58];
+    unsigned int mUnlockedTriggers;
+};
+
+class GameSceneManager
+{
+public:
+    virtual ~GameSceneManager();
+    virtual void* Push(int, int, bool);
+};
+
+enum ePopupMenu
+{
+    POPUP_UNLOCKED_FLOWER_CUP = 32,
+    POPUP_UNLOCKED_STAR_CUP = 33,
+    POPUP_UNLOCKED_BOWSER_CUP = 34,
+    POPUP_UNLOCKED_SUPER_CUPS = 35,
+    POPUP_UNLOCKED_KONGA_STADIUM = 37,
+    POPUP_UNLOCKED_YOSHI_STADIUM = 38,
+    POPUP_UNLOCKED_FORBIDDEN_STADIUM = 39,
+    POPUP_UNLOCKED_SUPER_STADIUM = 40,
+    POPUP_UNLOCKED_LEGEND_DIFFICULTY = 41,
+    POPUP_UNLOCKED_SUPER_TEAM = 42,
+    POPUP_UNLOCKED_CHEAT_GOALIE = 43,
+    POPUP_UNLOCKED_CHEAT_INFINITE = 44,
+    POPUP_UNLOCKED_CHEAT_TILT = 45,
+    POPUP_UNLOCKED_ALL_STS = 46,
+    NUM_POPUP_MENUS = 47,
+};
+
+enum Tag
+{
+    EMPTY = 0,
+    FREE_FUNCTION = 1,
+    FUNCTOR = 2,
+};
+
+typedef void FnVoidVoid();
+
+template <typename ReturnType>
+class Function0
+{
+public:
+    struct FunctorBase
+    {
+        virtual ~FunctorBase() {}
+        virtual FunctorBase* fnc_0x8() = 0;
+        virtual FunctorBase* fnc_0x10() = 0;
+    };
+
+    template <typename BindType>
+    struct FunctorImpl : public FunctorBase
+    {
+        BindType mBind;
+        virtual ~FunctorImpl() {}
+        virtual FunctorBase* fnc_0x8() { return 0; }
+        virtual FunctorBase* fnc_0x10() { return 0; }
+    };
+
+    Tag mTag;
+    union
+    {
+        ReturnType (*mFreeFunction)();
+        FunctorBase* mFunctor;
+    };
+
+    ~Function0()
+    {
+        if (mTag == FUNCTOR)
+        {
+            delete mFunctor;
+        }
+        mTag = EMPTY;
+    }
+};
+
+template <typename T>
+class Function;
+
+template <>
+class Function<FnVoidVoid> : public Function0<void>
+{
+};
+
+namespace Detail
+{
+    template <typename R, typename F>
+    struct MemFunImpl
+    {
+        F mFuncPtr;
+    };
+}
+
+template <typename R, typename F, typename A>
+struct BindExp1
+{
+    F mFuncPtr;
+    A mArg;
+};
+
+template <typename T, typename R>
+Detail::MemFunImpl<R, void (T::*)()> MemFun(void (T::*)());
+
+template <typename R, typename F, typename A>
+BindExp1<R, F, A> Bind(F fn, const A& arg);
+
+void* nlMalloc(unsigned long, unsigned int, bool);
+
+class FEPopupMenu
+{
+public:
+    void Create(ePopupMenu, Function<FnVoidVoid>&);
+};
+
+typedef Detail::MemFunImpl<void, void (CupTrophyScene::*)()> MemFunImpl_CupTrophyScene_v;
+typedef BindExp1<void, MemFunImpl_CupTrophyScene_v, CupTrophyScene*> BindExp1_vfmfcp;
+typedef Function0<void>::FunctorImpl<BindExp1_vfmfcp> FunctorImpl_vfmfcp;
+
 /**
  * Offset/Address/Size: 0x1D70 | 0x800CB424 | size: 0x1E4
+ * TODO: 95.46% match - remaining diff in FunctorImpl vtable-init scheduling and popup Create call shape.
  */
 void CupTrophyScene::HandleUnlockedTriggers()
 {
+    static const ePopupMenu PopupMap[] = {
+        POPUP_UNLOCKED_KONGA_STADIUM,
+        POPUP_UNLOCKED_YOSHI_STADIUM,
+        POPUP_UNLOCKED_FORBIDDEN_STADIUM,
+        POPUP_UNLOCKED_SUPER_CUPS,
+        POPUP_UNLOCKED_SUPER_TEAM,
+        POPUP_UNLOCKED_LEGEND_DIFFICULTY,
+        POPUP_UNLOCKED_SUPER_STADIUM,
+        POPUP_UNLOCKED_ALL_STS,
+        POPUP_UNLOCKED_CHEAT_TILT,
+        POPUP_UNLOCKED_CHEAT_INFINITE,
+        POPUP_UNLOCKED_FLOWER_CUP,
+        POPUP_UNLOCKED_STAR_CUP,
+        POPUP_UNLOCKED_BOWSER_CUP,
+        POPUP_UNLOCKED_CHEAT_GOALIE,
+        NUM_POPUP_MENUS,
+    };
+
+    GameInfoManager* gameInfo = nlSingleton<GameInfoManager>::s_pInstance;
+    int i = 0;
+    FEPopupMenu* popup;
+
+    while (i < 0x20)
+    {
+        if ((gameInfo->mUnlockedTriggers & (1 << i)) != 0)
+        {
+            popup = (FEPopupMenu*)nlSingleton<GameSceneManager>::s_pInstance->Push(0x1B, 0, false);
+            BindExp1_vfmfcp bind = Bind<void, MemFunImpl_CupTrophyScene_v, CupTrophyScene*>(
+                MemFun<CupTrophyScene, void>(&CupTrophyScene::HandleUnlockedTriggers), this);
+
+            {
+                Function<FnVoidVoid> callback;
+                callback.mTag = FUNCTOR;
+
+                FunctorImpl_vfmfcp* functor = (FunctorImpl_vfmfcp*)nlMalloc(sizeof(FunctorImpl_vfmfcp), 8, false);
+                if (functor != 0)
+                {
+                    functor = new (functor) FunctorImpl_vfmfcp();
+                    functor->mBind.mFuncPtr = bind.mFuncPtr;
+                    functor->mBind.mArg = bind.mArg;
+                }
+
+                callback.mFunctor = functor;
+                popup->Create(PopupMap[i], callback);
+            }
+
+            gameInfo->mUnlockedTriggers &= ((unsigned int)-2 << i);
+            return;
+        }
+
+        i++;
+    }
+
+    nlSingleton<GameSceneManager>::s_pInstance->Push(0x2E, 0, true);
 }
 
 /**

@@ -1,11 +1,14 @@
 #include "Game/GL/ShaderSkinMesh.h"
 
 #include "Game/GL/GLSkinMesh.h"
+#include "NL/gl/glModel.h"
 #include "NL/gl/glUserData.h"
 #include "NL/nlDLRing.h"
 #include "NL/nlMemory.h"
 #include "string.h"
 #include "types.h"
+
+extern nlVector3 sharedMorphBuffer[];
 
 // /**
 //  * Offset/Address/Size: 0x14C | 0x801E2240 | size: 0x58
@@ -210,8 +213,63 @@ nlMatrix4& ShaderSkinMesh::GetPoseMatrix(unsigned long boneID)
 /**
  * Offset/Address/Size: 0x8E8 | 0x801E0F2C | size: 0x1AC
  */
-void ShaderSkinMesh::GetPoseMatrices(GLSkinMeshMatrix*)
+struct TreeStack {
+    AVLTreeEntry<unsigned long, SkinMatrix>** m_Stack;
+    unsigned int m_Count;
+};
+
+void ShaderSkinMesh::GetPoseMatrices(GLSkinMeshMatrix* pMatrices)
 {
+    TreeStack* stack = (TreeStack*)nlMalloc(sizeof(TreeStack), 8, false);
+    if (stack != NULL)
+    {
+        unsigned int numElements = poseMatrices.m_NumElements;
+        AVLTreeEntry<unsigned long, SkinMatrix>* node = poseMatrices.m_Root;
+
+        stack->m_Stack = (AVLTreeEntry<unsigned long, SkinMatrix>**)nlMalloc((numElements + 1) * sizeof(AVLTreeEntry<unsigned long, SkinMatrix>*), 8, false);
+        stack->m_Count = 0;
+
+        if (node != NULL)
+        {
+            while (node->node.left != NULL)
+            {
+                stack->m_Stack[stack->m_Count] = node;
+                stack->m_Count++;
+                node = (AVLTreeEntry<unsigned long, SkinMatrix>*)node->node.left;
+            }
+
+            stack->m_Stack[stack->m_Count] = node;
+            stack->m_Count++;
+        }
+    }
+
+    while (stack->m_Count > 0)
+    {
+        pMatrices->boneID = stack->m_Stack[stack->m_Count - 1]->key;
+        memcpy(&pMatrices->matrix, &stack->m_Stack[stack->m_Count - 1]->value, sizeof(pMatrices->matrix));
+        pMatrices++;
+
+        stack->m_Count--;
+
+        AVLTreeEntry<unsigned long, SkinMatrix>* right = (AVLTreeEntry<unsigned long, SkinMatrix>*)stack->m_Stack[stack->m_Count]->node.right;
+        if (right == NULL) continue;
+
+        while (right->node.left != NULL)
+        {
+            stack->m_Stack[stack->m_Count] = right;
+            stack->m_Count++;
+            right = (AVLTreeEntry<unsigned long, SkinMatrix>*)right->node.left;
+        }
+
+        stack->m_Stack[stack->m_Count] = right;
+        stack->m_Count++;
+    }
+
+    if (stack != NULL)
+    {
+        delete[] stack->m_Stack;
+        delete stack;
+    }
 }
 
 /**
@@ -283,9 +341,70 @@ void ShaderSkinMesh::SetPoseMatrices(int num, GLSkinMeshMatrix* pMatrices)
 
 /**
  * Offset/Address/Size: 0x58C | 0x801E0BD0 | size: 0x1E0
+ * TODO: 91.0% match - remaining differences are register/counter assignment
+ *       in the packet clear loop and morph outer-loop induction variables.
  */
-void ShaderSkinMesh::PrepareToRender(unsigned long, const nlMatrix4*)
+void ShaderSkinMesh::PrepareToRender(unsigned long flags, const nlMatrix4* pMatrix)
 {
+    if (pModel != NULL)
+    {
+        glModelPacket* p = pModel->packets;
+        glModelPacket* pEnd = p + pModel->numPackets;
+        for (; p < pEnd; p++)
+        {
+            p->userData = 0;
+        }
+    }
+
+    if (numMorphs == 0)
+    {
+        morphBuffer = NULL;
+    }
+    else
+    {
+        morphBuffer = sharedMorphBuffer;
+
+        for (int i = 0; i < numSoftwareVerts; i++)
+        {
+            morphBuffer[i].f.x = softwareVertices[i].position.f.x;
+            morphBuffer[i].f.y = softwareVertices[i].position.f.y;
+            morphBuffer[i].f.z = softwareVertices[i].position.f.z;
+        }
+
+        MorphDelta* pDelta = morphData;
+        int m = 0;
+        u32 n = (u32)m;
+        while (m < numMorphs)
+        {
+            u32 nDeltas = morphNumDeltas[n];
+            MorphDelta* end = pDelta + nDeltas;
+
+            if (morphWeights[n] > 0.0f)
+            {
+                while (pDelta != end)
+                {
+                    float w = morphWeights[n];
+                    nlVector3* dst = &morphBuffer[pDelta->index];
+                    float rx = dst->f.x + w * pDelta->delta.f.x;
+                    float rz = dst->f.z + w * pDelta->delta.f.z;
+                    float ry = dst->f.y + w * pDelta->delta.f.y;
+                    dst->f.x = rx;
+                    dst->f.y = ry;
+                    dst->f.z = rz;
+                    pDelta++;
+                }
+            }
+            else
+            {
+                pDelta = end;
+            }
+
+            m++;
+            n++;
+        }
+    }
+
+    AttachSkinData(flags, pMatrix);
 }
 
 /**
