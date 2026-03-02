@@ -7,6 +7,7 @@ class NewAdapter
 public:
     // For AVL Tree interface
     T* Allocate() { return new T(); }
+    void Allocate(T*& out) { out = new T(); }
     void Free(T* ptr) { delete ptr; }
 
     // For List interface

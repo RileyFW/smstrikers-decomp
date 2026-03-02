@@ -272,11 +272,9 @@ void CreditScene::UpdateForCredits(float)
 
 /**
  * Offset/Address/Size: 0x104 | 0x8010F260 | size: 0xB8
- * TODO: 97.7% match - SDA string addressing for "credits_nintendologo" (lis+addi vs sda21)
  */
 void CreditScene::UpdateForNintendoLogo(float dt)
 {
-    FORCE_DONT_INLINE;
     TLComponentInstance* pWhiteFade = GetWhiteFadeComponent();
     f32 timeElapsed = *(f32*)&mCreditParser.mFileSize;
     timeElapsed += dt;
@@ -292,7 +290,7 @@ void CreditScene::UpdateForNintendoLogo(float dt)
     {
         if (!*(u8*)&mTimeElapsed)
         {
-            pWhiteFade->SetActiveSlide("credits_nintendologo");
+            pWhiteFade->SetActiveSlide("FADEIN");
             *(u8*)&mTimeElapsed = 1;
         }
         else

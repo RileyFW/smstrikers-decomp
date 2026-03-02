@@ -10,15 +10,15 @@ struct LOCHeader
     unsigned long Flags;
 };
 
-struct StringLookup
-{
-    unsigned long HashValue;
-    unsigned long StringOffset;
-};
-
 class nlLocalization
 {
 public:
+    struct StringLookup
+    {
+        unsigned long HashValue;
+        unsigned long StringOffset;
+    };
+
     enum nlLanguage
     {
         LangEnglish = 0,

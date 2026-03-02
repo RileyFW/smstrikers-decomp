@@ -229,8 +229,41 @@ void Remove3DSFXListener(SND_LISTENER* listener)
 /**
  * Offset/Address/Size: 0x88C | 0x801C5088 | size: 0xC8
  */
-void Update3DSFXListener(SND_LISTENER*, const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&, float)
+void Update3DSFXListener(SND_LISTENER* pListener, const nlVector3& position, const nlVector3& direction, const nlVector3& heading, const nlVector3& up, float overallEmitterVol)
 {
+    SND_FVECTOR sndPos;
+    sndPos.x = position.f.x;
+    sndPos.y = position.f.y;
+    sndPos.z = position.f.z;
+
+    SND_FVECTOR sndDir;
+    sndDir.x = direction.f.x;
+    sndDir.y = direction.f.y;
+    sndDir.z = direction.f.z;
+
+    SND_FVECTOR sndHeading;
+    sndHeading.x = heading.f.x;
+    sndHeading.y = heading.f.y;
+    sndHeading.z = heading.f.z;
+
+    SND_FVECTOR sndUp;
+    sndUp.x = up.f.x;
+    sndUp.y = up.f.y;
+    sndUp.z = up.f.z;
+
+    f32 rounded = 127.0f * overallEmitterVol;
+    f32 adj;
+    if (rounded < 0.0f)
+    {
+        adj = -0.5f;
+    }
+    else
+    {
+        adj = 0.5f;
+    }
+    rounded += adj;
+
+    sndUpdateListener(pListener, &sndPos, &sndDir, &sndHeading, &sndUp, (u8)(s32)rounded, NULL);
 }
 
 /**
@@ -529,9 +562,41 @@ bool UnloadAllSoundGroups(AudioFileData& fileData)
 /**
  * Offset/Address/Size: 0x11CC | 0x801C59C8 | size: 0x184
  */
-bool UnloadSoundGroup(AudioFileData&, unsigned long)
+bool UnloadSoundGroup(AudioFileData& fileData, unsigned long groupEnum)
 {
-    FORCE_DONT_INLINE;
+    u32 uTickStart = nlGetTicker();
+
+    if ((unsigned long)fileData.soundGroups[groupEnum].uLoadOrder == stack_list[fileData.soundGroups[groupEnum].stackEnum].unkC - 1)
+    {
+        if (!(unsigned char)sndStackSetCurrent(stack_list[fileData.soundGroups[groupEnum].stackEnum].id))
+        {
+            tDebugPrintManager::Print(DC_SOUND, "sndStackSetCurrent failed for stack %d\n", stack_list[fileData.soundGroups[groupEnum].stackEnum].id);
+            return false;
+        }
+
+        if (!(unsigned char)sndPopGroup())
+        {
+            tDebugPrintManager::Print(DC_SOUND, "sndPopGroup failed for %s\n", fileData.soundGroups[groupEnum].szGroupName);
+            return false;
+        }
+
+        stack_list[fileData.soundGroups[groupEnum].stackEnum].unkC--;
+
+        u32 uTickEnd = nlGetTicker();
+        f32 fTime = nlGetTickerDifference(uTickStart, uTickEnd) / 1000.0f;
+
+        tDebugPrintManager::Print(DC_SOUND, "Unloaded %s from stack %d in %f seconds\n", fileData.soundGroups[groupEnum].szGroupName, stack_list[fileData.soundGroups[groupEnum].stackEnum].id, fTime);
+        PrintSoundStackInfo();
+
+        SndGroupData* grp = &fileData.soundGroups[groupEnum];
+        grp->stackEnum = -1;
+        grp->uLoadOrder = -1;
+        grp->loadType = (LoadType)0;
+
+        return true;
+    }
+
+    tDebugPrintManager::Print(DC_SOUND, "Can't unload %s\n", fileData.soundGroups[groupEnum].szGroupName);
     return false;
 }
 

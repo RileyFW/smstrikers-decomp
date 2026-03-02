@@ -196,17 +196,12 @@ void Presentation::Update(float)
  */
 bool Presentation::DuringEndOfGamePresentation() const
 {
-    if (nlStrCmp<char>(mCurrentFunction, "ImplGameEnd") == 0)
-        return true;
-    if (nlStrCmp<char>(mCurrentFunction, "GameEndNoSuddenDeath") == 0)
-        return true;
-    if (nlStrCmp<char>(mCurrentFunction, "GoalSuddenDeath") == 0)
-        return true;
-    if (nlStrCmp<char>(mCurrentFunction, "PlayHighlight") == 0)
-        return true;
-    if (nlStrCmp<char>(mCurrentFunction, "PlayCupThrophy") == 0)
-        return true;
-    return false;
+    bool result = false;
+    if (nlStrCmp<char>("ImplGameEnd", mCurrentFunction) == 0 || nlStrCmp<char>("GameEndNoSuddenDeath", mCurrentFunction) == 0 || nlStrCmp<char>("GoalSuddenDeath", mCurrentFunction) == 0 || nlStrCmp<char>("PlayHighlight", mCurrentFunction) == 0 || nlStrCmp<char>("PlayCupThrophy", mCurrentFunction) == 0)
+    {
+        result = true;
+    }
+    return result;
 }
 
 /**

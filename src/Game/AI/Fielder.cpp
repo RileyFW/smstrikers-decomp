@@ -782,22 +782,27 @@ bool cFielder::IsTurboing()
  */
 bool cFielder::IsRunning() const
 {
-    int state = m_eActionState;
-    bool result = false;
+    bool result;
+    bool isRunningWithBall;
+    int state;
 
-    if (state == ACTION_RUNNING)
+    result = false;
+    state = m_eActionState;
+    if (state != ACTION_RUNNING)
     {
-        return true;
+        isRunningWithBall = result;
+        if (((u32)(state - ACTION_RUNNING_WB) <= 1) || (state == ACTION_RUNNING_WB_TURBO_TURN))
+        {
+            isRunningWithBall = true;
+        }
+        if (isRunningWithBall)
+        {
+            goto set_result;
+        }
     }
-
-    bool b = false;
-    if ((unsigned int)(state - ACTION_RUNNING_WB) <= 1 || state == ACTION_RUNNING_WB_TURBO_TURN)
+    else
     {
-        b = true;
-    }
-
-    if ((unsigned char)b)
-    {
+    set_result:
         result = true;
     }
     return result;
@@ -1966,6 +1971,23 @@ void cFielder::CleanActionShootToScore()
  */
 void cFielder::SetAttemptOneTouchPass()
 {
+    bool shouldAttempt = false;
+
+    cGlobalPad* pad = GetGlobalPad();
+    if (pad != NULL)
+    {
+        GameTweaks* tweaks = g_pGame->m_pGameTweaks;
+        float pressure = GetGlobalPad()->GetPressure(0x15, true);
+        if (pressure > tweaks->unk2B0)
+        {
+            shouldAttempt = true;
+        }
+    }
+
+    m_DesireReceivePassSharedVars.iAttemptOneTouchPass = shouldAttempt ? 2 : 1;
+
+    m_DesireReceivePassSharedVars.pOneTouchPassTarget = DoFindBestPassTarget(ReceivingVolleyPass(this), shouldAttempt);
+    m_DesireReceivePassSharedVars.iAttemptOneTouchShot = 0;
 }
 
 /**

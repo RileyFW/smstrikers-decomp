@@ -72,6 +72,20 @@ public:
         BaseFreeBlocks(this, sizeof(T));
     };
 
+    // Allocate an entry from the free list
+    void Allocate(T*& out)
+    {
+        if (m_FreeList == NULL)
+        {
+            BaseAddNewBlock(this, sizeof(T));
+        }
+        if (m_FreeList != NULL)
+        {
+            out = (T*)m_FreeList;
+            m_FreeList = m_FreeList->m_next;
+        }
+    }
+
     // Return an entry back to the free list
     void Free(T* entry)
     {

@@ -272,6 +272,7 @@ static inline unsigned int FakeRuntimeZero()
  * TODO: 97.6% match - r0/r6 register swap (MWCC register allocator quirk)
  */
 #pragma push
+#pragma global_optimizer off
 #pragma opt_propagation off
 void cTeam::SetCurrentPowerUp(ePowerUpType eNewPowerUpType, int nnumOfPowerups)
 {

@@ -8,41 +8,19 @@ extern char* optionNames[4];
 
 /**
  * Offset/Address/Size: 0xA8 | 0x80098354 | size: 0xBC
- * TODO: 95.47% match - zero-store scheduling differs before optionNames lookup.
  */
 void FEPopupMenu::SetOptionTextColourOnCurrent(bool)
 {
     FEPresentation* presentation = m_pFEScene->m_pFEPackage->GetPresentation();
-    volatile InlineHasher hashers[12];
-
-    hashers[1].m_Hash = 0;
-    hashers[3].m_Hash = 0;
-    hashers[5].m_Hash = 0;
-
-    int index = mHighlightedOption;
-
-    hashers[0].m_Hash = 0;
-    index = index << 2;
-    hashers[2].m_Hash = 0;
-
-    char* selected = *(char**)((unsigned char*)optionNames + index);
-
-    hashers[4].m_Hash = 0;
-
-    unsigned long hash = nlStringLowerHash(selected);
-    hashers[6].m_Hash = hash;
-    hashers[7].m_Hash = hash;
-
-    hash = nlStringLowerHash("Layer");
-    hashers[8].m_Hash = hash;
-    hashers[9].m_Hash = hash;
-
-    hash = nlStringLowerHash("Slide1");
-    hashers[10].m_Hash = hash;
-    hashers[11].m_Hash = hash;
 
     FEFinder<TLTextInstance, 3>::Find<FEPresentation>(
-        presentation, (InlineHasher&)hashers[11], (InlineHasher&)hashers[9], (InlineHasher&)hashers[7], (InlineHasher&)hashers[5], (InlineHasher&)hashers[3], (InlineHasher&)hashers[1]);
+        presentation,
+        InlineHasher(nlStringLowerHash("Slide1")),
+        InlineHasher(nlStringLowerHash("Layer")),
+        InlineHasher(nlStringLowerHash(optionNames[mHighlightedOption])),
+        InlineHasher(0),
+        InlineHasher(0),
+        InlineHasher(0));
 }
 
 /**

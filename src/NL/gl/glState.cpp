@@ -497,22 +497,25 @@ u32 glSetCurrentProgram(unsigned long program)
 
 /**
  * Offset/Address/Size: 0x858 | 0x801DC49C | size: 0x50
+ * TODO: 98.8% match - r5/r7 register swap in add/lwzu pair for texture array
+ * access. MWCC allocator reuses r5 for add result instead of allocating r7.
+ * All instructions identical, only 4 register naming diffs.
  */
-u32 glSetCurrentTexture(unsigned long texture, eGLTextureType type)
+unsigned long glSetCurrentTexture(unsigned long texture, eGLTextureType type)
 {
-    u32 prev = _bundle.texture[(unsigned int)type];
+    unsigned long prev = _bundle.texture[type];
+    unsigned long mask = 1u << type;
 
-    unsigned int bit = 1u << (unsigned int)type;
     if (texture == 0xFFFFFFFFu)
     {
-        _bundle.texconfig = _bundle.texconfig & ~bit;
+        _bundle.texconfig = _bundle.texconfig & ~mask;
     }
     else
     {
-        _bundle.texconfig = _bundle.texconfig | bit;
+        _bundle.texconfig = _bundle.texconfig | mask;
     }
 
-    _bundle.texture[(unsigned int)type] = texture;
+    _bundle.texture[type] = texture;
     return prev;
 }
 

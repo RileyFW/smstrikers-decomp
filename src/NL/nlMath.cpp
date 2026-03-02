@@ -449,29 +449,20 @@ float nlRandomf(float fMin, float fMax, unsigned int* pSeed)
 
 /**
  * Offset/Address/Size: 0x970 | 0x801D1DE4 | size: 0x7C
- * TODO: match pending - instruction scheduling differences with -O4,p
  */
-#pragma fp_contract off
 float nlRandomf(float fMax, unsigned int* pSeed)
 {
-    float scale;
+    unsigned int next;
+    unsigned int temp;
+    unsigned int mod;
     unsigned int seed;
-    unsigned int xored;
-    unsigned int s0;
-    unsigned int s1;
-    unsigned int modResult;
 
-    scale = fUnk_504 * fMax;
-    seed = *pSeed;
-    modResult = seed % 0x7FFFFFFFu;
-    xored = seed ^ 0x1D872B41;
-    s0 = xored >> 5;
-    s1 = xored ^ s0;
-    *pSeed = s1 ^ (xored ^ (s1 << 27));
-
-    return scale * (float)modResult;
+    mod = (seed = *pSeed) % 0x7FFFFFFFu;
+    next = seed ^ 0x1d872b41;
+    temp = next ^ (next >> 5);
+    *pSeed = temp ^ (next ^ (temp << 0x1b));
+    return (1.0f / 2147483647.0f) * fMax * (f32)mod;
 }
-#pragma fp_contract on
 
 /**
  * Offset/Address/Size: 0x9EC | 0x801D1E60 | size: 0x34

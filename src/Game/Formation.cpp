@@ -10,6 +10,8 @@
 #include "Game/FormationDefines.h"
 #include "Game/Sys/debug.h"
 #include "NL/nlMath.h"
+#include "NL/nlPrint.h"
+#include "NL/nlString.h"
 
 extern cTeam* g_pTeams[];
 
@@ -414,8 +416,20 @@ FormationEval* FormationEval::Create(FormationManager*, eFormationType, eFormati
 /**
  * Offset/Address/Size: 0x1D40 | 0x80039F90 | size: 0xC0
  */
-void FormationEval::Update(float)
+void FormationEval::Update(float fDeltaT)
 {
+    m_pKeyPlayer = NULL;
+
+    char buff[32];
+    nlSNPrintf(buff, 31, "FormationEvalUpdate%d_%d", m_eFormationType, m_pFormationManager->m_pTeam->m_nSide);
+    nlStringHash(buff);
+
+    if (m_SortTimer.Countdown(fDeltaT, 0.0f))
+    {
+        SortPlayers(NULL);
+        float randomTime = nlRandomf(0.2f, &nlDefaultSeed);
+        m_SortTimer.SetSeconds(0.4f + randomTime);
+    }
 }
 
 /**
