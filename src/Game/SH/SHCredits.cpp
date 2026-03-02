@@ -330,6 +330,7 @@ void CreditScene::UpdateForNLGMovie(float)
  */
 TLComponentInstance* CreditScene::GetWhiteFadeComponent()
 {
+    FORCE_DONT_INLINE;
     typedef TLComponentInstance* (*FindByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
     typedef TLComponentInstance* (*FindByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
     union
