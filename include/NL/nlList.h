@@ -160,10 +160,14 @@ public:
 template <typename T>
 T* nlListRemoveElement(T** head, T* element, T** tail)
 {
-    if (head == NULL) return NULL;
+    FORCE_DONT_INLINE;
+    if (head == NULL)
+        return NULL;
 
-    if (*head == element) {
-        if (tail != NULL && *tail == *head) {
+    if (*head == element)
+    {
+        if (tail != NULL && *tail == *head)
+        {
             *tail = NULL;
         }
         T* first = *head;
@@ -173,11 +177,15 @@ T* nlListRemoveElement(T** head, T* element, T** tail)
 
     T* prev = *head;
     T* current = prev->next;
-    while (current != NULL) {
-        if (current == element) {
+    while (current != NULL)
+    {
+        if (current == element)
+        {
             prev->next = current->next;
-            if (tail == NULL) return prev;
-            if (*tail == current) {
+            if (tail == NULL)
+                return prev;
+            if (*tail == current)
+            {
                 *tail = prev;
             }
             return prev;

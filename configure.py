@@ -1103,7 +1103,7 @@ config.libs = [
             Object(NonMatching, "Game/Drawable/DrawableBall.cpp"),
             Object(NonMatching, "Game/Drawable/DrawablePowerup.cpp"),
             Object(NonMatching, "Game/Drawable/DrawableExplosionFragment.cpp"),
-            Object(NonMatching, "Game/Drawable/DrawableModel.cpp", extra_cflags=["-inline deferred"]),
+            # Object(NonMatching, "Game/Drawable/DrawableModel.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableTmModel.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableSkinModel.cpp"),
 
@@ -1363,6 +1363,7 @@ config.libs = [
         "NL (Next Level Library)",
         [
             Object(Matching, "Game/Drawable/DrawableObj.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Drawable/DrawableModel.cpp", extra_cflags=["-inline deferred"]),
         ],
     ),
 

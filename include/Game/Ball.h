@@ -67,7 +67,7 @@ public:
     void ClearBallBlur();
     void ClearShotInProgress();
     void InitiateBallBlur(eBallShotEffectType, cPlayer*);
-    void GetInNet(int&);
+    bool GetInNet(int&);
     cPlayer* GetPassTargetFielder() const;
     cPlayer* GetOwnerGoalie();
     cFielder* GetOwnerFielder();

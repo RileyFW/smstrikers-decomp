@@ -441,8 +441,8 @@ void GetAABBDimensions(const glModel* model, AABBDimensions& dimensions, unsigne
 
 /**
  * Offset/Address/Size: 0xCF0 | 0x80120AFC | size: 0x28
- * TODO: ~94% match - instruction scheduling differs: target has li r5,0 before stw r0/lwz r3,
- *       but compiler generates lwz r3 first regardless of pragmas or code ordering
+ * TODO: 94% match - instruction scheduling: target has li r5,0 before lwz r3,0x9c(r3),
+ *       but compiler places lwz first. TU-level scheduling effect, not reproducible in scratch.
  */
 void DrawableModel::GetAABBDimensions(AABBDimensions& dims, bool param) const
 {

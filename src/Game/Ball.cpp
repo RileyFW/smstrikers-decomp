@@ -428,8 +428,59 @@ void cBall::InitiateBallBlur(eBallShotEffectType, cPlayer*)
 /**
  * Offset/Address/Size: 0x1CBC | 0x8000B690 | size: 0xF4
  */
-void cBall::GetInNet(int&)
+bool cBall::GetInNet(int& nSide)
 {
+    cPlayer* goalie;
+
+    if (m_pOwner != NULL)
+    {
+        if (m_pOwner->m_eClassType != GOALIE)
+        {
+            goto false_exit;
+        }
+        if (m_pOwner != NULL && m_pOwner->m_eClassType == GOALIE)
+        {
+            goalie = m_pOwner;
+        }
+        else
+        {
+            goalie = NULL;
+        }
+        if (goalie->m_pPhysicsCharacter->m_CanCollidedWithGoalLine)
+        {
+            goto false_exit;
+        }
+    }
+
+    if (!m_pPhysicsBall->m_unk_0x58)
+    {
+        goto false_exit;
+    }
+
+    nSide = -1;
+    {
+        cTeam** pTeams = g_pTeams;
+        int i;
+        for (i = 0; i < 2; i++)
+        {
+            if (m_v3Position.f.x * pTeams[i]->m_pNet->m_sideSign > 0.0f)
+            {
+                nSide = i;
+            }
+        }
+    }
+
+    if (m_pOwner != NULL && m_uGoalType != 2 && m_uGoalType != 6)
+    {
+        m_uGoalType = 5;
+    }
+
+    m_unk_0xA6 = false;
+    mpDamageTarget = NULL;
+    return true;
+
+false_exit:
+    return false;
 }
 
 /**

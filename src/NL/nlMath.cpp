@@ -426,24 +426,23 @@ float nlSqrt(float x, bool bAccurate)
 
 /**
  * Offset/Address/Size: 0x8EC | 0x801D1D60 | size: 0x84
- * TODO: 59.4% match - MWCC pipeline scheduler produces different instruction
- * ordering and register allocation (r5/r6 swap for mulhwu, r0/r4 for addi,
- * XOR chain decomposition order, store order). Logic is correct.
  */
 #pragma fp_contract off
 float nlRandomf(float fMin, float fMax, unsigned int* pSeed)
 {
-    uint mixed;
-    uint temp;
-    uint seed;
+    unsigned int next;
+    unsigned int temp;
+    unsigned int mod;
+    unsigned int seed;
 
     float range = fMax - fMin;
     float scale = (1.0f / 2147483647.0f) * range;
-    seed = *pSeed;
-    mixed = seed ^ 0x1D872B41;
-    temp = mixed ^ (mixed >> 5);
-    *pSeed = mixed ^ temp ^ (temp << 27);
-    return fMin + scale * (f32)(seed % 0x7FFFFFFFu);
+    mod = (seed = *pSeed) % 0x7FFFFFFFu;
+    next = seed ^ 0x1d872b41;
+    temp = next ^ (next >> 5);
+    *pSeed = temp ^ (next ^ (temp << 0x1b));
+    f32 fVal = scale * (f32)mod;
+    return fMin + fVal;
 }
 #pragma fp_contract on
 

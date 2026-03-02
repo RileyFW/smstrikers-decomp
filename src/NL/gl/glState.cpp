@@ -262,33 +262,6 @@ unsigned long glSetTextureState(eGLTextureState state, unsigned long value)
     return SetTextureStateImpl(&_textureState.m_State, state, value);
 }
 
-/**
- * Offset/Address/Size: 0x410 | 0x801DC054 | size: 0x9C
- * TODO: 84.2% match - MWCC merges u64 cmp (0) halves into single register (r30)
- * instead of two (r29:r30), shifting all callee-saved register assignments by 1.
- * All instructions match structurally (only register number diffs).
- */
-unsigned long glGetTextureState(unsigned long long texture, eGLTextureState texturestate)
-{
-    PackedTextureInfo* pInfo = &packed_texture[texturestate];
-    unsigned long out = 0;
-    s32 cnt = (s32)out;
-    unsigned long long cmp = (unsigned long long)out;
-    unsigned long one = 1;
-    s32 numBits = pInfo->count;
-
-    for (; cnt < numBits; cnt++)
-    {
-        unsigned long long mask = 1ULL << (cnt + pInfo->start_bit);
-        if ((texture & mask) != cmp)
-        {
-            out |= (one << cnt);
-        }
-    }
-
-    return out;
-}
-
 static inline unsigned long GetTextureStateImpl(unsigned long long* pTexture, eGLTextureState texturestate)
 {
     PackedTextureInfo* pInfo = &packed_texture[texturestate];
@@ -310,6 +283,13 @@ static inline unsigned long GetTextureStateImpl(unsigned long long* pTexture, eG
     }
 
     return out;
+}
+/**
+ * Offset/Address/Size: 0x410 | 0x801DC054 | size: 0x9C
+ */
+unsigned long glGetTextureState(unsigned long long texture, eGLTextureState texturestate)
+{
+    return GetTextureStateImpl(&texture, texturestate);
 }
 
 /**
@@ -498,8 +478,6 @@ u32 glSetCurrentProgram(unsigned long program)
 /**
  * Offset/Address/Size: 0x858 | 0x801DC49C | size: 0x50
  * TODO: 98.8% match - r5/r7 register swap in add/lwzu pair for texture array
- * access. MWCC allocator reuses r5 for add result instead of allocating r7.
- * All instructions identical, only 4 register naming diffs.
  */
 unsigned long glSetCurrentTexture(unsigned long texture, eGLTextureType type)
 {
