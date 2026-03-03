@@ -1,5 +1,7 @@
 #include "NL/nlMath.h"
 
+// unsigned int nlDefaultSeed;
+
 /**
  * Offset/Address/Size: 0x540 | 0x801F083C | size: 0x88
  */
@@ -25,26 +27,24 @@ void nlPolarToCartesian(float& x, float& y, unsigned short angle, float radius)
 
 /**
  * Offset/Address/Size: 0x46C | 0x801F0768 | size: 0x68
- * TODO: 84.4% match - MWCC register coalescing/scheduling difference: target
- * copies polar ptr to r5 and loads float before u16; our compiler uses r6 for
  */
 void nlPolarToCartesian(nlVector3& v, const nlPolar& polar)
 {
-    f32 radius = polar.r;
-    nlSinCos(&v.f.y, &v.f.x, polar.a);
+    const volatile nlPolar& p = polar;
+    f32 radius = p.r;
+    nlSinCos(&v.f.y, &v.f.x, p.a);
     v.f.x *= radius;
     v.f.y *= radius;
 }
 /**
  * Offset/Address/Size: 0x3EC | 0x801F06E8 | size: 0x80
- * TODO: 96.2% match - MWCC instruction scheduling: target loads lfs (polar.r)
- * before lhz (polar.a), our compiler schedules lhz before lfs
  */
 void nlAddPolarToCartesian(nlVector3& result, const nlPolar& polar)
 {
-    f32 radius = polar.r;
+    const volatile nlPolar& p = polar;
+    f32 radius = p.r;
     f32 cos_val, sin_val;
-    nlSinCos(&sin_val, &cos_val, polar.a);
+    nlSinCos(&sin_val, &cos_val, p.a);
     cos_val *= radius;
     sin_val *= radius;
     result.f.x += cos_val;
@@ -69,19 +69,20 @@ void nlCartesianToPolar(nlPolar& out, const nlVector3& in)
  */
 void nlMakeQuat(nlQuaternion& out, const nlVector3& v3RotationAxis, float ang_rad)
 {
-    f32 temp_f31;
-    f32 temp_f1;
-    s32 temp_r31;
+    f32 cosHalfAngle;
+    f32 sinHalfAngle;
+    s32 halfAngleUnits;
 
-    temp_r31 = 0.5f * (ang_rad * 10430.378f);
+    ang_rad *= 0.5f;
+    halfAngleUnits = 10430.378f * ang_rad;
 
-    temp_f31 = nlSin((u16)temp_r31 + 0x4000);
-    temp_f1 = nlSin((u16)temp_r31);
+    cosHalfAngle = nlSin((u16)halfAngleUnits + 0x4000);
+    sinHalfAngle = nlSin((u16)halfAngleUnits);
 
-    out.f.x = v3RotationAxis.f.x * temp_f1;
-    out.f.y = v3RotationAxis.f.y * temp_f1;
-    out.f.z = v3RotationAxis.f.z * temp_f1;
-    out.f.w = temp_f31;
+    out.f.x = v3RotationAxis.f.x * sinHalfAngle;
+    out.f.y = v3RotationAxis.f.y * sinHalfAngle;
+    out.f.z = v3RotationAxis.f.z * sinHalfAngle;
+    out.f.w = cosHalfAngle;
 }
 
 /**
@@ -155,4 +156,17 @@ void nlInvertRotTransMatrix(nlMatrix4& out, const nlMatrix4& in)
     out.m[3][1] = negResult.f.y;
     out.m[3][2] = negResult.f.z;
     out.m[3][3] = 1.0f;
+}
+
+/**
+ * Stub only for field order; unreferenced so the linker drops it.
+ * Forces emission of specific constants/operations so the compiler lays out the related fields to match the original binary.
+ */
+void math_stub(float& v0, float& v1, float& v2, float& v3, float& v4)
+{
+    v0 = 0.0f;
+    v1 = 1.0f;
+    v2 = -1.0f;
+    v3 = 0.5f;
+    v4 = 10430.378f;
 }

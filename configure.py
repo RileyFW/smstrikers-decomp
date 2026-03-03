@@ -1097,13 +1097,11 @@ config.libs = [
             Object(NonMatching, "Game/SH/SHTournTeamSetup.cpp", extra_cflags=["-inline deferred"]),            
 
             # GFX
-            # Object(NonMatching, "Game/Drawable/DrawableObj.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableNetMesh.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableCharacter.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableBall.cpp"),
             Object(NonMatching, "Game/Drawable/DrawablePowerup.cpp"),
             Object(NonMatching, "Game/Drawable/DrawableExplosionFragment.cpp"),
-            # Object(NonMatching, "Game/Drawable/DrawableModel.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableTmModel.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableSkinModel.cpp"),
 
@@ -1321,7 +1319,7 @@ config.libs = [
 
             # Ext/Game-Specific?
             Object(NonMatching, "NL/StatsGatherer.cpp"),     
-            Object(NonMatching, "NL/math.cpp", extra_cflags=["-inline deferred"]),     
+            Object(Matching, "NL/math.cpp", extra_cflags=["-inline deferred"]),     
             Object(NonMatching, "NL/utility.cpp", extra_cflags=["-inline deferred"]),     
 
             # Ext/GL

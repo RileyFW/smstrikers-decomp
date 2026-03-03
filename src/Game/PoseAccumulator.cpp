@@ -5,8 +5,8 @@
 #include "types.h"
 
 static const nlQuaternion qRotIdentity = { 0, 0, 0, 1 };
-static const nlVector3 v3ScaleIdentity = { 1.0f, 1.0f, 1.0f };
-static const nlVector3 v3TransIdentity = { 0.0f, 0.0f, 0.0f };
+static nlVector3 v3ScaleIdentity = { 1.0f, 1.0f, 1.0f };
+static nlVector3 v3TransIdentity = { 0.0f, 0.0f, 0.0f };
 
 extern const nlMatrix4 kPose64Template;
 extern const RotAccum kRotAccumTemplate;
@@ -513,28 +513,18 @@ void cPoseAccumulator::BlendScaleIdentity(int idx, float w)
     if (fabsf(w) < 0.001f)
         return;
 
-    ScaleAccum* a = &m_scale.mData[idx];
-    a->fAccumulatedWeight += w;
+    ScaleAccum* e = &m_scale.mData[idx];
+    e->fAccumulatedWeight += w;
 
-    if (a->bIdentity)
+    if (e->bIdentity)
         return;
 
-    float fRelativeWeight = w / a->fAccumulatedWeight;
-    // float inv = 1.0f - fRelativeWeight;
+    float f3 = w / e->fAccumulatedWeight;
+    float f2 = 1.0f - f3;
 
-    // nlVec3Set(a->s,
-    //     inv * a->s.f.x + t * v3ScaleIdentity.f.x,
-    //     inv * a->s.f.y + t * v3ScaleIdentity.f.y,
-    //     inv * a->s.f.z + t * v3ScaleIdentity.f.z);
-
-    a->s.f.x = (1.f - fRelativeWeight) * a->s.f.x + fRelativeWeight * v3ScaleIdentity.f.x;
-    a->s.f.y = (1.f - fRelativeWeight) * a->s.f.y + fRelativeWeight * v3ScaleIdentity.f.y;
-    a->s.f.z = (1.f - fRelativeWeight) * a->s.f.z + fRelativeWeight * v3ScaleIdentity.f.z;
-
-    // nlVec3Set(a->s,
-    //     (1.f - fRelativeWeight) * a->s.f.x + fRelativeWeight * v3ScaleIdentity.f.x,
-    //     (1.f - fRelativeWeight) * a->s.f.y + fRelativeWeight * v3ScaleIdentity.f.y,
-    //     (1.f - fRelativeWeight) * a->s.f.z + fRelativeWeight * v3ScaleIdentity.f.z);
+    e->s.f.x = f2 * e->s.f.x + f3 * v3ScaleIdentity.f.x;
+    e->s.f.y = f2 * e->s.f.y + f3 * v3ScaleIdentity.f.y;
+    e->s.f.z = f2 * e->s.f.z + f3 * v3ScaleIdentity.f.z;
 }
 
 /**

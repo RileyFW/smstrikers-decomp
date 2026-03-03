@@ -1,5 +1,7 @@
 #include "Game/Camera/GameplayCam.h"
 
+#include "Game/Team.h"
+#include "Game/AI/Fielder.h"
 #include "math.h"
 
 f32 CANT_COLLIDE = *(f32*)__float_max;
@@ -23,6 +25,67 @@ GameplayCamera::GameplayCamera()
  */
 void GameplayCamera::CalcDynamicZoom()
 {
+    m_fDesiredZoom = 0.0f;
+
+    for (int i = 0; i < 2; i++)
+    {
+        int numFieldersInInnerZone = 0;
+        int numFieldersInMidZone = 0;
+
+        for (int j = 0; j < 4; j++)
+        {
+            cFielder* fielder = g_pTeams[i]->GetFielder(j);
+            nlVector3 screenPosition = fielder->m_v3ScreenPosition;
+
+            screenPosition.f.x = fabsf(screenPosition.f.x);
+            screenPosition.f.y = fabsf(screenPosition.f.y);
+
+            if (screenPosition.f.x <= 0.75f && screenPosition.f.y <= 0.75f)
+            {
+                numFieldersInInnerZone++;
+            }
+
+            if (screenPosition.f.x <= 1.0f && screenPosition.f.y <= 1.0f)
+            {
+                numFieldersInMidZone++;
+            }
+        }
+
+        int numAssignedControllers = g_pTeams[i]->GetNumAssignedControllers();
+        int teamDesiredNumFieldersOnScreen = 0;
+        if (numAssignedControllers != 0)
+        {
+            teamDesiredNumFieldersOnScreen = numAssignedControllers >= 1 ? numAssignedControllers : 1;
+        }
+
+        Goalie* goalie = g_pTeams[i]->GetGoalie();
+        if (goalie->m_pBall != NULL)
+        {
+            teamDesiredNumFieldersOnScreen = teamDesiredNumFieldersOnScreen >= 4 ? teamDesiredNumFieldersOnScreen : 4;
+        }
+
+        float currentZoom;
+        float teamDesiredZoom = 0.0f;
+        if (teamDesiredNumFieldersOnScreen > 0)
+        {
+            if (numFieldersInInnerZone >= teamDesiredNumFieldersOnScreen)
+            {
+                teamDesiredZoom = 0.0f;
+            }
+            else if (numFieldersInMidZone < teamDesiredNumFieldersOnScreen)
+            {
+                teamDesiredZoom = 1.0f;
+            }
+            else
+            {
+                teamDesiredZoom = m_fZoom;
+            }
+        }
+
+        currentZoom = m_fDesiredZoom;
+        currentZoom = (currentZoom >= teamDesiredZoom) ? currentZoom : teamDesiredZoom;
+        m_fDesiredZoom = currentZoom;
+    }
 }
 
 /**

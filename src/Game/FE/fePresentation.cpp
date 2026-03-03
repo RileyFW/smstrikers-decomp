@@ -2,6 +2,7 @@
 
 #include "NL/nlString.h"
 
+#include "Game/FE/feSoundKeyframeTrigger.h"
 #include "Game/FE/feTemplates.h"
 
 /**
@@ -9,34 +10,26 @@
  */
 void FEPresentation::Update(float deltaTime)
 {
-    TLSlide* sp8;
-    TLSlide* temp_r3;
-    f32 temp_f0;
-    f32 temp_f2;
-    s32 temp_r0;
-
     if (m_currentSlide != NULL)
     {
         m_fadeDuration += deltaTime;
-        temp_r3 = m_currentSlide;
-        temp_f2 = m_fadeDuration;
-        temp_f0 = temp_r3->m_start + temp_r3->m_duration;
-        if (temp_f2 > temp_f0)
+        f32 end = m_currentSlide->m_start + m_currentSlide->m_duration;
+        if (m_fadeDuration > end)
         {
-            temp_r0 = temp_r3->m_uPlayMode;
-            switch (temp_r0)
-            { /* irregular */
-            case 1:
-                m_fadeDuration = temp_f2 - temp_f0;
+            switch (m_currentSlide->m_uPlayMode)
+            {
+            case TLPM_LOOPING:
+                m_fadeDuration = m_fadeDuration - end;
                 break;
-            case 0:
-                m_fadeDuration = temp_f0;
+            case TLPM_STOP_AT_END:
+                m_fadeDuration = end;
                 break;
             }
         }
-        sp8 = m_currentSlide;
-        // m_currentSlide->Update(m_currentSlide->unk18, m_fadeDuration);
-        // m_currentSlide->unk18 = m_fadeDuration;
+        SoundKeyframeTrigger trigger;
+        trigger.m_slide = m_currentSlide;
+        trigger.Update(m_currentSlide->m_time, m_fadeDuration);
+        m_currentSlide->m_time = m_fadeDuration;
         m_currentSlide->Update(deltaTime);
     }
 }

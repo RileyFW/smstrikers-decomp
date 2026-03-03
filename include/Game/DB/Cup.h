@@ -82,13 +82,20 @@ struct BaseCup
     };
     virtual void* DeserializeData(void* src)
     {
-        src = (u8*)memcpy(&mUserSelectedTeam, src, 4) + 4;
-        src = (u8*)memcpy(&mUserSelectedSidekick, src, 4) + 4;
-        src = (u8*)memcpy(&mRoundNumber, src, 2) + 2;
-        src = (u8*)memcpy(&mGameNumber, src, 2) + 2;
-        src = (u8*)memcpy(&mHumanTeams, src, 2) + 2;
-        src = (u8*)memcpy(&mCupStarted, src, 1) + 1;
-        src = (u8*)memcpy(&mCupSettings, src, sizeof(mCupSettings)) + sizeof(mCupSettings);
+        memcpy(&mUserSelectedTeam, src, 4);
+        src = (u8*)src + 4;
+        memcpy(&mUserSelectedSidekick, src, 4);
+        src = (u8*)src + 4;
+        memcpy(&mRoundNumber, src, 2);
+        src = (u8*)src + 2;
+        memcpy(&mGameNumber, src, 2);
+        src = (u8*)src + 2;
+        memcpy(&mHumanTeams, src, 2);
+        src = (u8*)src + 2;
+        memcpy(&mCupStarted, src, 1);
+        src = (u8*)src + 1;
+        memcpy(&mCupSettings, src, sizeof(mCupSettings));
+        src = (u8*)src + sizeof(mCupSettings);
         return src;
     };
     virtual int GetSaveDataSize() const { return 0x1B; };

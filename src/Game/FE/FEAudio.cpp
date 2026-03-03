@@ -112,10 +112,38 @@ void FEAudio::StopAnimAudioEvent(const char* eventName)
 /**
  * Offset/Address/Size: 0x738 | 0x8009F4E4 | size: 0xBC
  */
-long FEAudio::PlayAnimAudioEvent(const char*, bool)
+long FEAudio::PlayAnimAudioEvent(const char* eventName, bool)
 {
-    FORCE_DONT_INLINE;
-    return 0;
+    unsigned long hash = nlStringLowerHash(eventName);
+
+    if (!AudioLoader::IsInited())
+    {
+        return -1;
+    }
+
+    if (!mIsEnabled)
+    {
+        return -1;
+    }
+
+    unsigned long stackHash = hash;
+    AnimAudioEventLookup* result = nlBSearch<AnimAudioEventLookup, unsigned long>(stackHash, gp_AnimAudioEventTable, gNumAnimAudioEvents);
+    AnimAudioEventLookup* event;
+    if (result)
+    {
+        event = result;
+    }
+    else
+    {
+        event = NULL;
+    }
+
+    if (nlStrICmp<char>(event->szSFXType, "") == 0)
+    {
+        return -1;
+    }
+
+    Audio::PlayWorldSFXbyStr(event->szSFXType, 1.0f, 0.0f, false, true, NULL, NULL, NULL);
 }
 
 /**
@@ -222,20 +250,9 @@ AnimAudioEventLookup* nlBSearch(const unsigned long& key, AnimAudioEventLookup* 
  * Also minor scheduling diff with -O4,p (lbz for 2nd str moved before mr r31).
  * Compiler char sign-extension ABI quirk - not fixable with code changes.
  */
+// TEMP removed in scratch-root for decomp iteration
 template <>
-int nlStrICmp(const char* a, const char* b)
-{
-    char c1;
-    char c2;
-
-    do
-    {
-        c1 = nlToUpper<char>(*a++);
-        c2 = nlToUpper<char>(*b++);
-    } while (c1 != 0 && c2 != 0 && c1 == c2);
-
-    return c1 - c2;
-}
+int nlStrICmp(const char* a, const char* b);
 
 // /**
 //  * Offset/Address/Size: 0x84 | 0x8009FBF8 | size: 0x40

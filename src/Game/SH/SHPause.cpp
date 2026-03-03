@@ -426,7 +426,6 @@ void PauseMenuScene::TransitionOut(PauseMenuScene::TransitionType newtype)
 
 /**
  * Offset/Address/Size: 0x0 | 0x800AD4F8 | size: 0xD0
- * TODO: 99.9% match - only `i` diff on bl Find (branch offset relocation)
  */
 void PauseMenuScene::OpenItem(TLComponentInstance* instance)
 {
@@ -434,26 +433,14 @@ void PauseMenuScene::OpenItem(TLComponentInstance* instance)
 
     if (mMenuItems.mMenuItems[mMenuItems.mCurrentIndex].mDisabled)
     {
-        InlineHasher hashers[12];
-        InlineHasher* p = hashers;
-        int i;
-        for (i = 0; i < 10; i++)
-        {
-            p[i].m_Hash = 0;
-        }
-
-        p[10].m_Hash = nlStringLowerHash("disabled_text");
-        p[11].m_Hash = p[10].m_Hash;
-
-        TLSlide* slide = instance->GetActiveSlide();
         TLTextInstance* text = FEFinder<TLTextInstance, 3>::Find(
-            slide,
-            p[11],
-            p[9],
-            p[7],
-            p[5],
-            p[3],
-            p[1]);
+            instance->GetActiveSlide(),
+            InlineHasher(nlStringLowerHash("disabled_text")),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0));
 
         text->m_LocStrId = 0x38202C30;
         text->m_OverloadFlags |= 0x8;

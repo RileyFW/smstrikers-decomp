@@ -31,7 +31,7 @@ int World::CompareNameToGenericName(const char* str1, const char* str2)
 
 /**
  * Offset/Address/Size: 0x5C | 0x80194D20 | size: 0x44
- * TODO: 96.5% match - lwz r5,0x120(r3) scheduled 2 insns early due to -inline deferred in scratch
+ * TODO: 96.5% match - MWCC -O4,p scheduler moves lwz r5,0x120(r3) before prologue stw/stw/mr; all compiler variants (mwcc_247_92/92p1/105/107/108) produce same scheduling
  */
 unsigned long World::GetHashIdForGenericName(const char* name) const
 {
