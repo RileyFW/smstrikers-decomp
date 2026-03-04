@@ -25,8 +25,8 @@ public:
     /* 0x08 */ int mNumQuads;         // offset 0x8, size 0x4
     /* 0x0C */ int mNumVertices;      // offset 0xC, size 0x4
     /* 0x10 */ int mNumTriIndices;    // offset 0x10, size 0x4
-    /* 0x14 */ float mJolt;           // offset 0x14, size 0x4
-    /* 0x18 */ u32 m_unk18;           // bool mbInitialized;
+    /* 0x14 */ int mJolt;             // offset 0x14, size 0x4
+    /* 0x18 */ int m_unk18;           // offset 0x18, size 0x4
     /* 0x1C */ float mJoltCache;      // offset 0x1C, size 0x4
     /* 0x20 */ NetMesh* mpNetMesh;    // offset 0x20, size 0x4
     /* 0x24 */ bool mbInitialized;
@@ -35,6 +35,7 @@ public:
     static unsigned long* spColour[2];
     static unsigned short* spTriIndices[2];
     static bool sbStaticInitialized[2];
-}; // total size: 0x24
+    static int sNumVertices[2];
+}; // total size: 0x28
 
 #endif // _DRAWABLENETMESH_H_

@@ -2,7 +2,8 @@
 
 /**
  * Offset/Address/Size: 0x0 | 0x801EFF90 | size: 0x48
- * TODO: 85.6% match - work in progress..
+ * TODO: 88.9% match - prolog instruction scheduling: target has mr r7,r5 / lwz r4,0x44(r4)
+ *   but compiler emits lwz r4,0x44(r4) / li r7,0. Likely -inline deferred context difference.
  */
 AnimRetarget* AnimRetargetList::GetAnimRetargetWithSignature(const cSAnim* anim)
 {

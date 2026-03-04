@@ -1,4 +1,7 @@
 #include "Game/FE/Overlay/OverlayHandlerSummary.h"
+#include "Game/FE/feFinder.h"
+#include "Game/FE/feSlideMenu.h"
+#include "Game/Audio/CrowdMood.h"
 
 // /**
 //  * Offset/Address/Size: 0x468 | 0x800FF898 | size: 0x84
@@ -71,11 +74,73 @@ SummaryOverlay::~SummaryOverlay()
 {
 }
 
+static const char* SUMMARY_SLIDE_NAME = "SUMMARY";
+static const char* TOTAL_SUMMARY_SLIDE_NAME = "TOTAL SUMMARY";
+static const char* USER_SLIDE_NAME = "USER";
+static const char* TOTAL_USER_SLIDE_NAME = "TOTAL USER";
+
 /**
  * Offset/Address/Size: 0x1B00 | 0x800FE6A0 | size: 0x1EC
+ * TODO: 96.56% match - second Find<TLSlide> still places zero InlineHasher
+ * temporaries in low stack slots (r7/r8/r9 from 0x10/0x0C/0x08) instead of
+ * reusing first-call slots at 0x40/0x38/0x30.
  */
 void SummaryOverlay::SceneCreated()
 {
+    CrowdMood::Purge(true);
+
+    FEPresentation* presentation = m_pFEScene->m_pFEPackage->GetPresentation();
+
+    TLComponentInstance* pComp = FEFinder<TLComponentInstance, 4>::Find<FEPresentation>(
+        presentation,
+        InlineHasher(nlStringLowerHash("Slide1")),
+        InlineHasher(nlStringLowerHash("layer")),
+        InlineHasher(nlStringLowerHash("summary")),
+        InlineHasher(0),
+        InlineHasher(0),
+        InlineHasher(0));
+
+    mSlideMenu = new (nlMalloc(sizeof(FESlideMenu), 8, false)) FESlideMenu(pComp);
+
+    mSlideMenu->AddMenuItem(SUMMARY_SLIDE_NAME);
+
+    if (mShowCumulativeStats)
+    {
+        mSlideMenu->AddMenuItem(TOTAL_SUMMARY_SLIDE_NAME);
+        summaryOrder[1] = SUMMARY_CUMULATIVE_MATCH;
+        summaryOrder[3] = SUMMARY_CUMULATIVE_MATCH;
+    }
+
+    if (mShowUserStats)
+    {
+        mSlideMenu->AddMenuItem(USER_SLIDE_NAME);
+        if (mShowCumulativeStats)
+        {
+            mSlideMenu->AddMenuItem(TOTAL_USER_SLIDE_NAME);
+            summaryOrder[2] = SUMMARY_USER;
+            summaryOrder[3] = SUMMARY_CUMULATIVE_USER;
+        }
+        else
+        {
+            summaryOrder[1] = SUMMARY_USER;
+            summaryOrder[3] = SUMMARY_USER;
+        }
+    }
+
+    mSlideMenu->m_doWrapAround = true;
+
+    InlineHasher zero(0);
+
+    mButtons.mButtonInstance = FEFinder<TLComponentInstance, 4>::Find<TLSlide>(
+        presentation->m_currentSlide,
+        InlineHasher(nlStringLowerHash("Layer")),
+        InlineHasher(nlStringLowerHash("buttons")),
+        InlineHasher(0),
+        zero,
+        zero,
+        zero);
+
+    mButtons.SetState(mButtonState);
 }
 
 /**

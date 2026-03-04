@@ -69,6 +69,7 @@ public:
 
     void Create(ePopupMenu);
     void Create(ePopupMenu, Function<FnVoidVoid>&, Function<FnVoidVoid>&);
+    void SetBackButtonCallback(Function<FnVoidVoid>&);
     static void Nothing();
 
     // /* 0x0 */ TLSlide* m_slides;
@@ -84,9 +85,10 @@ public:
     /* 0xA40 */ eFEINPUT_PAD mControlInput;           // size 0x4
     /* 0xA44 */ Function<FnVoidVoid> callBacks[4];    // size 0x20
     /* 0xA64 */ nlColour mOptionColour;               // size 0x4
-    /* 0xA68 */ feVector3 mHighlightSize;             // size 0xC
-    /* 0xA74 */ ePopupMenu mType;                     // size 0x4
-}; // total size: 0xA78
+    /* 0xA68 */ u8 pad_A68[8];                        // size 0x8
+    /* 0xA70 */ feVector3 mHighlightSize;             // size 0xC
+    /* 0xA7C */ ePopupMenu mType;                     // size 0x4
+}; // total size: 0xA80
 
 // class FEFinder<TLTextInstance, 3>
 // {

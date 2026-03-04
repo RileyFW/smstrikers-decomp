@@ -193,7 +193,7 @@ void UnloadInGameSFX();
 void LoadInGameSFX();
 bool IsInited();
 void Initialize(bool);
-// void ShutdownReverb();
+bool ShutdownReverb();
 // void InitializeReverb(eStadiumID, unsigned char);
 // void CreateTrackMgr<3>();
 

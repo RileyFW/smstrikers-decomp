@@ -166,7 +166,7 @@ public:
     void UpdateActionState(float);
     void SetGoalieAction(eGoalieActionState, int);
     static void SaveBlendCallback(unsigned int, cPN_SAnimController*);
-    void SetupBlender(bool, const float*, int, int);
+    cPoseNode* SetupBlender(bool, const float*, int, int);
     void PlayBlendedAnims(float, int);
     void PlayNewAnim(int);
     void CleanGoalieAction();

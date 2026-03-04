@@ -350,16 +350,19 @@ static inline unsigned long extractStateBits(unsigned long rasterState, gl_State
     return out;
 }
 
+static inline unsigned long getRasterState()
+{
+    return _state.m_State;
+}
+
 /**
  * Offset/Address/Size: 0x604 | 0x801DC248 | size: 0xB4
- * TODO: 98.6% match - r6/r7 volatile register swap (out vs currentState).
- *       MWCC graph coloring artifact, all instructions identical.
  */
 unsigned long glSetRasterState(eGLState state, unsigned long value)
 {
     gl_StateBitfield* p = &packed_raster[state];
     s32 numBits = p->numBits;
-    unsigned long out = extractStateBits(_state.m_State, p, numBits);
+    unsigned long out = extractStateBits(getRasterState(), p, numBits);
 
     for (s32 i = 0; i < numBits; i++)
     {

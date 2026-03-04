@@ -19,12 +19,36 @@ template <typename ReturnType, typename ParamType>
 class Function1
 {
 public:
+    struct FunctorBase
+    {
+        virtual ~FunctorBase() { };
+        // virtual void Destroy() = 0;
+        virtual FunctorBase* fnc_0x8() = 0;  // probably Destroy()
+        virtual FunctorBase* fnc_0x10() = 0; // probably Clone()
+        virtual ReturnType operator()(ParamType) = 0;
+    };
+
     enum Tag mTag; // offset 0x0, size 0x4
     union
     {
         ReturnType (*mFreeFunction)(ParamType); // offset 0x4, size 0x4
         FunctorBase* mFunctor;                  // offset 0x4, size 0x4
     };
+
+    inline void operator()(ParamType arg)
+    {
+        if ((bool)mTag)
+        {
+            if (mTag == FREE_FUNCTION)
+            {
+                mFreeFunction(arg);
+            }
+            else
+            {
+                (*mFunctor)(arg);
+            }
+        }
+    }
 }; // total size: 0x8
 
 template <typename ReturnType>
@@ -54,7 +78,10 @@ public:
         FunctorBase* mFunctor;         // offset 0x4, size 0x4
     };
 
-    Function0() { mTag = EMPTY; }
+    Function0()
+        : mTag(EMPTY)
+    {
+    }
 
     Function0(const Function0& other)
         : mTag(other.mTag)

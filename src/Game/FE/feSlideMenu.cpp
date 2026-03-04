@@ -112,8 +112,8 @@ bool FESlideMenu::NextItem()
         else
         {
             // Virtual call through functor - use inline chained access
-            FunctorBase* functor = item->ItemCBFuncs[1].mFunctor;
-            ((void (*)(FunctorBase*))(*(unsigned long**)functor)[3])(functor);
+            Function<FESlideMenu*>::FunctorBase* functor = item->ItemCBFuncs[1].mFunctor;
+            ((void (*)(Function<FESlideMenu*>::FunctorBase*))(*(unsigned long**)functor)[3])(functor);
         }
 
         return true;
@@ -124,40 +124,25 @@ bool FESlideMenu::NextItem()
 
 /**
  * Offset/Address/Size: 0x200 | 0x80096E54 | size: 0xA4
- * TODO: 92.7% match - early-return branch structure difference (blt+b vs bge)
  */
 void FESlideMenu::SetSlideByIndex(unsigned char index)
 {
-    if (m_currentSlide == index)
-    {
+    if (m_currentSlide == index || index >= m_size)
         return;
-    }
-    if (!(index < m_size))
-    {
-        return;
-    }
+
     m_currentSlide = index;
 
-    // Get pointer to MenuItem and access callback at ON_HIGHLIGHT (index 1)
-    char* pThis = (char*)this;
-    u32 offset = m_currentSlide * 0x14;
-    u32* pItem = (u32*)(pThis + offset);
-
-    // Check callback type at offset 0xC (ItemCBFuncs[1].mTag)
-    int tag = (int)pItem[3];
-    if (tag != 0)
+    MenuItem& item = m_menuItems[m_currentSlide];
+    Tag tag = (Tag)item.ItemCBFuncs[ON_HIGHLIGHT].mTag;
+    if (tag != EMPTY)
     {
-        if (tag == 1)
+        if (tag == FREE_FUNCTION)
         {
-            // FREE_FUNCTION - direct call
-            void (*func)() = (void (*)())pItem[4];
-            func();
+            ((void (*)())item.ItemCBFuncs[ON_HIGHLIGHT].mFreeFunction)();
         }
         else
         {
-            // FUNCTOR - vtable call via fnc_0x8 (vtable[2])
-            FunctorBase* functor = (FunctorBase*)pItem[4];
-            functor->fnc_0x8();
+            item.ItemCBFuncs[ON_HIGHLIGHT].mFunctor->fnc_0x8();
         }
     }
 

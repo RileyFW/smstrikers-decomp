@@ -1,5 +1,9 @@
 #include "Game/AI/ShotMeter.h"
+#include "Game/AI/AIPad.h"
+#include "Game/AI/AiUtil.h"
+#include "Game/AI/Scripts/ScriptQuestions.h"
 #include "Game/Ball.h"
+#include "Game/CharacterTweaks.h"
 #include "Game/Game.h"
 #include "Game/GameTweaks.h"
 #include "Game/CharacterTriggers.h"
@@ -117,9 +121,96 @@ void ShotMeter::Reset()
     m_fSTSValue = 0.0f;
 }
 
+static inline void CalcShotAim(cFielder* pFielder, ShotMeter* pMeter)
+{
+    cAIPad* pPad = pFielder->m_pController;
+    float fAimValue = 0.0f;
+    if (pPad != NULL)
+    {
+        if (pPad->GetMovementStickMagnitude() > 0.1f)
+        {
+            s16 dir = pPad->GetMovementStickDirection();
+            if ((s16)(dir + 0x8000) < 0)
+            {
+                fAimValue = 1.0f;
+            }
+            else
+            {
+                fAimValue = -1.0f;
+            }
+        }
+    }
+    pMeter->mfSShotAimValue = fAimValue;
+}
+
+static inline void CalcScoreValue(cFielder* pFielder, ShotMeter* pMeter)
+{
+    float fLikelyToScore = LikelyToScore(pFielder);
+    float fDistance = PlayerShotDistance(pFielder);
+
+    float fSpeedValue = pMeter->m_fSpeedValue;
+    float fShooting = ((FielderTweaks*)pFielder->m_pTweaks)->fShooting;
+    GameTweaks* pGameTweaks = g_pGame->m_pGameTweaks;
+    float fRatingsWeight = pGameTweaks->unk2D8;
+    bool bIsChipShot = pFielder->mActionShotVars.bIsChipShot || pFielder->mActionLooseBallShotVars.bIsChipShot;
+
+    if (!bIsChipShot)
+    {
+        float fDistWeight = pGameTweaks->unk2E0;
+        fShooting *= fRatingsWeight;
+        float fOpenWeight = pGameTweaks->unk2DC;
+        float fDistVal = fDistance * fDistWeight;
+        float fSumD = fDistWeight + fOpenWeight;
+        float fOpenVal = fLikelyToScore * fOpenWeight;
+        float fSumWeights = fRatingsWeight + fSumD;
+        float fResult = fOpenVal + fDistVal;
+        float fRemainder = 1.0f - fSumWeights;
+        fSpeedValue *= fRemainder;
+        fResult = fSpeedValue + fResult;
+        pMeter->m_fScoreValue = fShooting + fResult;
+    }
+    else
+    {
+        float fChipWeight = pGameTweaks->unk2E4;
+        float fGoalieOut = GoalieOutOfPosition(pFielder);
+        pGameTweaks = g_pGame->m_pGameTweaks;
+        float fGoalieVal = fGoalieOut * fChipWeight;
+        fShooting *= fRatingsWeight;
+        float fChipOpenWeight = pGameTweaks->unk2E8;
+        float fSum = fChipWeight + fChipOpenWeight;
+        float fOpenVal = fLikelyToScore * fChipOpenWeight;
+        float fSumWeights = fRatingsWeight + fSum;
+        float fResult = fGoalieVal + fOpenVal;
+        float fRemainder = 1.0f - fSumWeights;
+        fSpeedValue *= fRemainder;
+        fResult = fSpeedValue + fResult;
+        pMeter->m_fScoreValue = fShooting + fResult;
+    }
+}
+
 /**
  * Offset/Address/Size: 0x0 | 0x80062120 | size: 0x1FC
+ * TODO: 97.52% match - 22 volatile float temp register allocation diffs in
+ * CalcScoreValue arithmetic (f4/f5 vs f1/f3 in non-chip, f2/f1 swap in chip).
+ * Inherent to MWCC register allocator with -inline deferred; CalcScoreValue
+ * and CalcShotAim were originally erased static member functions that got inlined.
  */
-void ShotMeter::ShotReleased(cFielder*)
+void ShotMeter::ShotReleased(cFielder* pFielder)
 {
+    KillWindups(pFielder);
+    m_eShotMeterState = SHOT_METER_RELEASED;
+
+    GameTweaks* pGameTweaks = g_pGame->m_pGameTweaks;
+    if (m_fTime > pGameTweaks->unk2D0)
+    {
+        m_fSpeedValue = 1.0f;
+    }
+    else
+    {
+        m_fSpeedValue = Interpolate(0.0f, 1.0f, m_fTime / pGameTweaks->unk2D0);
+    }
+
+    CalcScoreValue(pFielder, this);
+    CalcShotAim(pFielder, this);
+    m_fTime = 0.0f;
 }

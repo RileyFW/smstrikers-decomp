@@ -12,6 +12,7 @@
 #include "NL/nlString.h"
 #include "Game/PoseAccumulator.h"
 #include "Game/Camera/CameraMan.h"
+#include "Game/Render/NetMesh.h"
 #include "Game/Game.h"
 #include "Game/Audio/AudioLoader.h"
 // #include "Game/SoundProps/bowsergensoundproperties.h"
@@ -105,8 +106,7 @@ void Bowser::ActionRoll()
         PM_HOLD,
         (void (*)(unsigned int, cPN_SAnimController*))0,
         (unsigned int)0,
-        (bool)0
-    );
+        (bool)0);
 
     cPN_Blender* blender;
 
@@ -456,6 +456,52 @@ void Bowser::PlaySFX(Audio::eCharSFX type, PosUpdateMethod posUpdateMethod, floa
  */
 void Bowser::CheckFootSteps()
 {
+    if (mAnimID != 3)
+        return;
+
+    if (!mpAnimController->TestTrigger(0.3f) && !mpAnimController->TestTrigger(0.7f))
+        return;
+
+    if (mbDoTilt)
+    {
+        f32 fNewTilt = mfYAxisTilt;
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        f32 fTiltForce = pTweaks->unk324 + nlRandomf(pTweaks->unk328 - pTweaks->unk324, &nlDefaultSeed);
+
+        if (mAttackType != BOWSER_ATTACK_STOMP)
+        {
+            fNewTilt -= 0.5f * (fTiltForce * mv3Position.f.x);
+        }
+        else
+        {
+            fNewTilt -= fTiltForce * mv3Position.f.x;
+        }
+
+        f32 fMaxTilt = g_pGame->m_pGameTweaks->unk32C;
+        if (fNewTilt > fMaxTilt)
+        {
+            fNewTilt = fMaxTilt;
+        }
+        else if (fNewTilt < -fMaxTilt)
+        {
+            fNewTilt = -fMaxTilt;
+        }
+
+        if (mAttackType == BOWSER_ATTACK_STOMP && mStompStage == 2)
+        {
+            if (mfYAxisTilt * fNewTilt < 0.0f)
+            {
+                fNewTilt = 0.0f;
+                mbDoTilt = false;
+            }
+        }
+
+        SetTiltParameters(fNewTilt);
+    }
+
+    NetMesh::spPositiveXNetMesh->JoltNet(0.1f);
+    NetMesh::spNegativeXNetMesh->JoltNet(0.1f);
+    FireCameraRumbleFilter(0.0f, 0.5f);
 }
 
 /**

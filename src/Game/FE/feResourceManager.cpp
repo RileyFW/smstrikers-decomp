@@ -194,7 +194,79 @@ FEResourceManager::~FEResourceManager()
  */
 void FEResourceManager::Cleanup()
 {
-    FORCE_DONT_INLINE;
+    if (s_pOnDemandBundle != NULL)
+    {
+        s_pOnDemandBundle->Close();
+        delete s_pOnDemandBundle;
+        s_pOnDemandBundle = NULL;
+    }
+
+    if (s_loadedResourceList.m_NumElements != 0)
+    {
+        nlPrintf("WARNING: Resources still loaded during FEResourceManager::Cleanup\n");
+        nlPrintf("  Hash          Type\n");
+
+        struct NodeStack
+        {
+            AVLTreeEntry<unsigned long, FEResourceHandle*>** data;
+            u32 count;
+        };
+
+        NodeStack* stack = (NodeStack*)nlMalloc(sizeof(NodeStack), 8, false);
+
+        if (stack != NULL)
+        {
+            AVLTreeEntry<unsigned long, FEResourceHandle*>* node = s_loadedResourceList.m_Root;
+
+            stack->data = (AVLTreeEntry<unsigned long, FEResourceHandle*>**)nlMalloc(
+                (s_loadedResourceList.m_NumElements + 1) * sizeof(AVLTreeEntry<unsigned long, FEResourceHandle*>*), 8, false);
+            stack->count = 0;
+
+            if (node != NULL)
+            {
+                while (node->node.left != NULL)
+                {
+                    stack->data[stack->count] = node;
+                    stack->count = stack->count + 1;
+                    node = (AVLTreeEntry<unsigned long, FEResourceHandle*>*)node->node.left;
+                }
+                stack->data[stack->count] = node;
+                stack->count = stack->count + 1;
+            }
+        }
+
+        while (stack->count != 0)
+        {
+            AVLTreeEntry<unsigned long, FEResourceHandle*>* top = stack->data[stack->count - 1];
+            FEResourceHandle* handle = top->value;
+            nlPrintf("  0x%08X  %d\n", handle->m_hashID, handle->m_type);
+
+            stack->count--;
+
+            AVLTreeEntry<unsigned long, FEResourceHandle*>* current = stack->data[stack->count];
+            AVLTreeEntry<unsigned long, FEResourceHandle*>* right = (AVLTreeEntry<unsigned long, FEResourceHandle*>*)current->node.right;
+
+            if (right != NULL)
+            {
+                while (right->node.left != NULL)
+                {
+                    stack->data[stack->count] = right;
+                    stack->count = stack->count + 1;
+                    right = (AVLTreeEntry<unsigned long, FEResourceHandle*>*)right->node.left;
+                }
+                stack->data[stack->count] = right;
+                stack->count = stack->count + 1;
+            }
+        }
+
+        if (stack != NULL)
+        {
+            delete[] stack->data;
+            delete stack;
+        }
+    }
+
+    s_loadedResourceList.Clear();
 }
 
 /**

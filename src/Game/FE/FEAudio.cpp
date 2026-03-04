@@ -71,7 +71,6 @@ long FEAudio::PlayAnimAudioEvent(unsigned long uHash, bool)
     }
 
     Audio::PlayWorldSFXbyStr(event->szSFXType, 1.0f, 0.0f, false, true, NULL, NULL, NULL);
-    return 0;
 }
 
 /**
@@ -144,6 +143,7 @@ long FEAudio::PlayAnimAudioEvent(const char* eventName, bool)
     }
 
     Audio::PlayWorldSFXbyStr(event->szSFXType, 1.0f, 0.0f, false, true, NULL, NULL, NULL);
+    return 0;
 }
 
 /**

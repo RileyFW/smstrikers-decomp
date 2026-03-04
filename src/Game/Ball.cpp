@@ -229,9 +229,63 @@ void cBall::ShootAtFast(nlVector3& v3Vel, const nlVector3& v3Target, float fDesi
 
 /**
  * Offset/Address/Size: 0xB40 | 0x8000A514 | size: 0x1EC
+ * TODO: 99.23% match - FPR register coloring: fSpinRand allocated to f7 instead of f4,
+ *       cascading through cross product temporaries. Same MWCC quirk as SetVelocity (99.27%).
  */
-void cBall::ShootRelease(const nlVector3&, eSpinType)
+void cBall::ShootRelease(const nlVector3& v3Velocity, eSpinType SpinType)
 {
+    nlVector3 v3Up;
+    nlVector3 v3AngVel;
+
+    m_v3Velocity = v3Velocity;
+    m_pPhysicsBall->SetLinearVelocity(v3Velocity);
+
+    if (SpinType == SPINTYPE_NONE)
+    {
+        v3AngVel.f.x = 0.0f;
+        v3AngVel.f.y = 0.0f;
+        v3AngVel.f.z = 0.0f;
+    }
+    else if ((SpinType == SPINTYPE_FORWARD) || (SpinType == SPINTYPE_BACK))
+    {
+        float fSpinRand = 0.5f + nlRandomf(2.0f, &nlDefaultSeed);
+        if (SpinType == SPINTYPE_BACK)
+        {
+            fSpinRand *= -1.0f;
+        }
+
+        static const nlVector3 kZero = { 0.0f, 0.0f, 0.0f };
+        v3Up = kZero;
+        v3Up.f.z = fSpinRand;
+
+        float velY = v3Velocity.f.y;
+        float velX = v3Velocity.f.x;
+
+        v3AngVel.f.x = (v3Up.f.y * v3Velocity.f.z) - (v3Up.f.z * velY);
+        v3AngVel.f.y = (-v3Up.f.x * v3Velocity.f.z) + (v3Up.f.z * velX);
+        v3AngVel.f.z = (v3Up.f.x * velY) - (v3Up.f.y * velX);
+    }
+    else if (SpinType == SPINTYPE_ROLLING)
+    {
+        m_pPhysicsBall->CalcAngularFromLinearVelocity(v3AngVel);
+        nlVec3Set(v3AngVel, 0.92f * v3AngVel.f.x, 0.92f * v3AngVel.f.y, 0.92f * v3AngVel.f.z);
+    }
+    else if (SpinType == SPINTYPE_PARAMETER)
+    {
+        v3AngVel = *(const nlVector3*)NULL;
+    }
+
+    m_pPhysicsBall->SetAngularVelocity(v3AngVel);
+    m_pPhysicsBall->SetUseAngularVelocity(true);
+    m_pPhysicsBall->SetRotation(m3Ident);
+    FakeBallWorld::InvalidateBallCache();
+    m_bBallPathChangeCount = m_bBallPathChangeCount + 1;
+    m_v3ShotOrigin = m_v3Position;
+    m_tNoPickupTimer.SetSeconds(0.1f);
+    m_pPhysicsBall->m_bUseMagnusEffect = false;
+    m_unk_0xA6 = false;
+    mpDamageTarget = NULL;
+    m_unk_0xA3 = false;
 }
 
 /**

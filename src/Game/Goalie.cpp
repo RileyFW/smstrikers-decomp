@@ -5,6 +5,7 @@
 #include "Game/AI/Fielder.h"
 #include "Game/CharacterAudio.h"
 #include "Game/SAnim.h"
+#include "Game/SAnim/pnSingleAxisBlender.h"
 #include "Game/Physics/PhysicsGoalie.h"
 #include "Game/Physics/PhysicsFakeBall.h"
 #include "Game/Field.h"
@@ -838,11 +839,77 @@ void Goalie::SaveBlendCallback(unsigned int nParam, cPN_SAnimController* pAnimCt
     pAnimCtrl->m_fPlaybackSpeedScale = pThis->mBlendInfo.mfMilestoneScale[saveDataIndex][milestoneIndex];
 }
 
+static inline int GetAnimID(SaveBlendInfo& blend, int index)
+{
+    return blend.mpSaveData[index]->mnAnimID;
+}
+
 /**
  * Offset/Address/Size: 0x5D3C | 0x80048838 | size: 0x204
  */
-void Goalie::SetupBlender(bool, const float*, int, int)
+cPoseNode* Goalie::SetupBlender(bool bPrimary, const float* fStartPercent, int nMainAnimID, int nMilestone)
 {
+    float fBlend;
+    int index1;
+    cPN_SAnimController* pSaveController1;
+    int index2;
+
+    if (bPrimary)
+    {
+        fBlend = mBlendInfo.mfSaveBlendPrimary;
+        index1 = 0;
+        index2 = 1;
+    }
+    else
+    {
+        fBlend = mBlendInfo.mfSaveBlendSecondary;
+        index1 = 2;
+        index2 = 3;
+    }
+    int animID = GetAnimID(mBlendInfo, index1);
+    pSaveController1 = NewAnimController(animID, false, false, SaveBlendCallback, index1 + (unsigned int)this);
+    pSaveController1->m_fPlaybackSpeedScale = mBlendInfo.mfMilestoneScale[index1][nMilestone];
+    if (fStartPercent[index1] > 0.0f)
+    {
+        pSaveController1->m_fPrevTime = pSaveController1->m_fTime;
+        pSaveController1->m_fTime = fStartPercent[index1];
+    }
+    cPoseNode* result = pSaveController1;
+    if (nMainAnimID == animID)
+    {
+        m_pCurrentAnimController = pSaveController1;
+    }
+    else
+    {
+        pSaveController1->m_bIgnoreTriggers = true;
+    }
+    if (fBlend >= 0.0f)
+    {
+        animID = GetAnimID(mBlendInfo, index2);
+        cPN_SAnimController* pSaveController2 = NewAnimController(animID, false, false, SaveBlendCallback, index2 + (unsigned int)this);
+        pSaveController2->m_fPlaybackSpeedScale = mBlendInfo.mfMilestoneScale[index2][nMilestone];
+        if (fStartPercent[index2] > 0.0f)
+        {
+            pSaveController2->m_fPrevTime = pSaveController2->m_fTime;
+            pSaveController2->m_fTime = fStartPercent[index2];
+        }
+        if (nMainAnimID == animID)
+        {
+            m_pCurrentAnimController = pSaveController2;
+        }
+        else
+        {
+            pSaveController2->m_bIgnoreTriggers = true;
+        }
+
+        cPN_SingleAxisBlender* pPoseNode = new (AllocateSingleAxisBlender()) cPN_SingleAxisBlender(2, NULL, 0, 1.0f);
+        pPoseNode->m_fDesiredWeight = fBlend;
+        pPoseNode->m_fSmoothedWeight = fBlend;
+        pPoseNode->SetChild(0, pSaveController1);
+        pPoseNode->SetChild(1, pSaveController2);
+        result = pPoseNode;
+    }
+    return result;
 }
 
 /**
@@ -1664,9 +1731,43 @@ void Goalie::SetDesiredSaveFacing(const nlVector3& v3BallPosition)
 
 /**
  * Offset/Address/Size: 0x3C4 | 0x80042EC0 | size: 0x1F4
+ * TODO: 96.26% match - volatile FP register allocation differs: 10430.378f→f0 instead of f3,
+ * cascading through angle section (r4/r5 swap) and velocity clamp section (fVelX/fVelY in
+ * f0/f1 instead of f4/f5, missing 2 branch instructions in ternary codegen).
  */
-void Goalie::TrackTarget(const nlVector3&, float)
+void Goalie::TrackTarget(const nlVector3& v3Target, float fRatio)
 {
+    nlVector3 v3FutureBallPos;
+    nlVector3 v3FuturePos;
+    unsigned short aRot;
+
+    GetCurrentAnimFuture(m_nBallJointIndex, mpLooseBallInfo->mfPickupTime, v3FutureBallPos, v3FuturePos, aRot);
+
+    float fDeltaY = v3Target.f.y - v3FutureBallPos.f.y;
+    float fDeltaX = v3Target.f.x - v3FutureBallPos.f.x;
+
+    float fAngleToTarget = nlATan2f(v3Target.f.y - m_v3Position.f.y, v3Target.f.x - m_v3Position.f.x);
+
+    u16 aFutureAngle = (u16)(s32)(10430.378f * nlATan2f(v3FutureBallPos.f.y - m_v3Position.f.y, v3FutureBallPos.f.x - m_v3Position.f.x));
+    u16 aTargetAngle = (u16)(s32)(10430.378f * fAngleToTarget);
+    s32 iRatio = (s32)(1024.0f * fRatio);
+    s16 aDiff = (s16)(aTargetAngle - aFutureAngle);
+    iRatio = (iRatio * aDiff) / 1024;
+    SetFacingDirection((u16)(m_aActualFacingDirection + iRatio));
+
+    float fVelX = fRatio * fDeltaX;
+    float fVelY = fRatio * fDeltaY;
+    float fVelZ = 0.0f;
+    fVelZ *= fRatio;
+
+    fVelX = fVelX >= -0.12f ? fVelX : -0.12f;
+    fVelX = fVelX <= 0.5f ? fVelX : 0.5f;
+    fVelY = fVelY >= -0.12f ? fVelY : -0.12f;
+    fVelY = fVelY <= 0.5f ? fVelY : 0.5f;
+
+    nlVec3Set(v3FuturePos, fVelX + m_v3Position.f.x, fVelY + m_v3Position.f.y, fVelZ + m_v3Position.f.z);
+
+    SetPosition(v3FuturePos);
 }
 
 /**

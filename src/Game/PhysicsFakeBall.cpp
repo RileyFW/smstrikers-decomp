@@ -114,7 +114,8 @@ void FakeBallWorld::GetNextBallPosition(nlVector3& v3BallPos)
 
 /**
  * Offset/Address/Size: 0x668 | 0x80137A54 | size: 0xC8
- * TODO: register allocation: compiler uses r5 for &iter instead of r31
+ * TODO: 99.4% match - remaining diffs are static-local symbol numbering
+ *       (iter/init labels) and float literal label numbering.
  */
 void FakeBallWorld::ResetBallIterator()
 {
@@ -123,29 +124,33 @@ void FakeBallWorld::ResetBallIterator()
 
     GetPredictedBallPosition(0.0f, v3Position, v3Velocity);
 
-    // static signed char init;
-    static nlDLListIterator<DLListEntry<BallCacheInfo*> > iter(nlDLRingGetStart(mBallCacheList.m_Head), mBallCacheList.m_Head);
+    struct BallCacheIterator
+    {
+        DLListEntry<BallCacheInfo*>* m_head;
+        DLListEntry<BallCacheInfo*>* m_current;
 
-    // if (!init)
-    // {
-    //     iter.m_Curr = nlDLRingGetStart(mBallCacheList.m_Head);
-    //     iter.m_Head = mBallCacheList.m_Head;
-    //     init = 1;
-    // }
+        BallCacheIterator(DLListEntry<BallCacheInfo*>* head, DLListEntry<BallCacheInfo*>* current)
+            : m_head(head)
+            , m_current(current)
+        {
+        }
+    };
+
+    static BallCacheIterator iter(mBallCacheList.m_Head, nlDLRingGetStart(mBallCacheList.m_Head));
 
     iter.m_current = nlDLRingGetStart(mBallCacheList.m_Head);
     iter.m_head = mBallCacheList.m_Head;
-    mpCacheIterator = &iter;
+    mpCacheIterator = reinterpret_cast<nlDLListIterator<DLListEntry<BallCacheInfo*> >*>(&iter);
 
     if (mpCacheIterator->m_current != NULL)
     {
-        if (nlDLRingIsEnd(mpCacheIterator->m_head, mpCacheIterator->m_current) || mpCacheIterator->m_current == NULL)
+        if (nlDLRingIsEnd(mpCacheIterator->m_head, mpCacheIterator->m_current) || iter.m_current == NULL)
         {
-            mpCacheIterator->m_current = NULL;
+            iter.m_current = NULL;
         }
         else
         {
-            mpCacheIterator->m_current = mpCacheIterator->m_current->m_next;
+            iter.m_current = iter.m_current->m_next;
         }
     }
 }

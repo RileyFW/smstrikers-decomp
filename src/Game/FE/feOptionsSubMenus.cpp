@@ -160,7 +160,7 @@ OptionsSaveLoad::OptionsSaveLoad(FEPresentation* presentation, ButtonComponent::
             }
             else if (menuItem->mCallbacks[0].mTag == FUNCTOR)
             {
-                menuItem->mCallbacks[0].mFunctor->fnc_0x10();
+                menuItem->mCallbacks[0].mFunctor->fnc_0x8();
             }
         }
     }

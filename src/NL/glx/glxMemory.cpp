@@ -238,23 +238,18 @@ unsigned long long glplatResourceMark()
 /**
  * Offset/Address/Size: 0x440 | 0x801B6D68 | size: 0xB4
  */
-unsigned long glplatResourceAlloc(unsigned long arg0, eGLMemory arg1)
+unsigned long glplatResourceAlloc(unsigned long uSize, eGLMemory eMemory)
 {
-    s32 temp_r30;
-    s32 temp_r3;
-    u32* temp_r5;
-
-    temp_r30 = (p_phys + (n_phys + 0x1F)) & 0xFFFFFFE0;
-    temp_r3 = arg0 + (temp_r30 - p_phys);
-    n_phys = temp_r3;
-    if (temp_r3 > ResourceMemSize)
+    u32 base = p_phys;
+    unsigned long aligned = (base + n_phys + 0x1F) & ~0x1FU;
+    n_phys = uSize + (aligned - base);
+    if (n_phys > ResourceMemSize)
     {
-        OSReport("out of resource memory (%s)\n", szMemoryNames[arg1]);
+        OSReport("out of resource memory (%s)\n", szMemoryNames[eMemory]);
         nlBreak();
     }
-    temp_r5 = (u32*)&g_uResourceAlloc[g_uResourceMarker];
-    temp_r5[temp_r3] = temp_r5[temp_r3] + arg0;
-    return temp_r30;
+    g_uResourceAlloc[g_uResourceMarker].m_uBytes[eMemory] += uSize;
+    return aligned;
 }
 
 /**

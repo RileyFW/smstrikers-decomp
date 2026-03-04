@@ -1,4 +1,17 @@
 #include "Game/TransitionTask.h"
+#include "Game/Font/fontmanager.h"
+
+struct LocalizationObj
+{
+    void* m_pFile;
+    void* m_LookupTable;
+    void* m_FirstString;
+    unsigned long m_Language;
+};
+
+extern LocalizationObj* g_pLocalization;
+
+int nlSNPrintf(char*, unsigned long, const char*, ...);
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x801731FC | size: 0x10
@@ -33,6 +46,69 @@ void TransitionTask::Run(float)
  */
 void LoadFonts()
 {
+    const char* fontFileName1 = "game_font.fnt";
+    const char* fontFileName2 = "fe_font.fnt";
+    char langCode[4] = "eng";
+
+    unsigned long lang = g_pLocalization->m_Language;
+    switch (lang)
+    {
+    case 0:
+        langCode[0] = 'f';
+        langCode[1] = 'r';
+        langCode[2] = 'e';
+        break;
+    case 1:
+        langCode[0] = 'd';
+        langCode[1] = 'e';
+        langCode[2] = 'u';
+        break;
+    case 2:
+        langCode[0] = 'i';
+        langCode[1] = 't';
+        langCode[2] = 'a';
+        break;
+    case 3:
+        langCode[0] = 'j';
+        langCode[1] = 'p';
+        langCode[2] = 'n';
+        break;
+    case 4:
+        langCode[0] = 's';
+        langCode[1] = 'p';
+        langCode[2] = 'a';
+        break;
+    case 5:
+        langCode[0] = 'u';
+        langCode[1] = 'k';
+        langCode[2] = 'e';
+        break;
+    case 6:
+        langCode[0] = 'b';
+        langCode[1] = 'o';
+        langCode[2] = 'b';
+        break;
+    case 7:
+        langCode[0] = 'l';
+        langCode[1] = 'n';
+        langCode[2] = 'g';
+        break;
+    case 8:
+        break;
+    }
+
+    char bundlePath1[64];
+    char fontName1[64];
+    char bundlePath2[64];
+    char fontName2[64];
+
+    nlSNPrintf(bundlePath1, 64, "fonts/%s/game_font.bnl", langCode);
+    nlSNPrintf(fontName1, 64, "fonts/%s/game_font", langCode);
+    nlSNPrintf(bundlePath2, 64, "fonts/%s/fe_font.bnl", langCode);
+    nlSNPrintf(fontName2, 64, "fonts/%s/fe_font", langCode);
+
+    nlSingleton<FontManager>::s_pInstance->LoadFont(bundlePath1, fontName1, fontFileName1);
+    nlSingleton<FontManager>::s_pInstance->LoadFont(bundlePath2, fontName2, fontFileName2);
 }
 
 /**

@@ -129,13 +129,20 @@ void dInvertRigidTransformation(float* param_1, const float* param_2, const floa
     float a = param_2[0], b = param_2[4];
     float v[3];
 
-    param_1[0] = a; a = param_2[8];
-    param_1[1] = b; b = param_2[1];
-    param_1[2] = a; a = param_2[5];
-    param_1[4] = b; b = param_2[9];
-    param_1[5] = a; a = param_2[2];
-    param_1[6] = b; b = param_2[6];
-    param_1[8] = a; a = param_2[10];
+    param_1[0] = a;
+    a = param_2[8];
+    param_1[1] = b;
+    b = param_2[1];
+    param_1[2] = a;
+    a = param_2[5];
+    param_1[4] = b;
+    b = param_2[9];
+    param_1[5] = a;
+    a = param_2[2];
+    param_1[6] = b;
+    b = param_2[6];
+    param_1[8] = a;
+    a = param_2[10];
     param_1[9] = b;
     param_1[10] = a;
 
@@ -168,10 +175,12 @@ void dMultiplyMatrix4Vector4(float* m1, const float* m2, const float* m3)
  */
 void dMultiplyMatrix3Vector3(float* result, const float* R, const float* v, bool transposeMatrix)
 {
-    if (!transposeMatrix) {
+    if (!transposeMatrix)
+    {
         dMultiply0(result, R, v, 3, 3, 1);
     }
-    if (transposeMatrix) {
+    if (transposeMatrix)
+    {
         dMultiply1(result, R, v, 3, 3, 1);
     }
 }
@@ -305,8 +314,7 @@ void dClearCachedData()
  */
 void dWorldSetClearAccumulators(dxWorld* world, int flags)
 {
-    // world->adis_flag = flags;
-    *(int*)((u8*)world + 0x4c) = flags; //?
+    world->clear_accumulators = flags;
 }
 
 /**

@@ -23,23 +23,28 @@ class TrackManagerBase
 {
 public:
     virtual ~TrackManagerBase();
-    /* 0x08 */ virtual void Update(float);
+    /* 0x0C */ virtual void Update(float);
     /* 0x10 */ virtual StreamTrack& CreateTrack(const char*, MasterVolume::VOLUME_GROUP);
-    /* 0x14 */ virtual void OnMasterVolumeChange(MasterVolume::VOLUME_GROUP);
+    /* 0x14 */ virtual void DestroyAllTracks();
     /* 0x18 */ virtual StreamTrack* GetTrack(unsigned long);
     /* 0x1C */ virtual void StopAllTracks(unsigned long);
+    /* 0x20 */ virtual void OnMasterVolumeChange(MasterVolume::VOLUME_GROUP);
 
-    // class FadeManager
-    // {
-    // public:
-    //     void UpdateFade(STREAM_FADE_CTRL*);
-    // };
+    class FadeManager
+    {
+    public:
+        struct STREAM_FADE_CTRL
+        {
+            char data[0x14];
+        };
+        void UpdateFade(STREAM_FADE_CTRL*);
+    };
 
-    // StreamFileLookup m_FileLookup;       // offset 0x4, size 0x14
-    // FadeManager m_FadeMgr;               // offset 0x18, size 0x20
-    // SlotPool m_StreamPool;               // offset 0x38, size 0x18
-    // nlDLListSlotPool m_StreamDeleteList; // offset 0x50, size 0x1C
-};
+    /* 0x04 */ char _pad_0x04[0x14]; // StreamFileLookup m_FileLookup
+    /* 0x18 */ char _pad_0x18[0x20]; // FadeManager m_FadeMgr
+    /* 0x38 */ char _pad_0x38[0x18]; // SlotPool m_StreamPool
+    /* 0x50 */ char _pad_0x50[0x1C]; // nlDLListSlotPool m_StreamDeleteList
+}; // total size: 0x6C
 
 class StreamTrack
 {

@@ -387,27 +387,29 @@ void UpdatePlatPad(float dt)
     ((PadStatus*)padStatus)->Update(dt);
 }
 
+static inline void InitPadStatus(PadStatus* pad)
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        pad->m_justPressed[i] = 0;
+        pad->m_justReleased[i] = 0;
+        pad->m_previousButtons[i] = 0;
+        pad->m_previousErr[i] = 0;
+        memset(&pad->m_GameCubePads[i], 0, sizeof(tGameCubePad));
+    }
+}
+
 /**
- * Offset/Address/Size: 0xAEC | 0x801C3A9C | size: 0xB0
+rm * Offset/Address/Size: 0xAEC | 0x801C3A9C | size: 0xB0
  */
 void InitPlatPad()
 {
     PADRead(PadStatus::s_Current);
     memcpy(PadStatus::s_Next, PadStatus::s_Next, 4);
 
-    for (int category = 0; category < 2; ++category)
+    for (int i = 0; i < 2; ++i)
     {
-        PadStatus* pad = &padStatus[category];
-
-        for (int controller = 0; controller < 4; ++controller)
-        {
-            pad->m_justPressed[controller] = 0;
-            pad->m_justReleased[controller] = 0;
-            pad->m_previousButtons[controller] = 0;
-            pad->m_previousErr[controller] = 0;
-
-            memset(&pad->m_GameCubePads[controller], 0, sizeof(tGameCubePad));
-        }
+        InitPadStatus(&padStatus[i]);
     }
 }
 

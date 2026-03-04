@@ -1,4 +1,5 @@
 #include "Game/AI/SpaceSearch.h"
+#include "Game/AI/Fielder.h"
 #include "Game/AI/Fuzzy.h"
 #include "Game/AI/Scripts/ScriptQuestions.h"
 #include "Game/AI/AiUtil.h"
@@ -193,8 +194,56 @@ SSearchRunToNet::SSearchRunToNet(cPlayer* pPlayer)
 /**
  * Offset/Address/Size: 0x194 | 0x80062AE4 | size: 0x1EC
  */
-float SSearchRunToNet::EvaluatePosition(const nlVector3&, const nlVector3&, eFieldDirection, unsigned short)
+float SSearchRunToNet::EvaluatePosition(const nlVector3& v3TestPosition, const nlVector3& v3CenterPos, eFieldDirection eSearchDir, unsigned short aDirection)
 {
+    float fTotalSum = 0.0f;
+    float fTotalWeight = 0.0f;
+    cFielder* pBallOwner = (cFielder*)m_SSearchIdealShot.m_SSearchOpenLane.m_pBallOwner;
+
+    nlVector3 v3NetPosition = pBallOwner->GetAIOffNetLocation(NULL);
+    float fNetX = v3NetPosition.f.x;
+    float fNetY = v3NetPosition.f.y;
+
+    float fDx = pBallOwner->m_v3Position.f.x - fNetX;
+    float fDy = pBallOwner->m_v3Position.f.y - fNetY;
+    if (fDx * fDx + fDy * fDy < 2500.0f)
+    {
+        fTotalSum += m_SSearchIdealShot.EvaluatePosition(v3TestPosition, v3CenterPos, eSearchDir, aDirection);
+        fTotalWeight += 1.0f;
+    }
+    else
+    {
+        float fDxNet = fNetX - v3TestPosition.f.x;
+        float fDyNet = fNetY - v3TestPosition.f.y;
+        float fDistToNet = nlSqrt(fDxNet * fDxNet + fDyNet * fDyNet, true);
+        float fNormDist = NormalizeVal(fDistToNet, g_vRunToNetDistanceConfidence);
+        fTotalSum += 0.5f * fNormDist;
+        fTotalWeight += 0.5f;
+
+        float fOpenPos = OpenPosition(v3TestPosition, pBallOwner->m_pTeam->GetOtherTeam(), NULL, NULL);
+        fTotalSum += 0.3f * fOpenPos;
+        fTotalWeight += 0.3f;
+
+        OpenToPosition(v3TestPosition, v3NetPosition, pBallOwner->m_pTeam->GetOtherTeam(), pBallOwner, NULL, true);
+
+        nlVector3 v3FormationPos;
+        pBallOwner->GetFormationPosition(v3FormationPos, 0.5f);
+        float fFormDx = v3FormationPos.f.x - v3TestPosition.f.x;
+        float fFormDy = v3FormationPos.f.y - v3TestPosition.f.y;
+        float fFormDist = nlSqrt(fFormDx * fFormDx + fFormDy * fFormDy, true);
+        float fNormFormDist = NormalizeVal(fFormDist, g_vRunToNetFormationDistConfidence);
+        fTotalSum += 0.4f * fNormFormDist;
+        fTotalWeight += 0.4f;
+
+        float fCloseToSideline = CloseToSideline(v3TestPosition, NULL, false);
+        fTotalSum += 0.2f * (1.0f - fCloseToSideline);
+        fTotalWeight += 0.2f;
+    }
+
+    if (fTotalWeight > 0.0f)
+    {
+        return fTotalSum / fTotalWeight;
+    }
     return 0.0f;
 }
 

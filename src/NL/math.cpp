@@ -1,7 +1,5 @@
 #include "NL/nlMath.h"
 
-// unsigned int nlDefaultSeed;
-
 /**
  * Offset/Address/Size: 0x540 | 0x801F083C | size: 0x88
  */

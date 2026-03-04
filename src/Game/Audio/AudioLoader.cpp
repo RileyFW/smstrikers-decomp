@@ -46,6 +46,17 @@ struct SoundDefineMapType
     }
 };
 
+static int gLoadedStadiumGroup;
+static int gLoadedHomeCaptainGroup;
+static int gLoadedAwayCaptainGroup;
+static int gLoadedHomeSidekickGroup;
+static int gLoadedAwaySidekickGroup;
+static int gLoadedSurfaceGroup;
+
+typedef DLListEntry<AudioStreamTrack::TrackManagerBase::FadeManager::STREAM_FADE_CTRL> FadeDLListEntry;
+typedef DLListContainerBase<AudioStreamTrack::TrackManagerBase::FadeManager::STREAM_FADE_CTRL, BasicSlotPool<FadeDLListEntry> > FadeDLListContainer;
+typedef DLListEntry<GCAudioStreaming::StereoAudioStream*> StreamDLListEntry;
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x801490F4 | size: 0x60
 //  */
@@ -286,30 +297,29 @@ void AudioLoader::SetupCharSoundTypesAVLTree()
 
 /**
  * Offset/Address/Size: 0x3D40 | 0x80147B0C | size: 0xB4
- * TODO: 86% match - prologue lis/addi scheduling
+ * TODO: 86% scratch match - prologue lis/addi scheduling differs due to -inline deferred context
  */
 void AudioLoader::SetupWorldSoundTypesAVLTree()
 {
-    SoundStrToIDNode* const pSFXInfoBase = Audio::gWorldSFXInfo;
-    const char* const* pSoundTableBase = Audio::gWorldSoundTable;
-    AVLTreeNode** const ppRoot = (AVLTreeNode**)((char*)&gWorldSoundDefineMap.m_Root);
-    SoundStrToIDNode* pSFXInfo = pSFXInfoBase;
-    const char** pSoundTable = (const char**)pSoundTableBase;
-
-    for (int i = 0; i < 211; i++, pSFXInfo++, pSoundTable++)
+    for (int i = 0; i < 211; i++)
     {
-        SoundStrToIDNode* value = pSFXInfo;
-        pSFXInfo->typeStr = *pSoundTable;
-        value->uHashVal = nlStringLowerHash(pSFXInfo->typeStr);
+        SoundStrToIDNode* pNode = &Audio::gWorldSFXInfo[i];
+        pNode->typeStr = Audio::gWorldSoundTable[i];
+        pNode->uHashVal = nlStringLowerHash(pNode->typeStr);
 
-        unsigned int key = value->uHashVal;
+        unsigned int key = pNode->uHashVal;
         AVLTreeNode* existingNode;
 
-        ((AVLTreeUntemplated*)&gWorldSoundDefineMap)->AddAVLNode(ppRoot, &key, &value, &existingNode, *(unsigned int*)((char*)&gWorldSoundDefineMap + 0x24));
+        gWorldSoundDefineMap.AddAVLNode(
+            (AVLTreeNode**)&gWorldSoundDefineMap.m_Root,
+            &key,
+            &pNode,
+            &existingNode,
+            gWorldSoundDefineMap.m_NumElements);
 
         if (existingNode == NULL)
         {
-            (*(unsigned int*)((char*)&gWorldSoundDefineMap + 0x24))++;
+            gWorldSoundDefineMap.m_NumElements++;
         }
     }
 }
@@ -828,6 +838,96 @@ void AudioLoader::LoadInGame()
  */
 void AudioLoader::UnloadInGame()
 {
+    if (gbDisableAudio)
+    {
+        return;
+    }
+
+    Audio::ClearFadeData();
+    CrowdMood::SetCrowdVolume(0, 0);
+    Audio::UnloadWorldSFX();
+    Audio::UnloadInGameSFX();
+    g_pTrackManager->StopAllTracks(0);
+    CrowdMood::Purge(false);
+    Audio::DestroyPriorityStreams();
+    g_pTrackManager->DestroyAllTracks();
+
+    AudioStreamTrack::TrackManagerBase* pTM = g_pTrackManager;
+    pTM->StopAllTracks(0);
+
+    // Declare loop variables in order for register allocation
+    GCAudioStreaming::StereoAudioStream* pStream;
+    StreamDLListEntry* pFree;
+    StreamDLListEntry* pRemove;
+    StreamDLListEntry* pHead;
+    StreamDLListEntry* pCur;
+    StreamDLListEntry** ppHead;
+
+    // nlWalkDLRing on FadeManager
+    nlWalkDLRing(
+        *(FadeDLListEntry**)(pTM->_pad_0x18 + 0x18),
+        (FadeDLListContainer*)pTM->_pad_0x18,
+        &FadeDLListContainer::DeleteEntry);
+    *(FadeDLListEntry**)(pTM->_pad_0x18 + 0x18) = NULL;
+    SlotPoolBase::BaseFreeBlocks((SlotPoolBase*)pTM->_pad_0x18, sizeof(FadeDLListEntry));
+
+    // StereoAudioStream DLRing loop - use _pad_0x50 + 0x18 for offset 0x68
+    StreamDLListEntry* tmp = nlDLRingGetStart(*(StreamDLListEntry**)(pTM->_pad_0x50 + 0x18));
+    pHead = *(StreamDLListEntry**)(pTM->_pad_0x50 + 0x18);
+    ppHead = (StreamDLListEntry**)(pTM->_pad_0x50 + 0x18);
+    pCur = tmp;
+
+    while (pCur != NULL)
+    {
+        pStream = pCur->m_data;
+        pStream->~StereoAudioStream();
+
+        // Link freed stream memory into StreamPool free list (offset 0x44)
+        *(unsigned long*)pStream = *(unsigned long*)(pTM->_pad_0x38 + 0x0C);
+        *(unsigned long*)(pTM->_pad_0x38 + 0x0C) = (unsigned long)pStream;
+
+        pRemove = pCur;
+        pFree = pCur;
+
+        if (nlDLRingIsEnd(pHead, pCur) || pCur == NULL)
+        {
+            pCur = NULL;
+        }
+        else
+        {
+            pCur = pCur->m_next;
+        }
+
+        nlDLRingRemove(ppHead, pRemove);
+
+        // Link removed entry into StreamDeleteList free list (offset 0x5C)
+        *(unsigned long*)pFree = *(unsigned long*)(pTM->_pad_0x50 + 0x0C);
+        *(unsigned long*)(pTM->_pad_0x50 + 0x0C) = (unsigned long)pFree;
+    }
+
+    SlotPoolBase::BaseFreeBlocks((SlotPoolBase*)pTM->_pad_0x38, 0x40);
+    SlotPoolBase::BaseFreeBlocks((SlotPoolBase*)pTM->_pad_0x50, 0x0C);
+
+    PlatAudio::UnloadAllSoundGroupsOnStack(sebringAudioFileData, 1);
+
+    gLoadedAwaySidekickGroup = -1;
+    gLoadedHomeSidekickGroup = -1;
+    gLoadedAwayCaptainGroup = -1;
+    gLoadedHomeCaptainGroup = -1;
+    gLoadedSurfaceGroup = -1;
+    gLoadedStadiumGroup = -1;
+
+    if (!gbDisableReverb)
+    {
+        if (!Audio::ShutdownReverb())
+        {
+            nlPrintf("AudioLoader::UnloadInGame - ShutdownReverb failed\n");
+        }
+    }
+
+    SoundEventScript::DestroyInstance();
+    FEAudio::ResetRandomVoiceToggleSFX();
+    Audio::Silence();
 }
 
 /**
@@ -893,6 +993,18 @@ setupCharStadiumSoundTable:
     ((void (*)())AudioLoader::SetupCharStadiumSoundTable)();
 }
 
+extern SoundPropAccessor* surfaceSoundPropTables[14][5];
+extern SoundPropAccessor* gpCRITTERWOODSoundPropAccessor;
+extern SoundPropAccessor* gpBOWSERWOODSoundPropAccessor;
+extern SoundPropAccessor* gpCRITTERCONCRETESoundPropAccessor;
+extern SoundPropAccessor* gpBOWSERCONCRETESoundPropAccessor;
+extern SoundPropAccessor* gpCRITTERGRASSSoundPropAccessor;
+extern SoundPropAccessor* gpBOWSERGRASSSoundPropAccessor;
+extern SoundPropAccessor* gpCRITTERMETALSoundPropAccessor;
+extern SoundPropAccessor* gpBOWSERMETALSoundPropAccessor;
+extern SoundPropAccessor* gpCRITTERRUBBERSoundPropAccessor;
+extern SoundPropAccessor* gpBOWSERRUBBERSoundPropAccessor;
+
 /**
  * Offset/Address/Size: 0xF90 | 0x80144D5C | size: 0x1E0
  */
@@ -900,9 +1012,53 @@ setupCharStadiumSoundTable:
 #pragma dont_inline on
 SoundPropAccessor* GetSoundPropTableFromPlayerStadium(eStadiumID stadiumId, eCharacterClass charClass)
 {
-    (void)stadiumId;
-    (void)charClass;
-    return NULL;
+    switch (stadiumId)
+    {
+    case STAD_MARIO_STADIUM:
+        if (charClass >= NUM_FIELDER_CLASSES && charClass < NUM_CHARACTER_CLASSES)
+            return gpCRITTERWOODSoundPropAccessor;
+        if (charClass == NUM_CHARACTER_CLASSES)
+            return gpBOWSERWOODSoundPropAccessor;
+        return surfaceSoundPropTables[charClass][4];
+    case STAD_PEACH_TOAD_STADIUM:
+        if (charClass >= NUM_FIELDER_CLASSES && charClass < NUM_CHARACTER_CLASSES)
+            return gpCRITTERCONCRETESoundPropAccessor;
+        if (charClass == NUM_CHARACTER_CLASSES)
+            return gpBOWSERCONCRETESoundPropAccessor;
+        return surfaceSoundPropTables[charClass][2];
+    case STAD_DK_DAISY:
+        if (charClass >= NUM_FIELDER_CLASSES && charClass < NUM_CHARACTER_CLASSES)
+            return gpCRITTERGRASSSoundPropAccessor;
+        if (charClass == NUM_CHARACTER_CLASSES)
+            return gpBOWSERGRASSSoundPropAccessor;
+        return surfaceSoundPropTables[charClass][0];
+    case STAD_WARIO_STADIUM:
+        if (charClass >= NUM_FIELDER_CLASSES && charClass < NUM_CHARACTER_CLASSES)
+            return gpCRITTERMETALSoundPropAccessor;
+        if (charClass == NUM_CHARACTER_CLASSES)
+            return gpBOWSERMETALSoundPropAccessor;
+        return surfaceSoundPropTables[charClass][1];
+    case STAD_YOSHI_STADIUM:
+        if (charClass >= NUM_FIELDER_CLASSES && charClass < NUM_CHARACTER_CLASSES)
+            return gpCRITTERGRASSSoundPropAccessor;
+        if (charClass == NUM_CHARACTER_CLASSES)
+            return gpBOWSERGRASSSoundPropAccessor;
+        return surfaceSoundPropTables[charClass][0];
+    case STAD_SUPER_STADIUM:
+        if (charClass >= NUM_FIELDER_CLASSES && charClass < NUM_CHARACTER_CLASSES)
+            return gpCRITTERRUBBERSoundPropAccessor;
+        if (charClass == NUM_CHARACTER_CLASSES)
+            return gpBOWSERRUBBERSoundPropAccessor;
+        return surfaceSoundPropTables[charClass][3];
+    case STAD_FORBIDDEN_DOME:
+        if (charClass >= NUM_FIELDER_CLASSES && charClass < NUM_CHARACTER_CLASSES)
+            return gpCRITTERCONCRETESoundPropAccessor;
+        if (charClass == NUM_CHARACTER_CLASSES)
+            return gpBOWSERCONCRETESoundPropAccessor;
+        return surfaceSoundPropTables[charClass][2];
+    default:
+        return NULL;
+    }
 }
 #pragma pop
 

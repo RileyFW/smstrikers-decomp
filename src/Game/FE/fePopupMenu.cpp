@@ -32,9 +32,49 @@ void FEPopupMenu::ResizeHighlight()
 
 /**
  * Offset/Address/Size: 0x460 | 0x8009870C | size: 0x1C0
+ * TODO: 93.76% match - stack frame 0xa0 vs 0x90: MWCC not reusing InlineHasher(0) argument copy
+ * stack locations between pre-loop and loop Find calls.
  */
-void FEPopupMenu::CentrePopup(float, float)
+void FEPopupMenu::CentrePopup(float totalHeight, float topOfMessageBox)
 {
+    float half;
+    float offset;
+    FEPresentation* presentation;
+    TLTextInstance* pText;
+    feVector3 position;
+    int i;
+
+    half = totalHeight;
+    half *= 0.5f;
+    offset = half - topOfMessageBox;
+    presentation = m_pFEScene->m_pFEPackage->GetPresentation();
+
+    pText = FEFinder<TLTextInstance, 3>::Find<FEPresentation>(
+        presentation,
+        InlineHasher(nlStringLowerHash("Slide1")),
+        InlineHasher(nlStringLowerHash("Layer")),
+        InlineHasher(nlStringLowerHash("Message")),
+        InlineHasher(0),
+        InlineHasher(0),
+        InlineHasher(0));
+
+    position = pText->GetAssetPosition();
+    pText->SetAssetPosition(position.e[0], position.e[1] + offset, position.e[2]);
+
+    for (i = 0; i < mPopup.numOptions; i++)
+    {
+        pText = FEFinder<TLTextInstance, 3>::Find<FEPresentation>(
+            presentation,
+            InlineHasher(nlStringLowerHash("Slide1")),
+            InlineHasher(nlStringLowerHash("Layer")),
+            InlineHasher(nlStringLowerHash(optionNames[i])),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0));
+
+        position = pText->GetAssetPosition();
+        pText->SetAssetPosition(position.e[0], position.e[1] + offset, position.e[2]);
+    }
 }
 
 /**

@@ -3,9 +3,12 @@
 #include "Game/ParticleUpdateTask.h"
 #include "Game/WorldManager.h"
 #include "Game/Drawable/DrawableObj.h"
+#include "Game/Audio/StreamTrack.h"
 #include "NL/gl/gl.h"
 #include "NL/nlFile.h"
 #include "NL/nlString.h"
+
+extern AudioStreamTrack::TrackManagerBase* g_pTrackManager;
 
 class NisPlayer : public InterpreterCore
 {
@@ -315,9 +318,18 @@ void Presentation::StopOverlay()
 
 /**
  * Offset/Address/Size: 0x19C | 0x80124980 | size: 0x1D0
+ * TODO: 99.04% match - sp+0x08/0x10 stack offset swap for Function0<void> copy
+ * and Function<FnVoidVoid> temporaries. MWCC internal allocation order difference.
  */
 void CupWinStingerDone()
 {
+    AudioStreamTrack::TrackManagerBase* pMgr = g_pTrackManager;
+    AudioStreamTrack::StreamTrack* pTrack = pMgr->GetTrack(nlStringLowerHash("Music"));
+    {
+        Function0<void> emptyCallback;
+        pTrack->m_IdleCallback = Function<FnVoidVoid>(emptyCallback);
+    }
+    pTrack->PlayStream(nlStringLowerHash("STAD_Intro"), 0.5f, true, 500, 500, "Stadium", MasterVolume::VG_Special);
 }
 
 /**

@@ -7,6 +7,12 @@
 #include "dolphin/mtx.h"
 
 #include "NL/gl/glConstant.h"
+#include "NL/gc/gcSwizzler.h"
+#include "NL/gl/glMemory.h"
+#include "NL/nlPrint.h"
+#include "NL/gl/glState.h"
+#include "NL/nlString.h"
+#include "Game/Sys/debug.h"
 
 struct glx_DOFTexture
 {
@@ -217,9 +223,55 @@ void glxPostInitTargets()
 
 /**
  * Offset/Address/Size: 0x67C | 0x801C2D58 | size: 0x1EC
+ * TODO: 99.47% match - r29/r30 swap for sharedSize/singleSize in grab texture section, MWCC register allocator quirk
  */
 void glxInitTargets()
 {
+    PlatTexture* pTex;
+    unsigned long numBytes;
+    void* sharedMemory;
+    unsigned long sharedSize;
+    unsigned long singleSize;
+
+    numBytes = 0;
+
+    singleSize = GCTextureSize(GXTex_RGB565, 320, 224, 1, (u32)-1);
+    singleSize = (singleSize + 31) & ~31;
+    sharedSize = singleSize * 2;
+
+    sharedMemory = (void*)glResourceAlloc(sharedSize + 320 * 224, GLM_TextureData);
+
+    glx_SharedMemory = (u32)sharedMemory;
+    glx_SharedSize = sharedSize + 320 * 224;
+    clearz_mem = (void*)((u8*)sharedMemory + sharedSize);
+    numBytes += 320 * 224;
+
+    pTex = glx_CreatePlatTexture();
+    pTex->CreateWithMemory(320, 224, GXTex_RGB565, 1, (const void*)sharedMemory);
+    pTex->Prepare();
+    glx_AddTex(GrabTextureName, pTex);
+    numBytes += GCTextureSize(pTex->m_Format, pTex->m_Width, pTex->m_Height, pTex->m_Levels, (u32)-1);
+
+    pTex = glx_CreatePlatTexture();
+    pTex->CreateWithMemory(320, 224, GXTex_RGB565, 1, (const void*)((u8*)sharedMemory + singleSize));
+    pTex->Prepare();
+    glx_AddTex(DOFTextureName, pTex);
+    numBytes += GCTextureSize(pTex->m_Format, pTex->m_Width, pTex->m_Height, pTex->m_Levels, (u32)-1);
+
+    for (int i = 0; i < 10; i++)
+    {
+        char texturename[32];
+        nlSNPrintf(texturename, 32, "target/pshadow%02d", i);
+        unsigned long handle = glGetTexture(texturename);
+        pTex = glx_CreatePlatTexture();
+        pTex->Create(80, 80, GXTex_A8, 1, false, false);
+        nlZeroMemory(pTex->m_SwizzledData, GCTextureSize(pTex->m_Format, pTex->m_Width, pTex->m_Height, pTex->m_Levels, (u32)-1));
+        pTex->Prepare();
+        glx_AddTex(handle, pTex);
+        numBytes += GCTextureSize(pTex->m_Format, pTex->m_Width, pTex->m_Height, pTex->m_Levels, (u32)-1);
+    }
+
+    tDebugPrintManager::Print(DC_GL, "glxTarget used %uKB for targets\n", numBytes >> 10);
 }
 
 /**

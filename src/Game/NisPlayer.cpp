@@ -5,6 +5,7 @@
 #include "Game/Effects/EmissionManager.h"
 #include "Game/Game.h"
 #include "Game/Goalie.h"
+#include "Game/ReplayManager.h"
 #include "NL/nlTask.h"
 #include "NL/nlString.h"
 #include "string.h"
@@ -194,11 +195,49 @@ void NisPlayer::Play()
 {
 }
 
+static inline void HideAllActors()
+{
+    RenderSnapshot& snapshot = ReplayManager::Instance()->GetMutableRenderSnapshot();
+
+    for (int i = 0; i < 150; i++)
+    {
+        snapshot.mPowerups[i].mVisible = false;
+    }
+
+    for (int i = 0; i < 10; i++)
+    {
+        snapshot.mCharacters[i].mVisible = false;
+    }
+    snapshot.mBall.mVisible = false;
+}
+
 /**
  * Offset/Address/Size: 0x28F4 | 0x801175D0 | size: 0x1E0
+ * TODO: 99.96% match - one `i` diff at offset 0x30: bne branch target
  */
 void NisPlayer::Render() const
 {
+    int i;
+    nlTaskManager* taskManager = nlTaskManager::m_pInstance;
+    unsigned long currState = taskManager->m_CurrState;
+
+    if (currState == 0x100)
+    {
+        if (!((taskManager->m_PrevState == 0x100) && (currState == 1U)))
+        {
+            return;
+        }
+
+        HideAllActors();
+
+        for (i = 0; i < 4; i++)
+        {
+            if (mPlaying[i] != NULL)
+            {
+                mPlaying[i]->Render();
+            }
+        }
+    }
 }
 
 /**
@@ -294,10 +333,12 @@ void NisPlayer::PlayCharacterDirection()
  */
 void NisPlayer::EventHandler(Event* event)
 {
-    if (g_pGame == NULL) {
+    if (g_pGame == NULL)
+    {
         return;
     }
-    if (g_pGame->m_eGameState == 3) {
+    if (g_pGame->m_eGameState == 3)
+    {
         return;
     }
 

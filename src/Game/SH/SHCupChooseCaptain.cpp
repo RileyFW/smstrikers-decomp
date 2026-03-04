@@ -1,4 +1,18 @@
 #include "Game/SH/SHCupChooseCaptain.h"
+#include "Game/GameInfo.h"
+#include "Game/FE/feHelpFuncs.h"
+
+static unsigned long CAPTAIN_DESCRIPTIONS[] = {
+    0xFF68ABBA,
+    0xE2D37C19,
+    0x000465BA,
+    0x000BAD38,
+    0x0043DF21,
+    0x330C3072,
+    0x00C0A242,
+    0x00EC84AC,
+    0x69BFAF9D,
+};
 
 // /**
 //  * Offset/Address/Size: 0x4EC | 0x800DF878 | size: 0x15C
@@ -105,6 +119,125 @@ void CupChooseCaptainSceneV2::Update(float)
  */
 void CupChooseCaptainSceneV2::UpdateCaptainName()
 {
+    typedef TLTextInstance* (*FindTextByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLTextInstance* (*FindTextByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    typedef TLComponentInstance* (*FindCompByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindCompByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindTextByValue byValue;
+        FindTextByRef byRef;
+    } findText;
+
+    union
+    {
+        FindCompByValue byValue;
+        FindCompByRef byRef;
+    } findComp;
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8;
+    volatile InlineHasher h7, h6, h5, h4, h3, h2, h1, h0;
+
+    volatile InlineHasher gB, gA;
+    volatile InlineHasher g4, g3, g2, g1, g0;
+
+    volatile InlineHasher fB, fA;
+    volatile InlineHasher f4, f3, f2, f1, f0;
+
+    findText.byValue = FEFinder<TLTextInstance, 3>::Find<TLSlide>;
+    TLSlide* slide = mComponents[0]->GetActiveSlide();
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+    h8.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    unsigned long hash = nlStringLowerHash("CAPTAIN_NAME");
+    hA.m_Hash = hash;
+    hB.m_Hash = hash;
+
+    TLTextInstance* captainNameText = findText.byRef(
+        slide,
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    captainNameText->m_LocStrId = GetLOCCharacterName(mCurrentCaptain, false, true);
+    captainNameText->m_OverloadFlags |= 0x8;
+
+    g0.m_Hash = 0;
+    h1.m_Hash = 0;
+    g1.m_Hash = 0;
+    h3.m_Hash = 0;
+    g2.m_Hash = 0;
+    h5.m_Hash = 0;
+    g3.m_Hash = 0;
+    h7.m_Hash = 0;
+    g4.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    hash = nlStringLowerHash("CAPTAIN_NAME2");
+    gA.m_Hash = hash;
+    gB.m_Hash = hash;
+
+    TLTextInstance* captainDescText = findText.byRef(
+        slide,
+        (InlineHasher&)gB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    if (mCurrentCaptain == 8 && !nlSingleton<GameInfoManager>::s_pInstance->IsSuperTeamUnlocked())
+    {
+        captainDescText->SetStringId("CUP_ATTR_MYSTERY_LOCKED");
+    }
+    else
+    {
+        captainDescText->m_LocStrId = CAPTAIN_DESCRIPTIONS[mCurrentCaptain];
+        captainDescText->m_OverloadFlags |= 0x8;
+    }
+
+    findComp.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+
+    f0.m_Hash = 0;
+    h1.m_Hash = 0;
+    f1.m_Hash = 0;
+    h3.m_Hash = 0;
+    f2.m_Hash = 0;
+    h5.m_Hash = 0;
+    f3.m_Hash = 0;
+    h7.m_Hash = 0;
+    f4.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    hash = nlStringLowerHash("COMPONENT");
+    fA.m_Hash = hash;
+    fB.m_Hash = hash;
+
+    TLComponentInstance* teamComp = findComp.byRef(
+        slide,
+        (InlineHasher&)fB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    teamComp->SetActiveSlide(GetTeamName(mCurrentCaptain));
 }
 
 /**
@@ -123,9 +256,68 @@ void CupChooseCaptainSceneV2::ChangeState(CupChooseCaptainSceneV2::eCupCaptainSt
 
 /**
  * Offset/Address/Size: 0x15C | 0x800DD028 | size: 0x1D4
+ * TODO: 98.3% match - register allocation mismatch persists for early long-lived
+ * locals (target r30/r28/r27/r26/r31 vs current r31/r30/r29/r28/r27 for
+ * pGameInfo/chosenCaptain/chosenSidekick/numPlayingTeams/slot).
  */
 void CupChooseCaptainSceneV2::CreateLineup()
 {
+    GameInfoManager* const pGameInfo = nlSingleton<GameInfoManager>::s_pInstance;
+    eTeamID chosenCaptain = mCurrentCaptain;
+    eSidekickID chosenSidekick = mCurrentSK;
+
+    int numPlayingTeams = pGameInfo->GetNumPlayingTeams();
+    u32 slot = nlRandom((u32)numPlayingTeams, &nlDefaultSeed);
+
+    eTeamID lineup[8];
+    eSidekickID sklineup[8];
+
+    int i;
+    for (i = 0; i < numPlayingTeams; i++)
+    {
+        lineup[i] = (eTeamID)-1;
+        sklineup[i] = (eSidekickID)-1;
+    }
+
+    lineup[slot] = chosenCaptain;
+    sklineup[slot] = chosenSidekick;
+
+    for (i = 0; i < numPlayingTeams; i++)
+    {
+        if ((u32)i == slot)
+        {
+            continue;
+        }
+
+        eTeamID teamChoice;
+        u8 notAlreadyChosen;
+        do
+        {
+            if (pGameInfo->IsInSuperCupMode())
+            {
+                teamChoice = (eTeamID)nlRandom(9, &nlDefaultSeed);
+            }
+            else
+            {
+                teamChoice = (eTeamID)nlRandom(8, &nlDefaultSeed);
+            }
+
+            notAlreadyChosen = 1;
+            for (int k = 0; k < numPlayingTeams; k++)
+            {
+                if (teamChoice == lineup[k])
+                {
+                    notAlreadyChosen = 0;
+                    break;
+                }
+            }
+        } while (!notAlreadyChosen);
+
+        lineup[i] = teamChoice;
+        sklineup[i] = (eSidekickID)nlRandom(4, &nlDefaultSeed);
+    }
+
+    pGameInfo->SetupRoundRobinSchedule(lineup, sklineup);
 }
 
 /**

@@ -456,10 +456,69 @@ int SaveLoad::GetSaveBlockSize(int)
 
 /**
  * Offset/Address/Size: 0xD8 | 0x80189A34 | size: 0x18C
+ * TODO: 74.0% match - register allocation rotated (slot offset/numBlocks/card in
+ * r31/r29/r30 instead of r29/r30/r31); compiler constant-folds ~(iconCount|-1) eliminating
+ * the nor+srawi+and chain; first/second block loops emit an extra early ble (target
+ * speculatively schedules addi/srwi before branch); u8 return adds clrlwi masking
  */
-u8 SaveLoad::HasEnoughFreeSpace(int)
+u8 SaveLoad::HasEnoughFreeSpace(int Slot)
 {
-    return 0;
+    MemCard* card = g_MemCards[Slot];
+    int dataSize = nlSingleton<GameInfoManager>::s_pInstance->GetMemoryCardDataSize();
+    int numBlocks = 0;
+
+    if ((dataSize += 12) > 0)
+    {
+        dataSize = (u32)(dataSize + 0x1FFF) >> 13;
+        while (dataSize-- > 0)
+        {
+            numBlocks++;
+        }
+    }
+
+    MemCard::ICON_CONFIG IconCfg;
+    IconCfg.BannerFormat = 0;
+    IconCfg.IconCount = 0;
+    IconCfg.IconFormat = 0;
+    IconCfg.IconAnimType = 0;
+    memset(IconCfg.IconSpeeds, 0, 8);
+
+    memset(&IconCfg, 0, sizeof(MemCard::ICON_CONFIG));
+    IconCfg.IconCount = 1;
+    IconCfg.IconFormat = 2;
+    IconCfg.IconSpeeds[0] = 3;
+    IconCfg.BannerFormat = 2;
+
+    int iconFormat = IconCfg.IconFormat;
+    int iconCount = IconCfg.IconCount;
+
+    int iconSize = (iconFormat << 10) * iconCount;
+    int temp = ~(iconCount | -1);
+    int bannerClut = (temp >> 31) & 0x200;
+    int bannerSize = iconFormat * 0xC00;
+    int iconClut = (temp >> 31) & 0x200;
+
+    IconCfg.HeaderSize = bannerClut + bannerSize + iconSize + iconClut + 0x40;
+
+    if ((dataSize = (int)IconCfg.HeaderSize) > 0)
+    {
+        dataSize = (u32)(dataSize + 0x1FFF) >> 13;
+        while (dataSize-- > 0)
+        {
+            numBlocks++;
+        }
+    }
+
+    unsigned long sectorSize = card->m_CardInfo.SectorSize;
+    unsigned long bytestosave = numBlocks * sectorSize;
+    unsigned long alignedSize = g_MemCards[Slot]->AlignBytesToSectorSize(bytestosave);
+    MemCard* mc = g_MemCards[Slot];
+    if (alignedSize > mc->m_CardInfo.FreeBytes)
+    {
+        return 0;
+    }
+
+    return mc->m_CardInfo.FreeFiles >= 1;
 }
 
 /**

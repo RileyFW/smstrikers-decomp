@@ -105,6 +105,7 @@ public:
     static bool gbDisableAudio;
     static bool gbDisableCrowd;
     static bool gbStream;
+    static bool gbDisableReverb;
     static bool gbAsyncLoadEntireSampleFileIntoMemRequestMade;
     static AudioFileData sebringAudioFileData;
     static nlAVLTreeSlotPool<int, SoundStrToIDNode*, DefaultKeyCompare<int> > gMusyXSoundDefineMap;

@@ -89,7 +89,7 @@ public:
     eUserGameResult GetResultsOfLastUserGame() const;
     void SetResultsOfLastUserGame(eUserGameResult);
     s16 GetCurrentRoundNumber() const;
-    void GetNextRoundNumber(short) const;
+    s16 GetNextRoundNumber(short) const;
     s16 GetPreviousRoundNumber(short) const;
     signed short GetFirstRoundNumber() const;
     u16 GetNumGamesPerRound(int) const;

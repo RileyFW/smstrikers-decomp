@@ -681,9 +681,56 @@ void FormationEval::CalculateDesiredLocation(nlVector3& destPosition, cFielder* 
 /**
  * Offset/Address/Size: 0x1150 | 0x800393A0 | size: 0x1E0
  */
-float FormationEval::IsFielderInPosition(cFielder*, nlVector3, bool)
+float FormationEval::IsFielderInPosition(cFielder* pFielder, nlVector3 v3Pos, bool bExtended)
 {
-    return 0.0f;
+    if (m_pFormationSpec == NULL)
+    {
+        return 0.0f;
+    }
+
+    nlVector3 v3DesiredPos;
+    GetKeyPositions(pFielder, v3DesiredPos, NULL, false);
+
+    if (pFielder->m_pTeam->m_nSide != 0)
+    {
+        f32 negY = -v3DesiredPos.f.y;
+        f32 negX = -v3DesiredPos.f.x;
+        v3DesiredPos.f.z = 0.0f;
+        v3DesiredPos.f.x = negX;
+        v3DesiredPos.f.y = negY;
+    }
+
+    f32 dx = pFielder->m_v3Position.f.x - v3DesiredPos.f.x;
+    f32 dy = pFielder->m_v3Position.f.y - v3DesiredPos.f.y;
+    f32 distToDesired = nlSqrt(dx * dx + dy * dy, true);
+
+    f32 dx2 = pFielder->m_v3Position.f.x - v3Pos.f.x;
+    f32 dy2 = pFielder->m_v3Position.f.y - v3Pos.f.y;
+    f32 distToTarget = nlSqrt(dx2 * dx2 + dy2 * dy2, true);
+
+    f32 normalizedDist = NormalizeVal(distToDesired, g_pGame->m_pGameTweaks->vGetInPositionKeyFielderDist);
+
+    f32 inDist = Interpolate(
+        g_pGame->m_pGameTweaks->vGetInPositionInRadius.f.x,
+        g_pGame->m_pGameTweaks->vGetInPositionInRadius.f.y,
+        normalizedDist);
+
+    f32 outDist = Interpolate(
+        g_pGame->m_pGameTweaks->vGetInPositionOutRadius.f.x,
+        g_pGame->m_pGameTweaks->vGetInPositionOutRadius.f.y,
+        normalizedDist);
+
+    f32 result = 0.0f;
+    if (distToTarget <= inDist)
+    {
+        result = 1.0f;
+    }
+    else if (bExtended && distToTarget <= outDist)
+    {
+        result = nlMinEquals(nlMaxEquals(1.0f - distToTarget / outDist, 0.0f), 1.0f);
+    }
+
+    return result;
 }
 
 /**

@@ -52,8 +52,59 @@ void DrawableNetMesh::Render() const
 /**
  * Offset/Address/Size: 0x2C0 | 0x8011421C | size: 0x1F8
  */
-void DrawableNetMesh::Grab(NetMesh&)
+void DrawableNetMesh::Grab(NetMesh& netMesh)
 {
+    mpNetMesh = &netMesh;
+
+    if (!netMesh.mbInitialized)
+        return;
+
+    if (!mbInitialized)
+    {
+        int numTriIdx = netMesh.m_NumTriStripIndices;
+        mJolt = netMesh.m_NumParticles;
+        m_unk18 = numTriIdx;
+
+        int numVerts = mJolt;
+        int numIndices = m_unk18;
+
+        mpPosition = (nlVector3*)nlMalloc(numVerts * sizeof(nlVector3), 8, false);
+
+        if (!sbStaticInitialized[miNetIndex])
+        {
+            spTriIndices[miNetIndex] = (unsigned short*)nlMalloc(numIndices * 2, 8, false);
+
+            int allocSize = numVerts * 4;
+
+            spTexcoord[miNetIndex] = (shortVector2*)nlMalloc(allocSize, 8, false);
+            spColour[miNetIndex] = (unsigned long*)nlMalloc(allocSize, 8, false);
+
+            memset(spColour[miNetIndex], 0xFF, allocSize);
+
+            sbStaticInitialized[miNetIndex] = true;
+            sNumVertices[miNetIndex] = numVerts;
+        }
+
+        mbInitialized = true;
+        mJoltCache = 0.0f;
+    }
+
+    unsigned short* pTriIndices = spTriIndices[miNetIndex];
+    shortVector2* pTexcoord = spTexcoord[miNetIndex];
+
+    for (int i = 0; i < netMesh.m_NumTriStripIndices; i++)
+    {
+        *pTriIndices++ = netMesh.m_TriStripIndices[i];
+    }
+
+    {
+        shortVector2* pDst = pTexcoord;
+        for (int i = 0; i < netMesh.m_NumParticles; i++)
+        {
+            mpPosition[i] = netMesh.m_v3Position[i];
+            *pDst++ = netMesh.m_v2TextureCoords[i];
+        }
+    }
 }
 
 /**

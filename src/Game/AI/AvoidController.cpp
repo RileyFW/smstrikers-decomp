@@ -113,9 +113,80 @@ bool AvoidController::CalcPowerupRepulsionVector(nlVector3&)
 /**
  * Offset/Address/Size: 0xC30 | 0x80008284 | size: 0x1D8
  */
-bool AvoidController::CalcDesiredVelocityToAvoidSideline(nlVector2&, const nlVector2&, const nlVector2&, const nlVector2&, const nlVector2&)
+bool AvoidController::CalcDesiredVelocityToAvoidSideline(
+    nlVector2& vNewDesiredVelDir,
+    const nlVector2& vCurrentDesiredVelDir,
+    const nlVector2& vCurrentVelDir,
+    const nlVector2& vSidelinePos,
+    const nlVector2& vSidelineNormal)
 {
-    return false;
+    bool bHitSideline = false;
+
+    float fDotNormalVel = vSidelineNormal.f.x * vCurrentDesiredVelDir.f.x + vSidelineNormal.f.y * vCurrentDesiredVelDir.f.y;
+
+    nlVector2* pPos;
+    if (m_pFielder->m_pBall != NULL)
+    {
+        pPos = (nlVector2*)&m_pFielder->m_pBall->m_v3Position;
+    }
+    else
+    {
+        pPos = (nlVector2*)&m_pFielder->m_v3Position;
+    }
+
+    float dy = pPos->f.y - vSidelinePos.f.y;
+    float dx = pPos->f.x - vSidelinePos.f.x;
+    float fDistance = nlSqrt(dx * dx + dy * dy, true);
+
+    float fMaxDistance = 5.0f;
+    fDistance -= m_pFTweaks->fPhysCapsuleRadius;
+    if (m_CurrentlyAvoiding & AVOID_SIDELINES)
+    {
+        fMaxDistance = 8.0f;
+    }
+
+    float fMinDistance = 0.5f;
+    m_SidelineUnavoidable = false;
+    m_VeryCloseToSideline = false;
+
+    if (fDistance <= fMinDistance)
+    {
+        m_VeryCloseToSideline = true;
+        m_SidelineNormal = vSidelineNormal;
+        m_SidelineDirection = vNewDesiredVelDir;
+    }
+
+    if (fDistance <= fMaxDistance)
+    {
+        if (fDotNormalVel <= 0.0f)
+        {
+            if (fDotNormalVel > -0.9f)
+            {
+                float fCos, fSin;
+                nlSinCos(&fSin, &fCos, 0x4000);
+
+                nlVector2 vParallelVelDir;
+                vParallelVelDir.f.x = vSidelineNormal.f.x * fCos - vSidelineNormal.f.y * fSin;
+                vParallelVelDir.f.y = vSidelineNormal.f.y * fCos + vSidelineNormal.f.x * fSin;
+
+                if (vParallelVelDir.f.x * vCurrentDesiredVelDir.f.x + vParallelVelDir.f.y * vCurrentDesiredVelDir.f.y < 0.0f)
+                {
+                    vParallelVelDir.f.y = v3Zero.f.y - vParallelVelDir.f.y;
+                    vParallelVelDir.f.x = v3Zero.f.x - vParallelVelDir.f.x;
+                }
+
+                vNewDesiredVelDir = vParallelVelDir;
+            }
+            else
+            {
+                vNewDesiredVelDir = v2Zero;
+                m_SidelineUnavoidable = true;
+            }
+            bHitSideline = true;
+        }
+    }
+
+    return bHitSideline;
 }
 
 /**

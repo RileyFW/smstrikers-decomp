@@ -271,10 +271,69 @@ void ICaptainGridComponent::RebuildInstanceTable()
 
 /**
  * Offset/Address/Size: 0x6CC | 0x800C1DC0 | size: 0x1F0
+ * TODO: 98.10% match - r22/r24 activeslide/pCell register swap in first loop,
+ * r25/r28 i/cellIndex register swap in second loop
  */
+#pragma opt_strength_reduction off
 void ICaptainGridComponent::BuildMapMenu()
 {
+    TLSlide* activeslide = mParentComponent->GetActiveSlide();
+
+    mInstanceTable = (TLInstance**)nlMalloc(NUM_CAPTAIN_CELL_ITEMS * 4, 8, false);
+
+    unsigned long* pCell = CaptainCellItems;
+    int i;
+    for (i = 0; i < (int)NUM_CAPTAIN_CELL_ITEMS; i++, pCell += 2)
+    {
+        mInstanceTable[pCell[0]] = FEFinder<TLInstance, 2>::Find(activeslide,
+            InlineHasher(nlStringLowerHash((const char*)pCell[1])),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0));
+    }
+
+    int numRows = g_e3_Build ? 2 : 3;
+    int numCols = g_e3_Build ? 2 : 3;
+    int base = 0;
+    int NUM_ELEMENTS = numRows * numCols;
+
+    for (i = 0; i < numRows; i++)
+    {
+        int cellIndex = base;
+        for (int j = 0; j < numCols; j++)
+        {
+            int col = cellIndex % numCols;
+
+            int left = cellIndex - 1;
+            if (col - 1 < 0)
+                left = cellIndex + numCols - 1;
+
+            int right = cellIndex + 1;
+            if (col + 1 >= numCols)
+                right = cellIndex - numCols + 1;
+
+            int up = (cellIndex - numCols + NUM_ELEMENTS) % NUM_ELEMENTS;
+            int down = (cellIndex + numCols) % NUM_ELEMENTS;
+
+            int itemID = (int)CaptainCellItems[cellIndex * 2];
+            mMapMenu->AddItem(
+                itemID,
+                mInstanceTable[itemID],
+                (int)CaptainCellItems[left * 2],
+                (int)CaptainCellItems[right * 2],
+                (int)CaptainCellItems[up * 2],
+                (int)CaptainCellItems[down * 2],
+                true);
+            cellIndex++;
+        }
+        base += numCols;
+    }
+
+    mMapMenu->SetSelectedItem((int)CaptainCellItems[0]);
 }
+#pragma opt_strength_reduction on
 
 /**
  * Offset/Address/Size: 0x8BC | 0x800C1FB0 | size: 0x94

@@ -56,14 +56,16 @@ void DrawableBall::Render() const
  */
 glModel* BallLightingCB(glModel* pModel, eGLView& view, unsigned long& uLayer)
 {
+    u32 tex;
     glModelPacket* pPacket;
 
     static u32 WhiteTexture = glGetTexture("global/white");
 
     pPacket = pModel->packets;
+    tex = WhiteTexture;
     while (pPacket < &pModel->packets[pModel->numPackets])
     {
-        pPacket->state.texture[0] = WhiteTexture;
+        pPacket->state.texture[0] = tex;
         glSetRasterState(pPacket->state.raster, GLS_AlphaBlend, 4);
         pPacket++;
     }

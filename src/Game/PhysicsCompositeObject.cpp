@@ -8,36 +8,39 @@
 /**
  * Offset/Address/Size: 0x0 | 0x801FF6A8 | size: 0xA8
  */
-void PhysicsCompositeObject::AdjustTransform(int index, nlMatrix4& transform)
+void PhysicsCompositeObject::AdjustTransform(int i, nlMatrix4& m)
 {
+    u32 idx;
     DLListEntry<PhysicsTransform*>* head;
-    DLListEntry<PhysicsTransform*>* current = nlDLRingGetStart<DLListEntry<PhysicsTransform*> >(m_Components.m_Head);
+    DLListEntry<PhysicsTransform*>* pStart = nlDLRingGetStart<DLListEntry<PhysicsTransform*> >(m_Components.m_Head);
 
     head = m_Components.m_Head;
+    idx = 0;
+    DLListEntry<PhysicsTransform*>* current = pStart;
 
-    u32 i = 0;
-    do
+    PhysicsTransform* transformObj;
+
+    for (; idx < (u32)i; idx++)
     {
-        if (nlDLRingIsEnd<DLListEntry<PhysicsTransform*> >(head, current) != 0)
+        if (nlDLRingIsEnd<DLListEntry<PhysicsTransform*> >(head, current))
         {
-            current = nullptr;
-            break;
+            transformObj = 0;
+            goto call_transform;
         }
 
-        if ((nlDLRingIsEnd<DLListEntry<PhysicsTransform*> >(head, current) != 0) || (current == NULL))
+        if (nlDLRingIsEnd<DLListEntry<PhysicsTransform*> >(head, current) || current == 0)
         {
-            current = NULL;
+            current = 0;
         }
         else
         {
             current = current->m_next;
         }
+    }
 
-        i++;
-    } while (i < index);
-
-    PhysicsTransform* transformObj = (PhysicsTransform*)current->m_data;
-    transformObj->SetSubObjectTransform(transform, PhysicsObject::RELATIVE_TO_PARENT);
+    transformObj = (PhysicsTransform*)current->m_data;
+call_transform:
+    transformObj->SetSubObjectTransform(m, PhysicsObject::RELATIVE_TO_PARENT);
 }
 
 /**

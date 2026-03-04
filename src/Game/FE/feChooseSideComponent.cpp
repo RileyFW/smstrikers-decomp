@@ -182,23 +182,35 @@ void IChooseSide::PositionController(int padindex, bool usetween, bool setvisibi
 
 /**
  * Offset/Address/Size: 0x1DC | 0x800C3620 | size: 0xC8
- * TODO: 76% match - pointer iteration pattern and register allocation mismatch
+ * TODO: 92.6% match - MWCC strength-reduces ready pointer (r4=&mPlayerReady[1]) instead of
+ * side pointer (r4=&mPlayingSides[1]). Exhaustively tested: pointer decl order, increment order,
+ * single pointer, pure indexing, while/do-while, pragmas, types. Same MWCC quirk as AllControllersAreCentred.
  */
 bool IChooseSide::AllPlayersReady() const
 {
-    bool anyReady = false;
-    for (int i = 0; i < 4; i++)
+    const bool* ready = mPlayerReady;
+    const int* side = mPlayingSides;
+    u8 allReady = 0;
+
+    for (int i = 0; i < 4; i++, ready++, side++)
     {
-        if (mPlayerReady[i])
+        if (*ready)
         {
-            anyReady = true;
+            allReady = 1;
         }
-        else if (mPlayingSides[i] != -1)
+        else if (*side != -1)
         {
-            return false;
+            allReady = 0;
+            break;
         }
     }
-    return anyReady;
+
+    if (allReady == 1)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 /**

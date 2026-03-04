@@ -1,8 +1,14 @@
 #include "Game/SH/SHTournTeamSetup.h"
 #include "types.h"
+#include "Game/FE/feFinder.h"
+#include "Game/FE/feHelpFuncs.h"
 
 // Temporary dummy object for reference member initialization
 static CustomTournament s_dummyTourn;
+
+static unsigned long TOURN_CAPTAIN_DESCRIPTIONS[] = {
+    0xFF68ABBA, 0xE2D37C19, 0x000465BA, 0x000BAD38, 0x0043DF21, 0x330C3072, 0x00C0A242, 0x00EC84AC, 0x69BFAF9D
+};
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800E7710 | size: 0x40
@@ -207,10 +213,131 @@ void TournTeamSetupSceneV2::StartChooseCaptain(int arg)
 
 /**
  * Offset/Address/Size: 0x1CC4 | 0x800E3B68 | size: 0x200
+ * TODO: 87.3% match - stack frame size 0xB0 vs target 0x80, all diffs are stack
+ * offset (s/i) only. -inline deferred file causes different InlineHasher temporary
+ * stack allocation on decomp.me vs original build.
  */
 void TournTeamSetupSceneV2::UpdateCaptainName()
 {
-    FORCE_DONT_INLINE;
+    typedef TLTextInstance* (*FindTextByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLTextInstance* (*FindTextByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    typedef TLComponentInstance* (*FindCompByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindCompByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindTextByValue byValue;
+        FindTextByRef byRef;
+    } findText;
+
+    union
+    {
+        FindCompByValue byValue;
+        FindCompByRef byRef;
+    } findComp;
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8;
+    volatile InlineHasher h7, h6, h5, h4, h3, h2, h1, h0;
+
+    volatile InlineHasher gB, gA;
+    volatile InlineHasher g4, g3, g2, g1, g0;
+
+    volatile InlineHasher fB, fA;
+    volatile InlineHasher f4, f3, f2, f1, f0;
+
+    findText.byValue = FEFinder<TLTextInstance, 3>::Find<TLSlide>;
+    TLSlide* slide = mComponents[0]->GetActiveSlide();
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+    h8.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    unsigned long hash = nlStringLowerHash("CAPTAIN_NAME");
+    hA.m_Hash = hash;
+    hB.m_Hash = hash;
+
+    TLTextInstance* captainNameText = findText.byRef(
+        slide,
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    captainNameText->m_LocStrId = GetLOCCharacterName(mCurrentCaptain, false, true);
+    captainNameText->m_OverloadFlags |= 0x8;
+
+    g0.m_Hash = 0;
+    h1.m_Hash = 0;
+    g1.m_Hash = 0;
+    h3.m_Hash = 0;
+    g2.m_Hash = 0;
+    h5.m_Hash = 0;
+    g3.m_Hash = 0;
+    h7.m_Hash = 0;
+    g4.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    hash = nlStringLowerHash("CAPTAIN_NAME2");
+    gA.m_Hash = hash;
+    gB.m_Hash = hash;
+
+    TLTextInstance* captainDesc = findText.byRef(
+        slide,
+        (InlineHasher&)gB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    if (mCurrentCaptain == TEAM_MYSTERY && !nlSingleton<GameInfoManager>::s_pInstance->IsSuperTeamUnlocked())
+    {
+        captainDesc->SetStringId("CUP_ATTR_MYSTERY_LOCKED");
+    }
+    else
+    {
+        captainDesc->m_LocStrId = TOURN_CAPTAIN_DESCRIPTIONS[mCurrentCaptain];
+        captainDesc->m_OverloadFlags |= 0x8;
+    }
+
+    findComp.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+
+    f0.m_Hash = 0;
+    h1.m_Hash = 0;
+    f1.m_Hash = 0;
+    h3.m_Hash = 0;
+    f2.m_Hash = 0;
+    h5.m_Hash = 0;
+    f3.m_Hash = 0;
+    h7.m_Hash = 0;
+    f4.m_Hash = 0;
+    h9.m_Hash = 0;
+
+    hash = nlStringLowerHash("COMPONENT");
+    fA.m_Hash = hash;
+    fB.m_Hash = hash;
+
+    TLComponentInstance* comp = findComp.byRef(
+        slide,
+        (InlineHasher&)fB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    comp->SetActiveSlide(GetTeamName(mCurrentCaptain));
 }
 
 /**
@@ -273,13 +400,236 @@ void TournTeamSetupSceneV2::UpdateForCurrentRow()
 /**
  * Offset/Address/Size: 0x1FC | 0x800E20A0 | size: 0x1E8
  */
-void TournTeamSetupSceneV2::ScrollUp(bool)
+void TournTeamSetupSceneV2::ScrollUp(bool bPlaySound)
 {
+    int newIndex;
+    bool doUpdate;
+
+    if (!bPlaySound)
+    {
+        FEAudio::EnableSounds(false);
+    }
+
+    int flags = mMenuItems.mFlags;
+    int skipFlag;
+    int wrapFlag;
+    int currentIndex;
+    wrapFlag = flags & 1;
+    skipFlag = flags & 2;
+    currentIndex = mMenuItems.mCurrentIndex;
+    newIndex = currentIndex - 1;
+
+loop:
+    if (wrapFlag)
+    {
+        if (newIndex < 0)
+        {
+            newIndex = mMenuItems.mNumItemsAdded - 1;
+        }
+    }
+    else
+    {
+        if (newIndex < 0)
+        {
+            newIndex = 2;
+            goto end_section;
+        }
+    }
+
+    if (skipFlag)
+    {
+        if (mMenuItems.mMenuItems[newIndex].mDisabled)
+        {
+            newIndex--;
+            goto loop;
+        }
+    }
+
+    // Deselect old item (callback 2)
+    {
+        int tag = mMenuItems.mMenuItems[currentIndex].mCallbacks[2].mTag;
+        if (((u32)((-tag) | tag) >> 31) != 0)
+        {
+            TLComponentInstance* type = mMenuItems.mMenuItems[currentIndex].mType;
+            if (tag == FREE_FUNCTION)
+            {
+                mMenuItems.mMenuItems[currentIndex].mCallbacks[2].mFreeFunction(type);
+            }
+            else
+            {
+                (*mMenuItems.mMenuItems[currentIndex].mCallbacks[2].mFunctor)(type);
+            }
+        }
+    }
+
+    mMenuItems.mCurrentIndex = newIndex;
+
+    // Select new item (callback 1)
+    {
+        int selIdx = mMenuItems.mCurrentIndex;
+        int tag2 = mMenuItems.mMenuItems[selIdx].mCallbacks[1].mTag;
+        if (((u32)((-tag2) | tag2) >> 31) != 0)
+        {
+            TLComponentInstance* type2 = mMenuItems.mMenuItems[selIdx].mType;
+            if (tag2 == FREE_FUNCTION)
+            {
+                mMenuItems.mMenuItems[selIdx].mCallbacks[1].mFreeFunction(type2);
+            }
+            else
+            {
+                (*mMenuItems.mMenuItems[selIdx].mCallbacks[1].mFunctor)(type2);
+            }
+        }
+    }
+
+    newIndex = 1;
+
+end_section:
+    mCurrentRow = mRowOffset + mMenuItems.mCurrentIndex;
+    FEAudio::EnableSounds(false);
+
+    doUpdate = true;
+    if (newIndex == 2)
+    {
+        if (mRowOffset > 0)
+        {
+            mRowOffset--;
+            mCurrentRow = mRowOffset + mMenuItems.mCurrentIndex;
+            goto check_update;
+        }
+    }
+    if (newIndex == 2)
+    {
+        doUpdate = false;
+        FEAudio::PlayAnimAudioEvent("sfx_deny", false);
+    }
+
+check_update:
+    if (doUpdate)
+    {
+        if (newIndex == 2)
+        {
+            FEAudio::EnableSounds(true);
+        }
+        UpdateForCurrentRow();
+    }
+
+    FEAudio::EnableSounds(true);
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x800E1EA4 | size: 0x1FC
  */
-void TournTeamSetupSceneV2::ScrollDown(bool)
+void TournTeamSetupSceneV2::ScrollDown(bool bPlaySound)
 {
+    int newIndex;
+    bool doUpdate;
+
+    if (!bPlaySound)
+    {
+        FEAudio::EnableSounds(false);
+    }
+
+    int flags = mMenuItems.mFlags;
+    int skipFlag;
+    int wrapFlag;
+    int currentIndex;
+    wrapFlag = flags & 1;
+    skipFlag = flags & 2;
+    currentIndex = mMenuItems.mCurrentIndex;
+    newIndex = currentIndex + 1;
+
+loop:
+    if (wrapFlag)
+    {
+        newIndex = newIndex % mMenuItems.mNumItemsAdded;
+    }
+    else
+    {
+        if (newIndex >= mMenuItems.mNumItemsAdded)
+        {
+            newIndex = 2;
+            goto end_section;
+        }
+    }
+
+    if (skipFlag)
+    {
+        if (mMenuItems.mMenuItems[newIndex].mDisabled)
+        {
+            newIndex++;
+            goto loop;
+        }
+    }
+
+    // Deselect old item (callback 2)
+    {
+        int tag = mMenuItems.mMenuItems[currentIndex].mCallbacks[2].mTag;
+        if (((u32)((-tag) | tag) >> 31) != 0)
+        {
+            TLComponentInstance* type = mMenuItems.mMenuItems[currentIndex].mType;
+            if (tag == FREE_FUNCTION)
+            {
+                mMenuItems.mMenuItems[currentIndex].mCallbacks[2].mFreeFunction(type);
+            }
+            else
+            {
+                (*mMenuItems.mMenuItems[currentIndex].mCallbacks[2].mFunctor)(type);
+            }
+        }
+    }
+
+    mMenuItems.mCurrentIndex = newIndex;
+
+    // Select new item (callback 1)
+    {
+        int selIdx = mMenuItems.mCurrentIndex;
+        int tag2 = mMenuItems.mMenuItems[selIdx].mCallbacks[1].mTag;
+        if (((u32)((-tag2) | tag2) >> 31) != 0)
+        {
+            TLComponentInstance* type2 = mMenuItems.mMenuItems[selIdx].mType;
+            if (tag2 == FREE_FUNCTION)
+            {
+                mMenuItems.mMenuItems[selIdx].mCallbacks[1].mFreeFunction(type2);
+            }
+            else
+            {
+                (*mMenuItems.mMenuItems[selIdx].mCallbacks[1].mFunctor)(type2);
+            }
+        }
+    }
+
+    newIndex = 1;
+
+end_section:
+    mCurrentRow = mRowOffset + mMenuItems.mCurrentIndex;
+    FEAudio::EnableSounds(false);
+
+    doUpdate = true;
+    if (newIndex == 2)
+    {
+        if (mRowOffset + 3 < (int)mTournInfo.m_numTeams - 1)
+        {
+            mRowOffset++;
+            mCurrentRow = mRowOffset + mMenuItems.mCurrentIndex;
+            goto check_update;
+        }
+    }
+    if (newIndex == 2)
+    {
+        doUpdate = false;
+        FEAudio::PlayAnimAudioEvent("sfx_deny", false);
+    }
+
+check_update:
+    if (doUpdate)
+    {
+        if (newIndex == 2)
+        {
+            FEAudio::EnableSounds(true);
+        }
+        UpdateForCurrentRow();
+    }
+
+    FEAudio::EnableSounds(true);
 }

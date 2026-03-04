@@ -30,7 +30,7 @@ class FEAudio
 {
 public:
     static void EnableSounds(bool);
-    void ResetRandomVoiceToggleSFX();
+    static void ResetRandomVoiceToggleSFX();
     void PlayRandomVoiceToggleSFX();
     static long PlayAnimAudioEvent(unsigned long, bool);
     static void StopAnimAudioEvent(const char*);

@@ -135,16 +135,32 @@ void FERender::PopTransformMatrix()
  */
 void FERender::PushTransformMatrix(const TLInstance* instance)
 {
-    nlMatrix4 combinedMatrix; // r1+0x88
-    nlMatrix4 scaleMatrix;    // r1+0x48
-    nlMatrix4 rotationMatrix; // r1+0x08
+    nlMatrix4 combinedMatrix;
+    nlMatrix4 scaleMatrix;
+    nlMatrix4 rotationMatrix;
 
-    nlMakeRotationMatrixEulerAngles(rotationMatrix, instance->GetRotation().f.x, instance->GetRotation().f.y, instance->GetRotation().f.z);
-    nlMakeScaleMatrix(scaleMatrix, instance->GetScale().f.x, instance->GetScale().f.y, instance->GetScale().f.z);
+    const feVector3& rotZ = instance->GetRotation();
+    const feVector3& rotY = instance->GetRotation();
+    nlMakeRotationMatrixEulerAngles(rotationMatrix,
+        instance->GetRotation().f.x,
+        rotY.f.y,
+        rotZ.f.z);
+
+    const feVector3& scaleZ = instance->GetScale();
+    const feVector3& scaleY = instance->GetScale();
+    nlMakeScaleMatrix(scaleMatrix,
+        instance->GetScale().f.x,
+        scaleY.f.y,
+        scaleZ.f.z);
+
     nlMultMatrices(combinedMatrix, scaleMatrix, rotationMatrix);
 
-    const feVector3& tlPosition = instance->GetPosition();
-    combinedMatrix.SetRow4_(4, tlPosition.f.x, tlPosition.f.y, tlPosition.f.z * -1.0f, 1.0f);
+    const feVector3& pos = instance->GetPosition();
+    float z = pos.f.z;
+    float negOne = -1.0f;
+    nlVec3Set(combinedMatrix.GetTranslation(), pos.f.x, pos.f.y, z);
+    combinedMatrix.f.m44 = 1.0f;
+    combinedMatrix.f.m43 = z * negOne;
 
     m_pMatrixStack->PushMatrix();
     m_pMatrixStack->MultMatrix(combinedMatrix);

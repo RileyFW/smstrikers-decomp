@@ -25,6 +25,22 @@ bool isYoshiUnlocked = false;
 bool isForbiddenUnlocked = false;
 bool isSuperStadUnlocked = false;
 
+bool inline CheckUnlockStatus(const bool& globalFlag, const unsigned char& trophyValue, const unsigned int bit)
+{
+    if (!globalFlag)
+    {
+        if (GetConfigBool(Config::Global(), "givealltrophies", false))
+        {
+            return true;
+        }
+        else
+        {
+            return (trophyValue >> bit) & 0x01;
+        }
+    }
+    return globalFlag;
+}
+
 /**
  * Offset/Address/Size: 0x9E90 | 0x8017F534 | size: 0xB84
  */
@@ -249,8 +265,67 @@ s16 GameInfoManager::GetCurrentRoundNumber() const
 /**
  * Offset/Address/Size: 0x9300 | 0x8017E9A4 | size: 0x1FC
  */
-void GameInfoManager::GetNextRoundNumber(short) const
+/**
+ * TODO: 97.17% match - register allocation diffs (r30 vs r3/r0) in simple return paths
+ * and comparison operand register swap at 0x1C4-0x1CC. Likely -inline deferred flag issue.
+ */
+s16 GameInfoManager::GetNextRoundNumber(short roundParam) const
 {
+    s16 round;
+
+    if (roundParam == -7)
+    {
+        round = mCurrentCup->mRoundNumber;
+    }
+    else
+    {
+        round = roundParam;
+    }
+
+    if (round == -6)
+    {
+        round = 0;
+    }
+    else if (round == -4)
+    {
+        round = -3;
+    }
+    else if (round == -3)
+    {
+        round = -2;
+    }
+    else if (round == -2)
+    {
+        if (mCurrentMode == GM_BOWSER_CUP && !CheckUnlockStatus(isSuperTeamUnlocked, mUserInfo.mTrophies[0], 3))
+        {
+            round = -1;
+        }
+        else
+        {
+            round = -5;
+        }
+    }
+    else if (round == -1)
+    {
+        round = -5;
+    }
+    else
+    {
+        if ((mCurrentMode == GM_BOWSER_CUP || mCurrentMode == GM_SUPER_BOWSER_CUP) && mDoingKnockout && round == mPreviousCup->GetNumRounds() - 1)
+        {
+            round = -3;
+        }
+        else if (round + 1 == mCurrentCup->GetNumRounds())
+        {
+            round = -5;
+        }
+        else
+        {
+            round++;
+        }
+    }
+
+    return round;
 }
 
 /**
@@ -962,28 +1037,40 @@ void GameInfoManager::OnPostGameState()
 void GameInfoManager::ApplyDifficultySettings()
 {
     static eDifficultyID DifficultyMap[5][2];
-    unsigned char humansOnSide[2] = {0, 0};
+    unsigned char humansOnSide[2] = { 0, 0 };
     int i;
     GameplaySettings::eSkillLevel skillLevel;
 
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++)
+    {
         s16 padSide = mGameInfo[mCurrentMode]->mPadSides[(unsigned short)i];
-        if (padSide == 0) {
+        if (padSide == 0)
+        {
             humansOnSide[0] = 1;
-        } else if (padSide == 1) {
+        }
+        else if (padSide == 1)
+        {
             humansOnSide[1] = 1;
         }
     }
 
-    if (mIsInStrikers101Mode) {
+    if (mIsInStrikers101Mode)
+    {
         skillLevel = GameplaySettings::TRAINING;
-    } else {
+    }
+    else
+    {
         GameplaySettings* settings;
-        if (mUseCurGameSettings) {
+        if (mUseCurGameSettings)
+        {
             settings = &mCurGameGameplayOptions;
-        } else if (mCurrentMode == GM_FRIENDLY || mCurrentMode == GM_DEMO) {
+        }
+        else if (mCurrentMode == GM_FRIENDLY || mCurrentMode == GM_DEMO)
+        {
             settings = &mUserInfo.mGameplayOptions;
-        } else {
+        }
+        else
+        {
             settings = &mCurrentCup->mCupSettings;
         }
         skillLevel = settings->SkillLevel;
@@ -1139,22 +1226,6 @@ void GameInfoManager::TimeStampCupEnd()
  */
 void GameInfoManager::FindWinningTeam()
 {
-}
-
-bool inline CheckUnlockStatus(const bool& globalFlag, const unsigned char& trophyValue, const unsigned int bit)
-{
-    if (!globalFlag)
-    {
-        if (GetConfigBool(Config::Global(), "givealltrophies", false))
-        {
-            return true;
-        }
-        else
-        {
-            return (trophyValue >> bit) & 0x01;
-        }
-    }
-    return globalFlag;
 }
 
 /**

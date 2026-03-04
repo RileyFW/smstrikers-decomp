@@ -211,10 +211,13 @@ void onSelectCup(TLComponentInstance*)
  */
 void onSelectSuperCup(TLComponentInstance*)
 {
-    if (!GameInfoManager::Instance()->IsSuperCupModeUnlocked()) {
+    if (!GameInfoManager::Instance()->IsSuperCupModeUnlocked())
+    {
         FEPopupMenu* menu = (FEPopupMenu*)GameSceneManager::Instance()->Push(SCENE_POPUP_MENU, SCREEN_FORWARD, false);
         menu->Create(POPUP_SUPER_CUPS_LOCKED);
-    } else {
+    }
+    else
+    {
         GameSceneManager::Instance()->PopEntireStack();
         GameSceneManager::Instance()->Push(SCENE_SUPER_CUP_CHOOSE_CUP, SCREEN_FORWARD, false);
     }
@@ -242,7 +245,8 @@ void newTourn()
 {
     GameSceneManager::s_pInstance->PopEntireStack();
     GameSceneManager::s_pInstance->Push(SCENE_TOURN_SETPARAMS, SCREEN_FORWARD, false);
-    if (GameInfoManager::s_pInstance->mCustomTournamentInfo.m_cupConstructed) {
+    if (GameInfoManager::s_pInstance->mCustomTournamentInfo.m_cupConstructed)
+    {
         GameInfoManager::s_pInstance->mCustomTournamentInfo.m_cup->mCupStarted = false;
     }
 }
@@ -281,9 +285,48 @@ void confirmNewTourn()
 
 /**
  * Offset/Address/Size: 0x1680 | 0x800AB0DC | size: 0x1AC
+ * TODO: 92.1% match - Function0 default constructor dead stores not eliminated
+ *       with -inline auto (decomp.me). File uses -inline deferred which eliminates them.
  */
 void onSelectTournament(TLComponentInstance*)
 {
+    if (GameInfoManager::s_pInstance->mCustomTournamentInfo.m_cupConstructed
+        && GameInfoManager::s_pInstance->mCustomTournamentInfo.m_cup->mCupStarted)
+    {
+        FEPopupMenu* menu = (FEPopupMenu*)nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_POPUP_MENU, SCREEN_NOTHING, false);
+
+        {
+            Function<FnVoidVoid> yes;
+            yes.mTag = FREE_FUNCTION;
+            yes.mFreeFunction = continueTourn;
+
+            Function<FnVoidVoid> no;
+            no.mTag = FREE_FUNCTION;
+            no.mFreeFunction = confirmNewTourn;
+
+            menu->Create(POPUP_START_NEW_TOURNAMENT, yes, no);
+        }
+
+        {
+            Function<FnVoidVoid> back;
+            back.mTag = FREE_FUNCTION;
+            back.mFreeFunction = FEPopupMenu::Nothing;
+
+            menu->SetBackButtonCallback(back);
+        }
+
+        GameInfoManager::s_pInstance->SetMode(GameInfoManager::GM_TOURNAMENT);
+    }
+    else
+    {
+        GameSceneManager::s_pInstance->PopEntireStack();
+        GameSceneManager::s_pInstance->Push(SCENE_TOURN_SETPARAMS, SCREEN_FORWARD, false);
+
+        if (GameInfoManager::s_pInstance->mCustomTournamentInfo.m_cupConstructed)
+        {
+            GameInfoManager::s_pInstance->mCustomTournamentInfo.m_cup->mCupStarted = false;
+        }
+    }
 }
 
 /**

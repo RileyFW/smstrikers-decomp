@@ -19,6 +19,8 @@
 #include "Game/Game.h"
 #include "Game/Audio/WorldAudio.h"
 #include "Game/Physics/PhysicsColumn.h"
+#include "Game/FixedUpdateTask.h"
+#include "Game/FormationDefines.h"
 
 float g_fPassInterceptNoPickupTimer = 5.0f;
 
@@ -66,6 +68,8 @@ inline float min_float(float a, float b)
 
 /**
  * Offset/Address/Size: 0x68 | 0x800575B8 | size: 0xAC
+ * TODO: 96.9% match - remaining MWCC register/operand ordering in clamp sequence:
+ * fcmpo cr0,f0,f3 + fmr/stfs via f0 instead of target fcmpo cr0,f3,f0 + fmr/stfs via f3.
  */
 nlVector3 cPlayer::GetAIDefNetLocation(const nlVector3* v3ReferencePos)
 {
@@ -85,15 +89,15 @@ nlVector3 cPlayer::GetAIDefNetLocation(const nlVector3* v3ReferencePos)
 
     if (yCoord < 0.0f)
     {
-        yCoord = max_float(yCoord, -1.0f * halfNetWidth);
+        yCoord = max_float(-1.0f * halfNetWidth, yCoord);
         result.f.y = yCoord;
     }
     else
     {
         yCoord = min_float(yCoord, halfNetWidth);
+        result.f.y = yCoord;
     }
 
-    result.f.y = yCoord;
     return result;
 }
 
@@ -760,11 +764,67 @@ void cPlayer::GetAnimatedBallOrientation(nlQuaternion& qRetval)
     nlMultQuat(qRetval, qOrient, m_BaseBallOrientation);
 }
 
+static inline void UpdateTimers(cPlayer* self, float fDeltaT)
+{
+    if (self->m_pBall != NULL)
+    {
+        self->m_tBallPossessionTimer.Countup(fDeltaT, 100000.0f);
+    }
+    else
+    {
+        self->m_tBallUnPossessionTimer.Countup(fDeltaT, 100000.0f);
+    }
+
+    self->m_tSlideAttackTimer.Countdown(fDeltaT, 0.0f);
+    self->m_tSwapFacingTimer.Countdown(fDeltaT, 0.0f);
+    self->m_tNoPickupPassInterceptTimer.Countdown(fDeltaT, 0.0f);
+
+    if (self->m_tNoPickupTimer.m_uPackedTime != 0)
+    {
+        bool bCanCollideWithBall = self->m_tNoPickupTimer.Countdown(fDeltaT, 0.0f);
+        self->m_pPhysicsCharacter->m_CanCollideWithBall = bCanCollideWithBall;
+    }
+    else
+    {
+        self->m_pPhysicsCharacter->m_CanCollideWithBall = true;
+    }
+
+    float fScaledDt = fDeltaT * (1.0f / FixedUpdateTask::mTimeScale);
+    for (int iPadID = 0; iPadID < 4; iPadID++)
+    {
+        self->m_tSwapControllerTimer[iPadID].Countdown(fScaledDt, 0.0f);
+    }
+
+    if (self->m_fActualSpeed < 0.1f)
+    {
+        self->m_tInactivityTimer.Countup(fDeltaT, 100000.0f);
+    }
+    else
+    {
+        self->m_tInactivityTimer.m_uPackedTime = 0;
+    }
+}
+
 /**
  * Offset/Address/Size: 0x288C | 0x80059DDC | size: 0x1C4
  */
-void cPlayer::Update(float)
+void cPlayer::Update(float fDeltaT)
 {
+    if (m_pController != NULL)
+    {
+        m_UserControlledTime += fDeltaT;
+    }
+    else
+    {
+        m_UserControlledTime = 0.0f;
+    }
+
+    if (g_pGame->IsGameplayOrOvertime())
+    {
+        UpdateTimers(this, fDeltaT);
+    }
+
+    FieldLocToAILoc(m_v3AIPosition, m_v3Position, (eTeamSide)m_pTeam->m_nSide);
 }
 
 /**

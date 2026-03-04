@@ -2,9 +2,12 @@
 
 #include "dolphin/card.h"
 #include "Game/BaseGameSceneManager.h"
+#include "Game/GameSceneManager.h"
 #include "Game/DB/SaveLoad.h"
 #include "Game/FE/feFinder.h"
 #include "Game/FE/feInput.h"
+#include "Game/FE/fePopupMenu.h"
+#include "Game/FE/feSceneManager.h"
 #include "Game/FE/tlTextInstance.h"
 #include "Game/ResetTask.h"
 #include "Game/Sys/gcmemcard.h"
@@ -296,10 +299,71 @@ void CheckResults()
 
 /**
  * Offset/Address/Size: 0x1408 | 0x800B1990 | size: 0x1DC
+ * TODO: 92.6% match - Function<FnVoidVoid> default ctor zero-init (EMPTY tag)
+ * before overwrite to FREE_FUNCTION generates extra stores; minor register
+ * scheduling diffs. -inline deferred file.
  */
 bool PushNoCardMessage()
 {
-    FORCE_DONT_INLINE;
+    MemCard* memCard = g_MemCards[0];
+    s32 result = CARDProbeEx(memCard->m_Slot, &memCard->m_CardInfo.CardSize, &memCard->m_CardInfo.SectorSize);
+
+    if (result != CARD_RESULT_READY)
+    {
+        memCard->m_State = IS_IDLE;
+        memCard->m_CardState = CS_IDLE;
+    }
+
+    if (result == CARD_RESULT_NOCARD || WasCardRemoved)
+    {
+        BaseSceneHandler* handler;
+        if (nlSingleton<GameSceneManager>::s_pInstance->mCurrentStackDepth != 0)
+        {
+            handler = nlSingleton<GameSceneManager>::s_pInstance->mBaseSceneHandlerStack[nlSingleton<GameSceneManager>::s_pInstance->mCurrentStackDepth - 1];
+        }
+        else
+        {
+            handler = NULL;
+        }
+
+        if (nlSingleton<GameSceneManager>::s_pInstance->GetSceneType(handler) == SCENE_POPUP_MENU)
+        {
+            if (((FEPopupMenu*)handler)->mType == POPUP_NO_MEMCARD)
+            {
+                WasCardRemoved = 0;
+                return false;
+            }
+
+            if (!nlSingleton<FESceneManager>::s_pInstance->AreAllScenesValid())
+            {
+                return false;
+            }
+
+            nlSingleton<GameSceneManager>::s_pInstance->Pop();
+            nlSingleton<FESceneManager>::s_pInstance->ForceImmediateStackProcessing();
+        }
+
+        FEPopupMenu* popup = (FEPopupMenu*)nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_POPUP_MENU, SCREEN_NOTHING, false);
+
+        eSaveLoad prevOp = gSceneTypeStack[gSceneTypeStackDepth - 1];
+
+        Function<FnVoidVoid> option1;
+        Function<FnVoidVoid> option2;
+        option1.mTag = FREE_FUNCTION;
+        option1.mFreeFunction = RetryCB;
+        void (*cb)() = ContinueWithoutSavingCB;
+        if (prevOp == ST_LOAD)
+        {
+            cb = ContinueWithoutLoadingCB;
+        }
+        option2.mFreeFunction = cb;
+        option2.mTag = FREE_FUNCTION;
+
+        popup->Create(POPUP_NO_MEMCARD, option1, option2);
+
+        return true;
+    }
+
     return false;
 }
 

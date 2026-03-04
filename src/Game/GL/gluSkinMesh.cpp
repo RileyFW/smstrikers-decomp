@@ -55,22 +55,19 @@
  */
 void ShaderSkinMesh::StitchModel()
 {
-    glModel* model = pModel;
-    glModelPacket* pPacket = model->packets;
-    for (int packetIndex = 0; packetIndex < model->numPackets;
-        packetIndex++, pPacket = (glModelPacket*)((u8*)pPacket + 0x4A))
+    int packetIndex = 0;
+    glModelPacket* pPacket = pModel->packets;
+    for (; pPacket < pModel->packets + pModel->numPackets; packetIndex++, pPacket++)
     {
         if (glGetRasterState(pPacket->state.raster, GLS_SolidOffset) != 1)
             continue;
         DisplayList* dl = dlGetStruct(pPacket->indexBuffer);
-        u8* list = (u8*)dl->list;
-        if (list[3] != 0xff)
+        u8* pWrite = (u8*)dl->list;
+        if (*(pWrite += 3) != 0xff)
             continue;
-        u8* pWrite = list + 3;
-        unsigned char* pStitch = stitchArray[packetIndex];
         for (int i = 0; i < pPacket->numVertices; i++)
         {
-            *pWrite = (pStitch[i] + 1) * 3;
+            *pWrite = (stitchArray[packetIndex][i] + 1) * 3;
             pWrite += (pPacket->numStreams - 1) * 2 + 1;
         }
     }
