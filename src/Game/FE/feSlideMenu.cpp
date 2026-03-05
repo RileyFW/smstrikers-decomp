@@ -53,7 +53,7 @@ bool FESlideMenu::PrevItem()
             }
             else
             {
-                item->ItemCBFuncs[1].mFunctor->fnc_0x8();
+                ((FunctorBase*)item->ItemCBFuncs[1].mFunctor)->Invoke();
             }
         }
 
@@ -142,7 +142,7 @@ void FESlideMenu::SetSlideByIndex(unsigned char index)
         }
         else
         {
-            item.ItemCBFuncs[ON_HIGHLIGHT].mFunctor->fnc_0x8();
+            ((FunctorBase*)item.ItemCBFuncs[ON_HIGHLIGHT].mFunctor)->Invoke();
         }
     }
 
@@ -181,7 +181,7 @@ bool FESlideMenu::ApplyFunction()
     goto ret1;
 
 functor:
-    item->ItemCBFuncs[0].mFunctor->fnc_0x8();
+    ((FunctorBase*)item->ItemCBFuncs[0].mFunctor)->Invoke();
 
 ret1:
     return true;

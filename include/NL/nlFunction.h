@@ -11,8 +11,8 @@ enum Tag
 struct FunctorBase
 {
     virtual ~FunctorBase() { };
-    virtual FunctorBase* fnc_0x8() = 0;
-    virtual FunctorBase* fnc_0x10() = 0;
+    virtual void Invoke() = 0;
+    virtual FunctorBase* Clone() const = 0;
 };
 
 template <typename ReturnType, typename ParamType>
@@ -22,10 +22,8 @@ public:
     struct FunctorBase
     {
         virtual ~FunctorBase() { };
-        // virtual void Destroy() = 0;
-        virtual FunctorBase* fnc_0x8() = 0;  // probably Destroy()
-        virtual FunctorBase* fnc_0x10() = 0; // probably Clone()
         virtual ReturnType operator()(ParamType) = 0;
+        virtual FunctorBase* Clone() const = 0;
     };
 
     enum Tag mTag; // offset 0x0, size 0x4
@@ -58,8 +56,8 @@ public:
     struct FunctorBase
     {
         virtual ~FunctorBase() { };
-        virtual FunctorBase* fnc_0x8() = 0;
-        virtual FunctorBase* fnc_0x10() = 0;
+        virtual void Invoke() = 0;
+        virtual FunctorBase* Clone() const = 0;
     };
 
     template <typename BindType>
@@ -67,8 +65,8 @@ public:
     {
         BindType mBind;
         virtual ~FunctorImpl() { }
-        virtual FunctorBase* fnc_0x8() { return 0; }
-        virtual FunctorBase* fnc_0x10() { return 0; }
+        virtual void Invoke() { }
+        virtual FunctorBase* Clone() const { return 0; }
     };
 
     enum Tag mTag; // offset 0x0, size 0x4
@@ -92,7 +90,7 @@ public:
         }
         else if (mTag == FUNCTOR)
         {
-            mFunctor = other.mFunctor->fnc_0x10();
+            mFunctor = other.mFunctor->Clone();
         }
     }
 
@@ -149,7 +147,7 @@ public:
         }
         else if (mTag == FUNCTOR)
         {
-            mFunctor = other.mFunctor->fnc_0x10();
+            mFunctor = other.mFunctor->Clone();
         }
         return *this;
     }

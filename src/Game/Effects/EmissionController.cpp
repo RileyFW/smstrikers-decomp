@@ -11,8 +11,8 @@ extern int numLingeringSystems;
 struct EmissionFunctor
 {
     virtual ~EmissionFunctor() { };
-    virtual void __cl(EmissionController&) = 0;
-    virtual FunctorBase* fnc_0x10() = 0;
+    virtual void Invoke(EmissionController&) = 0;
+    virtual FunctorBase* Clone() const = 0;
 };
 
 struct UserEffectSpecClone : public UserEffectSpec
@@ -229,7 +229,7 @@ void EmissionController::Die()
         }
         else
         {
-            ((EmissionFunctor*)mFinishedCallback.mFunctor)->__cl(*this);
+            ((EmissionFunctor*)mFinishedCallback.mFunctor)->Invoke(*this);
         }
 
         Function1<void, EmissionController&> empty;
@@ -249,7 +249,7 @@ void EmissionController::Die()
         }
         else if (mFinishedCallback.mTag == FUNCTOR)
         {
-            mFinishedCallback.mFunctor = empty.mFunctor->fnc_0x10();
+            mFinishedCallback.mFunctor = empty.mFunctor->Clone();
         }
 
         if (empty.mTag == FUNCTOR)
@@ -404,7 +404,7 @@ void EmissionController::SetUpdateCallback(const Function1<void, EmissionControl
     }
     else if (mUpdateCallback.mTag == FUNCTOR)
     {
-        mUpdateCallback.mFunctor = callback.mFunctor->fnc_0x10();
+        mUpdateCallback.mFunctor = callback.mFunctor->Clone();
     }
 }
 
@@ -427,6 +427,6 @@ void EmissionController::SetFinishedCallback(const Function1<void, EmissionContr
     }
     else if (mFinishedCallback.mTag == FUNCTOR)
     {
-        mFinishedCallback.mFunctor = callback.mFunctor->fnc_0x10();
+        mFinishedCallback.mFunctor = callback.mFunctor->Clone();
     }
 }

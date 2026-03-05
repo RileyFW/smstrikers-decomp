@@ -380,6 +380,7 @@ void TournTeamSetupSceneV2::AutoFill()
  */
 void TournTeamSetupSceneV2::UpdateForCurrentRow()
 {
+    FORCE_DONT_INLINE;
     int numRows;
     int i = 0;
     numRows = ((u32)(3 - (u32)mTournInfo.m_numTeams) >> 31) + 3;
@@ -464,21 +465,18 @@ loop:
 
     mMenuItems.mCurrentIndex = newIndex;
 
-    // Select new item (callback 1)
+    int selIdx = mMenuItems.mCurrentIndex;
+    int tag2 = mMenuItems.mMenuItems[selIdx].mCallbacks[1].mTag;
+    if (((u32)((-tag2) | tag2) >> 31) != 0)
     {
-        int selIdx = mMenuItems.mCurrentIndex;
-        int tag2 = mMenuItems.mMenuItems[selIdx].mCallbacks[1].mTag;
-        if (((u32)((-tag2) | tag2) >> 31) != 0)
+        TLComponentInstance* type2 = mMenuItems.mMenuItems[selIdx].mType;
+        if (tag2 == FREE_FUNCTION)
         {
-            TLComponentInstance* type2 = mMenuItems.mMenuItems[selIdx].mType;
-            if (tag2 == FREE_FUNCTION)
-            {
-                mMenuItems.mMenuItems[selIdx].mCallbacks[1].mFreeFunction(type2);
-            }
-            else
-            {
-                (*mMenuItems.mMenuItems[selIdx].mCallbacks[1].mFunctor)(type2);
-            }
+            mMenuItems.mMenuItems[selIdx].mCallbacks[1].mFreeFunction(type2);
+        }
+        else
+        {
+            (*mMenuItems.mMenuItems[selIdx].mCallbacks[1].mFunctor)(type2);
         }
     }
 

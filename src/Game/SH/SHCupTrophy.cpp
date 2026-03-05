@@ -254,8 +254,8 @@ public:
     struct FunctorBase
     {
         virtual ~FunctorBase() {}
-        virtual FunctorBase* fnc_0x8() = 0;
-        virtual FunctorBase* fnc_0x10() = 0;
+        virtual FunctorBase* Invoke() = 0;
+        virtual FunctorBase* Clone() const = 0;
     };
 
     template <typename BindType>
@@ -263,8 +263,8 @@ public:
     {
         BindType mBind;
         virtual ~FunctorImpl() {}
-        virtual FunctorBase* fnc_0x8() { return 0; }
-        virtual FunctorBase* fnc_0x10() { return 0; }
+        virtual FunctorBase* Invoke() { return 0; }
+        virtual FunctorBase* Clone() const { return 0; }
     };
 
     Tag mTag;

@@ -304,7 +304,7 @@ void NSNMessengerScene::Update(float fDeltaT)
             }
             else
             {
-                m_messageFinishedCB.mFunctor->fnc_0x8();
+                ((FunctorBase*)m_messageFinishedCB.mFunctor)->Invoke();
             }
         }
     }
