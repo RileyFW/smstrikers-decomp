@@ -420,8 +420,9 @@ bool StopSFX(unsigned long handle)
 /**
  * Offset/Address/Size: 0xD18 | 0x801C5514 | size: 0x244
  */
-void PlaySFX(const SFXStartInfo&)
+unsigned long PlaySFX(const SFXStartInfo&)
 {
+    return 0;
 }
 
 /**

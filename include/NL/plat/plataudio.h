@@ -46,7 +46,22 @@ class nlFile;
 
 // class MusyXEffectType;
 // class MusyXOutputType;
-class SFXStartInfo;
+class SFXStartInfo
+{
+public:
+    /* 0x00 */ unsigned long uSFXID;
+    /* 0x04 */ float fVolume;
+    /* 0x08 */ float fPan;
+    /* 0x0C */ float fVolReverb;
+    /* 0x10 */ unsigned char uSurroundPan;
+    /* 0x11 */ unsigned char _pad1;
+    /* 0x12 */ unsigned short uPitchBend;
+    /* 0x14 */ unsigned short uModulation;
+    /* 0x16 */ unsigned short uDoppler;
+    /* 0x18 */ unsigned char bActivateFilter;
+    /* 0x19 */ unsigned char _pad2;
+    /* 0x1A */ unsigned short filterFreq;
+}; // total size: 0x1C
 
 // Forward declarations for types used in SoundStrToIDNode
 class SoundPropAccessor;
@@ -224,7 +239,7 @@ bool SetSFXVolumeGroup(u32 fid, u8 vGroup);
 bool SetSFXReverbVol(unsigned long, float);
 void SetSFXVolume(unsigned long, float);
 bool StopSFX(unsigned long);
-void PlaySFX(const SFXStartInfo&);
+unsigned long PlaySFX(const SFXStartInfo&);
 bool UnloadAllSoundGroupsOnStack(AudioFileData&, unsigned long);
 bool UnloadAllSoundGroups(AudioFileData&);
 bool UnloadSoundGroup(AudioFileData&, unsigned long);

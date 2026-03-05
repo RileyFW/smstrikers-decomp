@@ -3,6 +3,7 @@
 #include "Game/Sys/GCStream.h"
 
 #include "NL/nlConfig.h"
+#include "NL/nlMath.h"
 #include "NL/nlString.h"
 
 extern void ___blank(const char*, ...);
@@ -209,16 +210,78 @@ void MoodDefFromBlend(float*, MOOD_DEFINITION&)
 /**
  * Offset/Address/Size: 0x2EA0 | 0x801505B4 | size: 0x358
  */
-void PlayVocal(const CROWD_VOCAL_DEFINITION&, CROWD_STATE::VOCALIZATION_STATE&, GCAudioStreaming::AudioStream*)
+bool PlayVocal(const CROWD_VOCAL_DEFINITION&, CROWD_STATE::VOCALIZATION_STATE&, GCAudioStreaming::AudioStream*)
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
  * Offset/Address/Size: 0x2C7C | 0x80150390 | size: 0x224
  */
-void PlayMoodDef(MOOD_DEFINITION&)
+void PlayMoodDef(MOOD_DEFINITION& MoodDef)
 {
-    FORCE_DONT_INLINE;
+    Audio::SetSFXVolume(g_CrowdAudio.NeutralVoiceId, MoodDef.NeutralVol * g_CrowdState.CrowdVolume);
+    Audio::SetSFXVolume(g_CrowdAudio.PositiveVoiceId, MoodDef.PositiveVol * g_CrowdState.CrowdVolume);
+    Audio::SetSFXVolume(g_CrowdAudio.NegativeVoiceId, MoodDef.NegativeVol * g_CrowdState.CrowdVolume);
+
+    if (MoodDef.SaturationVolume > 0.0f)
+    {
+        if (MoodDef.SaturationSFXId == g_CrowdAudio.CurrentSaturationSFXId)
+        {
+            Audio::SetSFXVolume(g_CrowdAudio.SaturationVoiceId, MoodDef.SaturationVolume * g_CrowdState.CrowdVolume);
+        }
+        else
+        {
+            Audio::SetSFXVolumeGroup(MoodDef.SaturationSFXId, 2);
+            float fVolReverb = Audio::gCrowdSFX.GetSFXVolReverb(0x99);
+
+            SFXStartInfo info;
+            info.uSFXID = (unsigned long)-1;
+            info.fVolume = 0.0f;
+            info.fPan = 0.0f;
+            info.fVolReverb = 0.0f;
+            info.uSurroundPan = 0xFF;
+            info.uPitchBend = 0x2000;
+            info.uModulation = 0;
+            info.uDoppler = 0x2000;
+            info.bActivateFilter = 0;
+            info.filterFreq = 0;
+
+            info.uSFXID = MoodDef.SaturationSFXId;
+            info.fVolume = 1.0f;
+            info.fVolReverb = fVolReverb;
+
+            g_CrowdAudio.SaturationVoiceId = Audio::PlaySFX(info);
+            Audio::SetSFXVolume(g_CrowdAudio.SaturationVoiceId, MoodDef.SaturationVolume);
+        }
+    }
+    else
+    {
+        Audio::StopSFX(g_CrowdAudio.CurrentSaturationSFXId);
+        g_CrowdAudio.CurrentSaturationSFXId = (unsigned long)-1;
+    }
+
+    if (!g_CrowdState.StreamLocked)
+    {
+        PlayVocal(MoodDef.Chant, g_CrowdState.ChantState, g_CrowdAudio.pChantStream);
+
+        if (PlayVocal(MoodDef.Heckle, g_CrowdState.HeckleState, g_CrowdAudio.pHeckleStream))
+        {
+            unsigned char pan;
+            GCAudioStreaming::AudioStreamBuffer* pBuf;
+
+            pan = (unsigned char)nlRandom(0x7F, &nlDefaultSeed);
+            pBuf = g_CrowdAudio.pHeckleStream->m_Buffers[0];
+            pBuf->m_Pan = pan;
+            sndStreamMixParameterEx(pBuf->m_StreamId, pBuf->m_Volume, pBuf->m_Pan, pBuf->m_SurroundPan, 0, 0);
+
+            pan = (unsigned char)nlRandom(0x7F, &nlDefaultSeed);
+            pBuf = g_CrowdAudio.pHeckleStream->m_Buffers[0];
+            pBuf->m_SurroundPan = pan;
+            sndStreamMixParameterEx(pBuf->m_StreamId, pBuf->m_Volume, pBuf->m_Pan, pBuf->m_SurroundPan, 0, 0);
+        }
+    }
 }
 
 /**

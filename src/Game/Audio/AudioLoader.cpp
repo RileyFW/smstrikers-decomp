@@ -183,12 +183,12 @@ typedef DLListEntry<GCAudioStreaming::StereoAudioStream*> StreamDLListEntry;
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x80147E60 | size: 0x70
-//  */
-// void GCAudioStreaming::StereoAudioStream::~StereoAudioStream()
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x80147E60 | size: 0x70
+ */
+GCAudioStreaming::StereoAudioStream::~StereoAudioStream() {
+    Destructor();
+}
 
 /**
  * Offset/Address/Size: 0x3F48 | 0x80147D14 | size: 0x14C

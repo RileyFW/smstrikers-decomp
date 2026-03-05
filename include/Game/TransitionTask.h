@@ -37,6 +37,8 @@ public:
     /* 0x24 */ EventHandler* m_pGoalieHandler;
     /* 0x28 */ LoadingManager* m_pLoadingManager;
     /* 0x2C */ TRANSITION_STATE m_TransitionState;
+
+    static TransitionTask* sm_pGlobalTask;
 }; // total size: 0x30
 
 // class Detail

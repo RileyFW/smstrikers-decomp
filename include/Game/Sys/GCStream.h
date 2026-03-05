@@ -109,7 +109,7 @@ public:
 class StereoAudioStream : public AudioStream
 {
 public:
-    virtual ~StereoAudioStream() { };
+    virtual ~StereoAudioStream();
     virtual void GetUpdateReadLength();
     void _InterleavedHdrReadCB(nlFile*, void*, unsigned int, unsigned long);
     void _AsyncCancelCB(nlFile*, void*, unsigned int, unsigned long, void (*)(nlFile*, void*, unsigned int, unsigned long));
