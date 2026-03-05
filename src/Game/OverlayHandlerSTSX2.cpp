@@ -72,34 +72,34 @@ void STSX2Overlay::EventHandlerFunc(Event* event, void* arg1)
 
     if (event->m_uEventID == 5)
     {
-        u32 id = self->m_pActiveScreenHandler->fnc1();
+        EventData* data;
+        s32 id = event->m_data.GetID();
         if (id == -1)
         {
             nlPrintf("Error: Trying to get event data on event with none!\n");
-            return;
+            data = NULL;
+        }
+        else
+        {
+            id = event->m_data.GetID();
+            if (id != 0x18A)
+            {
+                nlPrintf("Error: Event data ID mismatch!\n");
+                data = NULL;
+            }
+            else
+            {
+                data = &event->m_data;
+            }
         }
 
-        id = self->m_pActiveScreenHandler->fnc1();
-        if (id != 0x18A)
+        u32 val = (*(u16*)((u8*)data + 6) >> 1) & 0x7FFF;
+        if (val == 6)
         {
-            nlPrintf("Error: Event data ID mismatch!\n");
-            return;
-        }
-
-        BaseScreenHandler* handler = self->m_pActiveScreenHandler;
-        u16* handlerWord = (u16*)((u8*)handler + 0x6);
-        u16 extracted = (*handlerWord >> 1) & 0x7FFF;
-
-        if (extracted == 6)
-        {
-            FEPresentation* presentation = *(FEPresentation**)((u8*)event + 0x14);
-            presentation->m_fadeDuration = presentation->m_currentSlide->m_start;
-            presentation->Update(1.0f);
-
-            // void** vtable = *(void***)event;
-            // typedef void (*EventVFunc)(Event*, s32);
-            // EventVFunc method = (EventVFunc)vtable[10]; // 0x28 / 4 = 10
-            // method(event, 1);
+            FEPresentation* pres = self->m_pFEPresentation;
+            pres->m_fadeDuration = pres->m_currentSlide->m_start;
+            self->m_pFEPresentation->Update(1.0f);
+            self->SetVisible(true);
         }
     }
 }

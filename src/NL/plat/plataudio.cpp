@@ -56,8 +56,12 @@ struct EffectSettings
     // todo: implement
 };
 
-static EffectSettings gDPL2AuxAEffectSettings[0x2];
-static EffectSettings gDPL2AuxBEffectSettings[0x2];
+static s32 gDPL2AuxAEffect;
+static s32 gDPL2AuxBEffect;
+static s32 gDPL2AuxAEffectSettings;
+static s32 gDPL2AuxBEffectSettings;
+static s32 gAuxAEffect;
+static s32 gAuxBEffect;
 static s32 gAuxAEffectSettings;
 static s32 gAuxBEffectSettings;
 
@@ -92,26 +96,15 @@ bool IsSFXPlaying(unsigned long id)
 
 /**
  * Offset/Address/Size: 0x38 | 0x801C4834 | size: 0xC0
- * TODO: 94.17% match - init procedure needs to be checked
+ * TODO: 94.17% match - r0/r5 register swap for true/gEmitters@l and lfs f0 scheduling
  */
 void PlatAudio::InitEmitter(unsigned long idx)
 {
     SFXEmitter* emitter = &gEmitters[idx];
-
-    emitter->bKeepTrack = true;
     SND_PARAMETER_INFO** ppInfo = &emitter->pMIDIControllerInfo;
 
-    // emitter->Init();
-    emitter->soundType = (unsigned long)-1;
-    emitter->fTimeStamp = -1.0f;
-    emitter->bIsStopping = 0;
-    emitter->bInUse = 0;
-    emitter->bIsFilterOn = 0;
-    emitter->m_unk_0x5F = 0;
-    emitter->pPhysObj = NULL;
-    emitter->pOwner = NULL;
-    emitter->pos.pvPos = NULL;
-    emitter->dir.pvDir = NULL;
+    emitter->bKeepTrack = true;
+    emitter->Init();
 
     emitter->pos.vPos.f.x = 0.0f;
     emitter->pos.vPos.f.y = 0.0f;
@@ -124,10 +117,9 @@ void PlatAudio::InitEmitter(unsigned long idx)
     SND_PARAMETER_INFO* pInfo = *ppInfo;
     if (pInfo != NULL)
     {
-        void* arr = *(void**)((char*)pInfo + 0x4);
-        if (arr != NULL)
+        if (pInfo->paraArray != NULL)
         {
-            delete[] (char*)arr;
+            delete[] (char*)pInfo->paraArray;
         }
         delete *ppInfo;
     }
@@ -971,8 +963,84 @@ bool AddAuxEffectA(MusyXEffectType type, void* data, unsigned char arg)
 /**
  * Offset/Address/Size: 0x2294 | 0x801C6A90 | size: 0x21C
  */
-void ShutdownAuxEffectA()
+bool ShutdownAuxEffectA()
 {
+    if (gUsingDolbyProLogic2)
+    {
+        s32 effect = gDPL2AuxAEffect;
+        s32 settings = gDPL2AuxAEffectSettings;
+
+        if (effect == 0)
+        {
+            nlPrintf("ShutdownAuxEffectA: No effect to shut down\n");
+            return true;
+        }
+
+        sndSetAuxProcessingCallbacks(0, NULL, NULL, 0xFF, 0, NULL, NULL, 0xFF, 0);
+
+        switch (effect)
+        {
+        case MUSYX_EFFECT_REVERB:
+            if (!sndAuxCallbackShutdownReverbSTD((SND_AUX_REVERBSTD*)settings))
+                return false;
+            break;
+        case MUSYX_EFFECT_REVERB_HI:
+            if (!sndAuxCallbackShutdownReverbHI((SND_AUX_REVERBHI*)settings))
+            {
+                nlPrintf("ShutdownAuxEffectA: Reverb HI shut down\n");
+                return false;
+            }
+            break;
+        case MUSYX_EFFECT_CHORUS:
+            if (!sndAuxCallbackShutdownChorus((SND_AUX_CHORUS*)settings))
+                return false;
+            break;
+        case MUSYX_EFFECT_DELAY:
+            if (!sndAuxCallbackShutdownDelay((SND_AUX_DELAY*)settings))
+                return false;
+            break;
+        }
+
+        return true;
+    }
+    else
+    {
+        s32 effect = gAuxAEffect;
+        s32 settings = gAuxAEffectSettings;
+
+        if (effect == 0)
+        {
+            nlPrintf("ShutdownAuxEffectA: No effect to shut down\n");
+            return true;
+        }
+
+        sndSetAuxProcessingCallbacks(0, NULL, NULL, 0xFF, 0, NULL, NULL, 0xFF, 0);
+
+        switch (effect)
+        {
+        case MUSYX_EFFECT_REVERB:
+            if (!sndAuxCallbackShutdownReverbSTD((SND_AUX_REVERBSTD*)settings))
+                return false;
+            break;
+        case MUSYX_EFFECT_REVERB_HI:
+            if (!sndAuxCallbackShutdownReverbHI((SND_AUX_REVERBHI*)settings))
+            {
+                nlPrintf("ShutdownAuxEffectA: Reverb HI shut down\n");
+                return false;
+            }
+            break;
+        case MUSYX_EFFECT_CHORUS:
+            if (!sndAuxCallbackShutdownChorus((SND_AUX_CHORUS*)settings))
+                return false;
+            break;
+        case MUSYX_EFFECT_DELAY:
+            if (!sndAuxCallbackShutdownDelay((SND_AUX_DELAY*)settings))
+                return false;
+            break;
+        }
+
+        return true;
+    }
 }
 
 /**

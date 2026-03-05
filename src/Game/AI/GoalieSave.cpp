@@ -1,5 +1,6 @@
 #include "Game/AI/GoalieSave.h"
 #include "Game/AI/FilteredRandom.h"
+#include "Game/Field.h"
 
 static nlAVLTree<int, SaveData*, DefaultKeyCompare<int> > gSaveMap;
 static nlListContainer<SaveData*> gSaveGrid[7][5];
@@ -346,6 +347,7 @@ bool GoalieSave::TriggerCallback(float fTime, float fDuration, unsigned long uEv
  */
 void GoalieSave::AddAreaToGrid(SaveData*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -422,9 +424,73 @@ void GoalieSave::AddChainToGrid(SaveData* pSaveData, bool bVertical)
     }
 }
 
+static inline void AddPointToGrid(SaveData* pSaveData, const nlVector3& v3Point)
+{
+    float z = v3Point.f.z;
+    float y = v3Point.f.y;
+
+    float netWidth = cField::GetNet(1.0f)->GetNetWidth();
+    float netHeight = cField::GetNet(1.0f)->GetNetHeight();
+
+    int i = (int)(7.0f * (0.5f * netWidth + y) / netWidth);
+    if (i < 0)
+        i = 0;
+    else if (i >= 7)
+        i = 6;
+
+    int j = (int)(5.0f * z / netHeight);
+    if (j < 0)
+        j = 0;
+    else if (j >= 5)
+        j = 4;
+
+    nlListContainer<SaveData*>& cell = gSaveGrid[i][j];
+
+    ListEntry<SaveData*>* entry = cell.m_Head;
+    if (entry != NULL)
+    {
+        while (entry != NULL)
+        {
+            if (entry->data == pSaveData)
+                return;
+            entry = entry->next;
+        }
+    }
+
+    {
+        ListEntry<SaveData*>* newEntry = (ListEntry<SaveData*>*)nlMalloc(sizeof(ListEntry<SaveData*>), 8, false);
+        if (newEntry != NULL)
+        {
+            newEntry->next = NULL;
+            newEntry->data = pSaveData;
+        }
+        nlListAddStart<ListEntry<SaveData*> >(&cell.m_Head, newEntry, &cell.m_Tail);
+    }
+}
+
 /**
  * Offset/Address/Size: 0x0 | 0x80053420 | size: 0x20C
  */
-void GoalieSave::AddToGrid(SaveData*)
+void GoalieSave::AddToGrid(SaveData* pSaveData)
 {
+    if (pSaveData->mpConnectedSaveData[1] != NULL || pSaveData->mpConnectedSaveData[0] != NULL)
+    {
+        if (pSaveData->mpConnectedSaveData[2] != NULL || pSaveData->mpConnectedSaveData[3] != NULL)
+        {
+            AddAreaToGrid(pSaveData);
+            return;
+        }
+        AddChainToGrid(pSaveData, true);
+        return;
+    }
+
+    if (pSaveData->mpConnectedSaveData[2] != NULL || pSaveData->mpConnectedSaveData[3] != NULL)
+    {
+        AddChainToGrid(pSaveData, false);
+        return;
+    }
+
+    AddPointToGrid(pSaveData, pSaveData->mv3SavePos);
+    pSaveData->mv3GroupMinCoords = pSaveData->mv3SavePos;
+    pSaveData->mv3GroupMaxCoords = pSaveData->mv3SavePos;
 }

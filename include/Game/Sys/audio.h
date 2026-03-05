@@ -18,6 +18,12 @@ class cGameSFX;
 namespace Audio
 {
 
+struct SoundEventData
+{
+    const char* eventName; // offset 0x0, size 0x4
+    int eventPriority;     // offset 0x4, size 0x4
+}; // total size: 0x8
+
 struct SoundAttributes
 {
     u32 me_ClassType;             // offset 0x0, size 0x4
@@ -175,7 +181,7 @@ void StopSFX(unsigned long);
 void StopCharSFXbyStr(const char* szSFXType, NisCharacterClass charIdentifier);
 void StopWorldSFXbyStr(const char* szSFXType);
 void PlayCharSFXbyStr(const char* szSFXType, NisCharacterClass charIdentifier, float fVol, float fDelay, bool bIs3D, bool bKeepTrack, const nlVector3* pInitialPosVector, const nlVector3* pInitialDirVector, unsigned long* unkPtr);
-void PlayWorldSFXbyStr(const char* szSFXType, float fVol, float fDelay, bool bIs3D, bool bKeepTrack, const nlVector3* pInitialPosVector, const nlVector3* pInitialDirVector, unsigned long* unkPtr);
+unsigned long PlayWorldSFXbyStr(const char* szSFXType, float fVol, float fDelay, bool bIs3D, bool bKeepTrack, const nlVector3* pInitialPosVector, const nlVector3* pInitialDirVector, unsigned long* unkPtr);
 void RemoveDelayedSFX(unsigned long index);
 int IsDelayedCharSFX(unsigned long type, cGameSFX* pOwnerSFX);
 // void AddDelayedSFX(const Audio::SoundAttributes&, unsigned long, float, float, cGameSFX*);

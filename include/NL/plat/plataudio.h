@@ -50,7 +50,17 @@ class SFXStartInfo;
 
 // Forward declarations for types used in SoundStrToIDNode
 class SoundPropAccessor;
-struct SoundProperties;
+
+struct SoundProperties
+{
+    /* 0x00 */ const char* typeStr;
+    /* 0x04 */ const char* musyxStr;
+    /* 0x08 */ float fVolume;
+    /* 0x0C */ float fDelay;
+    /* 0x10 */ float fVolReverb;
+    /* 0x14 */ int volumeGroup;
+    /* 0x18 */ int priority;
+}; // total size: 0x1C
 
 // struct SFXEmitter__
 // {
@@ -229,7 +239,7 @@ unsigned char ReadEntireSampleFileIntoMemSync(const char*);
 unsigned char ReadEntireSampleFileIntoMem(const char*);
 bool UpdateAuxEffectA(MusyXEffectType, void*);
 bool AddAuxEffectA(MusyXEffectType, void*, unsigned char);
-void ShutdownAuxEffectA();
+bool ShutdownAuxEffectA();
 bool DeactivateDPL2();
 bool ActivateDPL2();
 void SetOutputMode(MusyXOutputType);

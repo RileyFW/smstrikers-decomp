@@ -23,7 +23,8 @@ BasicString<char, Detail::TempStringAllocator> Config::LoadFileAsString(const ch
 /**
  * Offset/Address/Size: 0x1608 | 0x801D426C | size: 0x54
  */
-void Config::Set(const char* key, const BasicString<char, Detail::TempStringAllocator>& value) {
+void Config::Set(const char* key, const BasicString<char, Detail::TempStringAllocator>& value)
+{
     Set(key, value.c_str());
 }
 
@@ -331,9 +332,18 @@ void SetTagValuePair::Section(const BasicString<char, Detail::TempStringAllocato
 /**
  * Offset/Address/Size: 0x2998 | 0x801D55FC | size: 0x218
  */
-void SetTagValuePair::TagValuePair(const BasicString<char, Detail::TempStringAllocator>&, const BasicString<char, Detail::TempStringAllocator>&)
+void SetTagValuePair::TagValuePair(const BasicString<char, Detail::TempStringAllocator>& tag,
+    const BasicString<char, Detail::TempStringAllocator>& rhs)
 {
-    FORCE_DONT_INLINE;
+    BasicString<char, Detail::TempStringAllocator> tagWithSection(tag);
+
+    s32 sectionLen = mCurrentSection.m_data ? mCurrentSection.m_data->mSize - 1 : 0;
+    if (sectionLen > 0)
+    {
+        tagWithSection = mCurrentSection.Append(".").Append(tag);
+    }
+
+    mConfig.Set<BasicString<char, Detail::TempStringAllocator> >(tagWithSection.c_str(), rhs);
 }
 
 /**

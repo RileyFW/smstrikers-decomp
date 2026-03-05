@@ -1,4 +1,5 @@
 #include "Game/GameAudio.h"
+#include "Game/Audio/AudioLoader.h"
 #include "Game/Sys/debug.h"
 #include "NL/nlString.h"
 #include "types.h"
@@ -384,8 +385,88 @@ void cGameSFX::Stop(unsigned long soundID, cGameSFX::StopFlag stopFlag)
 /**
  * Offset/Address/Size: 0xF00 | 0x80152444 | size: 0x204
  */
-void cGameSFX::KeepTrack(SFXEmitter*, const Audio::SoundAttributes&, unsigned long)
+SFXPlaySet* cGameSFX::KeepTrack(SFXEmitter* pEmitter, const Audio::SoundAttributes& attrs, unsigned long sndID)
 {
+    if (!mbCurPlaySetIsValid)
+    {
+        return NULL;
+    }
+
+    if (attrs.mb_Is3D && !attrs.mb_Update3DContinuously)
+    {
+        return NULL;
+    }
+
+    SFXPlaySet* slot = NULL;
+
+    if (SFXPlaySet::m_TrackedSFXSlotPool.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&SFXPlaySet::m_TrackedSFXSlotPool, sizeof(SFXPlaySet));
+    }
+    if (SFXPlaySet::m_TrackedSFXSlotPool.m_FreeList != NULL)
+    {
+        slot = (SFXPlaySet*)SFXPlaySet::m_TrackedSFXSlotPool.m_FreeList;
+        SFXPlaySet::m_TrackedSFXSlotPool.m_FreeList = SFXPlaySet::m_TrackedSFXSlotPool.m_FreeList->m_next;
+    }
+
+    slot->type = (unsigned long)-1;
+    slot->voiceID = Audio::GetSndIDError();
+    slot->bIs3D = 0;
+    slot->emitter = NULL;
+    slot->delay = 0.0f;
+    slot->timeStamp = 0.0f;
+    slot->sfxPriority = 0;
+    slot->groupPriority = -1;
+    slot->filterFreq = 0;
+    slot->pitch = 0x2000;
+    slot->type = attrs.mu_Type;
+    if (!attrs.mf_ReturnEmitterOnPlay)
+    {
+        slot->voiceID = sndID;
+    }
+
+    slot->delay = attrs.mf_DelayTime;
+    if (attrs.mb_Is3D)
+    {
+        slot->bIs3D = 1;
+    }
+    else
+    {
+        slot->bIs3D = 0;
+    }
+
+    slot->timeStamp = Audio::GetAudioTimer();
+
+    if (attrs.mb_Is3D && attrs.mb_Update3DContinuously && 0.0f == attrs.mf_DelayTime)
+    {
+        slot->emitter = pEmitter;
+        pEmitter->bKeepTrack = true;
+        if (attrs.posUpdateMethod == PHYSOBJ)
+        {
+            pEmitter->pPhysObj = attrs.mp_PhysObj;
+        }
+        else if (attrs.posUpdateMethod == PTRS_TO_VECTORS)
+        {
+            pEmitter->pos.pvPos = attrs.pos.pvPos;
+            pEmitter->dir.pvDir = attrs.dir.pvDir;
+        }
+        else if (attrs.posUpdateMethod == VECTORS)
+        {
+            pEmitter->pos.vPos = attrs.pos.vPos;
+            pEmitter->dir.vDir = attrs.dir.vDir;
+        }
+    }
+
+    DLListEntry<SFXPlaySet*>* entry = (DLListEntry<SFXPlaySet*>*)nlMalloc(sizeof(DLListEntry<SFXPlaySet*>), 8, false);
+    if (entry != NULL)
+    {
+        entry->m_next = NULL;
+        entry->m_prev = NULL;
+        entry->m_data = slot;
+    }
+    nlDLRingAddStart(&mpCurPlaySet.m_Head, entry);
+
+    return slot;
 }
 
 /**
@@ -796,6 +877,63 @@ float cGameSFX::GetSFXVol(unsigned long index) const
  */
 void cGameSFX::SetSFX(SoundPropAccessor* pSoundPropAccessor)
 {
+    if (!mbInited)
+    {
+        nlPrintf("cGameSFX::SetSFX - not initialized\n");
+    }
+
+    if (mNumSFX == 0)
+    {
+        mNumSFX = pSoundPropAccessor->GetNumSFX();
+    }
+    else
+    {
+        mNumSFX += pSoundPropAccessor->GetNumSFX();
+    }
+
+    for (unsigned long i = 1; i < mNumSFXTypes; i++)
+    {
+        for (int j = 0; j < pSoundPropAccessor->GetNumSFX(); j++)
+        {
+            const SoundProperties* pProp = pSoundPropAccessor->GetSoundProperty(j);
+
+            if (nlStrCmp(mpSoundStrTable[i], pProp->typeStr) == 0)
+            {
+                eClassType classType = GetClassType();
+
+                if (classType == WORLD)
+                {
+                    AudioLoader::GetWorldSFXTypeFromStr(pProp->typeStr);
+                }
+                else if (classType == CHAR)
+                {
+                    AudioLoader::GetCharSFXTypeFromStr(pProp->typeStr);
+                }
+
+                SoundStrToIDNode* pNode = NULL;
+                unsigned long musyxID = AudioLoader::GetSFXIDFromStr(pProp->musyxStr, &pNode);
+
+                if (classType == CHAR)
+                {
+                    mpSFX[i].typeID = i;
+                    mpSFX[i].typeStr = pProp->typeStr;
+                }
+
+                mpSFX[i].musyxStr = pProp->musyxStr;
+                mpSFX[i].musyxID = musyxID;
+                mpSFX[i].fVolume = pProp->fVolume;
+                mpSFX[i].fDelay = pProp->fDelay;
+                mpSFX[i].fVolReverb = pProp->fVolReverb;
+                mpSFX[i].volGrp = pProp->volumeGroup;
+                mpSFX[i].sfxPriority = pProp->priority;
+                mpSFX[i].pSoundPropAccessor = pSoundPropAccessor;
+                mpSFX[i].pSoundProp = pProp;
+                mpSFX[i].pOwner = this;
+
+                break;
+            }
+        }
+    }
 }
 
 /**

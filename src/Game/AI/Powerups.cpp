@@ -785,9 +785,79 @@ SpinyShell::~SpinyShell()
 
 /**
  * Offset/Address/Size: 0xD0C | 0x8005B5F8 | size: 0x218
+ * TODO: 99.78% match - f4/f1 register allocation diff in 5.0f velocity cap
+ *       multiplication; likely MWCC register allocator version quirk.
  */
-void SpinyShell::Update(float)
+void SpinyShell::Update(float dt)
 {
+    nlPolar polar;
+    nlVector2 vel;
+    nlPolar polar2;
+
+    m_v3PrevPosition = m_v3Position;
+    m_pPhysicsObject->GetPosition(&m_v3Position);
+    m_pPhysicsObject->GetLinearVelocity(&m_v3Velocity);
+
+    if (m_v3Position.f.z < ((PhysicsSphere*)m_pPhysicsObject)->GetRadius())
+    {
+        m_v3Position.f.z = ((PhysicsSphere*)m_pPhysicsObject)->GetRadius();
+        m_pPhysicsObject->SetPosition(m_v3Position, PhysicsObject::WORLD_COORDINATES);
+    }
+
+    if (m_pBlurHandler != NULL)
+    {
+        m_pBlurHandler->AddViewOrientedPoint(m_v3Position, m_v3Velocity);
+    }
+
+    mtActiveTimer.Countdown(dt, 0.0f);
+    mtNoHitTimer.Countdown(dt, 0.0f);
+
+    UpdateTransform();
+
+    if (m_pBlurHandler != NULL)
+    {
+        nlCartesianToPolar(polar, m_v3Velocity.f.x, m_v3Velocity.f.y);
+        if (polar.r < 0.5f)
+        {
+            m_pBlurHandler->Die(0.5f);
+            m_pBlurHandler = NULL;
+        }
+    }
+
+    if (mtNoHitTimer.m_uPackedTime == 0)
+    {
+        nlCartesianToPolar(polar2, m_v3Velocity.f.x, m_v3Velocity.f.y);
+        if (polar2.r < 0.5f)
+        {
+            m_bShouldDestroy = true;
+        }
+        else if (polar2.r > 5.0f)
+        {
+            vel.as_u32[0] = m_v3Velocity.as_u32[0];
+            vel.as_u32[1] = m_v3Velocity.as_u32[1];
+            f32 velX = vel.f.x;
+            f32 velY = vel.f.y;
+            f32 sqX = velX * velX;
+            f32 sqY = velY * velY;
+            f32 recipLen = nlRecipSqrt(sqX + sqY, true);
+            vel.f.x = recipLen * velX;
+            vel.f.y = recipLen * velY;
+            vel.f.x = 5.0f * vel.f.x;
+            vel.f.y = 5.0f * vel.f.y;
+            nlVector3 cappedVel;
+            cappedVel.f.y = vel.f.y;
+            cappedVel.f.x = vel.f.x;
+            cappedVel.f.z = m_v3Velocity.f.z;
+            m_v3Velocity = cappedVel;
+            m_pPhysicsObject->SetLinearVelocity(cappedVel);
+        }
+    }
+
+    if (m_bShouldDestroy)
+    {
+        m_pDrawableObj->m_uObjectFlags &= ~1u;
+        Destroy(false);
+    }
 }
 
 /**
@@ -828,8 +898,77 @@ FreezeShell::~FreezeShell()
 /**
  * Offset/Address/Size: 0x8E8 | 0x8005B1D4 | size: 0x218
  */
-void FreezeShell::Update(float)
+void FreezeShell::Update(float fDeltaT)
 {
+    nlPolar polar;
+    nlVector2 vel;
+    nlPolar polar2;
+
+    m_v3PrevPosition = m_v3Position;
+    m_pPhysicsObject->GetPosition(&m_v3Position);
+    m_pPhysicsObject->GetLinearVelocity(&m_v3Velocity);
+
+    if (m_v3Position.f.z < ((PhysicsSphere*)m_pPhysicsObject)->GetRadius())
+    {
+        m_v3Position.f.z = ((PhysicsSphere*)m_pPhysicsObject)->GetRadius();
+        m_pPhysicsObject->SetPosition(m_v3Position, PhysicsObject::WORLD_COORDINATES);
+    }
+
+    if (m_pBlurHandler != NULL)
+    {
+        m_pBlurHandler->AddViewOrientedPoint(m_v3Position, m_v3Velocity);
+    }
+
+    mtActiveTimer.Countdown(fDeltaT, 0.0f);
+    mtNoHitTimer.Countdown(fDeltaT, 0.0f);
+
+    UpdateTransform();
+
+    if (m_pBlurHandler != NULL)
+    {
+        nlCartesianToPolar(polar, m_v3Velocity.f.x, m_v3Velocity.f.y);
+        if (polar.r < 0.5f)
+        {
+            m_pBlurHandler->Die(0.5f);
+            m_pBlurHandler = NULL;
+        }
+    }
+
+    if (mtNoHitTimer.m_uPackedTime == 0)
+    {
+        nlCartesianToPolar(polar2, m_v3Velocity.f.x, m_v3Velocity.f.y);
+        if (polar2.r < 3.0f)
+        {
+            m_bShouldDestroy = true;
+        }
+        else if (polar2.r > 20.0f)
+        {
+            vel.as_u32[0] = m_v3Velocity.as_u32[0];
+            vel.as_u32[1] = m_v3Velocity.as_u32[1];
+            f32 velX = vel.f.x;
+            f32 velY = vel.f.y;
+            f32 sqX = velX * velX;
+            f32 sqY = velY * velY;
+            f32 recipLen = nlRecipSqrt(sqX + sqY, true);
+            vel.f.x = recipLen * velX;
+            vel.f.y = recipLen * velY;
+            vel.f.x = 19.0f * vel.f.x;
+            vel.f.y = 19.0f * vel.f.y;
+            nlVector3 cappedVel;
+            cappedVel.f.y = vel.f.y;
+            cappedVel.f.x = vel.f.x;
+            cappedVel.f.z = m_v3Velocity.f.z;
+            m_v3Velocity = cappedVel;
+            m_pPhysicsObject->SetLinearVelocity(cappedVel);
+        }
+    }
+
+    // TODO: 99.78% match - f4/f1 register allocation diff in 19.0f multiplication, same MWCC version quirk as SpinyShell::Update
+    if (m_bShouldDestroy)
+    {
+        m_pDrawableObj->m_uObjectFlags &= ~1u;
+        Destroy(false);
+    }
 }
 
 /**

@@ -1,6 +1,8 @@
 #include "Game/Render/SidelineExplodable.h"
 #include "Game/Render/AnimatedModelExplodable.h"
 #include "Game/Render/StaticModelExplodable.h"
+#include "Game/WorldManager.h"
+#include "NL/glx/glxTexture.h"
 #include "NL/nlMath.h"
 #include "NL/nlString.h"
 #include "types.h"
@@ -225,8 +227,51 @@ void SidelineExplodableTextureLoadCallback(unsigned long)
 /**
  * Offset/Address/Size: 0x9EC | 0x80167D4C | size: 0x218
  */
-void ExplodableCategoryData::LoadGeometry()
+bool ExplodableCategoryData::LoadGeometry()
 {
+    glxTextureLoadCallback_t cb = glx_SetLoadCallback((glxTextureLoadCallback_t)SidelineExplodableTextureLoadCallback);
+
+    int numFragmentModelsLoaded = 0;
+    if (!WorldManager::s_World->LoadGeometry(mBaseModelName, true, true, mFragmentModelList, &numFragmentModelsLoaded))
+    {
+        return false;
+    }
+
+    mNumStationaryFragments = numFragmentModelsLoaded;
+
+    int numFragmentModelsLoaded2 = 0;
+    if (!WorldManager::s_World->LoadGeometry(mFragmentModelName, true, true, &mFragmentModelList[mNumStationaryFragments], &numFragmentModelsLoaded2))
+    {
+        return false;
+    }
+
+    mNumFragmentModels = numFragmentModelsLoaded2 + mNumStationaryFragments;
+
+    if (mUnexplodedModelName != NULL)
+    {
+        int numModelsLoaded = 0;
+        if (!WorldManager::s_World->LoadGeometry(mUnexplodedModelName, true, false, &mUnexplodedModel, &numModelsLoaded))
+        {
+            return false;
+        }
+
+        DrawableObject* drawable = WorldManager::s_World->FindDrawableObject(mUnexplodedModel);
+        drawable->m_uObjectFlags &= ~1;
+        drawable->m_bRenderPlanarShadow = true;
+    }
+
+    glx_SetLoadCallback(cb);
+
+    int i;
+    for (i = 0; i < mNumFragmentModels; i++)
+    {
+        DrawableObject* drawable = WorldManager::s_World->FindDrawableObject(mFragmentModelList[i]);
+        drawable->m_uObjectFlags &= ~1;
+        drawable->m_uObjectCreationFlags |= 0xF000;
+        mInitialTransforms[i] = drawable->GetWorldMatrix();
+    }
+
+    return true;
 }
 
 /**

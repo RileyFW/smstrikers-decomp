@@ -49,11 +49,7 @@ call_transform:
 int PhysicsCompositeObject::AddObject(PhysicsObject* object)
 {
     object->MakeStatic();
-    PhysicsTransform* transform = (PhysicsTransform*)nlMalloc(0x30, 8, 0);
-    if (transform != nullptr)
-    {
-        transform = new (transform) PhysicsTransform();
-    }
+    PhysicsTransform* transform = new (nlMalloc(0x30, 8, false)) PhysicsTransform();
 
     transform->Attach(object, this);
 

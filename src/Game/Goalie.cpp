@@ -1280,9 +1280,75 @@ void Goalie::InitActionSTSRecover()
 
 /**
  * Offset/Address/Size: 0x2600 | 0x800450FC | size: 0x224
+ * TODO: 97.01% match - register allocation diffs in delta block (f3/f4 swap for
+ * y/x/z deltas) and scale block (cascading register differences). All remaining
+ * diffs are register-only (r markers), functionally equivalent.
  */
 void Goalie::InitActionChipShotStumble()
 {
+    CleanGoalieAction();
+    mPrevGoalieActionState = mGoalieActionState;
+    mGoalieActionState = GOALIEACTION_MISS_CHIP_SHOT;
+    mnSubstate = 0;
+
+    float dx = m_v3Position.f.x - g_pBall->m_v3Position.f.x;
+    float dy = m_v3Position.f.y - g_pBall->m_v3Position.f.y;
+    bool bFar = (dx * dx + dy * dy) > 100.0f;
+    bool bContactLow;
+    if (mv3LocalContactPosition.f.y > 0.0f)
+        bContactLow = false;
+    else
+        bContactLow = true;
+    mpSaveData = GoalieSave::GetMissChipSaveData(bContactLow, bFar);
+
+    mpLooseBallInfo = NULL;
+    SetAnimState(mpSaveData->mnAnimID, true, 0.2f, false, false);
+    InitMovementFromAnim(0, v3Zero, 0.5f, false);
+    m_pPhysicsCharacter->m_CanCollidedWithGoalLine = false;
+
+    cBall* pBall = g_pBall;
+    float y = pBall->m_v3ShotTarget.f.y - pBall->m_v3Position.f.y;
+    float x = pBall->m_v3ShotTarget.f.x - pBall->m_v3Position.f.x;
+    float yy = y * y;
+    float z = pBall->m_v3ShotTarget.f.z - pBall->m_v3Position.f.z;
+    volatile float dirZ, dirY, dirX;
+    dirY = y;
+    float xx = x * x;
+    dirX = x;
+    dirZ = z;
+    float dist = nlSqrt(xx + yy, true);
+
+    if (dist > 0.5f)
+    {
+        float sx = dirX;
+        float distPlusOne = 1.0f + dist;
+        float sy = dirY;
+        float sz = dirZ;
+        float scale = distPlusOne / dist;
+        nlVec3Set(mv3NavTarget,
+            pBall->m_v3ShotTarget.f.x + scale * sx,
+            pBall->m_v3ShotTarget.f.y + scale * sy,
+            pBall->m_v3ShotTarget.f.z + scale * sz);
+    }
+    else
+    {
+        mv3NavTarget = pBall->m_v3ShotTarget;
+        float pushX;
+        if (mv3NavTarget.f.x > 0.0f)
+            pushX = 1.0f;
+        else
+            pushX = -1.0f;
+        mv3NavTarget.f.x += pushX;
+    }
+
+    float clampedY = mv3NavTarget.f.y;
+    float maxY = 0.5f * cNet::m_fNetWidth - 0.5f;
+    clampedY = (clampedY >= -maxY) ? clampedY : -maxY;
+    clampedY = (clampedY <= maxY) ? clampedY : maxY;
+    mv3NavTarget.f.y = clampedY;
+
+    mv3NavTarget.f.z = 0.0f;
+    mbDoHeadTrack = false;
 }
 
 /**

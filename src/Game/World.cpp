@@ -1,4 +1,5 @@
 #include "Game/World.h"
+#include "Game/LightObject.h"
 
 #include "string.h"
 
@@ -43,8 +44,80 @@ unsigned long World::GetHashIdForGenericName(const char* name) const
 /**
  * Offset/Address/Size: 0xA0 | 0x80194D64 | size: 0x1F0
  */
-void World::GetShadowLight(const nlVector3&, float)
+LightObject* World::GetShadowLight(const nlVector3& vPosition, float)
 {
+    u32* pStack;
+    LightObject* pClosest = NULL;
+    float fDistance = 999999.0f;
+    AVLTreeEntry<unsigned long, LightObject*>* pNode;
+    LightObject* pLight;
+
+    pStack = (u32*)nlMalloc(8, 8, false);
+    if (pStack != NULL)
+    {
+        u32 numElements = m_lightMap.m_NumElements;
+        pNode = m_lightMap.m_Root;
+        pStack[0] = (u32)nlMalloc((numElements + 1) * 4, 8, false);
+        pStack[1] = 0;
+
+        if (pNode != NULL)
+        {
+            while (pNode->node.left != NULL)
+            {
+                ((AVLTreeEntry<unsigned long, LightObject*>**)pStack[0])[pStack[1]] = pNode;
+                pStack[1]++;
+                pNode = (AVLTreeEntry<unsigned long, LightObject*>*)pNode->node.left;
+            }
+            ((AVLTreeEntry<unsigned long, LightObject*>**)pStack[0])[pStack[1]] = pNode;
+            pStack[1]++;
+        }
+    }
+
+    while (pStack[1] != 0)
+    {
+        pNode = ((AVLTreeEntry<unsigned long, LightObject*>**)pStack[0])[pStack[1] - 1];
+        pLight = pNode->value;
+
+        if (pLight->m_emitFlags & 1)
+        {
+            float dx, dy, dz;
+            dy = vPosition.f.y - pLight->m_worldPosition.f.y;
+            dx = vPosition.f.x - pLight->m_worldPosition.f.x;
+            dz = vPosition.f.z - pLight->m_worldPosition.f.z;
+            float distSq = dx * dx + dy * dy + dz * dz;
+            if (distSq < fDistance)
+            {
+                fDistance = distSq;
+                pClosest = pLight;
+            }
+        }
+
+        pStack[1]--;
+
+        {
+            AVLTreeEntry<unsigned long, LightObject*>* pChild = (AVLTreeEntry<unsigned long, LightObject*>*)((AVLTreeEntry<unsigned long, LightObject*>**)pStack[0])[pStack[1]]->node.right;
+            if (pChild == NULL)
+            {
+                continue;
+            }
+
+            while (pChild->node.left != NULL)
+            {
+                ((AVLTreeEntry<unsigned long, LightObject*>**)pStack[0])[pStack[1]] = pChild;
+                pStack[1]++;
+                pChild = (AVLTreeEntry<unsigned long, LightObject*>*)pChild->node.left;
+            }
+            ((AVLTreeEntry<unsigned long, LightObject*>**)pStack[0])[pStack[1]] = pChild;
+            pStack[1]++;
+        }
+    }
+
+    if (pStack != NULL)
+    {
+        delete[] (u8*)pStack[0];
+        delete (u8*)pStack;
+    }
+    return pClosest;
 }
 
 /**

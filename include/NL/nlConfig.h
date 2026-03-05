@@ -53,6 +53,12 @@ public:
     void Set(const char*, float);
     void Set(const char*, bool);
     void Set(const char*, int);
+
+    template <typename T>
+    void Set(const char* key, T value)
+    {
+        Set(key, value);
+    }
     TagValuePair& FindTvp(const char*);
     bool IsBool(const char*, bool&) const;
     bool Exists(const char*) const;
@@ -154,7 +160,11 @@ struct SetTagValuePair : public Config::Parser
     /* 0x14 */ float mTweakMaxValue;
     /* 0x18 */ float mTweakIncrement;
 
-    SetTagValuePair(Config& cfg) : mConfig(cfg), mTweaked(false) {}
+    SetTagValuePair(Config& cfg)
+        : mConfig(cfg)
+        , mTweaked(false)
+    {
+    }
 
     virtual void TagValuePair(const BasicString<char, Detail::TempStringAllocator>&, const BasicString<char, Detail::TempStringAllocator>&);
     virtual void Section(const BasicString<char, Detail::TempStringAllocator>&);

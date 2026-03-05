@@ -28,9 +28,6 @@ struct DelayTimer
 
 FadeAudioData* g_pFadeList;
 
-// extern cGame *g_pGame;
-// extern cTeam *g_pTeams;
-
 bool gbFilterOn = false;
 bool gbPitchBent = false;
 bool gbUseHiQualityReverb = false;
@@ -154,23 +151,23 @@ void FadeFilterFromCurrentToZero()
 /**
  * Offset/Address/Size: 0x3E0 | 0x8013C8F4 | size: 0x94
  */
-// void FadeFilterToFullStrength()
-// {
-// }
+void FadeFilterToFullStrength()
+{
+}
 
 /**
  * Offset/Address/Size: 0x474 | 0x8013C988 | size: 0x354
  */
-// void PitchBend(float, float, float, float)
-// {
-// }
+void PitchBend(float, float, float, float)
+{
+}
 
 /**
  * Offset/Address/Size: 0x7C8 | 0x8013CCDC | size: 0x510
  */
-// void FadeFilter(float, float, float, float)
-// {
-// }
+void FadeFilter(float, float, float, float)
+{
+}
 
 /**
  * Offset/Address/Size: 0xCD8 | 0x8013D1EC | size: 0x2C
@@ -353,79 +350,82 @@ bool IsSFXPlaying(unsigned long sfxID)
 /**
  * Offset/Address/Size: 0x2378 | 0x8013E88C | size: 0x34
  */
-// void StopSFX(unsigned long)
-// {
-// }
+void StopSFX(unsigned long)
+{
+}
 
 /**
  * Offset/Address/Size: 0x23AC | 0x8013E8C0 | size: 0x214
  */
-// void PlaySFXEventFromScript(const SoundEventData&, const char*, float, float)
-// {
-// }
+void PlaySFXEventFromScript(const SoundEventData&, const char*, float, float)
+{
+}
 
 /**
  * Offset/Address/Size: 0x25C0 | 0x8013EAD4 | size: 0x68
  */
-// void StopCharSFXbyStr(const char*, NisCharacterClass)
-// {
-// }
+void StopCharSFXbyStr(const char*, NisCharacterClass)
+{
+}
 
 /**
  * Offset/Address/Size: 0x2628 | 0x8013EB3C | size: 0xB4
  */
-// void StopWorldSFXbyStr(const char*)
-// {
-// }
+void StopWorldSFXbyStr(const char*)
+{
+}
 
 /**
  * Offset/Address/Size: 0x26DC | 0x8013EBF0 | size: 0x104
  */
-// void PlayCharSFXbyStr(const char*, NisCharacterClass, float, float, bool, bool, const nlVector3*, const nlVector3*, unsigned long*)
-// {
-// }
+void PlayCharSFXbyStr(const char*, NisCharacterClass, float, float, bool, bool, const nlVector3*, const nlVector3*, unsigned long*)
+{
+}
 
 /**
  * Offset/Address/Size: 0x27E0 | 0x8013ECF4 | size: 0x144
  */
-// void PlayWorldSFXbyStr(const char*, float, float, bool, bool, const nlVector3*, const nlVector3*, unsigned long*)
-// {
-// }
+
+unsigned long PlayWorldSFXbyStr(const char*, float, float, bool, bool, const nlVector3*, const nlVector3*, unsigned long*)
+{
+    return 0;
+}
 
 /**
  * Offset/Address/Size: 0x2924 | 0x8013EE38 | size: 0x30
  */
-// void RemoveDelayedSFX(unsigned long)
-// {
-// }
+void RemoveDelayedSFX(unsigned long)
+{
+}
 
 /**
  * Offset/Address/Size: 0x2954 | 0x8013EE68 | size: 0xE8
  */
-// void IsDelayedCharSFX(unsigned long, cGameSFX*)
-// {
-// }
+int IsDelayedCharSFX(unsigned long, cGameSFX*)
+{
+    return -1;
+}
 
 /**
  * Offset/Address/Size: 0x2A3C | 0x8013EF50 | size: 0x3E4
  */
-// void AddDelayedSFX(const SoundAttributes&, unsigned long, float, float, cGameSFX*)
-// {
-// }
+void AddDelayedSFX(const SoundAttributes&, unsigned long, float, float, cGameSFX*)
+{
+}
 
 /**
  * Offset/Address/Size: 0x2E20 | 0x8013F334 | size: 0x17C
  */
-// void PlaySFXbyID(const SoundAttributes&, unsigned long, float, float, int)
-// {
-// }
+void PlaySFXbyID(const SoundAttributes&, unsigned long, float, float, int)
+{
+}
 
 /**
  * Offset/Address/Size: 0x2F9C | 0x8013F4B0 | size: 0x20
  */
-// void PlaySFX(const SFXStartInfo&)
-// {
-// }
+void PlaySFX(const SFXStartInfo&)
+{
+}
 
 /**
  * Offset/Address/Size: 0x2FBC | 0x8013F4D0 | size: 0x8

@@ -341,25 +341,20 @@ void nlSinCos(float* presult_sin, float* presult_cos, unsigned short angle)
     *presult_cos = result_cos;
 }
 
-/**
- * Offset/Address/Size: 0x6F0 | 0x801D1B64 | size: 0xA0
- * TODO: 96% match - register allocation differences (f4/f5 swap), fneg instruction ordering
- */
 float nlSin(unsigned short angle)
 {
-    float a = (float)angle * (6.283185f / 65536.0f); // Convert to radians (2*PI / 65536)
+    float a = (float)angle * (6.283185f / 65536.0f);
+    float working_a = a;
     float flip_sign = 1.0f;
-    float working_a = a; // Create copy like target
 
-    // Reduce angle to [-PI/2, PI/2]
-    if (a >= 1.5707963f) // PI/2
+    if (a >= 4.7123889f) // 3*PI/2
     {
-        working_a = a - 3.14159265f; // PI
+        working_a = a - 6.283185f; // 2*PI
     }
-    else if (a >= 4.7123889f) // 3*PI/2
+    else if (a >= 1.5707963f) // PI/2
     {
-        flip_sign = -flip_sign;     // Use fneg pattern
-        working_a = a - 4.7123889f; // 3*PI/2
+        flip_sign = -flip_sign;
+        working_a = a - 3.14159265f; // PI
     }
 
     // Taylor series

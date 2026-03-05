@@ -136,7 +136,7 @@ public:
     void CreateFile(const char*, unsigned long, MemCard::ICON_CONFIG*, MemCard::MC_FILE*&, const MemCardFunctor&);
     void OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*);
     long FormatCard(const MemCardFunctor&);
-    void DeleteFile(const char*, const MemCardFunctor&);
+    long DeleteFile(const char*, const MemCardFunctor&);
     long InternalReadFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&);
     long InternalWriteFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&, bool);
     long CloseFile(MemCard::MC_FILE*);

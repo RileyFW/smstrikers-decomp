@@ -29,6 +29,7 @@ public:
     union
     {               // inferred
         float e[2]; // offset 0x0, size 0x8
+        u32 as_u32[2];
         struct
         {            // inferred
             float x; // offset 0x0, size 0x4

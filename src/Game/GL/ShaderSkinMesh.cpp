@@ -213,7 +213,8 @@ nlMatrix4& ShaderSkinMesh::GetPoseMatrix(unsigned long boneID)
 /**
  * Offset/Address/Size: 0x8E8 | 0x801E0F2C | size: 0x1AC
  */
-struct TreeStack {
+struct TreeStack
+{
     AVLTreeEntry<unsigned long, SkinMatrix>** m_Stack;
     unsigned int m_Count;
 };
@@ -252,7 +253,8 @@ void ShaderSkinMesh::GetPoseMatrices(GLSkinMeshMatrix* pMatrices)
         stack->m_Count--;
 
         AVLTreeEntry<unsigned long, SkinMatrix>* right = (AVLTreeEntry<unsigned long, SkinMatrix>*)stack->m_Stack[stack->m_Count]->node.right;
-        if (right == NULL) continue;
+        if (right == NULL)
+            continue;
 
         while (right->node.left != NULL)
         {
@@ -275,27 +277,39 @@ void ShaderSkinMesh::GetPoseMatrices(GLSkinMeshMatrix* pMatrices)
 /**
  * Offset/Address/Size: 0x76C | 0x801E0DB0 | size: 0x17C
  */
-struct EqualFirstCompare {
-    int operator()(unsigned long key1, unsigned long key2) const {
-        if (key1 == key2) return 0;
-        if (key1 < key2) return -1;
+struct EqualFirstCompare
+{
+    int operator()(unsigned long key1, unsigned long key2) const
+    {
+        if (key1 == key2)
+            return 0;
+        if (key1 < key2)
+            return -1;
         return 1;
     }
 };
 
 inline bool avlFindCheck(AVLTreeEntry<unsigned long, SkinMatrix>* node, unsigned long key, SkinMatrix*& outValue)
 {
-    while (node != NULL) {
+    while (node != NULL)
+    {
         int cmpResult = EqualFirstCompare()(key, node->key);
-        if (cmpResult == 0) {
-            if (&outValue != NULL) {
+        if (cmpResult == 0)
+        {
+            if (&outValue != NULL)
+            {
                 outValue = &node->value;
             }
             return true;
-        } else {
-            if (cmpResult < 0) {
+        }
+        else
+        {
+            if (cmpResult < 0)
+            {
                 node = (AVLTreeEntry<unsigned long, SkinMatrix>*)node->node.left;
-            } else {
+            }
+            else
+            {
                 node = (AVLTreeEntry<unsigned long, SkinMatrix>*)node->node.right;
             }
         }
@@ -307,11 +321,13 @@ void ShaderSkinMesh::SetPoseMatrices(int num, GLSkinMeshMatrix* pMatrices)
 {
     AVLTreeNode** poseRoot = (AVLTreeNode**)&poseMatrices.m_Root;
     int i = 0;
-    for (; i < num; i++) {
+    for (; i < num; i++)
+    {
         SkinMatrix* foundValue;
         unsigned long boneID = pMatrices[i].boneID;
 
-        if (avlFindCheck(boneMatrices.m_Root, boneID, foundValue)) {
+        if (avlFindCheck(boneMatrices.m_Root, boneID, foundValue))
+        {
             SkinMatrix skinMatrix;
             skinMatrix.Set(pMatrices[i].matrix);
 
@@ -321,18 +337,21 @@ void ShaderSkinMesh::SetPoseMatrices(int num, GLSkinMeshMatrix* pMatrices)
                 (void*)&boneID,
                 (void*)&skinMatrix,
                 &existingNode,
-                poseMatrices.m_NumElements
-            );
+                poseMatrices.m_NumElements);
 
             SkinMatrix* dest;
-            if (existingNode == NULL) {
+            if (existingNode == NULL)
+            {
                 poseMatrices.m_NumElements++;
                 dest = NULL;
-            } else {
+            }
+            else
+            {
                 dest = &((AVLTreeEntry<unsigned long, SkinMatrix>*)existingNode)->value;
             }
             foundValue = dest;
-            if (foundValue != NULL) {
+            if (foundValue != NULL)
+            {
                 *foundValue = skinMatrix;
             }
         }
@@ -466,7 +485,8 @@ void ShaderSkinMesh::AppendStitchingInfo(int packetIndex, int _numPackets, int n
  */
 void UserDataBuilder::AddEntry(const unsigned long& boneID, unsigned long* registerIndex)
 {
-    SkinMatrix* foundMatrix = (SkinMatrix*)m_PoseMatrices->FindGet(boneID);
+    unsigned long id = boneID;
+    SkinMatrix* foundMatrix = (SkinMatrix*)m_PoseMatrices->FindGet(id);
 
     m_Bone->reg = (*registerIndex) * 3 - 0x60;
     foundMatrix->Get4x3(m_Bone->mat);
@@ -558,7 +578,7 @@ void ShaderSkinMesh::Pose(cPoseAccumulator* pPoseAccumulator)
             found = 0;
         }
 
-check_found:
+    check_found:
         if (found)
         {
             skinMat.Set(*nodeMatrix);

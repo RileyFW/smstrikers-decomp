@@ -275,32 +275,33 @@ nlFile* nlOpen(const char* fileName)
 
 /**
  * Offset/Address/Size: 0x1B78 | 0x801D08CC | size: 0xB0
- * TODO: 88.9% match - register allocation differs (r4/r7 swap for amountRead, r0/r4 swap)
+ * TODO: 93.8% match - register allocation still differs in fread setup
+ *   (amountRead/length/remainingBytes in r3/r6 vs target r7/r3/r6), plus
+ *   post-fread compare/flag path keeps currentAmount/isComplete in r0/r4
+ *   instead of target r4/r0; final shift emits rlwinm instead of srwi.
  */
 s32 TDEVChunkFile::GetReadStatus()
 {
     fseek(m_pFile, m_CurrentRead.Pos + m_CurrentRead.AmountRead, 0);
 
-    u32 amountRead = m_CurrentRead.AmountRead;
     u32 length = m_CurrentRead.Length;
-    u32 readSize = 0x3000U;
-    u8* buffer = m_CurrentRead.Buffer;
-    u32 remainingBytes = length - amountRead;
-    u8* dest = buffer + amountRead;
-    if (remainingBytes <= 0x3000U)
-    {
-        readSize = remainingBytes;
-    }
+    u32 amountRead = m_CurrentRead.AmountRead;
+    u32 remainingBytes = length;
+    remainingBytes -= amountRead;
+    u8* dest = m_CurrentRead.Buffer + amountRead;
 
-    u32 bytesRead = fread(dest, 1, readSize, m_pFile);
-    u8 isComplete = 0;
-    m_CurrentRead.AmountRead = m_CurrentRead.AmountRead + bytesRead;
+    u32 bytesRead = fread(dest, 1, (remainingBytes <= 0x3000U) ? remainingBytes : 0x3000U, m_pFile);
+    u32 nextAmount = m_CurrentRead.AmountRead + bytesRead;
+    m_CurrentRead.AmountRead = nextAmount;
+    bool isComplete = false;
+    u32 currentAmount = m_CurrentRead.AmountRead;
+    u32 currentLength = m_CurrentRead.Length;
 
-    if ((m_CurrentRead.AmountRead == m_CurrentRead.Length) || ((m_CurrentRead.Length == 0x20U) && (m_CurrentRead.AmountRead != 0U)))
+    if ((currentAmount == currentLength) || ((currentLength == 0x20U) && (currentAmount != 0U)))
     {
-        isComplete = 1;
+        isComplete = true;
     }
-    return isComplete == 0;
+    return !isComplete;
 }
 
 /**

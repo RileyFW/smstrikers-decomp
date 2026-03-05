@@ -30,6 +30,58 @@ void cSAnim::BlendScale(int nodeIndex, int remappedNodeIndex, float tNorm, float
  */
 void cSAnim::BlendTrans(int nAccumulatorNode, int nSAnimNode, float fTime, float fWeight, cPoseAccumulator* pAccumulator, bool bMirror) const
 {
+    if (pAccumulator->m_BaseSHierarchy->PreserveBoneLength(nAccumulatorNode))
+    {
+        return;
+    }
+
+    PackedTrans* pKeys = m_pTransKeys[nSAnimNode];
+    if (pKeys != NULL && (unsigned int)nSAnimNode < m_nNumNodes)
+    {
+        if (m_pNodeProperties[nSAnimNode] & 0x4)
+        {
+            nlVector3 v;
+            v.f.x = pKeys[0].x;
+            v.f.y = pKeys[0].y;
+            v.f.z = pKeys[0].z;
+            pAccumulator->BlendTrans(nAccumulatorNode, &v, fWeight, bMirror);
+            return;
+        }
+
+        if (1.0f == fTime)
+        {
+            PackedTrans* pLastKey = &pKeys[m_nNumKeys - 1];
+            nlVector3 v;
+            v.f.x = pLastKey->x;
+            v.f.y = pLastKey->y;
+            v.f.z = pLastKey->z;
+            pAccumulator->BlendTrans(nAccumulatorNode, &v, fWeight, bMirror);
+            return;
+        }
+
+        int nKeyIndex = (int)(fTime * (float)(m_nNumKeys - 1));
+        float fFrac = fTime * (float)(m_nNumKeys - 1) - (float)nKeyIndex;
+        float fWeight2 = fWeight * fFrac;
+        float fWeight1 = fWeight - fWeight2;
+
+        PackedTrans* pKey = &pKeys[nKeyIndex];
+        nlVector3 v1;
+        v1.f.x = pKey->x;
+        v1.f.y = pKey->y;
+        v1.f.z = pKey->z;
+        pAccumulator->BlendTrans(nAccumulatorNode, &v1, fWeight1, bMirror);
+
+        PackedTrans* pNextKey = &m_pTransKeys[nSAnimNode][nKeyIndex + 1];
+        nlVector3 v2;
+        v2.f.x = pNextKey->x;
+        v2.f.y = pNextKey->y;
+        v2.f.z = pNextKey->z;
+        pAccumulator->BlendTrans(nAccumulatorNode, &v2, fWeight2, bMirror);
+    }
+    else
+    {
+        pAccumulator->BlendTransIdentity(nAccumulatorNode, fWeight);
+    }
 }
 
 /**

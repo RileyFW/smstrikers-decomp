@@ -42,6 +42,13 @@ extern cWorldSFX gCrowdSFX;
 
 extern bool g_e3_Build;
 
+class Fuzzy
+{
+public:
+    static FuzzyVariant ShouldIStrafeBall(cFielder*);
+    static FuzzyVariant ShouldIStrafeMark(cFielder*);
+};
+
 const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
 // Constants from .sdata2 for IsBallAwayFromCarrier
@@ -1894,8 +1901,9 @@ void cFielder::CanBreakOutOfSlideTackle()
 /**
  * Offset/Address/Size: 0x5F54 | 0x8001F290 | size: 0x2DC
  */
-void cFielder::CalculateStrafeDirection(unsigned short, unsigned short)
+eStrafeDirection cFielder::CalculateStrafeDirection(unsigned short, unsigned short)
 {
+    return STRAFE_IDLE;
 }
 
 /**
@@ -2030,9 +2038,44 @@ s16 cFielder::GetOneTouchShotDesire()
 
 /**
  * Offset/Address/Size: 0x573C | 0x8001EA78 | size: 0x220
+ * Match: 99.85% - all i diffs (SDA offsets / static symbol naming only)
  */
-void cFielder::SetStartAnimState(int)
+void cFielder::SetStartAnimState(int animState)
 {
+    static int RunStartAnims[4] = { 0, 0x10, 0x0F, 0x11 };
+
+    if (animState != -1)
+    {
+        SetAnimState(RunStartAnims[animState], true, 0.2f, false, false);
+
+        s16 turnAdjust = CalcAnimTurnAdjust(m_aActualFacingDirection, m_aDesiredFacingDirection, m_eAnimID);
+        InitMovementFromAnim(turnAdjust, v3Zero, 1.0f, false);
+
+        m_pCurrentAnimController->m_fPlaybackSpeedScale = 1.5f;
+    }
+    else
+    {
+        int nAnimState = ((m_aDesiredFacingDirection - m_aActualFacingDirection + 0x2000) >> 14) & 3;
+
+        if (nAnimState != 0)
+        {
+            SetAnimState(RunStartAnims[nAnimState], true, 0.2f, false, false);
+
+            s16 turnAdjust = CalcAnimTurnAdjust(m_aActualFacingDirection, m_aDesiredFacingDirection, m_eAnimID);
+            InitMovementFromAnim(turnAdjust, v3Zero, 1.0f, false);
+
+            m_pCurrentAnimController->m_fPlaybackSpeedScale = 1.5f;
+        }
+        else
+        {
+            int RunningAnims[3] = { 0x1B, 0x1A, 0x1C };
+
+            SetRunLeanSAB(RunningAnims, 3, 1);
+
+            FielderTweaks* pTweaks = (FielderTweaks*)m_pTweaks;
+            InitMovementRunning(pTweaks->fRunningDirectionSeekSpeed, pTweaks->fRunningDirectionSeekFalloff, pTweaks->fRunningAccel, pTweaks->fRunningDecel);
+        }
+    }
 }
 
 /**
@@ -2566,11 +2609,129 @@ bool cFielder::SetDesire(eFielderDesireState eNewDesire, float fConfidence)
     return false;
 }
 
+extern "C" eStrafeDirection CalculateStrafeDirection__8cFielderFUsUs(cFielder*, unsigned short, unsigned short);
+
 /**
  * Offset/Address/Size: 0x3B44 | 0x8001CE80 | size: 0x218
+ * TODO: 99.74% match - remaining r0/r3 register allocation swap in the
+ * isStrafing comparison block (lwz/cmpwi/li/clrlwi sequence at +0x10C).
  */
-void cFielder::ShouldIStrafe()
+u8 cFielder::ShouldIStrafe()
 {
+    u16 aDesiredFacingDir = m_aDesiredMovementDirection;
+    bool shouldStrafe;
+
+    if (m_pBall != NULL)
+    {
+        shouldStrafe = true;
+        bool isTurboing = false;
+        s32 animID = m_eAnimID;
+
+        if (animID == 0x1D)
+            goto setTrue1;
+        if (animID == 0x1E)
+            goto setTrue1;
+        if (animID == 0x1F)
+            goto setTrue1;
+        if (animID == 0x20)
+            goto setTrue1;
+        if (animID == 0x21)
+            goto setTrue1;
+        if (animID == 0x22)
+            goto setTrue1;
+        goto check1;
+    setTrue1:
+        isTurboing = true;
+    check1:
+        if (!isTurboing)
+        {
+            shouldStrafe = false;
+        }
+    }
+    else
+    {
+        shouldStrafe = true;
+        bool isTurboing = false;
+        s32 animID = m_eAnimID;
+
+        if (animID == 0x10)
+            goto setTrue2;
+        if (animID == 0x0F)
+            goto setTrue2;
+        if (animID == 0x11)
+            goto setTrue2;
+        goto check2;
+    setTrue2:
+        isTurboing = true;
+    check2:
+        if (!isTurboing)
+        {
+            shouldStrafe = false;
+        }
+    }
+
+    if (!shouldStrafe)
+    {
+        float fStrafeBall = Fuzzy::ShouldIStrafeBall(this).mData.f;
+        float temp = Fuzzy::ShouldIStrafeMark(this).mData.f;
+        float fStrafeMark = temp;
+        float fTotalScore = fStrafeBall + fStrafeMark;
+
+        if (GetGlobalPad() != NULL)
+        {
+            fStrafeBall = fTotalScore;
+            fStrafeMark = 0.0f;
+        }
+
+        bool isStrafing = false;
+        s32 strafeDir = mActionRunningVars.eLastStrafeDirection;
+        if (strafeDir == STRAFE_LEFT)
+            goto setStrafeTrue;
+        if (strafeDir == STRAFE_RIGHT)
+            goto setStrafeTrue;
+        if (strafeDir == STRAFE_BACK)
+            goto setStrafeTrue;
+        goto checkStrafe;
+    setStrafeTrue:
+        isStrafing = true;
+    checkStrafe:
+
+        float threshold;
+        if (isStrafing)
+        {
+            threshold = 0.3f;
+        }
+        else
+        {
+            threshold = 0.5f;
+        }
+
+        if (fTotalScore > threshold)
+        {
+            float ballWeight = fStrafeBall / fTotalScore;
+            float targetY = ballWeight * g_pBall->m_v3Position.f.y;
+            float targetX = ballWeight * g_pBall->m_v3Position.f.x;
+
+            if (m_pMark != NULL)
+            {
+                float markWeight = fStrafeMark / fTotalScore;
+                targetX += markWeight * m_pMark->m_v3Position.f.x;
+                targetY += markWeight * m_pMark->m_v3Position.f.y;
+            }
+
+            float angle = nlATan2f(targetY - m_v3Position.f.y, targetX - m_v3Position.f.x);
+            aDesiredFacingDir = (u16)(s32)(10430.378f * angle);
+        }
+
+        eStrafeDirection strafeResult = CalculateStrafeDirection__8cFielderFUsUs(this, aDesiredFacingDir, m_aDesiredMovementDirection);
+        if (strafeResult == STRAFE_FORWARD)
+        {
+            aDesiredFacingDir = m_aDesiredMovementDirection;
+        }
+    }
+
+    m_aDesiredFacingDirection = aDesiredFacingDir;
+    return m_aDesiredFacingDirection != m_aDesiredMovementDirection;
 }
 
 /**

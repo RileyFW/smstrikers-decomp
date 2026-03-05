@@ -490,9 +490,76 @@ void RotateVectorZAxis(nlVector3& v3Out, const nlVector3& v3In, unsigned short a
 
 /**
  * Offset/Address/Size: 0x814 | 0x800062C0 | size: 0x210
+ * TODO: 93.52% match - v3Vec1 components allocated to f7/f6/f5 instead of target
+ * f8/f7/f6 (off by 1), causing cascading register diffs throughout function.
+ * Extra fmr for ax copy. Likely MWCC register allocation behavior difference.
  */
-void GetRotationBetweenVectors(nlQuaternion&, const nlVector3&, const nlVector3&)
+void GetRotationBetweenVectors(nlQuaternion& quat, const nlVector3& v3Vec1, const nlVector3& v3Vec2)
 {
+    f32 t0;
+    f32 t1;
+    f32 t2;
+
+    f32 fInvR1R2 = 1.0f / nlSqrt((v3Vec1.f.x * v3Vec1.f.x + v3Vec1.f.y * v3Vec1.f.y + v3Vec1.f.z * v3Vec1.f.z) * (v3Vec2.f.x * v3Vec2.f.x + v3Vec2.f.y * v3Vec2.f.y + v3Vec2.f.z * v3Vec2.f.z), true);
+    f32 fCosAngle = fInvR1R2 * (v3Vec1.f.x * v3Vec2.f.x + v3Vec1.f.y * v3Vec2.f.y + v3Vec1.f.z * v3Vec2.f.z);
+
+    if (fCosAngle > 0.999999f)
+    {
+        quat.f.x = 0.0f;
+        quat.f.y = 0.0f;
+        quat.f.z = 0.0f;
+        quat.f.w = 1.0f;
+    }
+    else if (fCosAngle < -0.999999f)
+    {
+        f32 ay;
+        f32 az;
+        f32 ax = 1.0f;
+
+        if (v3Vec1.f.x > v3Vec1.f.z || v3Vec1.f.y > v3Vec1.f.z)
+        {
+            ax = 0.0f;
+            az = 1.0f;
+            ay = 0.0f;
+        }
+        else
+        {
+            ay = 0.0f;
+            az = 0.0f;
+        }
+
+        f32 nax = -ax;
+        t1 = az * v3Vec1.f.x + nax * v3Vec1.f.z;
+        t2 = ay * v3Vec1.f.z - az * v3Vec1.f.y;
+        t0 = ax * v3Vec1.f.y - ay * v3Vec1.f.x;
+
+        f32 invLen = nlRecipSqrt(t1 * t1 + t2 * t2 + t0 * t0, true);
+
+        quat.f.x = invLen * t2;
+        quat.f.y = invLen * t1;
+        quat.f.z = invLen * t0;
+        quat.f.w = 0.0f;
+    }
+    else
+    {
+        f32 fMagic = nlSqrt((f32)(0.5 * (1.0 + fCosAngle)), true);
+        f32 fMultiplier = fInvR1R2 / fMagic;
+
+        f32 cx = v3Vec1.f.z * v3Vec2.f.y;
+        f32 cz = v3Vec1.f.y * v3Vec2.f.x;
+        f32 negX = -v3Vec1.f.x;
+
+        quat.f.w = 0.5f * fMagic;
+
+        f32 cy = v3Vec1.f.z * v3Vec2.f.x;
+        cx = v3Vec1.f.y * v3Vec2.f.z - cx;
+        cz = v3Vec1.f.x * v3Vec2.f.y - cz;
+        cy = negX * v3Vec2.f.z + cy;
+
+        quat.f.x = cx * fMultiplier;
+        quat.f.y = cy * fMultiplier;
+        quat.f.z = cz * fMultiplier;
+    }
 }
 
 /**

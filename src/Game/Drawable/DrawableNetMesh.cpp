@@ -109,9 +109,74 @@ void DrawableNetMesh::Grab(NetMesh& netMesh)
 
 /**
  * Offset/Address/Size: 0xAC | 0x80114008 | size: 0x214
+ * TODO: 99.51% match - lhs m_unk18/mJolt load order remains swapped in init
+ *       block, and first blend loop keeps r4/r5 swapped for offset vs src ptr.
  */
-void DrawableNetMesh::Blend(float, const DrawableNetMesh&, const DrawableNetMesh&)
+void DrawableNetMesh::Blend(float blendFactor, const DrawableNetMesh& lhs, const DrawableNetMesh& rhs)
 {
+    nlVector3* pDst;
+    nlVector3* pSrc;
+
+    if (!lhs.mbInitialized || !rhs.mbInitialized)
+        return;
+
+    if (!mbInitialized)
+    {
+        int numTriIdx = lhs.m_unk18;
+        mJolt = lhs.mJolt;
+        m_unk18 = numTriIdx;
+
+        int numVerts = mJolt;
+        int numIndices = m_unk18;
+
+        mpPosition = (nlVector3*)nlMalloc(numVerts * sizeof(nlVector3), 8, false);
+
+        if (!sbStaticInitialized[miNetIndex])
+        {
+            spTriIndices[miNetIndex] = (unsigned short*)nlMalloc(numIndices * 2, 8, false);
+
+            int allocSize = numVerts * 4;
+
+            spTexcoord[miNetIndex] = (shortVector2*)nlMalloc(allocSize, 8, false);
+            spColour[miNetIndex] = (unsigned long*)nlMalloc(allocSize, 8, false);
+
+            memset(spColour[miNetIndex], 0xFF, allocSize);
+
+            sbStaticInitialized[miNetIndex] = true;
+            sNumVertices[miNetIndex] = numVerts;
+        }
+
+        mbInitialized = true;
+        mJoltCache = 0.0f;
+    }
+
+    float oneMinusBlend = 1.0f - blendFactor;
+
+    for (int i = 0; i < mJolt; i++)
+    {
+        pSrc = &lhs.mpPosition[i];
+        pDst = &mpPosition[i];
+        float x = oneMinusBlend * pSrc->f.x;
+        float y = pSrc->f.y;
+        float z = pSrc->f.z;
+        y = oneMinusBlend * y;
+        z = oneMinusBlend * z;
+        pDst->f.x = x;
+        pDst->f.y = y;
+        pDst->f.z = z;
+    }
+
+    for (int i = 0; i < mJolt; i++)
+    {
+        pDst = &mpPosition[i];
+        pSrc = &rhs.mpPosition[i];
+        float x = pDst->f.x + blendFactor * pSrc->f.x;
+        float z = pDst->f.z + blendFactor * pSrc->f.z;
+        float y = pDst->f.y + blendFactor * pSrc->f.y;
+        pDst->f.x = x;
+        pDst->f.y = y;
+        pDst->f.z = z;
+    }
 }
 
 /**

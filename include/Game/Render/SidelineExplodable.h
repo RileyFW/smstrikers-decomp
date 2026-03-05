@@ -24,7 +24,7 @@ public:
 class ExplodableCategoryData
 {
 public:
-    void LoadGeometry();
+    bool LoadGeometry();
 
     /* 0x00 */ const char* mBaseModelName;
     /* 0x04 */ const char* mFragmentModelName;

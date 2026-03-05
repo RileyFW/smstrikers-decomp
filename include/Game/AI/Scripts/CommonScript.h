@@ -24,8 +24,8 @@ public:
     void GetStrategicBallCarrier(cTeam*);
     void GetBestBallInterceptor(cTeam*);
     void GetSwapControllerScore(cPlayer*);
-    void ShouldIStrafeBall(cFielder*);
-    void ShouldIStrafeMark(cFielder*);
+    static FuzzyVariant ShouldIStrafeBall(cFielder*);
+    static FuzzyVariant ShouldIStrafeMark(cFielder*);
     void ShouldIMarkBallOwner(cFielder*);
     void ShouldIAttemptOneTimer(cFielder*);
     void GetBestLooseBallPassTarget(cFielder*);

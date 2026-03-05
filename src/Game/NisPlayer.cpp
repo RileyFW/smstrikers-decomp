@@ -191,8 +191,64 @@ void NisPlayer::Reset()
 /**
  * Offset/Address/Size: 0x2AD4 | 0x801177B0 | size: 0x1F8
  */
-void NisPlayer::Play()
+bool NisPlayer::Play()
 {
+    int i;
+    mActive = true;
+
+    for (i = 0; i < 4; i++)
+    {
+        if (mLoadQueue[i] != NULL)
+        {
+            if (mLoadQueue[i]->mTime > 0.0f)
+            {
+                mLoadQueue[i] = NULL;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    for (int j = 0; j < 4; j++)
+    {
+        delete mPlaying[j];
+        mPlaying[j] = mLoaded[j];
+        mLoaded[j] = NULL;
+    }
+
+    EmissionManager::Destroy(reinterpret_cast<unsigned long>(this), NULL);
+
+    if (nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack) != (cBaseCamera*)&mCamera)
+    {
+        cCameraManager::Remove(mCamera);
+        cCameraManager::PushCamera(&mCamera);
+    }
+
+    for (i = 0; i < 4; i++)
+    {
+        if (mPlaying[i] != NULL)
+        {
+            if (mPlaying[i]->SelectRandomCamera(mCamera))
+            {
+                break;
+            }
+        }
+    }
+
+    if (mLoadingFromBack)
+    {
+        mLoadingFromBack = false;
+        mUsedFromFront = 0;
+    }
+    else
+    {
+        mLoadingFromBack = true;
+        mUsedFromBack = 0x70800;
+    }
+
+    return true;
 }
 
 static inline void HideAllActors()
@@ -213,7 +269,6 @@ static inline void HideAllActors()
 
 /**
  * Offset/Address/Size: 0x28F4 | 0x801175D0 | size: 0x1E0
- * TODO: 99.96% match - one `i` diff at offset 0x30: bne branch target
  */
 void NisPlayer::Render() const
 {
@@ -221,21 +276,18 @@ void NisPlayer::Render() const
     nlTaskManager* taskManager = nlTaskManager::m_pInstance;
     unsigned long currState = taskManager->m_CurrState;
 
-    if (currState == 0x100)
+    if (currState != 0x100 || ((taskManager->m_PrevState == 0x100) && (currState != 1)))
     {
-        if (!((taskManager->m_PrevState == 0x100) && (currState == 1U)))
-        {
-            return;
-        }
+        return;
+    }
 
-        HideAllActors();
+    HideAllActors();
 
-        for (i = 0; i < 4; i++)
+    for (i = 0; i < 4; i++)
+    {
+        if (mPlaying[i] != NULL)
         {
-            if (mPlaying[i] != NULL)
-            {
-                mPlaying[i]->Render();
-            }
+            mPlaying[i]->Render();
         }
     }
 }

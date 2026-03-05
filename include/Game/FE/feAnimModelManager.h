@@ -1,15 +1,29 @@
 #ifndef _FEANIMMODELMANAGER_H_
 #define _FEANIMMODELMANAGER_H_
 
+#include "types.h"
 #include "NL/nlSingleton.h"
+
+class FEAnimModel;
+class FEBasic3dModel;
 
 class FEAnimModelManager : public nlSingleton<FEAnimModelManager>
 {
 public:
+    virtual ~FEAnimModelManager();
+    FEAnimModelManager();
+
     void Update(float);
     void Initialize();
-    ~FEAnimModelManager();
-    FEAnimModelManager();
+
+    /* 0x04 */ FEAnimModel* mLoadedModels[22];
+    /* 0x5C */ void* mLightData;
+    /* 0x60 */ void* mSpecularData;
+    /* 0x64 */ FEBasic3dModel* mFEAnimModelTweakList;
+    /* 0x68 */ FEBasic3dModel* mCurrentTweakModel;
+    /* 0x6C */ void* mAnimInventory;
+    /* 0x70 */ u8 pad70[0x18];
+    /* 0x88 */ u8 mTweak3dModels;
 };
 
 #endif // _FEANIMMODELMANAGER_H_

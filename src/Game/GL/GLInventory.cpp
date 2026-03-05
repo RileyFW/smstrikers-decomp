@@ -265,20 +265,61 @@ void GLInventory::AddTextureAnim(unsigned long key, GLTextureAnim* anim)
 }
 
 /**
+ * Helper struct for inlining FindGet with bool return to match target assembly.
+ * The target uses a bool found flag pattern (li r0,1 / li r0,0 / clrlwi.)
+ * which the native AVLTreeBase::FindGet (returning ValueType*) does not produce.
+ */
+struct TextureAnimFindHelper
+{
+    char pad[0x8];
+    AVLTreeEntry<unsigned long, GLTextureAnim*>* m_Root;
+
+    inline bool FindGet(unsigned long key, GLTextureAnim*** foundValue) const
+    {
+        AVLTreeEntry<unsigned long, GLTextureAnim*>* node = m_Root;
+        while (node != NULL)
+        {
+            int cmpResult;
+            if (key == node->key)
+                cmpResult = 0;
+            else if (key < node->key)
+                cmpResult = -1;
+            else
+                cmpResult = 1;
+            if (cmpResult == 0)
+            {
+                if (foundValue != NULL)
+                    *foundValue = &node->value;
+                return true;
+            }
+            else
+            {
+                if (cmpResult < 0)
+                    node = (AVLTreeEntry<unsigned long, GLTextureAnim*>*)node->node.left;
+                else
+                    node = (AVLTreeEntry<unsigned long, GLTextureAnim*>*)node->node.right;
+            }
+        }
+        return false;
+    }
+};
+
+/**
  * Offset/Address/Size: 0x7C0 | 0x801E2A58 | size: 0xC8
- * TODO: 82% match. The FindGet inline method needs adjustment for exact match.
- * Target tracks bool 'found' separately and stores value pointer to stack at 0x08(r1).
- * Missing the clrlwi./beq pattern for bool test before dereferencing result.
  */
 GLTextureAnim* GLInventory::GetTextureAnim(unsigned long id)
 {
     for (int i = m_nLevel; i >= 0; i--)
     {
-        GLTextureAnim** pResult = m_pTextureAnims[i]->m_pItems->FindGet(id);
-        if (pResult != nullptr)
-        {
-            return *pResult;
-        }
+        GLTextureAnim** foundValue;
+        bool found = ((TextureAnimFindHelper*)m_pTextureAnims[i]->m_pItems)->FindGet(id, &foundValue);
+        GLTextureAnim* result;
+        if (found)
+            result = *foundValue;
+        else
+            result = nullptr;
+        if (result != nullptr)
+            return result;
     }
     return nullptr;
 }

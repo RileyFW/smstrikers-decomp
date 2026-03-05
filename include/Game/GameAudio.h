@@ -50,7 +50,16 @@ struct SFXPlaySet
 class SoundPropAccessor
 {
 public:
-    virtual ~SoundPropAccessor();
+    ~SoundPropAccessor();
+
+    virtual SoundProperties* GetSoundProperty(unsigned int index) const;
+    virtual SoundProperties* GetSoundPropTable();
+    virtual int GetNumSFX();
+    virtual char* GetSoundPropTableName();
+    virtual char* GetHTMLFileName();
+    virtual unsigned char IsUsingOrigTable() const;
+    virtual void SetSoundPropTable(SoundProperties* pNewTable);
+    virtual void ResetSoundPropTable();
 
     /* 0x4 */ SoundProperties* mpSoundProp;
     /* 0x8 */ unsigned char mbIsReloaded;
@@ -82,7 +91,7 @@ public:
     bool ActivateFilterOnAllTrackedSFX(bool);
     bool SetFilterFreqOnAllTrackedSFX(unsigned short);
     bool SetPitchBendOnAllDialogueSFX(unsigned short);
-    void KeepTrack(SFXEmitter*, const Audio::SoundAttributes&, unsigned long);
+    SFXPlaySet* KeepTrack(SFXEmitter*, const Audio::SoundAttributes&, unsigned long);
     void Stop(unsigned long, cGameSFX::StopFlag);
     void StopEmitter(SFXEmitter*, unsigned long);
     bool StopTrackedSFX(SFXPlaySet*);

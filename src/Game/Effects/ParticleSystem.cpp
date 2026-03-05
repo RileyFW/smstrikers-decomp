@@ -103,9 +103,73 @@ void ParticleSystem::UpdateCoordSys()
 
 /**
  * Offset/Address/Size: 0x2404 | 0x801F755C | size: 0x224
+ * TODO: 89.9% match - post-nlRecipSqrt forward/mirror load ordering still differs
+ * (target loads Y then X; current emits X then Y), cascading into register-allocation
+ * differences in cross-product/normalization blocks.
  */
-void ParticleSystem::UpdateCoordSys(nlMatrix4&)
+void ParticleSystem::UpdateCoordSys(nlMatrix4& mCoordSys)
 {
+    float rightX, rightY, rightZ;
+    float gravY, gravX, gravZ;
+    float negGravX;
+    float upX;
+
+    float rsqrt = nlRecipSqrt(
+        m_vForward.f.x * m_vForward.f.x + m_vForward.f.y * m_vForward.f.y + m_vForward.f.z * m_vForward.f.z, true);
+
+    gravY = rsqrt * m_vForward.f.y;
+    gravX = rsqrt * m_vForward.f.x;
+    gravZ = rsqrt * m_vForward.f.z;
+    gravY *= m_Mirror.f.y;
+    gravX *= m_Mirror.f.x;
+    gravZ *= m_Mirror.f.z;
+
+    float refX = 0.0f;
+    float refZ = 1.0f;
+    float refY = refX;
+
+    float dot = refX * gravY + refX * gravX + refZ * gravZ;
+    if ((float)__fabs(dot) > 0.999f)
+    {
+        refY = refZ;
+        refZ = refX;
+    }
+
+    negGravX = -gravX;
+
+    rightX = gravY * refZ - gravZ * refY;
+    rightY = negGravX * refZ + gravZ * refX;
+    rightZ = gravX * refY - gravY * refX;
+
+    rsqrt = nlRecipSqrt(
+        rightX * rightX + rightY * rightY + rightZ * rightZ, true);
+    rightZ *= rsqrt;
+    rightX = rsqrt * rightX;
+    rightY *= rsqrt;
+
+    float upY = rightZ * gravX - rightX * gravZ;
+    upX = rightY * gravZ - rightZ * gravY;
+    float upZ = rightX * gravY - rightY * gravX;
+
+    rsqrt = nlRecipSqrt(
+        upY * upY + upX * upX + upZ * upZ, true);
+
+    mCoordSys.e[0] = rightX;
+    mCoordSys.e[1] = rightY;
+    mCoordSys.e[2] = rightZ;
+    mCoordSys.e[4] = rsqrt * upX;
+    mCoordSys.e[5] = rsqrt * upY;
+    mCoordSys.e[6] = rsqrt * upZ;
+    mCoordSys.e[8] = negGravX;
+    mCoordSys.e[9] = -gravY;
+    mCoordSys.e[10] = -gravZ;
+    mCoordSys.e[12] = m_vPosition.f.x;
+    mCoordSys.e[13] = m_vPosition.f.y;
+    mCoordSys.e[14] = m_vPosition.f.z;
+    mCoordSys.e[15] = 1.0f;
+    mCoordSys.e[11] = 0.0f;
+    mCoordSys.e[7] = 0.0f;
+    mCoordSys.e[3] = 0.0f;
 }
 
 /**

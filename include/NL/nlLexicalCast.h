@@ -42,7 +42,7 @@ BasicString<char, Detail::TempStringAllocator> LexicalCast<BasicString<char, Det
 #ifdef NL_LEXICALCAST_DEFINE
 
 /* ----------------------------------------------------------------------
-   Definitions (emitted in EXACT order below) — in ONE TU only.
+   Definitions (emitted in EXACT order below) -- in ONE TU only.
    Do this in exactly one .cpp:
        #define NL_LEXICALCAST_DEFINE
        #include "nlLexicalCast.h"

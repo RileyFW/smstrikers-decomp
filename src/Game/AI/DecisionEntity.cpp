@@ -303,5 +303,6 @@ void cDecisionEntity::FindDesireAction(int, FuzzyVariant, FuzzyVariant)
  */
 bool cDecisionEntity::SelectAction(eScriptActionSelection, float)
 {
+    FORCE_DONT_INLINE;
     return false;
 }

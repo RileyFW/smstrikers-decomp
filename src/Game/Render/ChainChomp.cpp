@@ -11,6 +11,11 @@
 #include "Game/Physics/PhysicsCharacter.h"
 #include "Game/Physics/PhysicsAIBall.h"
 #include "Game/AI/AiUtil.h"
+#include "NL/gl/glDraw3.h"
+#include "NL/gl/glState.h"
+#include "NL/glx/glxTexture.h"
+
+static unsigned char gbChainChompProjectedShadow;
 
 const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 const nlVector3 gv3HomePosition = { 0.0f, 0.0f, 10.0f };
@@ -255,6 +260,77 @@ after_speed:
 /**
  * Offset/Address/Size: 0x0 | 0x8015DD04 | size: 0x204
  */
-void ChainChomp::DrawShadow(const cPoseAccumulator&, const nlMatrix4&)
+void ChainChomp::DrawShadow(const cPoseAccumulator& pa, const nlMatrix4& worldMatrix)
 {
+    if (gbChainChompProjectedShadow)
+    {
+        SkinAnimatedNPC::DrawShadow(mpLastModel, mWorldMatrix);
+        return;
+    }
+
+    nlMatrix4& nodeMatrix = pa.GetNodeMatrix(3);
+
+    nlVector3 v3ModelPosition = nodeMatrix.GetTranslation();
+    float y = v3ModelPosition.f.y;
+
+    float frac = (mv3Position.f.z - 55.0f) / 200.0f;
+    if (frac < 0.0f)
+        frac = 0.0f;
+    if (frac > 1.0f)
+        frac = 1.0f;
+
+    float fAlpha = 200.0f * (1.0f - frac) + 80.0f * frac;
+    float radius = g_pGame->m_pGameTweaks->fChainChompRadius;
+    float half_dim = 5.0f * frac + (1.0f - frac) * (1.5f * radius);
+
+    int alpha = (int)fAlpha;
+    if (alpha < 0)
+        alpha = 0;
+    if (alpha > 255)
+        alpha = 255;
+
+    nlColour c;
+    c.c[0] = 255;
+    c.c[1] = 255;
+    c.c[2] = 255;
+    c.c[3] = (unsigned char)alpha;
+
+    glQuad3 quad;
+    quad.m_pos[0].f.x = v3ModelPosition.f.x - half_dim;
+    quad.m_pos[0].f.y = y - half_dim;
+    quad.m_pos[0].f.z = 0.02f;
+    quad.m_pos[1].f.x = v3ModelPosition.f.x - half_dim;
+    quad.m_pos[1].f.y = y + half_dim;
+    quad.m_pos[1].f.z = 0.02f;
+    quad.m_pos[2].f.x = v3ModelPosition.f.x + half_dim;
+    quad.m_pos[2].f.y = y + half_dim;
+    quad.m_pos[2].f.z = 0.02f;
+    quad.m_pos[3].f.x = v3ModelPosition.f.x + half_dim;
+    quad.m_pos[3].f.y = y - half_dim;
+    quad.m_pos[3].f.z = 0.02f;
+
+    quad.m_uv[0].f.x = 1.0f;
+    quad.m_uv[0].f.y = 1.0f;
+    quad.m_uv[1].f.x = 0.0f;
+    quad.m_uv[1].f.y = 1.0f;
+    quad.m_uv[2].f.x = 0.0f;
+    quad.m_uv[2].f.y = 0.0f;
+    quad.m_uv[3].f.x = 1.0f;
+    quad.m_uv[3].f.y = 0.0f;
+
+    quad.m_colour[3] = c;
+    quad.m_colour[2] = c;
+    quad.m_colour[1] = c;
+    quad.m_colour[0] = c;
+
+    glSetDefaultState(true);
+    glSetRasterState(GLS_AlphaBlend, 1);
+    glSetRasterState(GLS_Culling, 0);
+    glSetRasterState(GLS_DepthWrite, 0);
+    glSetCurrentRasterState(glHandleizeRasterState());
+    glSetCurrentTexture(glGetTexture("shadows/blob"), GLTT_Diffuse);
+    glSetTextureState(GLTS_DiffuseWrap, 3);
+    glSetCurrentTextureState(glHandleizeTextureState());
+
+    quad.Attach(GLV_Unshadowed, 0, true);
 }

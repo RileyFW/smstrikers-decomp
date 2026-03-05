@@ -4,14 +4,18 @@
 #include "dolphin/gx/GXGeometry.h"
 #include "dolphin/gx/GXLighting.h"
 #include "dolphin/gx/GXEnum.h"
+#include "dolphin/gx/GXTev.h"
 #include "dolphin/gx/GXTransform.h"
 #include "dolphin/mtx.h"
 #include "NL/gl/glLightUserData.h"
 #include "NL/gl/glMatrix.h"
 #include "NL/gl/glUserData.h"
+#include "NL/glx/glxGX.h"
 #include "NL/glx/glxMatrix.h"
+#include "NL/nlColour.h"
 #include "NL/platvmath.h"
 #include "types.h"
+#include <string.h>
 
 // Forward declarations for global variables (these would need to be declared elsewhere)
 extern bool glx_ReloadPointLights;
@@ -57,7 +61,8 @@ static bool glx_IsCoPlanarView;
 static Mtx gx_mview;
 static nlMatrix4 mview;
 
-struct GLSkinUserData {
+struct GLSkinUserData
+{
     int reg;
     float mat[12];
 };
@@ -87,8 +92,7 @@ void glud_Skin(void* pData, const glModelPacket* pPacket)
     else
         bInvXpose = glx_InvXpose;
 
-    if (g_bFastSkinPath && g_bMtxSkinMath && !glx_IsCoPlanarView &&
-        pPacket->state.matrix == glGetIdentityMatrix())
+    if (g_bFastSkinPath && g_bMtxSkinMath && !glx_IsCoPlanarView && pPacket->state.matrix == glGetIdentityMatrix())
     {
         // Fast path - use gx_mview directly
         for (i = 0; i < numMatrices; i++, pSkin++)
@@ -326,11 +330,100 @@ void glx_SendEnd()
     glx_SwitchUserData(nullptr);
 }
 
+static GXTexObj glx_texobj[6];
+static GXTlutObj glx_tlutobj[6];
+static u32 glx_texture[6];
+static u32 glx_texdirty;
+static u32 gx_vtxfmt;
+static nlColour world_ambient;
+static nlColour nlBlack;
+static nlColour nlWhite;
+static u32 glx_prevSpecMask;
+static u32 glx_DirtyFlags;
+static bool glx_ReloadSpecLights;
+static bool glx_allowSpecular;
+static bool glx_envdiffuse;
+static bool glx_mobilediffuse;
+static bool glx_constantcolour;
+static bool glx_viewport;
+static bool glx_CoPlanar;
+static bool glx_translucent;
+static bool glx_norasterizedalpha;
+static s32 glx_RasterizedAlphaStage;
+static s32 glx_RasterizedAlphaArg;
+static s32 glx_GlossMapStage;
+static s32 glx_GlossMapCoord;
+static bool glx_NoFog;
+
 /**
  * Offset/Address/Size: 0x4C94 | 0x801BE794 | size: 0x200
+ * TODO: 99.8% match - 4 register diffs (first loop counter r28 vs r31), 1 label diff (@142 vs @419)
  */
 void glx_SendReset()
 {
+    prev_view = GLV_Num;
+
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR1, GX_CLR_RGBA, GX_RGBA8, 0);
+
+    for (s32 i = 0; i < 6; i++)
+    {
+        GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)(GX_VA_TEX0 + i), GX_TEX_ST, GX_S16, 10);
+    }
+
+    glx_texdirty = 0;
+
+    for (s32 i = 0; i < 6; i++)
+    {
+        memset(&glx_texobj[i], 0, sizeof(GXTexObj));
+        memset(&glx_tlutobj[i], 0, sizeof(GXTlutObj));
+        glx_texture[i] = 0;
+    }
+
+    gx_vtxfmt = 0;
+
+    GetConstants();
+
+    {
+        nlColour amb;
+        nlColour temp = {};
+        nlColourSet(temp, world_ambient.c[0], world_ambient.c[1], world_ambient.c[2], world_ambient.c[3]);
+        amb = temp;
+        gxSetChanAmbColour(0, amb);
+    }
+    gxSetChanMatColour(0, nlWhite);
+    gxSetChanAmbColour(1, nlBlack);
+    gxSetChanMatColour(1, nlWhite);
+
+    GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_RED);
+
+    if (glx_prevSpecMask != 0)
+    {
+        gxSetNumChans(1);
+        GXSetChanCtrl(GX_COLOR1, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, glx_prevSpecMask, GX_DF_NONE, GX_AF_NONE);
+    }
+
+    glx_DirtyFlags = 0;
+    glx_ReloadPointLights = true;
+    glx_ReloadSpecLights = true;
+    glx_prevLightMask = 0;
+    glx_prevSpecMask = 0;
+    glx_allowSpecular = 0;
+    glx_envdiffuse = false;
+    glx_mobilediffuse = false;
+    glx_constantcolour = false;
+    glx_viewport = false;
+    glx_CoPlanar = false;
+
+    gxSetCoPlanar(false);
+
+    glx_translucent = false;
+    glx_norasterizedalpha = false;
+    glx_RasterizedAlphaStage = -1;
+    glx_RasterizedAlphaArg = -1;
+    glx_GlossMapStage = -1;
+    glx_GlossMapCoord = -1;
+    glx_NoFog = false;
 }
 
 /**
@@ -338,6 +431,7 @@ void glx_SendReset()
  */
 void GetConstants()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

@@ -133,14 +133,21 @@ void FormationManager::LoadFormationSets()
     }
 }
 
+static inline void ClearFormationEvals(FormationEval** pp)
+{
+    for (s32 j = 0; j < 3; j++)
+    {
+        FormationEval* pEval = pp[1];
+        delete pEval;
+        *++pp = nullptr;
+    }
+}
+
 /**
  * Offset/Address/Size: 0x275C | 0x8003A9AC | size: 0xC0
- * TODO: 98.96% match - r28/r30 register swap in nested loop
  */
 void FormationManager::UnloadFormationSets()
 {
-    FormationEval** pp;
-    s32 j;
     s32 i;
 
     if (g_pGame != nullptr)
@@ -149,13 +156,7 @@ void FormationManager::UnloadFormationSets()
         {
             for (i = 0; i < 2; i++)
             {
-                pp = (FormationEval**)g_pTeams[i]->m_pFormationManager;
-                for (j = 0; j < 3; j++)
-                {
-                    FormationEval* pEval = pp[1];
-                    delete pEval;
-                    *++pp = nullptr;
-                }
+                ClearFormationEvals((FormationEval**)g_pTeams[i]->m_pFormationManager);
             }
         }
     }

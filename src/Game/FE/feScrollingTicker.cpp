@@ -126,9 +126,61 @@ void ScrollingTickerScene::OpenMessengerNow()
 
 /**
  * Offset/Address/Size: 0x3C4 | 0x800A001C | size: 0x20C
+ * TODO: 99.39% match - remaining f28/f31 swap in scale values (z component path)
+ *       and SDA vs stack loads for interpolation factor after first SetAssetPosition.
  */
 void ScrollingTickerScene::OpenMessenger()
 {
+    m_pFETweenManager.clearTweens();
+
+    f32 from = 0.0f;
+    f32 to = 1.0f;
+
+    f32 closedY = m_leftBallClosedPos.f.y;
+    f32 open = m_leftBallOpenPos.f.x;
+    f32 x;
+
+    x = from * (open - m_leftBallClosedPos.f.x) + m_leftBallClosedPos.f.x;
+    m_leftBall->SetAssetPosition(x, closedY, from);
+
+    open = m_rightBallOpenPos.f.x;
+    x = open - m_rightBallClosedPos.f.x;
+    x = from * x + m_rightBallClosedPos.f.x;
+    m_rightBall->SetAssetPosition(x, closedY, from);
+
+    open = m_grayOpenScale.f.x;
+    x = open - m_grayClosedScale.f.x;
+    x = from * x + m_grayClosedScale.f.x;
+    m_backRectangle->SetAssetScale(x, m_grayOpenScale.f.y, to);
+
+    f32 val = from;
+    f32 sy;
+    f32 sx;
+    f32 sz;
+    sx = m_ballClosedScale.f.x * val;
+    sy = m_ballClosedScale.f.y * val;
+    sz = m_ballClosedScale.f.z * val;
+    m_leftBall->SetAssetScale(sx, sy, sz);
+    m_rightBall->SetAssetScale(sx, sy, sz);
+
+    m_backRectangle->SetAssetScale(
+        m_grayClosedScale.f.x * val,
+        m_grayClosedScale.f.y * val,
+        m_grayClosedScale.f.z * val);
+
+    m_textBox->m_bVisible = false;
+
+    FETweener* tickerExpand = m_pFETweenManager.createTween(
+        &from, &to, 1.0f, 0.0f, 1, TweenFunctions::easeoutelastic, this, setSizeTweenCallback);
+
+    FETweener* tickerGrow = m_pFETweenManager.createTween(
+        &from, &to, 0.15f, 0.0f, 1, TweenFunctions::linear, this, setScaleTweenCallback);
+
+    tickerGrow->setNextTween(tickerExpand);
+    tickerExpand->setDoneCallFunc(tickerOpened, this);
+    m_pFETweenManager.startTween(tickerGrow);
+
+    SetVisible(true);
 }
 
 /**

@@ -7,6 +7,8 @@
 #include "Game/AI/Fielder.h"
 #include "Game/Field.h"
 #include "Game/Ball.h"
+#include "Game/Physics/PhysicsShell.h"
+#include "Game/Physics/PhysicsBanana.h"
 #include "Game/Sys/eventman.h"
 #include "Game/ReplayManager.h"
 #include "NL/nlString.h"
@@ -54,9 +56,114 @@ void Bowser::Update(float)
 
 /**
  * Offset/Address/Size: 0x3054 | 0x8015BDC8 | size: 0x208
+ * TODO: 99.96% match - remaining diff is one branch immediate in the ball
+ * damage gate; switch jump table body matches target with case set
+ * 0x04/0x0D/0x0E/0x0F/0x13/0x14.
  */
-void Bowser::CollisionCallback(PhysicsObject*, PhysicsObject*, const nlVector3&)
+void Bowser::CollisionCallback(PhysicsObject* pObjA, PhysicsObject*, const nlVector3&)
 {
+    Bowser* pObj = (Bowser*)((PhysicsNPC*)this)->mpAINPC;
+    cCharacter* pCharacter = NULL;
+    int type = pObjA->GetObjectType();
+
+    switch (type)
+    {
+    case 4:
+    case 0x0D:
+    case 0x0E:
+        pCharacter = (cCharacter*)((PhysicsCharacter*)pObjA->m_parentObject)->m_pAICharacter;
+        break;
+
+    case 0x0F:
+    {
+        cBall* pBall = ((PhysicsAIBall*)pObjA)->m_pAIBall;
+        bool shouldDamage = false;
+        u32 timer = pBall->m_tShotTimer.m_uPackedTime;
+        if (timer != 0)
+        {
+            if (pBall->mbCanDamage)
+            {
+                shouldDamage = true;
+            }
+        }
+        if (!shouldDamage)
+        {
+            shouldDamage = false;
+            if (timer != 0)
+            {
+                if (pBall->m_unk_0xA4)
+                {
+                    shouldDamage = true;
+                }
+            }
+        }
+        if (shouldDamage)
+        {
+            g_pEventManager->CreateValidEvent(0x62, 0x14);
+        }
+        if (pBall->m_pOwner != NULL)
+        {
+            pCharacter = (cCharacter*)pBall->m_pOwner;
+        }
+        else
+        {
+            if (pBall->m_pPassTarget != NULL)
+            {
+                pBall->ClearPassTarget();
+            }
+            if (pBall->m_tShotTimer.m_uPackedTime != 0)
+            {
+                pBall->ClearShotInProgress();
+            }
+        }
+        break;
+    }
+
+    case 0x13:
+    {
+        PowerupBase* pPowerup = ((PhysicsShell*)pObjA)->m_pPowerupObject;
+        if (!pPowerup->m_bShouldDestroy)
+        {
+            if (pPowerup->meSize == POWERUPSIZE_LARGE)
+            {
+                g_pEventManager->CreateValidEvent(0x62, 0x14);
+            }
+        }
+        ((PhysicsShell*)pObjA)->m_pPowerupObject->m_bShouldDestroy = true;
+        break;
+    }
+
+    case 0x14:
+    {
+        PowerupBase* pPowerup = ((PhysicsBanana*)pObjA)->m_pPowerupObject;
+        if (!pPowerup->m_bShouldDestroy)
+        {
+            if (pPowerup->meSize == POWERUPSIZE_LARGE)
+            {
+                g_pEventManager->CreateValidEvent(0x62, 0x14);
+            }
+        }
+        ((PhysicsBanana*)pObjA)->m_pPowerupObject->m_bShouldDestroy = true;
+        break;
+    }
+    }
+
+    if (pCharacter != NULL)
+    {
+        if (pCharacter->m_eClassType == FIELDER)
+        {
+            if (!((cFielder*)pCharacter)->IsFallenDown(0.0f))
+            {
+                if (!((cFielder*)pCharacter)->IsInvincible())
+                {
+                    Event* pEvent = g_pEventManager->CreateValidEvent(0x30, 0x20);
+                    CollisionBowserPlayerData* pData = new (&pEvent->m_data) CollisionBowserPlayerData();
+                    pData->pFielder = (cFielder*)pCharacter;
+                    pData->pBowser = pObj;
+                }
+            }
+        }
+    }
 }
 
 /**

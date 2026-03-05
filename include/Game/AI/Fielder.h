@@ -227,7 +227,7 @@ public:
     void DoFindBestSlideAttackTarget(nlVector3&, nlVector3&);
     bool CanBeBlownUp();
     void CanBreakOutOfSlideTackle();
-    void CalculateStrafeDirection(unsigned short, unsigned short);
+    eStrafeDirection CalculateStrafeDirection(unsigned short, unsigned short);
     void CalcPointOnPerimeter(nlVector3&, const nlVector3&, float);
     void ClearTimers();
     void ClearVolleyPass();
@@ -268,7 +268,7 @@ public:
     float GetSpeedPowerupAdjusted(float);
     float GetSlideAttackSpeed();
     bool SetDesire(eFielderDesireState, float);
-    void ShouldIStrafe();
+    u8 ShouldIStrafe();
     bool ShouldITurboWithoutBall();
     void ShouldIWave();
     void TestCollisionForInvicibility(cFielder*);

@@ -239,8 +239,66 @@ float GetCurrentAnimTriggerTime(cCharacter* pCharacter, unsigned long uTriggerID
 /**
  * Offset/Address/Size: 0x281C | 0x801A15CC | size: 0x1FC
  */
-void EmitBallImpact(cPlayer*, bool)
+void EmitBallImpact(cPlayer* pPlayer, bool bSilent)
 {
+    if (g_pBall->mbIsPerfectShot)
+    {
+        Audio::gStadGenSFX.Stop((Audio::eWorldSFX)0xB9, cGameSFX::SFX_STOP_FIRST);
+    }
+    Audio::gStadGenSFX.Stop((Audio::eWorldSFX)0xBA, cGameSFX::SFX_STOP_FIRST);
+
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("ball_hit_impact"), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 1.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.0f;
+    {
+        Function<EmissionController&> update;
+        update.mTag = FREE_FUNCTION;
+        update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+        pController->SetUpdateCallback(update);
+    }
+    pPlayer->AttachEffect(pController);
+    pController->SetPosition(g_pBall->m_v3Position);
+    pController->SetVelocity(g_pBall->m_v3Velocity);
+
+    eClassTypes classType = pPlayer->m_eClassType;
+    s32 sfxId = 0xB7;
+    if (classType == FIELDER)
+    {
+        switch (pPlayer->m_eAnimID)
+        {
+        case 0x38:
+        case 0x3D:
+        case 0x3E:
+        case 0x3F:
+            sfxId = 0xB2;
+            break;
+        case 0x1D:
+        case 0x1E:
+        case 0x1F:
+        case 0x20:
+        case 0x21:
+        case 0x22:
+            sfxId = 0xC3;
+            break;
+        case 0x1A:
+        case 0x1B:
+        case 0x1C:
+            sfxId = 0xC3;
+            break;
+        }
+    }
+
+    if (classType == FIELDER && !bSilent)
+    {
+        Audio::SoundAttributes attrs;
+        attrs.Init();
+        attrs.SetSoundType(sfxId, true);
+        attrs.UseStationaryPosVector(pPlayer->m_v3Position);
+        Audio::gStadGenSFX.Play(attrs);
+    }
+
+    BeginRumbleAction(RUMBLE_SMALL_CONTACT, pPlayer->GetGlobalPad());
 }
 
 /**
@@ -669,9 +727,46 @@ void KillWindups(cCharacter* pCharacter)
 /**
  * Offset/Address/Size: 0x87C | 0x8019F62C | size: 0x210
  */
-void KillWindup(cCharacter*, const char*, bool)
+void KillWindup(cCharacter* pCharacter, const char* name, bool bKill)
 {
-    FORCE_DONT_INLINE;
+    if (nlStrCmp(name, "shoot_to_score_windup") == 0 && g_pBall->mbHyperSTS && pCharacter->IsPlayingEffect(fxGetGroup(name)))
+    {
+        pCharacter->StopSFX(Audio::CHARSFX_SHOT_WINDUP);
+        pCharacter->StopSFX(Audio::CHARSFX_EFFORTS_HEAD_SHAKE);
+    }
+    else if (nlStrCmp(name, "ball_pass_windup") == 0 && pCharacter->IsPlayingEffect(fxGetGroup(name)) && bKill)
+    {
+        pCharacter->StopSFX(Audio::CHARSFX_SHOT_WINDUP);
+        pCharacter->StopSFX(Audio::CHARSFX_EFFORTS_HEAD_SHAKE);
+    }
+    else if (nlStrCmp(name, "ball_sts_windup") == 0 && pCharacter->IsPlayingEffect(fxGetGroup(name)))
+    {
+        Audio::gCrowdSFX.Stop((Audio::eWorldSFX)0x9e, cGameSFX::SFX_STOP_FIRST);
+        pCharacter->StopSFX(Audio::CHARSFX_SUPER_KICK_WINDUP);
+        pCharacter->StopSFX(Audio::CHARSFX_SHOT_WINDUP);
+        pCharacter->StopSFX(Audio::CHARSFX_EFFORTS_HEAD_SHAKE);
+        pCharacter->StopSFX(Audio::CHARSFX_SHOT_RELEASE);
+        pCharacter->StopSFX(Audio::CHARSFX_SWISH_DOWN_02);
+        pCharacter->StopSFX(Audio::CHARSFX_SWISH_DOWN_03);
+
+        if (((cFielder*)pCharacter)->meS2SResult == S2S_SUPER_SHOT)
+        {
+            pCharacter->StopSFX(Audio::CHARSFX_GEN_STOS_JUMP);
+        }
+
+        if (IsCaptain(pCharacter->m_eCharacterClass))
+        {
+            pCharacter->StopSFX(Audio::CHARSFX_EFFORTS_KICK_SUPER);
+            pCharacter->StopSFX(Audio::CHARSFX_EFFORTS_SHOT_WINDUP);
+        }
+    }
+    else if (nlStrCmp(name, "ball_shot_windup") == 0)
+    {
+        pCharacter->StopSFX(Audio::CHARSFX_SHOT_WINDUP);
+        pCharacter->StopSFX(Audio::CHARSFX_EFFORTS_HEAD_SHAKE);
+    }
+
+    pCharacter->KillEffect(fxGetGroup(name));
 }
 
 /**

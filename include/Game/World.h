@@ -8,6 +8,8 @@
 #include "Game/World/worldanim.h"
 #include "NL/nlDLListContainer.h"
 
+#include "Game/LightObject.h"
+
 // void DoTranslucency(DrawableObject*);
 // void nlListAddStart<ListEntry<LightObject*>>(ListEntry<LightObject*>**, ListEntry<LightObject*>*, ListEntry<LightObject*>**);
 // void nlDLRingIsEnd<DLListEntry<WorldAnimController*>>(DLListEntry<WorldAnimController*>*, DLListEntry<WorldAnimController*>*);
@@ -24,7 +26,6 @@ class glModel;
 class WorldObjectData;
 class Event;
 class CharacterPhysicsData;
-class LightObject;
 
 struct WorldHelperChunkData
 {
@@ -63,7 +64,7 @@ public:
 
     int CompareNameToGenericName(const char*, const char*);
     unsigned long GetHashIdForGenericName(const char*) const;
-    void GetShadowLight(const nlVector3&, float);
+    LightObject* GetShadowLight(const nlVector3&, float);
     bool AddDrawableObject(unsigned long, DrawableObject*);
     HelperObject* FindHelperObject(unsigned long uHashId);
     DrawableObject* FindDrawableObject(unsigned long);

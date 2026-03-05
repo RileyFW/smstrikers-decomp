@@ -23,6 +23,7 @@ class Event;
 struct EventData;
 
 // Forward declarations
+class Bowser;
 class cSHierarchy;
 class cAnimInventory;
 class CharacterPhysicsData;
@@ -352,11 +353,14 @@ public:
     virtual u32 GetID();
 };
 
-class CollisionBowserPlayerData
+class CollisionBowserPlayerData : public EventData
 {
 public:
     virtual u32 GetID();
-};
+
+    /* 0x04 */ cFielder* pFielder;
+    /* 0x08 */ Bowser* pBowser;
+}; // total size: 0xC
 
 class CollisionChainPlayerData : public EventData
 {

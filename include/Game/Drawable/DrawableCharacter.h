@@ -90,6 +90,7 @@ public:
     /* 0x50 */ Bowser* mBowser;                     // offset 0x50, size 0x4
     /* 0x54 */ unsigned char mDirt;                 // offset 0x54, size 0x1
 
+    static bool sCameraRelativeLighting;
     static cCharacter* spRenderOnlyThisCharacter;
     static bool sbRenderOpposingGoalieToo;
 

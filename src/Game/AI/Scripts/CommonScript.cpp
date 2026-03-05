@@ -220,15 +220,17 @@ void Fuzzy::GetSwapControllerScore(cPlayer*)
 /**
  * Offset/Address/Size: 0xDC78 | 0x80077E48 | size: 0x794
  */
-void Fuzzy::ShouldIStrafeBall(cFielder*)
+FuzzyVariant Fuzzy::ShouldIStrafeBall(cFielder*)
 {
+    return FuzzyVariant();
 }
 
 /**
  * Offset/Address/Size: 0xD92C | 0x80077AFC | size: 0x34C
  */
-void Fuzzy::ShouldIStrafeMark(cFielder*)
+FuzzyVariant Fuzzy::ShouldIStrafeMark(cFielder*)
 {
+    return FuzzyVariant();
 }
 
 /**

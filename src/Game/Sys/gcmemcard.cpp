@@ -1,4 +1,6 @@
 #include "Game/Sys/gcmemcard.h"
+#include "NL/nlString.h"
+#include "NL/nlBSearch.h"
 
 void nlPrintf(const char*, ...);
 
@@ -422,9 +424,8 @@ void MemCard::WriteFileDoneCB(long channel, long result)
 
 /**
  * Offset/Address/Size: 0x12DC | 0x801CAA4C | size: 0xF4
- * TODO: 78.9% match - instruction scheduling differences in MemCardFunctor
- * struct copy (lwz/stw interleaving) and CARDMountAsync arg register
- * allocation (workArea addr in r4 vs CardRemovedCB addr in r4)
+ * TODO: 92.95% match - MWCC still hoists two functor-copy loads ahead of
+ * preceding stores in the 24-byte copy to m_CB[1] (8 instruction diffs).
  */
 s32 MemCard::BeginCardAccess(const MemCardFunctor& Callback)
 {
@@ -453,7 +454,10 @@ s32 MemCard::BeginCardAccess(const MemCardFunctor& Callback)
     m_State = IS_MOUNTING;
     m_CardState = CS_MOUNTING;
 
-    result = CARDMountAsync(m_Slot, (void*)(((u32)&m_CardWorkArea[CARD_SEG_SIZE - 1]) & ~(CARD_SEG_SIZE - 1)), CardRemovedCB, MountDoneCB);
+    u8* workArea = m_CardWorkArea + CARD_SEG_SIZE - 1;
+    workArea = (u8*)(((u32)workArea) & ~(CARD_SEG_SIZE - 1));
+
+    result = CARDMountAsync(m_Slot, workArea, CardRemovedCB, MountDoneCB);
     if (result != 0)
     {
         m_State = IS_IDLE;
@@ -505,9 +509,110 @@ s32 MemCard::FormatCard(const MemCardFunctor& functor)
 
 /**
  * Offset/Address/Size: 0x930 | 0x801CA0A0 | size: 0x1F8
+ * TODO: 96.2% match - 24-byte MemCardFunctor copy still has 6 scheduling/reg
+ * diffs, nlBSearch call uses EntryLookup mangling variant, and shift loop keeps a
+ * 4-instruction register permutation in entry copy.
  */
-void MemCard::DeleteFile(const char*, const MemCardFunctor&)
+static inline EntryLookup<MemCard::MC_FILE>* FindOpenLookup(MemCard* self, MemCard::MC_FILE* file)
 {
+    long i = 0;
+    long byteOff = i;
+    while ((unsigned long)i < self->m_OpenFiles.m_EntryCount)
+    {
+        if (self->m_OpenFiles.m_pEntryLookup[i].pEntry == file)
+        {
+            return &self->m_OpenFiles.m_pEntryLookup[i];
+        }
+        byteOff += 8;
+        i++;
+    }
+    return NULL;
+}
+
+static inline void ShiftOpenLookup(MemCard* self, EntryLookup<MemCard::MC_FILE>* foundEntry)
+{
+    s32 next;
+    unsigned long total = self->m_OpenFiles.m_EntryCount;
+    long idx = (foundEntry - self->m_OpenFiles.m_pEntryLookup);
+
+    while ((unsigned long)idx != total)
+    {
+        next = idx + 1;
+        EntryLookup<MemCard::MC_FILE>* src = &self->m_OpenFiles.m_pEntryLookup[next];
+        EntryLookup<MemCard::MC_FILE>* dst = &self->m_OpenFiles.m_pEntryLookup[idx];
+        idx = next;
+        unsigned long id = src->Id;
+        MemCard::MC_FILE* entry = src->pEntry;
+        dst->pEntry = entry;
+        dst->Id = id;
+    }
+
+    self->m_OpenFiles.m_EntryCount = self->m_OpenFiles.m_EntryCount - 1;
+}
+
+/**
+ * Offset/Address/Size: 0x3060 | 0x801CA0A0 | size: 0x1F8
+ * TODO: 96.15% match - struct copy scheduling (m_CB[6]=Callback) differs,
+ *   ShiftOpenLookup r3/r4 register allocation swap, nlBSearch symbol name mismatch
+ */
+long MemCard::DeleteFile(const char* FileName, const MemCardFunctor& Callback)
+{
+    EntryLookup<MC_FILE>* nlBSearch(const unsigned long&, EntryLookup<MC_FILE>*, int);
+    EntryLookup<MC_FILE>* foundEntry;
+
+    if (m_State != IS_MOUNTED)
+    {
+        return -100;
+    }
+
+    m_CB[6] = Callback;
+
+    unsigned long hash = nlStringHash(FileName);
+
+    EntryLookup<MC_FILE>* result;
+    if (m_OpenFiles.m_EntryCount != 0)
+    {
+        result = nlBSearch(hash, m_OpenFiles.m_pEntryLookup, m_OpenFiles.m_EntryCount);
+    }
+    else
+    {
+        result = NULL;
+    }
+
+    MC_FILE* file;
+    if (result != NULL)
+    {
+        file = result->pEntry;
+    }
+    else
+    {
+        file = NULL;
+    }
+
+    if (file != NULL)
+    {
+        file->TotalHeaderSize = 0;
+        if (CARDClose(&file->FileInfo) == 0 && file != NULL)
+        {
+            foundEntry = FindOpenLookup(this, file);
+            m_OpenFiles.FreeEntry(file);
+            ShiftOpenLookup(this, foundEntry);
+        }
+    }
+
+    m_State = IS_DELETING;
+    m_CardState = CS_DELETING;
+    m_LastTransferSize = CARDGetXferredBytes(m_Slot);
+    m_TargetTransferSize = 0x4000;
+
+    long Result = CARDDeleteAsync(m_Slot, FileName, DeleteFileDoneCB);
+    if (Result != 0)
+    {
+        m_State = IS_MOUNTED;
+        m_CardState = CS_MOUNTED;
+    }
+
+    return Result;
 }
 
 /**
@@ -678,12 +783,14 @@ void MemCard::ICON_CONFIG::GetValidDataInfo(MemCard::ICON_DATA_INFO& DataInfo) c
     unsigned long iconCount = iconCountMember;
     s32 iconStride = (s32)IconFormat << 10;
 
-    for (Icon = 1; Icon != iconCount; Icon++) {
+    for (Icon = 1; Icon != iconCount; Icon++)
+    {
         DataInfo.IconOffset[Icon] = DataInfo.IconOffset[Icon - 1] + iconStride;
     }
 
     iconCount = IconCount;
-    for (; Icon < 8; Icon++) {
+    for (; Icon < 8; Icon++)
+    {
         DataInfo.IconOffset[Icon] = DataInfo.IconOffset[iconCount - 1];
     }
 

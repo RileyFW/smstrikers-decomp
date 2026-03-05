@@ -65,10 +65,10 @@ public:
 // BasicString data storage struct
 struct BasicStringInternal
 {
-    char* mData;      // offset 0x0 - the actual char* buffer
-    int mSize;        // offset 0x4
-    int mCapacity;    // offset 0x8
-    int mRefCount;    // offset 0xC
+    char* mData;   // offset 0x0 - the actual char* buffer
+    int mSize;     // offset 0x4
+    int mCapacity; // offset 0x8
+    int mRefCount; // offset 0xC
 };
 
 // BasicString template class - total size: 0x4 (pointer to BasicStringInternal)
@@ -132,6 +132,11 @@ public:
     {
         return m_data ? m_data->mSize : 0;
     }
+
+    BasicString Append(const char* rhs) const;
+
+    template <typename OtherAllocator>
+    BasicString Append(const BasicString<CharT, OtherAllocator>& rhs) const;
 };
 
 // Format template function for single float argument

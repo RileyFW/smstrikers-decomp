@@ -420,9 +420,60 @@ void RenderSnapshot::RenderDebugInfo(const RenderSnapshot&, const RenderSnapshot
 
 /**
  * Offset/Address/Size: 0xC | 0x80112CE0 | size: 0x20C
+ * TODO: 87.29% match - register allocation differs (this=r29 should be r30, lhs=r30 should be r25).
+ *       Compiler allocates callee-saved regs differently in scratch vs full TU build.
+ *       All instructions match, only register numbering and float scheduling differ.
  */
-void RenderSnapshot::Blend(const float*, const RenderSnapshot&, const RenderSnapshot&)
+void RenderSnapshot::Blend(const float* blendFactors, const RenderSnapshot& lhs, const RenderSnapshot& rhs)
 {
+    int i;
+    mFrameBlendPercent = blendFactors[0];
+    mValid = true;
+
+    for (i = 0; i < 10; i++)
+    {
+        mCharacters[i].Blend(blendFactors, lhs.mCharacters[i], rhs.mCharacters[i]);
+    }
+
+    for (i = 0; i < 150; i++)
+    {
+        mPowerups[i].Blend(blendFactors, lhs.mPowerups[i], rhs.mPowerups[i]);
+    }
+
+    for (i = 0; i < 20; i++)
+    {
+        mExplosionFragments[i].Blend(blendFactors, lhs.mExplosionFragments[i], rhs.mExplosionFragments[i]);
+    }
+
+    mChainChomp.Blend(blendFactors, lhs.mChainChomp, rhs.mChainChomp);
+    mBowser.Blend(blendFactors, lhs.mBowser, rhs.mBowser);
+    mBall.Blend(blendFactors, lhs.mBall, rhs.mBall);
+
+    mpNetMeshPositiveX->Blend(blendFactors[0], *lhs.mpNetMeshPositiveX, *rhs.mpNetMeshPositiveX);
+    mpNetMeshNegativeX->Blend(blendFactors[0], *lhs.mpNetMeshNegativeX, *rhs.mpNetMeshNegativeX);
+
+    float blend = blendFactors[0];
+    mCameraUp.f.x = (1.0f - blend) * lhs.mCameraUp.f.x + blend * rhs.mCameraUp.f.x;
+    mCameraUp.f.y = (1.0f - blend) * lhs.mCameraUp.f.y + blend * rhs.mCameraUp.f.y;
+    mCameraUp.f.z = (1.0f - blend) * lhs.mCameraUp.f.z + blend * rhs.mCameraUp.f.z;
+
+    mGoalLight = rhs.mGoalLight;
+    mDoGoalieNetTestPosX = rhs.mDoGoalieNetTestPosX;
+    mDoGoalieNetTestNegX = rhs.mDoGoalieNetTestNegX;
+
+    const unsigned char* pLhsVis = lhs.mpExplodableVisibilityRecords;
+    const unsigned char* pRhsVis = rhs.mpExplodableVisibilityRecords;
+    for (int j = 0; j < mNumExplodables; j++)
+    {
+        unsigned char visible = 0;
+        if (*pLhsVis || *pRhsVis)
+        {
+            visible = 1;
+        }
+        mpExplodableVisibilityRecords[j] = visible;
+        pRhsVis++;
+        pLhsVis++;
+    }
 }
 
 /**
