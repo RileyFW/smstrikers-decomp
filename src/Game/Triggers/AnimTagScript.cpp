@@ -1,4 +1,5 @@
 #include "Game/Triggers/AnimTagScript.h"
+#include "NL/nlMemory.h"
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80214594 | size: 0x8C
@@ -81,7 +82,7 @@ void AnimTagScriptInterpreter::SetupAnimationTriggers(const char* TriggerFileNam
             const BinaryTriggerFile::TRIGGER_RECORD* pTriggerRecord;
             file.m_CurrentTrigger = 0;
             while (pTriggerRecord = file.m_pFirstTrigger + file.m_pCurrentAnim->TriggerOffset + file.m_CurrentTrigger,
-                   file.m_CurrentTrigger < file.m_pCurrentAnim->TriggerCount)
+                file.m_CurrentTrigger < file.m_pCurrentAnim->TriggerCount)
             {
                 pSlot = NULL;
                 if (m_AnimTagSlotPool.m_FreeList == NULL)
@@ -98,9 +99,7 @@ void AnimTagScriptInterpreter::SetupAnimationTriggers(const char* TriggerFileNam
                 pSlot->ScriptInfo.Trigger = pTriggerRecord->Trigger;
                 pSlot->ScriptInfo.ScriptFuncOffset = pTriggerRecord->ScriptFuncOffset;
 
-                ((cSAnim*)node->data)->CreateCallback(pTriggerRecord->Frame / (float)((cSAnim*)node->data)->m_nNumKeys,
-                    (unsigned int)pSlot,
-                    AnimControllerCB__24AnimTagScriptInterpreterFUi);
+                ((cSAnim*)node->data)->CreateCallback(pTriggerRecord->Frame / (float)((cSAnim*)node->data)->m_nNumKeys, (unsigned int)pSlot, AnimControllerCB__24AnimTagScriptInterpreterFUi);
 
                 file.m_CurrentTrigger++;
             }

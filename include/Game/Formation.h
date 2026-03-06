@@ -79,6 +79,8 @@ class FormationSpec;
 class FormationEval
 {
 public:
+    FormationEval();
+    FormationEval(FormationManager*, eFormationType, const FormationSpec*);
     virtual ~FormationEval();
     virtual void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
     virtual cPlayer* GetKeyPlayer();
@@ -101,6 +103,7 @@ public:
 class FormationBallPosition : public FormationEval
 {
 public:
+    FormationBallPosition(FormationManager*, eFormationType, const FormationSet*);
     ~FormationBallPosition();
     void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
     float GetWeight();
@@ -114,6 +117,7 @@ public:
 class FormationOffensive : public FormationEval
 {
 public:
+    FormationOffensive(FormationManager*, eFormationType, const FormationSpec*);
     ~FormationOffensive();
     float IsFielderInPosition(cFielder*, nlVector3, bool);
     float GetWeight();
@@ -122,6 +126,7 @@ public:
 class FormationDefensive : public FormationEval
 {
 public:
+    FormationDefensive(FormationManager*, eFormationType, const FormationSpec*);
     ~FormationDefensive();
     float IsFielderInPosition(cFielder*, nlVector3, bool);
     float GetWeight();

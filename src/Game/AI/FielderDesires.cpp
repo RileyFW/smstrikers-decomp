@@ -290,9 +290,85 @@ void cFielder::InitDesireRunToNet()
 
 /**
  * Offset/Address/Size: 0xCA8 | 0x80031A2C | size: 0x23C
+ * TODO: 99.8% match - case 1 ball pointer/velocity ref register allocation is swapped
  */
-void cFielder::DesireSlideAttack(float)
+void cFielder::DesireSlideAttack(float fDeltaT)
 {
+    float fTime;
+    nlVector3 v3VictimPosition;
+    float fBallClosingSpeed;
+
+    switch (m_eDesireSubState)
+    {
+    case 0:
+    {
+        if (m_pMark == NULL || m_DesireSlideAttackVars.m_pSlideAttackTarget == NULL || m_DesireSlideAttackVars.m_pSlideAttackTarget != g_pBall->m_pOwner)
+        {
+            SetDesireDuration(0.0f, true);
+            break;
+        }
+
+        if (CanISlideAttack(m_DesireSlideAttackVars.m_pSlideAttackTarget->m_v3Position,
+                m_DesireSlideAttackVars.m_pSlideAttackTarget->m_v3Velocity,
+                &fTime))
+        {
+            InitActionSlideAttack(m_DesireSlideAttackVars.m_pSlideAttackTarget, fTime);
+            m_eDesireSubState = 1;
+            break;
+        }
+
+        cFielder* pTarget = m_DesireSlideAttackVars.m_pSlideAttackTarget;
+        v3VictimPosition.f.x = pTarget->m_v3Position.f.x + 0.25f * pTarget->m_v3Velocity.f.x;
+        v3VictimPosition.f.y = pTarget->m_v3Position.f.y + 0.25f * pTarget->m_v3Velocity.f.y;
+        v3VictimPosition.f.z = 0.0f;
+
+        u8 turbo = ShouldITurboWithoutBall();
+        SetDesiredSpeedAndDirectionToPosition(fDeltaT, v3VictimPosition, (eTurboRequest)(turbo != 0), 1.0f, 1.0f);
+
+        m_pAvoidance->UseMinimumAvoidance(m_DesireSlideAttackVars.m_pSlideAttackTarget);
+        ShouldIStrafe();
+        break;
+    }
+    case 1:
+    {
+        SetDesireDuration(999999.9f, true);
+
+        if (m_tSlideAttackTimer.m_uPackedTime != 0)
+        {
+            if (mActionSlideAttackVars.bAttackSucceeded == 0)
+            {
+                float fBallSpeed = nlSqrt(
+                    g_pBall->m_v3Velocity.f.x * g_pBall->m_v3Velocity.f.x + g_pBall->m_v3Velocity.f.y * g_pBall->m_v3Velocity.f.y + g_pBall->m_v3Velocity.f.z * g_pBall->m_v3Velocity.f.z,
+                    true);
+
+                if (fBallSpeed > 0.05f)
+                {
+                    if (GetClosingSpeed2D(GetJointPosition(m_nLeftFootJointIndex), g_pBall->m_v3Velocity, g_pBall->m_v3Position, g_pBall->m_v3Velocity) < 0.0f)
+                    {
+                        if (nlRandomf(1.0f, &nlDefaultSeed) > 0.5f)
+                        {
+                            m_tSlideAttackTimer.SetSeconds(0.0f);
+                            m_eDesireSubState = 2;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            m_eDesireSubState = 2;
+        }
+        break;
+    }
+    case 2:
+    {
+        if (m_eActionState == ACTION_NEED_ACTION)
+        {
+            SetDesireDuration(0.0f, true);
+        }
+        break;
+    }
+    }
 }
 
 /**

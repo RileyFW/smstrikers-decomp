@@ -668,7 +668,7 @@ static __mem_pool* get_malloc_pool(void)
  */
 void* allocate_from_fixed_pools(__mem_pool_obj* pool_obj, u32 size)
 {
-    // UNUSED FUNCTION
+    FORCE_DONT_INLINE;
 }
 
 /**

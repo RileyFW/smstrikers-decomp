@@ -262,7 +262,7 @@ public:
     void SetRunningWBAnimState(float);
     bool ShouldIClearBall();
     bool ShouldILeadPass();
-    void CanISlideAttack(const nlVector3&, const nlVector3&, float*);
+    bool CanISlideAttack(const nlVector3&, const nlVector3&, float*);
     void SetDesiredSpeedAndDirectionToPosition(float, const nlVector3&, eTurboRequest, float, float);
     void SetDesiredSpeed(float, float);
     float GetSpeedPowerupAdjusted(float);

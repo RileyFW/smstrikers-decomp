@@ -383,9 +383,138 @@ SaveLoadScene::~SaveLoadScene()
 
 /**
  * Offset/Address/Size: 0xF0C | 0x800B1494 | size: 0x218
+ * TODO: 98.5% match - first hasher block remains at sp+0x38 (target sp+0x2C)
+ * and function body is still shifted by +0x14 bytes in current codegen
  */
 void SaveLoadScene::SceneCreated()
 {
+    FEPresentation* pres = m_pFEScene->m_pFEPackage->GetPresentation();
+    pres->SetActiveSlide("Slide1");
+
+    typedef TLTextInstance* (*FindTextByValue)(FEPresentation*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLTextInstance* (*FindTextByRef)(FEPresentation*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8;
+    volatile InlineHasher h7, h6, h5, h4, h3, h2, h1, h0;
+
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+
+    unsigned long hash;
+    hash = nlStringLowerHash("Text");
+    h6.m_Hash = hash;
+    h7.m_Hash = hash;
+
+    hash = nlStringLowerHash("Layer");
+    h8.m_Hash = hash;
+    h9.m_Hash = hash;
+
+    hash = nlStringLowerHash("Slide1");
+    hA.m_Hash = hash;
+    hB.m_Hash = hash;
+
+    union
+    {
+        FindTextByValue byValue;
+        FindTextByRef byRef;
+    } findText;
+    findText.byValue = FEFinder<TLTextInstance, 3>::Find<FEPresentation>;
+
+    m_displayText = findText.byRef(
+        pres,
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    if (mIsAutoSaving)
+    {
+        pres->SetActiveSlide("Slide2");
+    }
+
+    typedef TLSlide* (*FindSlideByValue)(FEPresentation*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLSlide* (*FindSlideByRef)(FEPresentation*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    volatile InlineHasher gB, gA;
+    volatile InlineHasher g9, g8, g7, g6, g4, g2, g0;
+
+    g0.m_Hash = 0;
+    h1.m_Hash = 0;
+    g2.m_Hash = 0;
+    h3.m_Hash = 0;
+    g4.m_Hash = 0;
+    h5.m_Hash = 0;
+    g6.m_Hash = 0;
+    g7.m_Hash = 0;
+    g8.m_Hash = 0;
+    g9.m_Hash = 0;
+
+    hash = nlStringLowerHash("Slide3");
+    gA.m_Hash = hash;
+    gB.m_Hash = hash;
+
+    union
+    {
+        FindSlideByValue byValue;
+        FindSlideByRef byRef;
+    } findSlide;
+    findSlide.byValue = FEFinder<TLSlide, 0>::Find<FEPresentation>;
+
+    mAboutAutoSaveSlide = findSlide.byRef(
+        pres,
+        (InlineHasher&)gB,
+        (InlineHasher&)g9,
+        (InlineHasher&)g7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
+
+    TLTextInstance* text = m_displayText;
+    if (text != NULL)
+    {
+        eSaveLoad prevOp = gSceneTypeStack[gSceneTypeStackDepth - 1];
+        switch (prevOp)
+        {
+        case ST_SAVE:
+        case ST_GAMESAVEIDTEST:
+            text->m_LocStrId = 0xCF941DC9;
+            text->m_OverloadFlags |= 0x8;
+            break;
+        case ST_LOAD:
+            text->m_LocStrId = 0xFAA420FA;
+            text->m_OverloadFlags |= 0x8;
+            break;
+        case ST_FORMAT:
+        case ST_CONFIRM_FORMAT:
+            text->m_LocStrId = 0x81D26163;
+            text->m_OverloadFlags |= 0x8;
+            break;
+        case ST_DELETE:
+            text->m_LocStrId = 0x1A7FDB2D;
+            text->m_OverloadFlags |= 0x8;
+            break;
+        case ST_ASK_SAVE:
+        case ST_ASK_LOAD:
+        case ST_CHECKING:
+        case ST_SHOULD_LOAD_OR_SAVE:
+            text->m_LocStrId = 0xE8E70E54;
+            text->m_OverloadFlags |= 0x8;
+            break;
+        case ST_ABOUT_AUTOSAVE:
+            break;
+        case (eSaveLoad)11:
+            text->m_LocStrId = 0xF501447B;
+            text->m_OverloadFlags |= 0x8;
+            break;
+        }
+    }
 }
 
 /**

@@ -2,6 +2,10 @@
 #define _NLFONT_H_
 
 #include "NL/nlMath.h"
+#include "NL/gl/gl.h"
+
+struct nlColour;
+class FontCharString;
 
 enum TextureType
 {
@@ -41,6 +45,14 @@ struct TextMetrics
 class nlFont
 {
 public:
+    enum TextPass
+    {
+        PASS_None = 0,
+        PASS_Text = 1,
+        PASS_Effect = 2,
+        PASS_TextAndEffect = 3,
+    };
+
     struct GlyphInfo
     {
         /* 0x0 */ nlVector2 uv;
@@ -71,7 +83,7 @@ public:
     unsigned long GetCharWidth(unsigned short FontChar, unsigned short PrevFontChar) const;
     void DisableScissorBox() const;
     // void SetScissorBox(const nlFont::ScissorBox&) const;
-    // void DrawString(eGLView, const FontCharString&, const nlVector2&, const nlColour&, const nlColour&, int, nlFont::TextPass, bool, unsigned long*, nlColour*) const;
+    void DrawString(eGLView, const FontCharString&, const nlVector2&, const nlColour&, const nlColour&, int, nlFont::TextPass, bool, unsigned long*, nlColour*) const;
     void Load(const char*, char*, unsigned long);
     // void GlyphInfo::SortProc(const nlFont::GlyphInfo*, const nlFont::GlyphInfo*);
     // void KernPair::SortProc(const nlFont::KernPair*, const nlFont::KernPair*);

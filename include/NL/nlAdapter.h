@@ -14,10 +14,7 @@ public:
     typedef T EntryType;
     static void DeleteEntry(T* entry)
     {
-        if (entry)
-        {
-            delete entry;
-        }
+        delete entry;
     }
 };
 

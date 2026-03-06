@@ -2,6 +2,24 @@
 #define _CHARACTERTEMPLATE_H_
 
 #include "Game/Character.h"
+#include "Game/Inventory.h"
+#include "Game/SHierarchy.h"
+
+class cAnimInventory;
+class CharacterPhysicsData;
+class AnimRetargetList;
+
+struct tCharacterTemplate
+{
+    /* 0x00 */ int nCharacterModelID[2];
+    /* 0x08 */ unsigned long uAnimInventoryHashID;
+    /* 0x0C */ unsigned char bAnimInventoryCopy;
+    /* 0x0D */ char pad_0xD[3];
+    /* 0x10 */ cInventory<cSHierarchy*>* pHierarchyInventory;
+    /* 0x14 */ cAnimInventory* pAnimInventory;
+    /* 0x18 */ const CharacterPhysicsData* pPhysicsData;
+    /* 0x1C */ cInventory<AnimRetargetList*>* pAnimRetargetListInventory;
+}; // total size: 0x20
 
 struct tGoalieTemplateInfo
 {
@@ -31,17 +49,16 @@ struct tCharacterTemplateInfo
     const char* szAnimRetargetFilename;           // offset 0x40, size 0x4
 }; // total size: 0x44
 
-class tCharacterTemplate;
 class tCharacterTemplateInfo;
 
 s32 GetGoalieIndex(int);
 s32 GetCharacterIndex(const cCharacter*);
 void DestroyCharacters();
 void CreateCharacters();
-void CreateGoalie(eCharacterClass, bool);
+cPlayer* CreateGoalie(eCharacterClass, bool);
 void CreateSidekick(int, int, eCharacterClass, eCharacterClass, bool);
 s32 SidekickTexture_cb(unsigned long);
-void CreateCharacter(int, int, eCharacterClass, bool);
+cPlayer* CreateCharacter(int, int, eCharacterClass, bool);
 void CharacterLoadingGuts(tCharacterTemplate*, const tCharacterTemplateInfo&, eCharacterClass, bool);
 bool IsCaptain(eCharacterClass);
 char* GetCharacterName(eCharacterClass cc);

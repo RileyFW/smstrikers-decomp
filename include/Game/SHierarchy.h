@@ -3,10 +3,11 @@
 
 #include "types.h"
 #include "NL/nlMath.h"
+#include "Game/SAnim.h"
 
 class nlChunk;
 
-class cSHierarchy
+class cSHierarchy : public cIdentifier
 {
 public:
     bool PreserveBoneLength(int) const;
@@ -24,19 +25,17 @@ public:
     inline u32* GetNodeIDs() const { return m_nodeIDs; }
     inline s32 GetNodeCount() const { return m_nodeCount; }
 
-    /* 0x00 */ void* m_hierarchyMetadata; // Pointer to hierarchy metadata or root node
-    /* 0x04 */ char m_pad_0x04[4];
-    /* 0x08 */ s32 m_nodeCount;             // Number of nodes in the hierarchy
-    /* 0x0C */ u32* m_nodeIDs;              // Array of node IDs
-    /* 0x10 */ void* m_parentIndices;       // Array of parent indices for each node
-    /* 0x14 */ s32* m_childCounts;          // Array of child counts for each node
-    /* 0x18 */ void* m_childArrays;         // Array of child index arrays for each node
-    /* 0x1C */ void* m_pushPopFlags;        // Push/pop flags for hierarchy traversal
-    /* 0x20 */ void* m_mirroredNodeIndices; // Mirrored node indices for symmetry
-    /* 0x24 */ s32 m_minNode;
-    /* 0x28 */ s32 m_maxNode;
-    /* 0x2C */ nlVector3* m_translationOffsets; // Translation offset data for each node
-    /* 0x30 */ bool* m_boneLengthFlags;         // Array of bone length preservation flags
+    /* 0x08 */ s32 m_nodeCount;
+    /* 0x0C */ u32* m_nodeIDs;
+    /* 0x10 */ s32* m_parentIndices;
+    /* 0x14 */ s32* m_childCounts;
+    /* 0x18 */ s32** m_childArrays;
+    /* 0x1C */ s32* m_pushPopFlags;
+    /* 0x20 */ s32* m_mirroredNodeIndices;
+    /* 0x24 */ s32 m_nPelvisNodeIndex;
+    /* 0x28 */ s32 m_nSpineNodeIndex;
+    /* 0x2C */ nlVector3* m_translationOffsets;
+    /* 0x30 */ u8* m_boneLengthFlags;
 };
 
 #endif // _SHIERARCHY_H_

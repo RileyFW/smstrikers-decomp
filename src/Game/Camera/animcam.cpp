@@ -1,6 +1,7 @@
 #include "Game/Camera/animcam.h"
 
 #include "NL/nlFile.h"
+#include "NL/nlMemory.h"
 #include "Game/Render/depthoffield.h"
 #include "Game/FixedUpdateTask.h"
 

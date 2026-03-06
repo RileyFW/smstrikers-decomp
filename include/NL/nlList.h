@@ -47,13 +47,13 @@ public:
     }
 
     // offsets and sizes are dependent on the adapter
-    /* 0x0 */ NewAdapter<T> m_Allocator;
+    /* 0x0 */ NewAdapter<ListEntry<T> > m_Allocator;
     /* 0x4 */ ListEntry<T>* m_Head;
     /* 0x8 */ ListEntry<T>* m_Tail;
 };
 
 template <typename T>
-class nlListContainer : public ListContainerBase<T, NewAdapter<T> >
+class nlListContainer : public ListContainerBase<T, NewAdapter<ListEntry<T> > >
 {
 public:
     // todo: ...
@@ -212,7 +212,12 @@ s32 nlListCountElements(T* head)
 template <typename EntryT, typename ContainerT>
 void nlWalkList(EntryT* list, ContainerT* cbClass, void (ContainerT::*cb)(EntryT*))
 {
-    FORCE_DONT_INLINE;
+    while (list != NULL)
+    {
+        EntryT* next = list->next;
+        (cbClass->*cb)(list);
+        list = next;
+    }
 }
 
 #endif

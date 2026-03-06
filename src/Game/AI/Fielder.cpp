@@ -2558,8 +2558,9 @@ bool cFielder::ShouldILeadPass()
 /**
  * Offset/Address/Size: 0x4564 | 0x8001D8A0 | size: 0x330
  */
-void cFielder::CanISlideAttack(const nlVector3&, const nlVector3&, float*)
+bool cFielder::CanISlideAttack(const nlVector3&, const nlVector3&, float*)
 {
+    return false;
 }
 
 /**

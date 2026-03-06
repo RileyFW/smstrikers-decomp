@@ -2,12 +2,23 @@
 
 #include "NL/nlMemory.h"
 #include "Game/Ball.h"
+#include "Game/Inventory.h"
+#include "Game/Physics/CollisionSpace.h"
+#include "Game/Physics/LoadablePhysicsMesh.h"
+#include "Game/Physics/PhysicsNet.h"
 #include "ode/NLGAdditions.h"
 
 extern PhysicsWorld* g_PhysicsWorld;
 extern nlListContainer<PhysicsObject*> g_NetPhysicsObjects;
+extern nlListContainer<PhysicsObject*> g_StaticPhysicsPrimitives;
+extern CollisionSpace* g_CollisionSpace;
+extern PhysicsMesh* g_TerrainMesh;
+static PhysicsRoundedCorner* corners[4];
+static cInventory<LoadablePhysicsMesh*> s_PhysicsMeshes;
 static bool sbDisableCollisionDetection;
 static bool sbNonMovingAABBsInitialized;
+
+void dClearCachedData();
 
 /**
  * Offset/Address/Size: 0x0 | 0x80132B10 | size: 0x14C
@@ -60,9 +71,67 @@ void PhysicsUpdate(PhysicsWorld* pWorld, float fDeltaT)
 
 /**
  * Offset/Address/Size: 0x14C | 0x80132C5C | size: 0x244
+ * TODO: 92.7% match - r29/r30 register swap throughout, stack offsets off by 4 bytes,
+ *       nlWalkList member function pointer constants differ. Likely -inline deferred related.
  */
 void PhysicsLoader::DestroyPhysics()
 {
+    PhysicsNet::StaticDestroy();
+
+    for (int i = 0; i < 4; i++)
+    {
+        delete corners[i];
+    }
+
+    ListEntry<PhysicsObject*>* entry = g_StaticPhysicsPrimitives.m_Head;
+    while (entry != NULL)
+    {
+        delete entry->data;
+        entry = entry->next;
+    }
+
+    typedef ListContainerBase<PhysicsObject*, NewAdapter<ListEntry<PhysicsObject*> > > PhysListBase;
+    nlWalkList(g_StaticPhysicsPrimitives.m_Head, (PhysListBase*)&g_StaticPhysicsPrimitives, &PhysListBase::DeleteEntry);
+    g_StaticPhysicsPrimitives.m_Head = NULL;
+    g_StaticPhysicsPrimitives.m_Tail = NULL;
+
+    nlWalkList(g_NetPhysicsObjects.m_Head, (PhysListBase*)&g_NetPhysicsObjects, &PhysListBase::DeleteEntry);
+    g_NetPhysicsObjects.m_Head = NULL;
+    g_NetPhysicsObjects.m_Tail = NULL;
+
+    ListEntry<LoadablePhysicsMesh*>* meshEntry = s_PhysicsMeshes.m_lItemList.m_Head;
+    while (meshEntry != NULL)
+    {
+        meshEntry->data->Destroy();
+        meshEntry = meshEntry->next;
+    }
+
+    typedef ListContainerBase<LoadablePhysicsMesh*, NewAdapter<ListEntry<LoadablePhysicsMesh*> > > MeshListBase;
+    nlWalkList(s_PhysicsMeshes.m_lItemList.m_Head, (MeshListBase*)&s_PhysicsMeshes.m_lItemList, &MeshListBase::DeleteEntry);
+    s_PhysicsMeshes.m_lItemList.m_Head = NULL;
+    s_PhysicsMeshes.m_lItemList.m_Tail = NULL;
+
+    while (s_PhysicsMeshes.m_lMemList.m_Head != NULL)
+    {
+        ListEntry<LoadablePhysicsMesh*>* removed = nlListRemoveStart(&s_PhysicsMeshes.m_lMemList.m_Head, &s_PhysicsMeshes.m_lMemList.m_Tail);
+        LoadablePhysicsMesh* mesh = removed->data;
+        ::operator delete(removed);
+        ::operator delete(mesh);
+    }
+
+    s_PhysicsMeshes.m_nItemCount = 0;
+    g_TerrainMesh = NULL;
+
+    if (g_CollisionSpace != NULL)
+    {
+        delete g_CollisionSpace;
+    }
+    g_CollisionSpace = NULL;
+
+    delete g_PhysicsWorld;
+    g_PhysicsWorld = NULL;
+
+    dClearCachedData();
 }
 
 /**

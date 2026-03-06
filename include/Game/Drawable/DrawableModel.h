@@ -11,7 +11,15 @@
 class glModel;
 class glModelPacket;
 class GLShadowVolume;
-class BallShadowParams;
+struct BallShadowParams
+{
+    float fReferenceHeight;
+    float fRadius0;
+    float fRadius1;
+    int nAlpha0;
+    int nAlpha1;
+    nlColour colour;
+};
 
 void CleanBoundingBoxCache();
 void RenderBoundingBox(const glModel*, const nlMatrix4&);

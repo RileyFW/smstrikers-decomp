@@ -407,11 +407,79 @@ bool FormationManager::CalculateFielderPosition(nlVector3& v3DestPosition, cFiel
 
 /**
  * Offset/Address/Size: 0x1E00 | 0x8003A050 | size: 0x22C
+ * TODO: 95.3% match - r26/r27/r30 circular register swap for counter/formID/offset in search loop
  */
-FormationEval* FormationEval::Create(FormationManager*, eFormationType, eFormationSet, eFormation)
+FormationEval::FormationEval(FormationManager* pMgr, eFormationType type, const FormationSpec* spec)
 {
-    FORCE_DONT_INLINE;
-    return nullptr;
+    m_SortTimer.SetSeconds(0.0f);
+    m_SortTimer.m_uPackedTime = 0;
+    m_pFormationManager = pMgr;
+    m_pKeyPlayer = NULL;
+    m_pFormationSpec = spec;
+    m_eFormationType = type;
+    m_iFielderFormationPos[0] = 0;
+    m_iFielderFormationPos[1] = 1;
+    m_iFielderFormationPos[2] = 2;
+    m_iFielderFormationPos[3] = 3;
+}
+
+FormationDefensive::FormationDefensive(FormationManager* pMgr, eFormationType type, const FormationSpec* spec)
+    : FormationEval(pMgr, type, spec)
+{
+}
+
+FormationOffensive::FormationOffensive(FormationManager* pMgr, eFormationType type, const FormationSpec* spec)
+    : FormationEval(pMgr, type, spec)
+{
+}
+
+FormationBallPosition::FormationBallPosition(FormationManager* pMgr, eFormationType type, const FormationSet* set)
+    : FormationEval(pMgr, type, NULL)
+{
+    m_pFormationSet = set;
+    m_pNextClosestFormation = NULL;
+}
+
+FormationEval* FormationEval::Create(FormationManager* pManager, eFormationType formType, eFormationSet formSetID, eFormation formID)
+{
+    int i;
+    FormationEval* result = NULL;
+    FormationSet* pFormationSet = NULL;
+    const FormationSpec* pFormationSpec = NULL;
+
+    if (formSetID != FSET_NONE)
+    {
+        pFormationSet = &FormationManager::m_FormationSetArray[formSetID];
+    }
+
+    if (formType != (eFormationType)-1)
+    {
+        const FormationSpec* spec = NULL;
+        for (i = 0; i < FormationManager::m_NumFormationSets; i++)
+        {
+            spec = FormationManager::m_FormationSetArray[i].GetFormationSpecFromID(formID);
+            if (spec != NULL)
+            {
+                break;
+            }
+        }
+        pFormationSpec = spec;
+    }
+
+    switch (formType)
+    {
+    case FTYPE_DEFENSIVE:
+        result = new (nlMalloc(sizeof(FormationDefensive), 8, false)) FormationDefensive(pManager, formType, pFormationSpec);
+        break;
+    case FTYPE_OFFENSIVE:
+        result = new (nlMalloc(sizeof(FormationOffensive), 8, false)) FormationOffensive(pManager, formType, pFormationSpec);
+        break;
+    case FTYPE_BALLPOSITION:
+        result = new (nlMalloc(sizeof(FormationBallPosition), 8, false)) FormationBallPosition(pManager, formType, pFormationSet);
+        break;
+    }
+
+    return result;
 }
 
 /**

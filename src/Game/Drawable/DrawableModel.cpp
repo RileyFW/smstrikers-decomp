@@ -1,6 +1,10 @@
 #include "Game/Drawable/DrawableModel.h"
 #include "Game/Render/RenderShadow.h"
 #include "NL/gl/glMatrix.h"
+#include "NL/gl/glDraw3.h"
+#include "NL/gl/glState.h"
+#include "NL/gl/glAppAttach.h"
+#include "NL/gl/glUserData.h"
 
 extern bool g_bShadowVolumes;
 
@@ -387,9 +391,86 @@ AVLTreeNode* AVLTreeBase<unsigned long, AABBDimensions, BasicSlotPool<AVLTreeEnt
 
 /**
  * Offset/Address/Size: 0x1DD4 | 0x80121BE0 | size: 0x214
+ * TODO: 90.73% match - fRadius stays in f6 (target f7), causing coordinate
+ *       block register mismatch (x/y loads and stfs order). Remaining drift
+ *       starts from an early-hoisted lfs in prologue.
  */
-void DrawBallShadow(const nlVector3&, const BallShadowParams&, bool)
+void DrawBallShadow(const nlVector3& vPosition, const BallShadowParams& p, bool bGlow)
 {
+    f32 fT = vPosition.f.z / p.fReferenceHeight;
+    if (fT < 0.0f)
+    {
+        fT = 0.0f;
+    }
+    if (fT > 1.0f)
+    {
+        fT = 1.0f;
+    }
+
+    f32 fRadius = (1.0f - fT) * p.fRadius0 + fT * p.fRadius1;
+    f32 fAlpha = (1.0f - fT) * (f32)p.nAlpha0 + fT * (f32)p.nAlpha1;
+    s32 nAlpha = (s32)fAlpha;
+    if (nAlpha < 0)
+    {
+        nAlpha = 0;
+    }
+    if (nAlpha > 255)
+    {
+        nAlpha = 255;
+    }
+
+    nlColour colour = p.colour;
+    f32 fY0 = vPosition.f.y - fRadius;
+    f32 fX0 = vPosition.f.x - fRadius;
+    f32 fY1 = vPosition.f.y + fRadius;
+    f32 fX1 = vPosition.f.x + fRadius;
+
+    glQuad3 quad;
+    colour.c[3] = (u8)nAlpha;
+
+    quad.m_pos[0].f.x = fX0;
+    quad.m_pos[0].f.y = fY0;
+    quad.m_pos[0].f.z = -0.5f;
+    quad.m_pos[1].f.x = fX0;
+    quad.m_pos[1].f.y = fY1;
+    quad.m_pos[1].f.z = -0.5f;
+    quad.m_pos[2].f.x = fX1;
+    quad.m_pos[2].f.y = fY1;
+    quad.m_pos[2].f.z = -0.5f;
+    quad.m_pos[3].f.x = fX1;
+    quad.m_pos[3].f.y = fY0;
+    quad.m_pos[3].f.z = -0.5f;
+
+    quad.m_uv[0].f.x = 1.0f;
+    quad.m_uv[0].f.y = 1.0f;
+    quad.m_uv[1].f.x = 0.0f;
+    quad.m_uv[1].f.y = 1.0f;
+    quad.m_uv[2].f.x = 0.0f;
+    quad.m_uv[2].f.y = 0.0f;
+    quad.m_uv[3].f.x = 1.0f;
+    quad.m_uv[3].f.y = 0.0f;
+
+    quad.m_colour[3] = colour;
+    quad.m_colour[2] = colour;
+    quad.m_colour[1] = colour;
+    quad.m_colour[0] = colour;
+
+    glSetDefaultState(true);
+
+    glSetRasterState(GLS_AlphaBlend, bGlow ? 3 : 1);
+    glSetRasterState(GLS_AlphaTest, 1);
+    glSetRasterState(GLS_Culling, 0);
+    glSetRasterState(GLS_DepthWrite, 0);
+    glSetCurrentRasterState(glHandleizeRasterState());
+
+    glSetCurrentTexture(glGetTexture(bGlow ? "global/ballshadowglow" : "global/ballshadow"), GLTT_Diffuse);
+    glSetTextureState(GLTS_DiffuseWrap, 3);
+    glSetCurrentTextureState(glHandleizeTextureState());
+
+    const glModel* pModel = quad.GetModel(true);
+    void* pUserData = glAppGetNoFogUserData();
+    glUserAttach(pUserData, pModel->packets, false);
+    glViewAttachModel(GLV_Unshadowed, pModel);
 }
 
 /**

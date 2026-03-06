@@ -1,4 +1,5 @@
 #include "Game/SAnim.h"
+#include "Game/PoseAccumulator.h"
 
 #include "NL/nlMemory.h"
 #include "NL/nlList.h"

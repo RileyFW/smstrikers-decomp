@@ -5,6 +5,7 @@
 #include "NL/nlFont.h"
 // #include "NL/nlColour.h"
 #include "NL/gl/gl.h"
+#include "NL/gl/glMatrix.h"
 
 struct nlColour;
 class FontCharString;
@@ -15,7 +16,7 @@ struct Row
     /* 0x2 */ unsigned short FirstChar;
 }; // total size: 0x4
 
-class FontCharString
+struct FontCharString
 {
     /* 0x0 */ unsigned short* m_pString;
     /* 0x4 */ unsigned char m_InternalBuffer;
@@ -35,7 +36,7 @@ public:
         /* 0x14 */ Row Rows[17];
     }; // total size: 0x58
 
-    void DrawString(const nlTextBox::StringDrawInfo&, const nlVector2&, const nlColour&, eGLView view);
+    static void DrawString(const nlTextBox::StringDrawInfo&, const nlVector2&, const nlColour&, eGLView view);
     void ProcessString(const FontCharString*, const nlFont*, const nlVector2&, unsigned long, const nlMatrix4*, nlTextBox::StringDrawInfo&);
 };
 

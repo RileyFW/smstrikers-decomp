@@ -6,7 +6,7 @@
 #include "NL/nlMath.h"
 // #include "NL/nlList.h"
 
-#include "Game/PoseAccumulator.h"
+class cPoseAccumulator;
 
 struct PackedScale
 {

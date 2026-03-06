@@ -1,7 +1,15 @@
 #include "Game/CharacterTemplate.h"
+#include "Game/Player.h"
+#include "Game/AI/Fielder.h"
+#include "Game/CharacterTweaks.h"
+#include "Game/Audio/AudioLoader.h"
+#include "NL/nlString.h"
+#include "NL/nlMemory.h"
+#include "NL/gl/gl.h"
 
 cCharacter* g_pCharacters[10];
 static tCharacterTemplateInfo g_aCharacterTemplateInfo[13];
+static tCharacterTemplate* g_aCharacterTemplates[13];
 
 s32 skiptexture = 0xFFFFFFFF;
 
@@ -100,8 +108,10 @@ void CreateCharacters()
 /**
  * Offset/Address/Size: 0xE70 | 0x80013158 | size: 0x634
  */
-void CreateGoalie(eCharacterClass, bool)
+cPlayer* CreateGoalie(eCharacterClass, bool)
 {
+    FORCE_DONT_INLINE;
+    return nullptr;
 }
 
 /**
@@ -126,9 +136,87 @@ s32 SidekickTexture_cb(unsigned long arg0)
 
 /**
  * Offset/Address/Size: 0x1ABC | 0x80013DA4 | size: 0x240
+ * TODO: 96.11% match - register allocation diffs (r29<>r31, r28<>r30, r26<>r28, r27<>r29,
+ * r31<>r26, r30<>r25, r25<>r27), beq vs bne/b branch in hierarchy search loop, extra li r0,0
+ * in retarget search setup
  */
-void CreateCharacter(int, int, eCharacterClass, bool)
+cPlayer* CreateCharacter(int nPlayerID, int nTeamID, eCharacterClass cc, bool bForViewer)
 {
+    if (cc >= NUM_FIELDER_CLASSES)
+    {
+        return CreateGoalie(cc, bForViewer);
+    }
+
+    if (g_aCharacterTemplates[cc] == NULL)
+    {
+        glLoadTextureBundle(g_aCharacterTemplateInfo[cc].szTextureFilename);
+        g_aCharacterTemplates[cc] = (tCharacterTemplate*)nlMalloc(sizeof(tCharacterTemplate), 8, false);
+        CharacterLoadingGuts(g_aCharacterTemplates[cc], g_aCharacterTemplateInfo[cc], cc, bForViewer);
+    }
+
+    cInventory<cSHierarchy*>* pHierInv = g_aCharacterTemplates[cc]->pHierarchyInventory;
+    u32 hash = nlStringHash(g_aCharacterTemplateInfo[cc].szHierarchy);
+
+    AnimRetargetList* pAnimRetarget;
+    cSHierarchy* pHierarchy;
+    ListEntry<cSHierarchy*>* hEntry = pHierInv->m_lItemList.m_Head;
+    while (hEntry != NULL)
+    {
+        pHierarchy = hEntry->data;
+        if (hash != pHierarchy->m_uHashID)
+        {
+            hEntry = hEntry->next;
+        }
+        else
+        {
+            goto hierFound;
+        }
+    }
+    pHierarchy = NULL;
+hierFound:
+
+    pAnimRetarget = NULL;
+    if (g_aCharacterTemplates[cc]->pAnimRetargetListInventory != NULL)
+    {
+        int idx = 0;
+        ListEntry<AnimRetargetList*>* retEntry = g_aCharacterTemplates[cc]->pAnimRetargetListInventory->m_lItemList.m_Head;
+        AnimRetargetList* retResult = NULL;
+        while (retEntry != NULL)
+        {
+            if (idx == 0)
+            {
+                retResult = retEntry->data;
+                break;
+            }
+            retEntry = retEntry->next;
+            idx++;
+        }
+        pAnimRetarget = retResult;
+    }
+
+    FielderTweaks* pTweaks = new (nlMalloc(0x124, 8, false)) FielderTweaks(g_aCharacterTemplateInfo[cc].szTweaksFilename);
+
+    cPlayer* pPlayer;
+    if (!bForViewer)
+    {
+        cFielder* pFielder = new (nlMalloc(0x3EC, 8, false)) cFielder(
+            nPlayerID, nTeamID, cc, (const int*)g_aCharacterTemplates[cc], pHierarchy, g_aCharacterTemplates[cc]->pAnimInventory, g_aCharacterTemplates[cc]->pPhysicsData, pTweaks, pAnimRetarget);
+        pPlayer = pFielder;
+    }
+    else
+    {
+        cPlayer* p = new (nlMalloc(0x1D4, 8, false)) cPlayer(
+            nPlayerID, cc, (const int*)g_aCharacterTemplates[cc], pHierarchy, g_aCharacterTemplates[cc]->pAnimInventory, g_aCharacterTemplates[cc]->pPhysicsData, (PlayerTweaks*)pTweaks, pAnimRetarget, (eClassTypes)1);
+        pPlayer = p;
+    }
+
+    pPlayer->m_szEffectsName = g_aCharacterTemplateInfo[cc].szEffectsName;
+    if (!AudioLoader::gbDisableAudio)
+    {
+        pPlayer->SetSFX(g_aCharacterTemplateInfo[cc].pSFXPropAccessor);
+    }
+
+    return pPlayer;
 }
 
 /**
@@ -136,6 +224,7 @@ void CreateCharacter(int, int, eCharacterClass, bool)
  */
 void CharacterLoadingGuts(tCharacterTemplate*, const tCharacterTemplateInfo&, eCharacterClass, bool)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
