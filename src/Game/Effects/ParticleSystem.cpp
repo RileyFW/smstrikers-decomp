@@ -12,7 +12,7 @@ efList freeParticles;
 
 void* textureFrames[36];
 Particle* particleMemory;
-unsigned int MaxNumParticles;
+int MaxNumParticles;
 
 /**
  * Offset/Address/Size: 0x26F0 | 0x801F7848 | size: 0x90
@@ -468,6 +468,7 @@ static void ParticleConstructor(void* ptr, int)
 
 /**
  * Offset/Address/Size: 0xAC | 0x801F5204 | size: 0xCC
+ * TODO: 94.9% match - instruction scheduling diff at loop init: li r30/mr r29 ordering
  */
 bool fxParticleStartup(int maxNumParticles)
 {
@@ -476,14 +477,13 @@ bool fxParticleStartup(int maxNumParticles)
 
     particleMemory = new (nlMalloc(MaxNumParticles * 0x4C + 0x10, 8, false)) Particle[MaxNumParticles];
 
-    tDebugPrintManager::Print(DC_RENDER, "%dKB used by Particle pool\n", (MaxNumParticles * 0x4C) >> 10);
+    tDebugPrintManager::Print(DC_RENDER, "%dKB used by Particle pool\n", (unsigned)(MaxNumParticles * 0x4C) >> 10);
 
-    Particle* p;
-    for (int i = 0; i < MaxNumParticles; i++)
+    int i = 0;
+    int offset = i;
+    for (; i < MaxNumParticles; offset += sizeof(Particle), i++)
     {
-        // efList& particles = freeParticles;
-        p = &particleMemory[i];
-        freeParticles.Insert(p);
+        freeParticles.Insert((efBaseNode*)((u8*)particleMemory + offset));
     }
 
     return true;

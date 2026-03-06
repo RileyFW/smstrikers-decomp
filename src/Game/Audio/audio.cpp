@@ -75,9 +75,25 @@ float MasterVolume::GetVoiceVolume()
 /**
  * Offset/Address/Size: 0x10 | 0x8013C524 | size: 0x208
  */
-void MasterVolume::SetVoiceVolume(float, int)
+void MasterVolume::SetVoiceVolume(float volume, int time)
 {
-    FORCE_DONT_INLINE;
+    Audio::SetVolGroupVolume(5, volume * gfVolumeGroups[8], time);
+    Audio::SetVolGroupVolume(6, volume * gfVolumeGroups[9], time);
+    Audio::SetVolGroupVolume(7, volume * gfVolumeGroups[10], time);
+    Audio::SetVolGroupVolume(8, volume * gfVolumeGroups[11], time);
+    Audio::SetVolGroupVolume(9, volume * gfVolumeGroups[12], time);
+    Audio::SetVolGroupVolume(10, volume * gfVolumeGroups[13], time);
+    Audio::SetVolGroupVolume(11, volume * gfVolumeGroups[14], time);
+    Audio::SetVolGroupVolume(12, volume * gfVolumeGroups[15], time);
+    Audio::SetVolGroupVolume(13, volume * gfVolumeGroups[16], time);
+    Audio::SetVolGroupVolume(14, volume * gfVolumeGroups[17], time);
+    Audio::SetVolGroupVolume(15, volume * gfVolumeGroups[18], time);
+    Audio::SetVolGroupVolume(16, volume * gfVolumeGroups[19], time);
+    Audio::SetVolGroupVolume(17, volume * gfVolumeGroups[20], time);
+    Audio::SetVolGroupVolume(18, volume * gfVolumeGroups[21], time);
+    Audio::SetVolGroupVolume(19, volume * gfVolumeGroups[22], time);
+    Audio::SetVolGroupVolume(4, volume * gfVolumeGroups[7], time);
+    gfVolumeGroups[3] = volume;
 }
 
 /**
@@ -188,35 +204,46 @@ void FadeFilter(float param1, float param2, float param3, float param4)
 {
     TransitionTask* pTask = TransitionTask::sm_pGlobalTask;
     TRANSITION_STATE state;
-    if (pTask != NULL) {
+    if (pTask != NULL)
+    {
         state = pTask->m_TransitionState;
-    } else {
+    }
+    else
+    {
         state = (TRANSITION_STATE)0;
     }
-    if (state == eTS_Destroying) {
+    if (state == eTS_Destroying)
+    {
         return;
     }
 
     float diff = param2 - param1;
     float fadePerFrame;
-    if (param3 <= 0.0f) {
+    if (param3 <= 0.0f)
+    {
         fadePerFrame = diff;
-        if (0.0f != param4) {
+        if (0.0f != param4)
+        {
             goto createFade;
         }
-        if (0.0f == param2) {
+        if (0.0f == param2)
+        {
             // param2 == 0 -> turn OFF filter
-            if (!gbFilterOn) {
+            if (!gbFilterOn)
+            {
                 return;
             }
             gWorldSFX.ActivateFilterOnAllTrackedSFX(false);
             gPowerupSFX.ActivateFilterOnAllTrackedSFX(false);
             gStadGenSFX.ActivateFilterOnAllTrackedSFX(false);
             gCrowdSFX.ActivateFilterOnAllTrackedSFX(false);
-            if (g_pGame != NULL) {
-                for (int t = 0; t < 2; t++) {
+            if (g_pGame != NULL)
+            {
+                for (int t = 0; t < 2; t++)
+                {
                     cTeam* team = g_pTeams[t];
-                    for (int p = 0; p < 5; p++) {
+                    for (int p = 0; p < 5; p++)
+                    {
                         team->GetPlayer(p)->m_pCharacterSFX->ActivateFilterOnAllTrackedSFX(false);
                     }
                 }
@@ -228,29 +255,38 @@ void FadeFilter(float param1, float param2, float param3, float param4)
             gPowerupSFX.SetFilterFreqOnAllTrackedSFX(0);
             gStadGenSFX.SetFilterFreqOnAllTrackedSFX(0);
             gCrowdSFX.SetFilterFreqOnAllTrackedSFX(0);
-            if (g_pGame != NULL) {
-                for (int t = 0; t < 2; t++) {
+            if (g_pGame != NULL)
+            {
+                for (int t = 0; t < 2; t++)
+                {
                     cTeam* team = g_pTeams[t];
-                    for (int p = 0; p < 5; p++) {
+                    for (int p = 0; p < 5; p++)
+                    {
                         team->GetPlayer(p)->m_pCharacterSFX->SetFilterFreqOnAllTrackedSFX(0);
                     }
                 }
                 BasicStadium::GetCurrentStadium()->mpNPCManager->mpBowser->m_pCharacterSFX->SetFilterFreqOnAllTrackedSFX(0);
             }
             CrowdMood::SetLPF(0);
-        } else {
+        }
+        else
+        {
             // param2 != 0 -> turn ON filter
-            if (gbFilterOn) {
+            if (gbFilterOn)
+            {
                 return;
             }
             gWorldSFX.ActivateFilterOnAllTrackedSFX(true);
             gPowerupSFX.ActivateFilterOnAllTrackedSFX(true);
             gStadGenSFX.ActivateFilterOnAllTrackedSFX(true);
             gCrowdSFX.ActivateFilterOnAllTrackedSFX(true);
-            if (g_pGame != NULL) {
-                for (int t = 0; t < 2; t++) {
+            if (g_pGame != NULL)
+            {
+                for (int t = 0; t < 2; t++)
+                {
                     cTeam* team = g_pTeams[t];
-                    for (int p = 0; p < 5; p++) {
+                    for (int p = 0; p < 5; p++)
+                    {
                         team->GetPlayer(p)->m_pCharacterSFX->ActivateFilterOnAllTrackedSFX(true);
                     }
                 }
@@ -262,10 +298,13 @@ void FadeFilter(float param1, float param2, float param3, float param4)
             gPowerupSFX.SetFilterFreqOnAllTrackedSFX(0x3FFF);
             gStadGenSFX.SetFilterFreqOnAllTrackedSFX(0x3FFF);
             gCrowdSFX.SetFilterFreqOnAllTrackedSFX(0x3FFF);
-            if (g_pGame != NULL) {
-                for (int t = 0; t < 2; t++) {
+            if (g_pGame != NULL)
+            {
+                for (int t = 0; t < 2; t++)
+                {
                     cTeam* team = g_pTeams[t];
-                    for (int p = 0; p < 5; p++) {
+                    for (int p = 0; p < 5; p++)
+                    {
                         team->GetPlayer(p)->m_pCharacterSFX->SetFilterFreqOnAllTrackedSFX(0x3FFF);
                     }
                 }
@@ -274,25 +313,34 @@ void FadeFilter(float param1, float param2, float param3, float param4)
             CrowdMood::SetLPF(0x3FFF);
         }
         return;
-    } else {
+    }
+    else
+    {
         fadePerFrame = diff / param3;
     }
 createFade:
     // Check transition state again
-    if (pTask != NULL) {
+    if (pTask != NULL)
+    {
         state = pTask->m_TransitionState;
-    } else {
+    }
+    else
+    {
         state = (TRANSITION_STATE)0;
     }
-    if (state == eTS_Destroying) {
+    if (state == eTS_Destroying)
+    {
         return;
     }
 
     // Search for existing fade with same type (2=filter) and target
     FadeAudioData* existing = g_pFadeList;
-    while (existing != NULL) {
-        if (*(s32*)existing == 2) {
-            if (*(float*)((char*)existing + 0x14) == param2) {
+    while (existing != NULL)
+    {
+        if (*(s32*)existing == 2)
+        {
+            if (*(float*)((char*)existing + 0x14) == param2)
+            {
                 break;
             }
         }
@@ -300,7 +348,8 @@ createFade:
     }
 
     // Remove existing if found
-    if (existing != NULL) {
+    if (existing != NULL)
+    {
         nlListRemoveElement<FadeAudioData>(&g_pFadeList, existing, NULL);
         delete existing;
     }
@@ -327,7 +376,7 @@ createFade:
     *(float*)((char*)newFade + 0x24) = -1.0f;
 
     // Set actual fade values
-    *(s32*)((char*)newFade) = 2;                    // type = 2 (filter)
+    *(s32*)((char*)newFade) = 2;                     // type = 2 (filter)
     *(float*)((char*)newFade + 0x08) = fadePerFrame; // fade rate per frame
     *(float*)((char*)newFade + 0x0C) = param4;       // delay
     *(float*)((char*)newFade + 0x10) = param3;       // time
@@ -335,10 +384,13 @@ createFade:
     *(float*)((char*)newFade + 0x18) = param1;       // from/current
 
     // Set direction flags based on target
-    if (0.0f == param2) {
+    if (0.0f == param2)
+    {
         *((char*)newFade + 0x1E) = 0;
         *((char*)newFade + 0x1C) = 1;
-    } else {
+    }
+    else
+    {
         *((char*)newFade + 0x1E) = 1;
         *((char*)newFade + 0x1C) = 0;
     }
@@ -551,11 +603,14 @@ void PlaySFXEventFromScript(const SoundEventData&, const char*, float, float)
  */
 void StopCharSFXbyStr(const char* szSFXType, NisCharacterClass charIdentifier)
 {
-    if (!g_bAudioInitialized) return;
+    if (!g_bAudioInitialized)
+        return;
     Audio::eCharSFX sfxType = (Audio::eCharSFX)AudioLoader::GetCharSFXTypeFromStr(szSFXType);
-    if (g_pGame == NULL) return;
+    if (g_pGame == NULL)
+        return;
     cCharacter* character = Audio::cCharacterSFX::GetCharacterFromNisCharClass(charIdentifier);
-    if (character == NULL) return;
+    if (character == NULL)
+        return;
     character->StopSFX(sfxType);
 }
 
@@ -564,9 +619,11 @@ void StopCharSFXbyStr(const char* szSFXType, NisCharacterClass charIdentifier)
  */
 void StopWorldSFXbyStr(const char* szSFXType)
 {
-    if (!g_bAudioInitialized) return;
+    if (!g_bAudioInitialized)
+        return;
     unsigned long type = AudioLoader::GetWorldSFXTypeFromStr(szSFXType);
-    if (!g_bWorldSFXInitialized) return;
+    if (!g_bWorldSFXInitialized)
+        return;
 
     if ((int)type < 94)
     {
@@ -591,17 +648,20 @@ void StopWorldSFXbyStr(const char* szSFXType)
  */
 int PlayCharSFXbyStr(const char* szSFXType, NisCharacterClass charIdentifier, float fVol, float fDelay, bool bIs3D, bool bKeepTrack, const nlVector3* pInitialPosVector, const nlVector3* pInitialDirVector, unsigned long* unkPtr)
 {
-    if (!g_bAudioInitialized) {
+    if (!g_bAudioInitialized)
+    {
         return -1;
     }
 
     unsigned long sfxType = AudioLoader::GetCharSFXTypeFromStr(szSFXType);
 
-    if (unkPtr != NULL) {
+    if (unkPtr != NULL)
+    {
         *unkPtr = sfxType;
     }
 
-    if (g_pGame == NULL) {
+    if (g_pGame == NULL)
+    {
         return -1;
     }
 
@@ -613,7 +673,8 @@ int PlayCharSFXbyStr(const char* szSFXType, NisCharacterClass charIdentifier, fl
     sa.mf_DelayTime = fDelay;
     sa.mb_KeepTrack = bKeepTrack;
 
-    if (bIs3D) {
+    if (bIs3D)
+    {
         sa.mb_Is3D = bIs3D;
         sa.pos.pvPos = pInitialPosVector;
         sa.dir.pvDir = pInitialDirVector;
@@ -623,7 +684,8 @@ int PlayCharSFXbyStr(const char* szSFXType, NisCharacterClass charIdentifier, fl
     }
 
     cCharacter* character = cCharacterSFX::GetCharacterFromNisCharClass(charIdentifier);
-    if (character == NULL) {
+    if (character == NULL)
+    {
         return -1;
     }
 
@@ -636,17 +698,20 @@ int PlayCharSFXbyStr(const char* szSFXType, NisCharacterClass charIdentifier, fl
 
 unsigned long PlayWorldSFXbyStr(const char* szSFXType, float fVol, float fDelay, bool bIs3D, bool bKeepTrack, const nlVector3* pInitialPosVector, const nlVector3* pInitialDirVector, unsigned long* pType)
 {
-    if (!g_bAudioInitialized) {
+    if (!g_bAudioInitialized)
+    {
         return (unsigned long)-1;
     }
 
     eWorldSFX type = (eWorldSFX)AudioLoader::GetWorldSFXTypeFromStr(szSFXType);
 
-    if (pType != NULL) {
+    if (pType != NULL)
+    {
         *pType = type;
     }
 
-    if (!g_bWorldSFXInitialized) {
+    if (!g_bWorldSFXInitialized)
+    {
         return (unsigned long)-1;
     }
 
@@ -658,7 +723,8 @@ unsigned long PlayWorldSFXbyStr(const char* szSFXType, float fVol, float fDelay,
     attr.mf_DelayTime = fDelay;
     attr.mb_KeepTrack = bKeepTrack;
 
-    if (bIs3D) {
+    if (bIs3D)
+    {
         attr.mb_Is3D = bIs3D;
         attr.pos.pvPos = pInitialPosVector;
         attr.dir.pvDir = pInitialDirVector;
@@ -667,13 +733,20 @@ unsigned long PlayWorldSFXbyStr(const char* szSFXType, float fVol, float fDelay,
         attr.mf_ReturnEmitterOnPlay = true;
     }
 
-    if (type < 0x5E) {
+    if (type < 0x5E)
+    {
         return gWorldSFX.Play(attr);
-    } else if (type < 0x92) {
+    }
+    else if (type < 0x92)
+    {
         return gPowerupSFX.Play(attr);
-    } else if (type < 0xB1) {
+    }
+    else if (type < 0xB1)
+    {
         return gCrowdSFX.Play(attr);
-    } else if (type < 0xD3) {
+    }
+    else if (type < 0xD3)
+    {
         return gStadGenSFX.Play(attr);
     }
 

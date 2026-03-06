@@ -7,6 +7,7 @@
 #include "Game/AI/Fielder.h"
 #include "Game/AI/Powerups.h"
 #include "Game/ReplayManager.h"
+#include "Game/Render/ElectricFence.h"
 #include "Game/RumbleActions.h"
 #include "Game/SAnim/pnSAnimController.h"
 #include "Game/SAnim.h"
@@ -582,9 +583,50 @@ void ElectrocutionUpdateCallback(EmissionController& ec)
 
 /**
  * Offset/Address/Size: 0x1060 | 0x8019FE10 | size: 0x230
+ * TODO: 99.36% match - stack slot assignment differs for update callback temporaries:
+ * first SetUpdateCallback uses sp+0x10 instead of sp+0x08; later update2 uses sp+0x08
+ * instead of sp+0x10.
  */
 void CharacterElectrocutionEffect(cCharacter* pCharacter, const nlVector3& v3Position, const nlVector3& v3Normal)
 {
+    if (g_pGame->mbCaptainShotToScoreOn)
+    {
+        return;
+    }
+
+    if (!EmissionManager::IsPlaying(GetCharacterIndex(pCharacter), fxGetGroup("electrocution")))
+    {
+        pCharacter->m_pCharacterSFX->Stop((Audio::eCharSFX)0x46, cGameSFX::SFX_STOP_FIRST);
+        pCharacter->Play3DSFX((Audio::eCharSFX)0x46, (PosUpdateMethod)2, 1.0f);
+        pCharacter->PlayRandomCharDialogue(4, (PosUpdateMethod)2, 1.0f, -1.0f);
+    }
+
+    EmissionController* pController = EmissionManager::Create(fxGetGroup("electrocution_aura"), 0);
+    const nlVector3 vel = { 0.0f, 0.0f, 1.0f };
+    pController->SetVelocity(vel);
+    pController->m_fGround = 0.0f;
+    {
+        Function<EmissionController&> finished;
+        {
+            Function<EmissionController&> update;
+            update.mTag = FREE_FUNCTION;
+            update.mFreeFunction = UpdateEmitterPoseFromCharacter;
+            pController->SetUpdateCallback(update);
+        }
+
+        pCharacter->AttachEffect(pController);
+        pController->m_uUserData = GetCharacterIndex(pCharacter);
+        finished.mTag = FREE_FUNCTION;
+        finished.mFreeFunction = ElectrocutionFinishedCallback;
+        pController->SetFinishedCallback(finished);
+    }
+    {
+        Function<EmissionController&> update2;
+        update2.mTag = FREE_FUNCTION;
+        update2.mFreeFunction = ElectrocutionUpdateCallback;
+        pController->SetUpdateCallback(update2);
+    }
+    EmitElectricFenceCharacterEffect(v3Position, v3Normal, GetCharacterIndex(pCharacter));
 }
 
 /**

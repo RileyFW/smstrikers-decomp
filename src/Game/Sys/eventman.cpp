@@ -30,43 +30,41 @@ EventManager::~EventManager()
 
 /**
  * Offset/Address/Size: 0x370 | 0x801FACF0 | size: 0x118
+ * TODO: 86.7% match - stmw/parameter register allocation differs (r23-r31 save set),
+ *       extra beq remains from placement new NULL check, and loop is strength-reduced
+ *       to running offset add instead of per-iteration mullw.
  */
-void EventManager::Create(unsigned long count, unsigned long size)
+void EventManager::Create(unsigned long uEventCount, unsigned long uEventSize)
 {
     EventManager* m = (EventManager*)nlMalloc(sizeof(EventManager), 8, false);
     if (m)
     {
-        m->m_dispatching = 0;
-        m->m_handlers = 0;
-        m->m_free = 0;
-        m->m_keep = 0;
-        m->m_queue = 0;
-        m->m_deferred = 0;
-        m->m_dest = 0;
-        m->m_pool = 0;
-        m->m_count = count; // +0x20
-        m->m_size = size;   // +0x24
+        new (m) EventManager();
+        m->m_dispatching = false;
+        m->m_handlers = NULL;
+        m->m_free = NULL;
+        m->m_keep = NULL;
+        m->m_queue = NULL;
+        m->m_deferred = NULL;
+        m->m_dest = NULL;
+        m->m_pool = NULL;
+        m->m_count = uEventCount;
+        m->m_size = uEventSize;
 
-        // Allocate pool: count * size
-        u32 total = m->m_count * m->m_size;
-        m->m_pool = nlMalloc(total, 8, false);
+        u32 total = m->m_size * m->m_count;
+        m->m_pool = (void*)nlMalloc(total, 8, false);
 
-        nlPrintf("Event Manager: Allocating %d events of size %d. Total = %d bytes\n", m->m_count, m->m_size, total); // @342
+        nlPrintf("Event Manager: Allocating %d events of size %d. Total = %d bytes\n",
+            m->m_count,
+            m->m_size,
+            total);
 
-        for (u32 i = 0; i < m->m_count; ++i)
+        for (u32 i = 0; i < uEventCount; i++)
         {
-            char* base = (char*)m->m_pool + i * m->m_size;
-            Event* e = (Event*)base;
-            e->m_next = 0;
-            e->m_prev = 0;
-            e->m_nReferenceCount = 0;
-            // EventData vptr is set by constructing the subobject; we only need it to be a valid base
-            // The original TU writes the vptr slot; letting the compiler emit that via default ctor:
-            new (&e->m_data) EventData();
+            Event* e = new ((u8*)m->m_pool + uEventSize * i) Event();
             nlDLRingAddEnd(&m->m_free, e);
         }
 
-        // Finish default destination setup
         m->SetupDestArray();
     }
     g_pEventManager = m;

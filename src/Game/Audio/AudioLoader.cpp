@@ -155,12 +155,54 @@ typedef DLListEntry<GCAudioStreaming::StereoAudioStream*> StreamDLListEntry;
 //  {
 //  }
 
-// /**
-//  * Offset/Address/Size: 0x398 | 0x801481F8 | size: 0xD4
-//  */
-// void GCAudioStreaming::AudioStream::WarmReadDone(GCAudioStreaming::AudioStreamBuffer*)
-// {
-// }
+/**
+ * Offset/Address/Size: 0x398 | 0x801481F8 | size: 0xD4
+ * TODO: 96.23% match - ble- vs beq- branch for m_BufferCount > 0 check (MWCC
+ * emits beq for wrapping-if structure, target has ble; functionally equivalent)
+ */
+void GCAudioStreaming::AudioStream::WarmReadDone(GCAudioStreaming::AudioStreamBuffer* pBuffer)
+{
+    if (m_Buffers[m_BufferCount - 1] != pBuffer)
+    {
+        return;
+    }
+
+    m_State = SS_Warm;
+
+    if (!(m_Flags & (1 << SF_Play)))
+    {
+        return;
+    }
+
+    if (pBuffer != m_Buffers[m_BufferCount - 1])
+    {
+        return;
+    }
+
+    m_Flags &= ~(1 << SF_Play);
+
+    volatile u32 i = 0;
+    if (m_BufferCount > 0)
+    {
+        AudioStreamBuffer* buf = m_Buffers[0];
+        while (buf != NULL)
+        {
+            sndStreamActivate(buf->m_StreamId);
+            u32 ci = i + 1;
+            i = ci;
+            if (ci < m_BufferCount)
+            {
+                buf = m_Buffers[ci];
+            }
+            else
+            {
+                buf = NULL;
+            }
+        }
+    }
+
+    m_State = SS_Playing;
+}
 
 // /**
 //  * Offset/Address/Size: 0x350 | 0x801481B0 | size: 0x48
@@ -186,7 +228,8 @@ typedef DLListEntry<GCAudioStreaming::StereoAudioStream*> StreamDLListEntry;
 /**
  * Offset/Address/Size: 0x0 | 0x80147E60 | size: 0x70
  */
-GCAudioStreaming::StereoAudioStream::~StereoAudioStream() {
+GCAudioStreaming::StereoAudioStream::~StereoAudioStream()
+{
     Destructor();
 }
 

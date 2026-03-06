@@ -40,6 +40,7 @@ inline void ConvertFloatColourToColour_(nlColour& out, const float r, const floa
 
 /**
  * Offset/Address/Size: 0x3BC | 0x8020A644 | size: 0xD0
+ * TODO: 98.85% match - 1 instruction scheduling diff: lfs f1,8(r4) scheduled before fmuls f3 instead of after. Compiler pipeline heuristic, not controllable from source.
  */
 void FERender::RenderTextInstance(TLTextInstance* textInstance)
 {
@@ -53,8 +54,6 @@ void FERender::RenderTextInstance(TLTextInstance* textInstance)
 
     nlColour colour;
     ConvertColour(colour, s_currentAssetColour);
-    // ConvertFloatColourToColour(colour, s_currentAssetColour);
-    // ConvertFloatColourToColour_(colour, s_currentAssetColour.c[0] * 255.0f, s_currentAssetColour.c[1] * 255.0f, s_currentAssetColour.c[2] * 255.0f, s_currentAssetColour.c[3] * 255.0f);
 
     textInstance->Render((eGLView)(m_pRenderScene->m_uRenderView), colour);
 }

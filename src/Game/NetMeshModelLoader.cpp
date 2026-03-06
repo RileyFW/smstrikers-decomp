@@ -1,6 +1,70 @@
 #include "Game/Physics/NetMeshModelLoader.h"
 #include "NL/glx/glxDisplayList.h"
 
+// Local AVL tree type definitions for AddEdge inline tree access
+struct AVLTreeNode
+{
+    AVLTreeNode* left;
+    AVLTreeNode* right;
+    s8 heavy;
+};
+
+class NetMeshVertex
+{
+public:
+    const glModelPacket* mpPacket;
+    unsigned short mIndex;
+    int mParticleIndex;
+    unsigned char mbIsConstrained;
+};
+
+class NetMeshEdge
+{
+public:
+    const glModelPacket* mpPacket;
+    NetMeshVertex* mpVertex1;
+    NetMeshVertex* mpVertex2;
+};
+
+struct VertexEntry
+{
+    AVLTreeNode node;
+    NetMeshVertex key;
+    int value;
+};
+
+struct EdgeEntry
+{
+    AVLTreeNode node;
+    NetMeshEdge key;
+    int value;
+};
+
+class AVLTreeUntemplated
+{
+public:
+    virtual ~AVLTreeUntemplated();
+    void AddAVLNode(AVLTreeNode**, void*, void*, AVLTreeNode**, unsigned int);
+};
+
+struct VertexTree : public AVLTreeUntemplated
+{
+    char allocator[0x18];
+    VertexEntry* m_Root;
+    void* m_Compare;
+    unsigned int m_NumElements;
+};
+
+struct EdgeTree : public AVLTreeUntemplated
+{
+    char allocator[0x18];
+    EdgeEntry* m_Root;
+    void* m_Compare;
+    unsigned int m_NumElements;
+};
+
+static int s_initialEdgeCount = 1;
+
 // /**
 //  * Offset/Address/Size: 0x1554 | 0x80132B00 | size: 0x10
 //  */
@@ -166,9 +230,154 @@ void NetMeshModelLoader::LoadGeometryFromModel()
 /**
  * Offset/Address/Size: 0xC44 | 0x80130D9C | size: 0x234
  */
-void NetMeshModelLoader::AddEdge(const glModelPacket&, unsigned short, unsigned short)
+void NetMeshModelLoader::AddEdge(const glModelPacket& packet, unsigned short idx1, unsigned short idx2)
 {
-    FORCE_DONT_INLINE;
+    NetMeshEdge edge;
+    edge.mpPacket = NULL;
+    edge.mpVertex1 = NULL;
+    edge.mpVertex2 = NULL;
+
+    NetMeshVertex* pVertex1;
+    NetMeshVertex* pVertex2;
+    int* pValue;
+
+    // First vertex lookup - find vertex entry for (packet, idx1)
+    {
+        VertexEntry* vnode = ((VertexTree*)m_VertexList)->m_Root;
+        while (vnode != NULL)
+        {
+            const glModelPacket* nodePacket = vnode->key.mpPacket;
+            bool found = (&packet == nodePacket && idx1 == vnode->key.mIndex);
+            int cmp;
+            if (found)
+            {
+                cmp = 0;
+            }
+            else
+            {
+                bool less = (&packet < nodePacket || (&packet == nodePacket && idx1 < vnode->key.mIndex));
+                if (less)
+                {
+                    cmp = -1;
+                }
+                else
+                {
+                    cmp = 1;
+                }
+            }
+
+            if (cmp == 0)
+            {
+                int** ppValue = &pValue;
+                if (ppValue != NULL)
+                {
+                    *ppValue = &vnode->value;
+                }
+                NetMeshVertex** ppKey = &pVertex1;
+                if (ppKey != NULL)
+                {
+                    *ppKey = &vnode->key;
+                }
+                break;
+            }
+            else if (cmp < 0)
+            {
+                vnode = (VertexEntry*)vnode->node.left;
+            }
+            else
+            {
+                vnode = (VertexEntry*)vnode->node.right;
+            }
+        }
+    }
+
+    // Second vertex lookup - find vertex entry for (packet, idx2)
+    {
+        VertexEntry* vnode = ((VertexTree*)m_VertexList)->m_Root;
+        while (vnode != NULL)
+        {
+            const glModelPacket* nodePacket = vnode->key.mpPacket;
+            bool found = (&packet == nodePacket && idx2 == vnode->key.mIndex);
+            int cmp;
+            if (found)
+            {
+                cmp = 0;
+            }
+            else
+            {
+                bool less = (&packet < nodePacket || (&packet == nodePacket && idx2 < vnode->key.mIndex));
+                if (less)
+                {
+                    cmp = -1;
+                }
+                else
+                {
+                    cmp = 1;
+                }
+            }
+
+            if (cmp == 0)
+            {
+                int** ppValue = &pValue;
+                if (ppValue != NULL)
+                {
+                    *ppValue = &vnode->value;
+                }
+                NetMeshVertex** ppKey = &pVertex2;
+                if (ppKey != NULL)
+                {
+                    *ppKey = &vnode->key;
+                }
+                break;
+            }
+            else if (cmp < 0)
+            {
+                vnode = (VertexEntry*)vnode->node.left;
+            }
+            else
+            {
+                vnode = (VertexEntry*)vnode->node.right;
+            }
+        }
+    }
+
+    // Construct edge with vertices ordered by mIndex (smaller first)
+    edge.mpPacket = &packet;
+
+    NetMeshVertex* v2 = pVertex2;
+    if (pVertex1->mIndex < v2->mIndex)
+    {
+        edge.mpVertex1 = pVertex1;
+        edge.mpVertex2 = v2;
+    }
+    else
+    {
+        edge.mpVertex1 = v2;
+        edge.mpVertex2 = pVertex1;
+    }
+
+    // Insert edge into edge tree
+    EdgeTree* edgeTree = (EdgeTree*)m_EdgeList;
+    AVLTreeNode* existing;
+    edgeTree->AddAVLNode((AVLTreeNode**)&edgeTree->m_Root, &edge, &s_initialEdgeCount, &existing, edgeTree->m_NumElements);
+
+    // If new edge: increment element count
+    // If existing edge: increment reference count
+    int* pRefCount;
+    if (existing == NULL)
+    {
+        edgeTree->m_NumElements++;
+        pRefCount = NULL;
+    }
+    else
+    {
+        pRefCount = &((EdgeEntry*)existing)->value;
+    }
+
+    if (pRefCount != NULL)
+    {
+        (*pRefCount)++;
+    }
 }
 
 extern void AddTriangleFromGeometry__18NetMeshModelLoaderFRC13glModelPacketPUs(

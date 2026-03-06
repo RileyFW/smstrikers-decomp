@@ -320,6 +320,8 @@ dColliderFn* dRoundedCornerColliderFn(int num)
 
 /**
  * Offset/Address/Size: 0x0 | 0x8021DAC8 | size: 0xD0
+ * TODO: 95% match - epilogue lwz r0 (LR restore) scheduled before register restores
+ *       instead of after. All decomp.me MWCC compilers exhibit this behavior.
  */
 dGeomID dCreateRoundedCorner(dxSpace* space, float param, bool flag1, bool flag2)
 {

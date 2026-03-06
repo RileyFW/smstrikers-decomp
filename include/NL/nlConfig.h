@@ -55,10 +55,7 @@ public:
     void Set(const char*, int);
 
     template <typename T>
-    void Set(const char* key, T value)
-    {
-        Set(key, value);
-    }
+    void Set(const char* key, T value);
     TagValuePair& FindTvp(const char*);
     bool IsBool(const char*, bool&) const;
     bool Exists(const char*) const;

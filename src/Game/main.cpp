@@ -5,6 +5,14 @@
 #include "NL/gl/glState.h"
 #include "Game/Effects/ParticleSystem.h"
 #include "Game/Transitions/ModelTransition.h"
+#include "NL/nlConfig.h"
+#include "Game/ProfileTask.h"
+#include "Game/Sys/FloatingPointExceptions.h"
+#include "Game/Sys/CallStackDumper.h"
+#include "dolphin/os/OSThread.h"
+
+extern u8 g_DoStackWatermarkTests;
+extern u8 g_StackWatermarkFiller;
 
 static bool g_bProfiling = false;
 static bool g_bTweaking = false;
@@ -17,9 +25,42 @@ static void* g_pTheLoadingManagerTask = nullptr;
 ClockUpdateTask clockUpdateTask;
 AudioUpdateTask audioUpdateTask;
 
+static void Initialize();
+
 int main(void)
 {
-    return 0;
+    if (g_DoStackWatermarkTests)
+    {
+        OSClearStack(g_StackWatermarkFiller);
+    }
+
+    Initialize();
+
+    fopen("flushfile.txt", "r");
+
+    Config& config = Config::Global();
+    bool skipfe = GetConfigBool(config, "skipfe", false);
+    nlTaskManager::SetNextState(skipfe ? 2 : 4);
+
+    Config& config2 = Config::Global();
+    bool enableFPE = GetConfigBool(config2, "enableFloatingPointExceptions", false);
+    if (enableFPE)
+    {
+        InstallFloatingPointExceptionHandler();
+    }
+
+    Config& config3 = Config::Global();
+    bool enableCSD = GetConfigBool(config3, "callStackDumper", false);
+    if (enableCSD)
+    {
+        InstallCallStackDumper();
+    }
+
+    for (;;)
+    {
+        nlTaskManager::RunAllTasks();
+        UpdateProfile();
+    }
 }
 
 static void SetupViews()

@@ -103,6 +103,7 @@ static int initialized = 0;
 
 static SubBlock* SubBlock_merge_prev(SubBlock*, SubBlock**);
 static void SubBlock_merge_next(SubBlock*, SubBlock**);
+void Block_link(Block*, SubBlock*);
 static Block* link_new_block(__mem_pool_obj*, u32);
 
 #define SubBlock_size(ths)  ((ths)->size & 0xFFFFFFF8)
@@ -142,7 +143,17 @@ static const u32 fix_pool_sizes[] = { 4, 12, 20, 36, 52, 68 };
 
 static void Block_construct(Block* ths, u32 size)
 {
-    FORCE_DONT_INLINE;
+    SubBlock* sb = (SubBlock*)((char*)ths + sizeof(Block));
+
+    ths->size = size | 3;
+    *(u32*)((char*)ths + size - 8) = ths->size;
+    sb->block = (Block*)((u32)ths | 1);
+    sb->size = size - 24;
+    *(u32*)((char*)sb + (size - 24) - sizeof(u32)) = size - 24;
+    ths->max_size = size - 24;
+    Block_start(ths) = NULL;
+
+    Block_link(ths, sb);
 }
 
 /**
@@ -833,9 +844,11 @@ void __pool_alloc_clear(void)
  */
 void* malloc(u32 size)
 {
+    void* ptr;
     __begin_critical_region(malloc_pool_access);
-    __pool_alloc(get_malloc_pool(), size);
+    ptr = __pool_alloc(get_malloc_pool(), size);
     __end_critical_region(malloc_pool_access);
+    return ptr;
 }
 
 /**

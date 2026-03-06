@@ -32,12 +32,17 @@ public:
 
 extern cGame* g_pGame;
 
+class cField
+{
+public:
+    static float GetGoalLineX(unsigned int);
+};
+
 class SidelineExplodableManager
 {
 public:
     static void TriggerExplosions(const nlVector3&, float);
 };
-
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8016C898 | size: 0x64
@@ -113,8 +118,71 @@ void RenderElectricFence(EmissionController&)
 /**
  * Offset/Address/Size: 0xC8C | 0x8016BCBC | size: 0x220
  */
-void EmitElectricFenceBallEffect(const nlVector3&, const nlVector3&, unsigned long, bool)
+void EmitElectricFenceBallEffect(const nlVector3& pos, const nlVector3& dir, unsigned long emitterID, bool bNoSpark)
 {
+    ElectricFenceData* data;
+    const char* groupName;
+    EmissionController* controller;
+
+    if (g_pGame->mbCaptainShotToScoreOn)
+        return;
+
+    nlVector3 clampedPos;
+    ((unsigned long*)&clampedPos)[0] = ((unsigned long*)&pos)[0];
+    ((unsigned long*)&clampedPos)[1] = ((unsigned long*)&pos)[1];
+    ((unsigned long*)&clampedPos)[2] = ((unsigned long*)&pos)[2];
+
+    float goalLineX = cField::GetGoalLineX(1U);
+    float absPosX = (float)__fabs(clampedPos.f.x);
+    if ((float)__fabs(absPosX - goalLineX) < 0.2f)
+    {
+        if (clampedPos.f.x > 0.0f)
+        {
+            clampedPos.f.x = goalLineX;
+        }
+        else
+        {
+            clampedPos.f.x = -goalLineX;
+        }
+    }
+
+    groupName = bNoSpark ? "electric_fence_nospark" : "electric_fence";
+
+    if (!EmissionManager::IsPlaying(emitterID, fxGetGroup(groupName)))
+    {
+        controller = EmissionManager::Create(fxGetGroup(groupName), 0);
+        controller->m_uUserData = emitterID;
+        controller->SetPosition(clampedPos);
+
+        float angle = nlATan2f(dir.f.y, dir.f.x);
+        data = NULL;
+        controller->m_aFacing = (u16)(10430.378f * angle);
+
+        if (ElectricFenceData::sElectricFenceDataPool.m_FreeList == NULL)
+        {
+            SlotPoolBase::BaseAddNewBlock(&ElectricFenceData::sElectricFenceDataPool, sizeof(ElectricFenceData));
+        }
+        SlotPoolEntry* freeSlot = ElectricFenceData::sElectricFenceDataPool.m_FreeList;
+        if (freeSlot != NULL)
+        {
+            data = (ElectricFenceData*)freeSlot;
+            ElectricFenceData::sElectricFenceDataPool.m_FreeList = freeSlot->m_next;
+        }
+
+        new (data) ElectricFenceData(controller);
+
+        {
+            Function<EmissionController&> updateCb;
+            updateCb.mTag = FREE_FUNCTION;
+            updateCb.mFreeFunction = RenderElectricFence;
+            controller->SetUpdateCallback(updateCb);
+        }
+
+        Function<EmissionController&> finishedCb;
+        finishedCb.mTag = FREE_FUNCTION;
+        finishedCb.mFreeFunction = ElectricFenceFinished;
+        controller->SetFinishedCallback(finishedCb);
+    }
 }
 
 /**

@@ -243,8 +243,8 @@ bool Config::IsBool(const char*, bool&) const
 
 /**
  * Offset/Address/Size: 0x2520 | 0x801D5184 | size: 0xC8
- * TODO: 97.4% match - *p++ forces lbz into r0 + extra extsb r3,r0 (target loads lbz r3
- * directly), add operand order swap in hash computation (compiler scheduling)
+ * TODO: 99.9% match - nlToUpper<Uc> call site (from (u8)*p++) vs target nlToUpper<c>
+ * template instantiation (i diff only)
  */
 bool Config::Exists(const char* tag) const
 {
@@ -252,8 +252,9 @@ bool Config::Exists(const char* tag) const
     u32 hash = 0x1505;
     while (*p != 0)
     {
-        s32 c = (s8)nlToUpper(*p++);
-        hash += (hash << 5) + c;
+        s32 c = (s8)nlToUpper((u8)*p++);
+        u32 h = hash;
+        hash = h + (h << 5) + c;
     }
     u32 startIdx = hash & 0x3FF;
 
@@ -330,6 +331,18 @@ void SetTagValuePair::Section(const BasicString<char, Detail::TempStringAllocato
 }
 
 /**
+ * Offset/Address/Size: 0x1C | 0x801D5830 | size: 0x20
+ */
+#pragma dont_inline on
+template <typename T>
+void Config::Set(const char* key, T value)
+{
+    Set(key, value);
+}
+template void Config::Set<BasicString<char, Detail::TempStringAllocator> >(const char*, BasicString<char, Detail::TempStringAllocator>);
+#pragma dont_inline reset
+
+/**
  * Offset/Address/Size: 0x2998 | 0x801D55FC | size: 0x218
  */
 void SetTagValuePair::TagValuePair(const BasicString<char, Detail::TempStringAllocator>& tag,
@@ -379,13 +392,6 @@ void SetTagValuePair::TagValuePair(const BasicString<char, Detail::TempStringAll
  * Offset/Address/Size: 0x10 | 0x801D5824 | size: 0xC
  */
 // void Config::TagValuePair::TagValuePair()
-// {
-// }
-
-/**
- * Offset/Address/Size: 0x1C | 0x801D5830 | size: 0x20
- */
-// Config::Set<BasicString<char, Detail::TempStringAllocator>>(const char*, BasicString<char, Detail::TempStringAllocator>)
 // {
 // }
 

@@ -321,7 +321,6 @@ void CrowdMood::Update(float)
 
 /**
  * Offset/Address/Size: 0x92C | 0x8014E040 | size: 0xCC
- * TODO: 93% match - register allocation differences (r6/r7 swap, nor dest reg)
  */
 void CrowdMood::AdjustMood(CrowdMood::CROWD_MOOD Towards, unsigned long Amount)
 {
@@ -334,24 +333,22 @@ void CrowdMood::AdjustMood(CrowdMood::CROWD_MOOD Towards, unsigned long Amount)
     }
     else
     {
-        if (g_CrowdState.DestMoodLevel > Amount)
+        u8 level = g_CrowdState.DestMoodLevel;
+        if (level > Amount)
         {
             g_CrowdState.DestMoodLevel -= Amount;
         }
         else
         {
-            // Neutral check - when Towards == CM_Neutral, diff becomes 0
-            s32 notNeutral = ~((s32)(Towards - CM_Neutral) | (s32)(CM_Neutral - Towards));
             g_CrowdState.DestMood = Towards;
-            unsigned long diff = Amount - g_CrowdState.DestMoodLevel;
-            g_CrowdState.DestMoodLevel = diff & ~(notNeutral >> 31);
+            g_CrowdState.DestMoodLevel = (Towards == CM_Neutral) ? 0 : (Amount - level);
         }
     }
 
     g_CrowdState.HasChanged = true;
     g_CrowdState.AtDestination = false;
 
-    ___blank("Crowd mood adjusted to %d %d\n", (s8)g_CrowdState.DestMood, g_CrowdState.DestMoodLevel);
+    ___blank("Crowd mood adjusted to %d %d\n", *(volatile s8*)&g_CrowdState.DestMood, g_CrowdState.DestMoodLevel);
 }
 
 /**

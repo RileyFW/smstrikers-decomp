@@ -87,54 +87,26 @@ void glx_UpdateWarble()
 /**
  * Offset/Address/Size: 0x108 | 0x801C27E4 | size: 0xE0
  */
-void glx_DOFUpdate(float arg8)
+void glx_DOFUpdate(float fDist)
 {
-    Vec sp10;
-    Mtx sp24;
-    Mtx sp3C;
-    Mtx sp58;
-    // f32 sp20;
-    // f32 sp1C;
-    // f32 sp18;
-    // f32 sp14;
-    // ? sp10;
+    Mtx mtx;
+    f32 projection[7];
+    f32 viewport[6];
+    f32 sx;
+    f32 sy;
+    f32 sz;
 
-    // nlVector4 sp14;
-
-    // ? spC;
-    // f32 sp8;
-    // f32 temp_f0;
-    // f32 var_f31;
-
-    float var_f31 = arg8;
-    if (fabs(var_f31) < 0.001f)
+    if ((float)__fabs(fDist) < 0.001f)
     {
-        var_f31 = 0.001f;
+        fDist = 0.001f;
     }
-    GXGetProjectionv(&sp3C[0][0]);
-    GXGetViewportv(&sp24[0][0]);
-    PSMTXIdentity(sp58);
-    // void GXProject(f32 x, f32 y, f32 z, const Mtx mtx, const f32* pm, const f32* vp, f32* sx, f32* sy, f32* sz)
-    GXProject(0.f, 0.f, -arg8, sp58, &sp3C[0][0], &sp24[0][0], &(sp10.x), &(sp10.y), &(sp10.z));
-    float temp_f0 = 16777215.0f * -sp10.z; // or x?
-    // sp14 = @452.unk0;
-    // sp18 = @452.unk4;
-    // sp1C = @452.unk8;
-    // sp20 = @452.unkC;
-    // sp14 = temp_f0;
-    // sp18 = temp_f0;
-    // sp1C = temp_f0;
-    // sp20 = temp_f0;
-    nlVector4 v4 = { temp_f0, temp_f0, temp_f0, temp_f0 };
+    GXGetProjectionv(projection);
+    GXGetViewportv(viewport);
+    PSMTXIdentity(mtx);
+    GXProject(0.f, 0.f, -fDist, mtx, projection, viewport, &sx, &sy, &sz);
+    f32 depth = 16777215.0f * -sz;
+    nlVector4 v4 = { depth, depth, depth, depth };
     glConstantSet("dof/depth", v4);
-    // glConstantSet("dof/depth", nlVector4(0.f, 0.f, 0.f, temp_f0));
-
-    // sp14.x = temp_f0;
-    // sp14.y = temp_f0;
-    // sp14.z = temp_f0;
-    // sp14.w = temp_f0;
-
-    // glConstantSet("dof/depth", sp14);
 }
 
 /**

@@ -800,8 +800,43 @@ unsigned long GameInfoManager::GetMemoryCardDataSize() const
 /**
  * Offset/Address/Size: 0x642C | 0x8017BAD0 | size: 0x238
  */
-void GameInfoManager::GetMemoryCardData(void*)
+void GameInfoManager::GetMemoryCardData(void* pData)
 {
+    memcpy(pData, &mUserInfo, sizeof(UserInfo));
+    pData = (u8*)pData + sizeof(UserInfo);
+
+    mMushroomCupSeries.SerializeData(pData);
+    pData = (u8*)pData + mMushroomCupSeries.GetSaveDataSize();
+
+    mFlowerCupSeries.SerializeData(pData);
+    pData = (u8*)pData + mFlowerCupSeries.GetSaveDataSize();
+
+    mStarCupSeries.SerializeData(pData);
+    pData = (u8*)pData + mStarCupSeries.GetSaveDataSize();
+
+    mBowserCupSeries.SerializeData(pData);
+    pData = (u8*)pData + mBowserCupSeries.GetSaveDataSize();
+
+    mBowserCupKnockout.SerializeData(pData);
+    pData = (u8*)pData + mBowserCupKnockout.GetSaveDataSize();
+
+    mSuperMushroomCupSeries.SerializeData(pData);
+    pData = (u8*)pData + mSuperMushroomCupSeries.GetSaveDataSize();
+
+    mSuperFlowerCupSeries.SerializeData(pData);
+    pData = (u8*)pData + mSuperFlowerCupSeries.GetSaveDataSize();
+
+    mSuperStarCupSeries.SerializeData(pData);
+    pData = (u8*)pData + mSuperStarCupSeries.GetSaveDataSize();
+
+    mSuperBowserCupSeries.SerializeData(pData);
+    pData = (u8*)pData + mSuperBowserCupSeries.GetSaveDataSize();
+
+    mSuperBowserCupKnockout.SerializeData(pData);
+    pData = (u8*)pData + mSuperBowserCupKnockout.GetSaveDataSize();
+
+    mCustomTournamentInfo.SerializeData(pData);
+    mCustomTournamentInfo.GetSaveDataSize();
 }
 
 /**

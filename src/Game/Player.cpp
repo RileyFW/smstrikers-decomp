@@ -492,10 +492,100 @@ cGlobalPad* cPlayer::GetGlobalPad()
 
 /**
  * Offset/Address/Size: 0x1700 | 0x80058C50 | size: 0x230
+ * TODO: 99.64% match - r30/r31 register swap between pTarget and compiler-generated
+ *       strength-reduction loop offset variable. MWCC internal register allocator ordering.
  */
-cPlayer* cPlayer::DoFindBestPassTarget(bool bIsVolleyPass, bool bIsPassingFromVolley)
+cPlayer* cPlayer::DoFindBestPassTarget(bool bAllowLeadPass, bool bIsPerfectPass)
 {
-    return nullptr;
+    f32 fBestScore = 99999.0f;
+    cFielder* pTarget;
+    cPlayer* pBestTarget = NULL;
+
+    for (s32 i = 0; i < 4; i++)
+    {
+        pTarget = m_pTeam->m_pAIOrderedFielders[i];
+
+        if (pTarget == this)
+            continue;
+
+        u16 aDirection = m_aActualFacingDirection;
+
+        if (m_pController != NULL)
+        {
+            if (m_pController->GetMovementStickMagnitude() > 0.1f)
+            {
+                aDirection = m_pController->GetMovementStickDirection();
+            }
+        }
+
+        f32 fAngleWeighting;
+        f32 fDistBetween;
+        f32 dx;
+        f32 dy;
+        f32 fMinDistance;
+        f32 fMaxDistance;
+
+        if (bAllowLeadPass || bIsPerfectPass)
+        {
+            fMaxDistance = 100.0f;
+            fAngleWeighting = g_pGame->m_pGameTweaks->fVolleyPassAngleWeighting;
+            fMinDistance = g_pGame->m_pGameTweaks->fVolleyPassMinDistance;
+        }
+        else
+        {
+            fMinDistance = 1.0f;
+            fMaxDistance = 50.0f;
+            fAngleWeighting = g_pGame->m_pGameTweaks->fPassAngleWeighting;
+        }
+
+        dy = pTarget->m_v3Position.f.y - m_v3Position.f.y;
+        dx = pTarget->m_v3Position.f.x - m_v3Position.f.x;
+
+        f32 fSqrt = nlSqrt(dx * dx + dy * dy, true);
+        fDistBetween = fSqrt;
+
+        if (fSqrt < fMinDistance || fSqrt > fMaxDistance)
+        {
+            fDistBetween = 0.0f;
+        }
+
+        f32 fConverted = 10430.37835f * nlATan2f(dy, dx);
+        f32 fInvWeight = 1.0f - fAngleWeighting;
+        s16 angleDiff = (s16)(aDirection - (u16)(s32)fConverted);
+        s32 angleAbs;
+        if (angleDiff < 0)
+        {
+            angleAbs = -angleDiff;
+        }
+        else
+        {
+            angleAbs = angleDiff;
+        }
+
+        f32 fScore = fDistBetween * fInvWeight + fAngleWeighting * (f32)(u16)angleAbs;
+
+        if (!pTarget->CanReceivePass())
+        {
+            fScore += 500.0f;
+        }
+
+        if (fScore < fBestScore)
+        {
+            pBestTarget = pTarget;
+            fBestScore = fScore;
+        }
+    }
+
+    if (pBestTarget == NULL)
+    {
+        pBestTarget = m_pTeam->GetDefence();
+        if (pBestTarget == this)
+        {
+            pBestTarget = m_pTeam->GetMidfield();
+        }
+    }
+
+    return pBestTarget;
 }
 
 /**

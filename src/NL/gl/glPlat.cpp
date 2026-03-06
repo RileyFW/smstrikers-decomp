@@ -82,7 +82,7 @@ f32 glx_FogEnd = 160.f;
 f32 glx_FogIntensity = 1.f;
 GXColor glx_FogColour = { 0xFF, 0xFF, 0xFF, 0xFF };
 
-u32 fogtype[5] = { GX_FOG_PERSP_LIN, GX_FOG_PERSP_EXP, GX_FOG_PERSP_EXP2, GX_FOG_PERSP_REVEXP, GX_FOG_PERSP_REVEXP2 };
+static u32 fogtype[5] = { GX_FOG_PERSP_LIN, GX_FOG_PERSP_EXP, GX_FOG_PERSP_EXP2, GX_FOG_PERSP_REVEXP, GX_FOG_PERSP_REVEXP2 };
 
 s32 glx_VIWidth = 0x00000294;
 s32 prev_VIWidth = 0x00000294;
@@ -469,14 +469,20 @@ void glx_Fog(bool enable)
 {
     if (enable)
     {
-        GXColor fogColour = glx_FogColour;
-        fogColour.r = glx_FogColour.r * glx_FogIntensity;
-        fogColour.g = glx_FogColour.g * glx_FogIntensity;
-        fogColour.b = glx_FogColour.b * glx_FogIntensity;
+        s32 r = (s32)(glx_FogIntensity * glx_FogColour.r);
+        s32 g = (s32)(glx_FogIntensity * glx_FogColour.g);
+        s32 b = (s32)(glx_FogIntensity * glx_FogColour.b);
+        GXColor fogColour;
+        fogColour.r = r;
+        fogColour.g = g;
+        fogColour.b = b;
+        fogColour.a = glx_FogColour.a;
         GXSetFog((GXFogType)fogtype[glx_FogType], glx_FogStart, glx_FogEnd, 0.25f, 130.f, fogColour);
-        return;
     }
-    GXSetFog(GX_FOG_NONE, 0.f, 0.f, 0.f, 0.f, glx_FogColour);
+    else
+    {
+        GXSetFog(GX_FOG_NONE, 0.f, 0.f, 0.f, 0.f, glx_FogColour);
+    }
 }
 
 /**

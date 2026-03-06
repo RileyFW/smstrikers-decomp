@@ -63,20 +63,17 @@ void ICaptainGridComponent::MoveHighlightToTarget(eTeamID teamID)
  */
 eTeamID ICaptainGridComponent::GetSelectedItem() const
 {
-    // TODO: 97.9% match - extra mr r5,r0 for pItems pointer init
     int selectedItem = mMapMenu->GetSelectedItem();
-    unsigned long* pItems = CaptainCellItems;
-    long count = (long)NUM_CAPTAIN_CELL_ITEMS;
-    long i = 0;
+    long i;
     eTeamID result = TEAM_INVALID;
 
-    for (; i < count; pItems += 2, i++)
+    for (i = 0; i < (long)NUM_CAPTAIN_CELL_ITEMS; i++)
     {
-        if (selectedItem != (int)pItems[0])
+        if (selectedItem != (int)CaptainCellItems[i * 2])
         {
             continue;
         }
-        switch (pItems[0])
+        switch (CaptainCellItems[i * 2])
         {
         case 0:
             result = TEAM_DAISY;

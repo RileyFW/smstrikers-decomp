@@ -1,6 +1,7 @@
 #include "Game/OverlayManager.h"
 #include "Game/BaseGameSceneManager.h"
 #include "Game/FE/feInGameMessengerManager.h"
+#include "Game/FE/feSceneManager.h"
 #include "Game/GameInfo.h"
 #include "Game/OverlayHandlerHUD.h"
 #include "NL/nlSingleton.h"
@@ -117,13 +118,19 @@ void OverlayManager::FEEventHandler(Event*, void*)
  */
 void OverlayManager::SetVisible(SceneList scene, bool visibility, bool overrideStateSettings)
 {
-    BasicString<char, Detail::TempStringAllocator> fileName; // r1+0xC
-    u32 uHashID;                                             // r4
-    BaseOverlayHandler* sceneHandler;                        // r3
-    u32 state;                                               // r4
-
-    if (nlSingleton<GameInfoManager>::s_pInstance->mCurrentCup->mUserSelectedSidekick != SK_MYSTERY || scene == OVERLAY_HUD)
+    if (nlSingleton<GameInfoManager>::s_pInstance->mCurrentMode == GameInfoManager::GM_DEMO && scene != OVERLAY_HUD)
     {
+        return;
+    }
+
+    BasicString<char, Detail::TempStringAllocator> fileName = GetFileName(scene);
+    u32 uHashID = nlStringLowerHash(fileName.c_str());
+    BaseOverlayHandler* sceneHandler = (BaseOverlayHandler*)nlSingleton<FESceneManager>::s_pInstance->GetSceneHandler(uHashID);
+    u32 state = nlTaskManager::m_pInstance->m_CurrState;
+
+    if (overrideStateSettings || (sceneHandler->mVisibilityMask & state))
+    {
+        sceneHandler->SetVisible(visibility);
     }
 }
 

@@ -37,40 +37,20 @@ void MakePerpendicularPlane(const nlVector3& v3Position, unsigned short aNormalA
 
 /**
  * Offset/Address/Size: 0x1354 | 0x80006E00 | size: 0xCC
- * TODO: 85.2% match - register scheduling differences
  */
 void MakePerpendicularPlane(const nlVector3& v3Position, const nlVector3& v3Normal, nlVector4& v4Plane, float fPlaneOffset)
 {
-    f32 ny = v3Normal.f.y;
-    f32 nx = v3Normal.f.x;
-    f32 ny2 = ny * ny;
-    f32 nx2 = nx * nx;
-    f32 nz = v3Normal.f.z;
-    f32 nz2 = nz * nz;
-    f32 lenSq = nx2 + ny2;
-    f32 lenSq2 = nz2 + lenSq;
-
-    f32 invLen = nlRecipSqrt(lenSq2, true);
+    f32 lenSq = const_cast<nlVector3&>(v3Normal).GetLengthSq3D();
+    f32 invLen = nlRecipSqrt(lenSq, true);
 
     f32 normX = invLen * v3Normal.f.x;
     f32 normY = invLen * v3Normal.f.y;
-    f32 posY = v3Position.f.y;
     f32 normZ = invLen * v3Normal.f.z;
-    f32 posX = v3Position.f.x;
-
     v4Plane.f.x = normX;
-    f32 posZ = v3Position.f.z;
     v4Plane.f.y = normY;
     v4Plane.f.z = normZ;
 
-    f32 planeY = v4Plane.f.y;
-    f32 planeX = v4Plane.f.x;
-    f32 t0 = posY * planeY;
-    f32 planeZ = v4Plane.f.z;
-    f32 t1 = posX * planeX + t0;
-    f32 t2 = posZ * planeZ + t1;
-    f32 w = fPlaneOffset + t2;
-    v4Plane.f.w = w;
+    v4Plane.f.w = fPlaneOffset + (v3Position.f.x * v4Plane.f.x + v3Position.f.y * v4Plane.f.y + v3Position.f.z * v4Plane.f.z);
 }
 
 /**

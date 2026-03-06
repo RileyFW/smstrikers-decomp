@@ -22,6 +22,8 @@
 
 SoundPropAccessor* gpBOWSERSoundPropAccessor;
 
+static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
+
 float Bowser::mfYAxisTilt = 0.0f;
 
 /**
@@ -261,6 +263,55 @@ void Bowser::ActionRoll()
  */
 void Bowser::ActionStomp()
 {
+    nlVector3 vel;
+    mAnimID = 1;
+    cPN_SAnimController* controller = AllocateSAnimController();
+    controller = new (controller) cPN_SAnimController(mpAnim[1], (const AnimRetarget*)0, PM_HOLD, (void (*)(unsigned int, cPN_SAnimController*))0, (unsigned int)0, (bool)0);
+    if (mpFeatherBlender->GetChild(0) != NULL)
+    {
+        delete mpFeatherBlender->GetChild(0);
+    }
+    mpFeatherBlender->SetChild(0, controller);
+    mpAnimController = controller;
+    meBowserState = BOWSER_STATE_FALL;
+    mfDesiredSpeed = 0.0f;
+    nlVector3 targetPos = mv3TargetPos;
+    float goalLineX = cField::GetGoalLineX(1U);
+    float limitX = goalLineX - 5.0f;
+    if ((float)fabs(targetPos.f.x) > limitX)
+    {
+        if (targetPos.f.x > 0.0f)
+        {
+            targetPos.f.x = limitX;
+        }
+        else
+        {
+            targetPos.f.x = -limitX;
+        }
+    }
+    float sidelineY = cField::GetSidelineY(1U);
+    float limitY = sidelineY - 5.0f;
+    if ((float)fabs(targetPos.f.y) > limitY)
+    {
+        if (targetPos.f.y < 0.0f)
+        {
+            targetPos.f.y = -limitY;
+        }
+        else
+        {
+            targetPos.f.y = limitY;
+        }
+    }
+    targetPos.f.z = 200.0f;
+    targetPos.f.z = 0.0f;
+    targetPos.f.y += 5.0f;
+    SetPosition(targetPos);
+    maFacingDirection = 0xC000;
+    maDesiredFacingDirection = 0xC000;
+    vel = v3Zero;
+    vel.f.y = 50.0f;
+    mv3Velocity = vel;
+    mtActiveTimer.m_uPackedTime = 0;
 }
 
 /**

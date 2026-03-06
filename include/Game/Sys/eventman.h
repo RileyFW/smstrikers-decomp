@@ -22,6 +22,13 @@ public:
     /* 0x08 */ u32 m_uEventID;
     /* 0x0C */ s32 m_nReferenceCount;
     /* 0x10 */ EventData m_data;
+
+    Event()
+        : m_next(NULL)
+        , m_prev(NULL)
+        , m_nReferenceCount(0)
+    {
+    }
 };
 
 typedef void (*EventCallback)(Event*, void*);
@@ -61,7 +68,7 @@ public:
 class EventManager
 {
 public:
-    void Create(unsigned long, unsigned long);
+    static void Create(unsigned long, unsigned long);
     void SetupDestArray();
     EventHandler* AddEventHandler(EventCallback, void*, unsigned long);
     void RemoveEventHandler(EventHandler*);

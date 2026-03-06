@@ -74,8 +74,7 @@
 //  * Offset/Address/Size: 0x0 | 0x800CC8DC | size: 0x78
 //  */
 // void Function0<void>::FunctorImpl<BindExp1<void, Detail::MemFunImpl<void, void (CupTrophyScene::*)()>, CupTrophyScene*>>::Clone() const
-// {
-// }
+// -- moved after type definitions below
 
 // /**
 //  * Offset/Address/Size: 0xBC | 0x800CC6F8 | size: 0x1E4
@@ -253,7 +252,7 @@ class Function0
 public:
     struct FunctorBase
     {
-        virtual ~FunctorBase() {}
+        virtual ~FunctorBase() { }
         virtual FunctorBase* Invoke() = 0;
         virtual FunctorBase* Clone() const = 0;
     };
@@ -262,7 +261,7 @@ public:
     struct FunctorImpl : public FunctorBase
     {
         BindType mBind;
-        virtual ~FunctorImpl() {}
+        virtual ~FunctorImpl() { }
         virtual FunctorBase* Invoke() { return 0; }
         virtual FunctorBase* Clone() const { return 0; }
     };
@@ -294,12 +293,12 @@ class Function<FnVoidVoid> : public Function0<void>
 
 namespace Detail
 {
-    template <typename R, typename F>
-    struct MemFunImpl
-    {
-        F mFuncPtr;
-    };
-}
+template <typename R, typename F>
+struct MemFunImpl
+{
+    F mFuncPtr;
+};
+} // namespace Detail
 
 template <typename R, typename F, typename A>
 struct BindExp1
@@ -325,6 +324,15 @@ public:
 typedef Detail::MemFunImpl<void, void (CupTrophyScene::*)()> MemFunImpl_CupTrophyScene_v;
 typedef BindExp1<void, MemFunImpl_CupTrophyScene_v, CupTrophyScene*> BindExp1_vfmfcp;
 typedef Function0<void>::FunctorImpl<BindExp1_vfmfcp> FunctorImpl_vfmfcp;
+
+/**
+ * Offset/Address/Size: 0x0 | 0x800CC8DC | size: 0x78
+ */
+Function0<void>::FunctorBase*
+Function0<void>::FunctorImpl<BindExp1_vfmfcp>::Clone() const
+{
+    return new (nlMalloc(sizeof(FunctorImpl_vfmfcp), 8, false)) FunctorImpl_vfmfcp(*this);
+}
 
 /**
  * Offset/Address/Size: 0x1D70 | 0x800CB424 | size: 0x1E4

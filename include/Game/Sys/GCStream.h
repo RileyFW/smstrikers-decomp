@@ -63,7 +63,7 @@ class AudioStream
 {
 public:
     virtual ~AudioStream() { };
-    virtual void WarmReadDone(AudioStreamBuffer*) { };
+    virtual void WarmReadDone(AudioStreamBuffer*);
     void Purge() { };
     void Destructor();
     virtual void Stop();

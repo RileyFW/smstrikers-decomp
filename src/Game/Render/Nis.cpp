@@ -1,4 +1,6 @@
 #include "Game/Render/Nis.h"
+#include "Game/ReplayManager.h"
+#include "Game/NisPlayer.h"
 #include "Game/Sys/audio.h"
 #include "NL/nlList.h"
 
@@ -154,9 +156,60 @@ bool Nis::SelectRandomCamera(cAnimCamera& camera)
 
 /**
  * Offset/Address/Size: 0xD18 | 0x8012C128 | size: 0x200
+ * TODO: 96.91% match - remaining diffs are MWCC register assignment/scheduling:
+ * r29/r30/r31 role rotation (this/character base/current dc), GetRootRot load order,
+ * and FP temp register allocation around stadium/offset accumulation.
  */
 void Nis::Render()
 {
+    DrawableCharacter* pDC;
+    RenderSnapshot& snapshot = ReplayManager::Instance()->GetMutableRenderSnapshot();
+    nlVector3 offset = { 0.0f, 0.0f, 0.0f };
+    int numBalls = 0;
+
+    for (int i = 0; i < 10; i++)
+    {
+        pDC = &snapshot.mCharacters[i];
+        if (mCharacterControllers[i] == NULL)
+            continue;
+        pDC->mVisible = true;
+
+        nlVector3 rootTrans = { 0.0f, 0.0f, 0.0f };
+        u16 angle = 0;
+        float fTime = mCharacterControllers[i]->m_fTime;
+        mCharacterControllers[i]->m_pSAnim->GetRootTrans(fTime, &rootTrans);
+        fTime = mCharacterControllers[i]->m_fTime;
+        mCharacterControllers[i]->m_pSAnim->GetRootRot(fTime, &angle);
+        if (mMirrored)
+        {
+            mCharacterControllers[i]->m_bMirror = true;
+            rootTrans.f.x *= -1.0f;
+            angle = angle + (0x4000 - angle) * 2;
+        }
+
+        float z = rootTrans.f.z + mHeader->stadiumOffset.f.z;
+        float y = rootTrans.f.y + mHeader->stadiumOffset.f.y;
+        float x = rootTrans.f.x + mHeader->stadiumOffset.f.x;
+        rootTrans.f.z = z;
+        rootTrans.f.y = y;
+        rootTrans.f.x = x;
+        rootTrans.f.x = x + offset.f.x;
+        rootTrans.f.y = y + offset.f.z;
+        rootTrans.f.z = z + offset.f.y;
+
+        pDC->EvaluateFrom(*mCharacterControllers[i], rootTrans, angle);
+        pDC->BuildNodeMatrices();
+        if (mBallId[i] >= 0 && numBalls < mHeader->numBalls
+            && numBalls < NisPlayer::Instance()->mMaxNumBallsVisible)
+        {
+            if (mBallId[i] == 0)
+            {
+                snapshot.mBall.mVisible = true;
+                snapshot.mBall.EvaluateFrom(*pDC);
+            }
+            numBalls++;
+        }
+    }
 }
 
 /**

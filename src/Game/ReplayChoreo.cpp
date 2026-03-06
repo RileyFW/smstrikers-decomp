@@ -1,6 +1,14 @@
 #include "Game/ReplayChoreo.h"
 #include "Game/Camera/CameraMan.h"
+#include "Game/Game.h"
+#include "Game/Team.h"
 #include "NL/nlTask.h"
+
+struct GoalScoredDataExt
+{
+    GoalScoredData data;
+    int sideOfInterest;
+};
 
 // /**
 //  * Offset/Address/Size: 0xEC4 | 0x80129A38 | size: 0xD74
@@ -61,8 +69,83 @@ void ReplayChoreo::LoadScript()
 /**
  * Offset/Address/Size: 0xA9C | 0x80128108 | size: 0x22C
  */
-void ReplayChoreo::EventHandler(Event*)
+void ReplayChoreo::EventHandler(Event* event)
 {
+    if (!g_pGame)
+        return;
+
+    if (event->m_uEventID == 5)
+    {
+        GoalScoredDataExt* gsd;
+        s32 id = event->m_data.GetID();
+        if (id == -1)
+        {
+            nlPrintf("Error: Trying to get event data on event with none!\n");
+            gsd = 0;
+        }
+        else
+        {
+            id = event->m_data.GetID();
+            if (id != 0x18A)
+            {
+                nlPrintf("Error: GetData() failed! Data types do not match!\n");
+                gsd = 0;
+            }
+            else
+            {
+                gsd = (GoalScoredDataExt*)&event->m_data;
+            }
+        }
+
+        if (gsd != 0)
+        {
+            mGoalScoredData = gsd->data;
+            mReplayPad = gsd->sideOfInterest;
+
+            if ((mGoalScoredData.uGoalType == 6 || mGoalScoredData.uGoalType == 2) && mGoalScoredData.uIsHyper)
+            {
+                mGoalScoredData.uGoalType = 8;
+            }
+
+            mCamera.SetSideOfInterest((gsd->data.uTeamIndex + 1) % 2);
+        }
+    }
+
+    if (event->m_uEventID == 0xF)
+    {
+        GoalieSaveData* gsd;
+        s32 id = event->m_data.GetID();
+        if (id == -1)
+        {
+            nlPrintf("Error: Trying to get event data on event with none!\n");
+            gsd = 0;
+        }
+        else
+        {
+            id = event->m_data.GetID();
+            if (id != 0x13C)
+            {
+                nlPrintf("Error: GetData() failed! Data types do not match!\n");
+                gsd = 0;
+            }
+            else
+            {
+                gsd = (GoalieSaveData*)&event->m_data;
+            }
+        }
+
+        if (gsd != 0)
+        {
+            if (gsd->isSTS)
+                return;
+
+            int teamSide = gsd->pGoalie->m_pTeam->m_nSide;
+            mGoalScoredData.uTeamIndex = (teamSide + 1) % 2;
+            mGoalScoredData.uGoalType = gsd->saveType;
+            mGoalScoredData.pScorer = gsd->pShooter;
+            mCamera.SetSideOfInterest(teamSide);
+        }
+    }
 }
 
 /**

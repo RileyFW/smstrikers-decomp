@@ -34,10 +34,12 @@ enum eWorldSFX
 class cWorldSFX : public cGameSFX
 {
 public:
+    unsigned long Play(Audio::SoundAttributes&);
     void Stop(eWorldSFX, cGameSFX::StopFlag);
 };
 
 extern cWorldSFX gCrowdSFX;
+extern cWorldSFX gStadGenSFX;
 } // namespace Audio
 
 extern bool g_e3_Build;
@@ -1198,9 +1200,83 @@ void cFielder::ShootBallDueToContact(unsigned short aAngle)
 
 /**
  * Offset/Address/Size: 0x8F5C | 0x80022298 | size: 0x230
+ * TODO: 98.54% match - angle-delta abs block still has r4/r7 register allocation mismatch
+ *       and extsh/neg/clrlwi compare-order drift.
  */
 void cFielder::DoClearBall()
 {
+    nlPolar pClearingTopAngle;
+    nlPolar pClearingBottomAngle;
+    u16 aClearingAngle;
+
+    float fRandomDistance = nlRandomf(5.0f, &nlDefaultSeed);
+    float fGoalline = cField::GetGoalLineX(m_pTeam->GetOtherNet()->m_sideSign);
+
+    float fTopY = cField::GetSidelineY(1) - fRandomDistance;
+    nlCartesianToPolar(pClearingTopAngle, fGoalline - m_v3Position.f.x, fTopY - m_v3Position.f.y);
+
+    float fBottomY = fRandomDistance + cField::GetSidelineY(0);
+    nlCartesianToPolar(pClearingBottomAngle, fGoalline - m_v3Position.f.x, fBottomY - m_v3Position.f.y);
+
+    ShotMeter* pShotMeter = m_pShotMeter;
+    u16 aBottomAngle = pClearingBottomAngle.a;
+    u16 aTopAngle = pClearingTopAngle.a;
+    s16 nBottomDelta = m_aActualFacingDirection - aBottomAngle;
+    s16 nTopDelta = m_aActualFacingDirection - aTopAngle;
+
+    if (pShotMeter->mfSShotAimValue > 0.5f)
+    {
+        aClearingAngle = aTopAngle;
+    }
+    else if (pShotMeter->mfSShotAimValue < -0.5f)
+    {
+        aClearingAngle = aBottomAngle;
+    }
+    else
+    {
+        u16 nAbsBottomDelta = (u16)((nBottomDelta < 0) ? -nBottomDelta : nBottomDelta);
+        u16 nAbsTopDelta = (u16)((nTopDelta < 0) ? -nTopDelta : nTopDelta);
+
+        if (nAbsBottomDelta < nAbsTopDelta)
+        {
+            aClearingAngle = aBottomAngle;
+        }
+        else
+        {
+            aClearingAngle = aTopAngle;
+        }
+    }
+
+    float fClearSpeed = InterpolateRangeClamped(
+        g_pGame->m_pGameTweaks->unk2BC, g_pGame->m_pGameTweaks->unk2C0, 0.0f, 1.0f, pShotMeter->m_fSpeedValue);
+
+    GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+    float fZSpeed = pTweaks->unk2C4;
+    bool bIsChipShot = mActionShotVars.bIsChipShot || mActionLooseBallShotVars.bIsChipShot;
+    if (bIsChipShot)
+    {
+        fZSpeed = pTweaks->unk2C8;
+    }
+
+    nlVector3 v3ClearBallVelocity;
+    nlPolarToCartesian(v3ClearBallVelocity.f.x, v3ClearBallVelocity.f.y, aClearingAngle, fClearSpeed);
+    v3ClearBallVelocity.f.z = fZSpeed;
+
+    if (m_pBall != NULL)
+    {
+        ReleaseBall();
+    }
+
+    g_pBall->ShootRelease(v3ClearBallVelocity,
+        nlRandom(2, &nlDefaultSeed) != 0 ? SPINTYPE_FORWARD : SPINTYPE_BACK);
+    SetNoPickUpTime(0.25f);
+
+    Audio::SoundAttributes sndAtr;
+    sndAtr.Init();
+    sndAtr.SetSoundType(0xB3, true);
+    sndAtr.UseStationaryPosVector(m_v3Position);
+    Audio::gStadGenSFX.Play(sndAtr);
+    EmitBallImpact(this, true);
 }
 
 /**
@@ -2865,8 +2941,75 @@ void cFielder::ShouldIWave()
 /**
  * Offset/Address/Size: 0x3668 | 0x8001C9A4 | size: 0x228
  */
-void cFielder::TestCollisionForInvicibility(cFielder*)
+void cFielder::TestCollisionForInvicibility(cFielder* pOpponent)
 {
+    cFielder* pReactee = NULL;
+    cFielder* pAttacker = NULL;
+    static ePowerUpType currPowerup = POWER_UP_STAR;
+
+    if (m_ePowerup == POWER_UP_STAR)
+    {
+        currPowerup = m_ePowerup;
+    }
+
+    if (IsOnSameTeam(pOpponent))
+    {
+        return;
+    }
+
+    ePowerUpType thisPowerup = m_ePowerup;
+
+    do
+    {
+        bool bThisInvincible = (thisPowerup == POWER_UP_STAR && m_tPowerupEffectTime.m_uPackedTime != 0) || (mActionShootToScoreVars.isCurrentlyInvincible != 0);
+        if (bThisInvincible)
+        {
+            bool bOtherInvincible = (pOpponent->m_ePowerup == POWER_UP_STAR && pOpponent->m_tPowerupEffectTime.m_uPackedTime != 0) || (pOpponent->mActionShootToScoreVars.isCurrentlyInvincible != 0);
+            if (!bOtherInvincible)
+            {
+                pReactee = pOpponent;
+                pAttacker = this;
+                break;
+            }
+        }
+
+        bool bOtherInvincible = (pOpponent->m_ePowerup == POWER_UP_STAR && pOpponent->m_tPowerupEffectTime.m_uPackedTime != 0) || (pOpponent->mActionShootToScoreVars.isCurrentlyInvincible != 0);
+        if (bOtherInvincible)
+        {
+            bool bThisInvincible2 = (thisPowerup == POWER_UP_STAR && m_tPowerupEffectTime.m_uPackedTime != 0) || (mActionShootToScoreVars.isCurrentlyInvincible != 0);
+            if (!bThisInvincible2)
+            {
+                pReactee = this;
+                pAttacker = pOpponent;
+            }
+        }
+    } while (false);
+
+    if (pReactee == NULL)
+        return;
+
+    if (pReactee->IsFallenDown(0.0f))
+        return;
+
+    pReactee->InitActionSlideAttackReact(this, true);
+
+    PowerupBase::PlayPowerupSound(currPowerup, PowerupBase::PWRUP_SOUND_HIT, m_pPhysicsCharacter, 100.0f);
+
+    if (pAttacker->CanPickupBall(g_pBall))
+    {
+        pAttacker->PickupBall(g_pBall);
+    }
+
+    if (g_pGame->IsGameplayOrOvertime())
+    {
+        nlSingleton<StatsTracker>::s_pInstance->TrackStat(STATS_POWERUPS_HIT,
+            pReactee->m_pTeam->m_nSide,
+            pReactee->m_ID,
+            0,
+            0,
+            0,
+            0);
+    }
 }
 
 /**

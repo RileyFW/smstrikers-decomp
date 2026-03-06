@@ -420,6 +420,80 @@ void cTeam::Update(float dt)
  */
 void cTeam::UpdateControllers()
 {
+    cAIPad* pAIPads = AIPadManager::mAIPads;
+
+    for (int i = 0; i < 4; i++)
+    {
+        if (m_nSide != (s16)nlSingleton<GameInfoManager>::s_pInstance->GetPlayingSide((u16)i))
+        {
+            for (int j = 0; j < 5; j++)
+            {
+                if (m_pPlayers[j]->m_pController == &pAIPads[i])
+                {
+                    m_pPlayers[j]->SetAIPad(NULL);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            int playerIdx;
+            for (playerIdx = 0; playerIdx < 5; playerIdx++)
+            {
+                if (m_pPlayers[playerIdx]->m_pController == &pAIPads[i])
+                {
+                    break;
+                }
+            }
+
+            if (playerIdx == 5)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    if (m_pPlayers[j]->m_pController == NULL)
+                    {
+                        m_pPlayers[j]->SetAIPad(&pAIPads[i]);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    cPlayer* pOwner = g_pBall->m_pOwner;
+    if (pOwner != NULL)
+    {
+        if (pOwner->m_eClassType == GOALIE)
+        {
+            if (g_pGame->IsGameplayOrOvertime() && !((Goalie*)pOwner)->mbNoUserControl)
+            {
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        if (pOwner->m_pTeam != this)
+        {
+            return;
+        }
+        if (pOwner->m_pController != NULL)
+        {
+            return;
+        }
+
+        for (int j = 0; j < 5; j++)
+        {
+            if (m_pPlayers[j]->m_pController != NULL)
+            {
+                cAIPad* pPad = m_pPlayers[j]->m_pController;
+                m_pPlayers[j]->SetAIPad(NULL);
+                pOwner->SetAIPad(pPad);
+                break;
+            }
+        }
+    }
 }
 
 /**
