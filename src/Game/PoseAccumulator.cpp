@@ -341,27 +341,26 @@ void cPoseAccumulator::BuildNodeMatrices(const nlMatrix4& world)
  */
 void cPoseAccumulator::BlendRot(int idx, const nlQuaternion* q, float w, bool flip)
 {
+    RotAccum* e = m_rot.mData + idx;
+
     if ((float)fabsf(w) < 0.001f)
         return;
 
-    RotAccum* e = m_rot.mData + idx;
     nlQuaternion qtemp;
 
     if (flip)
     {
         cSHierarchy* h = m_BaseSHierarchy;
 
-        if (idx == h->m_maxNode || idx == h->m_minNode)
+        if (idx == h->m_nSpineNodeIndex || idx == h->m_nPelvisNodeIndex)
         {
-            // store: (-x, -w, y, z)
-            qtemp.f.x = -q->f.x;
-            qtemp.f.y = q->f.y;
-            qtemp.f.z = q->f.z;
-            qtemp.f.w = -q->f.w;
+            qtemp.f.x = -q->f.w;
+            qtemp.f.y = q->f.z;
+            qtemp.f.z = q->f.y;
+            qtemp.f.w = -q->f.x;
         }
-        else if (idx < h->m_minNode)
+        else if (idx < h->m_nPelvisNodeIndex)
         {
-            // store: (-x, y, -z, w)
             qtemp.f.x = -q->f.x;
             qtemp.f.y = q->f.y;
             qtemp.f.z = -q->f.z;
@@ -369,7 +368,6 @@ void cPoseAccumulator::BlendRot(int idx, const nlQuaternion* q, float w, bool fl
         }
         else
         {
-            // store: (-x, -y, z, w)
             qtemp.f.x = -q->f.x;
             qtemp.f.y = -q->f.y;
             qtemp.f.z = q->f.z;
@@ -457,7 +455,7 @@ void cPoseAccumulator::BlendTrans(int idx, const nlVector3* v, float w, bool fli
         cSHierarchy* h = m_BaseSHierarchy;
 
         nlVector3 vtemp;
-        if (idx <= h->m_minNode || idx == h->m_maxNode)
+        if (idx <= h->m_nPelvisNodeIndex || idx == h->m_nSpineNodeIndex)
         {
             // store: (x, -y, z)
             nlVec3Set(vtemp, v->f.x, -v->f.y, v->f.z);

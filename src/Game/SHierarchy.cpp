@@ -308,7 +308,7 @@ cSHierarchy* cSHierarchy::Initialize(nlChunk* chunkData)
     {
         alignedOffset_2 = (s32)((char*)nextChunkPtr + 8);
     }
-    ((cSHierarchy*)alignedOffset)->m_hierarchyMetadata = (void*)alignedOffset_2;
+    ((cSHierarchy*)alignedOffset)->m_nodeIDs = (u32*)alignedOffset_2;
     chunkPtr_2 = (void*)((char*)nextChunkPtr + (*(s32*)((char*)nextChunkPtr + 4) + 8));
     temp_r3_3 = *(s32*)chunkPtr_2 & 0x7F000000;
     if (((-temp_r3_3 | temp_r3_3) >> 0x1F) != 0)
@@ -332,7 +332,7 @@ cSHierarchy* cSHierarchy::Initialize(nlChunk* chunkData)
     {
         alignedOffset_4 = (s32)((char*)nextChunkPtr_2 + 8);
     }
-    ((cSHierarchy*)alignedOffset)->m_parentIndices = (void*)alignedOffset_4;
+    ((cSHierarchy*)alignedOffset)->m_parentIndices = (s32*)alignedOffset_4;
     chunkPtr_3 = (void*)((char*)nextChunkPtr_2 + (*(s32*)((char*)nextChunkPtr_2 + 4) + 8));
     temp_r3_5 = *(s32*)chunkPtr_3 & 0x7F000000;
     if (((-temp_r3_5 | temp_r3_5) >> 0x1F) != 0)
@@ -356,7 +356,7 @@ cSHierarchy* cSHierarchy::Initialize(nlChunk* chunkData)
     {
         alignedOffset_6 = (s32)((char*)nextChunkPtr_3 + 8);
     }
-    ((cSHierarchy*)alignedOffset)->m_childArrays = (void*)alignedOffset_6;
+    ((cSHierarchy*)alignedOffset)->m_childArrays = (s32**)alignedOffset_6;
     chunkPtr_4 = (void*)((char*)nextChunkPtr_3 + (*(s32*)((char*)nextChunkPtr_3 + 4) + 8));
     temp_r3_7 = *(s32*)chunkPtr_4 & 0x7F000000;
     if (((-temp_r3_7 | temp_r3_7) >> 0x1F) != 0)
@@ -368,7 +368,7 @@ cSHierarchy* cSHierarchy::Initialize(nlChunk* chunkData)
     {
         alignedOffset_7 = (s32)((char*)chunkPtr_4 + 8);
     }
-    ((cSHierarchy*)alignedOffset)->m_pushPopFlags = (void*)alignedOffset_7;
+    ((cSHierarchy*)alignedOffset)->m_pushPopFlags = (s32*)alignedOffset_7;
     finalChunkPtr = (void*)((char*)chunkPtr_4 + (*(s32*)((char*)chunkPtr_4 + 4) + 8));
     temp_r3_8 = *(s32*)finalChunkPtr & 0x7F000000;
     if (((-temp_r3_8 | temp_r3_8) >> 0x1F) != 0)
@@ -414,7 +414,7 @@ loop_29:
     {
         alignedOffset_9 = (s32)((char*)chunkPtr_5 + 8);
     }
-    ((cSHierarchy*)alignedOffset)->m_mirroredNodeIndices = (void*)alignedOffset_9;
+    ((cSHierarchy*)alignedOffset)->m_mirroredNodeIndices = (s32*)alignedOffset_9;
     nextChunkPtr_4 = (void*)((char*)finalChunkPtr + (*(s32*)((char*)finalChunkPtr + 4) + 8));
     temp_r3_10 = *(s32*)nextChunkPtr_4 & 0x7F000000;
     if (((-temp_r3_10 | temp_r3_10) >> 0x1F) != 0)
@@ -438,6 +438,6 @@ loop_29:
     {
         alignedOffset_11 = (s32)((char*)chunkPtr_6 + 8);
     }
-    ((cSHierarchy*)alignedOffset)->m_boneLengthFlags = (bool*)alignedOffset_11;
+    ((cSHierarchy*)alignedOffset)->m_boneLengthFlags = (u8*)alignedOffset_11;
     return (cSHierarchy*)alignedOffset;
 }
