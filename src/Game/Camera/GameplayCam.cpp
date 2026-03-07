@@ -1,10 +1,16 @@
 #include "Game/Camera/GameplayCam.h"
 
+#include "Game/GameInfo.h"
 #include "Game/Team.h"
 #include "Game/AI/Fielder.h"
+#include "Game/AI/AiUtil.h"
+#include "NL/nlTask.h"
+#include "NL/gl/glMatrix.h"
 #include "math.h"
 
 f32 CANT_COLLIDE = *(f32*)__float_max;
+extern CameraData gCameraData[];
+extern bool gGameplayCameraInReplay;
 
 /**
  * Offset/Address/Size: 0x28 | 0x801AA440 | size: 0x14
@@ -90,9 +96,82 @@ void GameplayCamera::CalcDynamicZoom()
 
 /**
  * Offset/Address/Size: 0x8CC | 0x801A9F0C | size: 0x258
+ * TODO: 98.57% match - float register allocation differs (omega=f6 vs target f8,
+ * change=f8 vs target f6) due to MWCC graph coloring. All instructions correct.
+ * File uses -inline deferred which may contribute to the register allocation difference.
  */
-void GameplayCamera::Update(float)
+void GameplayCamera::Update(float deltaTime)
 {
+    m_bDynamicZoom = nlSingleton<GameInfoManager>::s_pInstance->mUserInfo.mVisualOptions.mIsAutoZoomCamera;
+    m_fDesiredZoom = 1.0f - nlSingleton<GameInfoManager>::s_pInstance->mUserInfo.mVisualOptions.mCameraZoomLevel;
+
+    if (nlSingleton<GameInfoManager>::s_pInstance->mUserInfo.mVisualOptions.mIsWidescreen)
+    {
+        m_nearZoom.m_CameraData = gCameraData + 2;
+        m_farZoom.m_CameraData = gCameraData + 3;
+    }
+    else
+    {
+        m_nearZoom.m_CameraData = gCameraData;
+        m_farZoom.m_CameraData = gCameraData + 1;
+    }
+
+    m_nearZoom.Update(deltaTime, m_ForceNeutralAndNearZoom);
+    m_farZoom.Update(deltaTime, m_ForceNeutralAndNearZoom);
+
+    if (m_ForceNeutralAndNearZoom)
+    {
+        m_fZoom = 0.0f;
+    }
+    else
+    {
+        bool gamePaused = (nlTaskManager::m_pInstance->m_CurrState == 1);
+
+        if (m_bDynamicZoom && !gamePaused && !gGameplayCameraInReplay)
+        {
+            CalcDynamicZoom();
+        }
+
+        float clampedDesiredZoom = Interpolate(0.2f, 0.7f, m_fDesiredZoom);
+        float smoothTime;
+
+        if (gamePaused)
+        {
+            smoothTime = 0.1f;
+        }
+        else
+        {
+            smoothTime = 0.75f;
+        }
+
+        float omega = 2.0f / smoothTime;
+        float x = omega * deltaTime;
+        float exp = 1.0f / ((x * (0.235f * x * x)) + ((0.48f * x * x) + (1.0f + x)));
+        float change = m_fZoom - clampedDesiredZoom;
+        float currentVelocity = m_fZoomSeekSpeed;
+        float temp = deltaTime * ((change * omega) + currentVelocity);
+
+        m_fZoomSeekSpeed = exp * (currentVelocity - (omega * temp));
+        m_fZoom = (exp * (change + temp)) + clampedDesiredZoom;
+    }
+
+    float zoom = m_fZoom;
+    float inverseZoom = 1.0f - zoom;
+
+    m_v3Target.f.x = (inverseZoom * m_nearZoom.m_v3Target.f.x) + (zoom * m_farZoom.m_v3Target.f.x);
+    m_v3Target.f.y = (inverseZoom * m_nearZoom.m_v3Target.f.y) + (zoom * m_farZoom.m_v3Target.f.y);
+    m_v3Target.f.z = (inverseZoom * m_nearZoom.m_v3Target.f.z) + (zoom * m_farZoom.m_v3Target.f.z);
+
+    zoom = m_fZoom;
+    inverseZoom = 1.0f - zoom;
+
+    m_v3Camera.f.x = (inverseZoom * m_nearZoom.m_v3Camera.f.x) + (zoom * m_farZoom.m_v3Camera.f.x);
+    m_v3Camera.f.y = (inverseZoom * m_nearZoom.m_v3Camera.f.y) + (zoom * m_farZoom.m_v3Camera.f.y);
+    m_v3Camera.f.z = (inverseZoom * m_nearZoom.m_v3Camera.f.z) + (zoom * m_farZoom.m_v3Camera.f.z);
+
+    m_fFOV = Interpolate(m_nearZoom.m_CameraData->fov, m_farZoom.m_CameraData->fov, m_fZoom);
+
+    glMatrixLookAt(m_matView, m_v3Camera, m_v3Target, mUpVector);
 }
 
 /**

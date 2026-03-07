@@ -216,9 +216,102 @@ bool ReplayChoreo::Done() const
 
 /**
  * Offset/Address/Size: 0x108 | 0x80127774 | size: 0x23C
+ * TODO: 95.21% match - remaining diffs are instruction ordering in the age-selection checks and register assignment order in GoalScoredData copy stores.
  */
-void ReplayChoreo::SaveHighlight(ReplayChoreo::HighlightQuality)
+void ReplayChoreo::SaveHighlight(ReplayChoreo::HighlightQuality quality)
 {
+    extern bool LockReel__6ReplayFfii(Replay*, float, int, int);
+    extern u8 g_e3_Build;
+
+    mReplayManager = ReplayManager::Instance();
+    mReplay = mReplayManager->mReplay;
+
+    if (g_e3_Build != 0)
+    {
+        return;
+    }
+
+    if (nlTaskManager::m_pInstance->m_CurrState != 2)
+    {
+        return;
+    }
+
+    int idx = -1;
+
+    if (quality == HIGHLIGHT_QUALITY_GOAL_EQUALIZER)
+    {
+        idx = 1;
+    }
+    else if (quality == HIGHLIGHT_QUALITY_GOAL_INCREASE_DIFF)
+    {
+        idx = 2;
+    }
+    else
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            if (!mReplay->IsReelValid(i + 1) || mHighlights[i].mSideOfInterest == 0)
+            {
+                idx = i;
+                break;
+            }
+        }
+
+        if (idx < 0)
+        {
+            if (mHighlights[0].mSideOfInterest < quality)
+            {
+                idx = 0;
+            }
+            else if (mHighlights[1].mSideOfInterest < quality)
+            {
+                idx = 1;
+            }
+            else if (mHighlights[2].mSideOfInterest < quality)
+            {
+                idx = 2;
+            }
+        }
+
+        if (idx < 0)
+        {
+            int age = 0;
+            for (int i = 0; i < 3; i++)
+            {
+                int dt = (int)(mReplayManager->mTime - *(float*)&mHighlights[i].mGoalScoredData);
+                if (mHighlights[i].mSideOfInterest == quality && dt > age)
+                {
+                    idx = i;
+                    age = dt;
+                }
+            }
+        }
+    }
+
+    if (idx >= 0)
+    {
+        if (LockReel__6ReplayFfii(mReplay, 0.0f, idx + 1, quality))
+        {
+            char* highlight = (char*)this + idx * sizeof(Highlight);
+
+            *(int*)(highlight + 0x230) = quality;
+            *(float*)(highlight + 0x234) = mReplayManager->mTime;
+            *(int*)(highlight + 0x240) = *(int*)((char*)&mGoalScoredData + 4);
+            int x214 = *(int*)((char*)&mGoalScoredData + 8);
+            int x210 = *(int*)((char*)&mGoalScoredData + 0xC);
+            *(int*)(highlight + 0x244) = x210;
+            *(int*)(highlight + 0x248) = x214;
+            *(int*)(highlight + 0x24C) = *(int*)((char*)&mGoalScoredData + 0x10);
+            *(int*)(highlight + 0x250) = *(int*)((char*)&mGoalScoredData + 0x14);
+            *(int*)(highlight + 0x254) = *(int*)((char*)&mGoalScoredData + 0x18);
+            int x228 = *(int*)((char*)&mGoalScoredData + 0x1C);
+            int x224 = *(int*)((char*)&mGoalScoredData + 0x20);
+            *(int*)(highlight + 0x258) = x224;
+            *(int*)(highlight + 0x25C) = x228;
+            *(int*)(highlight + 0x260) = *(int*)((char*)&mGoalScoredData + 0x24);
+            *(int*)(highlight + 0x238) = mCamera.mSideOfInterest;
+        }
+    }
 }
 
 /**

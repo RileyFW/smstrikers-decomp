@@ -211,7 +211,7 @@ public:
     bool IsActionDone() const;
     void SetAction(eFielderActionState);
     void InitActionSlideAttackReact(cPlayer*, bool);
-    void GetFormationPosition(nlVector3&, float);
+    bool GetFormationPosition(nlVector3&, float);
     LooseBallContactAnimInfo* GetOneTimerBallContactAnimInfo(unsigned short, const nlVector3&, const nlVector3&, bool, bool);
     const LooseBallContactAnimInfo* GetReceivePassBallContactAnimInfo(cBall*, const nlVector3&, unsigned short, bool, bool);
     void GetReceivePassBallContactOffset(nlVector3&, unsigned short, const LooseBallContactAnimInfo*);
@@ -328,7 +328,7 @@ public:
     void DesireInterceptBall(float);
     void DesireMark(float);
     void DesireSupportBall(float, bool);
-    void InitDesireGetOpen();
+    bool InitDesireGetOpen();
     void InitDesireOneTimerFromRun(unsigned short, const nlVector3&, const nlVector3&, bool, bool);
     void DesireOneTimer(float);
     void InitDesireReceivePassFromIdle(const LooseBallContactAnimInfo*, unsigned short, bool);

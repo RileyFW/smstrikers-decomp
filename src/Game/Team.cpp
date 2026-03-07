@@ -545,9 +545,9 @@ void cTeam::StopGameplayEffectsAndSounds()
 /**
  * Offset/Address/Size: 0xAD0 | 0x80064E7C | size: 0x24
  */
-void cTeam::CalculateFormationPosition(nlVector3& pos, cFielder* pFielder, bool bParam, float fParam)
+bool cTeam::CalculateFormationPosition(nlVector3& pos, cFielder* pFielder, bool bParam, float fParam)
 {
-    m_pFormationManager->CalculateFielderPosition(pos, pFielder, bParam, fParam);
+    return m_pFormationManager->CalculateFielderPosition(pos, pFielder, bParam, fParam);
 }
 
 /**

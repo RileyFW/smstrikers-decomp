@@ -20,6 +20,8 @@ float g_fExponentScale = 128.0f;
 float g_fExponentBase = 8.0f;
 float g_fTransAdjustOccluded = 1.0f;
 float g_fTransAdjustNotOccluded = 0.125f;
+static float g_fTransMinimum = 0.0f;
+static unsigned char sbAllObjectsCanBeTransparent = 0;
 
 /**
  * Offset/Address/Size: 0x0 | 0x80194CC4 | size: 0x5C
@@ -343,33 +345,199 @@ void World::HandleCameraSwitch()
 /**
  * Offset/Address/Size: 0x10F4 | 0x80195DB8 | size: 0x24C
  */
-void DoTranslucency(DrawableObject*)
+class cRumbleFilter;
+
+class cBaseCamera
 {
+public:
+    virtual ~cBaseCamera() { }
+    virtual int GetType() = 0;
+    virtual void Update(float) = 0;
+    virtual const nlMatrix4& GetViewMatrix() const = 0;
+    virtual float GetFOV() const;
+    virtual void Reactivate() { }
+    virtual const nlVector3& GetTargetPosition() const = 0;
+    virtual const nlVector3& GetCameraPosition() const = 0;
+
+    cBaseCamera* m_next;
+    cBaseCamera* m_prev;
+    cRumbleFilter* m_pFilter;
+    nlVector3 mUpVector;
+};
+
+class cCameraManager
+{
+public:
+    static int m_pBeginFrameCameraType;
+    static cBaseCamera* m_cameraStack;
+    static bool IsObjectOccludingField(const DrawableObject*);
+};
+
+struct MatrixEffectCamStub
+{
+    char _pad[0x13C];
+    unsigned char m_transitioningOut;
+};
+
+extern unsigned char sbPretendWereNotInGameplayCam;
+
+void DoTranslucency(DrawableObject* pObject)
+{
+    int cameraType = cCameraManager::m_pBeginFrameCameraType;
+
+    if (cameraType == 4)
+    {
+        pObject->m_translucency = 1.0f;
+        if (pObject->m_translucency < 0.0f)
+        {
+            pObject->m_translucency = 0.0f;
+        }
+        if (pObject->m_translucency > 1.0f)
+        {
+            pObject->m_translucency = 1.0f;
+        }
+        return;
+    }
+
+    float fTrans = pObject->m_translucency;
+    bool inGameplayCamera = false;
+    bool transitioningOutOfGameplayCamera = false;
+    bool canBeTransparent = false;
+
+    if ((cameraType == 7) || (cameraType == 10))
+    {
+        inGameplayCamera = true;
+    }
+
+    if (sbPretendWereNotInGameplayCam)
+    {
+        inGameplayCamera = false;
+    }
+
+    if (nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->GetType() == 8)
+    {
+        if (((MatrixEffectCamStub*)nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack))->m_transitioningOut)
+        {
+            transitioningOutOfGameplayCamera = true;
+        }
+    }
+
+    unsigned long objectCreationFlags = pObject->m_uObjectCreationFlags;
+
+    if (objectCreationFlags & 0x2000)
+    {
+        if (inGameplayCamera)
+        {
+            pObject->m_translucency = 0.0f;
+            if (pObject->m_translucency < 0.0f)
+            {
+                pObject->m_translucency = 0.0f;
+            }
+            if (pObject->m_translucency > 1.0f)
+            {
+                pObject->m_translucency = 1.0f;
+            }
+            return;
+        }
+
+        if (transitioningOutOfGameplayCamera)
+        {
+            canBeTransparent = true;
+        }
+    }
+
+    if (objectCreationFlags & 0x8000)
+    {
+        if (inGameplayCamera)
+        {
+            pObject->m_translucency = 0.0f;
+            if (pObject->m_translucency < 0.0f)
+            {
+                pObject->m_translucency = 0.0f;
+            }
+            if (pObject->m_translucency > 1.0f)
+            {
+                pObject->m_translucency = 1.0f;
+            }
+            return;
+        }
+    }
+
+    if (!(objectCreationFlags & 0x1000) && !canBeTransparent && !sbAllObjectsCanBeTransparent)
+    {
+        pObject->m_translucency = 1.0f;
+        if (pObject->m_translucency < 0.0f)
+        {
+            pObject->m_translucency = 0.0f;
+        }
+        if (pObject->m_translucency > 1.0f)
+        {
+            pObject->m_translucency = 1.0f;
+        }
+        return;
+    }
+
+    if (cCameraManager::IsObjectOccludingField(pObject))
+    {
+        fTrans -= g_fTransAdjustOccluded;
+    }
+    else
+    {
+        fTrans += g_fTransAdjustNotOccluded;
+    }
+
+    if (fTrans > 1.0f)
+    {
+        fTrans = 1.0f;
+    }
+
+    if (fTrans < g_fTransMinimum)
+    {
+        fTrans = g_fTransMinimum;
+    }
+
+    pObject->m_translucency = fTrans;
+    if (pObject->m_translucency < 0.0f)
+    {
+        pObject->m_translucency = 0.0f;
+    }
+    if (pObject->m_translucency > 1.0f)
+    {
+        pObject->m_translucency = 1.0f;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x1340 | 0x80196004 | size: 0xE8
- * TODO: 83.7% match - work in progress...
+ * TODO: 82.8% match - f2/f4 float register swap (posX) and addic./bne vs mtctr/bdnz
+ * caused by -inline deferred in scratch context (target uses -inline auto)
  */
-bool World::IsSphereInFrustum(const nlMatrix4& matWorld, float fRadius)
+bool World::IsSphereInFrustum(const nlMatrix4& mat, float radius)
 {
-    nlVector3 v3Position = *(nlVector3*)&matWorld.f.m41;
-    int numSets = 2;
-
-    const nlVector4* pPlane = &m_frustumPlane[0];
-    f32 negRadius = -fRadius;
-
+    volatile u32 tz;
+    volatile u32 ty;
+    volatile u32 tx;
+    tx = *(u32*)&mat.m[3][0];
+    f32 posX = *(f32*)&tx;
+    s32 numSets = 2;
+    ty = *(u32*)&mat.m[3][1];
+    f32* plane = (f32*)((u8*)this + 0x80);
+    tz = *(u32*)&mat.m[3][2];
+    s32 count = 0;
+    f32 posY = *(f32*)&ty;
+    f32 posZ = *(f32*)&tz;
+    f32 negRadius = -radius;
     do
     {
-        if (nlPlaneDot(pPlane[0], v3Position) < negRadius)
+        if ((posZ * plane[2] + (posX * plane[0] + posY * plane[1]) + *(f32*)((u8*)this + 0x8C + count * 0x18)) < negRadius)
             return false;
-        if (nlPlaneDot(pPlane[1], v3Position) < negRadius)
+        if ((posZ * plane[6] + (posX * plane[4] + posY * plane[5]) + *(f32*)((u8*)this + 0x9C + count * 0x18)) < negRadius)
             return false;
-        if (nlPlaneDot(pPlane[2], v3Position) < negRadius)
+        if ((posZ * plane[10] + (posX * plane[8] + posY * plane[9]) + *(f32*)((u8*)this + 0xAC + count * 0x18)) < negRadius)
             return false;
-        pPlane += 3;
-    } while (--numSets);
-
+        plane += 12;
+        count += 2;
+    } while (--numSets != 0);
     return true;
 }
 

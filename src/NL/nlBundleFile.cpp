@@ -31,7 +31,7 @@ void BundleFile::ReadFileAsync(unsigned long hash, void* buffer, unsigned long s
     m_unk_0x10 = arg5;
     BundleFileDirectoryEntry* entry = &m_bundleEntries[index];
     nlSeek(m_file, entry->m_blockNumber * m_bundleHeader->m_blockSize, 0);
-    nlReadAsync(m_file, buffer, size, &cbFileReadAsyncCallback, *(unsigned long*)this);    
+    nlReadAsync(m_file, buffer, size, &cbFileReadAsyncCallback, (unsigned long)this);
 }
 
 /**
@@ -44,7 +44,7 @@ void BundleFile::ReadFileAsync(const char* filename, void* buffer, unsigned long
     m_unk_0x10 = arg5;
     BundleFileDirectoryEntry* entry = &m_bundleEntries[index];
     nlSeek(m_file, entry->m_blockNumber * m_bundleHeader->m_blockSize, 0);
-    nlReadAsync(this->m_file, buffer, size, &cbFileReadAsyncCallback, *(unsigned long*)this);   
+    nlReadAsync(this->m_file, buffer, size, &cbFileReadAsyncCallback, *(unsigned long*)this);
 }
 
 /**

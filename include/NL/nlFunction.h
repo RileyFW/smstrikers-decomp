@@ -77,7 +77,6 @@ public:
     };
 
     Function0()
-        : mTag(EMPTY)
     {
     }
 

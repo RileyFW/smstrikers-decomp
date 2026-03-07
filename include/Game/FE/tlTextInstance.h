@@ -34,6 +34,11 @@ struct StringDrawInfo
 
 class FontCharString
 {
+public:
+    FontCharString() { }
+    template <typename T>
+    FontCharString(const T*, const nlFont*, T*);
+
     /* 0x0 */ unsigned short* m_pString;
     /* 0x4 */ unsigned char m_InternalBuffer;
 }; // total size: 0x8

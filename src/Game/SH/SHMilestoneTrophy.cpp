@@ -1,6 +1,10 @@
 #include "Game/SH/SHMilestoneTrophy.h"
 
+#include "Game/FE/FEAudio.h"
 #include "Game/FE/feFinder.h"
+#include "Game/FE/feInput.h"
+#include "Game/GameInfo.h"
+#include "Game/GameSceneManager.h"
 
 // /**
 //  * Offset/Address/Size: 0x1058 | 0x800D0DD8 | size: 0x118
@@ -161,8 +165,84 @@ void MilestoneTrophyScene::SceneCreated()
 /**
  * Offset/Address/Size: 0x188 | 0x800CDC88 | size: 0x244
  */
-void MilestoneTrophyScene::Update(float)
+void MilestoneTrophyScene::Update(float fDeltaT)
 {
+    BaseSceneHandler::Update(fDeltaT);
+    mButtons.CentreButtons();
+    mButtons2.CentreButtons();
+    mAsyncTrophy->Update(true);
+
+    FEPresentation* presentation = m_pFEScene->m_pFEPackage->GetPresentation();
+
+    bool canAccept = true;
+    if (mButtonState != ButtonComponent::BS_A_AND_B && mButtonState != ButtonComponent::BS_A_ONLY)
+    {
+        canAccept = false;
+    }
+
+    bool canBack = true;
+    if (mButtonState != ButtonComponent::BS_A_AND_B && mButtonState != ButtonComponent::BS_B_ONLY)
+    {
+        canBack = false;
+    }
+
+    TLSlide* slide = presentation->m_currentSlide;
+    if (presentation->m_fadeDuration < slide->m_start + slide->m_duration)
+    {
+        return;
+    }
+
+    if (mIsNew == true && canAccept)
+    {
+        if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x100, false, NULL))
+        {
+            nlSingleton<GameSceneManager>::s_pInstance->Pop();
+            nlSingleton<GameInfoManager>::s_pInstance->DetermineNextCupScreen();
+            FEAudio::PlayAnimAudioEvent("sfx_accept", false);
+            return;
+        }
+    }
+
+    if (mIsNew == false && canBack)
+    {
+        if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x200, false, NULL))
+        {
+            nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_TROPHY_ROOM, SCREEN_BACK, true);
+            FEAudio::PlayAnimAudioEvent("sfx_back", false);
+            return;
+        }
+    }
+
+    if (mIsNew == false && g_pFEInput->IsAutoPressed(FE_ALL_PADS, 0x0C, true, NULL))
+    {
+        if (mTrophy == TROPHY_PARAMEDIC_CUP)
+        {
+            mTrophy = TROPHY_VETERAN_CUP;
+        }
+        else
+        {
+            mTrophy = (eTrophyType)((int)mTrophy + 1);
+        }
+
+        ChangeSlides();
+        FEAudio::PlayAnimAudioEvent("sfx_milestone_scroll_right", false);
+        return;
+    }
+
+    if (mIsNew == false && g_pFEInput->IsAutoPressed(FE_ALL_PADS, 0x0B, true, NULL))
+    {
+        if (mTrophy == TROPHY_VETERAN_CUP)
+        {
+            mTrophy = TROPHY_PARAMEDIC_CUP;
+        }
+        else
+        {
+            mTrophy = (eTrophyType)((int)mTrophy - 1);
+        }
+
+        ChangeSlides();
+        FEAudio::PlayAnimAudioEvent("sfx_milestone_scroll_left", false);
+    }
 }
 
 /**

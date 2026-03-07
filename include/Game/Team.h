@@ -91,7 +91,7 @@ public:
     void UpdateControllers();
     void ResetCharacters();
     void StopGameplayEffectsAndSounds();
-    void CalculateFormationPosition(nlVector3&, cFielder*, bool, float);
+    bool CalculateFormationPosition(nlVector3&, cFielder*, bool, float);
     void UpdateTeamAI(float);
     void AssignMarks(bool);
     cFielder* GetCaptain();

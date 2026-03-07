@@ -10,44 +10,71 @@ nlAVLTree<unsigned long, nlVector4, DefaultKeyCompare<unsigned long> >* constant
 
 nlVector4 vZero = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-/**
- * Offset/Address/Size: 0x0 | 0x801DF220 | size: 0x10C
- */
-nlVector4 glConstantGet(const char* constantName)
+static inline bool glConstantFindInTree(nlAVLTree<unsigned long, nlVector4, DefaultKeyCompare<unsigned long> >* tree, unsigned long key, nlVector4*& foundValue)
 {
-    u32 hash = nlStringHash(constantName);
-    nlVector4* result = NULL;
+    AVLTreeEntry<unsigned long, nlVector4>* node = tree->m_Root;
 
-    // Search through levels from current level down to 0
-    for (int i = level; i >= 0; i--)
+    while (node != NULL)
     {
-        AVLTreeEntry<unsigned long, nlVector4>* node = constants[i]->m_Root;
-
-        // Binary search within the AVL tree
-        while (node != NULL)
+        int cmpResult;
+        if (key == node->key)
         {
-            if (hash == node->key)
-            {
-                result = &node->value;
-                break;
-            }
-            else if (hash < node->key)
-            {
-                node = (AVLTreeEntry<unsigned long, nlVector4>*)node->node.left;
-            }
-            else
-            {
-                node = (AVLTreeEntry<unsigned long, nlVector4>*)node->node.right;
-            }
+            cmpResult = 0;
+        }
+        else if (key < node->key)
+        {
+            cmpResult = -1;
+        }
+        else
+        {
+            cmpResult = 1;
         }
 
-        if (result != NULL)
+        if (cmpResult == 0)
         {
-            break; // Found the constant, exit the level loop
+            if (&foundValue != NULL)
+            {
+                foundValue = &node->value;
+            }
+            return true;
+        }
+
+        if (cmpResult < 0)
+        {
+            node = (AVLTreeEntry<unsigned long, nlVector4>*)node->node.left;
+        }
+        else
+        {
+            node = (AVLTreeEntry<unsigned long, nlVector4>*)node->node.right;
         }
     }
 
-    // If not found, use the zero vector
+    return false;
+}
+
+/**
+ * Offset/Address/Size: 0x0 | 0x801DF220 | size: 0x10C
+ * TODO: 98.0% match - MWCC regalloc quirk: addi r0 + mr r4 instead of direct addi r4
+ * for result = &vZero, and epilogue lwz r0/r31 restore order swapped (compiler variant)
+ */
+nlVector4 glConstantGet(const char* constantName)
+{
+    unsigned long hash = nlStringHash(constantName);
+    nlVector4* foundValue;
+    nlVector4* result;
+
+    for (int i = level; i >= 0; i--)
+    {
+        if (glConstantFindInTree(constants[i], hash, foundValue))
+        {
+            result = foundValue;
+            goto found;
+        }
+    }
+
+    result = NULL;
+
+found:
     if (result == NULL)
     {
         result = &vZero;
@@ -62,45 +89,27 @@ nlVector4 glConstantGet(const char* constantName)
 bool glConstantGet(const char* constantName, nlVector4& result)
 {
     u32 hash = nlStringHash(constantName);
-    nlVector4* foundValue = nullptr;
+    nlVector4* foundValue;
+    nlVector4* out;
 
-    // Search through levels from current level down to 0
     for (int i = level; i >= 0; i--)
     {
-        AVLTreeEntry<unsigned long, nlVector4>* node = constants[i]->m_Root;
-
-        // Binary search within the AVL tree
-        while (node != nullptr)
+        if (glConstantFindInTree(constants[i], hash, foundValue))
         {
-            if (hash == node->key)
-            {
-                foundValue = &node->value;
-                break;
-            }
-            else if (hash < node->key)
-            {
-                node = (AVLTreeEntry<unsigned long, nlVector4>*)node->node.left;
-            }
-            else
-            {
-                node = (AVLTreeEntry<unsigned long, nlVector4>*)node->node.right;
-            }
-        }
-
-        if (foundValue != nullptr)
-        {
-            break; // Found the constant, exit the level loop
+            out = foundValue;
+            goto found;
         }
     }
 
-    // If not found, return false
-    if (foundValue == nullptr)
+    out = NULL;
+
+found:
+    if (out == NULL)
     {
         return false;
     }
 
-    // Copy the found value to the result parameter
-    result = *foundValue;
+    result = *out;
     return true;
 }
 

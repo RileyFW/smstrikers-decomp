@@ -455,17 +455,102 @@ found2:
 // }
 
 /**
- * Offset/Address/Size: 0x2050 | 0x8005C93C | size: 0x2A0
- */
-void PowerupBase::PlayPowerupSound(ePowerUpType, PowerupBase::PowerupSound, const nlVector3&, float)
-{
-}
-
-/**
  * Offset/Address/Size: 0x1E00 | 0x8005C6EC | size: 0x250
+ * TODO: 99.84% match - jump table relocation symbol mismatch in switch dispatch (@3011 vs generated local label).
  */
-void PowerupBase::PlayPowerupSound(ePowerUpType, PowerupBase::PowerupSound, PhysicsObject*, float)
+unsigned long PowerupBase::PlayPowerupSound(ePowerUpType type, PowerupBase::PowerupSound powerupSnd, PhysicsObject* pPhysObj, float fVol)
 {
+    Audio::SoundAttributes sndAtr;
+    unsigned long sndType;
+    float fDefaultVol;
+
+    if (type >= NUM_POWER_UPS)
+    {
+        return Audio::GetSndIDError();
+    }
+
+    if (!Audio::IsInited())
+    {
+        return Audio::GetSndIDError();
+    }
+
+    sndAtr.Init();
+
+    switch (powerupSnd)
+    {
+    case PWRUP_SOUND_ACQUIRE:
+        sndType = powerupSounds[type].sndAcquire;
+        break;
+    case PWRUP_SOUND_ACTIVATE:
+        sndType = powerupSounds[type].sndActivate;
+        break;
+    case PWRUP_SOUND_IN_EFFECT:
+        sndType = powerupSounds[type].sndInEffect;
+        break;
+    case PWRUP_SOUND_HIT:
+        sndType = powerupSounds[type].sndHit;
+        break;
+    case PWRUP_SOUND_BOUNCE_WALL:
+        sndType = powerupSounds[type].sndBounceWall;
+        break;
+    case PWRUP_SOUND_BOUNCE_GROUND:
+        sndType = powerupSounds[type].sndBounceGround;
+        break;
+    case PWRUP_SOUND_EXPLODE:
+        sndType = powerupSounds[type].sndExplode;
+        break;
+    case PWRUP_SOUND_END:
+        sndType = powerupSounds[type].sndEnd;
+        break;
+    }
+
+    if (sndType == 0xFFFFFFFF)
+    {
+        return -1;
+    }
+
+    if (powerupSnd == PWRUP_SOUND_ACQUIRE)
+    {
+        sndAtr.SetSoundType(sndType, false);
+    }
+    else
+    {
+        sndAtr.SetSoundType(sndType, true);
+
+        if (type == POWER_UP_BOBOMB)
+        {
+            if ((powerupSnd == PWRUP_SOUND_IN_EFFECT) || (powerupSnd == PWRUP_SOUND_ACTIVATE))
+            {
+                sndAtr.UsePhysObj(pPhysObj);
+                *(u8*)&sndAtr.mp_OwnerSFX = 1;
+            }
+            else
+            {
+                sndAtr.UseStationaryPosVector(pPhysObj->GetPosition());
+            }
+        }
+        else
+        {
+            if (powerupSnd == PWRUP_SOUND_IN_EFFECT)
+            {
+                sndAtr.UsePhysObj(pPhysObj);
+                *(u8*)&sndAtr.mp_OwnerSFX = 1;
+            }
+            else
+            {
+                sndAtr.UseStationaryPosVector(pPhysObj->GetPosition());
+            }
+        }
+    }
+
+    fDefaultVol = Audio::gPowerupSFX.GetSFXVol(sndType);
+
+    if (fVol != 1.0f)
+    {
+        sndAtr.mf_Attenuate = fVol * fDefaultVol;
+    }
+
+    return Audio::gPowerupSFX.Play(sndAtr);
 }
 
 /**

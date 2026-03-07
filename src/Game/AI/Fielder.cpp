@@ -1609,14 +1609,14 @@ void cFielder::SetAction(eFielderActionState actionState)
 /**
  * Offset/Address/Size: 0x6D58 | 0x80020094 | size: 0x3C
  */
-void cFielder::GetFormationPosition(nlVector3& v3DestPosition, float fBallPosFormationWeight)
+bool cFielder::GetFormationPosition(nlVector3& v3DestPosition, float fBallPosFormationWeight)
 {
     if (fBallPosFormationWeight < 0.0f)
     {
         fBallPosFormationWeight = 1.0f;
     }
 
-    m_pTeam->CalculateFormationPosition(v3DestPosition, this, m_DesireCommonVars.bInPosition, fBallPosFormationWeight);
+    return m_pTeam->CalculateFormationPosition(v3DestPosition, this, m_DesireCommonVars.bInPosition, fBallPosFormationWeight);
 }
 
 /**

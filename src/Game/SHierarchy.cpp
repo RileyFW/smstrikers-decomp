@@ -92,21 +92,21 @@ s32 cSHierarchy::GetChild(int parentIndex, int childIndex) const
  */
 void cSHierarchy::BuildPushPopFlags(int nodeIndex, int currentDepth, int& stackDepth)
 {
+    int newSD1;
+    int child;
+    int k;
+    int cc2;
+    int newSD2;
     int l;
-    int newSD3;
     int cc3;
     int ggchild;
-    int k;
-    int newSD2;
-    int cc2;
+    int newSD3;
     int gchild;
     int j;
-    int newSD1;
     int cc1;
-    int child;
     int i;
-    int newSD0;
     int childCount;
+    int newSD0;
 
     if (currentDepth != stackDepth)
     {

@@ -8,6 +8,12 @@ extern const unsigned short MissingLocString[];
 
 template <typename T, typename U>
 T* nlBSearch(const U& key, T* table, int count);
+template <typename T>
+unsigned long nlStrLen(const T*);
+
+extern "C" void ProcessString__9nlTextBoxFPC14FontCharStringPC6nlFontRC9nlVector2UlPC9nlMatrix4RQ29nlTextBox14StringDrawInfo(const FontCharString*, const nlFont*, const nlVector2&, unsigned long, const nlMatrix4*, StringDrawInfo&);
+extern "C" void DrawString__9nlTextBoxFRCQ29nlTextBox14StringDrawInfoRC9nlVector2RC8nlColour7eGLView(const StringDrawInfo&, const nlVector2&, const nlColour&, eGLView);
+extern "C" void SetScissorBox__6nlFontCFRCQ26nlFont10ScissorBox(const nlFont*, const ScissorBox&);
 
 /**
  * Offset/Address/Size: 0x0 | 0x802101D8 | size: 0x1C
@@ -31,11 +37,141 @@ void TLTextInstance::SetString(const unsigned short* utf16)
     m_OverloadFlags &= 0xFFFFFFF7;
 }
 
+static inline const nlFont* GetFontFromComponent(TLComponent* comp)
+{
+    struct FontResource
+    {
+        unsigned char _pad[0x14];
+        const nlFont* m_font;
+    };
+    return ((const FontResource*)comp->pChildren)->m_font;
+}
+
 /**
  * Offset/Address/Size: 0x38 | 0x80210210 | size: 0x250
+ * TODO: 97.8% match - only 2 constant pool label diffs remain (unavoidable SDA ordering)
  */
-void TLTextInstance::Render(eGLView, const nlColour&) const
+void TLTextInstance::Render(eGLView view, const nlColour& colour) const
 {
+    struct ResourceHandle
+    {
+        unsigned char _pad[0x10];
+        bool m_bValid;
+    };
+
+    nlVector2 drawAt;
+    const nlFont* pFont;
+
+    GetPosition();
+
+    TLComponent* component = m_component;
+    const ResourceHandle* resource = (const ResourceHandle*)component->pChildren;
+    if (!resource->m_bValid)
+    {
+        return;
+    }
+
+    const unsigned short* pWideTextString;
+    if (m_OverloadFlags & 0x8)
+    {
+        unsigned long key = m_LocStrId;
+        nlLocalization* loc = g_pLocalization;
+        const unsigned short* locString;
+
+        if (loc->m_LookupTable == NULL)
+        {
+            locString = LocalizationTableNotFound;
+        }
+        else
+        {
+            nlLocalization::StringLookup* result = nlBSearch<nlLocalization::StringLookup, unsigned long>(key, loc->m_LookupTable, loc->m_pFile->StringCount);
+            if (result != NULL)
+            {
+                locString = loc->m_FirstString + result->StringOffset;
+            }
+            else
+            {
+                locString = MissingLocString;
+            }
+        }
+
+        pWideTextString = locString;
+    }
+    else
+    {
+        pWideTextString = m_wcUserString;
+    }
+
+    if (pWideTextString != NULL)
+    {
+        unsigned short* buffer = (unsigned short*)__alloca((nlStrLen<unsigned short>(pWideTextString) + 1) * sizeof(unsigned short));
+
+        pFont = GetFontFromComponent(component);
+        FontCharString charString(pWideTextString, pFont, buffer);
+
+        ((TLTextInstance*)this)->m_DrawInfo.String = charString.m_pString;
+        ProcessString__9nlTextBoxFPC14FontCharStringPC6nlFontRC9nlVector2UlPC9nlMatrix4RQ29nlTextBox14StringDrawInfo(&charString, pFont, m_OverloadedAttributes.BoxSize, m_DrawOptions | 0x800, m_DrawInfo.pMatrix, (StringDrawInfo&)m_DrawInfo);
+
+        if (charString.m_InternalBuffer)
+        {
+            delete[] charString.m_pString;
+        }
+    }
+    else if (m_pFontString == NULL)
+    {
+        return;
+    }
+
+    float x;
+    switch (m_DrawOptions & 0xF)
+    {
+    case 0:
+        x = 0.0f;
+        break;
+    case 1:
+    {
+        float half = 0.5f;
+        float bx = m_OverloadedAttributes.BoxSize.f.x;
+        x = -bx * half;
+        break;
+    }
+    case 2:
+        x = -m_OverloadedAttributes.BoxSize.f.x;
+        break;
+    }
+
+    float y;
+    switch (m_DrawOptions & 0xF0)
+    {
+    case 0:
+        y = 0.0f;
+        break;
+    case 0x10:
+    {
+        float half = 0.5f;
+        float by = m_OverloadedAttributes.BoxSize.f.y;
+        y = by * half;
+        break;
+    }
+    case 0x20:
+        y = m_OverloadedAttributes.BoxSize.f.y;
+        break;
+    }
+
+    drawAt.f.x = x;
+    drawAt.f.y = y;
+
+    if (m_UseScissorRect)
+    {
+        SetScissorBox__6nlFontCFRCQ26nlFont10ScissorBox(m_DrawInfo.pFont, m_ScissorRect);
+    }
+
+    DrawString__9nlTextBoxFRCQ29nlTextBox14StringDrawInfoRC9nlVector2RC8nlColour7eGLView((const StringDrawInfo&)m_DrawInfo, drawAt, colour, view);
+
+    if (m_UseScissorRect)
+    {
+        m_DrawInfo.pFont->DisableScissorBox();
+    }
 }
 
 /**

@@ -564,13 +564,92 @@ void DrawableModel::DrawPlanarShadow()
  */
 void GetShadowBoundingSquare(const glModel*, const nlMatrix4&, float&, float&, float&, float&, unsigned long)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x730 | 0x8012053C | size: 0x234
+ * TODO: 98.40% match - culling-state setup still schedules `li r3, 6` after
+ *       the visibility branch instead of before `cmplwi`.
  */
-void DrawCoPlanarReference(eGLView, const glModel&, const nlMatrix4&, unsigned long)
+void DrawCoPlanarReference(eGLView view, const glModel& model, const nlMatrix4& mtx, unsigned long userData)
 {
+    extern unsigned char g_bCoPlanarReferenceVis;
+    extern unsigned long ResolvedWhiteTexture;
+
+    float z;
+    if (view == GLV_CoPlanar0)
+    {
+        z = sfCoPlanar0Z;
+    }
+    else
+    {
+        z = sfCoPlanarZ;
+    }
+
+    float x0;
+    float x1;
+    float y0;
+    float y1;
+    GetShadowBoundingSquare(&model, mtx, x0, x1, y0, y1, userData);
+
+    nlVector3 points[4] = {};
+    points[0].f.x = x0;
+    points[0].f.y = y0;
+    points[0].f.z = z;
+    points[1].f.x = x1;
+    points[1].f.y = y0;
+    points[1].f.z = z;
+    points[2].f.x = x1;
+    points[2].f.y = y1;
+    points[2].f.z = z;
+    points[3].f.x = x0;
+    points[3].f.y = y1;
+    points[3].f.z = z;
+
+    if (x0 + x1 < 0.0f)
+    {
+        points[0].f.x = x1;
+        points[1].f.x = x0;
+        points[2].f.x = x0;
+        points[3].f.x = x1;
+    }
+
+    glSetDefaultState(false);
+
+    eGLState cullState = GLS_Culling;
+    unsigned long cullMode = 3;
+    if (g_bCoPlanarReferenceVis)
+    {
+        cullMode = 0;
+    }
+
+    glSetRasterState(cullState, cullMode);
+    glSetRasterState(GLS_DepthTest, 0);
+    glSetRasterState(GLS_DepthWrite, 0);
+
+    glSetCurrentRasterState(glHandleizeRasterState());
+    glSetCurrentTexture(ResolvedWhiteTexture, GLTT_Diffuse);
+
+    glQuad3 quad;
+    quad.m_pos[0] = points[0];
+    quad.m_uv[0].f.x = 0.0f;
+    quad.m_uv[0].f.y = 0.0f;
+
+    quad.m_pos[1] = points[1];
+    quad.m_uv[1].f.x = 0.0f;
+    quad.m_uv[1].f.y = 0.0f;
+
+    quad.m_pos[2] = points[2];
+    quad.m_uv[2].f.x = 0.0f;
+    quad.m_uv[2].f.y = 0.0f;
+
+    quad.m_pos[3] = points[3];
+    quad.m_uv[3].f.x = 0.0f;
+    quad.m_uv[3].f.y = 0.0f;
+
+    quad.SetColour(0xAA, 0xAA, 0xAA, 0xFF);
+    quad.Attach(view, 0, true);
 }
 
 /**

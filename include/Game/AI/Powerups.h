@@ -101,7 +101,7 @@ public:
     void CollisionCallback(PhysicsObject*, PhysicsObject*, const nlVector3&, void*);
     void UpdateTransform();
     void PlayPowerupSound(ePowerUpType, PowerupBase::PowerupSound, const nlVector3&, float);
-    static void PlayPowerupSound(ePowerUpType, PowerupBase::PowerupSound, PhysicsObject*, float);
+    static unsigned long PlayPowerupSound(ePowerUpType, PowerupBase::PowerupSound, PhysicsObject*, float);
     static void StopPowerupInEffectSound(SFXEmitter*);
 
     /* 0x04 */ bool m_bShouldDestroy;

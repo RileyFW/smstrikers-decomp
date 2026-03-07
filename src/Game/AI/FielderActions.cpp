@@ -544,9 +544,69 @@ void cFielder::InitActionElectrocution(const nlVector3& wallPosition, const nlVe
 
 /**
  * Offset/Address/Size: 0x6F6C | 0x8002DAA4 | size: 0x250
+ * TODO: 99.80% match - f3/f5 register swap for launchVelocity x/y components.
  */
-void cFielder::ActionElectrocution(float)
+void cFielder::ActionElectrocution(float dt)
 {
+    switch (m_eAnimID)
+    {
+    case 0x74:
+    {
+        mActionElectrocutionVars.electrocutionTime -= dt;
+        if (mActionElectrocutionVars.electrocutionTime < 0.0f)
+        {
+            SetAnimState(0x75, true, 0.2f, false, false);
+            InitMovementCoast();
+
+            nlVector3 launchVelocity = { 1.0f, 2.0f, 8.0f };
+            float cosAngle;
+            float sinAngle;
+            nlSinCos(&sinAngle, &cosAngle, m_aActualFacingDirection);
+
+            nlVector3 velocity;
+            nlVec3SetRotatedXY(velocity, launchVelocity, cosAngle, sinAngle);
+            SetVelocity(velocity);
+
+            EmitElectrocutionExplosion(this);
+            BeginRumbleAction((eRumbleActionPreset)1, GetGlobalPad());
+        }
+        break;
+    }
+    case 0x75:
+    {
+        nlVector3 velocity = m_v3Velocity;
+        velocity.f.x *= 0.99f;
+        velocity.f.y *= 0.99f;
+        velocity.f.z += -30.0f * dt;
+        SetVelocity(velocity);
+
+        m_v3Position.f.z += dt * m_v3Velocity.f.z;
+        if (m_v3Position.f.z < 0.0f)
+        {
+            m_v3Position.f.z = 0.0f;
+            m_v3Velocity.f.z = 0.0f;
+
+            SetAnimState(0x76, true, 0.2f, false, false);
+            InitMovementFromAnim(0, v3Zero, 0.0f, false);
+            BeginRumbleAction((eRumbleActionPreset)1, GetGlobalPad());
+
+            Audio::SoundAttributes attrs;
+            attrs.Init();
+            attrs.me_ClassType = 1;
+            attrs.SetSoundType(0xB, true);
+            attrs.UseStationaryPosVector(m_v3Position);
+            PlaySFX(attrs);
+        }
+        break;
+    }
+    case 0x76:
+        if (ShouldStartCrossBlend(7))
+        {
+            SetAction(ACTION_NEED_ACTION);
+            m_pCharacterSFX->StopPlayingRandomCharDialogue(CHAR_DIALOGUE_ELECTROCUTE);
+        }
+        break;
+    }
 }
 
 /**

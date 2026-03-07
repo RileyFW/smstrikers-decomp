@@ -1,4 +1,5 @@
 #include "Game/DB/StatsTracker.h"
+#include "Game/FE/feHelpFuncs.h"
 #include "Game/GameInfo.h"
 
 // /**
@@ -74,8 +75,109 @@ StatsTracker::StatsTracker()
 /**
  * Offset/Address/Size: 0x50C8 | 0x80186628 | size: 0x234
  */
-void StatsTracker::SetBasicGameInfoPointer(BasicGameInfo*, bool)
+void StatsTracker::SetBasicGameInfoPointer(BasicGameInfo* pGameInfo, bool initializeStats)
 {
+    eTeamID homeid;
+    eTeamID awayid;
+    eSidekickID homesk;
+    eSidekickID awaysk;
+    eCharacterClass characterClass;
+    u32 i;
+    int j;
+
+    mBasicGameInfo = pGameInfo;
+    homeid = mBasicGameInfo->mTeamIndex[0];
+    awayid = mBasicGameInfo->mTeamIndex[1];
+    homesk = mBasicGameInfo->mSidekickIndex[0];
+    awaysk = mBasicGameInfo->mSidekickIndex[1];
+
+    mIsUserCupWinner = false;
+    mIsOvertime = false;
+    mHasGameEnded = false;
+    mNumConsecutiveGamesPlayed = 1;
+    mNumGamesWon[0] = 0;
+    mNumGamesWon[1] = 0;
+
+    if (!initializeStats)
+    {
+        return;
+    }
+
+    memset(&mCurrentTeamStats[0].mPlayerTotalStats, 0, sizeof(PlayerStats));
+    mCurrentTeamStats[0].mPlayerTotalStats.mRecordType.mTeamID = homeid;
+    mCurrentTeamStats[0].mPlayerTotalStats.mType = TYPE_TEAM;
+    mCurrentTeamStats[0].mTeamIndex = homeid;
+    mCurrentTeamStats[0].mNumWins = 0;
+    mCurrentTeamStats[0].mNumLosses = 0;
+    mCurrentTeamStats[0].mNumOTLosses = 0;
+    mCurrentTeamStats[0].mNumPoints = 0;
+
+    memset(&mCurrentTeamStats[1].mPlayerTotalStats, 0, sizeof(PlayerStats));
+    mCurrentTeamStats[1].mPlayerTotalStats.mRecordType.mTeamID = awayid;
+    mCurrentTeamStats[1].mPlayerTotalStats.mType = TYPE_TEAM;
+    mCurrentTeamStats[1].mTeamIndex = awayid;
+    mCurrentTeamStats[1].mNumWins = 0;
+    mCurrentTeamStats[1].mNumLosses = 0;
+    mCurrentTeamStats[1].mNumOTLosses = 0;
+    mCurrentTeamStats[1].mNumPoints = 0;
+
+    memset(&mCumulativeTeamStats[0].mPlayerTotalStats, 0, sizeof(PlayerStats));
+    mCumulativeTeamStats[0].mPlayerTotalStats.mRecordType.mTeamID = homeid;
+    mCumulativeTeamStats[0].mPlayerTotalStats.mType = TYPE_TEAM;
+    mCumulativeTeamStats[0].mTeamIndex = homeid;
+    mCumulativeTeamStats[0].mNumWins = 0;
+    mCumulativeTeamStats[0].mNumLosses = 0;
+    mCumulativeTeamStats[0].mNumOTLosses = 0;
+    mCumulativeTeamStats[0].mNumPoints = 0;
+
+    memset(&mCumulativeTeamStats[1].mPlayerTotalStats, 0, sizeof(PlayerStats));
+    mCumulativeTeamStats[1].mPlayerTotalStats.mRecordType.mTeamID = awayid;
+    mCumulativeTeamStats[1].mPlayerTotalStats.mType = TYPE_TEAM;
+    mCumulativeTeamStats[1].mTeamIndex = awayid;
+    mCumulativeTeamStats[1].mNumWins = 0;
+    mCumulativeTeamStats[1].mNumLosses = 0;
+    mCumulativeTeamStats[1].mNumOTLosses = 0;
+    mCumulativeTeamStats[1].mNumPoints = 0;
+
+    characterClass = (eCharacterClass)ConvertToCharacterClass(homeid);
+    memset(&mCurrentPlayerStats[0][0], 0, sizeof(PlayerStats));
+    mCurrentPlayerStats[0][0].mRecordType.mCharacterClass = characterClass;
+    mCurrentPlayerStats[0][0].mType = TYPE_CHARACTER;
+
+    characterClass = (eCharacterClass)ConvertToCharacterClass(awayid);
+    memset(&mCurrentPlayerStats[1][0], 0, sizeof(PlayerStats));
+    mCurrentPlayerStats[1][0].mRecordType.mCharacterClass = characterClass;
+    mCurrentPlayerStats[1][0].mType = TYPE_CHARACTER;
+
+    i = 1;
+    do
+    {
+        characterClass = (eCharacterClass)ConvertToCharacterClass(homesk);
+        memset(&mCurrentPlayerStats[0][i], 0, sizeof(PlayerStats));
+        mCurrentPlayerStats[0][i].mRecordType.mCharacterClass = characterClass;
+        mCurrentPlayerStats[0][i].mType = TYPE_CHARACTER;
+
+        characterClass = (eCharacterClass)ConvertToCharacterClass(awaysk);
+        memset(&mCurrentPlayerStats[1][i], 0, sizeof(PlayerStats));
+        mCurrentPlayerStats[1][i].mRecordType.mCharacterClass = characterClass;
+        mCurrentPlayerStats[1][i].mType = TYPE_CHARACTER;
+
+        i++;
+    } while (i < 5);
+
+    j = 0;
+    do
+    {
+        memset(&mCurrentUserStats[j], 0, sizeof(PlayerStats));
+        mCurrentUserStats[j].mRecordType.mControllerID = j;
+        mCurrentUserStats[j].mType = TYPE_USER;
+
+        memset(&mCumulativeUserStats[j], 0, sizeof(PlayerStats));
+        mCumulativeUserStats[j].mRecordType.mControllerID = j;
+        mCumulativeUserStats[j].mType = TYPE_USER;
+
+        j++;
+    } while (j < 4);
 }
 
 /**
@@ -195,28 +297,40 @@ void StatsTracker::SimulateGame()
     int goalsAgainst = 0;
     int i;
 
-    for (i = 0; i < 15; i++) {
+    for (i = 0; i < 15; i++)
+    {
         int rand = (int)nlRandom(100, &nlDefaultSeed);
-        if (rand < 20) {
+        if (rand < 20)
+        {
             goalsFor++;
             s_pInstance->TrackStat(STATS_GOALS_FOR, 0, 0, -1, 0, 1, 0);
-        } else if (rand < 40) {
+        }
+        else if (rand < 40)
+        {
             goalsAgainst++;
             s_pInstance->TrackStat(STATS_GOALS_FOR, 1, 0, -1, 0, 1, 0);
         }
     }
 
-    if (goalsFor == goalsAgainst) {
-        if ((int)nlRandom(100, &nlDefaultSeed) < 50) {
+    if (goalsFor == goalsAgainst)
+    {
+        if ((int)nlRandom(100, &nlDefaultSeed) < 50)
+        {
             s_pInstance->TrackStat(STATS_GOALS_FOR, 0, 0, -1, 0, 1, 0);
             s_pInstance->TrackStat(STATS_OT_WIN, 0, 0, goalsFor + 1, goalsAgainst, 0, 0);
-        } else {
+        }
+        else
+        {
             s_pInstance->TrackStat(STATS_GOALS_FOR, 1, 0, -1, 0, 1, 0);
             s_pInstance->TrackStat(STATS_OT_WIN, 1, 0, goalsFor, goalsAgainst + 1, 0, 0);
         }
-    } else if (goalsFor > goalsAgainst) {
+    }
+    else if (goalsFor > goalsAgainst)
+    {
         s_pInstance->TrackStat(STATS_WIN, 0, 0, goalsFor, goalsAgainst, 0, 0);
-    } else {
+    }
+    else
+    {
         s_pInstance->TrackStat(STATS_WIN, 1, 0, goalsFor, goalsAgainst, 0, 0);
     }
 }
@@ -244,78 +358,93 @@ void StatsTracker::AddMilestoneUserStat(ePlayerStats stat, int amount)
 
     switch (stat)
     {
-        case STATS_GOALS_FOR:
+    case STATS_GOALS_FOR:
+    {
+        int val = pGIM->mUserInfo.mNumGoalsScored + amount;
+        if (val >= 9999)
         {
-            int val = pGIM->mUserInfo.mNumGoalsScored + amount;
-            if (val >= 9999) {
-                pGIM->mUserInfo.mNumGoalsScored = 9999;
-            } else {
-                pGIM->mUserInfo.mNumGoalsScored = val;
-            }
-            if (!pGIM->HasTrophy(TROPHY_SNIPER_CUP) && pGIM->mUserInfo.mNumGoalsScored >= 300)
-            {
-                pGIM->mUserInfo.mTrophies[1] |= 0x02;
-            }
-            break;
+            pGIM->mUserInfo.mNumGoalsScored = 9999;
         }
-        case STATS_HITS_MADE:
+        else
         {
-            int val = pGIM->mUserInfo.mNumHits + amount;
-            if (val >= 9999) {
-                pGIM->mUserInfo.mNumHits = 9999;
-            } else {
-                pGIM->mUserInfo.mNumHits = val;
-            }
-            if (!pGIM->HasTrophy(TROPHY_PARAMEDIC_CUP) && pGIM->mUserInfo.mNumHits >= 1000)
-            {
-                pGIM->mUserInfo.mTrophies[1] |= 0x10;
-            }
-            break;
+            pGIM->mUserInfo.mNumGoalsScored = val;
         }
-        case STATS_PERFECT_PASSES:
+        if (!pGIM->HasTrophy(TROPHY_SNIPER_CUP) && pGIM->mUserInfo.mNumGoalsScored >= 300)
         {
-            int val = pGIM->mUserInfo.mNumPerfectPasses + amount;
-            if (val >= 9999) {
-                pGIM->mUserInfo.mNumPerfectPasses = 9999;
-            } else {
-                pGIM->mUserInfo.mNumPerfectPasses = val;
-            }
-            if (!pGIM->HasTrophy(TROPHY_TACTICIAN_CUP) && pGIM->mUserInfo.mNumPerfectPasses >= 300)
-            {
-                pGIM->mUserInfo.mTrophies[1] |= 0x08;
-            }
-            break;
+            pGIM->mUserInfo.mTrophies[1] |= 0x02;
         }
-        case STATS_GAMES_PLAYED:
+        break;
+    }
+    case STATS_HITS_MADE:
+    {
+        int val = pGIM->mUserInfo.mNumHits + amount;
+        if (val >= 9999)
         {
-            int val = pGIM->mUserInfo.mNumGamesPlayed + amount;
-            if (val >= 9999) {
-                pGIM->mUserInfo.mNumGamesPlayed = 9999;
-            } else {
-                pGIM->mUserInfo.mNumGamesPlayed = val;
-            }
-            if (!pGIM->HasTrophy(TROPHY_VETERAN_CUP) && pGIM->mUserInfo.mNumGamesPlayed >= 100)
-            {
-                pGIM->mUserInfo.mTrophies[1] |= 0x01;
-            }
-            break;
+            pGIM->mUserInfo.mNumHits = 9999;
         }
-        case STATS_STS_ATTEMPTS:
+        else
         {
-            int val = pGIM->mUserInfo.mNumSTSAttempts + amount;
-            if (val >= 9999) {
-                pGIM->mUserInfo.mNumSTSAttempts = 9999;
-            } else {
-                pGIM->mUserInfo.mNumSTSAttempts = val;
-            }
-            if (!pGIM->HasTrophy(TROPHY_STRIKER_CUP) && pGIM->mUserInfo.mNumSTSAttempts >= 100)
-            {
-                pGIM->mUserInfo.mTrophies[1] |= 0x04;
-            }
-            break;
+            pGIM->mUserInfo.mNumHits = val;
         }
-        default:
-            break;
+        if (!pGIM->HasTrophy(TROPHY_PARAMEDIC_CUP) && pGIM->mUserInfo.mNumHits >= 1000)
+        {
+            pGIM->mUserInfo.mTrophies[1] |= 0x10;
+        }
+        break;
+    }
+    case STATS_PERFECT_PASSES:
+    {
+        int val = pGIM->mUserInfo.mNumPerfectPasses + amount;
+        if (val >= 9999)
+        {
+            pGIM->mUserInfo.mNumPerfectPasses = 9999;
+        }
+        else
+        {
+            pGIM->mUserInfo.mNumPerfectPasses = val;
+        }
+        if (!pGIM->HasTrophy(TROPHY_TACTICIAN_CUP) && pGIM->mUserInfo.mNumPerfectPasses >= 300)
+        {
+            pGIM->mUserInfo.mTrophies[1] |= 0x08;
+        }
+        break;
+    }
+    case STATS_GAMES_PLAYED:
+    {
+        int val = pGIM->mUserInfo.mNumGamesPlayed + amount;
+        if (val >= 9999)
+        {
+            pGIM->mUserInfo.mNumGamesPlayed = 9999;
+        }
+        else
+        {
+            pGIM->mUserInfo.mNumGamesPlayed = val;
+        }
+        if (!pGIM->HasTrophy(TROPHY_VETERAN_CUP) && pGIM->mUserInfo.mNumGamesPlayed >= 100)
+        {
+            pGIM->mUserInfo.mTrophies[1] |= 0x01;
+        }
+        break;
+    }
+    case STATS_STS_ATTEMPTS:
+    {
+        int val = pGIM->mUserInfo.mNumSTSAttempts + amount;
+        if (val >= 9999)
+        {
+            pGIM->mUserInfo.mNumSTSAttempts = 9999;
+        }
+        else
+        {
+            pGIM->mUserInfo.mNumSTSAttempts = val;
+        }
+        if (!pGIM->HasTrophy(TROPHY_STRIKER_CUP) && pGIM->mUserInfo.mNumSTSAttempts >= 100)
+        {
+            pGIM->mUserInfo.mTrophies[1] |= 0x04;
+        }
+        break;
+    }
+    default:
+        break;
     }
 }
 

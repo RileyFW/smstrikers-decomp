@@ -6,6 +6,7 @@
 
 #include "Game/AI/AvoidController.h"
 #include "Game/AI/Fielder.h"
+#include "Game/AI/SpaceSearch.h"
 #include "Game/AnimInventory.h"
 
 extern FuzzyVariant fvNotSet;
@@ -195,8 +196,52 @@ void cFielder::DesireSupportBall(float, bool)
 /**
  * Offset/Address/Size: 0x33A0 | 0x80034124 | size: 0x244
  */
-void cFielder::InitDesireGetOpen()
+bool cFielder::InitDesireGetOpen()
 {
+    if (m_DesireCommonVars.pSBC == this)
+    {
+        if (m_sQueuedDesireParams.eDesireType == FIELDERDESIRE_GET_OPEN)
+        {
+            m_sQueuedDesireParams.fDuration = 0.0f;
+            m_sQueuedDesireParams.eDesireType = FIELDERDESIRE_NEED_DESIRE;
+            m_sQueuedDesireParams.opt1 = fvNotSet;
+            m_sQueuedDesireParams.opt2 = fvNotSet;
+        }
+        return false;
+    }
+
+    nlVector3 v3FormationPosition;
+    m_DesireCommonVars.bInPosition = GetFormationPosition(v3FormationPosition, -1.0f);
+    if (m_DesireCommonVars.bInPosition)
+    {
+        v3FormationPosition = m_v3Position;
+    }
+
+    nlVector3 v3BestPosition = v3FormationPosition;
+    const nlVector3* pTargetPosition;
+    if (m_DesireCommonVars.pSBC != NULL)
+    {
+        pTargetPosition = &m_DesireCommonVars.pSBC->m_v3Position;
+    }
+    else
+    {
+        pTargetPosition = &g_pBall->m_v3Position;
+    }
+
+    nlVector3 v3TargetPosition = *pTargetPosition;
+    v3TargetPosition.f.z = 0.0f;
+
+    SetSpaceSearch(new (nlMalloc(0x78, 8, false)) SSearchBestPass(m_DesireCommonVars.pSBC, this, false, false));
+    m_pSpaceSearch->m_bDebugOn = false;
+    m_pSpaceSearch->FindBestPosition(v3BestPosition, v3FormationPosition, DIR_TOWARD_TARGET, &v3TargetPosition, 4.0f, 0x8000);
+
+    m_DesireCommonVars.v3DesiredPosition.f.x = 0.95f * v3FormationPosition.f.x + 0.05f * v3BestPosition.f.x;
+    m_DesireCommonVars.v3DesiredPosition.f.y = 0.95f * v3FormationPosition.f.y + 0.05f * v3BestPosition.f.y;
+    m_DesireCommonVars.v3DesiredPosition.f.z = 0.95f * v3FormationPosition.f.z + 0.05f * v3BestPosition.f.z;
+
+    m_pAvoidance->SetThingsToAvoid(0x1F);
+
+    return true;
 }
 
 /**

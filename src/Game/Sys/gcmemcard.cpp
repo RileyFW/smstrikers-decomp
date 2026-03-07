@@ -484,27 +484,27 @@ void MemCard::OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*)
 /**
  * Offset/Address/Size: 0xB28 | 0x801CA298 | size: 0xC0
  */
-s32 MemCard::FormatCard(const MemCardFunctor& functor)
+s32 MemCard::FormatCard(const MemCardFunctor& Callback)
 {
     if (m_State != IS_MOUNTED && m_State != IS_MOUNTED_ERROR)
     {
         return -100;
     }
 
-    m_CB[4] = functor;
+    m_CB[4] = Callback;
     m_State = IS_FORMATTING;
     m_CardState = CS_FORMATTING;
     m_LastTransferSize = CARDGetXferredBytes(m_Slot);
     m_TargetTransferSize = 0xA000;
-    s32 result = CARDFormatAsync(m_Slot, FormatDoneCB);
+    s32 Result = CARDFormatAsync(m_Slot, FormatDoneCB);
 
-    if (result != 0)
+    if (Result != 0)
     {
         m_State = IS_IDLE;
         m_CardState = CS_IDLE;
     }
 
-    return result;
+    return Result;
 }
 
 /**
