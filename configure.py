@@ -1376,7 +1376,7 @@ config.libs = [
             Object(NonMatching, "ode/collision_std.cpp", extra_cflags=["-fp_contract on"]),
             Object(NonMatching, "ode/collision_transform.cpp"),
             Object(NonMatching, "ode/collision_util.cpp"),
-            Object(NonMatching, "ode/error.cpp", extra_cflags=["-inline off"]),
+            Object(Matching, "ode/error.cpp", extra_cflags=["-inline off"]),
             Object(NonMatching, "ode/joint.cpp"),
             Object(Matching, "ode/memory.cpp"),
             Object(NonMatching, "ode/ode.cpp"),
