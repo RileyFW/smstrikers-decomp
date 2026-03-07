@@ -289,16 +289,18 @@ cflags_ode = [
     "-inline auto, deferred",
     "-maxerrors 1",
     "-nosyspath",
-    "-fp_contract off",
+    "-fp_contract on",
     "-multibyte",
     '-pragma "cats off"',
     '-pragma "warn_notinlined off"',
     "-RTTI off",
     "-char signed",
     "-use_lmw_stmw on",
-    "-str reuse,pool,readonly",
+    # "-str reuse,pool,readonly",
     "-common off",
     "-cwd source",
+    "-str reuse",
+    "-sym on"
 ]
 
 cflags_musyx = [

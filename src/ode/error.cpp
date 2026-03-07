@@ -28,58 +28,54 @@
 extern void nlPrintf(const char*, ...);
 extern void nlBreak();
 
-static dMessageFunction *error_function = 0;
-static dMessageFunction *debug_function = 0;
-static dMessageFunction *message_function = 0;
+static dMessageFunction* error_function = 0;
+static dMessageFunction* debug_function = 0;
+static dMessageFunction* message_function = 0;
 
 // extern "C" void dSetErrorHandler (dMessageFunction *fn)
 // {
 //   error_function = fn;
 // }
 
-
 // extern "C" void dSetDebugHandler (dMessageFunction *fn)
 // {
 //   debug_function = fn;
 // }
-
 
 // extern "C" void dSetMessageHandler (dMessageFunction *fn)
 // {
 //   message_function = fn;
 // }
 
-
 // extern "C" dMessageFunction *dGetErrorHandler()
 // {
 //   return error_function;
 // }
-
 
 // extern "C" dMessageFunction *dGetDebugHandler()
 // {
 //   return debug_function;
 // }
 
-
 // extern "C" dMessageFunction *dGetMessageHandler()
 // {
 //   return message_function;
 // }
 
-
-inline void printMessage (int num, const char *msg1, const char *msg2, va_list ap)
+inline void printMessage(int num, const char* msg1, const char* msg2, va_list ap)
 {
-  fflush (stderr);
-  fflush (stdout);
-  if (num) fprintf (stderr,"\n%s %d: ",msg1,num);
-  else fprintf (stderr,"\n%s: ",msg1);
-  
-  // vfprintf (stderr,msg2,ap);
-  nlPrintf(msg2, ap);
+    fflush(stderr);
+    fflush(stdout);
+    if (num)
+        fprintf(stderr, "\n%s %d: ", msg1, num);
+    else
+        fprintf(stderr, "\n%s: ", msg1);
 
-  fprintf (stderr,"\n");
-  fflush (stderr);
+    // vfprintf (stderr,msg2,ap);
+    nlPrintf(msg2, ap);
+
+    fprintf(stderr, "\n");
+    fflush(stderr);
 }
 
 //****************************************************************************
@@ -96,24 +92,38 @@ inline void printMessage (int num, const char *msg1, const char *msg2, va_list a
 //   exit (1);
 // }
 
-
-extern "C" void dDebug (int num, const char *msg, ...)
+extern "C" void dDebug(int num, const char* msg, ...)
 {
-  va_list ap;
-  va_start (ap,msg);
-  if (debug_function) debug_function (num,msg,ap);
-  else printMessage (num,"ODE INTERNAL ERROR",msg,ap);
-  // *((char *)0) = 0;   ... commit SEGVicide
-  nlBreak();
+    va_list ap;
+    va_start(ap, msg);
+    if (debug_function)
+    {
+        debug_function(num, msg, ap);
+    }
+    else
+    {
+        if (num)
+        {
+            nlPrintf("\n%s %d: ", "ODE INTERNAL ERROR", num);
+        }
+        else
+        {
+            nlPrintf("\n%s: ", "ODE INTERNAL ERROR");
+        }
+        nlPrintf("\n");
+    }
+    // *((char *)0) = 0;   ... commit SEGVicide
+    nlBreak();
 }
 
-
-extern "C" void dMessage (int num, const char *msg, ...)
+extern "C" void dMessage(int num, const char* msg, ...)
 {
-  va_list ap;
-  va_start (ap,msg);
-  if (message_function) message_function (num,msg,ap);
-  else printMessage (num,"ODE Message",msg,ap);
+    va_list ap;
+    va_start(ap, msg);
+    if (message_function)
+        message_function(num, msg, ap);
+    else
+        printMessage(num, "ODE Message", msg, ap);
 }
 
 #endif
