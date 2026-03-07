@@ -26,6 +26,8 @@
 #include <ode/config.h>
 #include <ode/error.h>
 
+#include "NL/nlMath.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -135,9 +137,10 @@ typedef double dReal;
 
 #if defined(dSINGLE)
 
-#define REAL(x)         (x##f)                              /* form a constant */
-#define dRecip(x)       ((float)(1.0f / (x)))               /* reciprocal */
-#define dSqrt(x)        ((float)sqrtf(float(x)))            /* square root */
+#define REAL(x)   (x##f)                          /* form a constant */
+#define dRecip(x) ((float)(1.0f / (x)))           /* reciprocal */
+#define dSqrt(x)  ((float)nlSqrt(float(x), true)) /* reciprocal */
+// #define dSqrt(x)        ((float)sqrtf(float(x)))            /* square root */
 #define dRecipSqrt(x)   ((float)(1.0f / sqrtf(float(x))))   /* reciprocal square root */
 #define dSin(x)         ((float)sinf(float(x)))             /* sine */
 #define dCos(x)         ((float)cosf(float(x)))             /* cosine */

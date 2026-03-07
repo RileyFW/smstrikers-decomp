@@ -38,6 +38,8 @@ dContactGeom::g1 and dContactGeom::g2.
 #include "collision_std.h"
 #include "collision_util.h"
 
+#include "NL/nlMath.h"
+
 #ifdef _MSC_VER
 #pragma warning(disable : 4291) // for VC++, no complaints about "no matching operator delete found"
 #endif
@@ -284,7 +286,8 @@ static void make_sure_plane_normal_has_unit_length(dxPlane* g)
     dReal l = g->p[0] * g->p[0] + g->p[1] * g->p[1] + g->p[2] * g->p[2];
     if (l > 0)
     {
-        l = dRecipSqrt(l);
+        // l = dRecipSqrt(l);
+        l = nlRecipSqrt(l, true);
         g->p[0] *= l;
         g->p[1] *= l;
         g->p[2] *= l;
@@ -618,7 +621,8 @@ void cullPoints(int n, dReal p[], int m, int i0, int iret[])
     // compute the angle of each point w.r.t. the centroid
     dReal A[8];
     for (i = 0; i < n; i++)
-        A[i] = dAtan2(p[i * 2 + 1] - cy, p[i * 2] - cx);
+        // A[i] = dAtan2(p[i * 2 + 1] - cy, p[i * 2] - cx);
+        A[i] = nlATan2f(p[i * 2 + 1] - cy, p[i * 2] - cx);
 
     // search for points that have angles closest to A[i0] + i*(2*pi/m).
     int avail[8];
@@ -1702,7 +1706,8 @@ static int ray_sphere_helper(dxRay* ray, dVector3 sphere_pos, dReal radius,
     dReal k = B * B - C;
     if (k < 0)
         return 0;
-    k = dSqrt(k);
+    // k = dSqrt(k);
+    k = nlSqrt(k, true);
     dReal alpha;
     if (mode && C >= 0)
     {
@@ -1927,7 +1932,8 @@ int dCollideRayCCylinder(dxGeom* o1, dxGeom* o2,
         }
         else
         {
-            k = dSqrt(k);
+            // k = dSqrt(k);
+            k = nlSqrt(k, true);
             A = dRecip(2 * A);
             dReal alpha = (-B - k) * A;
             if (alpha < 0)

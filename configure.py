@@ -1371,7 +1371,7 @@ config.libs = [
             Object(NonMatching, "ode/NLGAdditions.cpp", extra_cflags=["-inline auto, deferred"]),
             Object(NonMatching, "ode/collision_kernel.cpp"),
             Object(Matching, "ode/collision_space.cpp"),
-            Object(NonMatching, "ode/collision_std.cpp"),
+            Object(NonMatching, "ode/collision_std.cpp", extra_cflags=["-fp_contract on"]),
             Object(NonMatching, "ode/collision_transform.cpp"),
             Object(NonMatching, "ode/collision_util.cpp"),
             Object(NonMatching, "ode/error.cpp", extra_cflags=["-inline off"]),

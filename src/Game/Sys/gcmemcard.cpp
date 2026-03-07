@@ -483,6 +483,9 @@ void MemCard::OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*)
 
 /**
  * Offset/Address/Size: 0xB28 | 0x801CA298 | size: 0xC0
+ * TODO: 91% match - r5/r6 register swap and load/store scheduling difference
+ * in 24-byte MemCardFunctor copy. MWCC scheduler interleaves loads across
+ * pairs instead of target's load-load-store-store pattern.
  */
 s32 MemCard::FormatCard(const MemCardFunctor& Callback)
 {
