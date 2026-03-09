@@ -398,7 +398,7 @@ long SaveLoad::StartMemoryCardIDCheck(int slot, void (*callback)(long))
 
 /**
  * Offset/Address/Size: 0x264 | 0x80189BC0 | size: 0x12C
- * TODO: 76.4% match - loop pre-check uses cmpwi path (target keeps addic flags), icon constant/register allocation differs (r3/r4/r5 vs r7/r4/r3), and second block-count path still inserts cmpwi/mr
+ * TODO: 69.6% match - first block-count path still emits extra cmpwi/mr around the rounded block count, icon header setup does not keep the target nor/srawi/and chain register flow, and header +0x40 path compiles to addi+add instead of addic.
  */
 #pragma push
 #pragma opt_propagation off
@@ -407,9 +407,10 @@ int SaveLoad::GetSaveBlockSize(int)
     int dataSize = nlSingleton<GameInfoManager>::s_pInstance->GetMemoryCardDataSize();
     int numBlocks = 0;
 
-    if ((dataSize += 12) > 0)
+    dataSize += 12;
+    int blocks = (u32)(dataSize + 0x1FFF) >> 13;
+    if (dataSize > 0)
     {
-        int blocks = (u32)(dataSize + 0x1FFF) >> 13;
         int i = blocks;
         while (i-- > 0)
         {
@@ -425,24 +426,23 @@ int SaveLoad::GetSaveBlockSize(int)
     memset(IconCfg.IconSpeeds, 0, 8);
 
     memset(&IconCfg, 0, sizeof(MemCard::ICON_CONFIG));
-    IconCfg.BannerFormat = 2;
     IconCfg.IconCount = 1;
     IconCfg.IconFormat = 2;
     IconCfg.IconSpeeds[0] = 3;
+    IconCfg.BannerFormat = 2;
 
     int iconFormat = IconCfg.IconFormat;
     int iconCount = IconCfg.IconCount;
-
     int iconSize = (iconFormat << 10) * iconCount;
-    int bannerClut = (iconFormat < 2) ? 0x200 : 0;
+    int temp = ~(iconCount | -1);
+    int bannerClut = (temp >> 31) & 0x200;
     int bannerSize = iconFormat * 0xC00;
-    int iconClut = (iconCount <= 0) ? 0x200 : 0;
+    int iconClut = (temp >> 31) & 0x200;
+    int total = bannerClut + bannerSize + iconSize + iconClut;
 
-    IconCfg.HeaderSize = bannerClut + bannerSize + iconSize + iconClut + 0x40;
-
-    if ((dataSize = (int)IconCfg.HeaderSize) > 0)
+    if ((dataSize = (int)(IconCfg.HeaderSize = total + 0x40)) > 0)
     {
-        int blocks = (u32)(dataSize + 0x1FFF) >> 13;
+        blocks = (u32)(dataSize + 0x1FFF) >> 13;
         int i = blocks;
         while (i-- > 0)
         {

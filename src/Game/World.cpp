@@ -599,14 +599,15 @@ static inline void* getUserData(void* p)
 
 /**
  * Offset/Address/Size: 0x1B7C | 0x80196840 | size: 0x12C
- * TODO: 98.67% match - r29/r31 register swap (pSpec/pEntries)
+ * TODO: 98.67% match - remaining r29/r31 register swap; current World layout is missing m_pPlayerNISLightData so m_pSpecularData aliases target m_pSTSIntensity offset
  */
 void* World::GetCustomSpecularData(glModelPacket* pPacket, bool bPerm)
 {
     u32 allocSize;
     GLSpecularUserData* pEntries;
     int numLights;
-    void* pSTSIntensity = m_pSTSIntensity;
+    void* pSTSIntensity;
+    pSTSIntensity = m_pSpecularData;
 
     u8 glossLevel = (u8)glGetTextureState(pPacket->state.texturestate, GLTS_GlossLevel);
 

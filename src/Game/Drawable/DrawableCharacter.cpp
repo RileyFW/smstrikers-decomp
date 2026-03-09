@@ -288,7 +288,7 @@ void DrawableCharacter::Grab(SkinAnimatedMovableNPC& character)
     }
     else
     {
-        // *mPoseAccumulator = *character.mpPoseAccumulator;
+        *mPoseAccumulator = *character.mpPoseAccumulator;
     }
 
     mEffectsTexturing = nullptr;

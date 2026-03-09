@@ -155,56 +155,18 @@ void glSetRasterStateDefaults()
     _state.m_State = defaultRasterState;
 }
 
+static inline unsigned long SetTextureStateImpl(unsigned long long* pState, eGLTextureState state, unsigned long value);
+
 /**
  * Offset/Address/Size: 0x1CC | 0x801DBE10 | size: 0x12C
- * TODO: 75.6% match - MWCC register allocator merges both halves of u64 cmp
- * (initialized to 0) into single register (r23) instead of separate r20/r21,
- * shifting all callee-saved register assignments by 1. All instructions match
- * structurally (only register number diffs).
+ * TODO: 85.5% match - helper inline is close, but the first function still has
+ * callee-saved register assignment differences and second-loop high/low word
+ * update ordering differences versus target assembly.
  */
 unsigned long glSetTextureState(unsigned long long& texture, eGLTextureState state, unsigned long value)
 {
-    unsigned long out = 0;
-    PackedTextureInfo* pInfo = &packed_texture[state];
-    PackedTextureInfo* pCount = (PackedTextureInfo*)((u8*)pInfo + 4);
-    s32 cnt = (s32)out;
-    unsigned long long cmp = (unsigned long long)out;
-    unsigned long one = 1;
-    unsigned long long tex = texture;
-    s32 numBits = pInfo->count;
-
-    for (; cnt < numBits; cnt++)
-    {
-        unsigned long long mask = 1ULL << (cnt + pInfo->start_bit);
-        if ((tex & mask) != cmp)
-        {
-            out |= (one << cnt);
-        }
-    }
-
-    for (cnt = 0; cnt < (s32)pCount->start_bit; cnt++)
-    {
-        if (value & (1 << cnt))
-        {
-            unsigned long long mask = 1ULL << (cnt + pInfo->start_bit);
-            unsigned long lo = ((unsigned long*)&texture)[1];
-            unsigned long hi = ((unsigned long*)&texture)[0];
-            ((unsigned long*)&texture)[1] = lo | (unsigned long)mask;
-            ((unsigned long*)&texture)[0] = hi | (unsigned long)(mask >> 32);
-        }
-        else
-        {
-            unsigned long lo = ((unsigned long*)&texture)[1];
-            u32 startBit = pInfo->start_bit;
-            unsigned long hi = ((unsigned long*)&texture)[0];
-            unsigned long mask32 = 1UL << (cnt + startBit);
-            unsigned long notMask = ~mask32;
-            ((unsigned long*)&texture)[1] = lo & notMask;
-            ((unsigned long*)&texture)[0] = hi & (unsigned long)((s32)notMask >> 31);
-        }
-    }
-
-    return out;
+    unsigned long long* pTexture = &texture;
+    return SetTextureStateImpl(pTexture, state, value);
 }
 
 static inline unsigned long SetTextureStateImpl(unsigned long long* pState, eGLTextureState state, unsigned long value)

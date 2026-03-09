@@ -275,27 +275,24 @@ void ModeledScreenTransition::Render(eGLView)
     }
 
     int modelMapIndex = 0;
-    // int modelIndex = 0;
+    int modelOffset = 0;
 
     for (u32 modelIndex = 0; modelIndex < m_nModels; modelIndex++)
     {
-        int packetIndex = 0;
-
-        glModel* pModel = &m_pModels[modelIndex];
-        int nodeIndex = m_pModelMap[modelMapIndex];
-        for (; packetIndex < pModel->numPackets; packetIndex++)
+        for (u32 packetIndex = 0; packetIndex < m_pModels[modelOffset / 0x10].numPackets; packetIndex++)
         {
-            const nlMatrix4& nodeMatrix = m_pPoseAccumulator->GetNodeMatrix(nodeIndex);
+            const nlMatrix4& nodeMatrix = m_pPoseAccumulator->GetNodeMatrix(m_pModelMap[modelMapIndex]);
             u32 matrixHandle = glAllocMatrix();
             if (matrixHandle != 0xFFFFFFFF)
             {
                 glSetMatrix(matrixHandle, nodeMatrix);
             }
-            pModel->packets[packetIndex].state.matrix = matrixHandle;
+            m_pModels[modelOffset / 0x10].packets[packetIndex].state.matrix = matrixHandle;
         }
 
-        glViewAttachModel(s_3DView, pModel);
+        glViewAttachModel(s_3DView, &m_pModels[modelOffset / 0x10]);
         modelMapIndex++;
+        modelOffset += 0x10;
     }
 
     if (m_bEnableGrab)

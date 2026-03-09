@@ -119,53 +119,36 @@ found:
 void glConstantSet(const char* constantName, const nlVector4& value)
 {
     u32 hash = nlStringHash(constantName);
-    nlVector4* foundValue = nullptr;
+    nlVector4* foundValue;
+    nlVector4* result;
 
-    // Search through levels from current level down to 0
     for (int i = level; i >= 0; i--)
     {
-        AVLTreeEntry<unsigned long, nlVector4>* node = constants[i]->m_Root;
-
-        // Binary search within the AVL tree
-        while (node != nullptr)
+        if (glConstantFindInTree(constants[i], hash, foundValue))
         {
-            if (hash == node->key)
-            {
-                foundValue = &node->value;
-                break;
-            }
-            else if (hash < node->key)
-            {
-                node = (AVLTreeEntry<unsigned long, nlVector4>*)node->node.left;
-            }
-            else
-            {
-                node = (AVLTreeEntry<unsigned long, nlVector4>*)node->node.right;
-            }
-        }
-
-        if (foundValue != nullptr)
-        {
-            break; // Found the constant, exit the level loop
+            result = foundValue;
+            goto found;
         }
     }
 
-    if (foundValue == nullptr)
-    {
-        // Constant not found, add it to the current level's tree
-        AVLTreeNode* newNode;
-        constants[level]->AddAVLNode((AVLTreeNode**)&constants[level]->m_Root, &hash, (void*)&value, &newNode, 0);
+    result = NULL;
 
-        if (newNode == nullptr)
+found:
+    if (result == NULL)
+    {
+        AVLTreeNode* existingNode;
+        nlAVLTree<unsigned long, nlVector4, DefaultKeyCompare<unsigned long> >* tree = constants[level];
+
+        tree->AddAVLNode((AVLTreeNode**)&tree->m_Root, &hash, (void*)&value, &existingNode, tree->m_NumElements);
+
+        if (existingNode == NULL)
         {
-            // Increment the element count
-            constants[level]->m_NumElements++;
+            tree->m_NumElements++;
         }
     }
     else
     {
-        // Constant found, update its value
-        *foundValue = value;
+        *result = value;
     }
 }
 

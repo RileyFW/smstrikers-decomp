@@ -2,6 +2,7 @@
 #include "Game/Effects/EmissionController.h"
 #include "Game/Effects/EmissionManager.h"
 #include "NL/nlAVLTree.h"
+#include "NL/nlMain.h"
 #include "NL/nlString.h"
 
 nlAVLTree<unsigned long, EffectsGroup*, DefaultKeyCompare<unsigned long> >* pGroupMap = nullptr;
@@ -301,11 +302,137 @@ bool parse_spec(SimpleParser*, EffectsSpec&)
 
 /**
  * Offset/Address/Size: 0x80C | 0x801F3254 | size: 0x224
+ * TODO: 86.9% match - MWCC strength reduction converts base+offset to pointer walk (stw vs target stwx),
+ * cascading into: CSE of numTerrains*4 into r30, hashID r0->r4, found r0->r28 + extra node==nullptr check,
+ * existingSpec r30->r28, stack offset shift. Root cause: -inline deferred (original) vs -inline auto (decomp.me).
  */
-EffectsTerrainSpec* parse_terrain_spec(SimpleParser*)
+EffectsTerrainSpec* parse_terrain_spec(SimpleParser* parser)
 {
-    FORCE_DONT_INLINE;
-    return nullptr;
+    unsigned long terrainIDs[256];
+    unsigned long offset = 0;
+    unsigned long numTerrains = 0;
+    SimpleParser* p = parser;
+    unsigned long* terrainBase = terrainIDs;
+
+    while (true)
+    {
+        char* token = p->NextTokenOnLine(true);
+        if (token == nullptr)
+        {
+            break;
+        }
+
+        *(unsigned long*)((char*)terrainBase + offset) = nlStringLowerHash(token);
+        numTerrains++;
+        offset += 4;
+    }
+
+    EffectsTerrainSpec* pSpec = (EffectsTerrainSpec*)nlMalloc(8, 8, false);
+    if (pSpec != nullptr)
+    {
+        pSpec->m_pTerrainIDs = nullptr;
+        pSpec->m_uNumTerrains = 0;
+    }
+
+    pSpec->m_uNumTerrains = numTerrains;
+    pSpec->m_pTerrainIDs = (unsigned long*)nlMalloc(numTerrains * 4, 8, false);
+    memcpy(pSpec->m_pTerrainIDs, terrainIDs, numTerrains * 4);
+
+    RunningChecksum checksum;
+    checksum.ChecksumInt(pSpec->m_uNumTerrains);
+    checksum.ChecksumData(pSpec->m_pTerrainIDs, pSpec->m_uNumTerrains * 4);
+
+    AVLTreeEntry<unsigned long, EffectsTerrainSpec*>* node = pTerrainSpecMap->m_Root;
+    unsigned long hashID = ~checksum.m_unk_0x00;
+    unsigned char found;
+    EffectsTerrainSpec** foundValue;
+
+    while (node != nullptr)
+    {
+        int cmpResult;
+
+        if (hashID == node->key)
+        {
+            cmpResult = 0;
+        }
+        else if (hashID < node->key)
+        {
+            cmpResult = -1;
+        }
+        else
+        {
+            cmpResult = 1;
+        }
+
+        if (cmpResult == 0)
+        {
+            if (&foundValue != nullptr)
+            {
+                foundValue = &node->value;
+            }
+
+            found = true;
+            break;
+        }
+
+        if (cmpResult < 0)
+        {
+            node = (AVLTreeEntry<unsigned long, EffectsTerrainSpec*>*)node->node.left;
+        }
+        else
+        {
+            node = (AVLTreeEntry<unsigned long, EffectsTerrainSpec*>*)node->node.right;
+        }
+    }
+
+    if (node == nullptr)
+    {
+        found = false;
+    }
+
+    EffectsTerrainSpec* existingSpec;
+    if (found)
+    {
+        existingSpec = *foundValue;
+    }
+    else
+    {
+        existingSpec = nullptr;
+    }
+
+    if (existingSpec == nullptr)
+    {
+        EffectsTerrainSpec* pNewSpec = pSpec;
+        RunningChecksum checksum2;
+
+        checksum2.ChecksumInt(pSpec->m_uNumTerrains);
+        checksum2.ChecksumData(pSpec->m_pTerrainIDs, pSpec->m_uNumTerrains * 4);
+
+        unsigned long key = ~checksum2.m_unk_0x00;
+        AVLTreeNode* existingNode;
+
+        pTerrainSpecMap->AddAVLNode((AVLTreeNode**)&pTerrainSpecMap->m_Root, &key, &pNewSpec, &existingNode, pTerrainSpecMap->m_NumElements);
+
+        if (existingNode == nullptr)
+        {
+            pTerrainSpecMap->m_NumElements++;
+        }
+
+        return pSpec;
+    }
+
+    if (pSpec != nullptr)
+    {
+        if (pSpec->m_pTerrainIDs != nullptr)
+        {
+            delete[] pSpec->m_pTerrainIDs;
+            pSpec->m_pTerrainIDs = nullptr;
+        }
+
+        delete pSpec;
+    }
+
+    return existingSpec;
 }
 
 /**
@@ -414,13 +541,16 @@ bool fxUnloadGroups()
  * The target uses a bool found flag pattern (li r0,1 / li r0,0 / clrlwi.)
  * which the native AVLTreeBase::FindGet (returning ValueType*) does not produce.
  */
-struct GroupMapFindHelper {
+struct GroupMapFindHelper
+{
     char pad[0x8];
     AVLTreeEntry<unsigned long, EffectsGroup*>* m_Root;
 
-    inline bool FindGet(unsigned long key, EffectsGroup*** foundValue) const {
+    inline bool FindGet(unsigned long key, EffectsGroup*** foundValue) const
+    {
         AVLTreeEntry<unsigned long, EffectsGroup*>* node = m_Root;
-        while (node != NULL) {
+        while (node != NULL)
+        {
             int cmpResult;
             if (key == node->key)
                 cmpResult = 0;
@@ -428,11 +558,14 @@ struct GroupMapFindHelper {
                 cmpResult = -1;
             else
                 cmpResult = 1;
-            if (cmpResult == 0) {
+            if (cmpResult == 0)
+            {
                 if (foundValue != NULL)
                     *foundValue = &node->value;
                 return true;
-            } else {
+            }
+            else
+            {
                 if (cmpResult < 0)
                     node = (AVLTreeEntry<unsigned long, EffectsGroup*>*)node->node.left;
                 else

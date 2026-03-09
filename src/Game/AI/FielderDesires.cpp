@@ -55,16 +55,58 @@ CommonDesireData& GetCommonDesireData(eFielderDesireState desireType)
 
 /**
  * Offset/Address/Size: 0x6484 | 0x80037208 | size: 0x174
+ * TODO: 77.58% match - remaining diffs are mostly register allocation and load scheduling between queued opt1/opt2 locals.
  */
 void cFielder::QueueDesire(eFielderDesireState eDesireType, float fDuration, FuzzyVariant opt1, FuzzyVariant opt2)
 {
+    eVariantType opt1Type = opt1.mType;
+    u32 opt1Data0 = opt1.mData.vector.as_u32[0];
+    u32 opt1Data1 = opt1.mData.vector.as_u32[1];
+    u32 opt1Data2 = opt1.mData.vector.as_u32[2];
+    float opt1Confidence = opt1.Confidence;
+    float opt1SelectionChance = opt1.SelectionChance;
+    eVariantType opt1ExtraType = opt1.ExtraData.mType;
+    u32 opt1Extra0 = opt1.ExtraData.mData.vector.as_u32[0];
+    u32 opt1Extra1 = opt1.ExtraData.mData.vector.as_u32[1];
+    u32 opt1Extra2 = opt1.ExtraData.mData.vector.as_u32[2];
+
+    eVariantType opt2Type = opt2.mType;
+    u32 opt2Data0 = opt2.mData.vector.as_u32[0];
+    u32 opt2Data1 = opt2.mData.vector.as_u32[1];
+    u32 opt2Data2 = opt2.mData.vector.as_u32[2];
+    float opt2Confidence = opt2.Confidence;
+    float opt2SelectionChance = opt2.SelectionChance;
+    eVariantType opt2ExtraType = opt2.ExtraData.mType;
+    u32 opt2Extra0 = opt2.ExtraData.mData.vector.as_u32[0];
+    u32 opt2Extra1 = opt2.ExtraData.mData.vector.as_u32[1];
+    u32 opt2Extra2 = opt2.ExtraData.mData.vector.as_u32[2];
+
     ClearQueuedDesire();
 
-    // Set actual values
     m_sQueuedDesireParams.eDesireType = eDesireType;
     m_sQueuedDesireParams.fDuration = fDuration;
-    m_sQueuedDesireParams.opt1 = opt1;
-    m_sQueuedDesireParams.opt2 = opt2;
+
+    m_sQueuedDesireParams.opt1.mType = opt1Type;
+    m_sQueuedDesireParams.opt1.mData.vector.as_u32[0] = opt1Data0;
+    m_sQueuedDesireParams.opt1.mData.vector.as_u32[1] = opt1Data1;
+    m_sQueuedDesireParams.opt1.mData.vector.as_u32[2] = opt1Data2;
+    m_sQueuedDesireParams.opt1.Confidence = opt1Confidence;
+    m_sQueuedDesireParams.opt1.SelectionChance = opt1SelectionChance;
+    m_sQueuedDesireParams.opt1.ExtraData.mType = opt1ExtraType;
+    m_sQueuedDesireParams.opt1.ExtraData.mData.vector.as_u32[0] = opt1Extra0;
+    m_sQueuedDesireParams.opt1.ExtraData.mData.vector.as_u32[1] = opt1Extra1;
+    m_sQueuedDesireParams.opt1.ExtraData.mData.vector.as_u32[2] = opt1Extra2;
+
+    m_sQueuedDesireParams.opt2.mType = opt2Type;
+    m_sQueuedDesireParams.opt2.mData.vector.as_u32[0] = opt2Data0;
+    m_sQueuedDesireParams.opt2.mData.vector.as_u32[1] = opt2Data1;
+    m_sQueuedDesireParams.opt2.mData.vector.as_u32[2] = opt2Data2;
+    m_sQueuedDesireParams.opt2.Confidence = opt2Confidence;
+    m_sQueuedDesireParams.opt2.SelectionChance = opt2SelectionChance;
+    m_sQueuedDesireParams.opt2.ExtraData.mType = opt2ExtraType;
+    m_sQueuedDesireParams.opt2.ExtraData.mData.vector.as_u32[0] = opt2Extra0;
+    m_sQueuedDesireParams.opt2.ExtraData.mData.vector.as_u32[1] = opt2Extra1;
+    m_sQueuedDesireParams.opt2.ExtraData.mData.vector.as_u32[2] = opt2Extra2;
 }
 
 /**
@@ -253,9 +295,85 @@ void cFielder::InitDesireOneTimerFromRun(unsigned short, const nlVector3&, const
 
 /**
  * Offset/Address/Size: 0x2E60 | 0x80033BE4 | size: 0x254
+ * TODO: 99.6% match - initial ball position/velocity load order and f28/f29/f30 usage differ in the dot-product precheck path.
  */
-void cFielder::DesireOneTimer(float)
+void cFielder::DesireOneTimer(float fDeltaT)
 {
+    cFielder* fp = this;
+
+    float yDiff = fp->m_DesireOneTimerVars.v3BallPosition.f.y - g_pBall->m_v3Position.f.y;
+    float xDiff = fp->m_DesireOneTimerVars.v3BallPosition.f.x - g_pBall->m_v3Position.f.x;
+    float invLen = nlRecipSqrt(yDiff * yDiff + xDiff * xDiff, true);
+    float targetDirY = invLen * yDiff;
+    yDiff = invLen * xDiff;
+
+    cBall* pBall = g_pBall;
+    invLen = nlRecipSqrt(pBall->m_v3Velocity.f.x * pBall->m_v3Velocity.f.x + pBall->m_v3Velocity.f.y * pBall->m_v3Velocity.f.y, true);
+
+    float ballDirY = invLen * pBall->m_v3Velocity.f.y;
+    float ballDirX = invLen * pBall->m_v3Velocity.f.x;
+
+    if (fp->m_pBall == NULL && fp->m_eDesireSubState != 1)
+    {
+        invLen = targetDirY * ballDirY + yDiff * ballDirX;
+        if (invLen < 0.98f)
+        {
+            fp->ClearPassTargetIfAmThePassTarget();
+            fp->SetDesireDuration(0.0f, true);
+            return;
+        }
+    }
+
+    fp->m_DesireOneTimerVars.fDesiredTime -= fDeltaT;
+
+    switch (fp->m_eDesireSubState)
+    {
+    case 0:
+    {
+        if (fp->m_DesireOneTimerVars.fDesiredTime <= 0.0f)
+        {
+            float yToTarget = fp->m_v3Position.f.y - fp->m_DesireOneTimerVars.v3DesiredPosition.f.y;
+            float xToTarget = fp->m_v3Position.f.x - fp->m_DesireOneTimerVars.v3DesiredPosition.f.x;
+
+            if (xToTarget * xToTarget + yToTarget * yToTarget > 4.0f)
+            {
+                fp->ClearPassTargetIfAmThePassTarget();
+                fp->SetDesireDuration(0.0f, true);
+                return;
+            }
+
+            fp->SetFacingDirection(fp->m_DesireOneTimerVars.aDesiredFacingDirection);
+            fp->InitActionOneTimer(
+                fp->m_DesireOneTimerVars.nOneTimerAnim,
+                fp->m_DesireOneTimerVars.v3DesiredPosition,
+                fp->m_DesireOneTimerVars.fOneTimerAnimTime,
+                fp->m_DesireOneTimerVars.bIsChipShot);
+            fp->m_eDesireSubState = 1;
+
+            cSAnim* pAnim = fp->m_pAnimInventory->GetAnim(fp->m_DesireOneTimerVars.nOneTimerAnim);
+            float oneTimerTime = fp->m_DesireOneTimerVars.fOneTimerAnimTime * ((float)pAnim->m_nNumKeys / 30.0f);
+            float totalTime = oneTimerTime + fp->m_DesireOneTimerVars.fDesiredTime;
+
+            if (oneTimerTime > 0.0f && totalTime > 0.0f)
+            {
+                fp->m_pCurrentAnimController->m_fPlaybackSpeedScale = oneTimerTime / totalTime;
+            }
+        }
+        break;
+    }
+
+    case 1:
+    {
+        if (fp->IsActionDone())
+        {
+            fp->SetDesireDuration(0.0f, true);
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
 }
 
 /**

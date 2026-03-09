@@ -39,12 +39,25 @@ void BundleFile::ReadFileAsync(unsigned long hash, void* buffer, unsigned long s
  */
 void BundleFile::ReadFileAsync(const char* filename, void* buffer, unsigned long size, FileReadAsyncCallback callback, unsigned long arg5)
 {
-    u32 index = FindHashIndex(GetNormalizedFilenameHash(filename));
+    char tmp[252];
+    char* puVar8 = tmp;
+    u32 i = 0;
+    char* pcVar10 = (char*)filename;
+    for (; i < nlStrLen<char>(filename); puVar8++, i++, pcVar10++)
+    {
+        *puVar8 = nlToLower<char>(*pcVar10);
+        if (*pcVar10 == '\\')
+        {
+            *puVar8 = 0x2f;
+        }
+    }
+    tmp[i] = 0;
+    u32 index = FindHashIndex(nlStringHash((char*)&tmp[0]));
     m_readAsyncCallback = callback;
     m_unk_0x10 = arg5;
     BundleFileDirectoryEntry* entry = &m_bundleEntries[index];
     nlSeek(m_file, entry->m_blockNumber * m_bundleHeader->m_blockSize, 0);
-    nlReadAsync(this->m_file, buffer, size, &cbFileReadAsyncCallback, *(unsigned long*)this);
+    nlReadAsync(m_file, buffer, size, &cbFileReadAsyncCallback, (unsigned long)this);
 }
 
 /**

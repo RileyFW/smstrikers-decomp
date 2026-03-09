@@ -418,15 +418,14 @@ void SidelineExplodableManager::TriggerExplosions(const nlVector3& pos, float ex
 
     while (node != NULL)
     {
-        SidelineExplodable* pExplodable = node->mpExplodable;
-        const nlMatrix4& worldMtx = pExplodable->GetWorldMatrix();
+        const nlMatrix4& worldMtx = node->mpExplodable->GetWorldMatrix();
         float dy = worldMtx.f.m43 - posZ;
         float dx = worldMtx.f.m41 - posX;
         float dz = worldMtx.f.m42 - posY;
         float dist = nlSqrt(dy * dy + (dx * dx + dz * dz), true);
         if (dist < triggerRadius)
         {
-            pExplodable->mfExplodeTime = dist / divisor;
+            node->mpExplodable->mfExplodeTime = dist / divisor;
         }
         node = node->next;
     }

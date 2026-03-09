@@ -235,9 +235,9 @@ void cCameraManager::SetWorldUpVectorTilt(float fXAxisTilt, float fYAxisTilt)
     float fSin; // r1+0xC
     float fCos; // r1+0x8
 
-    nlSinCos(&fSin, &fCos, (s16)(65536.0f * fXAxisTilt) / 360);
+    nlSinCos(&fSin, &fCos, ((s32)(65536.0f * fXAxisTilt)) / 360);
     nlVec3Set(cCameraManager::m_UpVectorStack[0], 0.0f, fSin, fCos);
-    nlSinCos(&fSin, &fCos, (u16)(65536.0f * fYAxisTilt) / 360);
+    nlSinCos(&fSin, &fCos, ((s32)(65536.0f * fYAxisTilt)) / 360);
 
     cCameraManager::m_UpVectorStack[0].f.x = fSin;
     cCameraManager::m_UpVectorStack[0].f.z = cCameraManager::m_UpVectorStack[0].f.z * fCos;

@@ -9,34 +9,28 @@
  */
 void* glModelDupArrayNoStreams(const glModel* models, unsigned long count, bool arg2, bool arg3)
 {
-    glModel* new_models[4];
-    glModelPacket* new_packets;
-    glModelPacket* dst_pack;
-    glModelPacket* src_pack;
+    glModel* result;
     glModel* dst_model;
     glModel* src_model;
+    u32 i;
 
-    if (arg3 != 0)
-    {
-        new_models[0] = (glModel*)glResourceAlloc(count * 0x10, GLM_Header);
-    }
-    else
-    {
-        new_models[0] = (glModel*)glFrameAlloc(count * 0x10, GLM_Header);
-    }
+    result = arg3 ? (glModel*)glResourceAlloc(count * 0x10, GLM_Header) : (glModel*)glFrameAlloc(count * 0x10, GLM_Header);
 
-    if (new_models == NULL)
+    if (result == NULL)
     {
         return NULL;
     }
 
-    memcpy(new_models, models, count * 0x10);
+    memcpy(result, models, count * 0x10);
 
-    src_model = (glModel*)&models[0];
-    dst_model = new_models[0];
+    src_model = (glModel*)models;
+    dst_model = result;
+    i = 0;
 
-    for (int i = 0; i < count; i++)
+    while (i < count)
     {
+        glModelPacket* new_packets;
+
         if (arg3 != 0)
         {
             new_packets = (glModelPacket*)glResourceAlloc(src_model->numPackets * 0x4A, GLM_Header);
@@ -53,27 +47,31 @@ void* glModelDupArrayNoStreams(const glModel* models, unsigned long count, bool 
 
         memcpy(new_packets, src_model->packets, src_model->numPackets * 0x4A);
         dst_model->packets = new_packets;
+
         if (arg2 != 0)
         {
-            dst_pack = new_packets;
-            src_pack = src_model->packets;
-            u8* last_pack = (u8*)src_pack + src_model->numPackets * 0x4A;
+            glModelPacket* dst_pack = new_packets;
+            glModelPacket* src_pack = src_model->packets;
+            glModelPacket* end_pack = src_pack + src_model->numPackets;
 
-            while ((u8*)src_pack < last_pack)
+            while (src_pack < end_pack)
             {
                 if (src_pack->userData != 0)
                 {
                     dst_pack->userData = 0;
-                    glUserDup((glModelPacket*)dst_pack, (glModelPacket*)src_pack, false);
+                    glUserDup(dst_pack, src_pack, false);
                 }
-                src_pack = (glModelPacket*)((u8*)src_pack + 0x4A);
-                dst_pack = (glModelPacket*)((u8*)dst_pack + 0x4A);
+                src_pack++;
+                dst_pack++;
             }
         }
+
         src_model++;
         dst_model++;
+        i++;
     }
-    return new_models[0];
+
+    return result;
 }
 
 /**

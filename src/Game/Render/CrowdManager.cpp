@@ -237,22 +237,20 @@ void CrowdManager::Update(float deltaTime)
     {
         m_fTime = 0.0f;
 
-        m_nCurrentFrame++;
-        if (m_nCurrentFrame >= m_nNumFrames)
+        int currentFrame = m_nCurrentFrame + 1;
+        m_nCurrentFrame = currentFrame;
+        if (currentFrame >= m_nNumFrames)
         {
             m_nCurrentFrame = 0;
         }
 
-        float frameValue = (float)m_nCurrentFrame * 0.125f;
-
-        // Set all components of the vector to the frame value
-        nlVector4 frameVector;
+        float frameValue = 0.125f;
+        frameValue = (float)(u32)m_nCurrentFrame * frameValue;
+        nlVector4 frameVector = {};
         frameVector.f.x = frameValue;
         frameVector.f.y = frameValue;
         frameVector.f.z = frameValue;
         frameVector.f.w = frameValue;
-
-        // Set the constant for shader use
         glConstantSet("crowd/frame", frameVector);
     }
 }

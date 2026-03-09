@@ -46,42 +46,47 @@ extern u8 bInRetrace;
 void DrawLoadingIndicator()
 {
     u32 targetFPS = glx_GetTargetFPS();
-    int xPos = 0x120; // 288
-    int yPos;
-    float scale = 1.0f;
     int counterLimit;
+    int xPos;
+    int yPos;
+    float scale;
+    int yPosTemp;
 
     if (targetFPS == 50)
     {
-        yPos = 0x1B4; // 436
+        xPos = 0x120;
+        yPosTemp = 0x1B4;
         if (glx_bLoadOtherPosition)
         {
-            yPos = 0x1A2; // 418
+            yPosTemp = 0x1A2;
         }
-        counterLimit = 0x10; // 16
+        scale = 1.0f;
+        yPos = yPosTemp;
+        counterLimit = 0x10;
     }
     else
     {
-        yPos = 0x17E; // 382
+        xPos = 0x120;
+        yPosTemp = 0x17E;
         if (glx_bLoadOtherPosition)
         {
-            yPos = 0x16E; // 366
+            yPosTemp = 0x16E;
         }
-        counterLimit = 0x13; // 19
+        scale = 1.0f;
+        yPos = yPosTemp;
+        counterLimit = 0x13;
     }
 
-    float spacing = 24.0f * scale;
-    int spacingInt = (int)spacing;
-    if (spacingInt & 1)
+    int spacing = (int)(24.0f * scale);
+    if (spacing & 1)
     {
-        spacingInt++;
+        spacing++;
     }
 
     for (int i = 0; i < 3; i++)
     {
-        bool isSelected = (nSelected == i);
-        BlitImage(xPos, yPos, scale, scale, isSelected);
-        xPos += spacingInt;
+        BlitImage(xPos, yPos, scale, scale, !(nSelected - i));
+        xPos += spacing;
     }
 
     loadCounter++;

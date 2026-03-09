@@ -44,20 +44,20 @@ void ChainChomp::Update(float)
 
 /**
  * Offset/Address/Size: 0x97C | 0x8015E680 | size: 0x12C
- * TODO: 83.8% match - MWCC generates if/else chain instead of jump table for sparse switch (5 cases across 17 slots)
  */
 void ChainChomp::CollisionCallback(PhysicsObject* pObjA, PhysicsObject* pObjB, const nlVector3& v3Normal)
 {
     ChainChomp* pChainChomp = (ChainChomp*)((PhysicsNPC*)this)->mpAINPC;
     cFielder* pFielder = NULL;
 
-    int objType = pObjA->GetObjectType();
-
-    if ((u32)(objType - 13) <= 1u)
+    switch (pObjA->GetObjectType())
     {
+    case 0x04:
+    case 0x0D:
+    case 0x0E:
         pFielder = (cFielder*)((PhysicsCharacter*)pObjA->m_parentObject)->m_pAICharacter;
-    }
-    else if (objType == 0x0F)
+        break;
+    case 0x0F:
     {
         cBall* pBall = ((PhysicsAIBall*)pObjA)->m_pAIBall;
         if (pBall->m_pOwner != NULL)
@@ -69,14 +69,14 @@ void ChainChomp::CollisionCallback(PhysicsObject* pObjA, PhysicsObject* pObjB, c
             pBall->ClearPassTarget();
             pBall->ClearShotInProgress();
         }
+        break;
     }
-    else if (objType == 0x13)
-    {
+    case 0x13:
         ((PhysicsShell*)pObjA)->m_pPowerupObject->m_bShouldDestroy = true;
-    }
-    else if (objType == 0x14)
-    {
+        break;
+    case 0x14:
         ((PhysicsBanana*)pObjA)->m_pPowerupObject->m_bShouldDestroy = true;
+        break;
     }
 
     if (pFielder != NULL && pFielder->m_eClassType == FIELDER && !pFielder->IsFallenDown(0.0f))

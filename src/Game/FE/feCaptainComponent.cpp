@@ -678,20 +678,14 @@ void IChooseCaptain::FindAliveHumanPlayers()
 }
 
 /**
- * Offset/Address/Size: 0x388 | 0x800BDD24 | size: 0x158
- * TODO: 94.9% match - r3/r6 register swap in first loop (numSide1 counter vs
- * array pointer), stb r5 vs stb r0 for mIsSinglePlayerInput=false
- */
-/**
  * Offset/Address/Size: 0x3DC | 0x800BDD24 | size: 0x158
- * TODO: 94.5% match - r3/r6 register swap in first loop (numSide1 vs array base pointer),
- * r3/r5 register swap in second loop (ptr vs idx), and stb r0 vs stb r5 for mIsSinglePlayerInput.
- * File uses -inline deferred which may cause different register allocation in scratch.
+ * TODO: 96.2% match - first counting loop still has r3/r6 swap (numSide1 vs array traversal),
+ * and prologue/branch layout differs around that loop due MWCC register reuse.
  */
 void IChooseCaptain::SetupForLastPhase(eFEINPUT_PAD pad)
 {
-    int numSide0 = 0;
-    mIsSinglePlayerInput = false;
+    int numSide0;
+    mIsSinglePlayerInput = numSide0 = 0;
 
     if (mNumTotalPushedPlayers == 1)
     {
@@ -744,13 +738,16 @@ void IChooseCaptain::SetupForLastPhase(eFEINPUT_PAD pad)
     }
     else
     {
-        for (int i = 0; i < mNumTotalPushedPlayers; i++)
+        int i = 0;
+        IChooseCaptain* p = this;
+        for (; i < mNumTotalPushedPlayers; i++)
         {
-            if (mAllPushedPlayers[i] == pad)
+            if (p->mAllPushedPlayers[0] == pad)
             {
                 side = mAllPushedPlayerSides[i];
                 goto found;
             }
+            p = (IChooseCaptain*)((u8*)p + 4);
         }
         side = -1;
     }

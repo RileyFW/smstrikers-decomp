@@ -28,67 +28,73 @@ AnimRetarget* AnimRetargetList::GetAnimRetargetWithSignature(const cSAnim* anim)
 
 /**
  * Offset/Address/Size: 0x48 | 0x801EFFD8 | size: 0x10C
- * TODO: 84.2% match - work in progress..
+ * TODO: 91.9% match - register allocation mismatch around aligned chunk pointer
+ * computation in second/loop chunk-data blocks (r3/r4/r5/r6 swaps; extra store/branch).
  */
-void AnimRetargetList::Initialize(nlChunk* chunk)
+void AnimRetargetList::Initialize(nlChunk*)
 {
-    nlChunk* chunkPtr = (nlChunk*)&m_NumAnimRetargets;
-    u32 id = chunkPtr->m_ID;
-    u32 align = id & 0x7F000000;
     AnimRetargetList* data;
+    nlChunk* chunk = (nlChunk*)&m_NumAnimRetargets;
+    u32 align = chunk->m_ID & 0x7F000000;
 
     if (((-align | align) >> 31) != 0)
     {
-        u32 alignVal = 1 << (align >> 24);
-        data = (AnimRetargetList*)(((u32)chunkPtr + alignVal + 7) & ~(alignVal - 1));
+        u32 mask = 1 << (align >> 24);
+        u32 ptr = (u32)chunk + mask;
+        ptr += 7;
+        ptr &= ~(mask - 1);
+        data = (AnimRetargetList*)ptr;
     }
     else
     {
-        data = (AnimRetargetList*)((u32)chunkPtr + 8);
+        data = (AnimRetargetList*)((u8*)chunk + 8);
     }
 
-    nlChunk* nextChunk = (nlChunk*)((char*)chunkPtr + chunkPtr->m_Size + 0x10);
-    u32 nextId = nextChunk->m_ID;
-    u32 nextAlign = nextId & 0x7F000000;
-    AnimRetarget* mapData;
+    nlChunk* nextChunk = (nlChunk*)((u8*)chunk + chunk->m_Size + 0x10);
+    align = nextChunk->m_ID & 0x7F000000;
 
-    if (((-nextAlign | nextAlign) >> 31) != 0)
+    AnimRetarget* pAnimRetarget;
+
+    if (((-align | align) >> 31) != 0)
     {
-        u32 alignVal = 1 << (nextAlign >> 24);
-        mapData = (AnimRetarget*)(((u32)nextChunk + alignVal + 7) & ~(alignVal - 1));
+        u32 mask = 1 << (align >> 24);
+        u32 ptr = (u32)nextChunk + mask;
+        ptr += 7;
+        ptr &= ~(mask - 1);
+        pAnimRetarget = (AnimRetarget*)ptr;
     }
     else
     {
-        mapData = (AnimRetarget*)((u32)nextChunk + 8);
+        pAnimRetarget = (AnimRetarget*)((u8*)nextChunk + 8);
     }
-
-    data->m_pAnimRetarget = mapData;
+    data->m_pAnimRetarget = pAnimRetarget;
 
     s32 i = 0;
-    s32 offset = 0;
+    s32 off = 0;
 
     while (i < data->m_NumAnimRetargets)
     {
-        nlChunk* mapChunk = (nlChunk*)((char*)nextChunk + nextChunk->m_Size + 8);
-        u32 mapId = mapChunk->m_ID;
-        u32 mapAlign = mapId & 0x7F000000;
+        nlChunk* mapChunk = (nlChunk*)((u8*)nextChunk + nextChunk->m_Size + 8);
+        nextChunk = mapChunk;
+        align = mapChunk->m_ID & 0x7F000000;
+
         signed short* nextMap;
 
-        nextChunk = mapChunk;
-
-        if (((-mapAlign | mapAlign) >> 31) != 0)
+        if (((-align | align) >> 31) != 0)
         {
-            u32 alignVal = 1 << (mapAlign >> 24);
-            nextMap = (signed short*)(((u32)mapChunk + alignVal + 7) & ~(alignVal - 1));
+            u32 mask = 1 << (align >> 24);
+            u32 ptr = (u32)mapChunk + mask;
+            ptr += 7;
+            ptr &= ~(mask - 1);
+            nextMap = (signed short*)ptr;
         }
         else
         {
-            nextMap = (signed short*)((u32)mapChunk + 8);
+            nextMap = (signed short*)((u8*)mapChunk + 8);
         }
 
-        AnimRetarget* retargets = data->m_pAnimRetarget;
-        *(signed short**)((char*)retargets + offset + 8) = nextMap;
-        offset += 0xC;
+        *(signed short**)((u8*)data->m_pAnimRetarget + off + 8) = nextMap;
+        off += 0xC;
         i++;
     }
 }

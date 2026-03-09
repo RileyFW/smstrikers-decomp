@@ -1,4 +1,6 @@
 #include "NL/nlConfig.h"
+#include "Game/Sys/debug.h"
+#include "NL/nlFileGC.h"
 
 // static Config* sGlobal = nullptr;
 
@@ -12,12 +14,49 @@ void Config::Parse(const char*, Config::Parser&)
 
 /**
  * Offset/Address/Size: 0x13EC | 0x801D4050 | size: 0x21C
+ * TODO: 87.7% match - unresolved debug format literal for @2685 and remaining
+ * r29/r30/r27 allocation/scheduling differences in buffer sizing and copy loops
  */
-BasicString<char, Detail::TempStringAllocator> Config::LoadFileAsString(const char*)
+BasicString<char, Detail::TempStringAllocator> Config::LoadFileAsString(const char* filename)
 {
-    FORCE_DONT_INLINE;
-    BasicString<char, Detail::TempStringAllocator> s;
-    return s;
+    tDebugPrintManager::Print(DC_CONFIG_SYSTEM, "Loading config file: %s\n", filename);
+    nlFlushFileCash();
+
+    unsigned long fileSize = 0;
+    char* buffer = (char*)nlLoadEntireFile(filename, &fileSize, 0x20, AllocateEnd);
+    if (buffer != 0)
+    {
+        char* bufferEnd = buffer + fileSize;
+        BasicStringInternal* data = (BasicStringInternal*)nlMalloc(0x10, 8, true);
+        if (data != 0)
+        {
+            s32 length = bufferEnd - buffer;
+            s32 size = length + 1;
+            data->mData = (char*)nlMalloc(size, 8, true);
+            data->mSize = size;
+            data->mCapacity = size;
+
+            for (s32 i = 0; i < length + 1; i++)
+            {
+                data->mData[i] = 0;
+            }
+
+            data->mRefCount = 1;
+            char* src = buffer;
+            for (s32 i = 0; i < data->mSize - 1; i++, src++)
+            {
+                data->mData[i] = *src;
+            }
+        }
+
+        BasicString<char, Detail::TempStringAllocator> s;
+        s.m_data = data;
+        nlFree(buffer);
+        nlFlushFileCash();
+        return s;
+    }
+
+    return BasicString<char, Detail::TempStringAllocator>();
 }
 
 /**
@@ -145,64 +184,59 @@ void Config::Set(const char* tag, bool value)
 
 /**
  * Offset/Address/Size: 0x1E14 | 0x801D4A78 | size: 0x120
- * TODO: 86.9% match - r28/r29 register swap in hash probe loop (idx/offset/tvp allocation),
+ * TODO: 92.5% match - r28/r29 register swap in probe/copy path (idx/offset/tvp and strStart/tvp->tag),
+ * hash loop emits pre-call extsb/add scheduling differences, copy loop branch shape (bge vs blt+b),
  */
 void Config::Set(const char* tag, int value)
 {
     const char* p = tag;
     u32 hash = 0x1505;
-    s32 c;
-    while (c = (s8)*p)
+    while ((s8)*p != 0)
     {
-        p++;
-        c = nlToUpper((char)c);
-        c = (s8)c;
-        u32 shifted = hash << 5;
-        shifted += c;
-        hash += shifted;
+        s32 c = nlToUpper(*p++);
+        hash += (hash << 5) + (s8)c;
     }
-    u32 idx = hash & 0x3FF;
+
+    u32 h = hash;
+    u32 idx = h & 0x3FF;
 
     TagValuePair* tvp;
     while (true)
     {
         u32 offset = idx * 12;
-        if (mTvpHash[idx].tag == NULL)
+        if (mTvpHash[idx].tag == NULL || nlStrICmp(mTvpHash[idx].tag, tag) == 0)
         {
             tvp = (TagValuePair*)((char*)mTvpHash + offset);
             break;
         }
-        if (nlStrICmp(mTvpHash[idx].tag, tag) == 0)
-        {
-            tvp = (TagValuePair*)((char*)mTvpHash + offset);
-            break;
-        }
-        idx = (idx + 1) & 0x3FF;
+        idx++;
+        idx &= 0x3FF;
     }
 
     tvp->type = _INT;
     tvp->value.i = value;
-    if (tvp->tag != NULL)
-    {
-        return;
-    }
 
-    char* strStart = mStringEnd;
-    s32 ch;
-    while (ch = (s8)*tag)
+    if (tvp->tag == NULL)
     {
-        if (mStringEnd - mStringMemory >= 0x27FF)
+        char* strStart = mStringEnd;
+        char ch;
+        while ((ch = *tag) != 0)
         {
-            break;
+            if (mStringEnd - mStringMemory < 0x27FF)
+            {
+                *mStringEnd = nlToUpper(ch);
+                tag++;
+                mStringEnd++;
+            }
+            else
+            {
+                break;
+            }
         }
-        ch = nlToUpper((char)ch);
-        *mStringEnd = (char)ch;
+        *mStringEnd = '\0';
         mStringEnd++;
-        tag++;
+        tvp->tag = strStart;
     }
-    *mStringEnd = '\0';
-    mStringEnd++;
-    tvp->tag = strStart;
 }
 
 /**

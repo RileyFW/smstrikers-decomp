@@ -85,20 +85,22 @@ void IChooseSide::ResetAndPositionControllers(bool)
 
 /**
  * Offset/Address/Size: 0x3DC | 0x800C3820 | size: 0xE4
- * TODO: 97.1% match - r4/r5 register swap for allReady and readyIndicator
+ * TODO: 98.25% match - extra `li r4, 0` dead store on first loop break path;
+ * -inline deferred eliminates it (allReady already false from init), decomp.me -inline auto does not
  */
 void IChooseSide::SetReady(int controllerIdx, bool ready)
 {
     mPlayerReady[controllerIdx] = ready;
     mInstanceTable[controllerIdx + 4]->m_bVisible = ready;
 
+    bool allReady;
     TLInstance* readyIndicator = mInstanceTable[16];
     if (readyIndicator == NULL)
     {
         return;
     }
 
-    bool allReady = false;
+    allReady = false;
     for (int i = 0; i < 4; i++)
     {
         if (mPlayerReady[i])
@@ -118,13 +120,11 @@ void IChooseSide::SetReady(int controllerIdx, bool ready)
 
 /**
  * Offset/Address/Size: 0x2A4 | 0x800C36E8 | size: 0x138
- * TODO: 88.4% match - register allocation (stmw r24 vs r25), load interleaving order,
- *       visibility section add instruction
+ * TODO: 99.7% match - r4/r5 swap in setvisibilities block when loading +0x44/+0x34
  */
 void IChooseSide::PositionController(int padindex, bool usetween, bool setvisibilities)
 {
-    u32 offset = (u32)padindex << 2;
-    int side = ((int*)this)[padindex];
+    int side = mPlayingSides[padindex];
     int destPosIndex;
 
     if (side == 0)
@@ -141,23 +141,15 @@ void IChooseSide::PositionController(int padindex, bool usetween, bool setvisibi
         destPosIndex = temp;
     }
 
-    char* base = (char*)this + offset;
-    TLInstance* inst = *(TLInstance**)(base + 0x14);
-    const feVector3* pos = &inst->GetPosition();
-
-    u32 px = *(u32*)&pos->e[0];
-    u32 py = *(u32*)&pos->e[1];
-    u32 localPos[3];
-    localPos[0] = px;
-    localPos[1] = py;
-    localPos[2] = *(u32*)&pos->e[2];
+    TLInstance* inst = mInstanceTable[padindex];
+    feVector3 localPos = inst->GetPosition();
 
     mTweenManager.clearTweensOnObj(inst);
 
     if (usetween)
     {
         FETweener* tweener = mTweenManager.createTween(
-            (float*)localPos,
+            localPos.e,
             &mControllerDestPos[destPosIndex],
             0.2f,
             0.0f,
@@ -169,14 +161,13 @@ void IChooseSide::PositionController(int padindex, bool usetween, bool setvisibi
     }
     else
     {
-        (*(TLInstance**)(base + 0x14))->SetAssetPosition(mControllerDestPos[destPosIndex], *(float*)&localPos[1], *(float*)&localPos[2]);
+        mInstanceTable[padindex]->SetAssetPosition(mControllerDestPos[destPosIndex], localPos.e[1], localPos.e[2]);
     }
 
     if (setvisibilities)
     {
-        char* base2 = (char*)this + offset;
-        (*(TLInstance**)(base2 + 0x44))->m_bVisible = (side == -1);
-        (*(TLInstance**)(base2 + 0x34))->m_bVisible = (side != -1);
+        mInstanceTable[padindex + 12]->m_bVisible = (side == -1);
+        mInstanceTable[padindex + 8]->m_bVisible = (side != -1);
     }
 }
 

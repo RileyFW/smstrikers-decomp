@@ -128,6 +128,8 @@ void cTeam::ClearCurrentPowerUp()
 /**
  * Offset/Address/Size: 0x1A4C | 0x80065DF8 | size: 0x148
  */
+#pragma push
+#pragma opt_propagation off
 void cTeam::TogglePowerup(bool bToggle)
 {
     static bool bAudioToggleSwitch = true;
@@ -136,19 +138,23 @@ void cTeam::TogglePowerup(bool bToggle)
     m_ePowerupList[1] = m_ePowerupList[0];
     m_ePowerupList[0] = tmp;
 
-    if (!bToggle && (0 == 0))
+    if (!bToggle)
     {
-        if ((tmp.eType != POWER_UP_NONE) || (m_ePowerupList[1].eType != POWER_UP_NONE))
+        unsigned int alwaysZero = 0;
+        if (alwaysZero == 0)
         {
-            if (bAudioToggleSwitch)
+            if ((tmp.eType != POWER_UP_NONE) || (m_ePowerupList[1].eType != POWER_UP_NONE))
             {
-                Audio::gWorldSFX.Play(Audio::WORLDSFX_FILTER_START, 100.0f, -1.0f, true, 100.0f);
+                if (bAudioToggleSwitch)
+                {
+                    Audio::gWorldSFX.Play(Audio::WORLDSFX_FILTER_START, 100.0f, -1.0f, true, 100.0f);
+                }
+                else
+                {
+                    Audio::gWorldSFX.Play(Audio::WORLDSFX_FILTER_END, 100.0f, -1.0f, true, 100.0f);
+                }
+                bAudioToggleSwitch = !bAudioToggleSwitch;
             }
-            else
-            {
-                Audio::gWorldSFX.Play(Audio::WORLDSFX_FILTER_END, 100.0f, -1.0f, true, 100.0f);
-            }
-            bAudioToggleSwitch = !bAudioToggleSwitch;
         }
     }
 
@@ -165,6 +171,7 @@ void cTeam::TogglePowerup(bool bToggle)
         mbHasToggledPowerup = false;
     }
 }
+#pragma pop
 
 /**
  * Offset/Address/Size: 0x1910 | 0x80065CBC | size: 0x13C

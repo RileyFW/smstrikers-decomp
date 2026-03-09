@@ -141,7 +141,6 @@ void SuperLoadingScene::SceneCreated()
 
 /**
  * Offset/Address/Size: 0x1324 | 0x800A7A94 | size: 0x104
- * TODO: 97.92% match - r3/r5 register swap for img0/texRes in texture validation block
  */
 void SuperLoadingScene::Update(float fDeltaT)
 {
@@ -152,9 +151,8 @@ void SuperLoadingScene::Update(float fDeltaT)
         bool allReady;
         FETextureResource* texRes;
         TLImageInstance* img0;
-        img0 = mImageInstances[0][0];
         allReady = false;
-        texRes = img0->m_pTextureResource;
+        texRes = (img0 = mImageInstances[0][0])->m_pTextureResource;
         if (texRes->m_bValid)
         {
             if (mImageInstances[1][0]->m_pTextureResource->m_bValid)
@@ -164,6 +162,7 @@ void SuperLoadingScene::Update(float fDeltaT)
         }
         if (allReady)
         {
+            texRes = img0->m_pTextureResource;
             texRes->m_glTextureHandle = mTextureHandles[0][0];
             mImageInstances[1][0]->m_pTextureResource->m_glTextureHandle = mTextureHandles[1][0];
             mAlreadySwappedTextures = true;

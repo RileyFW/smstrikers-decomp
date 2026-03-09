@@ -198,13 +198,13 @@ float nlTan(unsigned short angle)
 
 /**
  * Offset/Address/Size: 0x460 | 0x801D18D4 | size: 0x12C
- * TODO: 96.33% match - MWCC keeps clamped rad in f6 instead of f7 through NR/compare path,
- *       causing widespread f-register allocation differences in polynomial/sqrt sequence
+ * TODO: 98.20% match - clamp handoff still materializes a temp in f5 (extra fmr)
+ *       instead of keeping clamped rad in f7 through the rsqrt/compare path
  */
 unsigned short nlACos(float x)
 {
     u8 complement = (x < 0.0f);
-    f32 y, temp, sqrtVal, rad;
+    f32 y, temp, sqrtVal, rad, rad2;
 
     x = 1.0f - (f32)fabs(x);
 
@@ -214,9 +214,15 @@ unsigned short nlACos(float x)
     y = x * y + 2.0002916f;
     y = x * y + -0.000007239284f;
 
-    rad = 2.0f * x;
-
-    rad = (rad >= 0.00001f) ? rad : 0.00001f;
+    rad2 = 2.0f * x;
+    if (rad2 >= 0.00001f)
+    {
+        rad = rad2;
+    }
+    else
+    {
+        rad = 0.00001f;
+    }
 
     if (rad > 0.0f)
     {

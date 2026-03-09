@@ -119,7 +119,7 @@ Event* EventManager::CreateValidEvent(unsigned long eventID, unsigned long uSize
 {
     if (uSize > m_size)
     {
-        nlPrintf("Event Manager: Size mismatch on event creation (%d vs %d)!\n", uSize, m_size); // @326
+        nlPrintf("Event Manager: Size mismatch on event creation (%d vs %d)!\n", m_size, uSize); // @326
         return NULL;
     }
 
@@ -164,7 +164,6 @@ void EventManager::DispatchEvents()
         if (m_handlers != 0)
         {
             EventHandler* it = nlDLRingGetStart(m_handlers);
-            EventHandler* end = m_handlers;
             do
             {
                 u32 mask = m_dest[e->m_uEventID]; // dest[type]
@@ -175,7 +174,7 @@ void EventManager::DispatchEvents()
                     (*fn)(e, ud); // bctrl
                 }
 
-                if (it == end)
+                if (it == m_handlers)
                     break;
 
                 it = it->m_next;

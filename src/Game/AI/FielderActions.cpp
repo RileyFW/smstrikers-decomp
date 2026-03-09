@@ -159,35 +159,32 @@ void cFielder::EndAction()
 
 /**
  * Offset/Address/Size: 0x7D0C | 0x8002E844 | size: 0x20C
+ * TODO: 99.08% match - remaining r-only FPR allocation mismatch in fabs/frsp distance compare chain
  */
 nlVector3 GetClosestWallPoint(const nlVector3& pos)
 {
-    // Get the positive sideline Y coordinate
-    float sidelineY = cField::GetSidelineY(1U);
+    nlVector3 topSideline = pos;
+    topSideline.f.y = cField::GetSidelineY(1U);
 
-    // Get both goal line X coordinates (positive and negative)
-    float goalLineXPos = cField::GetGoalLineX(1.0f);
-    float goalLineXNeg = cField::GetGoalLineX(-1.0f);
+    nlVector3 rightGoalLine = pos;
+    rightGoalLine.f.x = cField::GetGoalLineX(1.0f);
 
-    // Calculate the 4 potential wall points
-    nlVector3 topSideline = { pos.f.x, sidelineY, pos.f.z };
-    nlVector3 rightGoalLine = { goalLineXPos, pos.f.y, pos.f.z };
-    nlVector3 leftGoalLine = { goalLineXNeg, pos.f.y, pos.f.z };
-    nlVector3 bottomSideline = { pos.f.x, -sidelineY, pos.f.z };
+    nlVector3 leftGoalLine = pos;
+    leftGoalLine.f.x = cField::GetGoalLineX(-1.0f);
 
-    // Calculate distances to each wall point
-    float distToTop = (float)fabs(pos.f.y - sidelineY);
-    float distToBottom = (float)fabs(pos.f.y - (-sidelineY));
-    float distToRight = (float)fabs(pos.f.x - goalLineXPos);
-    float distToLeft = (float)fabs(pos.f.x - goalLineXNeg);
+    nlVector3 bottomSideline = pos;
+    bottomSideline.f.y = -topSideline.f.y;
 
-    // Find the closest wall point by comparing distances
-    if (distToTop < distToBottom)
+    f32 distTop = (f32)fabs(pos.f.y - topSideline.f.y);
+    f32 distBottom = (f32)fabs(pos.f.y - bottomSideline.f.y);
+    f32 distRight = (f32)fabs(pos.f.x - rightGoalLine.f.x);
+    f32 distLeft = (f32)fabs(pos.f.x - leftGoalLine.f.x);
+
+    if (distTop < distBottom)
     {
-        if (distToRight < distToLeft)
+        if (distRight < distLeft)
         {
-            // Compare top vs right
-            if (distToTop < distToRight)
+            if (distTop < distRight)
             {
                 return topSideline;
             }
@@ -198,8 +195,7 @@ nlVector3 GetClosestWallPoint(const nlVector3& pos)
         }
         else
         {
-            // Compare top vs left
-            if (distToTop < distToLeft)
+            if (distTop < distLeft)
             {
                 return topSideline;
             }
@@ -211,10 +207,9 @@ nlVector3 GetClosestWallPoint(const nlVector3& pos)
     }
     else
     {
-        if (distToRight < distToLeft)
+        if (distRight < distLeft)
         {
-            // Compare bottom vs right
-            if (distToBottom < distToRight)
+            if (distBottom < distRight)
             {
                 return bottomSideline;
             }
@@ -225,8 +220,7 @@ nlVector3 GetClosestWallPoint(const nlVector3& pos)
         }
         else
         {
-            // Compare bottom vs left
-            if (distToBottom < distToLeft)
+            if (distBottom < distLeft)
             {
                 return bottomSideline;
             }

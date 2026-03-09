@@ -160,6 +160,7 @@ ChooseCaptainsSceneV2::~ChooseCaptainsSceneV2()
 /**
  * Offset/Address/Size: 0xC28 | 0x800D7670 | size: 0xF8
  */
+#pragma inline_depth(0)
 void ChooseCaptainsSceneV2::SceneCreated()
 {
     mChooseCaptain.Initialize("art/fe/LoadingScreensUI.res", "art/fe/LoadingScreensSidekicksUI.res");
@@ -191,7 +192,6 @@ void ChooseCaptainsSceneV2::SceneCreated()
     CreateTicker();
     ChangeSceneType(mDesiredSceneType);
 }
-
 /**
  * Offset/Address/Size: 0xBE0 | 0x800D7628 | size: 0x48
  */

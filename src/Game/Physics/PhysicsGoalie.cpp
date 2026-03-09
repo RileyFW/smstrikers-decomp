@@ -65,6 +65,7 @@ bool PhysicsGoalie::SweepTestForBallContact(const nlVector3& ballPrevPosition, c
  */
 bool PhysicsGoalie::SweepTestEveryBone(float, const nlVector3&, const nlVector3&, nlVector3&, nlVector3&) const
 {
+    FORCE_DONT_INLINE;
     return false;
 }
 

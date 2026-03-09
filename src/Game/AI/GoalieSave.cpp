@@ -5,8 +5,6 @@
 static nlAVLTree<int, SaveData*, DefaultKeyCompare<int> > gSaveMap;
 static nlListContainer<SaveData*> gSaveGrid[7][5];
 
-typedef ListContainerBase<SaveData*, NewAdapter<SaveData*> > SaveListBase;
-
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80056D60 | size: 0xA4
 //  */
@@ -184,7 +182,13 @@ typedef ListContainerBase<SaveData*, NewAdapter<SaveData*> > SaveListBase;
 
 /**
  * Offset/Address/Size: 0x2B44 | 0x80055F64 | size: 0xE0
- * TODO: 89.2% match - register allocation: compiler merges two NULL constants into one register (r31) vs target using two (r30, r31)
+ * TODO: 91.39% match - register allocation/stack frame differs: compiler uses r26-r31 with 0x30 frame, target uses r25-r31 with 0x40 frame; merged NULL store still emits r31 for both head/tail
+ */
+/**
+ * Offset/Address/Size: 0x3DC | 0x80055F64 | size: 0xE0
+ * TODO: 91.4% match - MWCC coalesces headClr/tailClr into one register (6 callee-saved regs
+ * instead of 7). Target uses r30=headClr, r31=tailClr separately. This shifts all register
+ * assignments by +4 and reduces stack frame from 0x40 to 0x30 (stmw r25 vs stmw r26).
  */
 void GoalieSave::ClearData()
 {
@@ -195,27 +199,25 @@ void GoalieSave::ClearData()
 
     gSaveMap.Clear();
 
-    // nlListContainer<SaveData*>* pGrid = &gSaveGrid[0][0];
+    typedef ListContainerBase<SaveData*, NewAdapter<ListEntry<SaveData*> > > SaveListBase;
+
     int i = 0;
 
     do
     {
         int j = 0;
-        nlListContainer<SaveData*>* pEntry = &gSaveGrid[i][j];
-        ListEntry<SaveData*>* headClr = pEntry->m_Head;
-        ListEntry<SaveData*>* tailClr = pEntry->m_Tail;
-        // ListEntry<SaveData*>* headClr = (ListEntry<SaveData*>*)(u32)j;
-        // ListEntry<SaveData*>* tailClr = (ListEntry<SaveData*>*)(u32)j;
+        nlListContainer<SaveData*>* pEntry = &gSaveGrid[i][0];
+        ListEntry<SaveData*>* headClr = (ListEntry<SaveData*>*)(u32)j;
+        ListEntry<SaveData*>* tailClr = (ListEntry<SaveData*>*)(u32)j;
         do
         {
-            nlWalkList<ListEntry<SaveData*>, SaveListBase>(pEntry->m_Head, (SaveListBase*)pEntry, (void (SaveListBase::*)(ListEntry<SaveData*>*))&SaveListBase::DeleteEntry);
+            nlWalkList(pEntry->m_Head, (SaveListBase*)pEntry, &SaveListBase::DeleteEntry);
             pEntry->m_Head = headClr;
             j++;
             pEntry->m_Tail = tailClr;
             pEntry++;
         } while (j < 5);
         i++;
-        // pGrid += 5;
     } while (i < 7);
 
     if (mpSaveTable != NULL)

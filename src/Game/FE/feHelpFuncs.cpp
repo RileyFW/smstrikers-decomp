@@ -672,61 +672,86 @@ void SingleHighlite::TempDisableSound()
  */
 void SingleHighlite::OpenItem(TLComponentInstance* component)
 {
-    TLComponentInstance* foundComponent;
-    TLImageInstance* imageInstance;
-    TLSlide* slide;
-    InlineHasher hashers[6];
+    typedef TLComponentInstance* (*FindComponentByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindComponentByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+    typedef TLImageInstance* (*FindImageByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLImageInstance* (*FindImageByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindComponentByValue byValue;
+        FindComponentByRef byRef;
+    } findComponent;
+    union
+    {
+        FindImageByValue byValue;
+        FindImageByRef byRef;
+    } findImage;
+
     unsigned long hash;
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8;
+    volatile InlineHasher h7, h6, h5, h4, h3, h2, h1, h0;
+
+    findComponent.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+    findImage.byValue = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
 
     component->SetActiveSlide("high");
     component->Update(0.0f);
 
-    // Initialize hashers to 0
-    for (int i = 0; i < 6; i++)
-    {
-        hashers[i].m_Hash = 0;
-    }
+    h0.m_Hash = 0;
+    h1.m_Hash = 0;
+    h2.m_Hash = 0;
+    h3.m_Hash = 0;
+    h4.m_Hash = 0;
+    h5.m_Hash = 0;
+    h6.m_Hash = 0;
+    h7.m_Hash = 0;
+    h8.m_Hash = 0;
+    h9.m_Hash = 0;
 
-    // Set hash for "@1522"
     hash = nlStringLowerHash("in");
-    hashers[0].m_Hash = hash;
+    hA.m_Hash = hash;
+    hB.m_Hash = hash;
+    component = findComponent.byRef(
+        component->GetActiveSlide(),
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
 
-    // Find TLSlide using FEFinder<TLComponentInstance, 4>
-    slide = component->GetActiveSlide();
-    foundComponent = FEFinder<TLComponentInstance, 4>::Find(
-        slide,
-        hashers[0],
-        hashers[1],
-        hashers[2],
-        hashers[3],
-        hashers[4],
-        hashers[5]);
+    component->SetActiveSlide("high");
+    component->Update(0.0f);
 
-    foundComponent->SetActiveSlide("in");
-    foundComponent->Update(0.0f);
+    volatile InlineHasher g7, g6;
+    volatile InlineHasher g4, g3, g2, g1, g0;
 
-    // Initialize hashers to 0 again
-    for (int i = 0; i < 6; i++)
-    {
-        hashers[i].m_Hash = 0;
-    }
+    g0.m_Hash = 0;
+    h1.m_Hash = 0;
+    g1.m_Hash = 0;
+    h3.m_Hash = 0;
+    g2.m_Hash = 0;
+    h5.m_Hash = 0;
+    g3.m_Hash = 0;
+    h7.m_Hash = 0;
+    g4.m_Hash = 0;
+    h9.m_Hash = 0;
 
-    // Set hash for "@1523"
     hash = nlStringLowerHash("may_highlite");
-    hashers[0].m_Hash = hash;
-
-    // Find TLImageInstance using FEFinder<TLImageInstance, 2>
-    slide = foundComponent->GetActiveSlide();
-    imageInstance = FEFinder<TLImageInstance, 2>::Find(
-        slide,
-        hashers[0],
-        hashers[1],
-        hashers[2],
-        hashers[3],
-        hashers[4],
-        hashers[5]);
-
-    imageInstance->SetAssetColour(MenuHighliteColour);
+    g6.m_Hash = hash;
+    g7.m_Hash = hash;
+    findImage.byRef(
+                 component->GetActiveSlide(),
+                 (InlineHasher&)g7,
+                 (InlineHasher&)h9,
+                 (InlineHasher&)h7,
+                 (InlineHasher&)h5,
+                 (InlineHasher&)h3,
+                 (InlineHasher&)h1)
+        ->SetAssetColour(MenuHighliteColour);
 
     if (TEMPDISABLESOUND == false)
     {

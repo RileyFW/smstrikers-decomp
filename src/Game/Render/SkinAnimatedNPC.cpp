@@ -159,6 +159,7 @@ void SkinAnimatedNPC::DrawShadow(const cPoseAccumulator& poseAccumulator, const 
  */
 void SkinAnimatedNPC::SetAnimState(cSAnim& pAnim, float fBlendTime, ePlayMode playMode)
 {
+    // TODO: 97.89% match - blender construction path still emits an extra beq from placement-new lowering.
     cPN_SAnimController* controller = NULL;
 
     if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList == NULL)
@@ -189,7 +190,10 @@ void SkinAnimatedNPC::SetAnimState(cSAnim& pAnim, float fBlendTime, ePlayMode pl
             cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
         }
 
-        blender = new (blender) cPN_Blender(mpPoseTree, controller, fBlendTime);
+        if (blender != NULL)
+        {
+            blender = new (blender) cPN_Blender(mpPoseTree, controller, fBlendTime);
+        }
         mpPoseTree = blender;
     }
     else

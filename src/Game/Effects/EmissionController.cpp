@@ -325,7 +325,6 @@ void* fxLoadEntireFileHigh(const char* filename, unsigned long* fileSize)
 
 /**
  * Offset/Address/Size: 0x150 | 0x801F7A40 | size: 0x138
- * TODO: 98.21% match - register allocation r29/r31/r30 vs r31/r30/r29.
  */
 void EmissionController::Render()
 {
@@ -377,7 +376,8 @@ void EmissionController::Render()
         {
             if (!m_pUserEffects[j]->IsFinished())
             {
-                m_pUserEffects[j]->Render((const nlVector3**)&info, (s32)(s8)m_GlView);
+                s8 view = m_GlView;
+                m_pUserEffects[j]->Render((const nlVector3**)&info, (s32)view);
             }
             j++;
             i++;

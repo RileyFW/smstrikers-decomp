@@ -544,59 +544,89 @@ void GetRotationBetweenVectors(nlQuaternion& quat, const nlVector3& v3Vec1, cons
 
 /**
  * Offset/Address/Size: 0x70C | 0x800061B8 | size: 0x108
- * TODO: 92.0% match - work in progress..missing inline methods
+ * TODO: 99.09% match - remaining f8/f9 allocation swap for quat.z/quat.w values
+ * through ww/zz and xz2/zw2 term generation.
  */
 void RotateVector(nlVector3& result, const nlVector3& v, nlQuaternion& q)
 {
-    f32 qx = q.f.x;
-    f32 qw = q.f.w;
-    f32 qz = q.f.z;
-    f32 qx2 = qx * qx;
-    f32 two = 2.0f;
-    f32 qw2 = qw * qw;
-    f32 qy = q.f.y;
-    f32 qz2 = qz * qz;
-    f32 x2 = two * qx;
-    f32 z2 = two * qz;
-    f32 vy = v.f.y;
-    f32 y2 = two * qy;
-    f32 vx = v.f.x;
-    f32 qy2 = qy * qy;
+    f32 xz2;
+    f32 R;
+    f32 xw2;
+    f32 P;
+    f32 zz;
+    f32 S;
+    f32 G;
+    f32 N;
+    f32 z2;
+    f32 C;
+    f32 K;
+    f32 y2;
+    f32 O;
+    f32 A;
+    f32 H;
+    f32 yw2;
+    f32 xy2;
+    f32 yz2;
+    f32 vx;
+    f32 I;
+    f32 xx;
+    f32 T;
+    f32 J;
+    f32 L;
+    f32 F;
+    f32 yy;
+    f32 D;
+    f32 M;
+    f32 zw2;
+    f32 vy;
+    f32 vz;
+    f32 ww;
+    f32 E;
+    f32 U;
+    f32 x2;
+    f32 B;
 
-    f32 A = qw2 - qx2;
-    f32 B = qx2 + qw2;
-    f32 vz = v.f.z;
+    xx = q.f.x * q.f.x;
+    ww = q.f.w * q.f.w;
+    zz = q.f.z * q.f.z;
+    x2 = 2.0f * q.f.x;
+    z2 = 2.0f * q.f.z;
+    vy = v.f.y;
+    y2 = 2.0f * q.f.y;
+    vx = v.f.x;
+    yy = q.f.y * q.f.y;
 
-    f32 x2y = x2 * qy;
-    f32 z2w = z2 * qw;
-    f32 C = qy2 + A;
-    f32 D = B - qy2;
-    f32 E = x2y - z2w;
-    f32 F = C - qz2;
-    f32 G = A - qy2;
-    f32 x2w = x2 * qw;
-    f32 y2z = y2 * qz;
-    f32 x2z = x2 * qz;
-    f32 y2w = y2 * qw;
-    f32 H = x2w + y2z;
-    f32 I = D - qz2;
-    f32 J = vy * E;
-    f32 K = z2w + x2y;
-    f32 L = vy * F;
-    f32 M = x2z + y2w;
-    f32 N = vx * I + J;
-    f32 O = x2z - y2w;
-    f32 P = vy * H;
-    f32 Q = vz * M + N;
-    f32 R = y2z - x2w;
-    f32 S = vx * K + L;
-    f32 T = qz2 + G;
-    result.f.x = Q;
-    f32 U = vx * O + P;
-    f32 V = vz * R + S;
-    f32 W = vz * T + U;
-    result.f.y = V;
-    result.f.z = W;
+    A = ww - xx;
+    B = xx + ww;
+    vz = v.f.z;
+
+    xy2 = x2 * q.f.y;
+    zw2 = z2 * q.f.w;
+    C = yy + A;
+    D = B - yy;
+    E = xy2 - zw2;
+    F = C - zz;
+    G = A - yy;
+    xw2 = x2 * q.f.w;
+    yz2 = y2 * q.f.z;
+    xz2 = x2 * q.f.z;
+    yw2 = y2 * q.f.w;
+    H = xw2 + yz2;
+    I = D - zz;
+    J = vy * E;
+    K = zw2 + xy2;
+    L = vy * F;
+    M = xz2 + yw2;
+    N = vx * I + J;
+    O = xz2 - yw2;
+    P = vy * H;
+    result.f.x = vz * M + N;
+    R = yz2 - xw2;
+    S = vx * K + L;
+    T = zz + G;
+    U = vx * O + P;
+    result.f.y = vz * R + S;
+    result.f.z = vz * T + U;
 }
 
 /**
@@ -711,14 +741,80 @@ float AIsgn(float fValue)
 
 /**
  * Offset/Address/Size: 0x2E4 | 0x80005D90 | size: 0x234
+ * TODO: 96.56% match - remaining diffs are f30/f31 saved FPR swap in MWCC
+ * graph-coloring register allocator (lenSq gets f31 instead of f30)
  */
 nlVector3 GetClosestPointOnLineABFromPointC(const nlVector3& a, const nlVector3& b, const nlVector3& c)
 {
-    nlVector3 closestPoint;
-    closestPoint.f.x = (a.f.x + b.f.x) / 2.0f;
-    closestPoint.f.y = (a.f.y + b.f.y) / 2.0f;
-    closestPoint.f.z = (a.f.z + b.f.z) / 2.0f;
-    return closestPoint;
+    f32 v12 = c.f.x - a.f.x;
+    f32 v10 = b.f.x - a.f.x;
+    f32 v13 = c.f.y - a.f.y;
+    f32 v31 = b.f.y - a.f.y;
+    f32 v29 = c.f.z - a.f.z;
+    f32 v28 = b.f.z - a.f.z;
+
+    f32 dot = v13 * v31;
+    f32 lenSq = v31 * v31;
+    dot = v12 * v10 + dot;
+    lenSq = v10 * v10 + lenSq;
+
+    f32 cX = a.f.x + v12;
+    dot = v29 * v28 + dot;
+    const f32 fLenSq = v28 * v28 + lenSq;
+    f32 cY = a.f.y + v13;
+    f32 cZ = a.f.z + v29;
+
+    f32 t = dot / fLenSq;
+    f32 tx = t * v10;
+    f32 v8 = t * v31;
+    f32 v1 = t * v28;
+
+    tx = v12 - tx;
+    v8 = v13 - v8;
+    v1 = v29 - v1;
+
+    f32 projX = cX - tx;
+    f32 projY = cY - v8;
+    f32 projZ = cZ - v1;
+
+    nlVector3 projected;
+    projected.f.x = projX;
+    projected.f.y = projY;
+    projected.f.z = projZ;
+
+    v29 = a.f.y - projY;
+    f32 v27 = a.f.z - projZ;
+    v28 = a.f.x - projX;
+    v31 = b.f.z - projZ;
+    f32 v25 = b.f.y - projY;
+    f32 v26 = b.f.x - projX;
+
+    f32 lineLen = nlSqrt(fLenSq, true);
+    f32 distASq = v29 * v29 + v28 * v28 + v27 * v27;
+    f32 distA = nlSqrt(distASq, true);
+
+    if (distA > lineLen)
+        goto lbl_outside;
+    {
+        f32 lineLen2 = nlSqrt(fLenSq, true);
+        f32 distBSq = v25 * v25 + v26 * v26 + v31 * v31;
+        f32 distB = nlSqrt(distBSq, true);
+        if (!(distB > lineLen2))
+            goto lbl_return_proj;
+    }
+lbl_outside:
+{
+    f32 distBSq2 = v25 * v25 + v26 * v26 + v31 * v31;
+    f32 distB2 = nlSqrt(distBSq2, true);
+    f32 distA2 = nlSqrt(distASq, true);
+    if (distA2 < distB2)
+    {
+        return a;
+    }
+    return b;
+}
+lbl_return_proj:
+    return projected;
 }
 
 /**

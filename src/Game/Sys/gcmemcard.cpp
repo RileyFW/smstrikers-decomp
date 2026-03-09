@@ -55,20 +55,24 @@ void nlPrintf(const char*, ...);
 
 /**
  * Offset/Address/Size: 0x824 | 0x801CB364 | size: 0xE0
- * TODO: 94.6% match - r29/r31 register swap (MWCC strength-reduced loop byte offset
- * gets r31 instead of r29, card pointer gets r29 instead of r31)
  */
-void MemCard::CardRemovedCB(long channel, long result)
+static inline void DoCardRemovedCleanup(long channel)
 {
+    unsigned long i = 0;
     MemCard* card = g_MemCards[channel];
+    unsigned long lookupOffset = i;
+
     card->m_State = IS_IDLE;
     card->m_CardState = CS_IDLE;
     card->m_LastTransferSize = 0;
 
-    for (unsigned long i = 0; i < card->m_OpenFiles.m_EntryCount; i++)
+    while (i < card->m_OpenFiles.m_EntryCount)
     {
         card->m_OpenFiles.FreeEntry(card->m_OpenFiles.m_pEntryLookup[i].pEntry);
+        lookupOffset += 8;
+        i++;
     }
+
     card->m_OpenFiles.FreeLookup();
     card->m_OpenFiles.m_EntryCount = 0;
 
@@ -82,6 +86,11 @@ void MemCard::CardRemovedCB(long channel, long result)
     {
         nlPrintf("Trying to call unset MC functor");
     }
+}
+
+void MemCard::CardRemovedCB(long channel, long result)
+{
+    DoCardRemovedCleanup(channel);
 }
 
 /**
@@ -285,9 +294,9 @@ void MemCard::SetStatusDoneCB(long channel, long result)
     if (result == 0)
     {
         card->m_State = IS_MOUNTED;
+        unsigned long headerSize = card->m_pFileCB->TotalHeaderSize;
         MC_FILE* file = card->m_pFileCB;
         void* data = card->m_pDataCB;
-        unsigned long headerSize = file->TotalHeaderSize;
 
         if (card->m_State != IS_MOUNTED)
         {
@@ -697,51 +706,54 @@ long MemCard::InternalWriteFile(MC_FILE* pFile, void* Buffer, unsigned long Leng
 
 /**
  * Offset/Address/Size: 0x620 | 0x801C9D90 | size: 0x120
- * TODO: 95.4% match - r3/r5 register swap in search loop (MWCC allocates byte offset
- * to r3 instead of r5) and r4/r5 swap in copy loop (next vs m_pEntryLookup)
+ * TODO: 99.1% match - first loop keeps i/byteOff in r4/r3 instead of target r3/r4;
+ * copy loop keeps slwi/add/lwz+stw on r0 where target keeps those on r3/r5.
  */
+static inline EntryLookup<MemCard::MC_FILE>* FindOpenFileLookup(nlStaticSortedSlot<MemCard::MC_FILE, 16>& openFiles, MemCard::MC_FILE* pFile)
+{
+    for (long i = 0, byteOff = i; (unsigned long)i < openFiles.m_EntryCount; i++, byteOff += 8)
+    {
+        if (openFiles.m_pEntryLookup[byteOff >> 3].pEntry == pFile)
+        {
+            return &openFiles.m_pEntryLookup[i];
+        }
+    }
+
+    return NULL;
+}
+
+static inline void ShiftCloseFileEntries(nlStaticSortedSlot<MemCard::MC_FILE, 16>& openFiles, EntryLookup<MemCard::MC_FILE>* pLookup)
+{
+    s32 next;
+    unsigned long total = openFiles.m_EntryCount;
+    long idx = (pLookup - openFiles.m_pEntryLookup);
+
+    while ((unsigned long)idx != total)
+    {
+        next = idx + 1;
+        EntryLookup<MemCard::MC_FILE>* dst = &openFiles.m_pEntryLookup[idx];
+        EntryLookup<MemCard::MC_FILE>* src = &openFiles.m_pEntryLookup[next];
+        idx = next;
+        unsigned long id = src->Id;
+        MemCard::MC_FILE* entry = src->pEntry;
+        dst->pEntry = entry;
+        dst->Id = id;
+    }
+
+    openFiles.m_EntryCount = openFiles.m_EntryCount - 1;
+}
+
 s32 MemCard::CloseFile(MC_FILE* pFile)
 {
-    EntryLookup<MC_FILE>* pLookup;
-    s32 next;
     pFile->TotalHeaderSize = 0;
     s32 result = CARDClose(&pFile->FileInfo);
     if (result == 0 && pFile != NULL)
     {
-        long i = 0;
-        long byteOff = i;
-        while ((unsigned long)i < m_OpenFiles.m_EntryCount)
-        {
-            if (m_OpenFiles.m_pEntryLookup[i].pEntry == pFile)
-            {
-                pLookup = &m_OpenFiles.m_pEntryLookup[i];
-                goto found;
-            }
-            byteOff += 8;
-            i++;
-        }
-        pLookup = NULL;
-    found:
-
+        EntryLookup<MC_FILE>* pLookup = FindOpenFileLookup(m_OpenFiles, pFile);
         m_OpenFiles.FreeEntry(pFile);
-
-        long idx = (pLookup - m_OpenFiles.m_pEntryLookup);
-        unsigned long total = m_OpenFiles.m_EntryCount;
-
-        while ((unsigned long)idx != total)
-        {
-            next = idx + 1;
-            EntryLookup<MC_FILE>* src = &m_OpenFiles.m_pEntryLookup[next];
-            EntryLookup<MC_FILE>* dst = &m_OpenFiles.m_pEntryLookup[idx];
-            idx = next;
-            unsigned long id = src->Id;
-            MC_FILE* entry = src->pEntry;
-            dst->pEntry = entry;
-            dst->Id = id;
-        }
-
-        m_OpenFiles.m_EntryCount = m_OpenFiles.m_EntryCount - 1;
+        ShiftCloseFileEntries(m_OpenFiles, pLookup);
     }
+
     return result;
 }
 

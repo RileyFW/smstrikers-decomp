@@ -114,25 +114,24 @@ u16 GameInfoManager::GetNumRounds() const
 
 /**
  * Offset/Address/Size: 0x9AB8 | 0x8017F15C | size: 0x23C
+ * TODO: 63.7% match - compiler emits 32-bit copies for TeamStats fields at
+ * +0x4/+0x8, but target uses 16-bit copies at +0x4/+0x6/+0x8/+0xA before
+ * 32-bit copies from +0xC onward.
  */
 TeamStats GameInfoManager::GetTeamStatsByIndex(unsigned short index)
 {
-    TeamStats stats;
-
     if (mCurrentMode == GM_BOWSER_CUP)
     {
-        stats = *mBowserCupSeries.GetTeamStats(index);
+        return *mBowserCupSeries.GetTeamStats(index);
     }
     else if (mCurrentMode == GM_SUPER_BOWSER_CUP)
     {
-        stats = *mSuperBowserCupSeries.GetTeamStats(index);
+        return *mSuperBowserCupSeries.GetTeamStats(index);
     }
     else
     {
-        stats = *mCurrentCup->GetTeamStats(index);
+        return *mCurrentCup->GetTeamStats(index);
     }
-
-    return stats;
 }
 
 /**
@@ -333,50 +332,44 @@ s16 GameInfoManager::GetNextRoundNumber(short roundParam) const
  */
 s16 GameInfoManager::GetPreviousRoundNumber(short roundParam) const
 {
-    short temp;
-    short round;
     eGameModes mode;
 
-    round = roundParam;
-    if (round == -7)
+    if (roundParam == -7)
     {
-        round = mCurrentCup->mRoundNumber;
+        roundParam = mCurrentCup->mRoundNumber;
     }
 
     mode = mCurrentMode;
 
-    if ((round == -5) && (!mDoingKnockout))
+    if ((roundParam == -5) && (!mDoingKnockout))
     {
-        temp = mCurrentCup->GetNumRounds() - 1;
+        roundParam = mCurrentCup->GetNumRounds() - 1;
     }
-    else if ((round == -5) && (mDoingKnockout))
+    else if ((roundParam == -5) && (mDoingKnockout))
     {
-        temp = -2;
+        roundParam = -2;
     }
-    else if ((round == -3) && (mode == GM_BOWSER_CUP || mode == GM_SUPER_BOWSER_CUP))
+    else if ((roundParam == -3) && (mode == GM_BOWSER_CUP || mode == GM_SUPER_BOWSER_CUP))
     {
-        temp = mPreviousCup->GetNumRounds() - 1;
+        roundParam = mPreviousCup->GetNumRounds() - 1;
+    }
+    else if ((roundParam == -3) && (mode != GM_BOWSER_CUP && mode != GM_SUPER_BOWSER_CUP))
+    {
+        roundParam = -4;
+    }
+    else if (roundParam == -2)
+    {
+        roundParam = -3;
+    }
+    else if (roundParam == -1)
+    {
+        roundParam = -2;
     }
     else
     {
-        if ((round == -3) && (mode != GM_BOWSER_CUP && mode != GM_SUPER_BOWSER_CUP))
-        {
-            temp = -4;
-        }
-        else if (round == -2)
-        {
-            temp = -3;
-        }
-        else if (round == -1)
-        {
-            temp = -2;
-        }
-        else
-        {
-            temp = round - 1;
-        }
+        roundParam--;
     }
-    return temp;
+    return roundParam;
 }
 
 /**

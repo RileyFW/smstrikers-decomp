@@ -319,7 +319,6 @@ void cCharacter::SetAnimState(int animID, bool useBlendTime, float fNonDefaultBl
     float finalBlendTime;
     cPN_SAnimController* newController;
     cPN_Blender* blender;
-    cPoseNode* oldController;
 
     if (useBlendTime)
     {
@@ -331,16 +330,15 @@ void cCharacter::SetAnimState(int animID, bool useBlendTime, float fNonDefaultBl
     }
 
     newController = NewAnimController(animID, bRestartCyclic, bForceMirrorSwap, nullptr, 0);
-    oldController = m_pAILayer[0];
 
-    if (oldController != nullptr && finalBlendTime != 0.0f)
+    if (m_pAILayer[0] != nullptr && finalBlendTime != 0.0f)
     {
-        blender = new (AllocateBlender()) cPN_Blender(oldController, newController, finalBlendTime);
+        blender = new (AllocateBlender()) cPN_Blender(m_pAILayer[0], newController, finalBlendTime);
     }
     else
     {
-        delete oldController;
-        blender = nullptr;
+        delete m_pAILayer[0];
+        blender = (cPN_Blender*)newController;
     }
 
     m_pAILayer[0] = blender;
@@ -666,8 +664,62 @@ nlVector3& cCharacter::GetPrevJointPosition(int jointIndex)
 /**
  * Offset/Address/Size: 0x1864 | 0x8000F7B0 | size: 0x244
  */
-void cCharacter::GetCurrentAnimFuture(int, float, nlVector3&, nlVector3&, unsigned short&)
+void cCharacter::GetCurrentAnimFuture(int nJointIndex, float fTime, nlVector3& v3Out, nlVector3& v3FutureRoot, unsigned short& outFacing)
 {
+    /**
+     * TODO: 96.79% match - remaining mismatch is register allocation/order and an
+     * extra placement-new null-check branch when constructing cPoseAccumulator.
+     */
+    cPN_SAnimController* pAnim = m_pCurrentAnimController;
+    float savedPrevTime = pAnim->m_fPrevTime;
+    float savedTime = pAnim->m_fTime;
+
+    pAnim->m_fPrevTime = pAnim->m_fTime;
+    pAnim->m_fTime = fTime;
+
+    outFacing = m_aActualFacingDirection;
+    m_pCurrentAnimController->GetRootTrans(&v3FutureRoot, outFacing);
+
+    unsigned short rootRot;
+    m_pCurrentAnimController->GetRootRot(&rootRot);
+    outFacing += rootRot;
+
+    v3FutureRoot.f.x += m_v3Position.f.x;
+    v3FutureRoot.f.y += m_v3Position.f.y;
+    v3FutureRoot.f.z = 0.0f;
+
+    if (nJointIndex < 0)
+    {
+        v3Out = v3FutureRoot;
+    }
+    else
+    {
+        cPoseAccumulator* pAccumulator = (cPoseAccumulator*)nlMalloc(sizeof(cPoseAccumulator), 8, false);
+        if (pAccumulator != NULL)
+        {
+            new (pAccumulator) cPoseAccumulator(m_pPoseAccumulator->m_BaseSHierarchy, true);
+        }
+
+        nlMatrix4 m;
+        nlMakeRotationMatrixZ(m, 0.0000958738f * (float)outFacing);
+        m.m[3][0] = v3FutureRoot.f.x;
+        m.m[3][1] = v3FutureRoot.f.y;
+        m.m[3][2] = v3FutureRoot.f.z;
+        m.m[3][3] = 1.0f;
+
+        pAccumulator->Pose(*m_pCurrentAnimController, m);
+        v3Out = *(nlVector3*)&pAccumulator->GetNodeMatrix(nJointIndex).m[3][0];
+
+        delete pAccumulator;
+    }
+
+    pAnim = m_pCurrentAnimController;
+    pAnim->m_fPrevTime = pAnim->m_fTime;
+    pAnim->m_fTime = savedPrevTime;
+
+    pAnim = m_pCurrentAnimController;
+    pAnim->m_fPrevTime = pAnim->m_fTime;
+    pAnim->m_fTime = savedTime;
 }
 
 /**

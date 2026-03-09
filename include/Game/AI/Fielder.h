@@ -204,7 +204,7 @@ public:
     void DoPositioningInterceptBall();
     void DoAwardPowerupStuff(eAwardPowerupType, float);
     void DoCalcShootToScoreResult(float, float, float, float, float);
-    void DoFindBestHitTarget();
+    cFielder* DoFindBestHitTarget();
     void DoFindBestShotTarget(nlVector3&, float&, bool);
     void DoRegularShooting();
     void DoResetShotMeter(float);

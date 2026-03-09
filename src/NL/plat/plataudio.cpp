@@ -419,10 +419,148 @@ bool StopSFX(unsigned long handle)
 
 /**
  * Offset/Address/Size: 0xD18 | 0x801C5514 | size: 0x244
+ * TODO: 94.21% match - MWCC float register allocation difference: 0.0f constant
+ * loads into f1 instead of target's f0, causing cascading f-register swaps and
+ * 3 missing 0.0f reload instructions. Also r4/r5 swap in filter section,
+ * r5/r0 for pitch bend comparison, and Print call lis/li argument ordering.
  */
-unsigned long PlaySFX(const SFXStartInfo&)
+unsigned long PlaySFX(const SFXStartInfo& info)
 {
-    return 0;
+    const SFXStartInfo* pInfo = &info;
+    u8 uVolume;
+    u8 uPan;
+    SND_PARAMETER tempParaArray[4];
+    int currParaIndex;
+    SND_PARAMETER* pParaArray;
+    SND_PARAMETER_INFO tempParaInfo;
+    unsigned long numPara;
+
+    float f2 = pInfo->fVolume;
+    if (0.0f == f2)
+    {
+        uVolume = 0xFF;
+    }
+    else if (f2 > 1.0f)
+    {
+        uVolume = 0x7F;
+    }
+    else if (f2 < 0.0f)
+    {
+        uVolume = 0;
+    }
+    else
+    {
+        float f0;
+        f2 = 127.0f * f2;
+        if (f2 < 0.0f)
+        {
+            f0 = -0.5f;
+        }
+        else
+        {
+            f0 = 0.5f;
+        }
+        f0 = f2 + f0;
+        uVolume = (u8)(s32)f0;
+    }
+
+    float f1 = pInfo->fPan;
+    if (0.0f == f1)
+    {
+        uPan = 0xFF;
+    }
+    else
+    {
+        float f3 = 0.5f;
+        f1 = 1.0f + f1;
+        f1 = f3 * f1;
+        f1 = 127.0f * f1;
+        if (f1 < 0.0f)
+        {
+            f3 = -0.5f;
+        }
+        float f0 = f1 + f3;
+        uPan = (u8)(s32)f0;
+    }
+
+    numPara = 0;
+    currParaIndex = 0;
+    tempParaInfo.numPara = 0;
+    tempParaInfo.paraArray = NULL;
+    pParaArray = NULL;
+
+    if (0.0f != pInfo->fVolReverb)
+    {
+        numPara = 1;
+    }
+
+    if (pInfo->uPitchBend != 0x2000)
+    {
+        numPara += 1;
+    }
+
+    if (pInfo->bActivateFilter)
+    {
+        numPara += 2;
+    }
+
+    if (numPara != 0)
+    {
+        pParaArray = tempParaArray;
+        tempParaInfo.numPara = numPara;
+        tempParaInfo.paraArray = pParaArray;
+    }
+
+    f2 = pInfo->fVolReverb;
+    if (0.0f != f2)
+    {
+        float f0;
+        float f1v = 127.0f * f2;
+        pParaArray[0].ctrl = 0x5B;
+        if (f1v < 0.0f)
+        {
+            f0 = -0.5f;
+        }
+        else
+        {
+            f0 = 0.5f;
+        }
+        f0 = f1v + f0;
+        currParaIndex = 1;
+        pParaArray[0].paraData.value7 = (u8)(s32)f0;
+    }
+
+    if (pInfo->uPitchBend != 0x2000)
+    {
+        if (pInfo->uPitchBend != 0x2000)
+        {
+            tDebugPrintManager::Print(DC_SOUND, "pitch bend should be non-default\n");
+        }
+
+        pParaArray[currParaIndex].ctrl = 0x80;
+        pParaArray[currParaIndex].paraData.value14 = pInfo->uPitchBend;
+        currParaIndex += 1;
+    }
+
+    if (pInfo->bActivateFilter)
+    {
+        unsigned long idx = currParaIndex;
+        u16 freq = pInfo->filterFreq;
+
+        pParaArray[idx].ctrl = 0x4F;
+        pParaArray[idx].paraData.value14 = 0x2000;
+
+        if (freq > 0x3FFF)
+        {
+            freq = 0x3FFF;
+        }
+
+        idx = currParaIndex + 1;
+        pParaArray[idx].ctrl = 1;
+        pParaArray[idx].paraData.value14 = freq;
+    }
+
+    return sndFXStartParaInfo((u16)pInfo->uSFXID, uVolume, uPan, 0, &tempParaInfo);
 }
 
 /**
@@ -902,49 +1040,102 @@ bool UpdateAuxEffectA(MusyXEffectType type, void* auxEffectSettings)
 
 /**
  * Offset/Address/Size: 0x2028 | 0x801C6824 | size: 0x244
+ * TODO: 96.17% match - register allocation mismatch for type/data/arg2/arg3 and callback (r25-r29 swap), causing extra moves in callback setup paths.
  */
 bool AddAuxEffect(MusyXEffectType type, void* data, bool arg2, unsigned char arg3)
 {
-    FORCE_DONT_INLINE;
-
     if ((arg2 == 0) && (PlatAudio::gUsingDolbyProLogic2) && (type != 0))
     {
         return false;
     }
 
-    // if (PlatAudio::gUsingDolbyProLogic2)
-    // {
-    //     if (arg2 != 0)
-    //     {
-    //         var_r31 = &gDPL2AuxAEffectSettings;
-    //         var_r30 = &gDPL2AuxAEffect;
-    //     }
-    //     else
-    //     {
-    //         var_r31 = &gDPL2AuxBEffectSettings;
-    //         var_r30 = &gDPL2AuxBEffect;
-    //     }
-    // }
-    // else if (arg2 != 0)
-    // {
-    //     var_r31 = &gAuxAEffectSettings;
-    //     var_r30 = &gAuxAEffect;
-    // }
-    // else
-    // {
-    //     var_r31 = &gAuxBEffectSettings;
-    //     var_r30 = &gAuxBEffect;
-    // }
+    void* pAuxEffectSettings;
+    MusyXEffectType* pAuxEffect;
+    void (*callback)(u8 reason, SND_AUX_INFO* info, void* user);
+
+    if (PlatAudio::gUsingDolbyProLogic2)
+    {
+        if (arg2)
+        {
+            pAuxEffectSettings = &gDPL2AuxAEffectSettings;
+            pAuxEffect = (MusyXEffectType*)&gDPL2AuxAEffect;
+        }
+        else
+        {
+            pAuxEffectSettings = &gDPL2AuxBEffectSettings;
+            pAuxEffect = (MusyXEffectType*)&gDPL2AuxBEffect;
+        }
+    }
+    else if (arg2)
+    {
+        pAuxEffectSettings = &gAuxAEffectSettings;
+        pAuxEffect = (MusyXEffectType*)&gAuxAEffect;
+    }
+    else
+    {
+        pAuxEffectSettings = &gAuxBEffectSettings;
+        pAuxEffect = (MusyXEffectType*)&gAuxBEffect;
+    }
 
     switch (type)
     {
     case MUSYX_EFFECT_NONE:
-        // var_r25 = NULL;
-        // temp_ret = nlPrintf("InitAuxEffect: MUSYX_EFFECT_NONE passed in, callback return is NULL.\n");
-        // var_f1 = (bitwise f32)temp_ret;
-        // var_r4 = temp_ret;
+        callback = NULL;
         nlPrintf("InitAuxEffect: MUSYX_EFFECT_NONE passed in, callback return is NULL.\n");
         break;
+    case MUSYX_EFFECT_REVERB:
+        callback = sndAuxCallbackReverbSTD;
+        if (!sndAuxCallbackPrepareReverbSTD((SND_AUX_REVERBSTD*)data))
+        {
+            nlPrintf("InitAuxEffect: MUSYX_EFFECT_REVERB passed in, callback return is NULL.\n");
+            callback = NULL;
+        }
+        break;
+    case MUSYX_EFFECT_REVERB_HI:
+        callback = sndAuxCallbackReverbHI;
+        if (!sndAuxCallbackPrepareReverbHI((SND_AUX_REVERBHI*)data))
+        {
+            nlPrintf("InitAuxEffect: MUSYX_EFFECT_REVERB_HI passed in, callback return is NULL.\n");
+            callback = NULL;
+        }
+        break;
+    case MUSYX_EFFECT_CHORUS:
+        callback = sndAuxCallbackChorus;
+        if (!sndAuxCallbackPrepareChorus((SND_AUX_CHORUS*)data))
+        {
+            nlPrintf("InitAuxEffect: MUSYX_EFFECT_CHORUS passed in, callback return is NULL.\n");
+            callback = NULL;
+        }
+        break;
+    case MUSYX_EFFECT_DELAY:
+        callback = sndAuxCallbackDelay;
+        if (!sndAuxCallbackPrepareDelay((SND_AUX_DELAY*)data))
+        {
+            nlPrintf("InitAuxEffect: MUSYX_EFFECT_DELAY passed in, callback return is NULL.\n");
+            callback = NULL;
+        }
+        break;
+    default:
+        nlPrintf("InitAuxEffect: Unaccounted-for case.\n");
+        break;
+    }
+
+    if (callback == NULL)
+    {
+        nlPrintf("PlatAudio::SetAuxEffects(), callback is NULL. Should not happen unless values are invalid.\n");
+        return false;
+    }
+
+    *pAuxEffect = type;
+    *(void**)pAuxEffectSettings = data;
+
+    if (arg2)
+    {
+        sndSetAuxProcessingCallbacks(arg3, callback, *(void**)pAuxEffectSettings, 0xFF, 0, NULL, NULL, 0xFF, 0);
+    }
+    else
+    {
+        sndSetAuxProcessingCallbacks(arg3, NULL, NULL, 0xFF, 0, callback, *(void**)pAuxEffectSettings, 0xFF, 0);
     }
 
     return true;

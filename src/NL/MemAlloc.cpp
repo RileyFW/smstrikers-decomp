@@ -55,52 +55,54 @@ void TotalFreeMemCallback::Callback(FreeBlockList* fbl)
  */
 void MemoryAllocator::Initialize(void* arg0, unsigned int arg1)
 {
-    FreeBlockList* temp_r3;
-    FreeBlockList* temp_r4;
-    FreeBlockList* var_r4;
-    s32 temp_r5_2;
-    u32 temp_r5;
-    void* temp_r6;
+    FreeBlockList* start;
+    FreeBlockList* iter;
+    FreeBlockList* next;
+    FreeBlockList* prev;
+    u32 size;
 
-    this->m_free_block_list = NULL;
+    m_free_block_list = NULL;
     ((FreeBlockList*)arg0)->m_unk_0x08 = arg1;
-    temp_r3 = nlDLRingGetStart<FreeBlockList>((FreeBlockList*)this->m_free_block_list);
-    if ((temp_r3 > (FreeBlockList*)arg0) || (temp_r3 == NULL))
+    start = nlDLRingGetStart<FreeBlockList>(m_free_block_list);
+    if ((start > (FreeBlockList*)arg0) || (start == NULL))
     {
-        nlDLRingAddStart<FreeBlockList>(&this->m_free_block_list, (FreeBlockList*)arg0);
+        nlDLRingAddStart<FreeBlockList>(&m_free_block_list, (FreeBlockList*)arg0);
     }
     else
     {
-        var_r4 = temp_r3;
-    loop_6:
-        if (var_r4 != temp_r3)
+        iter = start->m_next;
+        while (iter != start)
         {
-            if (var_r4 <= (FreeBlockList*)arg0)
+            if (iter > (FreeBlockList*)arg0)
             {
-                var_r4 = var_r4->m_next;
-                goto loop_6;
+                break;
             }
+
+            iter = iter->m_next;
         }
-        nlDLRingInsert<FreeBlockList>(&this->m_free_block_list, var_r4->m_prev, (FreeBlockList*)arg0);
+
+        nlDLRingInsert<FreeBlockList>(&m_free_block_list, iter->m_prev, (FreeBlockList*)arg0);
     }
-    temp_r4 = ((FreeBlockList*)arg0)->m_next;
-    if (temp_r4 > (FreeBlockList*)arg0)
+
+    next = ((FreeBlockList*)arg0)->m_next;
+    if (next > (FreeBlockList*)arg0)
     {
-        temp_r5 = ((FreeBlockList*)arg0)->m_unk_0x08;
-        if (((FreeBlockList*)arg0 + temp_r5) == temp_r4)
+        size = ((FreeBlockList*)arg0)->m_unk_0x08;
+        if ((FreeBlockList*)((u8*)arg0 + size) == next)
         {
-            ((FreeBlockList*)arg0)->m_unk_0x08 = temp_r5 + temp_r4->m_unk_0x08;
-            nlDLRingRemove<FreeBlockList>(&this->m_free_block_list, temp_r4);
+            ((FreeBlockList*)arg0)->m_unk_0x08 = size + next->m_unk_0x08;
+            nlDLRingRemove<FreeBlockList>(&m_free_block_list, next);
         }
     }
-    temp_r6 = ((FreeBlockList*)arg0)->m_prev;
-    if (temp_r6 < (FreeBlockList*)arg0)
+
+    prev = ((FreeBlockList*)arg0)->m_prev;
+    if (prev < (FreeBlockList*)arg0)
     {
-        temp_r5_2 = ((FreeBlockList*)temp_r6)->m_unk_0x08;
-        if (((FreeBlockList*)temp_r6 + temp_r5_2) == (FreeBlockList*)arg0)
+        size = prev->m_unk_0x08;
+        if ((FreeBlockList*)((u8*)prev + size) == (FreeBlockList*)arg0)
         {
-            ((FreeBlockList*)temp_r6)->m_unk_0x08 = temp_r5_2 + ((FreeBlockList*)arg0)->m_unk_0x08;
-            nlDLRingRemove<FreeBlockList>(&this->m_free_block_list, (FreeBlockList*)arg0);
+            prev->m_unk_0x08 = size + ((FreeBlockList*)arg0)->m_unk_0x08;
+            nlDLRingRemove<FreeBlockList>(&m_free_block_list, (FreeBlockList*)arg0);
         }
     }
 }
@@ -292,76 +294,82 @@ loop_19:
 
 /**
  * Offset/Address/Size: 0x534 | 0x801CDC80 | size: 0x130
+ * TODO: 95.39% match - MWCC keeps swapping r30/r31 roles between allocator head pointer and free block pointer.
  */
 void MemoryAllocator::Free(void* arg0)
 {
-    FreeBlockList** temp_r3;
-    FreeBlockList* temp_r4;
-    FreeBlockList* temp_r6;
-    FreeBlockList* var_r31;
-    FreeBlockList* var_r4;
-    s32 temp_r0;
-    s32 temp_r5;
-    s32 var_r3;
-    u32 temp_r5_2;
-    u32 temp_r5_3;
-    u32 var_r3_2;
+    MemoryAllocator* self;
+    FreeBlockList* block;
+    FreeBlockList* start;
+    FreeBlockList* iter;
+    FreeBlockList* next;
+    FreeBlockList* prev;
+    s32 header;
+    s32 offset;
+    s32 size;
+    u32 blockSize;
 
-    if (arg0 != NULL)
+    if (arg0 == NULL)
     {
-        temp_r5 = *(u32*)((char*)arg0 - 4);
-        var_r31 = (FreeBlockList*)((char*)arg0 - 4);
-        var_r3 = ((temp_r5 & 0x3FFFFFFF) + 3) & 0xFFFFFFFC;
-        if (temp_r5 & 0x40000000)
+        return;
+    }
+
+    self = this;
+    header = *(u32*)((char*)arg0 - 4);
+    block = (FreeBlockList*)((char*)arg0 - 4);
+    size = ((header & 0x3FFFFFFF) + 3) & 0xFFFFFFFC;
+    if (header & 0x40000000)
+    {
+        size += *(u32*)((char*)arg0 + size);
+    }
+
+    blockSize = size + 4;
+    if (header & 0x80000000)
+    {
+        offset = *(u32*)((char*)block - 4);
+        block = (FreeBlockList*)((char*)block - offset);
+        blockSize += offset;
+    }
+
+    block->m_unk_0x08 = blockSize;
+    start = nlDLRingGetStart<FreeBlockList>(self->m_free_block_list);
+    if ((start > block) || (start == NULL))
+    {
+        nlDLRingAddStart<FreeBlockList>(&self->m_free_block_list, block);
+    }
+    else
+    {
+        iter = start->m_next;
+        while (iter != start)
         {
-            var_r3 += *(u32*)((char*)arg0 + var_r3);
-        }
-        var_r3_2 = var_r3 + 4;
-        if (temp_r5 & 0x80000000)
-        {
-            temp_r0 = *(u32*)((char*)var_r31 - 4);
-            var_r31 = (FreeBlockList*)((char*)var_r31 - temp_r0);
-            var_r3_2 += temp_r0;
-        }
-        var_r31->m_unk_0x08 = var_r3_2;
-        temp_r3 = &this->m_free_block_list;
-        if ((*temp_r3 > var_r31) || (*temp_r3 == NULL))
-        {
-            nlDLRingAddStart<FreeBlockList>(&this->m_free_block_list, var_r31);
-        }
-        else
-        {
-            var_r4 = *temp_r3;
-        loop_11:
-            if (var_r4 != *temp_r3)
+            if (iter > block)
             {
-                if (var_r4 <= var_r31)
-                {
-                    var_r4 = var_r4->m_next;
-                    goto loop_11;
-                }
+                break;
             }
-            nlDLRingInsert<FreeBlockList>(&this->m_free_block_list, var_r4->m_prev, var_r31);
+            iter = iter->m_next;
         }
-        temp_r4 = var_r31->m_next;
-        if (temp_r4 > var_r31)
+        nlDLRingInsert<FreeBlockList>(&self->m_free_block_list, iter->m_prev, block);
+    }
+
+    next = block->m_next;
+    if (next > block)
+    {
+        size = block->m_unk_0x08;
+        if (((char*)block + size) == (char*)next)
         {
-            temp_r5_2 = var_r31->m_unk_0x08;
-            if (((char*)var_r31 + temp_r5_2) == (char*)temp_r4)
-            {
-                var_r31->m_unk_0x08 = temp_r5_2 + temp_r4->m_unk_0x08;
-                nlDLRingRemove<FreeBlockList>(&this->m_free_block_list, temp_r4);
-            }
+            block->m_unk_0x08 = size + next->m_unk_0x08;
+            nlDLRingRemove<FreeBlockList>(&self->m_free_block_list, next);
         }
-        temp_r6 = var_r31->m_prev;
-        if (temp_r6 < var_r31)
+    }
+
+    prev = block->m_prev;
+    if (prev < block)
+    {
+        size = prev->m_unk_0x08;
+        if (((char*)prev + size) == (char*)block)
         {
-            temp_r5_3 = temp_r6->m_unk_0x08;
-            if (((char*)temp_r6 + temp_r5_3) == (char*)var_r31)
-            {
-                temp_r6->m_unk_0x08 = temp_r5_3 + var_r31->m_unk_0x08;
-                nlDLRingRemove<FreeBlockList>(&this->m_free_block_list, var_r31);
-            }
+            prev->m_unk_0x08 = size + block->m_unk_0x08;
+            nlDLRingRemove<FreeBlockList>(&self->m_free_block_list, block);
         }
     }
 }

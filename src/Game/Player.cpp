@@ -103,11 +103,9 @@ nlVector3 cPlayer::GetAIDefNetLocation(const nlVector3* v3ReferencePos)
 
 /**
  * Offset/Address/Size: 0x114 | 0x80057664 | size: 0xE0
- * TODO: 95.9% match - MWCC ternary register allocation: fmr f0,f3 instead of fmr f3,f0.
- * Compiler always uses f0 as ternary result dest when yCoord is in f3.
- * Tried 20+ variations: swapped args (97.3% but fcmpo order wrong), if/else (adds mfcr/rlwinm),
- * static inline helpers, const qualifiers, different variable ordering - all produce same fmr direction.
- * Same issue affects GetAIDefNetLocation. Likely inherent MWCC graph-coloring register allocator decision.
+ * TODO: 97.6% match - improved with swapped max_float args, but MWCC still differs in clamp codegen:
+ * first negative clamp compare order is fcmpo cr0,f0,f3 (target f3,f0), and clamp stores via f0
+ * instead of f3. Positive clamp also keeps result in f0 (extra fmr f0,f3 before limit assign).
  */
 nlVector3 cPlayer::GetAIOffNetLocation(const nlVector3* v3ReferencePos)
 {
@@ -128,7 +126,7 @@ nlVector3 cPlayer::GetAIOffNetLocation(const nlVector3* v3ReferencePos)
     if (yCoord < 0.0f)
     {
         float negHalf = -1.0f * fNetWidth;
-        yCoord = max_float(yCoord, negHalf);
+        yCoord = max_float(negHalf, yCoord);
         v3NetLocation.f.y = yCoord;
     }
     else
@@ -679,8 +677,8 @@ void cPlayer::PickupBall(cBall*)
  */
 cFielder* cPlayer::GetClosestOpponentFielder(nlVector3* pPosition)
 {
-    f32 fMinDist = HUGE_VALF;
     cTeam* pOtherTeam = m_pTeam->GetOtherTeam();
+    f32 fMinDist = HUGE_VALF;
     cPlayer* pClosest = NULL;
 
     nlVector3 refPos;

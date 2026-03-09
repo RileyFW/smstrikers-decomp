@@ -259,8 +259,7 @@ void Goalie::InitActionPassInterceptSave()
 
     PlayBlendedAnims(mBlendInfo.mfStartTime, -1);
 
-    u8* pByte = (u8*)m_pPhysicsCharacter + 0x80;
-    *pByte |= 0x40; // Set bit 6
+    m_pPhysicsCharacter->m_CanCollideWithBall = 1;
 
     mnOffplayPending = GOALIE_OFFPLAY_NONE;
     mbBallImpacted = false;
@@ -270,23 +269,19 @@ void Goalie::InitActionPassInterceptSave()
 
     pSaveData->pGoalie = this;
     pSaveData->v3BallVelocity = v3Zero;
-    *((f32*)((u8*)pSaveData + 0x1C)) = 0.0f;
+    pSaveData->fWowFactor = 0.0f;
+    pSaveData->isSTS = 0;
 
-    // Clear bit 7 of byte at offset 0x20
-    u8* pByte20 = (u8*)pSaveData + 0x20;
-    *pByte20 &= ~0x80;
+    pSaveData->saveType = g_pBall->m_uGoalType;
+    pSaveData->pShooter = g_pBall->m_pShooter;
 
-    *((u32*)((u8*)pSaveData + 0x18)) = g_pBall->m_uGoalType;
-    *((cPlayer**)((u8*)pSaveData + 0x14)) = g_pBall->m_pShooter;
-
-    u32* pWord20 = (u32*)((u8*)pSaveData + 0x20);
     if (mpSaveData != NULL)
     {
-        *pWord20 = (*pWord20 & 0xFFFFFF00) | (mpSaveData->muSaveType & 0xFF);
+        pSaveData->padding = mpSaveData->muSaveType;
     }
     else
     {
-        *pWord20 = (*pWord20 & 0xFFFFFF00) | 3;
+        pSaveData->padding = 3;
     }
 }
 
@@ -575,6 +570,11 @@ bool Goalie::IsLooseBallClose(float)
 /**
  * Offset/Address/Size: 0x64C0 | 0x80048FBC | size: 0xDC
  */
+static inline f32 DistSq(f32 a, f32 b)
+{
+    return (b * b) + (a * a);
+}
+
 bool Goalie::IsWithinPounceRange()
 {
     cFielder* pFielder = g_pBall->GetOwnerFielder();
@@ -585,13 +585,14 @@ bool Goalie::IsWithinPounceRange()
             return false;
         }
 
-        const float temp_f5 = m_v3Position.f.y - pFielder->m_v3Position.f.y;
-        const float temp_f4 = LooseBallAnims::mTrapBallInfo.mfPickupDistance + ((GoalieTweaks*)m_pTweaks)->fPounceRange;
-        const float temp_f1 = m_v3Position.f.x - pFielder->m_v3Position.f.x;
-        const float temp_f4_2 = temp_f4 * temp_f4;
+        f32 dy = m_v3Position.f.y - pFielder->m_v3Position.f.y;
+        f32 range = LooseBallAnims::mTrapBallInfo.mfPickupDistance + ((GoalieTweaks*)m_pTweaks)->fPounceRange;
+        f32 dx = m_v3Position.f.x - pFielder->m_v3Position.f.x;
+        f32 rangeSq = range * range;
 
-        if ((temp_f4_2 > ((temp_f1 * temp_f1) + (temp_f5 * temp_f5)))
-            || (temp_f4_2 > ((m_v3Position.f.x - g_pBall->m_v3Position.f.x) * (m_v3Position.f.x - g_pBall->m_v3Position.f.x) + (m_v3Position.f.y - g_pBall->m_v3Position.f.y) * (m_v3Position.f.y - g_pBall->m_v3Position.f.y))))
+        // TODO: 99.0% match - f2/f4 float register allocation swap for selfY/rangeSq in both distance checks.
+        if ((rangeSq > DistSq(dy, dx))
+            || (rangeSq > DistSq(m_v3Position.f.y - g_pBall->m_v3Position.f.y, m_v3Position.f.x - g_pBall->m_v3Position.f.x)))
         {
             return true;
         }
@@ -695,21 +696,19 @@ void Goalie::MakeSaveEvent(bool bIsSTS)
     GoalieTweaks* pTweaks = (GoalieTweaks*)m_pTweaks;
     pSaveData->fWowFactor = 1.0f / pTweaks->fShotFatigueMax;
 
-    // Use struct bitfield but offset by 8 bytes (0x20 - 0x18 = 8)
-    GoalieSaveData* pOffset = (GoalieSaveData*)((u8*)pSaveData + 8);
-    pOffset->isSTS = bIsSTS;
+    pSaveData->isSTS = bIsSTS;
 
     pSaveData->saveType = g_pBall->m_uGoalType;
     pSaveData->pShooter = g_pBall->m_pShooter;
 
     if (mpSaveData != NULL)
     {
-        pOffset->saveType = mpSaveData->muSaveType;
+        pSaveData->padding = mpSaveData->muSaveType;
         pSaveData->fWowFactor *= mpSaveData->mfFatigueValue;
     }
     else
     {
-        pOffset->saveType = 3;
+        pSaveData->padding = 3;
         pSaveData->fWowFactor *= ((GoalieTweaks*)m_pTweaks)->fShotFatigueDefault;
     }
 }
@@ -1484,9 +1483,8 @@ void Goalie::InitActionSTSAttack()
 
 /**
  * Offset/Address/Size: 0x214C | 0x80044C48 | size: 0x100
- * TODO: 97.19% match - ownerX assigned f3 instead of f1, causing cascading register
- * diffs through fabs section (0x58-0x68) and first CalculateDistanceSquared2D call
- * (0x98-0xAC). Target reloads ownerX from memory at 0x5c; our compiler caches in f3.
+ * TODO: 97.66% match - ownerX is kept in f3 through the fabs/threshold block,
+ * so MWCC skips the ownerX reload from memory at 0x5C and shifts branch targets by 0x4.
  */
 bool Goalie::IsTeammateHoardingBall()
 {
@@ -1498,15 +1496,14 @@ bool Goalie::IsTeammateHoardingBall()
         cBall* pBall = g_pBall;
         if (myX * ownerX > 0.0f)
         {
-            f32 absMyX = (f32)fabs(myX);
-            f32 absOwnerX = (f32)fabs(ownerX);
-            f32 threshold = absMyX - 2.7f;
+            f32 threshold = (f32)fabs(myX) - 2.7f;
 
-            if (absOwnerX > threshold || (f32)fabs(pBall->m_v3Position.f.x) > threshold)
+            if ((f32)fabs(ownerX) > threshold || (f32)fabs(pBall->m_v3Position.f.x) > threshold)
             {
                 f32 distThresh = 100.0f;
 
-                if (m_v3Position.CalculateDistanceSquared2D(pOwner->m_v3Position) < distThresh || m_v3Position.CalculateDistanceSquared2D(pBall->m_v3Position) < distThresh)
+                if (nlGetLengthSquared2D(m_v3Position.f.x - pOwner->m_v3Position.f.x, m_v3Position.f.y - pOwner->m_v3Position.f.y) < distThresh
+                    || m_v3Position.CalculateDistanceSquared2D(pBall->m_v3Position) < distThresh)
                 {
                     return true;
                 }
@@ -1618,30 +1615,29 @@ float Goalie::CalcSaveParameters(float fTimeToContact, unsigned int uSaveType, b
  */
 float Goalie::CalcTimeToPlane()
 {
+    Goalie* self = this;
     nlVector3 localVelocity;
     nlVector4 plane;
     float time;
     unsigned short desiredFacing;
 
-    SetDesiredSaveFacing(g_pBall->m_v3Position);
+    self->SetDesiredSaveFacing(g_pBall->m_v3Position);
 
-    desiredFacing = m_aDesiredFacingDirection;
-    MakePerpendicularPlane(m_v3Position, desiredFacing, plane, 0.2f);
+    desiredFacing = self->m_aDesiredFacingDirection;
+    nlVector3& pos = self->m_v3Position;
+    MakePerpendicularPlane(pos, desiredFacing, plane, 0.2f);
 
-    time = FakeBallWorld::GetPredictedPlaneIntersectTime(plane, mv3TargetPosition, localVelocity);
+    time = FakeBallWorld::GetPredictedPlaneIntersectTime(plane, self->mv3TargetPosition, localVelocity);
 
-    float absTargetX = (float)fabsf(mv3TargetPosition.f.x);
-    float goalLineX = cField::GetGoalLineX(1U);
-
-    if (absTargetX > goalLineX)
+    if ((float)fabsf(self->mv3TargetPosition.f.x) > cField::GetGoalLineX(1U))
     {
         return -1.0f;
     }
 
     if (time > 0.0f)
     {
-        GetLocalPoint(mv3LocalContactPosition, mv3TargetPosition, m_v3Position, desiredFacing);
-        GetLocalPoint(mv3LocalContactVelocity, localVelocity, v3Zero, desiredFacing);
+        GetLocalPoint(self->mv3LocalContactPosition, self->mv3TargetPosition, pos, desiredFacing);
+        GetLocalPoint(self->mv3LocalContactVelocity, localVelocity, v3Zero, desiredFacing);
     }
 
     return time;

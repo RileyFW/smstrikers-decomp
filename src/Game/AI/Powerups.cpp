@@ -684,9 +684,90 @@ RedShell::~RedShell()
 
 /**
  * Offset/Address/Size: 0x1628 | 0x8005BF14 | size: 0x24C
+ * TODO: 99.8% match - f1/f2/f4 register allocation swap in the 19.0f
+ * velocity-cap multiply sequence when normalizing XY speed.
  */
-void RedShell::Update(float)
+extern "C" void SeekTarget__8RedShellFv(RedShell*);
+
+void RedShell::Update(float dt)
 {
+    nlPolar polar;
+    nlVector2 vel;
+    nlPolar polar2;
+    nlVector3 cappedVel;
+
+    m_v3PrevPosition = m_v3Position;
+    m_pPhysicsObject->GetPosition(&m_v3Position);
+    m_pPhysicsObject->GetLinearVelocity(&m_v3Velocity);
+
+    if (m_v3Position.f.z < ((PhysicsSphere*)m_pPhysicsObject)->GetRadius())
+    {
+        m_v3Position.f.z = ((PhysicsSphere*)m_pPhysicsObject)->GetRadius();
+        m_pPhysicsObject->SetPosition(m_v3Position, PhysicsObject::WORLD_COORDINATES);
+    }
+
+    if (m_pBlurHandler != NULL)
+    {
+        m_pBlurHandler->AddViewOrientedPoint(m_v3Position, m_v3Velocity);
+    }
+
+    mtActiveTimer.Countdown(dt, 0.0f);
+    mtNoHitTimer.Countdown(dt, 0.0f);
+
+    UpdateTransform();
+
+    if (m_pBlurHandler != NULL)
+    {
+        nlCartesianToPolar(polar, m_v3Velocity.f.x, m_v3Velocity.f.y);
+        if (polar.r < 0.5f)
+        {
+            m_pBlurHandler->Die(0.5f);
+            m_pBlurHandler = NULL;
+        }
+    }
+
+    if (mtNoHitTimer.m_uPackedTime == 0)
+    {
+        nlCartesianToPolar(polar2, m_v3Velocity.f.x, m_v3Velocity.f.y);
+        if (polar2.r < 3.0f)
+        {
+            m_bShouldDestroy = true;
+        }
+        else if (polar2.r > 20.0f)
+        {
+            vel.as_u32[0] = m_v3Velocity.as_u32[0];
+            vel.as_u32[1] = m_v3Velocity.as_u32[1];
+            f32 velX = vel.f.x;
+            f32 velY = vel.f.y;
+            f32 sqX = velX * velX;
+            f32 sqY = velY * velY;
+            f32 recipLen = nlRecipSqrt(sqX + sqY, true);
+            vel.f.x = recipLen * velX;
+            vel.f.y = recipLen * velY;
+            vel.f.x = 19.0f * vel.f.x;
+            vel.f.y = 19.0f * vel.f.y;
+            cappedVel.f.y = vel.f.y;
+            cappedVel.f.x = vel.f.x;
+            cappedVel.f.z = m_v3Velocity.f.z;
+            m_v3Velocity = cappedVel;
+            m_pPhysicsObject->SetLinearVelocity(cappedVel);
+        }
+    }
+
+    if (mtActiveTimer.m_uPackedTime == 0)
+    {
+        m_pTarget = NULL;
+    }
+    else if (mtNoHitTimer.GetSeconds() < 0.8f)
+    {
+        SeekTarget__8RedShellFv(this);
+    }
+
+    if (m_bShouldDestroy)
+    {
+        m_pDrawableObj->m_uObjectFlags &= ~1u;
+        Destroy(false);
+    }
 }
 
 /**

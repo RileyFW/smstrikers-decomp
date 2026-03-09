@@ -96,33 +96,38 @@ void cSAnim::Destroy()
 
 /**
  * Offset/Address/Size: 0x2EC | 0x801E9500 | size: 0xE0
+ * TODO: 94.0% match - register allocation diffs (r5/r6 for base ptr, f1/f3 for fRealIndex,
+ * lhz vs lhzx access pattern). Pointer approach gives best match but differs from target's
+ * indexed addressing. -inline deferred scheduling artifact.
  */
-void cSAnim::GetRootRot(float t, unsigned short* outZ) const
+void cSAnim::GetRootRot(float fTime, unsigned short* pRootRot) const
 {
-    int nIndex;       // r0
-    float fRealIndex; // f3
+    float fRealIndex;
+    int nIndex;
 
     if (m_nNumRootKeys != 0)
     {
-        if (t == 0.0f || m_nNumRootKeys == 1)
+        if (fTime == 0.0f || m_nNumRootKeys == 1)
         {
-            *outZ = m_pRootRot[m_nNumRootKeys - 1];
+            *pRootRot = m_pRootRot[m_nNumRootKeys - 1];
             return;
         }
 
-        fRealIndex = t * (m_nNumRootKeys - 1);
+        fRealIndex = fTime * (m_nNumRootKeys - 1);
         nIndex = (int)fRealIndex;
+        unsigned short val0 = m_pRootRot[nIndex];
+        unsigned short* p = m_pRootRot + nIndex;
         float fraction = fRealIndex - nIndex;
-        const unsigned short val0 = m_pRootRot[nIndex];
-        const unsigned short val1 = m_pRootRot[nIndex + 1];
-        const u16 diff = (u16)(val1 - val0);
-        *outZ = val0 + (int)(fraction * diff);
+        s16 diff = (s16)(p[1] - val0);
+        *pRootRot = val0 + (int)(fraction * diff);
         return;
     }
-    *outZ = 0;
+    *pRootRot = 0;
 }
 /**
  * Offset/Address/Size: 0x1E0 | 0x801E93F4 | size: 0x10C
+ * TODO: 98.66% match - remaining interpolation block register allocation differs
+ * (index in r5 vs r7 and val0/val1 base register assignment swap).
  */
 void cSAnim::GetRootTrans(float t, nlVector3* out) const
 {
@@ -137,12 +142,14 @@ void cSAnim::GetRootTrans(float t, nlVector3* out) const
         float fRealIndex = t * (m_nNumRootKeys - 1);
         int nIndex = (int)fRealIndex;
         float fWeight = fRealIndex - nIndex;
-        const nlVector3& val0 = m_pRootTrans[nIndex];
-        const nlVector3& val1 = m_pRootTrans[nIndex + 1];
+        float fInvWeight = 1.0f - fWeight;
+        const nlVector3* pRootTrans = m_pRootTrans;
+        const nlVector3* pVal0 = &pRootTrans[nIndex];
+        const nlVector3* pVal1 = &pRootTrans[nIndex + 1];
 
-        out->f.x = (fWeight * val1.f.x) + (1.0f - fWeight) * val0.f.x;
-        out->f.y = (fWeight * val1.f.y) + (1.0f - fWeight) * val0.f.y;
-        out->f.z = (fWeight * val1.f.z) + (1.0f - fWeight) * val0.f.z;
+        out->f.x = (fWeight * pVal1->f.x) + (fInvWeight * pVal0->f.x);
+        out->f.y = (fWeight * pVal1->f.y) + (fInvWeight * pVal0->f.y);
+        out->f.z = (fWeight * pVal1->f.z) + (fInvWeight * pVal0->f.z);
 
         return;
     }

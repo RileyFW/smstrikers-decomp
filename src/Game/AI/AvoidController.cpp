@@ -104,10 +104,105 @@ bool AvoidController::CalcFielderRepulsionVector(nlVector3&)
 
 /**
  * Offset/Address/Size: 0xE08 | 0x8000845C | size: 0x258
+ * TODO: 98.63% match - volatile FP temp register allocation (f1/f2 swap at delta loads)
+ * and integer register r7 vs r4 for m_pFielder temp in GetClosingSpeed2D arg setup.
+ * All 11 diffs are register-only, no instruction or structural differences.
  */
-bool AvoidController::CalcPowerupRepulsionVector(nlVector3&)
+bool AvoidController::CalcPowerupRepulsionVector(nlVector3& v3OutRepulsion)
 {
-    return false;
+    extern PowerupBase* g_pPowerups[];
+    extern cTeam* g_pCurrentlyUpdatingTeam;
+    extern float GetClosingSpeed2D(const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&);
+    extern float NormalizeVal(float, float, float);
+
+    bool bAvoidedSomething = false;
+    float fDeltaX, fDeltaY, fDeltaZ;
+    float fDistance;
+    float fMagnitude;
+    float fClosingSpeed;
+
+    v3OutRepulsion.f.x = 0.0f;
+    v3OutRepulsion.f.y = 0.0f;
+    v3OutRepulsion.f.z = 0.0f;
+
+    if (m_pFielder->IsInvincible())
+    {
+        return false;
+    }
+
+    for (int i = 0; i < 25; i++)
+    {
+        PowerupBase* pPowerup = g_pPowerups[i];
+
+        if (pPowerup != NULL)
+        {
+            fDeltaX = m_pFielder->m_v3Position.f.x - pPowerup->m_v3Position.f.x;
+            fDeltaY = m_pFielder->m_v3Position.f.y - pPowerup->m_v3Position.f.y;
+            fDeltaZ = m_pFielder->m_v3Position.f.z - pPowerup->m_v3Position.f.z;
+            float fDistanceSq = fDeltaY * fDeltaY;
+            fDistanceSq += fDeltaX * fDeltaX;
+            fDistanceSq += fDeltaZ * fDeltaZ;
+
+            if (fDistanceSq > 25.0f)
+            {
+                continue;
+            }
+
+            fDistance = nlSqrt(fDistanceSq, true);
+
+            float fInvDistance = 1.0f / fDistance;
+            fDeltaZ = fInvDistance * fDeltaZ;
+            fDeltaY = fInvDistance * fDeltaY;
+            fDeltaX = fInvDistance * fDeltaX;
+
+            fDistance -= m_pFTweaks->fPhysCapsuleRadius + pPowerup->GetRadius();
+
+            fClosingSpeed = GetClosingSpeed2D(m_pFielder->m_v3Position, m_pFielder->m_v3Velocity, pPowerup->m_v3Position, pPowerup->m_v3Velocity);
+
+            float fPowerupSpeedSq = pPowerup->m_v3Velocity.f.x * pPowerup->m_v3Velocity.f.x
+                                  + pPowerup->m_v3Velocity.f.y * pPowerup->m_v3Velocity.f.y
+                                  + pPowerup->m_v3Velocity.f.z * pPowerup->m_v3Velocity.f.z;
+
+            if (fPowerupSpeedSq <= 2.0f)
+            {
+                fMagnitude = 10.0f * NormalizeVal(fDistance, 3.0f, 1.0f);
+            }
+            else
+            {
+                fMagnitude = 10.0f * NormalizeVal(fDistance, 5.0f, 2.0f);
+                fMagnitude += 15.0f * NormalizeVal(fClosingSpeed, 0.0f, 4.0f);
+
+                if (m_pFielder->m_pBall != NULL)
+                {
+                    fMagnitude *= 2.0f * SkillTweaks::GetSkillTweaks(g_pCurrentlyUpdatingTeam->m_nSide)->Off_Avoidance;
+                }
+            }
+
+            if (fMagnitude <= 0.0f)
+            {
+                continue;
+            }
+
+            float fContribution = 30.0f;
+            if (fMagnitude <= fContribution)
+            {
+                fContribution = fMagnitude;
+            }
+
+            float fOutX = v3OutRepulsion.f.x;
+            float fOutY = v3OutRepulsion.f.y;
+            fOutX = fContribution * fDeltaX + fOutX;
+            float fOutZ = v3OutRepulsion.f.z;
+            fOutY = fContribution * fDeltaY + fOutY;
+            fOutZ = fContribution * fDeltaZ + fOutZ;
+            v3OutRepulsion.f.x = fOutX;
+            v3OutRepulsion.f.y = fOutY;
+            v3OutRepulsion.f.z = fOutZ;
+            bAvoidedSomething = true;
+        }
+    }
+
+    return bAvoidedSomething;
 }
 
 /**

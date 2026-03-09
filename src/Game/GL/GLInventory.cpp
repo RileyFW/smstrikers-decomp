@@ -23,32 +23,46 @@ void GLInventory::Create()
  */
 void GLInventory::Delete()
 {
-    FORCE_DONT_INLINE;
     m_bCreated = false;
 
-    for (int level = 0; level < 16; level++)
+    nlListContainer<void*>* fileData = NULL;
+    nlListContainer<void*>** current = m_pFileData;
+    int level = 0;
+
+    for (; level < 16; level++, current++)
     {
         ReleaseLevel(level);
 
-        nlListContainer<void*>* fileData = m_pFileData[level];
+        fileData = *current;
 
-        if (fileData != nullptr)
+        if (fileData == NULL)
         {
-            // nlWalkList<ListEntry<void*>, ListContainerBase<void*, NewAdapter<ListEntry<void*> > > >(
-            //     fileData->m_Head,
-            //     fileData,
-            //     &ListContainerBase<void*, NewAdapter<ListEntry<void*> > >::DeleteEntry);
-
-            fileData->m_Head = nullptr;
-            fileData->m_Tail = nullptr;
-            delete fileData;
+            goto after_file_data;
         }
-        delete m_pSkinData[level];
-        delete m_pModels[level];
-        delete m_pShadowVolumes[level];
-        delete m_pTextureAnims[level];
-        delete m_pVertexAnims[level];
-        delete m_pMaterialLists[level];
+
+        if (fileData == NULL)
+        {
+            goto delete_file_data;
+        }
+
+        nlWalkList<ListEntry<void*>, ListContainerBase<void*, NewAdapter<ListEntry<void*> > > >(
+            fileData->m_Head,
+            fileData,
+            &ListContainerBase<void*, NewAdapter<ListEntry<void*> > >::DeleteEntry);
+
+        fileData->m_Head = NULL;
+        fileData->m_Tail = NULL;
+
+    delete_file_data:
+        delete fileData;
+
+    after_file_data:
+        delete ((freeing_GLInventory<nlChunk>**)current)[16];
+        delete ((clearing_GLInventory<glModel>**)current)[32];
+        delete ((deleting_GLInventory<GLShadowVolume>**)current)[48];
+        delete ((deleting_GLInventory<GLTextureAnim>**)current)[64];
+        delete ((deleting_GLInventory<GLVertexAnim>**)current)[80];
+        delete ((deleting_GLInventory<GLMaterialList>**)current)[96];
     }
 }
 

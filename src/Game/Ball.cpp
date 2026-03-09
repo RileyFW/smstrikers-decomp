@@ -35,56 +35,43 @@ nlMatrix3 m3Ident = { 1.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 1.f };
 /**
  * Offset/Address/Size: 0x0 | 0x800099D4 | size: 0x10C
  */
-float cBall::PredictLandingSpotAndTime(nlVector3& landingSpot)
+float cBall::PredictLandingSpotAndTime(nlVector3& v3Dest)
 {
-    float sp10;
-    float spC;
-    int sp8;
-    float dVar9;
-    float fVar5;
-    float pfVar7;
-    float dVar8;
-    float dVar10;
+    float fTime = 0.0f;
 
-    // m_unk_0x58.x = 0;
-    // m_unk_0x58.y = 0;
-    // m_unk_0x58.z = 0;
-
-    dVar8 = 0.1f;
-    if (m_v3Velocity.f.z > 1.0f)
+    if (m_v3Position.f.z > 1.0f)
     {
-        SolveQuadratic(dVar8, 0.5f * m_pPhysicsBall->m_gravity, m_v3Velocity.f.z, sp8, spC, sp10);
+        int numSolutions;
+        float times[2];
 
-        pfVar7 = spC;         // pfVar7 = &local_14;
-        dVar8 = 100000000.0f; // dVar8 = (double)Ball::@1409;
-        fVar5 = 0.f;
-        dVar10 = dVar8;
-        if (sp8 > 0)
+        SolveQuadratic(0.5f * m_pPhysicsBall->m_gravity, m_v3Velocity.f.z, m_v3Position.f.z, numSolutions, times[0], times[1]);
+
+        float t = 100000000.0f;
+        float* root = times;
+        for (int i = numSolutions; i > 0; i--)
         {
-            do
+            if (*root >= 0.0f)
             {
-                dVar9 = pfVar7;
-                dVar8 = dVar10;
-                if ((0.f <= dVar9) && (dVar8 = dVar9, dVar10 <= dVar9))
-                {
-                    dVar8 = dVar10;
-                }
-                pfVar7 = pfVar7 + 1;
-                sp8 -= 1;
-                dVar10 = dVar8;
-            } while (sp8 != 0);
+                t = (t <= *root) ? t : *root;
+            }
+            root++;
         }
 
-        landingSpot.f.x = (dVar8 * m_v3Velocity.f.x) + m_v3Position.f.x;
-        landingSpot.f.y = (dVar8 * m_v3Velocity.f.y) + m_v3Position.f.y;
-        // landingSpot.z = (dVar8 * m_unk_0x58.z) + m_v3Position.z;
-        landingSpot.f.z = 0.f;
-        return dVar8;
+        fTime = t;
+        float x = t * m_v3Velocity.f.x + m_v3Position.f.x;
+        float z = t * m_v3Velocity.f.z + m_v3Position.f.z;
+        float y = t * m_v3Velocity.f.y + m_v3Position.f.y;
+        v3Dest.f.x = x;
+        v3Dest.f.y = y;
+        v3Dest.f.z = z;
+        v3Dest.f.z = 0.0f;
+    }
+    else
+    {
+        v3Dest = m_v3Position;
     }
 
-    landingSpot = m_v3Position;
-
-    return 0.f;
+    return fTime;
 }
 
 /**

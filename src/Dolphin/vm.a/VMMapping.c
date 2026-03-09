@@ -37,12 +37,17 @@ BOOL VMAlloc(u32 address, u32 size)
         return FALSE;
     }
 
+    /**
+     * Offset/Address/Size: 0x0 | 0x8025F83C | size: 0x100
+     * TODO: 96.17% match - loop preheader differs: compiler emits an extra
+     * size==0 branch and compares page count register (r0) instead of size
+     * register (r28) before entering the bdnz loop.
+     */
     if (size > 0)
     {
-        u32 pageCount = (size + 0xFFF) >> 12;
         u32 offset = 0;
 
-        for (i = 0; i < pageCount; ++i)
+        for (i = 0; i < ((size + 0xFFF) >> 12); ++i)
         {
             u32 virtualPage = address + offset;
 
@@ -62,7 +67,7 @@ BOOL VMAlloc(u32 address, u32 size)
             }
 
             g_baseARAMtoVM[g_nextARAMPageToCheck_233] = virtualPage;
-            g_baseVMtoARAM[VMToARAMOffset(virtualPage) >> 2] = g_nextARAMPageToCheck_233 << 12;
+            g_baseVMtoARAM[((virtualPage >> 10) & 0x7FFC) >> 2] = g_nextARAMPageToCheck_233 << 12;
 
             g_totalAllocatedVM += 0x1000;
             offset += 0x1000;

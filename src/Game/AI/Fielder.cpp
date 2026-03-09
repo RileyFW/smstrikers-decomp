@@ -43,12 +43,14 @@ extern cWorldSFX gStadGenSFX;
 } // namespace Audio
 
 extern bool g_e3_Build;
+void FireCameraRumbleFilter(float, float);
 
 class Fuzzy
 {
 public:
     static FuzzyVariant ShouldIStrafeBall(cFielder*);
     static FuzzyVariant ShouldIStrafeMark(cFielder*);
+    static FuzzyVariant GetBestHitTarget(cFielder*);
 };
 
 const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
@@ -1561,9 +1563,67 @@ void cFielder::DoCalcShootToScoreResult(float f1, float f2, float f3, float f4, 
 
 /**
  * Offset/Address/Size: 0x7C34 | 0x80020F70 | size: 0x244
+ * TODO: 99.93% match - remaining codegen differences are in the stick-magnitude
+ * compare operand order and small-data constant symbol selection.
  */
-void cFielder::DoFindBestHitTarget()
+cFielder* cFielder::DoFindBestHitTarget()
 {
+    if (GetGlobalPad() == NULL)
+    {
+        FuzzyVariant vBestTarget = Fuzzy::GetBestHitTarget(this);
+        return (cFielder*)vBestTarget.mData.pPlayer;
+    }
+
+    float fBestScore = 99999.0f;
+    cFielder* pBestCandidate = NULL;
+    cTeam* pTeam = m_pTeam->GetOtherTeam();
+    u16 aDirection = m_aActualFacingDirection;
+
+    if (0.0f != m_pController->GetMovementStickMagnitude())
+    {
+        aDirection = m_pController->GetMovementStickDirection();
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        float fTempScore = 99999.0f;
+        cFielder* pCandidate = pTeam->GetFielder(i);
+
+        if (!pCandidate->IsFallenDown(0.0f) && pCandidate->m_tFrozenTimer.m_uPackedTime == 0)
+        {
+            bool bInvalidTarget = ((pCandidate->m_ePowerup == POWER_UP_STAR)
+                                      && (pCandidate->m_tPowerupEffectTime.m_uPackedTime != 0))
+                               || pCandidate->mActionShootToScoreVars.isCurrentlyInvincible;
+
+            if (!bInvalidTarget)
+            {
+                fTempScore = DoFlashLight(
+                    pCandidate->m_v3Position,
+                    aDirection,
+                    g_pGame->m_pGameTweaks->fAngleWeighting,
+                    0.0f,
+                    100.0f);
+            }
+        }
+
+        if ((g_pBall->GetOwnerFielder() == pCandidate) || (g_pBall->GetPassTargetFielder() == pCandidate))
+        {
+            fTempScore *= g_pGame->m_pGameTweaks->fHitCarrierWeighting;
+        }
+
+        if (fTempScore < fBestScore)
+        {
+            pBestCandidate = pCandidate;
+            fBestScore = fTempScore;
+        }
+    }
+
+    if (pBestCandidate == NULL)
+    {
+        pBestCandidate = GetClosestOpponentFielder(NULL);
+    }
+
+    return pBestCandidate;
 }
 
 /**
@@ -1578,6 +1638,7 @@ void cFielder::DoFindBestShotTarget(nlVector3&, float&, bool)
  */
 void cFielder::DoRegularShooting()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -2813,10 +2874,6 @@ u8 cFielder::ShouldIStrafe()
 
 /**
  * Offset/Address/Size: 0x39F8 | 0x8001CD34 | size: 0x14C
- * TODO: 96.4% match - MWCC caches 0.0f init values for nlVector3 locals and
- * doesn't re-read from stack after GetAIOffNetLocation/GetAIDefNetLocation
- * write via hidden return pointer. Causes lfs from @sda_const instead of
- * lfs from stack in both distance computation blocks.
  */
 bool cFielder::ShouldITurboWithoutBall()
 {
@@ -2829,21 +2886,13 @@ bool cFielder::ShouldITurboWithoutBall()
                 return true;
             }
 
-            nlVector3 offNet;
-            offNet.f.x = 0.0f;
-            offNet.f.y = 0.0f;
-            offNet.f.z = 0.0f;
-            m_pMark->GetAIOffNetLocation(NULL);
+            const nlVector3& offNet = m_pMark->GetAIOffNetLocation(NULL);
 
             float dx = m_pMark->m_v3Position.f.x - offNet.f.x;
             float dy = m_pMark->m_v3Position.f.y - offNet.f.y;
             float distOff = nlSqrt(dx * dx + dy * dy, true);
 
-            nlVector3 defNet;
-            defNet.f.x = 0.0f;
-            defNet.f.y = 0.0f;
-            defNet.f.z = 0.0f;
-            GetAIDefNetLocation(NULL);
+            const nlVector3& defNet = GetAIDefNetLocation(NULL);
 
             float dx2 = m_v3Position.f.x - defNet.f.x;
             float dy2 = m_v3Position.f.y - defNet.f.y;
@@ -3152,6 +3201,86 @@ void cFielder::PreUpdate(float fTime)
  */
 void cFielder::PostPhysicsUpdate()
 {
+    cPlayer::PostPhysicsUpdate();
+
+    if (m_eActionState == ACTION_ONETIMER || m_eActionState == ACTION_LOOSE_BALL_SHOT)
+    {
+        if (m_pCurrentAnimController->TestTrigger(mActionOneTimerVars.fOneTimerAnimTime))
+        {
+            if (g_pBall->m_pOwner == NULL)
+            {
+                nlVector3 ballPos;
+                nlVector3 ballPhysicsPos;
+                g_pBall->m_pPhysicsBall->GetPosition(&ballPhysicsPos);
+                ballPos = g_pBall->m_v3Position;
+
+                nlVector3* pJointPos;
+                int jointIndex;
+                jointIndex = m_nBallJointIndex;
+                if (TestCollision(0.18f, GetPrevJointPosition(jointIndex), *(pJointPos = &GetJointPosition(jointIndex)), 0.18f, ballPos, ballPhysicsPos))
+                {
+                    g_pBall->SetPosition(GetJointPosition(m_nBallJointIndex));
+
+                    m_pShotMeter->Reset();
+                    m_pShotMeter->m_fTime = 0.0f;
+
+                    u8 wasPerfectPass = g_pBall->mbHyperSTS;
+                    m_pShotMeter->CalcOneTimerValue(this, wasPerfectPass);
+
+                    g_pBall->ClearPassTarget();
+
+                    cNet* pOtherNet = m_pTeam->GetOtherNet();
+                    float posX = m_v3Position.f.x;
+                    float sideSign = pOtherNet->m_sideSign;
+                    if (!(posX * sideSign <= 0.0f))
+                    {
+                        g_pBall->SetOwner(this);
+                        g_pBall->ClearOwner();
+                        DoRegularShooting();
+
+                        bool bIsChipShot = false;
+                        if (mActionShotVars.bIsChipShot || mActionLooseBallShotVars.bIsChipShot)
+                        {
+                            bIsChipShot = true;
+                        }
+
+                        if (bIsChipShot)
+                        {
+                            EmitBallShot(this, BALL_EFFECT_CHIP_SHOT, NULL, false);
+                        }
+                        else
+                        {
+                            bool bIsOneTimerShot = false;
+                            if (g_pBall->m_tShotTimer.m_uPackedTime != 0 && g_pBall->m_unk_0xA4 != 0)
+                            {
+                                bIsOneTimerShot = true;
+                            }
+
+                            if (bIsOneTimerShot)
+                            {
+                                EmitBallShot(this, BALL_EFFECT_PERFECT_SHOT, NULL, false);
+                                FireCameraRumbleFilter(0.0f, 0.2f);
+                                Play3DSFX(Audio::eCharSFX(0x3D), VECTORS, 100.0f);
+                            }
+                            else
+                            {
+                                EmitBallShot(this, BALL_EFFECT_ONETIMER_SHOT, NULL, false);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        DoClearBall();
+                    }
+
+                    if (FixedUpdateTask::mTimeScale < 1.0f)
+                    {
+                        Audio::FadeFilterFromCurrentToZero();
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -3227,19 +3356,12 @@ void cFielder::SetPowerup(ePowerUpType, int, cFielder*)
 
 /**
  * Offset/Address/Size: 0x1BE4 | 0x8001AF20 | size: 0x134
- * TODO: 83.1% match - numPowerups stored in register r30 instead of stack
- *       offset 0x30, causing extra register save/restore (r28 vs r29 for this)
  */
 void cFielder::UseTeamPowerup(cFielder* pTarget)
 {
     cTeam* pTeam;
 
-    if (m_ePowerup == POWER_UP_STAR)
-    {
-        return;
-    }
-
-    if (m_tFrozenTimer.m_uPackedTime != 0)
+    if ((m_ePowerup == POWER_UP_STAR) || (m_tFrozenTimer.m_uPackedTime != 0))
     {
         return;
     }
@@ -3259,9 +3381,7 @@ void cFielder::UseTeamPowerup(cFielder* pTarget)
     if (!m_pTeam->IsCurrentNoPowerup())
     {
         pTeam = m_pTeam;
-        int numPowerups = pTeam->GetCurrentPowerUp().nnumOfPowerups;
-        ePowerUpType eType = pTeam->GetCurrentPowerUp().eType;
-        SetPowerup(eType, numPowerups, pTarget);
+        SetPowerup(pTeam->GetCurrentPowerUp().eType, pTeam->GetCurrentPowerUp().nnumOfPowerups, pTarget);
         m_pTeam->ClearCurrentPowerUp();
     }
     else
@@ -3273,9 +3393,7 @@ void cFielder::UseTeamPowerup(cFielder* pTarget)
         }
         m_pTeam->TogglePowerup(true);
         pTeam = m_pTeam;
-        int numPowerups = pTeam->GetCurrentPowerUp().nnumOfPowerups;
-        ePowerUpType eType = pTeam->GetCurrentPowerUp().eType;
-        SetPowerup(eType, numPowerups, pTarget);
+        SetPowerup(pTeam->GetCurrentPowerUp().eType, pTeam->GetCurrentPowerUp().nnumOfPowerups, pTarget);
         m_pTeam->ClearCurrentPowerUp();
     }
 }
