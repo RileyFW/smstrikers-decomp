@@ -3,17 +3,26 @@
 #include "Game/World.h"
 #include "NL/gl/glModel.h"
 #include "NL/gl/gl.h"
+#include "NL/gl/glState.h"
 
-extern u8 g_bEnableDrawableSkinModel;
-extern u8 g_bSkinModelTextureLighting;
-extern u32 UnlitProgram;
-extern u32 LitProgram;
-extern u32 LightTexture;
-extern u32 GLTT_BumpLocal_bit;
+bool g_bEnableDrawableSkinModel = true;
+bool g_bSkinModelTextureLighting = true;
+const u32 GLTT_BumpLocal_bit = 1 << (int)GLTT_BumpLocal;
+
+const unsigned long UnlitProgram = glGetProgram("3d unlit");
+const unsigned long LitProgram = glGetProgram("3d pointlit");
+const unsigned long LightTexture = glGetTexture("global/lightramp");
+const unsigned long BlackTexture = glGetTexture("global/black");
+const unsigned long WhiteTexture = glGetTexture("global/white");
 
 u32 glAllocMatrix();
 void glSetMatrix(u32 matrix, const nlMatrix4& m);
-u8 glViewAttachPacket(eGLView view, const glModelPacket* pPacket);
+
+static inline void ApplySkinModelTextureLighting(glModelPacket* pDup)
+{
+    pDup->state.texconfig |= GLTT_BumpLocal_bit;
+    pDup->state.texture[5] = LightTexture;
+}
 
 /**
  * Offset/Address/Size: 0x0 | 0x80122D5C | size: 0x60
@@ -24,7 +33,6 @@ DrawableSkinModel::~DrawableSkinModel()
 
 /**
  * Offset/Address/Size: 0x60 | 0x80122DBC | size: 0x170
- * TODO: 99.57% match - r4/r5/r0 register allocation swap in GLTT_BumpLocal_bit/LightTexture block
  */
 void DrawableSkinModel::Draw()
 {
@@ -45,7 +53,7 @@ void DrawableSkinModel::Draw()
         void* pLightData;
         if (g_bSkinModelTextureLighting)
         {
-            pLightData = m_pWorldContext->m_pIntensityPerm;
+            pLightData = m_pWorldContext->m_pIntensityData;
         }
         else
         {
@@ -81,9 +89,7 @@ void DrawableSkinModel::Draw()
 
         if (g_bSkinModelTextureLighting)
         {
-            u32 lightTex = LightTexture;
-            pDup->state.texconfig |= GLTT_BumpLocal_bit;
-            pDup->state.texture[5] = lightTex;
+            ApplySkinModelTextureLighting(pDup);
         }
 
         glViewAttachPacket((eGLView)6, pDup);

@@ -8,13 +8,13 @@ class WorldAnimController;
 class DrawableSkinModel : public DrawableObject
 {
 public:
-    ~DrawableSkinModel();
+    /* 0x08 */ virtual ~DrawableSkinModel();
     /* 0x10 */ virtual void Draw();
-    void SetAnimation(const char*, unsigned long);
-    void SetAnimationSpeed(float);
-    float GetAnimationTime();
-    void SetAnimationTime(float);
-    float GetAnimationDuration();
+    /* 0x14 */ virtual void SetAnimation(const char*, unsigned long);
+    /* 0x18 */ virtual void SetAnimationSpeed(float);
+    /* 0x1C */ virtual float GetAnimationTime();
+    /* 0x20 */ virtual void SetAnimationTime(float);
+    /* 0x24 */ virtual float GetAnimationDuration();
 
     /* 0x9C */ void* m_pField9C;
     /* 0xA0 */ void* m_pFieldA0;

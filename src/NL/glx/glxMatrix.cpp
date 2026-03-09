@@ -46,62 +46,95 @@ void glxCopyMatrix(float (&arg0)[4][4], const nlMatrix4& arg1)
  */
 void glplatMatrixLookAt(nlMatrix4& arg0, const nlVector3& arg1, const nlVector3& arg2, const nlVector3& arg3)
 {
-    // Calculate the forward vector (from eye to target)
-    float dx = arg1.f.x - arg2.f.x;
-    float dy = arg1.f.y - arg2.f.y;
-    float dz = arg1.f.z - arg2.f.z;
+    float ay = arg1.f.y;
+    float by = arg2.f.y;
+    float ax = arg1.f.x;
+    float f26 = ay - by;
+    float bx = arg2.f.x;
+    float az = arg1.f.z;
+    float f27 = ax - bx;
+    float bz = arg2.f.z;
+    float f0 = f26 * f26;
+    float f28 = az - bz;
 
-    // Normalize the forward vector
-    float length = nlRecipSqrt(dx * dx + dy * dy + dz * dz, true);
-    float forward_x = length * dx;
-    float forward_y = length * dy;
-    float forward_z = length * dz;
+    float f1 = nlRecipSqrt(f28 * f28 + (f27 * f27 + f0), true);
+    float f31 = f1 * f27;
+    float upz = arg3.f.z;
+    float upy = arg3.f.y;
+    float f30 = f1 * f26;
+    float upx = arg3.f.x;
+    float f29 = f1 * f28;
 
-    // Calculate the right vector using cross product of up and forward
-    float up_x = arg3.f.x;
-    float up_y = arg3.f.y;
-    float up_z = arg3.f.z;
+    float negUpx = -upx;
+    float fA = upz * f31;
+    float fB = upz * f30;
+    float fC = upy * f31;
+    f27 = negUpx * f29 + fA;
+    f26 = upy * f29 - fB;
+    f28 = upx * f30 - fC;
 
-    // Cross product: right = up × forward
-    float right_x = up_y * forward_z - up_z * forward_y;
-    float right_y = up_z * forward_x - up_x * forward_z;
-    float right_z = up_x * forward_y - up_y * forward_x;
+    f1 = nlRecipSqrt(f28 * f28 + (f26 * f26 + f27 * f27), true);
+    float f12 = f1 * f27;
+    float eyeY = arg1.f.y;
+    float f11 = f1 * f26;
+    float eyeX = arg1.f.x;
+    float f2 = f30 * eyeY;
+    float eyeZ = arg1.f.z;
+    float f00 = f12 * eyeY;
 
-    // Normalize the right vector
-    float right_length = nlRecipSqrt(right_x * right_x + right_y * right_y + right_z * right_z, true);
-    right_x *= right_length;
-    right_y *= right_length;
-    right_z *= right_length;
+    arg0.m[0][0] = f11;
 
-    // Calculate the up vector using cross product of forward and right
-    float up_new_x = forward_y * right_z - forward_z * right_y;
-    float up_new_y = forward_z * right_x - forward_x * right_z;
-    float up_new_z = forward_x * right_y - forward_y * right_x;
+    float f13 = f1 * f28;
+    float zero = 0.0f;
+    float f8 = -f31;
 
-    // Build the look-at matrix (transposed for this implementation)
-    // Row 0: right vector
-    arg0.m[0][0] = right_x;
-    arg0.m[0][1] = right_y;
-    arg0.m[0][2] = right_z;
-    arg0.m[0][3] = 0.0f;
+    arg0.m[1][0] = f12;
 
-    // Row 1: up vector
-    arg0.m[1][0] = up_new_x;
-    arg0.m[1][1] = up_new_y;
-    arg0.m[1][2] = up_new_z;
-    arg0.m[1][3] = 0.0f;
+    float f4 = f29 * f11;
 
-    // Row 2: forward vector (negated for look-at)
-    arg0.m[2][0] = -forward_x;
-    arg0.m[2][1] = -forward_y;
-    arg0.m[2][2] = -forward_z;
-    arg0.m[2][3] = 0.0f;
+    arg0.m[2][0] = f13;
 
-    // Row 3: translation (negative dot product with eye position)
-    arg0.m[3][0] = -(right_x * arg1.f.x + right_y * arg1.f.y + right_z * arg1.f.z);
-    arg0.m[3][1] = -(up_new_x * arg1.f.x + up_new_y * arg1.f.y + up_new_z * arg1.f.z);
-    arg0.m[3][2] = -(-forward_x * arg1.f.x - forward_y * arg1.f.y - forward_z * arg1.f.z);
-    arg0.m[3][3] = 1.0f;
+    float f3 = f11 * eyeX + f00;
+    float one = 1.0f;
+    float f9 = f29 * f12;
+    float f10 = f8 * f13 + f4;
+    f4 = f13 * eyeZ + f3;
+    f8 = f30 * f11;
+    f9 = f30 * f13 - f9;
+    f3 = f10 * eyeY;
+    f4 = -f4;
+    float f5 = f31 * f12 - f8;
+    f3 = f9 * eyeX + f3;
+
+    arg0.m[3][0] = f4;
+
+    f2 = f31 * eyeX + f2;
+
+    arg0.m[0][1] = f9;
+
+    f3 = f5 * eyeZ + f3;
+    f2 = f29 * eyeZ + f2;
+
+    arg0.m[1][1] = f10;
+
+    f3 = -f3;
+
+    arg0.m[2][1] = f5;
+
+    f2 = -f2;
+
+    arg0.m[3][1] = f3;
+    arg0.m[0][2] = f31;
+    arg0.m[1][2] = f30;
+    arg0.m[2][2] = f29;
+    arg0.m[3][2] = f2;
+    arg0.m[0][3] = zero;
+    arg0.m[1][3] = zero;
+    arg0.m[2][3] = zero;
+    arg0.m[3][3] = one;
+
+    // TODO: 93.0% match - remaining diffs are f26/f27 swap in initial forward normalization and
+    // downstream right/up register-allocation mismatches (instruction shapes match, registers differ).
 }
 
 /**

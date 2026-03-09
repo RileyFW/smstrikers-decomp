@@ -37,14 +37,15 @@ float nlRecipSqrt(float, bool);
 
 void dNormalize3(dVector3 a)
 {
-    dReal a0, a1, a2, aa0, aa1, aa2, l;
+    // TODO: 99.8% match - initial dFabs/frsp staging still differs (f1/f2/f3).
+    dReal aa0, aa1, aa2, a0, a1, a2, l;
     dAASSERT(a);
     a0 = a[0];
     a1 = a[1];
     a2 = a[2];
     aa0 = dFabs(a0);
-    aa1 = dFabs(a1);
     aa2 = dFabs(a2);
+    aa1 = dFabs(a1);
     if (aa1 > aa0)
     {
         if (aa2 > aa1)

@@ -2,7 +2,7 @@
 #include "NL/nlConfig.h"
 #include "NL/nlLexicalCast.h"
 
-SlotPool<Replay::Frame> Replay::mSlotPool;
+SlotPool<Replay::Frame> Replay::Frame::mSlotPool;
 
 namespace
 {
@@ -17,16 +17,16 @@ Replay::Replay(char* memory, int memorySize, int maxFrameSize)
     Frame* frame = nullptr;
 
     // Allocate a Frame from the slot pool if none available
-    if (mSlotPool.m_FreeList == nullptr)
+    if (Frame::mSlotPool.m_FreeList == nullptr)
     {
-        SlotPoolBase::BaseAddNewBlock(&mSlotPool, sizeof(Frame));
+        SlotPoolBase::BaseAddNewBlock(&Frame::mSlotPool, sizeof(Frame));
     }
 
     // Get a Frame from the free list
-    if (mSlotPool.m_FreeList != nullptr)
+    if (Frame::mSlotPool.m_FreeList != nullptr)
     {
-        frame = (Frame*)mSlotPool.m_FreeList;
-        mSlotPool.m_FreeList = (SlotPoolEntry*)frame->mNext;
+        frame = (Frame*)Frame::mSlotPool.m_FreeList;
+        Frame::mSlotPool.m_FreeList = (SlotPoolEntry*)frame->mNext;
     }
 
     // Initialize the Frame if we got one
@@ -133,7 +133,7 @@ float Replay::TimeOfLastOccurence(unsigned int events) const
 
 /**
  * Offset/Address/Size: 0x49C | 0x80213D48 | size: 0x17C
- * TODO: 98.53% match - r4/r5 register swap for mFree->mBegin/mSize loads
+ * TODO: 98.63% match - r4/r5 register swap for mFree->mBegin/mSize loads
  * in merge section. Likely -inline deferred vs -inline auto register
  * allocation difference.
  */
@@ -168,8 +168,8 @@ void Replay::NewFrame()
                 mFree->mSize += nextFrame->mSize;
                 mFree->mNext = nextFrame->mNext;
                 mFree->mReelIdx = -1;
-                ((SlotPoolEntry*)nextFrame)->m_next = mSlotPool.m_FreeList;
-                mSlotPool.m_FreeList = (SlotPoolEntry*)nextFrame;
+                ((SlotPoolEntry*)nextFrame)->m_next = Frame::mSlotPool.m_FreeList;
+                Frame::mSlotPool.m_FreeList = (SlotPoolEntry*)nextFrame;
             }
             else
             {

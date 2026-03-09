@@ -1543,6 +1543,8 @@ float FarToTheirGoalie(cPlayer* pPlayer)
 
 /**
  * Offset/Address/Size: 0x1D08 | 0x80080790 | size: 0x170
+ * TODO: 98.15% match - MWCC still rotates callee-saved mapping for
+ *       score/zero (f30/f31) and base/invert/counters (r25/r26/r30/r31).
  */
 float CloseToSideline(const nlVector3& v3Position, const nlVector2* vDistanceConfidence, bool bInvert)
 {
@@ -1561,14 +1563,14 @@ float CloseToSideline(const nlVector3& v3Position, const nlVector2* vDistanceCon
         fScore = 0.0f;
     }
 
-    int i = 0;
     u32 posU0 = v3Position.as_u32[0];
-    f32 fZero = 0.0f;
     u32 posU1 = v3Position.as_u32[1];
     u32 posU2 = v3Position.as_u32[2];
-    s32 offset = i;
-    f32 posX = v3Position.f.x;
     const u8* pBase = (const u8*)cField::mSidelines;
+    s32 i = 0;
+    s32 offset = i;
+    f32 fZero = 0.0f;
+    f32 posX = v3Position.f.x;
     f32 posY = v3Position.f.y;
 
     for (; i < 4; i++, offset += 0xC)

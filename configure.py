@@ -1104,8 +1104,8 @@ config.libs = [
             Object(NonMatching, "Game/Drawable/DrawableBall.cpp"),
             Object(NonMatching, "Game/Drawable/DrawablePowerup.cpp"),
             Object(NonMatching, "Game/Drawable/DrawableExplosionFragment.cpp"),
-            Object(NonMatching, "Game/Drawable/DrawableTmModel.cpp", extra_cflags=["-inline deferred"]),
-            Object(NonMatching, "Game/Drawable/DrawableSkinModel.cpp"),
+            # Object(Matching, "Game/Drawable/DrawableTmModel.cpp", extra_cflags=["-inline deferred"]),
+            # Object(NonMatching, "Game/Drawable/DrawableSkinModel.cpp"),
 
             # Interpreter
             Object(NonMatching, "Game/InterpreterCore.cpp", extra_cflags=["-inline deferred"]),
@@ -1364,6 +1364,8 @@ config.libs = [
         [
             Object(Matching, "Game/Drawable/DrawableObj.cpp", extra_cflags=["-inline deferred"]),
             Object(NonMatching, "Game/Drawable/DrawableModel.cpp", extra_cflags=["-inline deferred"]),
+            Object(NonMatching, "Game/Drawable/DrawableTmModel.cpp", extra_cflags=["-inline deferred"]),
+            Object(Matching, "Game/Drawable/DrawableSkinModel.cpp"),
         ],
     ),
 

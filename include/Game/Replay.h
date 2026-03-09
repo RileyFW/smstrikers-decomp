@@ -195,6 +195,7 @@ public:
         /* 0x10 */ unsigned int mEvents;
         /* 0x14 */ int mReelIdx;
         /* 0x18 */ Frame* mNext;
+        static SlotPool<Frame> mSlotPool;
     }; // total size: 0x1C
 
     struct Reel
@@ -236,8 +237,6 @@ public:
     /* 0x40 */ int mMaxFrameSize;       // offset 0x50, size 0x4
     /* 0x44 */ int mActualMaxFrameSize; // offset 0x54, size 0x4
     /* 0x48 */ Reel* mHighlights[3];    // offset 0x58, size 0xC
-
-    static SlotPool<Frame> mSlotPool;
 
 }; // total size: 0x64
 
