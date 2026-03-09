@@ -53,9 +53,6 @@ void nlPrintf(const char*, ...);
 // {
 // }
 
-/**
- * Offset/Address/Size: 0x824 | 0x801CB364 | size: 0xE0
- */
 static inline void DoCardRemovedCleanup(long channel)
 {
     unsigned long i = 0;
@@ -88,6 +85,9 @@ static inline void DoCardRemovedCleanup(long channel)
     }
 }
 
+/**
+ * Offset/Address/Size: 0x824 | 0x801CB364 | size: 0xE0
+ */
 void MemCard::CardRemovedCB(long channel, long result)
 {
     DoCardRemovedCleanup(channel);
@@ -147,8 +147,46 @@ void MemCard::MountDoneCB(long channel, long result)
     }
 }
 
+static inline EntryLookup<MemCard::MC_FILE>* FindCreateFileLookup(MemCard* self, MemCard::MC_FILE* pFile)
+{
+    long byteOff = 0;
+    long i = byteOff;
+    while ((unsigned long)i < self->m_OpenFiles.m_EntryCount)
+    {
+        if (self->m_OpenFiles.m_pEntryLookup[byteOff >> 3].pEntry == pFile)
+        {
+            return &self->m_OpenFiles.m_pEntryLookup[i];
+        }
+        byteOff += 8;
+        i++;
+    }
+    return NULL;
+}
+
+static inline void ShiftCreateFileLookup(MemCard* self, EntryLookup<MemCard::MC_FILE>* pFoundEntry)
+{
+    unsigned long total = self->m_OpenFiles.m_EntryCount;
+    long idx = (pFoundEntry - self->m_OpenFiles.m_pEntryLookup);
+
+    while ((unsigned long)idx != total)
+    {
+        long next = idx + 1;
+        EntryLookup<MemCard::MC_FILE>* src = &self->m_OpenFiles.m_pEntryLookup[next];
+        EntryLookup<MemCard::MC_FILE>* dst = &self->m_OpenFiles.m_pEntryLookup[idx];
+        idx = next;
+        unsigned long id = src->Id;
+        MemCard::MC_FILE* entry = src->pEntry;
+        dst->pEntry = entry;
+        dst->Id = id;
+    }
+
+    self->m_OpenFiles.m_EntryCount = self->m_OpenFiles.m_EntryCount - 1;
+}
+
 /**
  * Offset/Address/Size: 0x540 | 0x801CB080 | size: 0x1A0
+ * TODO: 99.23% match - lookup loop keeps i/byteOff in r5/r3 instead of
+ * target r3/r5, and entry copy uses r3/r4/r0 register permutation.
  */
 void MemCard::CreateFileDoneCB(long channel, long result)
 {
@@ -160,24 +198,9 @@ void MemCard::CreateFileDoneCB(long channel, long result)
         MC_FILE* pFile = card->m_pFileCB;
         if (pFile != NULL)
         {
-            EntryLookup<MC_FILE>* pFoundEntry = NULL;
-            for (unsigned long i = 0; i < card->m_OpenFiles.m_EntryCount; i++)
-            {
-                if (card->m_OpenFiles.m_pEntryLookup[i].pEntry == pFile)
-                {
-                    pFoundEntry = &card->m_OpenFiles.m_pEntryLookup[i];
-                    break;
-                }
-            }
-
+            EntryLookup<MC_FILE>* pFoundEntry = FindCreateFileLookup(card, pFile);
             card->m_OpenFiles.FreeEntry(pFile);
-
-            unsigned long idx = pFoundEntry - card->m_OpenFiles.m_pEntryLookup;
-            for (; idx != card->m_OpenFiles.m_EntryCount; idx++)
-            {
-                card->m_OpenFiles.m_pEntryLookup[idx] = card->m_OpenFiles.m_pEntryLookup[idx + 1];
-            }
-            card->m_OpenFiles.m_EntryCount--;
+            ShiftCreateFileLookup(card, pFoundEntry);
         }
         card->m_pFileCB = NULL;
     }

@@ -717,7 +717,7 @@ config.libs = [
             Object(NonMatching, "PowerPC_EABI_Support/MSL/MSL_C/MSL_Common/string.c"),
             Object(NonMatching, "PowerPC_EABI_Support/MSL/MSL_C/MSL_Common/strtold.c"),
             Object(NonMatching, "PowerPC_EABI_Support/MSL/MSL_C/MSL_Common/strtoul.c"),
-            Object(NonMatching, "PowerPC_EABI_Support/MSL/MSL_C/MSL_Common/char_io.c"),
+            Object(Matching, "PowerPC_EABI_Support/MSL/MSL_C/MSL_Common/char_io.c"),
             Object(Matching, "PowerPC_EABI_Support/MSL/MSL_C/MSL_Common/wchar_io.c"),
             Object(Matching, "PowerPC_EABI_Support/MSL/MSL_C/MSL_Common/float.c"),
             Object(Matching, "PowerPC_EABI_Support/MSL/MSL_C/MSL_Common/signal.c"),
