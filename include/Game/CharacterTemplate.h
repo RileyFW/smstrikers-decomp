@@ -63,6 +63,8 @@ void CharacterLoadingGuts(tCharacterTemplate*, const tCharacterTemplateInfo&, eC
 bool IsCaptain(eCharacterClass);
 char* GetCharacterName(eCharacterClass cc);
 
+extern cCharacter* g_pCharacters[10];
+
 // void LexicalCast<bool, const char*>(const char* const&);
 // void LexicalCast<bool, float>(const float&);
 // void LexicalCast<bool, int>(const int&);

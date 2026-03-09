@@ -10,15 +10,10 @@ static int mti = 0x271;
  */
 void seedMT(unsigned long seed)
 {
-    int i;
-
     mt[0] = seed;
-    mti = 1;
 
-    for (i = 1; i < 624; ++i)
+    for (mti = 1; mti < 624; ++mti)
     {
-        mt[i] = 1812433253UL * (mt[i - 1] ^ (mt[i - 1] >> 30)) + i;
+        mt[mti] = 1812433253UL * (mt[mti - 1] ^ (mt[mti - 1] >> 30)) + mti;
     }
-
-    mti = i;
 }

@@ -227,7 +227,7 @@ void ScreenTransitionManager::DeleteAllTransitions()
  * Offset/Address/Size: 0x5A4 | 0x80205694 | size: 0x178
  */
 /**
- * TODO: 96.0% match - remaining r29/r30 swap between this and nameData in MWCC register allocation.
+ * TODO: 96.33% match - this/nameData register allocation is fixed, but MWCC hoists a m_Transitions pointer addi and keeps cleanup on r30 instead of target r29.
  */
 void ScreenTransitionManager::AddTransitionToMap(char* name, ScreenTransition* pTransition)
 {
@@ -242,6 +242,7 @@ void ScreenTransitionManager::AddTransitionToMap(char* name, ScreenTransition* p
         m_TransitionMap.m_NumElements++;
     }
 
+    Vector<BasicString<char, Detail::TempStringAllocator>, DefaultAllocator>* transitions = &m_Transitions;
     BasicStringInternal* nameData = (BasicStringInternal*)nlMalloc(16, 8, true);
 
     if (nameData != nullptr)
@@ -273,7 +274,7 @@ void ScreenTransitionManager::AddTransitionToMap(char* name, ScreenTransition* p
     }
 
     nameStringData = nameData;
-    m_Transitions.push_back(*(BasicString<char, Detail::TempStringAllocator>*)&nameStringData);
+    transitions->push_back(*(BasicString<char, Detail::TempStringAllocator>*)&nameStringData);
 
     nameData = nameStringData;
     if (nameData != nullptr)

@@ -418,6 +418,8 @@ void cCharacterSFX::StopPlayingAllRandomCharDialogue()
 
 /**
  * Offset/Address/Size: 0x4B8 | 0x8014C85C | size: 0x148
+ * TODO: 99.45% match - r6/r7 register allocation differs in the footstep flag
+ *       clearing loop.
  */
 int cCharacterSFX::PlayRandomWalkFootstep(float, bool bAvoidCurrent)
 {
@@ -437,17 +439,18 @@ int cCharacterSFX::PlayRandomWalkFootstep(float, bool bAvoidCurrent)
     attrs.me_ClassType = 1;
 
     s32 randomIndex = nlRandom(5, &nlDefaultSeed);
-    Audio::eCharSFX sfxType = charFootstepSFX[1][randomIndex];
+    Audio::eCharSFX* walkSFX = charFootstepSFX[1];
+    Audio::eCharSFX sfxType = walkSFX[randomIndex];
 
     if (bAvoidCurrent != 0)
     {
         if (mCharSFX[sfxType].m_unk_0x40 != 0)
         {
-            sfxType = charFootstepSFX[1][(randomIndex + 1) % 5];
+            sfxType = walkSFX[(randomIndex + 1) % 5];
         }
     }
 
-    for (int i = (int)charFootstepSFX[1][0]; i < (int)charFootstepSFX[1][2]; i++)
+    for (int i = walkSFX[0]; i < (int)charFootstepSFX[1][2]; i++)
     {
         mCharSFX[i].m_unk_0x40 = false;
     }

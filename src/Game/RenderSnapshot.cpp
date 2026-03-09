@@ -5,6 +5,7 @@
 #include "Game/BasicStadium.h"
 #include "Game/Render/NPCManager.h"
 #include "Game/Camera/CameraMan.h"
+#include "Game/CharacterTemplate.h"
 #include "Game/Render/NetMesh.h"
 #include "Game/Physics/PhysicsNet.h"
 #include "Game/Goalie.h"
@@ -17,10 +18,8 @@
 
 #include "Game/ReplaySpecializations.h"
 
-extern cCharacter* g_pCharacters[10];
 extern bool g_GoalLightEnabled;
 extern float g_AllActorsHidden;
-extern GLInventory glInventory;
 extern f32 g_fFixedUpdateTick;
 
 /**

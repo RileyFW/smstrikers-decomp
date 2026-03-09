@@ -9,22 +9,14 @@ nlVector3_ ZeroVector3 = { 0.0f, 0.0f, 0.0f };
  */
 void FEAnimation::Update(float arg0)
 {
-    // f32 sp18;
-    // f32 sp14;
-    // f32 sp10;
-    // f32 spC;
-
-    float sp18;
-    nlVector3 spC;
-
-    s32 sp8;
     f32 temp_f0;
     f32 temp_f2;
     f32 var_f31;
-    fAnimationKeyframe* temp_r3;
     fAnimationKeyframe* var_r31;
     u16 temp_r0;
     fAnimationKeyframe* temp_r9;
+    nlVector4 spC;
+    static const nlVector4 sZero = { 0.0f, 0.0f, 0.0f, 0.0f };
 
     temp_r0 = this->unk10;
     switch (temp_r0)
@@ -32,22 +24,29 @@ void FEAnimation::Update(float arg0)
     case 1:
         AnimateTargetAtTimeWithVector3(arg0);
         return;
+
     case 0:
-        temp_r3 = nlDLRingGetStart<fAnimationKeyframe>((fAnimationKeyframe*)this->m_DLRingHead);
-        var_r31 = temp_r3;
-        if (var_r31 != temp_r3->m_next)
+        var_r31 = nlDLRingGetStart<fAnimationKeyframe>((fAnimationKeyframe*)this->m_DLRingHead);
+        if (var_r31 != var_r31->m_next)
         {
             if (arg0 >= var_r31->unkC)
             {
-            loop_9:
+                goto loop_check;
+
+            loop_body:
+                var_r31 = var_r31->m_next;
+                if (nlDLRingIsEnd<fAnimationKeyframe>((fAnimationKeyframe*)this->m_DLRingHead, var_r31) != 0)
+                {
+                    goto loop_end;
+                }
+
+            loop_check:
                 if (arg0 > var_r31->unkC)
                 {
-                    var_r31 = var_r31->m_next;
-                    if (nlDLRingIsEnd<fAnimationKeyframe>((fAnimationKeyframe*)this->m_DLRingHead, var_r31) == 0)
-                    {
-                        goto loop_9;
-                    }
+                    goto loop_body;
                 }
+
+            loop_end:
                 temp_f2 = var_r31->unkC;
                 if (arg0 == temp_f2)
                 {
@@ -57,25 +56,18 @@ void FEAnimation::Update(float arg0)
                 {
                     temp_r9 = var_r31->m_prev;
                     temp_f0 = temp_r9->unkC;
-                    // Initialize with zeros (equivalent to @185 constants)
-                    spC = *(nlVector3*)&ZeroVector3;
-                    // spC = 0.0f;
-                    // sp10 = 0.0f;
-                    // sp14 = 0.0f;
-                    // sp18 = 0.0f;
-                    // spC = *(nlVector4*)&temp_r9->unk0;
-                    spC = temp_r9->unk0;
-                    sp18 = var_r31->unk0.f.x;
-                    // spC = temp_r9->unk0;
-                    // sp10 = temp_r9->unk4;
-                    // sp14 = temp_r9->unk8;
-                    // sp18 = var_r31->unk0;
+                    spC = sZero;
+                    spC.f.x = temp_r9->unk0.f.x;
+                    spC.f.y = temp_r9->unk0.f.y;
+                    spC.f.z = temp_r9->unk0.f.z;
+                    spC.f.w = var_r31->unk0.f.x;
                     var_f31 = nlBezier(&spC.f.x, 3, (arg0 - temp_f0) / (temp_f2 - temp_f0));
                 }
                 else
                 {
                     var_f31 = var_r31->unk0.f.x;
                 }
+
                 if ((var_f31 != -1.0f) && (this->unk14 == 6))
                 {
                     nlColour newColor = m_instance->GetAssetColour();

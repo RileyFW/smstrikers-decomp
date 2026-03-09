@@ -4,14 +4,14 @@
 #include "types.h"
 #include "NL/nlDLRing.h"
 
-
 // void nlDLRingGetEnd<FreeBlockList>(FreeBlockList*);
 // void nlDLRingGetStart<FreeBlockList>(FreeBlockList*);
 // void nlDLRingRemove<FreeBlockList>(FreeBlockList**, FreeBlockList*);
 // void nlDLRingAddStart<FreeBlockList>(FreeBlockList**, FreeBlockList*);
 // void nlDLRingInsert<FreeBlockList>(FreeBlockList**, FreeBlockList*, FreeBlockList*);
 
-struct FreeBlockList {
+struct FreeBlockList
+{
     /* 0x0 */ FreeBlockList* m_next;
     /* 0x4 */ FreeBlockList* m_prev;
     /* 0x8 */ u32 m_unk_0x08;
@@ -26,8 +26,11 @@ public:
     void* Allocate(unsigned long, unsigned int, bool);
     void Free(void*);
 
-    /* 0x0 */ FreeBlockList *m_free_block_list;
+    /* 0x0 */ FreeBlockList* m_free_block_list;
 };
+
+extern MemoryAllocator StandardAllocator;
+extern MemoryAllocator VirtualAllocator;
 
 class LargestFreeBlockCallback
 {
@@ -46,9 +49,8 @@ public:
 };
 
 // Template function declaration for nlWalkDLRing
-template<typename T, typename CallbackType>
+template <typename T, typename CallbackType>
 void nlWalkDLRing(T* head, CallbackType* callback, void (CallbackType::*callbackFunc)(T*));
-
 
 // class nlWalkDLRing<FreeBlockList, LargestFreeBlockCallback>(FreeBlockList*, LargestFreeBlockCallback*, void (LargestFreeBlockCallback
 // {
@@ -56,20 +58,17 @@ void nlWalkDLRing(T* head, CallbackType* callback, void (CallbackType::*callback
 //     void *)(FreeBlockList*));
 // };
 
-
 // class nlWalkDLRing<FreeBlockList, TotalFreeMemCallback>(FreeBlockList*, TotalFreeMemCallback*, void (TotalFreeMemCallback
 // {
 // public:
 //     void *)(FreeBlockList*));
 // };
 
-
 // class nlWalkRing<FreeBlockList, TotalFreeMemCallback>(FreeBlockList*, TotalFreeMemCallback*, void (TotalFreeMemCallback
 // {
 // public:
 //     void *)(FreeBlockList*));
 // };
-
 
 // class nlWalkRing<FreeBlockList, LargestFreeBlockCallback>(FreeBlockList*, LargestFreeBlockCallback*, void (LargestFreeBlockCallback
 // {

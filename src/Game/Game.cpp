@@ -632,13 +632,13 @@ void cGame::InitGameState(eGameState state)
     // Handle state-specific logic
     switch (state)
     {
-    case GS_PRE_GAME:
-        m_pGameClock->Stop();
-        break;
-
     case GS_KICKOFF:
         m_pGameClock->Stop();
         ResetForKickOff();
+        break;
+
+    case GS_PRE_GAME:
+        m_pGameClock->Stop();
         break;
 
     case GS_POST_GOAL:
@@ -662,6 +662,7 @@ void cGame::InitGameState(eGameState state)
         break;
 
     case GS_GAMEPLAY:
+    case GS_OVERTIME:
         m_pGameClock->Start();
         // Loop through all teams and fielders
         for (int i = 0; i < 2; i++)
@@ -677,10 +678,6 @@ void cGame::InitGameState(eGameState state)
                 }
             }
         }
-        break;
-
-    case GS_OVERTIME:
-        // No specific action for overtime
         break;
 
     default:

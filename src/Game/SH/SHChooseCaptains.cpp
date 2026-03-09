@@ -303,31 +303,31 @@ void ChooseCaptainsSceneV2::ResetForCHOOSESIDES()
         FindCompByRef byRef;
     };
 
-    volatile InlineHasher hB, hA;
-    volatile InlineHasher h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+    volatile unsigned long hB, hA;
+    volatile unsigned long h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
 
-    volatile InlineHasher hB2, hA2;
-    volatile InlineHasher h92, h82, h72, h62, h52, h42, h32, h22, h12, h02;
+    volatile unsigned long hB2, hA2;
+    volatile unsigned long h92, h82, h72, h62, h52, h42, h32, h22, h12, h02;
 
     FindUnion findComp;
     findComp.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
 
-    h0.m_Hash = 0;
-    h1.m_Hash = 0;
-    h2.m_Hash = 0;
-    h3.m_Hash = 0;
-    h4.m_Hash = 0;
-    h5.m_Hash = 0;
-    h6.m_Hash = 0;
-    h7.m_Hash = 0;
+    h0 = 0;
+    h1 = 0;
+    h2 = 0;
+    h3 = 0;
+    h4 = 0;
+    h5 = 0;
+    h6 = 0;
+    h7 = 0;
 
-    u32 hash = nlStringLowerHash("CHOOSE_SIDE");
-    h8.m_Hash = hash;
-    h9.m_Hash = hash;
+    unsigned long hash = nlStringLowerHash("CHOOSE_SIDE");
+    h8 = hash;
+    h9 = hash;
 
     hash = nlStringLowerHash("Layer");
-    hB.m_Hash = hash;
-    hA.m_Hash = hash;
+    hB = hash;
+    hA = hash;
 
     TLComponentInstance* comp = findComp.byRef(m_pFEPresentation->m_currentSlide, (InlineHasher&)hB, (InlineHasher&)h9, (InlineHasher&)h7, (InlineHasher&)h5, (InlineHasher&)h3, (InlineHasher&)h1);
 
@@ -340,22 +340,22 @@ void ChooseCaptainsSceneV2::ResetForCHOOSESIDES()
         FindUnion findComp2;
         findComp2.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
 
-        h02.m_Hash = 0;
-        h1.m_Hash = 0;
-        h22.m_Hash = 0;
-        h3.m_Hash = 0;
-        h42.m_Hash = 0;
-        h5.m_Hash = 0;
-        h62.m_Hash = 0;
-        h7.m_Hash = 0;
+        h02 = 0;
+        h1 = 0;
+        h22 = 0;
+        h3 = 0;
+        h42 = 0;
+        h5 = 0;
+        h62 = 0;
+        h7 = 0;
 
         hash = nlStringLowerHash("buttons");
-        h82.m_Hash = hash;
-        h92.m_Hash = hash;
+        h82 = hash;
+        h92 = hash;
 
         hash = nlStringLowerHash("Layer");
-        hB2.m_Hash = hash;
-        hA2.m_Hash = hash;
+        hB2 = hash;
+        hA2 = hash;
 
         TLComponentInstance* buttonsComp = findComp2.byRef(m_pFEPresentation->m_currentSlide, (InlineHasher&)hB2, (InlineHasher&)h92, (InlineHasher&)h7, (InlineHasher&)h5, (InlineHasher&)h3, (InlineHasher&)h1);
 

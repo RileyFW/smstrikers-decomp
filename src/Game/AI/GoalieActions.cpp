@@ -407,9 +407,18 @@ void Goalie::ActionSTSRecover(float deltaTime)
     }
 }
 
+static inline float SubtractPosX(const nlVector3& pos, float x)
+{
+    return pos.f.x - x;
+}
+
+static inline float SubtractPosY(const nlVector3& pos, const nlVector3& nav)
+{
+    return pos.f.y - nav.f.y;
+}
+
 /**
  * Offset/Address/Size: 0x19A0 | 0x8004FEDC | size: 0x178
- * TODO: regswaps still around nlATan2f....
  */
 void Goalie::ActionChipShotStumble(float deltaTime)
 {
@@ -450,7 +459,7 @@ void Goalie::ActionChipShotStumble(float deltaTime)
 
     if ((float)fabs(x) > (0.5f + (float)fabs(m_v3Position.f.x)) && m_pCurrentAnimController->m_fTime < 0.5f)
     {
-        m_aDesiredFacingDirection = (u16)(s32)(10430.378f * nlATan2f(m_v3Position.f.y - mv3NavTarget.f.y, m_v3Position.f.x - x));
+        m_aDesiredFacingDirection = (u16)(s32)(10430.378f * nlATan2f(SubtractPosY(m_v3Position, mv3NavTarget), SubtractPosX(m_v3Position, x)));
 
         GoalieTweaks* pTweaks = static_cast<GoalieTweaks*>(m_pTweaks);
         u16 newFacing = SeekDirection(

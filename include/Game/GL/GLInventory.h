@@ -219,4 +219,6 @@ public:
     /* 0x1C4 */ unsigned char m_bCreated;
 }; // total size: 0x1C8
 
+extern GLInventory glInventory;
+
 #endif // _GLINVENTORY_H_

@@ -47,8 +47,8 @@ public:
 class BlurManager
 {
 public:
-    void Shutdown();
-    void Update(float);
+    static void Shutdown();
+    static void Update(float);
     static void DestroyHandler(BlurHandler*, float);
     static BlurHandler* GetNewHandler(const char*, float, int, bool);
 
@@ -56,7 +56,8 @@ public:
     static BlurHandler* m_activeBlurHandler;
 };
 
-template<> void nlDeleteRing<BlurHandler>(BlurHandler** head);
+template <>
+void nlDeleteRing<BlurHandler>(BlurHandler** head);
 
 // class SlotPool<BlurHandler>
 // {

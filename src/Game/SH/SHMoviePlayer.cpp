@@ -8,12 +8,12 @@
 #include "Game/FE/feInput.h"
 #include "Game/FE/fePresentation.h"
 #include "Game/GameInfo.h"
+#include "Game/GameRenderTask.h"
 #include "Game/GameSceneManager.h"
 #include "Game/OverlayManager.h"
 #include "NL/gl/gl.h"
 #include "types.h"
 
-extern bool g_bRenderWorld;
 extern bool g_e3_Build;
 extern FEInput* g_pFEInput;
 
@@ -195,7 +195,8 @@ void LessonMoviePlayerScene::SceneCreated()
     typedef TLComponentInstance* (*FindComponentByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
     typedef TLComponentInstance* (*FindComponentByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
 
-    union {
+    union
+    {
         FindComponentByValue byValue;
         FindComponentByRef byRef;
     } findComponent;
@@ -227,7 +228,12 @@ void LessonMoviePlayerScene::SceneCreated()
 
     mButtonComponent.mButtonInstance = findComponent.byRef(
         m_pFEPresentation->m_currentSlide,
-        (InlineHasher&)hB, (InlineHasher&)h9, (InlineHasher&)h7, (InlineHasher&)h5, (InlineHasher&)h3, (InlineHasher&)h1);
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
 
     mButtonComponent.SetState(ButtonComponent::BS_B_ONLY);
 }

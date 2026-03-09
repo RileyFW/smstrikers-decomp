@@ -2,9 +2,10 @@
 #include <dolphin/mtx.h>
 #include <math.h>
 
-void PSQUATScale(const register Quaternion* q, register Quaternion* r, register f32 scale) {
+void PSQUATScale(const register Quaternion* q, register Quaternion* r, register f32 scale)
+{
     register f32 rxy, rzw;
-    
+
     asm {
         psq_l rxy, 0(q), 0, 0
         psq_l rzw, 8(q), 0, 0
@@ -15,7 +16,7 @@ void PSQUATScale(const register Quaternion* q, register Quaternion* r, register 
     }
 }
 
-f32 PSQUATDotProduct(const register Quaternion* p, const register Quaternion* q) 
+f32 PSQUATDotProduct(const register Quaternion* p, const register Quaternion* q)
 {
     register f32 pxy, pzw, qxy, qzw, dp;
 
@@ -32,41 +33,71 @@ f32 PSQUATDotProduct(const register Quaternion* p, const register Quaternion* q)
     return dp;
 }
 
+// Keep trig wrappers out of line to preserve C_QUATSlerp call structure.
+#pragma dont_inline on
+static f32 my_acosf(f32 x)
+{
+    return acosf(x);
+}
+static f32 my_sinf(f32 x)
+{
+    return sinf(x);
+}
+#pragma dont_inline reset
+
 void C_QUATSlerp(float t, const Quaternion* p, const Quaternion* q, Quaternion* r)
 {
-    // f32 dVar1;
-    // f32 dVar2;
+    f32 tp;
+    f32 tq;
     f32 theta;
     f32 sin_th;
-    f32 tq;
-    f32 tp;
     f32 cos_th;
-  
-    tq = 1.0;
-    cos_th = p->x * q->x + p->y * q->y + p->z * q->z + p->w * q->w;
+    f32 mul0;
+    f32 mul1;
 
-    if (cos_th < 0.0f) 
+    mul0 = p->x * q->x;
+    mul1 = p->y * q->y;
+    cos_th = mul0 + mul1;
+    mul0 = p->z * q->z;
+    cos_th = cos_th + mul0;
+    mul0 = p->w * q->w;
+    cos_th = cos_th + mul0;
+
+    tq = 1.0f;
+    if (cos_th < 0.0f)
     {
         cos_th = -cos_th;
         tq = -tq;
     }
 
-    if (0.99999f < cos_th) 
+    if (cos_th <= 0.99999f)
+    {
+        theta = my_acosf(cos_th);
+        sin_th = my_sinf(theta);
+        mul0 = my_sinf((1.0f - t) * theta);
+        tp = mul0 / sin_th;
+        mul0 = my_sinf(t * theta) / sin_th;
+        tq = tq * mul0;
+    }
+    else
     {
         tq = tq * t;
         tp = 1.0f - t;
     }
-    else 
-    {
-        theta = acosf(cos_th);
-        sin_th = sinf(theta);
-        tp = sinf((1.0f - t) * theta) / sin_th;
-        tq = tq * sinf(theta * t) / sin_th;
-    }
 
-  r->x = (tp * p->x) + (tq * q->x);
-  r->y = (tp * p->y) + (tq * q->y);
-  r->z = (tp * p->z) + (tq * q->z);
-  r->w = (tp * p->w) + (tq * q->w);
-  return;
+    mul0 = tp * p->x;
+    mul1 = tq * q->x;
+    r->x = mul0 + mul1;
+
+    mul0 = tp * p->y;
+    mul1 = tq * q->y;
+    r->y = mul0 + mul1;
+
+    mul0 = tp * p->z;
+    mul1 = tq * q->z;
+    r->z = mul0 + mul1;
+
+    mul0 = tp * p->w;
+    mul1 = tq * q->w;
+    r->w = mul0 + mul1;
 }

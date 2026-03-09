@@ -1574,7 +1574,6 @@ unsigned short Goalie::CalcBestSave(float fTime, const nlVector3& rTargetPos, co
  */
 float Goalie::CalcSaveParameters(float fTimeToContact, unsigned int uSaveType, bool bFromTakeoff, bool bFindFailSave)
 {
-    // float fTime = fTimeToContact;
     if (mbShouldMiss)
     {
         fTimeToContact += ((GoalieTweaks*)m_pTweaks)->fSaveMissDelay;
@@ -1602,12 +1601,14 @@ float Goalie::CalcSaveParameters(float fTimeToContact, unsigned int uSaveType, b
 
     const float blendFactor = (mpSaveData->mv3SavePos.f.x - mv3LocalContactPosition.f.x) / mv3LocalContactVelocity.f.x;
 
+    fTimeToContact += blendFactor;
+
     nlVec3Set(mv3LocalContactPosition,
         (blendFactor * mv3LocalContactVelocity.f.x) + mv3LocalContactPosition.f.x,
         (blendFactor * mv3LocalContactVelocity.f.y) + mv3LocalContactPosition.f.y,
         (blendFactor * mv3LocalContactVelocity.f.z) + mv3LocalContactPosition.f.z);
 
-    return fTimeToContact + blendFactor;
+    return fTimeToContact;
 }
 
 /**

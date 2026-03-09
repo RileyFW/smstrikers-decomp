@@ -55,21 +55,22 @@ void MakePerpendicularPlane(const nlVector3& v3Position, const nlVector3& v3Norm
 
 /**
  * Offset/Address/Size: 0x1204 | 0x80006CB0 | size: 0x150
- * TODO: 96.2% match - register renames for x-component loads (f3/f7/f6 vs f6/f3/f2 at 0x44-0x50)
- * which cascade into the if-block and post-nlRecipSqrt section.
- * dy/dx reuse pattern partially fixes first block; remaining diffs are MWCC register allocation.
+ * TODO: 97.3% match - x-component prologue register allocation still differs
+ * (target f3/f7/f6 vs current f6/f3/f2 around 0x44-0x74), which cascades into
+ * f9/f7 assignment differences in the post-nlRecipSqrt cone-side checks.
  */
 bool IsPointInCone(const nlVector3& v3Point, const nlVector3& v3Pivot, const nlVector3& v3Plane1, const nlVector3& v3Plane2)
 {
     f32 dy = v3Plane1.f.y;
     f32 dyLA = dy - v3Pivot.f.y;
     dy -= v3Point.f.y;
-    f32 dx = v3Plane1.f.x;
-    f32 dxLA = dx - v3Pivot.f.x;
-    dx -= v3Point.f.x;
+    f32 dyP = dy;
+    f32 x = v3Plane1.f.x;
+    f32 dxLA = x - v3Pivot.f.x;
+    f32 dxP = x - v3Point.f.x;
 
     f32 distSqA = dxLA * dxLA + dyLA * dyLA;
-    f32 distSqP = dx * dx + dy * dy;
+    f32 distSqP = dxP * dxP + dyP * dyP;
 
     if (distSqP < distSqA)
     {
@@ -77,18 +78,22 @@ bool IsPointInCone(const nlVector3& v3Point, const nlVector3& v3Pivot, const nlV
         f32 zeroVal = 0.0f;
         f32 dirY = v3Pivot.f.y - v3Point.f.y;
 
-        f32 lenSq = dirX * dirX;
         f32 perpY = -dirY;
-        lenSq += perpY * perpY;
+        f32 lenSq = perpY * perpY + dirX * dirX;
         f32 invLen = nlRecipSqrt(zeroVal + lenSq, true);
 
-        f32 normX = invLen * dirX;
-        f32 normY = invLen * perpY;
+        f32 dotApexY;
+        f32 normZ;
+        f32 dotLeftY;
+        f32 dotRightY;
 
-        f32 dotApexY = v3Pivot.f.y * normX;
-        f32 normZ = invLen * zeroVal;
-        f32 dotLeftY = v3Plane1.f.y * normX;
-        f32 dotRightY = v3Plane2.f.y * normX;
+        f32 normY = invLen * perpY;
+        f32 normX = invLen * dirX;
+
+        dotApexY = v3Pivot.f.y * normX;
+        normZ = invLen * zeroVal;
+        dotLeftY = v3Plane1.f.y * normX;
+        dotRightY = v3Plane2.f.y * normX;
 
         f32 dotApex = v3Pivot.f.x * normY + dotApexY;
         dotApex += v3Pivot.f.z * normZ;

@@ -35,4 +35,6 @@ public:
     /* 0x58 */ eGLView m_eView;
 }; // total size: 0x5C
 
+extern ShapeRender g_ShapeRenderer;
+
 #endif // _SHAPERENDER_H_

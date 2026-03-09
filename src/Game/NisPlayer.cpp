@@ -10,7 +10,6 @@
 #include "NL/nlString.h"
 #include "string.h"
 
-extern cCharacter* g_pCharacters[10];
 bool g_ForceDoubleBallTransition;
 
 // /**

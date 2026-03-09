@@ -181,66 +181,76 @@ void gl_ViewStartup()
 {
     u32 screenWidth;
     u32 screenHeight;
-    nlMatrix4* identityMatrix;
     glView* view;
     GLRenderList* renderList;
-    // glView* puVar6;
-    int iVar8;
+    s32 offset;
+    glView** viewSlot;
+    s32 i;
+    u32 identityMatrix;
+    bool* viewEnable;
 
     screenWidth = glGetScreenWidth();
     screenHeight = glGetScreenHeight();
-    identityMatrix = (nlMatrix4*)glGetIdentityMatrix();
-    iVar8 = 0;
+    identityMatrix = glGetIdentityMatrix();
+
+    i = 0;
+    offset = 0;
+    viewSlot = views;
+    viewEnable = gl_ViewEnable;
     do
     {
-        gl_ViewEnable[iVar8] = true;
+        *viewEnable = TRUE;
 
         view = (glView*)nlMalloc(0xFC, 8, FALSE);
         if (view != NULL)
         {
-            renderList = (GLRenderList*)nlMalloc(0x30, 8, FALSE);
-            if (renderList != NULL)
-            {
-                renderList = new (renderList) GLRenderList();
-            }
-
+            renderList = new (nlMalloc(0x30, 8, FALSE)) GLRenderList();
             view->renderList = renderList;
             view->m_preIterateCallback = NULL;
             view->m_postIterateCallback = NULL;
-            view->m_unk_0xEC = false;
-            view->m_depthClear = false;
+            view->m_unk_0xEC = FALSE;
+            view->m_depthClear = FALSE;
         }
 
-        views[iVar8] = view;
+        *viewSlot = view;
 
+        view = views[offset / 4];
         view->m_unk_0x00 = 0;
-        view->renderList->m_unk_0x04 = GLVSort_Texture;
+        renderList = view->renderList;
+        renderList->m_unk_0x04 = GLVSort_Texture;
+        view = views[offset / 4];
+        view->m_unk_0x14 = (nlMatrix4*)identityMatrix;
+        view->m_unk_0xE0 = TRUE;
+        glGetMatrix(identityMatrix, view->m_viewMatrix);
 
-        view->m_unk_0x14 = identityMatrix;
-        view->m_unk_0xE0 = 1;
+        view = views[offset / 4];
+        view->m_unk_0x18 = (nlMatrix4*)identityMatrix;
+        view->m_unk_0xE0 = TRUE;
+        glGetMatrix(identityMatrix, view->m_projectionMatrix);
 
-        glGetMatrix(*(u32*)identityMatrix, view->m_viewMatrix);
-
-        view->m_unk_0x18 = identityMatrix;
-        view->m_unk_0xE0 = 1;
-
-        glGetMatrix(*(u32*)identityMatrix, view->m_projectionMatrix);
-
+        view = views[offset / 4];
         view->m_target = GLTG_None;
-
         view->m_unk_0x04 = 0;
         view->m_unk_0x08 = 0;
         view->m_screenWidth = screenWidth;
         view->m_screenHeight = screenHeight;
 
+        view = views[offset / 4];
         view->m_filter = GLFilter_None;
+        view = views[offset / 4];
         view->m_filterSource = GLTG_None;
-        view->m_unk_0xEC = false;
-        view->m_depthClear = false;
-        view->renderList->m_unk_0x00 = iVar8;
+        view = views[offset / 4];
+        view->m_unk_0xEC = FALSE;
+        view = views[offset / 4];
+        view->m_depthClear = FALSE;
 
-        iVar8++;
-    } while (iVar8 < 0x22);
+        (*viewSlot)->renderList->m_unk_0x00 = i;
+
+        viewEnable++;
+        viewSlot++;
+        offset += 4;
+        i++;
+    } while (i < 0x22);
 }
 
 /**

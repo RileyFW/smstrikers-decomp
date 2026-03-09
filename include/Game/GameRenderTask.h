@@ -1,12 +1,15 @@
 #ifndef _GAMERENDERTASK_H_
 #define _GAMERENDERTASK_H_
 
+#include "NL/nlTask.h"
 
-class GameRenderTask
+class GameRenderTask : public nlTask
 {
 public:
-    const char* GetName();
-    void Run(float);
+    virtual void Run(float);
+    virtual const char* GetName();
 };
+
+extern bool g_bRenderWorld;
 
 #endif // _GAMERENDERTASK_H_

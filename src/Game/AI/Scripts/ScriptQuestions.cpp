@@ -407,6 +407,8 @@ float UserControlled(cFielder* pFielder)
 
 /**
  * Offset/Address/Size: 0x5838 | 0x800842C0 | size: 0x168
+ * TODO: 98.04% match - remaining diffs are GetClosestPoint temporary stack slot
+ * ordering (0x10/0x1C) and float register allocation around second distance calc.
  */
 float InPassingLane(cFielder* pFielder)
 {
@@ -426,26 +428,27 @@ float InPassingLane(cFielder* pFielder)
         return 0.0f;
     }
 
-    cPlayer* temp_r31 = g_pScriptBall->m_pPassTarget;
-    if (g_pScriptBall->m_pPrevOwner == NULL || temp_r31 == NULL)
+    cPlayer* pPassingTarget = g_pScriptBall->m_pPassTarget;
+    if (g_pScriptBall->m_pPrevOwner == NULL || pPassingTarget == NULL)
     {
         return 0.0f;
     }
 
     nlPolar polar;
-    // nlVector3 closestPoint;
-
     nlCartesianToPolar(polar, g_pScriptBall->m_v3Velocity.f.x, g_pScriptBall->m_v3Velocity.f.y);
     float fVelocityMagnitude = polar.r;
-    nlVector3 closestPoint = GetClosestPointOnLineABFromPointC(g_pScriptBall->m_v3Position, pPassTarget->m_v3Position, temp_r31->m_v3Position);
 
+    nlVector3 closestPoint = GetClosestPointOnLineABFromPointC(g_pScriptBall->m_v3Position, pPassingTarget->m_v3Position, pFielder->m_v3Position);
+
+    float fScaledDistance;
+    float fClosestY = closestPoint.f.y;
+    float dy1 = g_pScriptBall->m_v3Position.f.y - fClosestY;
     float dx1 = g_pScriptBall->m_v3Position.f.x - closestPoint.f.x;
-    float dy1 = g_pScriptBall->m_v3Position.f.y - closestPoint.f.y;
-    float fScaledDistance = (nlSqrt(dx1 * dx1 + dy1 * dy1, true) / fVelocityMagnitude) * pFielder->m_pTweaks->fRunningSpeed;
+    fScaledDistance = (nlSqrt(dx1 * dx1 + dy1 * dy1, true) / fVelocityMagnitude) * pFielder->m_pTweaks->fRunningSpeed;
 
+    float dy2 = pFielder->m_v3Position.f.y - fClosestY;
     float dx2 = pFielder->m_v3Position.f.x - closestPoint.f.x;
-    float dy2 = pFielder->m_v3Position.f.y - closestPoint.f.y;
-    return NormalizeVal(nlSqrt(dx2 * dx2 + dy2 * dy2, true), fScaledDistance + g_pGame->m_pGameTweaks->fShellExplodeChance, fScaledDistance);
+    return NormalizeVal(nlSqrt(dx2 * dx2 + dy2 * dy2, true), fScaledDistance + ((GameTweaks*)g_pGame->m_pFuzzyTweaks)->fShellExplodeChance, fScaledDistance);
 }
 
 /**
@@ -1023,7 +1026,6 @@ float LikelyToScore(cFielder* pFielder)
  */
 float GoalieOutOfPosition(cFielder* pFielder)
 {
-    // float halfNetWidth;
     nlVector3 goalieNetPos;
     cPlayer* pGoalie;
 
@@ -1033,16 +1035,16 @@ float GoalieOutOfPosition(cFielder* pFielder)
     }
 
     pGoalie = pFielder->m_pTeam->GetOtherTeam()->GetGoalie();
-    const float halfNetWidth = 0.5f * cNet::m_fNetWidth;
-
+    float halfNetWidth = 0.5f * cNet::m_fNetWidth;
     goalieNetPos = pGoalie->m_v3Position;
     goalieNetPos.f.x = pGoalie->m_pTeam->m_pNet->m_baseLocation.f.x;
 
-    if (goalieNetPos.f.y < -halfNetWidth)
+    float goalieY = goalieNetPos.f.y;
+    if (goalieY < -halfNetWidth)
     {
         goalieNetPos.f.y = -halfNetWidth;
     }
-    else if (goalieNetPos.f.y > halfNetWidth)
+    else if (goalieY > halfNetWidth)
     {
         goalieNetPos.f.y = halfNetWidth;
     }
@@ -1057,12 +1059,12 @@ float GoalieOutOfPosition(cFielder* pFielder)
     float dy2 = pGoalie->m_v3Position.f.y - goalieNetPos.f.y;
     float goalieDistance = nlSqrt(dx2 * dx2 + dy2 * dy2, true);
 
-    const double Epsilon = 0.0;
-    if ((double)fielderDistance <= Epsilon)
+    if (!((double)fielderDistance > 0.0))
     {
         fielderDistance = 0.1f;
     }
-    if ((double)goalieDistance <= Epsilon)
+
+    if (!((double)goalieDistance > 0.0))
     {
         goalieDistance = 0.1f;
     }

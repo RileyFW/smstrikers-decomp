@@ -11,7 +11,7 @@ public:
     virtual void Run(float dt);
     virtual const char* GetName();
 
-    void DecrementFrameLock(float);
+    static void DecrementFrameLock(float);
     static float GetPhysicsUpdateTick();
 
     FixedUpdateTask();

@@ -32,7 +32,6 @@ extern cWorldSFX gCrowdSFX;
 extern cWorldSFX gStadGenSFX;
 } // namespace Audio
 
-extern cCharacter* g_pCharacters[10];
 extern cTeam* g_pTeams[2] __attribute__((section(".data")));
 
 /**

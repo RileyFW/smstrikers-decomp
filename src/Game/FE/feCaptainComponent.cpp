@@ -514,7 +514,7 @@ void IChooseCaptain::SetupCaptainComponent(TLComponentInstance* compinstance, in
 
 /**
  * Offset/Address/Size: 0x70C | 0x800BE0A8 | size: 0x184
- * TODO: 93.7% match - r30/r31 allocation remains swapped across the sidekick index/homeaway offset path and source texture pointer lifetime.
+ * TODO: 94.4% match - r30/r31 allocation remains swapped across the sidekick index/homeaway offset path and source texture pointer lifetime.
  */
 void IChooseCaptain::StartSidekickMiniHead(int homeaway, eSidekickID sidekick)
 {
@@ -565,8 +565,8 @@ void IChooseCaptain::StartSidekickMiniHead(int homeaway, eSidekickID sidekick)
     TLComponentInstance* sourcecomp = mSidekickGridComponents[homeaway]->mParentComponent;
 
     h0.m_Hash = 0;
-    h1.m_Hash = 0;
     h2.m_Hash = 0;
+    h1.m_Hash = 0;
     h3.m_Hash = 0;
     h4.m_Hash = 0;
     h5.m_Hash = 0;
@@ -782,8 +782,8 @@ void IChooseCaptain::PushPlayer(eFEINPUT_PAD pad, int side)
 
 /**
  * Offset/Address/Size: 0x1DC | 0x800BDB78 | size: 0x15C
- * TODO: 96.1% match - r0/r4 register swap for mIsSinglePlayerInput=false store,
- *       else entry uses li r3,0/li r4,0 instead of mr r3,r4 (MWCC register reuse)
+ * TODO: 98.2% match - mIsSinglePlayerInput=false still stores from r0 (target uses r4),
+ *       side-count else entry still emits lbz reload before mr r3,r4
  */
 void IChooseCaptain::PopPlayer(eFEINPUT_PAD pad)
 {
@@ -813,8 +813,8 @@ void IChooseCaptain::PopPlayer(eFEINPUT_PAD pad)
     }
     else
     {
-        int side1Count = 0;
-        int side0Count = 0;
+        int side1Count = mIsSinglePlayerInput;
+        int side0Count = side1Count;
         IChooseCaptain* p = this;
         for (int i = 0; i < mNumTotalPushedPlayers; i++)
         {

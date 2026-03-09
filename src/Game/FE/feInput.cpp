@@ -321,15 +321,19 @@ bool FEInput::HasInputLock(BaseSceneHandler* pRequestingSceneHandler) const
 
 /**
  * Offset/Address/Size: 0x494 | 0x8020EEA0 | size: 0x188
- * TODO: 98.6% match - register allocation differences (r28/r30, r29/r31 swapped)
+ * TODO: 99.4% match - register allocation differences (r29/r31 swapped for pad base vs byte cursor)
  */
 void FEInput::Update(float dt)
 {
+    FEPadData* padData;
+    float* pFloat;
+    char* pByte;
+
     for (int padIndex = 0; padIndex < 4; padIndex++)
     {
-        FEPadData* padData = &g_aFEPadData[padIndex];
-        char* pByte = (char*)padData;
-        float* pFloat = (float*)padData;
+        padData = &g_aFEPadData[padIndex];
+        pByte = (char*)padData;
+        pFloat = (float*)padData;
 
         for (int buttonMask = 1, buttonIndex = 0; buttonIndex < 12; buttonIndex++, buttonMask <<= 1, pByte++, pFloat++)
         {
