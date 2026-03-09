@@ -10,8 +10,8 @@
 void* glModelDupArrayNoStreams(const glModel* models, unsigned long count, bool arg2, bool arg3)
 {
     glModel* result;
-    glModel* dst_model;
     glModel* src_model;
+    glModel* dst_model;
     u32 i;
 
     result = arg3 ? (glModel*)glResourceAlloc(count * 0x10, GLM_Header) : (glModel*)glFrameAlloc(count * 0x10, GLM_Header);
