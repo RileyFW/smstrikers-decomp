@@ -230,58 +230,66 @@ PlatTexture* glx_CreatePlatTexture()
  */
 int glplatTextureGetNumBits(int component)
 {
-    if (texobj.m_Bits[component] != 0xFF)
+    if (texobj.m_Bits[component] == 0xFF)
     {
-        return texobj.m_Bits[component];
+        u32 format = texobj.m_Format;
+        u8 bits[4] = { 5, 6, 5, 0 };
+
+        switch (format)
+        {
+        case GXTex_RGB565:
+            bits[0] = 5;
+            bits[1] = 6;
+            bits[2] = 5;
+            bits[3] = 0;
+            break;
+
+        case GXTex_RGB5A3:
+            bits[0] = 5;
+            bits[1] = 5;
+            bits[2] = 5;
+            bits[3] = 3;
+            break;
+
+        case GXTex_CMPR:
+            break;
+
+        case GXTex_RGBA8:
+            bits[0] = 8;
+            bits[1] = 8;
+            bits[2] = 8;
+            bits[3] = 8;
+            break;
+
+        case GXTex_I8:
+            bits[0] = 8;
+            bits[1] = 0;
+            bits[2] = 0;
+            bits[3] = 0;
+            break;
+
+        case GXTex_I4:
+            bits[0] = 4;
+            bits[1] = 0;
+            bits[2] = 0;
+            bits[3] = 0;
+            break;
+
+        case GXTex_A8:
+            break;
+
+        case GXTex_IA8:
+            bits[0] = 8;
+            bits[1] = 0;
+            bits[2] = 0;
+            bits[3] = 8;
+            break;
+        }
+
+        return bits[component];
     }
 
-    u8 bits[4];
-    switch (texobj.m_Format)
-    {
-    case GXTex_RGB565:
-        bits[0] = 5;
-        bits[1] = 6;
-        bits[2] = 5;
-        bits[3] = 0;
-        break;
-
-    case GXTex_RGB5A3:
-        bits[0] = 5;
-        bits[1] = 5;
-        bits[2] = 5;
-        bits[3] = 3;
-        break;
-
-    case GXTex_CMPR:
-        bits[0] = 8;
-        bits[1] = 8;
-        bits[2] = 8;
-        bits[3] = 8;
-        break;
-
-    case GXTex_I8:
-        bits[0] = 8;
-        bits[1] = 0;
-        bits[2] = 0;
-        bits[3] = 0;
-        break;
-
-    case GXTex_I4:
-        bits[0] = 4;
-        bits[1] = 0;
-        bits[2] = 0;
-        bits[3] = 0;
-        break;
-
-    default:
-        bits[0] = 8;
-        bits[1] = 0;
-        bits[2] = 0;
-        bits[3] = 8;
-        break;
-    }
-
-    return bits[component];
+    return texobj.m_Bits[component];
 }
 
 /**
@@ -575,9 +583,9 @@ bool glx_AddTex(unsigned long handle, PlatTexture* platTex)
 
 /**
  * Offset/Address/Size: 0xF94 | 0x801B8250 | size: 0x194
- * TODO: 89.5% match - inline template AVL tree FindGet differences,
- *       register allocation (r28 intermediate vs direct stack access for tex pointer),
- *       target uses found flag (r0) while current checks tex pointer directly
+ * TODO: 97.82% match - tree-search found flag still lives in r5 (target uses
+ *       r0 with no loop-entry init), and grid-call argument registers are
+ *       swapped at shift setup (target wants r4 from height, r3 from width)
  */
 PlatTexture* glx_GetTex(unsigned long handle, bool bMissingFatal, bool bAllowGrids)
 {
@@ -601,16 +609,52 @@ PlatTexture* glx_GetTex(unsigned long handle, bool bMissingFatal, bool bAllowGri
         handle = pAnim->GetTexture(-1)->textureHandle;
     }
 
-    // Search through marker levels from current down to 0
     for (int index = currentMarkerLevel; index >= 0; index--)
     {
-        tex = textures[index]->FindGet(handle);
-        if (tex != NULL)
+        AVLTreeEntry<unsigned long, PlatTexture*>* node = textures[index]->m_Root;
+        bool found = false;
+
+        while (node != NULL)
         {
-            // If allowing grids and grid mode is on
+            int cmpResult;
+            if (handle == node->key)
+            {
+                cmpResult = 0;
+            }
+            else if (handle < node->key)
+            {
+                cmpResult = -1;
+            }
+            else
+            {
+                cmpResult = 1;
+            }
+
+            if (cmpResult == 0)
+            {
+                if (&tex != NULL)
+                {
+                    tex = &node->value;
+                }
+                found = true;
+                break;
+            }
+
+            if (cmpResult < 0)
+            {
+                node = (AVLTreeEntry<unsigned long, PlatTexture*>*)node->node.left;
+            }
+            else
+            {
+                node = (AVLTreeEntry<unsigned long, PlatTexture*>*)node->node.right;
+            }
+        }
+
+        if (found)
+        {
             if (bAllowGrids && glx_bGridMode)
             {
-                PlatTexture* gridTex = glx_GetGridTexture((u16)(*tex)->m_Height >> 2, (u16)(*tex)->m_Width >> 2);
+                PlatTexture* gridTex = glx_GetGridTexture((u32)(u16)(*tex)->m_Height >> 2, (u32)(*tex)->m_Width >> 2);
                 if (gridTex != NULL)
                 {
                     return gridTex;

@@ -22,34 +22,34 @@ static unsigned long _defaultProgram = glGetProgram("2d unlit");
 /**
  * Offset/Address/Size: 0x610 | 0x801D7C10 | size: 0x210
  */
+
+inline void GLMeshWriterCore::Position(const nlVector3& v)
+{
+    Vertex(v);
+}
+
 bool glPoly2::Attach(eGLView view, int layer, unsigned long* pMatrixHandle, unsigned long programHandle)
 {
-    // eGLStream stream_decl[3]; // r1+0x14
-    // GLMeshWriter mesh;        // r1+0x20
-
-    unsigned long program; // r31
-    unsigned long matrix;  // r30
-    eGLPrimitive prim;     // r5
-    int* pMap;             // r25
-    // int i;                   // r24
-    unsigned long texconfig; // r29
-    // int index;               // r23
-
-    program = programHandle;
     eGLStream streamsDesc[3] = { GLStream_Position, GLStream_Colour, GLStream_Diffuse };
-
     GLMeshWriter writer;
 
-    if ((program + 0x10000) == -1)
+    if ((programHandle + 0x10000) == 0xFFFF)
     {
-        program = _defaultProgram;
+        programHandle = _defaultProgram;
     }
 
-    texconfig = gl_GetCurrentStateBundle()->texconfig;                                             // r29
-    program = glSetCurrentProgram(program);                                                        // r31
-    matrix = glSetCurrentMatrix((pMatrixHandle != NULL) ? *pMatrixHandle : glGetIdentityMatrix()); // r30
+    unsigned long program;
+    unsigned long matrix;
+    unsigned long texconfig;
 
-    if (glHasQuads() != 0)
+    texconfig = gl_GetCurrentStateBundle()->texconfig;
+    program = glSetCurrentProgram(programHandle);
+    matrix = pMatrixHandle ? *pMatrixHandle : glGetIdentityMatrix();
+    matrix = glSetCurrentMatrix(matrix);
+
+    eGLPrimitive prim;
+    int* pMap;
+    if (glHasQuads())
     {
         prim = GLP_QuadList;
         pMap = QuadMap;
@@ -60,17 +60,24 @@ bool glPoly2::Attach(eGLView view, int layer, unsigned long* pMatrixHandle, unsi
         pMap = StripMap;
     }
 
-    if (writer.Begin(4, prim, texconfig + 2, streamsDesc, false) != 0)
+    if (writer.Begin(4, prim, texconfig + 2, streamsDesc, false))
     {
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 4; i++)
         {
-            writer.Colour(m_colour[i]);
+            int index = pMap[i];
+            writer.Colour(m_colour[index]);
             if (texconfig != 0)
             {
-                writer.Texcoord(m_uv[i]);
+                writer.Texcoord(m_uv[index]);
             }
-            nlVector3 pos = { m_pos[i].f.x, m_pos[i].f.y, depth };
-            writer.Vertex(pos);
+            float fx = m_pos[index].f.x;
+            float fy = m_pos[index].f.y;
+            float fz = depth;
+            nlVector3 pos;
+            pos.f.x = fx;
+            pos.f.y = fy;
+            pos.f.z = fz;
+            writer.Position(pos);
         }
         if (!writer.End())
         {
@@ -78,13 +85,16 @@ bool glPoly2::Attach(eGLView view, int layer, unsigned long* pMatrixHandle, unsi
         }
 
         glViewAttachModel(view, layer, writer.GetModel());
-        glSetCurrentProgram(program);
-        glSetCurrentMatrix(matrix);
-
-        return true;
+    }
+    else
+    {
+        return false;
     }
 
-    return false;
+    glSetCurrentProgram(program);
+    glSetCurrentMatrix(matrix);
+
+    return true;
 }
 
 /**

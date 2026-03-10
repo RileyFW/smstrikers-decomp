@@ -534,32 +534,22 @@ void DoubleHighlite::TempDisableSound()
 
 /**
  * Offset/Address/Size: 0xCB4 | 0x800A3D70 | size: 0x1B0
- * TODO: 85.9% match - remaining diffs are around forcing direct-branch codegen for
- * FEFinder<TLImageInstance, 2>::Find with the exact register usage (avoiding mtctr/bctrl
- * function-pointer dispatch while still preserving the hasher stack layout).
  */
 void DoubleHighlite::OpenItem(TLComponentInstance* component)
 {
     typedef TLImageInstance* (*FindImageByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
     typedef TLImageInstance* (*FindImageByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
 
-    union
-    {
-        FindImageByValue byValue;
-        FindImageByRef byRef;
-    } findImage;
-
     TLComponentInstance* highlite;
+    TLComponentInstance* head;
     volatile InlineHasher hB, hA;
     volatile InlineHasher h9, h8;
     volatile InlineHasher h7, h6, h5, h4, h3, h2, h1, h0;
 
-    findImage.byValue = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
-
     component->SetActiveSlide("high");
 
-    highlite = (TLComponentInstance*)component->GetActiveSlide()->m_instances;
-    TLComponentInstance* head = highlite;
+    head = (TLComponentInstance*)component->GetActiveSlide()->m_instances;
+    highlite = head;
     unsigned long hash = nlStringLowerHash("highlite");
     while (highlite)
     {
@@ -594,15 +584,24 @@ void DoubleHighlite::OpenItem(TLComponentInstance* component)
     hA.m_Hash = hash;
     hB.m_Hash = hash;
 
-    findImage.byRef(
-                 highlite->GetActiveSlide(),
-                 (InlineHasher&)hB,
-                 (InlineHasher&)h9,
-                 (InlineHasher&)h7,
-                 (InlineHasher&)h5,
-                 (InlineHasher&)h3,
-                 (InlineHasher&)h1)
-        ->SetAssetColour(MenuHighliteColour);
+    {
+        union
+        {
+            FindImageByValue byValue;
+            FindImageByRef byRef;
+        } findImage;
+        findImage.byValue = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
+
+        findImage.byRef(
+                     highlite->GetActiveSlide(),
+                     (InlineHasher&)hB,
+                     (InlineHasher&)h9,
+                     (InlineHasher&)h7,
+                     (InlineHasher&)h5,
+                     (InlineHasher&)h3,
+                     (InlineHasher&)h1)
+            ->SetAssetColour(MenuHighliteColour);
+    }
 
     volatile InlineHasher g7, g6;
     volatile InlineHasher g4, g3, g2, g1, g0;
@@ -622,15 +621,24 @@ void DoubleHighlite::OpenItem(TLComponentInstance* component)
     g6.m_Hash = hash;
     g7.m_Hash = hash;
 
-    findImage.byRef(
-                 highlite->GetActiveSlide(),
-                 (InlineHasher&)g7,
-                 (InlineHasher&)h9,
-                 (InlineHasher&)h7,
-                 (InlineHasher&)h5,
-                 (InlineHasher&)h3,
-                 (InlineHasher&)h1)
-        ->SetAssetColour(MenuHighliteColour);
+    {
+        union
+        {
+            FindImageByValue byValue;
+            FindImageByRef byRef;
+        } findImage;
+        findImage.byValue = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
+
+        findImage.byRef(
+                     highlite->GetActiveSlide(),
+                     (InlineHasher&)g7,
+                     (InlineHasher&)h9,
+                     (InlineHasher&)h7,
+                     (InlineHasher&)h5,
+                     (InlineHasher&)h3,
+                     (InlineHasher&)h1)
+            ->SetAssetColour(MenuHighliteColour);
+    }
 
     highlite->Update(0.0f);
     component->Update(0.0f);

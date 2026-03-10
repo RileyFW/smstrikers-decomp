@@ -208,66 +208,77 @@ void nlFlushFileCash()
     // EMPTY
 }
 
+static GCFile* TDEVChunkFileOpen(const char* fileName)
+{
+    GCFile* pGCFile;
+    _FILE* pFile;
+
+    pFile = fopen(fileName, "rb");
+    if (pFile == NULL)
+    {
+        pGCFile = NULL;
+    }
+    else
+    {
+        pGCFile = (GCFile*)ftell(pFile);
+        fseek(pFile, 0, 2);
+        unsigned long uSize = ftell(pFile);
+        fseek(pFile, (unsigned long)pGCFile, 0);
+
+        if (uSize == 0xFFFFFFFF)
+        {
+            pGCFile = NULL;
+        }
+        else
+        {
+            pGCFile = new TDEVChunkFile(pFile);
+            while (pFile == NULL)
+            {
+            }
+        }
+    }
+
+    return pGCFile;
+}
+
+static GCFile* DolphinFileOpen(const char* fileName)
+{
+    s32 fileEntrynum;
+    GCFile* pFile;
+
+    fileEntrynum = DVDConvertPathToEntrynum(fileName);
+    if (fileEntrynum == -1)
+    {
+        pFile = NULL;
+    }
+    else
+    {
+        pFile = new DolphinFile(fileEntrynum);
+        while (pFile == NULL)
+        {
+        }
+    }
+
+    return pFile;
+}
+
 /**
  * Offset/Address/Size: 0x19EC | 0x801D0740 | size: 0x18C
- * TODO: 96.5% match - r29/r31 register mismatch for result/file values, plus
- * extra mr r0,r3 shuttles in ftell/return paths and a shifted branch layout.
+ * TODO: 99.1% match - TDEV branch is now aligned; remaining diffs are the
+ * DVD helper register swap (r29/r30 for fileEntrynum/pFile) and scratch-only
+ * string label mismatch for fopen mode ("rb").
  */
 nlFile* nlOpen(const char* fileName)
 {
-    s32 entryNum;
-    _FILE* fp;
     nlFile* file;
 
     if (fileSystem == eGC_TDEV)
     {
-        nlFile* result;
-
-        fp = fopen(fileName, "rb");
-        if (fp == NULL)
-        {
-            result = NULL;
-        }
-        else
-        {
-            result = (nlFile*)ftell(fp);
-            fseek(fp, 0, 2);
-            unsigned long size = ftell(fp);
-            fseek(fp, (unsigned long)result, 0);
-
-            if (size == 0xFFFFFFFF)
-            {
-                result = NULL;
-            }
-            else
-            {
-                result = new TDEVChunkFile(fp);
-                while (fp == NULL)
-                {
-                }
-            }
-        }
-
-        file = result;
+        file = TDEVChunkFileOpen(fileName);
     }
     else
     {
-        nlFile* result;
-
-        entryNum = DVDConvertPathToEntrynum(fileName);
-        if (entryNum == -1)
-        {
-            result = NULL;
-        }
-        else
-        {
-            result = new DolphinFile(entryNum);
-            while (result == NULL)
-            {
-            }
-        }
-
-        file = result;
+        file = DolphinFileOpen(fileName);
     }
 
     return file;

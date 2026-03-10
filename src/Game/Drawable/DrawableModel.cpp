@@ -6,7 +6,16 @@
 #include "NL/gl/glAppAttach.h"
 #include "NL/gl/glUserData.h"
 
-extern bool g_bShadowVolumes;
+bool g_bShadowVolumes = true;
+bool g_bEnableDrawableSkinModel = true;
+bool g_bSkinModelTextureLighting = true;
+const u32 GLTT_BumpLocal_bit = 1 << (int)GLTT_BumpLocal;
+
+const unsigned long UnlitProgram = glGetProgram("3d unlit");
+const unsigned long LitProgram = glGetProgram("3d pointlit");
+const unsigned long LightTexture = glGetTexture("global/lightramp");
+const unsigned long BlackTexture = glGetTexture("global/black");
+const unsigned long WhiteTexture = glGetTexture("global/white");
 
 static float sfCoPlanarZ = 0.1f;
 static float sfCoPlanar0Z = 0.041666668f;

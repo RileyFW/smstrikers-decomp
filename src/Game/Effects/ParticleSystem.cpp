@@ -10,7 +10,7 @@ eGLView ParticleSystem::m_eViews[8];
 
 efList freeParticles;
 
-void* textureFrames[36];
+void* textureFrames[36] = { nullptr };
 Particle* particleMemory;
 int MaxNumParticles;
 

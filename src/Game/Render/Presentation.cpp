@@ -326,7 +326,7 @@ void CupWinStingerDone()
     AudioStreamTrack::TrackManagerBase* pMgr = g_pTrackManager;
     AudioStreamTrack::StreamTrack* pTrack = pMgr->GetTrack(nlStringLowerHash("Music"));
     {
-        Function0<void> emptyCallback;
+        Function0<void> emptyCallback = Function0<void>();
         pTrack->m_IdleCallback = Function<FnVoidVoid>(emptyCallback);
     }
     pTrack->PlayStream(nlStringLowerHash("STAD_Intro"), 0.5f, true, 500, 500, "Stadium", MasterVolume::VG_Special);

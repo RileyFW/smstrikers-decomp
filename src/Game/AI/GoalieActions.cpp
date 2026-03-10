@@ -1077,7 +1077,6 @@ void Goalie::ActionLooseBallPursueBouncing(float deltaTime)
 
 /**
  * Offset/Address/Size: 0x6CC | 0x8004EC08 | size: 0x194
- * TODO: the math to define the angle for SetFacingDirection does not match yet
  */
 void Goalie::ActionSTSAttackSetup(float deltaTime)
 {
@@ -1112,14 +1111,14 @@ void Goalie::ActionSTSAttackSetup(float deltaTime)
 
     GetLocalPoint(mv3LocalContactPosition, pOwnerFielder->m_v3Position, m_v3Position, m_aActualFacingDirection);
 
-    float angle = 10430.378f * nlATan2f(mv3LocalContactPosition.f.y, mv3LocalContactPosition.f.x);
+    float angle = nlATan2f(mv3LocalContactPosition.f.y, mv3LocalContactPosition.f.x);
     float progressRatio = (mfTargetTime - mfWaitTime) / mfTargetTime;
 
-    s32 angleDeltaInt = (s32)angle;
+    s16 angleDeltaInt = (s16)(u16)(s32)(10430.378f * angle);
     s32 multiplierInt = (s32)(1024.0f * (progressRatio * (progressRatio * ((-2.0f * progressRatio) + 3.0f))));
-    s32 adjustedDelta = (multiplierInt * angleDeltaInt) / 1024;
+    s32 adjustedDelta = (angleDeltaInt * multiplierInt) / 1024;
 
-    u16 newFacing = m_aActualFacingDirection + adjustedDelta;
+    u16 newFacing = adjustedDelta + m_aActualFacingDirection;
 
     SetFacingDirection(newFacing);
     m_aDesiredFacingDirection = newFacing;

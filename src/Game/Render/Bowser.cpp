@@ -314,13 +314,14 @@ void Bowser::ActionStomp()
     mtActiveTimer.m_uPackedTime = 0;
 }
 
+extern "C" cPN_Blender* __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(cPN_Blender*, cPoseNode*, cPoseNode*, float);
+
 /**
  * Offset/Address/Size: 0x2314 | 0x8015B088 | size: 0x1A0
  */
 void Bowser::ActionDescend(float fBlendTime)
 {
     cPN_SAnimController* controller = NULL;
-    cPoseNode* poseNode;
 
     mAnimID = 1;
 
@@ -337,11 +338,13 @@ void Bowser::ActionDescend(float fBlendTime)
 
     controller = new (controller) cPN_SAnimController(mpAnim[1], (const AnimRetarget*)0, PM_HOLD, (void (*)(unsigned int, cPN_SAnimController*))0, (unsigned int)0, (bool)0);
 
+    cPN_Blender* blender;
+
     if (mpFeatherBlender->GetChild(0) != NULL)
     {
         if (fBlendTime > 0.0f)
         {
-            poseNode = NULL;
+            blender = NULL;
 
             if (cPN_Blender::m_BlenderSlotPool.m_FreeList == NULL)
             {
@@ -350,24 +353,27 @@ void Bowser::ActionDescend(float fBlendTime)
 
             if (cPN_Blender::m_BlenderSlotPool.m_FreeList != NULL)
             {
-                poseNode = (cPN_Blender*)cPN_Blender::m_BlenderSlotPool.m_FreeList;
+                blender = (cPN_Blender*)cPN_Blender::m_BlenderSlotPool.m_FreeList;
                 cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
             }
 
-            poseNode = new ((cPN_Blender*)poseNode) cPN_Blender(*mpFeatherBlender->GetChildPtr(0), controller, fBlendTime);
+            if (blender != NULL)
+            {
+                blender = __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(blender, *mpFeatherBlender->GetChildPtr(0), controller, fBlendTime);
+            }
         }
         else
         {
             delete mpFeatherBlender->GetChild(0);
-            poseNode = controller;
+            blender = (cPN_Blender*)controller;
         }
     }
     else
     {
-        poseNode = controller;
+        blender = (cPN_Blender*)controller;
     }
 
-    mpFeatherBlender->SetChild(0, poseNode);
+    mpFeatherBlender->SetChild(0, blender);
     mpAnimController = controller;
     meBowserState = BOWSER_STATE_FALL;
 }

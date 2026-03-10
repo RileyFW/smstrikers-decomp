@@ -93,32 +93,23 @@ void FEScrollText::Update(float fDeltaT)
     }
 }
 
-/**
- * Offset/Address/Size: 0x1C8 | 0x800C8B9C | size: 0x198
- */
-void FEScrollText::SetDisplayMessage(const char* id)
+static inline const unsigned short* LookupLocTextChar(unsigned long hash)
 {
     nlLocalization* loc = (nlLocalization*)g_pLocalization;
-    unsigned long hash = nlStringLowerHash(id);
-    const unsigned short* text;
-
     if (loc->m_LookupTable == 0)
     {
-        text = LocalizationTableNotFound;
+        return LocalizationTableNotFound;
     }
-    else
+    nlLocalization::StringLookup* lookup = nlBSearch<nlLocalization::StringLookup, unsigned long>(hash, loc->m_LookupTable, loc->m_pFile->StringCount);
+    if (lookup != 0)
     {
-        nlLocalization::StringLookup* lookup = nlBSearch<nlLocalization::StringLookup, unsigned long>(hash, loc->m_LookupTable, loc->m_pFile->StringCount);
-        if (lookup != 0)
-        {
-            text = loc->m_FirstString + lookup->StringOffset;
-        }
-        else
-        {
-            text = MissingLocString;
-        }
+        return loc->m_FirstString + lookup->StringOffset;
     }
+    return MissingLocString;
+}
 
+static inline BasicStringInternal* BuildScrollString(const unsigned short* text)
+{
     BasicStringInternal* data = (BasicStringInternal*)nlMalloc(0x10, 8, true);
     if (data != 0)
     {
@@ -136,8 +127,9 @@ void FEScrollText::SetDisplayMessage(const char* id)
         data->mData = (char*)nlMalloc((data->mSize + 1) * 2, 8, true);
         data->mCapacity = data->mSize;
 
+        int j;
         int i = 0;
-        int j = i;
+        j = i;
         while (i < data->mSize)
         {
             *(unsigned short*)(data->mData + j) = *text;
@@ -148,6 +140,18 @@ void FEScrollText::SetDisplayMessage(const char* id)
 
         data->mRefCount = 1;
     }
+    return data;
+}
+
+/**
+ * Offset/Address/Size: 0x1C8 | 0x800C8B9C | size: 0x198
+ * TODO: 95.1% match - MWCC keeps this in r30 and loc/data in r29 (target is this→r29, loc/data→r30)
+ */
+void FEScrollText::SetDisplayMessage(const char* id)
+{
+    unsigned long hash = nlStringLowerHash(id);
+    const unsigned short* text = LookupLocTextChar(hash);
+    BasicStringInternal* data = BuildScrollString(text);
 
     BasicStringInternal* msgData = data;
     SetDisplayMessage(*(const BasicString<unsigned short, Detail::TempStringAllocator>*)&msgData);

@@ -325,48 +325,58 @@ void ScreenTransitionManager::EnableRandomTransition(const char* filter)
  */
 void ScreenTransitionManager::SelectRandomTransition(const char* filter)
 {
-    FORCE_DONT_INLINE;
-    // Vector<BasicString<char, Detail::TempStringAllocator>, DefaultAllocator> matchingTransitions;
     Vector<BasicString<char, Detail::TempStringAllocator>, DefaultAllocator> matchingTransitions;
-    // Vector<ScreenTransition, DefaultAllocator> matchingTransitions;
+    matchingTransitions.mData = nullptr;
+    matchingTransitions.mSize = 0;
+    matchingTransitions.mCapacity = 0;
     matchingTransitions.reserve(8);
-
-    m_SelectedTransition = nullptr;
 
     for (int i = 0; i < m_Transitions.mSize; i++)
     {
         const char* transitionName = m_Transitions.mData[i].c_str();
         if (strstr(transitionName, filter) != nullptr)
         {
-            // Vector<BasicString<char, Detail::TempStringAllocator>, DefaultAllocator>::push_back(const BasicString<char, Detail::TempStringAllocator>&)
             matchingTransitions.push_back(m_Transitions.mData[i]);
         }
     }
 
-    // If we found matching transitions, randomly select one
+    m_SelectedTransition = nullptr;
+
     if (matchingTransitions.mSize > 0)
     {
-        // Generate a random index
         int randomIndex = nlRandom(matchingTransitions.mSize, &nlDefaultSeed);
-
-        const char* selectedTransitionName = matchingTransitions.mData[randomIndex].c_str();
-
-        unsigned long transitionHash = glHash(selectedTransitionName);
-
-        // Search the AVL tree for the transition with this hash
-        AVLTreeEntry<unsigned long, ScreenTransition*>* foundEntry = nullptr;
+        unsigned long transitionHash = glHash(matchingTransitions.mData[randomIndex].c_str());
+        ScreenTransition** foundTransition = nullptr;
         AVLTreeEntry<unsigned long, ScreenTransition*>* current = m_TransitionMap.m_Root;
+        unsigned char found;
 
-        while (current != nullptr)
+        for (; current != nullptr || (found = 0, 0);)
         {
-            unsigned long currentKey = current->key;
-
-            if (transitionHash == currentKey)
+            int cmpResult;
+            if (transitionHash == current->key)
             {
-                foundEntry = current;
+                cmpResult = 0;
+            }
+            else if (transitionHash < current->key)
+            {
+                cmpResult = -1;
+            }
+            else
+            {
+                cmpResult = 1;
+            }
+
+            if (cmpResult == 0)
+            {
+                if (&foundTransition != nullptr)
+                {
+                    foundTransition = &current->value;
+                }
+                found = 1;
                 break;
             }
-            else if (transitionHash < currentKey)
+
+            if (cmpResult < 0)
             {
                 current = (AVLTreeEntry<unsigned long, ScreenTransition*>*)current->node.left;
             }
@@ -376,9 +386,9 @@ void ScreenTransitionManager::SelectRandomTransition(const char* filter)
             }
         }
 
-        if (foundEntry != nullptr)
+        if (found)
         {
-            m_SelectedTransition = foundEntry->value;
+            m_SelectedTransition = *foundTransition;
         }
     }
 }

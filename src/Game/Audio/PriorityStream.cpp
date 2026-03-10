@@ -147,8 +147,8 @@ void PriorityStream::FakeResume(bool checkActive)
 
 /**
  * Offset/Address/Size: 0x380 | 0x80157E34 | size: 0x1B0
- * TODO: 95.8% match - remaining diffs in switch/control-flow shape:
- *   r3/r4 compare register swap, literal load via mr r5, and default-path store/branch placement
+ * TODO: 95.8% match - switch/control-flow mismatch (r3/r4 compare swap),
+ *   format literal loads via addi r0 + mr r5, and default-path branch/store placement.
  */
 void PriorityStream::TrackIdleCB()
 {
@@ -169,7 +169,8 @@ void PriorityStream::TrackIdleCB()
         {
             if (m_HasCrowdStream && m_PStream.m_Active)
             {
-                switch (m_PStream.m_StreamId)
+                u32 streamId = m_PStream.m_StreamId;
+                switch (streamId)
                 {
                 case 0x436E3953:
                     pCounter = &PLAY_RECORD::s_BowserAttackNext;
@@ -180,7 +181,7 @@ void PriorityStream::TrackIdleCB()
                     Format = "sudden_death_%d";
                     break;
                 default:
-                    m_HasCrowdStream = m_PStream.m_StreamId;
+                    m_HasCrowdStream = streamId;
                     goto after_switch;
                 }
 
@@ -204,7 +205,6 @@ void PriorityStream::TrackIdleCB()
                     m_PStream.m_Track.PlayStream(
                         m_HasCrowdStream, m_PStream.m_Volume, (m_PStream.m_Looping & 1), m_PStream.m_FadeIn, m_PStream.m_ExistingFadeOut, m_PStream.m_StreamParam[0] ? m_PStream.m_StreamParam : (const char*)0, (MasterVolume::VOLUME_GROUP)m_PStream.m_VolGroup);
                 }
-                return;
             }
             return;
         }

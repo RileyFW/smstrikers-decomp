@@ -196,7 +196,6 @@ void Audio::DestroyPriorityStreams()
         {
             Function0<void> f0;
             f0.mTag = EMPTY;
-            f0.mFreeFunction = NULL;
             track.m_IdleCallback = Function<FnVoidVoid>(f0);
         }
         delete ps;

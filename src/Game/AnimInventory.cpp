@@ -89,107 +89,90 @@ cAnimInventory::~cAnimInventory()
 
 /**
  * Offset/Address/Size: 0x88 | 0x80007004 | size: 0x214
+ * TODO: 86.4% match in scratch (wRAb2) - this/path register assignment and loop
+ * induction register allocation differ in both animation lookup loops.
  */
 void cAnimInventory::AddAnimBundle(const char* path)
 {
-    int fileSize = 0;
-    void* base = nlLoadEntireFileToVirtualMemory(path, &fileSize, 1, 0, AllocateStart);
-    char* p = (char*)base;
-    char* end = p + fileSize;
+    int len;
+    char* pMem = (char*)nlLoadEntireFileToVirtualMemory(path, &len, 0x10000, 0, AllocateStart);
+    SAnimContainer* inv = m_cont;
 
-    // Remember the loaded block in the container’s file list
+    ListEntry<char*>* pFileEntry = (ListEntry<char*>*)nlMalloc(8, 8, 0);
+    if (pFileEntry != 0)
     {
-        ListEntry<char*>* e = (ListEntry<char*>*)nlMalloc(8, 8, 0);
-        if (e)
-        {
-            e->next = 0;
-            e->data = (char*)base;
-        }
-        nlListAddStart(&m_cont->fileHead, e, &m_cont->fileTail); // :contentReference[oaicite:16]{index=16}
+        pFileEntry->next = 0;
+        pFileEntry->data = pMem;
     }
+    nlListAddStart<ListEntry<char*> >(&inv->fileHead, pFileEntry, &inv->fileTail);
 
-    // Walk chunks
-    while (p != end)
+    char* end = pMem + len;
+    while (pMem != end)
     {
-        u32 id = *(u32*)p;
-        u32 masked = id & 0xFFFFFF00;
-        if (((masked + 0x7FFF0000u) & 0xFFFF0000u) == 0x70000000u) // chunk family check.  :contentReference[oaicite:17]{index=17}
+        if ((((nlChunk*)pMem)->m_ID & 0xFFFFFF00) == 0x80017000)
         {
-            // cSAnim::Initialize(nlChunk*)
-            cSAnim* a = cSAnim::Initialize((nlChunk*)p);
-
-            // push into anim list
-            ListEntry<cSAnim*>* e = (ListEntry<cSAnim*>*)nlMalloc(8, 8, 0);
-            if (e)
+            cSAnim* pAnim = cSAnim::Initialize((nlChunk*)pMem);
+            ListEntry<cSAnim*>* pAnimEntry = (ListEntry<cSAnim*>*)nlMalloc(8, 8, 0);
+            if (pAnimEntry != 0)
             {
-                e->next = 0;
-                e->data = a;
+                pAnimEntry->next = 0;
+                pAnimEntry->data = pAnim;
             }
-            nlListAddStart(&m_cont->animHead, e, &m_cont->animTail); // :contentReference[oaicite:18]{index=18}
-            m_cont->animCount++;
+            nlListAddStart<ListEntry<cSAnim*> >(&inv->animHead, pAnimEntry, &inv->animTail);
+            inv->animCount++;
         }
         else
         {
-            nlPrintf("Warning: inventory encountered an unknown chunk type\n"); // @392.  :contentReference[oaicite:19]{index=19}
+            nlPrintf("Warning: inventory encountered an unknown chunk type\n");
         }
 
-        // advance by chunk->size + header (header size is 8)
-        u32 chunkSize = *(u32*)(p + 4);
-        p += (int)chunkSize + 8;
+        pMem += ((nlChunk*)pMem)->m_Size + 8;
     }
 
-    // Resolve each desired animation name to a cSAnim*
     int i;
-    int ofs = 0;
-    int dst = 0;
-    for (i = 0; i < m_count; ++i)
+    int propOffset = 0;
+    for (i = 0; i < m_count; i++)
     {
-        const char* name = *(const char**)((char*)m_props + ofs + 4); // +4 = name.  :contentReference[oaicite:20]{index=20}
-        u32 h = nlStringHash(name);
+        unsigned int hash = nlStringHash(*(const char**)((char*)m_props + propOffset + 4));
+        ListEntry<cSAnim*>* pList = m_cont->animHead;
+        cSAnim* pFound = 0;
 
-        // search in this container
-        ListEntry<cSAnim*>* it = m_cont->animHead;
-        cSAnim* found = 0;
-        while (it)
+        while (pList != 0)
         {
-            cSAnim* a = it->data;
-            // a->mHash at +4 (compared in asm)
-            if (*(u32*)((char*)a + 4) == h)
+            cSAnim* pEntryAnim = pList->data;
+            if (hash == pEntryAnim->m_uHashID)
             {
-                found = a;
+                pFound = pEntryAnim;
                 break;
             }
-            it = it->next;
+            pList = pList->next;
         }
-        m_anims[dst >> 2] = found;
 
-        // not found? warn and try default container
-        if (m_anims[dst >> 2] == 0)
+        m_anims[i] = pFound;
+        if (m_anims[i] == 0)
         {
-            nlPrintf("Warning! Could not find \"%s\" in bundle \"%s\"\n", name, path); // @393.  :contentReference[oaicite:21]{index=21}
-
-            SAnimContainer* defc = g_pDefaultSAnimInventory;
-            it = defc ? defc->animHead : 0;
-            found = 0;
-            while (it)
+            nlPrintf("Warning! Could not find \"%s\" in bundle \"%s\"\n", *(const char**)((char*)m_props + propOffset + 4), path);
+            hash = nlStringHash(*(const char**)((char*)m_props + propOffset + 4));
+            pList = g_pDefaultSAnimInventory->animHead;
+            pFound = 0;
+            while (pList != 0)
             {
-                cSAnim* a = it->data;
-                if (*(u32*)((char*)a + 4) == h)
+                cSAnim* pEntryAnim = pList->data;
+                if (hash == pEntryAnim->m_uHashID)
                 {
-                    found = a;
+                    pFound = pEntryAnim;
                     break;
                 }
-                it = it->next;
+                pList = pList->next;
             }
-            m_anims[dst >> 2] = found;
 
-            // still not found? fall back to first entry
-            if (m_anims[dst >> 2] == 0)
-                m_anims[dst >> 2] = m_anims[0];
+            m_anims[i] = pFound;
+            if (m_anims[i] == 0)
+            {
+                m_anims[i] = m_anims[0];
+            }
         }
-
-        ofs += 0x20; // next property
-        dst += 4;    // next anim pointer slot
+        propOffset += sizeof(AnimProperties);
     }
 }
 

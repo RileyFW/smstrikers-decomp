@@ -82,7 +82,8 @@ u32 CrowdManager::GetTextureHandle(unsigned long) const
 void CrowdManager::Replay(LoadFrame& frame)
 {
     int replayState = 0;
-    Replayable<1, LoadFrame, int>(frame, replayState);
+    void (*replayInt)(LoadFrame&, int&) = Replayable<1, LoadFrame, int>;
+    replayInt(frame, replayState);
 
     if (replayState != (int)m_State)
     {
