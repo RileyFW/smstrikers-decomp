@@ -1379,7 +1379,7 @@ config.libs = [
             Object(NonMatching, "ode/collision_transform.cpp"),
             Object(NonMatching, "ode/collision_util.cpp"),
             Object(Matching, "ode/error.cpp", extra_cflags=["-inline off"]),
-            Object(NonMatching, "ode/joint.cpp"),
+            Object(Matching, "ode/joint.cpp"),
             Object(Matching, "ode/memory.cpp"),
             Object(NonMatching, "ode/ode.cpp"),
             Object(NonMatching, "ode/odemath.cpp", extra_cflags=["-inline deferred"]),
