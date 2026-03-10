@@ -14,7 +14,6 @@ enum eCrowdState
     Crowd_NumStates = 3,
 };
 
-void CrowdBundleLoad_cb(void*, unsigned long, void*);
 // void Replayable<1, LoadFrame, int>(LoadFrame&, int&);
 // void Replayable<1, SaveFrame, int>(SaveFrame&, int&);
 
@@ -30,6 +29,7 @@ public:
     void SetState(eCrowdState, bool);
     void Update(float);
     void EventHandler(Event*);
+    inline void SetFrameConstant();
 
     /* 0x00 */ eCrowdState m_State;
     /* 0x04 */ float m_fTime;

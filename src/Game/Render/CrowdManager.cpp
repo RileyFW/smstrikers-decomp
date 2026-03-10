@@ -13,6 +13,10 @@
 
 #include "Game/ReplaySpecializations.h"
 
+static void CrowdBundleLoad_cb(void*, unsigned long, void*);
+
+CrowdManager CrowdManager::instance;
+
 /**
  * Offset/Address/Size: 0x978 | 0x801647F4 | size: 0x10C
  */
@@ -47,6 +51,13 @@ void CrowdManager::Initialize()
  */
 void CrowdManager::Uninitialize()
 {
+}
+
+inline void CrowdManager::SetFrameConstant()
+{
+    float frameValue = (float)(u32)m_nCurrentFrame / 8.0f;
+    nlVector4 frameVector = { frameValue, frameValue, frameValue, frameValue };
+    glConstantSet("crowd/frame", frameVector);
 }
 
 /**
@@ -100,7 +111,7 @@ void CrowdManager::Replay(LoadFrame& frame)
             szBundle = "idle";
             break;
         case Crowd_Excited:
-            szBundle = "excited";
+            szBundle = "happy";
             break;
         default:
             break;
@@ -109,25 +120,18 @@ void CrowdManager::Replay(LoadFrame& frame)
         char szFilename[64];
         if (m_szStadium[0] == '\0')
         {
-            nlSNPrintf(szFilename, 64, "crowd/%s", szBundle);
+            nlSNPrintf(szFilename, 64, "crowd/%s.glt", szBundle);
         }
         else
         {
-            nlSNPrintf(szFilename, 64, "crowd/%s/%s", m_szStadium, szBundle);
+            nlSNPrintf(szFilename, 64, "crowd/%s_%s.glt", m_szStadium, szBundle);
         }
 
         glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
 
         m_nCurrentFrame = 0;
         nlStrNCpy(m_szTexture, "idle/idle", 64);
-
-        float frameValue = (float)(u32)m_nCurrentFrame / 8.0f;
-        nlVector4 frameVector = {};
-        frameVector.f.x = frameValue;
-        frameVector.f.y = frameValue;
-        frameVector.f.z = frameValue;
-        frameVector.f.w = frameValue;
-        glConstantSet("crowd/frame", frameVector);
+        SetFrameConstant();
     }
 }
 
@@ -143,7 +147,7 @@ void CrowdManager::Replay(SaveFrame& frame)
 /**
  * Offset/Address/Size: 0x70C | 0x80164588 | size: 0x60
  */
-void CrowdBundleLoad_cb(void*, unsigned long, void*)
+static void CrowdBundleLoad_cb(void*, unsigned long, void*)
 {
     if (!glTextureLoad(glGetTexture("idle/idle")))
         return;
@@ -186,7 +190,7 @@ void CrowdManager::SetState(eCrowdState state, bool force)
         szBundle = "idle";
         break;
     case Crowd_Excited:
-        szBundle = "excited";
+        szBundle = "happy";
         break;
     default:
         break;
@@ -195,26 +199,18 @@ void CrowdManager::SetState(eCrowdState state, bool force)
     char szFilename[64];
     if (m_szStadium[0] == '\0')
     {
-        nlSNPrintf(szFilename, 64, "crowd/%s", szBundle);
+        nlSNPrintf(szFilename, 64, "crowd/%s.glt", szBundle);
     }
     else
     {
-        nlSNPrintf(szFilename, 64, "crowd/%s/%s", m_szStadium, szBundle);
+        nlSNPrintf(szFilename, 64, "crowd/%s_%s.glt", m_szStadium, szBundle);
     }
 
     glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
 
     m_nCurrentFrame = 0;
     nlStrNCpy(m_szTexture, "idle/idle", 64);
-
-    float frameValue = (float)(u32)m_nCurrentFrame;
-    frameValue = 0.125f * frameValue;
-    nlVector4 frameVector = {};
-    frameVector.f.x = frameValue;
-    frameVector.f.y = frameValue;
-    frameVector.f.z = frameValue;
-    frameVector.f.w = frameValue;
-    glConstantSet("crowd/frame", frameVector);
+    SetFrameConstant();
 }
 
 /**
@@ -246,14 +242,7 @@ void CrowdManager::Update(float deltaTime)
             m_nCurrentFrame = 0;
         }
 
-        float frameValue = 0.125f;
-        frameValue = (float)(u32)m_nCurrentFrame * frameValue;
-        nlVector4 frameVector = {};
-        frameVector.f.x = frameValue;
-        frameVector.f.y = frameValue;
-        frameVector.f.z = frameValue;
-        frameVector.f.w = frameValue;
-        glConstantSet("crowd/frame", frameVector);
+        SetFrameConstant();
     }
 }
 
@@ -288,7 +277,7 @@ void CrowdManager::EventHandler(Event* event)
                         szBundle = "idle";
                         break;
                     case Crowd_Excited:
-                        szBundle = "excited";
+                        szBundle = "happy";
                         break;
                     default:
                         break;
@@ -297,25 +286,18 @@ void CrowdManager::EventHandler(Event* event)
                     char szFilename[64];
                     if (m_szStadium[0] == '\0')
                     {
-                        nlSNPrintf(szFilename, 64, "crowd/%s", szBundle);
+                        nlSNPrintf(szFilename, 64, "crowd/%s.glt", szBundle);
                     }
                     else
                     {
-                        nlSNPrintf(szFilename, 64, "crowd/%s/%s", m_szStadium, szBundle);
+                        nlSNPrintf(szFilename, 64, "crowd/%s_%s.glt", m_szStadium, szBundle);
                     }
 
                     glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
 
                     m_nCurrentFrame = 0;
                     nlStrNCpy(m_szTexture, "idle/idle", 64);
-
-                    float frameValue = (float)(u32)m_nCurrentFrame / 8.0f;
-                    nlVector4 frameVector = {};
-                    frameVector.f.x = frameValue;
-                    frameVector.f.y = frameValue;
-                    frameVector.f.z = frameValue;
-                    frameVector.f.w = frameValue;
-                    glConstantSet("crowd/frame", frameVector);
+                    SetFrameConstant();
                 }
             }
             else
@@ -333,7 +315,7 @@ void CrowdManager::EventHandler(Event* event)
                     szBundle = "idle";
                     break;
                 case Crowd_Excited:
-                    szBundle = "excited";
+                    szBundle = "happy";
                     break;
                 default:
                     break;
@@ -342,25 +324,18 @@ void CrowdManager::EventHandler(Event* event)
                 char szFilename[64];
                 if (m_szStadium[0] == '\0')
                 {
-                    nlSNPrintf(szFilename, 64, "crowd/%s", szBundle);
+                    nlSNPrintf(szFilename, 64, "crowd/%s.glt", szBundle);
                 }
                 else
                 {
-                    nlSNPrintf(szFilename, 64, "crowd/%s/%s", m_szStadium, szBundle);
+                    nlSNPrintf(szFilename, 64, "crowd/%s_%s.glt", m_szStadium, szBundle);
                 }
 
                 glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
 
                 m_nCurrentFrame = 0;
                 nlStrNCpy(m_szTexture, "idle/idle", 64);
-
-                float frameValue = (float)(u32)m_nCurrentFrame / 8.0f;
-                nlVector4 frameVector = {};
-                frameVector.f.x = frameValue;
-                frameVector.f.y = frameValue;
-                frameVector.f.z = frameValue;
-                frameVector.f.w = frameValue;
-                glConstantSet("crowd/frame", frameVector);
+                SetFrameConstant();
             }
         }
     }
@@ -404,7 +379,7 @@ void CrowdManager::EventHandler(Event* event)
                     szBundle = "idle";
                     break;
                 case Crowd_Excited:
-                    szBundle = "excited";
+                    szBundle = "happy";
                     break;
                 default:
                     break;
@@ -413,25 +388,18 @@ void CrowdManager::EventHandler(Event* event)
                 char szFilename[64];
                 if (m_szStadium[0] == '\0')
                 {
-                    nlSNPrintf(szFilename, 64, "crowd/%s", szBundle);
+                    nlSNPrintf(szFilename, 64, "crowd/%s.glt", szBundle);
                 }
                 else
                 {
-                    nlSNPrintf(szFilename, 64, "crowd/%s/%s", m_szStadium, szBundle);
+                    nlSNPrintf(szFilename, 64, "crowd/%s_%s.glt", m_szStadium, szBundle);
                 }
 
                 glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
 
                 m_nCurrentFrame = 0;
                 nlStrNCpy(m_szTexture, "idle/idle", 64);
-
-                float frameValue = (float)(u32)m_nCurrentFrame / 8.0f;
-                nlVector4 frameVector = {};
-                frameVector.f.x = frameValue;
-                frameVector.f.y = frameValue;
-                frameVector.f.z = frameValue;
-                frameVector.f.w = frameValue;
-                glConstantSet("crowd/frame", frameVector);
+                SetFrameConstant();
             }
         }
     }

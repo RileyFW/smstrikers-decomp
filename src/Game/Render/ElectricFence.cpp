@@ -187,7 +187,7 @@ void EmitElectricFenceBallEffect(const nlVector3& pos, const nlVector3& dir, uns
 
 /**
  * Offset/Address/Size: 0xAB8 | 0x8016BAE8 | size: 0x1D4
- * TODO: 97.65% match - r31/r29 register swap for controller/pos (likely -inline deferred flag mismatch)
+ * TODO: 97.65% match - r31/r29/r30 register swap: controller should be r31 but gets r29, pos should be r30 but gets r31. MWCC register allocator heuristic difference, not related to -inline deferred.
  */
 void EmitElectricFenceCharacterEffect(const nlVector3& pos, const nlVector3& dir, unsigned long emitterID)
 {

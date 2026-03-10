@@ -420,8 +420,8 @@ bool Goalie::InitiatePickup()
 
 /**
  * Offset/Address/Size: 0x73E4 | 0x80049EE0 | size: 0x1D0
- * TODO: 96.0% match - control-flow/register drift in redundant anim check dead path
- * (target uses r3/r5 bool flow), plus f0/f2 swap in pickup-time controller writeback
+ * TODO: 98.6% match - extra li r5,1 for bShouldSetAnim init before dead-code branch,
+ * r3/r5 register swap for flag vs controller, f0/f2 swap in pickup-time writeback
  */
 void Goalie::InitiatePanicGrab(cPlayer* pPlayer)
 {
@@ -457,10 +457,11 @@ void Goalie::InitiatePanicGrab(cPlayer* pPlayer)
         }
     }
 
-    if (mpLooseBallInfo->mnAnimID != m_eAnimID)
+    s32 nAnimID = mpLooseBallInfo->mnAnimID;
+    if (nAnimID != m_eAnimID)
     {
         u8 bShouldSetAnim = true;
-        if (mpLooseBallInfo->mnAnimID == m_eAnimID)
+        if (nAnimID == m_eAnimID)
         {
             bShouldSetAnim = false;
             if (m_pCurrentAnimController->m_ePlayMode == 1 && m_pCurrentAnimController->m_fTime == 1.0f)
@@ -471,7 +472,7 @@ void Goalie::InitiatePanicGrab(cPlayer* pPlayer)
 
         if (bShouldSetAnim)
         {
-            SetAnimState(mpLooseBallInfo->mnAnimID, true, 0.2f, false, false);
+            SetAnimState(nAnimID, true, 0.2f, false, false);
         }
 
         f32 fPickupTime = mpLooseBallInfo->mfPickupTime * 0.5f;
