@@ -165,77 +165,59 @@ int dCollideColumnColumn(dxGeom* geomID0, dxGeom* geomID1, int arg2, dContactGeo
 /**
  * Offset/Address/Size: 0xE0 | 0x8021CF0C | size: 0x1AC
  */
-int dCollideColumnPlane(dxGeom* geomID0, dxGeom* geomID1, int arg2, dContactGeom* arg3, int arg4)
+int dCollideColumnPlane(dxGeom* o1, dxGeom* o2, int flags, dContactGeom* contact, int skip)
 {
-    dVector4 sp8;
-    f32 temp_f2;
-    f32 temp_f31; // radius
-    s32 temp_r0;
-    s32 temp_r6;
-    s32 var_r4;
-    s32 var_r5;
-    s8 var_r6;
-    float* temp_r3; // pos
+    dVector4 n;
+    dReal radius;
+    dReal d;
+    const dReal* pos;
+    u8 ax1;
+    u8 ax2;
+    u8 perpendicular;
+    dReal distance;
 
-    temp_f31 = *(float*)dGeomGetClassData(geomID0);
-    dGeomPlaneGetParams(geomID1, sp8);
-    temp_r3 = (float*)dGeomGetPosition(geomID0);
-    var_r4 = 0xFF;
-    var_r5 = 0xFF;
-    var_r6 = 0;
-    if ((u8)lengthwiseAxis == 0)
-    {
-        var_r4 = 1;
-        var_r5 = 2;
-        if (sp8[0] < 0.001f)
-        {
-            var_r6 = 1;
+    radius = *(dReal*)dGeomGetClassData(o1);
+    dGeomPlaneGetParams(o2, n);
+    d = n[3];
+    pos = (const dReal*)dGeomGetPosition(o1);
+    ax1 = 0xFF;
+    ax2 = 0xFF;
+    perpendicular = 0;
+    if (lengthwiseAxis == 0) {
+        ax1 = 1;
+        ax2 = 2;
+        if (n[0] < 0.001f) {
+            perpendicular = 1;
         }
     }
-    if ((u8)lengthwiseAxis == 1)
-    {
-        var_r4 = 0;
-        var_r5 = 2;
-        if (sp8[1] < 0.001f)
-        {
-            var_r6 = 1;
+    if (lengthwiseAxis == 1) {
+        ax1 = 0;
+        ax2 = 2;
+        if (n[1] < 0.001f) {
+            perpendicular = 1;
         }
     }
-    if ((u8)lengthwiseAxis == 2)
-    {
-        var_r4 = 0;
-        var_r5 = 1;
-        if (sp8[2] < 0.001f)
-        {
-            var_r6 = 1;
+    if (lengthwiseAxis == 2) {
+        ax1 = 0;
+        ax2 = 1;
+        if (n[2] < 0.001f) {
+            perpendicular = 1;
         }
     }
-    if (var_r6 == 0)
-    {
+    if (!perpendicular) {
         return 0;
     }
-    temp_r6 = (var_r4 * 4) & 0x3FC;
-    temp_r0 = (var_r5 * 4) & 0x3FC;
-    temp_f2 = ((*(&sp8[0] + temp_r6) * *(temp_r3 + temp_r6)) + (*(&sp8[0] + temp_r0) * *(temp_r3 + temp_r0))) - sp8[3];
-    if (temp_f2 < temp_f31)
-    {
-
-        // typedef struct dContactGeom {
-        //   dVector3 pos; 0 4 8 C
-        //   dVector3 normal; 10 14 18 1C
-        //   dReal depth; 20
-        //   dGeomID g1,g2; 24 28
-        // } dContactGeom;
-
-        arg3->normal[0] = sp8[0];
-        arg3->normal[1] = sp8[1];
-        arg3->normal[2] = sp8[2];
-        *(float*)(arg3 + temp_r6) = -((*(float*)((u8*)(arg3 + temp_r6 + 0x10)) * temp_f31) - *(temp_r3 + temp_r6));
-        *(float*)(arg3 + temp_r0) = -((*(float*)((u8*)(arg3 + temp_r0 + 0x10)) * temp_f31) - *(temp_r3 + temp_r0));
-        *(float*)(arg3 + (lengthwiseAxis * 4)) = 0.0f;
-        arg3->depth = (f32)(temp_f2 - temp_f31);
-        arg3->g1 = geomID0;
-        arg3->g2 = geomID1;
+    distance = n[ax1] * pos[ax1] + n[ax2] * pos[ax2] - d;
+    if (distance < radius) {
+        contact->normal[0] = n[0];
+        contact->normal[1] = n[1];
+        contact->normal[2] = n[2];
+        contact->pos[ax1] = pos[ax1] - contact->normal[ax1] * radius;
+        contact->pos[ax2] = pos[ax2] - contact->normal[ax2] * radius;
+        contact->pos[lengthwiseAxis] = 0.0f;
+        contact->depth = distance - radius;
+        contact->g1 = o1;
+        contact->g2 = o2;
         return 1;
     }
     return 0;

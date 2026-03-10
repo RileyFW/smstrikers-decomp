@@ -1373,7 +1373,7 @@ config.libs = [
         "Open Dynamics Engine (ODE)",
         [
             Object(NonMatching, "ode/NLGAdditions.cpp", extra_cflags=["-inline auto, deferred"]),
-            Object(NonMatching, "ode/collision_kernel.cpp"),
+            Object(Matching, "ode/collision_kernel.cpp"),
             Object(Matching, "ode/collision_space.cpp"),
             Object(NonMatching, "ode/collision_std.cpp", extra_cflags=["-fp_contract on"]),
             Object(NonMatching, "ode/collision_transform.cpp"),

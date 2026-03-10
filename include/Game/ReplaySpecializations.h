@@ -39,6 +39,7 @@ void Replayable(SaveFrame& frame, bool& value)
 template <>
 void Replayable<1, SaveFrame, int>(SaveFrame& frame, int& value)
 {
+    FORCE_DONT_INLINE;
     if (frame.mInterval == 1)
     {
         if (frame.mInterval == 1)

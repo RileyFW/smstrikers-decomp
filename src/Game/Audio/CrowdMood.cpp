@@ -513,8 +513,8 @@ void CrowdMood::ActivateLPF(bool Activate)
 
 /**
  * Offset/Address/Size: 0x2D4 | 0x8014D9E8 | size: 0x1BC
- * TODO: 96.9% match - `cmplwi m_BufferCount, 0` emits `beq` (target `ble`) in both buffer-start checks.
- *       Scratch context causes register allocation shift (r28↔r30, r29↔r31).
+ * TODO: 97.9% match (build) - `cmplwi m_BufferCount, 0` emits `beq` (target `ble`) in both
+ *       buffer-start checks; likely GC/2.0 vs GC/1.3.2 compiler version difference.
  */
 void CrowdMood::SetLPF(unsigned short Frequency)
 {

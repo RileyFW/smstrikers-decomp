@@ -420,69 +420,64 @@ bool Goalie::InitiatePickup()
 
 /**
  * Offset/Address/Size: 0x73E4 | 0x80049EE0 | size: 0x1D0
+ * TODO: 96.0% match - control-flow/register drift in redundant anim check dead path
+ * (target uses r3/r5 bool flow), plus f0/f2 swap in pickup-time controller writeback
  */
 void Goalie::InitiatePanicGrab(cPlayer* pPlayer)
 {
-    if (pPlayer == NULL)
+    if (pPlayer != NULL)
     {
-        return;
+        if (IsOnSameTeam(pPlayer))
+        {
+            return;
+        }
+
+        cFielder* pFielder = static_cast<cFielder*>(pPlayer);
+
+        if (!pFielder->IsFallenDown(0.0f) && !pFielder->IsInvincible() &&
+            pPlayer != NULL && pPlayer->m_eClassType == FIELDER &&
+            !pFielder->IsFallenDown(0.0f))
+        {
+            pPlayer->PlayRandomCharDialogue(CHAR_DIALOGUE_HIT, VECTORS, 100.0f, -1.0f);
+
+            if (pPlayer->m_pBall != NULL)
+            {
+                pPlayer->ReleaseBall();
+            }
+
+            if (IsOnSameTeam(pFielder))
+            {
+                pFielder->EndDesire(false);
+                pFielder->EndAction();
+            }
+            else
+            {
+                pFielder->InitActionSlideAttackReact(this, false);
+            }
+        }
     }
 
-    if (IsOnSameTeam(pPlayer))
+    if (mpLooseBallInfo->mnAnimID != m_eAnimID)
     {
-        return;
-    }
+        u8 bShouldSetAnim = true;
+        if (mpLooseBallInfo->mnAnimID == m_eAnimID)
+        {
+            bShouldSetAnim = false;
+            if (m_pCurrentAnimController->m_ePlayMode == 1 && m_pCurrentAnimController->m_fTime == 1.0f)
+            {
+                bShouldSetAnim = true;
+            }
+        }
 
-    cFielder* pFielder = static_cast<cFielder*>(pPlayer);
-    if (pFielder->IsFallenDown(0.0f))
-    {
-        return;
-    }
+        if (bShouldSetAnim)
+        {
+            SetAnimState(mpLooseBallInfo->mnAnimID, true, 0.2f, false, false);
+        }
 
-    if (pFielder->IsInvincible())
-    {
-        return;
-    }
-
-    if (pPlayer == NULL)
-    {
-        return;
-    }
-
-    if (pPlayer->m_eClassType != FIELDER)
-    {
-        return;
-    }
-
-    if (pFielder->IsFallenDown(0.0f))
-    {
-        return;
-    }
-
-    pPlayer->PlayRandomCharDialogue(CHAR_DIALOGUE_HIT, VECTORS, 100.0f, -1.0f);
-
-    if (pPlayer->m_pBall != NULL)
-    {
-        pPlayer->ReleaseBall();
-    }
-
-    if (IsOnSameTeam(pFielder))
-    {
-        pFielder->EndDesire(false);
-        pFielder->EndAction();
-    }
-    else
-    {
-        pFielder->InitActionSlideAttackReact(this, false);
-    }
-
-    if (mpLooseBallInfo != NULL && mpLooseBallInfo->mnAnimID != m_eAnimID)
-    {
-        SetAnimState(0, true, 0.2f, false, false);
-
+        f32 fPickupTime = mpLooseBallInfo->mfPickupTime * 0.5f;
         cPN_SAnimController* pController = m_pCurrentAnimController;
         pController->m_fPrevTime = pController->m_fTime;
-        pController->m_fTime = 0.5f * mpLooseBallInfo->mfPickupTime;
+        pController->m_fTime = fPickupTime;
         InitMovementFromAnim(0, v3Zero, 1.0f, false);
     }
 

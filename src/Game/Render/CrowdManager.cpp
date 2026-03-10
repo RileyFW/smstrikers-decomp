@@ -136,7 +136,8 @@ void CrowdManager::Replay(LoadFrame& frame)
  */
 void CrowdManager::Replay(SaveFrame& frame)
 {
-    Replayable<1, SaveFrame, int>(frame, reinterpret_cast<int&>(m_State));
+    int state = m_State;
+    Replayable<1, SaveFrame, int>(frame, state);
 }
 
 /**
@@ -258,7 +259,180 @@ void CrowdManager::Update(float deltaTime)
 
 /**
  * Offset/Address/Size: 0x0 | 0x80163E7C | size: 0x480
+ * TODO: 96.89% match - top-level event-id dispatch still differs:
+ * target uses `cmpwi 9; beq; bge; cmpwi 5` ordering and register allocation
+ * (r0/r6) differs in duplicated Crowd_Idle transition blocks.
  */
-void CrowdManager::EventHandler(Event*)
+void CrowdManager::EventHandler(Event* event)
 {
+    s32 eventID = (s32)event->m_uEventID;
+
+    if (eventID >= 9)
+    {
+        if (eventID < 11)
+        {
+            if (eventID != 9)
+            {
+                if (m_State != Crowd_Idle)
+                {
+                    const char* szBundle = NULL;
+                    m_State = Crowd_Idle;
+                    m_fTime = 0.0f;
+
+                    switch (m_State)
+                    {
+                    case Crowd_Idle:
+                        szBundle = "idle";
+                        break;
+                    case Crowd_Happy:
+                        szBundle = "idle";
+                        break;
+                    case Crowd_Excited:
+                        szBundle = "excited";
+                        break;
+                    default:
+                        break;
+                    }
+
+                    char szFilename[64];
+                    if (m_szStadium[0] == '\0')
+                    {
+                        nlSNPrintf(szFilename, 64, "crowd/%s", szBundle);
+                    }
+                    else
+                    {
+                        nlSNPrintf(szFilename, 64, "crowd/%s/%s", m_szStadium, szBundle);
+                    }
+
+                    glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
+
+                    m_nCurrentFrame = 0;
+                    nlStrNCpy(m_szTexture, "idle/idle", 64);
+
+                    float frameValue = (float)(u32)m_nCurrentFrame / 8.0f;
+                    nlVector4 frameVector = {};
+                    frameVector.f.x = frameValue;
+                    frameVector.f.y = frameValue;
+                    frameVector.f.z = frameValue;
+                    frameVector.f.w = frameValue;
+                    glConstantSet("crowd/frame", frameVector);
+                }
+            }
+            else
+            {
+                const char* szBundle = NULL;
+                m_State = Crowd_Idle;
+                m_fTime = 0.0f;
+
+                switch (m_State)
+                {
+                case Crowd_Idle:
+                    szBundle = "idle";
+                    break;
+                case Crowd_Happy:
+                    szBundle = "idle";
+                    break;
+                case Crowd_Excited:
+                    szBundle = "excited";
+                    break;
+                default:
+                    break;
+                }
+
+                char szFilename[64];
+                if (m_szStadium[0] == '\0')
+                {
+                    nlSNPrintf(szFilename, 64, "crowd/%s", szBundle);
+                }
+                else
+                {
+                    nlSNPrintf(szFilename, 64, "crowd/%s/%s", m_szStadium, szBundle);
+                }
+
+                glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
+
+                m_nCurrentFrame = 0;
+                nlStrNCpy(m_szTexture, "idle/idle", 64);
+
+                float frameValue = (float)(u32)m_nCurrentFrame / 8.0f;
+                nlVector4 frameVector = {};
+                frameVector.f.x = frameValue;
+                frameVector.f.y = frameValue;
+                frameVector.f.z = frameValue;
+                frameVector.f.w = frameValue;
+                glConstantSet("crowd/frame", frameVector);
+            }
+        }
+    }
+    else if (eventID == 5)
+    {
+        EventData* gsd;
+        s32 id = event->m_data.GetID();
+        if (id == -1)
+        {
+            nlPrintf("Error: Trying to get event data on event with none!\n");
+            gsd = NULL;
+        }
+        else
+        {
+            id = event->m_data.GetID();
+            if (id != 0x18A)
+            {
+                nlPrintf("Error: GetData() failed! Data types do not match!\n");
+                gsd = NULL;
+            }
+            else
+            {
+                gsd = &event->m_data;
+            }
+        }
+
+        if (gsd != NULL)
+        {
+            if (m_State != Crowd_Excited)
+            {
+                const char* szBundle = NULL;
+                m_State = Crowd_Excited;
+                m_fTime = 0.0f;
+
+                switch (m_State)
+                {
+                case Crowd_Idle:
+                    szBundle = "idle";
+                    break;
+                case Crowd_Happy:
+                    szBundle = "idle";
+                    break;
+                case Crowd_Excited:
+                    szBundle = "excited";
+                    break;
+                default:
+                    break;
+                }
+
+                char szFilename[64];
+                if (m_szStadium[0] == '\0')
+                {
+                    nlSNPrintf(szFilename, 64, "crowd/%s", szBundle);
+                }
+                else
+                {
+                    nlSNPrintf(szFilename, 64, "crowd/%s/%s", m_szStadium, szBundle);
+                }
+
+                glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
+
+                m_nCurrentFrame = 0;
+                nlStrNCpy(m_szTexture, "idle/idle", 64);
+
+                float frameValue = (float)(u32)m_nCurrentFrame / 8.0f;
+                nlVector4 frameVector = {};
+                frameVector.f.x = frameValue;
+                frameVector.f.y = frameValue;
+                frameVector.f.z = frameValue;
+                frameVector.f.w = frameValue;
+                glConstantSet("crowd/frame", frameVector);
+            }
+        }
+    }
 }
