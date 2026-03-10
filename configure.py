@@ -550,10 +550,10 @@ def ODELib(lib_name: str, objects: Objects, cflags=cflags_ode) -> Library:
         ],
         system_includes=[
             *system_includes_base,
-             #TODO: revisite. instead of libc, which is a copy of MSL
             "include/PowerPC_EABI_Support/MSL_C++/MSL_Common/",
         ],
-        mw_version="GC/1.3.2",
+        # mw_version="GC/1.3.2",
+        mw_version="GC/2.0",
         cflags=[
             *cflags,
             "-DdNODEBUG=ON",
@@ -1381,9 +1381,7 @@ config.libs = [
             Object(Matching, "ode/error.cpp", extra_cflags=["-inline off"]),
             Object(Matching, "ode/joint.cpp"),
             Object(Matching, "ode/memory.cpp"),
-            Object(NonMatching, "ode/ode.cpp"),
-            Object(NonMatching, "ode/odemath.cpp", extra_cflags=["-inline deferred"]),
-            # Object(NonMatching, "ode/odemath.cpp", extra_cflags=["-inline auto"]),
+            Object(Matching, "ode/ode.cpp", extra_cflags=["-inline deferred"]),
             Object(Matching, "ode/matrix.cpp"),
             Object(Matching, "ode/mass.cpp"),
             Object(Matching, "ode/obstack.cpp"),
@@ -1394,8 +1392,16 @@ config.libs = [
             Object(NonMatching, "ode/ext/dColumn.cpp", extra_cflags=["-inline off"]),
             Object(NonMatching, "ode/ext/dFinitePlane.cpp"),
             Object(NonMatching, "ode/ext/dRoundedCorner.cpp"),
+
+            Object(NonMatching, "ode/odemath.cpp", extra_cflags=["-inline deferred"]),
         ],
     ),
+    # ODELib20(
+    #     "Open Dynamics Engine (ODE) MWCC 2.0",
+    #     [
+    #         Object(NonMatching, "ode/odemath.cpp", extra_cflags=["-inline deferred"]),
+    #     ],
+    # ),
     DolphinLib(
         "THP",
         [

@@ -439,18 +439,23 @@ struct TargaHeader
 
 /**
  * Offset/Address/Size: 0xBAC | 0x801BF8FC | size: 0x1B0
+ * TODO: 99.35% match - r27/r28/r29 register allocation cycle (imageData, dead copy,
+ * rowPixelOffset). MWCC allocates r27=imageData r28=rowPixelOffset r29=dead_copy
+ * instead of target r29=imageData r28=dead_copy r27=rowPixelOffset.
  */
 void glx_ScreenCapture(bool isMovie)
 {
     char filename[0x40];
     FILE* file;
     TargaHeader header;
-    u8* imageData;
     u32 argbColor;
-    u8 r, g, b;
+    union {
+        u32 word;
+        u8 bytes[4];
+    } colorBytes;
     s32 pixelOffset;
-    s32 rowPixelOffset;
-    s32 x, y;
+    u8* imageData;
+    s32 y, x;
 
     if (isMovie != 0)
     {
@@ -485,24 +490,18 @@ void glx_ScreenCapture(bool isMovie)
         imageData = (u8*)nlMalloc(0xD2000, 8, false);
         GXDrawDone();
 
-        rowPixelOffset = 0;
         for (y = 0; y < 0x1C0; y++)
         {
-            pixelOffset = rowPixelOffset * 3;
             for (x = 0; x < 0x280; x++)
             {
                 GXPeekARGB((u16)x, (u16)y, &argbColor);
 
-                r = argbColor >> 16;
-                g = argbColor >> 8;
-                b = argbColor;
-
-                imageData[pixelOffset] = r;
-                imageData[pixelOffset + 1] = g;
-                imageData[pixelOffset + 2] = b;
-                pixelOffset += 3;
+                pixelOffset = (y * 0x280 + x) * 3;
+                colorBytes.word = argbColor;
+                imageData[pixelOffset] = colorBytes.bytes[3];
+                imageData[pixelOffset + 1] = colorBytes.bytes[2];
+                imageData[pixelOffset + 2] = colorBytes.bytes[1];
             }
-            rowPixelOffset += 0x280;
         }
 
         fwrite(&header, 1, sizeof(TargaHeader), file);

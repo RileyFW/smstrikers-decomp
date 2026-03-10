@@ -1093,25 +1093,32 @@ void cFielder::ActionOneTouchPassFromVolley(float)
 
 /**
  * Offset/Address/Size: 0x530C | 0x8002BE44 | size: 0x1C8
- * TODO: work in progress
  */
-bool cFielder::DoCalcCanDoPerfectPass(cFielder* pReceiver, const nlVector3& v3Position)
+bool cFielder::DoCalcCanDoPerfectPass(cFielder* pPassTarget, const nlVector3& v3PassPosition)
 {
-    const nlVector3& v3OffNetLocPos = pReceiver->GetAIOffNetLocation(NULL);
-
-    float fDistSqPosToOffNet = CalculateDistanceSquared(v3Position, v3OffNetLocPos);
-
+    const nlVector3& v3OffNetLocPos = pPassTarget->GetAIOffNetLocation(NULL);
+    float fDistSqPosToOffNet = CalculateDistanceSquared(v3PassPosition, v3OffNetLocPos);
     const nlVector3& v3OffNetLocThis = GetAIOffNetLocation(NULL);
 
-    float fDistSqThisToOffNet = CalculateDistanceSquared(m_v3Position, v3OffNetLocPos);
-    float fDistSqBallToPos = CalculateDistanceSquared(v3Position, g_pBall->m_v3Position);
-    float fOpenToNet = 0.66999996f * OpenToTheirNet(pReceiver);
+    float fMaxDistToNet = 14.0f;
+    float fMinDistToPassTarget = 4.0f;
+    float fDistSqThisToOffNet = CalculateDistanceSquared(m_v3Position, v3OffNetLocThis);
+    float fDistSqBallToPos = CalculateDistanceSquared(v3PassPosition, g_pBall->m_v3Position);
+    float fPasserMaxDistToNet = fMaxDistToNet;
+
+    fMaxDistToNet *= fMaxDistToNet;
+    float fPasserMaxDistToNetSq = fPasserMaxDistToNet;
+    fPasserMaxDistToNetSq *= fPasserMaxDistToNetSq;
+    fMinDistToPassTarget *= fMinDistToPassTarget;
+
+    float fPasseeScore = 0.66999996f * OpenToTheirNet(pPassTarget);
+    float fPasserScore = 0.33f * Open(pPassTarget);
 
     bool result = false;
-    if (((fOpenToNet + (0.33f * Open(pReceiver))) > 0.72f)
-        && (fDistSqBallToPos > (4.0f * 4.0f))
-        && (fDistSqPosToOffNet < (14.f * 14.f))
-        && (fDistSqThisToOffNet < (14.f * 14.f)))
+    if (((fPasseeScore + fPasserScore) > 0.72f)
+        && (fDistSqBallToPos > fMinDistToPassTarget)
+        && (fDistSqPosToOffNet < fMaxDistToNet)
+        && (fDistSqThisToOffNet < fPasserMaxDistToNetSq))
     {
         result = true;
     }

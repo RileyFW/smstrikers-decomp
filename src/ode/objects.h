@@ -69,6 +69,13 @@ struct dxAutoDisable
     dReal angular_threshold; // angular (squared) velocity treshold
     dReal idle_time;         // time the body needs to be idle to auto-disable it
     int idle_steps;          // steps the body needs to be idle to auto-disable it
+    dxAutoDisable& operator=(const dxAutoDisable& o) {
+        linear_threshold = o.linear_threshold;
+        angular_threshold = o.angular_threshold;
+        idle_time = o.idle_time;
+        idle_steps = o.idle_steps;
+        return *this;
+    }
 };
 
 // quick-step parameters

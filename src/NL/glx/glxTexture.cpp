@@ -386,18 +386,25 @@ bool glxParseTextureBundle(const char* filedata)
 /**
  * Offset/Address/Size: 0x9F4 | 0x801B7CB0 | size: 0x1D0
  */
+/**
+ * Offset/Address/Size: 0xAF4 | 0x801B7CB0 | size: 0x1D0
+ * TODO: 97.3% match - MWCC optimizer eliminates uSize=uBaseOffset copy (mr r25,r29)
+ *       and folds uBaseOffset+=0x20 into loop body instead of precomputing
+ */
 bool glplatLoadTextureBundle(const char* filename)
 {
-    char fullname[256];
+    char fullFilename[256];
+    unsigned long uBaseOffset;
     nlFile* pFile;
-    glTexBundleHeader* pHeader;
     glTexBundleDict* pDictionary;
-    char* baseData;
+    glTexBundleHeader* pHeader;
+    unsigned char* pData;
+    unsigned long uNumFiles;
 
     glx_FreeMemory0();
-    nlStrNCat<char>(fullname, "art/", filename, 0x100);
+    nlStrNCat<char>(fullFilename, "art/", filename, 0x100);
 
-    pFile = nlOpen(fullname);
+    pFile = nlOpen(fullFilename);
     if (pFile == NULL)
     {
         nlPrintf("file '%s' not found\n", filename);
@@ -406,23 +413,24 @@ bool glplatLoadTextureBundle(const char* filename)
     pHeader = (glTexBundleHeader*)nlMalloc(0x20, 0x20, 1);
     nlRead(pFile, pHeader, 0x20);
 
-    const unsigned long uNumFiles = pHeader->numTextures;
-    const unsigned long uBaseOffset = uNumFiles * 0x10;
+    uNumFiles = pHeader->numTextures;
+    uBaseOffset = uNumFiles * sizeof(glTexBundleDict);
 
     pDictionary = (glTexBundleDict*)nlMalloc(uBaseOffset, 0x20, 1);
     nlRead(pFile, pDictionary, uBaseOffset);
 
-    baseData = (char*)nlMalloc(0x40800, 0x20, 1);
+    pData = (unsigned char*)nlMalloc(0x40800, 0x20, 1);
     nlQSort<glTexBundleDict>(pDictionary, uNumFiles, BundleSortProc);
 
-    for (int i = 0; i < uNumFiles; i++)
+    uBaseOffset += 0x20;
+
+    for (unsigned long i = 0; i < uNumFiles; i++)
     {
-        unsigned long uSize = uBaseOffset + 0x20 + pDictionary[i].offset;
-        nlSeek(pFile, uSize, 0);
-        nlRead(pFile, baseData, pDictionary[i].fileSize);
+        nlSeek(pFile, uBaseOffset + pDictionary[i].offset, 0);
+        nlRead(pFile, pData, pDictionary[i].fileSize);
         if (glxTextureLoad_cb == NULL)
         {
-            glplatTextureAdd(pDictionary[i].hash, baseData, pDictionary[i].fileSize);
+            glplatTextureAdd(pDictionary[i].hash, pData, pDictionary[i].fileSize);
         }
         else
         {
@@ -431,17 +439,17 @@ bool glplatLoadTextureBundle(const char* filename)
             {
                 if (glTextureLoad(newHash) != 0)
                 {
-                    glplatTextureReplace(newHash, baseData, pDictionary[i].fileSize);
+                    glplatTextureReplace(newHash, pData, pDictionary[i].fileSize);
                 }
                 else
                 {
-                    glplatTextureAdd(newHash, baseData, pDictionary[i].fileSize);
+                    glplatTextureAdd(newHash, pData, pDictionary[i].fileSize);
                 }
             }
         }
     }
 
-    nlFree(baseData);
+    nlFree(pData);
     nlFree(pDictionary);
     nlFree(pHeader);
     nlClose(pFile);

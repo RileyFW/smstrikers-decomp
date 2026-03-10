@@ -144,40 +144,26 @@ void dNormalize4(dVector4 a)
 void dPlaneSpace(const dVector3 n, dVector3 p, dVector3 q)
 {
     dAASSERT(n && p && q);
-    /**
-     * Offset/Address/Size: 0x20508 | 0x80220508 | size: 0x144
-     * TODO: remaining mismatch is float register allocation in both branches after nlRecipSqrt.
-     */
     if (dFabs(((volatile const dReal*)n)[2]) > M_SQRT1_2)
     {
         dReal a = n[1] * n[1] + n[2] * n[2];
         dReal k = nlRecipSqrt(a, true);
-        dReal n2 = n[2];
-        dReal n1 = n[1];
-        dReal n0 = n[0];
-
         p[0] = 0.0f;
-        p[1] = -n2 * k;
-        p[2] = n1 * k;
-
+        p[1] = -n[2] * k;
+        p[2] = n[1] * k;
         q[0] = a * k;
-        q[1] = -n0 * p[2];
-        q[2] = n0 * p[1];
+        q[1] = -n[0] * p[2];
+        q[2] = n[0] * p[1];
     }
     else
     {
         dReal a = n[0] * n[0] + n[1] * n[1];
         dReal k = nlRecipSqrt(a, true);
-        dReal n1 = n[1];
-        dReal n0 = n[0];
-        dReal n2 = n[2];
-
-        p[0] = -n1 * k;
-        p[1] = n0 * k;
+        p[0] = -n[1] * k;
+        p[1] = n[0] * k;
         p[2] = 0.0f;
-
-        q[0] = -n2 * p[1];
-        q[1] = n2 * p[0];
+        q[0] = -n[2] * p[1];
+        q[1] = n[2] * p[0];
         q[2] = a * k;
     }
 }

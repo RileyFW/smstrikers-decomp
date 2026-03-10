@@ -61,11 +61,9 @@ FEMapMenu::~FEMapMenu()
 
 /**
  * Offset/Address/Size: 0xDA4 | 0x800980A4 | size: 0x1A0
- * TODO: r29/r30 register allocation difference
  */
 void FEMapMenu::AddItem(int itemID, TLInstance* pIcon, int leftID, int rightID, int upID, int downID, bool active)
 {
-
     m_items[m_numItems].ItemID = itemID;
     m_items[m_numItems].Icon = pIcon;
     m_items[m_numItems].Active = active;
@@ -74,24 +72,19 @@ void FEMapMenu::AddItem(int itemID, TLInstance* pIcon, int leftID, int rightID, 
     m_items[m_numItems].Up = upID;
     m_items[m_numItems].Down = downID;
 
-    FEMapMenu* pBase;
-    s32 offset;
+    s8 idx = m_numItems;
+    nlColour color = m_items[idx].Icon->m_component->GetColour();
 
-    offset = m_numItems * (s32)sizeof(ItemEntry);
-    pBase = (FEMapMenu*)((s32)this + offset);
-
-    nlColour color = pBase->m_items[0].Icon->m_component->GetColour();
-
-    if (!pBase->m_items[0].Active)
+    if (!m_items[idx].Active)
     {
         color.c[0] = (u8)(color.c[0] * m_disabledMultColor);
         color.c[1] = (u8)(color.c[1] * m_disabledMultColor);
         color.c[2] = (u8)(color.c[2] * m_disabledMultColor);
-        pBase->m_items[0].Icon->SetAssetColour(color);
+        m_items[idx].Icon->SetAssetColour(color);
     }
     else
     {
-        pBase->m_items[0].Icon->SetAssetColour(color);
+        m_items[idx].Icon->SetAssetColour(color);
     }
 
     m_numItems++;

@@ -18,8 +18,7 @@ bool useSubtractiveDarkening;
  */
 void WorldDarkening::UpdateAndRender(float deltaTime)
 {
-    u8 darkenAmount; // r5
-    glPoly2 poly;    // r1+0x10
+    glPoly2 poly;
 
     mPos += mRate * deltaTime;
 
@@ -64,19 +63,17 @@ void WorldDarkening::UpdateAndRender(float deltaTime)
 
     poly.SetupRectangle(0.0f, 0.0f, 640.0f, 480.0f, -1.0f);
 
-    darkenAmount = 255.0f * mPos;
+    s32 darkenAmount = 255.0f * mPos;
 
     if (useSubtractiveDarkening != 0)
     {
-        nlColour black = { 0, 0, 0, 0 };
-        nlColour color = black;
+        nlColour color = { 0, 0, 0, 0 };
         nlColourSet(color, darkenAmount, darkenAmount, darkenAmount, 255);
         poly.SetColour(color);
     }
     else
     {
-        nlColour black = { 0, 0, 0, 0 };
-        nlColour color = black;
+        nlColour color = { 0, 0, 0, 0 };
         nlColourSet(color, 0, 0, 0, darkenAmount);
         poly.SetColour(color);
     }

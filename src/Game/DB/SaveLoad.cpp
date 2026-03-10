@@ -94,12 +94,10 @@ bool SaveLoad::CardBusy()
 
 /**
  * Offset/Address/Size: 0x3720 | 0x8018D07C | size: 0x1BC
- * TODO: 93.0% match - r4/r0/r11 vs r0/r11/r10 register allocation for iconFmt/iconCount/bannerFmt loads;
- * expression scheduling (mulli/mullw order) differs; SDA vs absolute addressing for string literals;
- * lis r5 vs r6 for gIconDataCache after nlMalloc in file-reading sections
+ * TODO: 97.4% match - regalloc differs: iconFmt/iconCount/bannerFmt load regs shifted (r4/r0/r11 vs r0/r11/r10),
+ * headerSize accumulation uses r6 as accumulator instead of target r0/r3 sequence,
+ * and SDA string addressing for "@2009"/"@2010" (1 instr vs target 2 instr)
  */
-#pragma push
-#pragma opt_propagation off
 void LoadMemoryCardIconData()
 {
     nlFile* pFile1;
@@ -115,14 +113,16 @@ void LoadMemoryCardIconData()
 
     gIconDataCache.mIconConfig.GetValidDataInfo(gIconDataCache.mIconDataInfo);
 
-    s8 iconFmt = gIconDataCache.mIconConfig.IconFormat;
-    u8 iconCount = gIconDataCache.mIconConfig.IconCount;
     u8 bannerFmt = gIconDataCache.mIconConfig.BannerFormat;
+    u8 iconCount = gIconDataCache.mIconConfig.IconCount;
+    s8 iconFmt = gIconDataCache.mIconConfig.IconFormat;
 
-    u32 headerSize = ((bannerFmt == 1) ? 0x200 : 0)
-                   + (bannerFmt * 0xC00 + iconCount * (iconFmt << 10))
-                   + ((iconFmt == 1) ? 0x200 : 0)
-                   + 0x40;
+    u32 headerSize = 0;
+    headerSize += ((bannerFmt == 1) ? 0x200 : 0);
+    headerSize += bannerFmt * 0xC00;
+    headerSize += ((iconFmt == 1) ? 0x200 : 0);
+    headerSize += iconCount * (iconFmt << 10);
+    headerSize += 0x40;
     gIconDataCache.mIconConfig.HeaderSize = headerSize;
 
     gIconDataCache.mIconHdrBuffer = nlMalloc(headerSize, 0x20, false);
@@ -135,19 +135,16 @@ void LoadMemoryCardIconData()
 
     pFile1 = nlOpen("@2009");
     nlFileSize(pFile1, &bannerSize);
-    void* bannerBuf = nlMalloc(bannerSize, 0x20, true);
-    gIconDataCache.mBannerBuffer = bannerBuf;
-    nlRead(pFile1, bannerBuf, bannerSize);
+    gIconDataCache.mBannerBuffer = nlMalloc(bannerSize, 0x20, true);
+    nlRead(pFile1, gIconDataCache.mBannerBuffer, bannerSize);
     nlClose(pFile1);
 
     nlFile* pFile2 = nlOpen("@2010");
     nlFileSize(pFile2, &iconSize);
-    void* iconBuf = nlMalloc(iconSize, 0x20, true);
-    gIconDataCache.mIconBuffer = iconBuf;
-    nlRead(pFile2, iconBuf, iconSize);
+    gIconDataCache.mIconBuffer = nlMalloc(iconSize, 0x20, true);
+    nlRead(pFile2, gIconDataCache.mIconBuffer, iconSize);
     nlClose(pFile2);
 }
-#pragma pop
 
 // /**
 //  * Offset/Address/Size: 0x355C | 0x8018CEB8 | size: 0x1C4

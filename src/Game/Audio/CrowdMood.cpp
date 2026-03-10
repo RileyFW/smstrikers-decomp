@@ -513,9 +513,8 @@ void CrowdMood::ActivateLPF(bool Activate)
 
 /**
  * Offset/Address/Size: 0x2D4 | 0x8014D9E8 | size: 0x1BC
- * TODO: 93.4% match - register allocation: r28/r30 (Frequency), r29/r31 (g_CrowdAudio),
- *       r28/r30 (g_CrowdState). Extra li for volatile zero-init.
- *       ble- vs beq- for buffer count check.
+ * TODO: 96.9% match - `cmplwi m_BufferCount, 0` emits `beq` (target `ble`) in both buffer-start checks.
+ *       Scratch context causes register allocation shift (r28↔r30, r29↔r31).
  */
 void CrowdMood::SetLPF(unsigned short Frequency)
 {
@@ -536,8 +535,7 @@ void CrowdMood::SetLPF(unsigned short Frequency)
     {
         if (pChant->m_State >= GCAudioStreaming::SS_Warming)
         {
-            buf = NULL;
-            volatile unsigned long i = 0;
+            volatile unsigned long i = (unsigned long)(buf = NULL);
             if (pChant->m_BufferCount > 0)
             {
                 buf = pChant->m_Buffers[0];
@@ -567,8 +565,7 @@ void CrowdMood::SetLPF(unsigned short Frequency)
         pHeckle = g_CrowdAudio.pHeckleStream;
         if (pHeckle->m_State >= GCAudioStreaming::SS_Warming)
         {
-            buf = NULL;
-            volatile unsigned long i = 0;
+            volatile unsigned long i = (unsigned long)(buf = NULL);
             if (pHeckle->m_BufferCount > 0)
             {
                 buf = pHeckle->m_Buffers[0];

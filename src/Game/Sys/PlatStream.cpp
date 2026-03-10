@@ -93,8 +93,8 @@ bool PlatAudio::IsStreamingInited()
 
 /**
  * Offset/Address/Size: 0x0 | 0x801C70C4 | size: 0x1BC
- * TODO: 95.0% match - r28/r29 induction variable swap remains and both buffer
- * count zero checks compile to beq with one extra zero-init instruction.
+ * TODO: 96.1% match - r28/r29 outer induction-variable roles remain swapped
+ * and both m_BufferCount > 0 checks still compile as beq instead of ble.
  */
 void PlatAudio::StopAllStreams()
 {
@@ -111,9 +111,7 @@ void PlatAudio::StopAllStreams()
         stream->m_Flags &= ~(1 << SF_Play);
         if (stream->m_State == SS_Playing)
         {
-            volatile unsigned long j = 0;
-
-            buffer = NULL;
+            volatile unsigned long j = (unsigned long)(buffer = NULL);
             if (stream->m_BufferCount > 0)
                 buffer = stream->m_Buffers[0];
 
@@ -174,7 +172,7 @@ void PlatAudio::StopAllStreams()
             }
         }
 
-        lookupOffset += 8;
         streamIndex++;
+        lookupOffset += 8;
     }
 }
