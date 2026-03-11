@@ -155,7 +155,6 @@ void cCharacter::StopSFX(Audio::eCharSFX sfxType)
 /**
  * Offset/Address/Size: 0x334 | 0x8000E280 | size: 0x60
  */
-// void cCharacter::PlaySFX(Audio::SoundAttributes&)
 int cCharacter::PlaySFX(Audio::SoundAttributes& attributes)
 {
     if (Audio::IsInited())

@@ -125,15 +125,15 @@ void FESceneManager::RenderActiveScenes()
 
 /**
  * Offset/Address/Size: 0x284 | 0x8020D8D0 | size: 0x1A8
- * TODO: 98.82% match - register allocation differences only (r diffs).
- * msg/queueHeadAddr swapped (r31/r30), inner loop vars rotated (r28/r26, r25/r29).
- * MWCC inlines IsObjectQueuedForPop but allocates hoisted static address register
- * before caller variables, causing systematic register reordering.
+ * TODO: 99.34% match - register allocation differences only (r diffs).
+ * headEntry remains in r26 instead of r28; inlined IsObjectQueuedForPop locals rotate
+ * (pSceneHandler r25/r29, msgHead r29/r26, msgEntry r28/r25).
  */
 void FESceneManager::QueueScenePop()
 {
     PackagePushPopMessage* msg;
     DLListEntry<PackagePushPopMessage*>* entry;
+    DLListEntry<PackagePushPopMessage*>** queueHead;
 
     msg = NULL;
 
@@ -154,6 +154,7 @@ void FESceneManager::QueueScenePop()
 
     DLListEntry<BaseSceneHandler*>* sceneEntry = nlDLRingGetStart(m_sceneHandlerStack.m_Head);
     DLListEntry<BaseSceneHandler*>* headEntry = m_sceneHandlerStack.m_Head;
+    queueHead = &m_pushPopMessageQueue.m_Head;
 
     while (sceneEntry != NULL)
     {
@@ -195,7 +196,7 @@ void FESceneManager::QueueScenePop()
         entry->m_data = msg;
     }
 
-    nlDLRingAddEnd(&m_pushPopMessageQueue.m_Head, entry);
+    nlDLRingAddEnd(queueHead, entry);
 }
 
 /**

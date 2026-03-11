@@ -66,13 +66,11 @@ void Goalie::ActionLooseBallCatch(float deltaTime)
 
     if (m_eAnimID == GOALIEACTION_STS)
     {
-        if (mfTargetTime <= mBlendInfo.mfMilestoneTime[2] + 0.01f)
+        float targetTime = mfTargetTime;
+        if (targetTime <= mBlendInfo.mfMilestoneTime[2] + 0.01f)
         {
-            float clampedValue = mBlendInfo.mfMilestoneTime[2] - mfTargetTime;
-            if (clampedValue >= mBlendInfo.mfStartTime)
-            {
-                clampedValue = mBlendInfo.mfStartTime;
-            }
+            float clampedValue = mBlendInfo.mfMilestoneTime[2] - targetTime;
+            clampedValue = nlMaxEquals(clampedValue, mBlendInfo.mfStartTime);
             PlayBlendedAnims(clampedValue, -1);
         }
     }
@@ -103,22 +101,20 @@ void Goalie::ActionLooseBallCatch(float deltaTime)
         const nlVector3& leftHandPos = GetJointPosition(m_nLeftHandJointIndex);
         const nlVector3& rightHandPos = GetJointPosition(m_nRightHandJointIndex);
 
-        float distSqLeft = g_pBall->m_v3Position.CalculateDistanceSquared(leftHandPos);
-        if (distSqLeft < 1.0f || g_pBall->m_v3Position.CalculateDistanceSquared(rightHandPos) < 1.0f)
-        // if (_CalculateDistanceSquared(leftHandPos, g_pBall->m_v3Position) < 1.0f
-        //     || _CalculateDistanceSquared(rightHandPos, g_pBall->m_v3Position) < 1.0f)
+        float distSqLeft = CalculateDistanceSquared(g_pBall->m_v3Position, leftHandPos);
+        if (distSqLeft < 1.0f || CalculateDistanceSquared(g_pBall->m_v3Position, rightHandPos) < 1.0f)
         {
             Audio::SoundAttributes soundAttrs;
             soundAttrs.Init();
             soundAttrs.SetSoundType(0xC0, true);
             soundAttrs.UseStationaryPosVector(m_v3Position);
-            soundAttrs.mf_Volume = 1.0f; // @2821 - needs verification
+            soundAttrs.mf_Volume = 1.0f;
             Audio::gStadGenSFX.Play(soundAttrs);
 
             PickupBall(g_pBall);
             mbPickedUp = true;
             g_pBall->ClearShotInProgress();
-            EmitGoalieCatch(this, "goalie_catch", false); // @1580 is likely a string constant
+            EmitGoalieCatch(this, "goalie_catch", false);
         }
     }
 }

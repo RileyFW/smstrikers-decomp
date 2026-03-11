@@ -1073,6 +1073,7 @@ void cFielder::SetDesireDuration(float duration, bool randomize)
  */
 void cFielder::ShootBallDueToContact(const nlVector3& aShootDirection)
 {
+    FORCE_DONT_INLINE;
     bool bBallAwayFromCarrier;
     if ((m_eActionState == ACTION_RUNNING_WB_TURBO) && ((m_pCurrentAnimController->m_fTime > 0.2f) && (m_pCurrentAnimController->m_fTime < 0.975f)))
     {

@@ -922,8 +922,7 @@ unsigned long PlaySFXbyID(const SoundAttributes& attrs, unsigned long sfxID, flo
  */
 unsigned long PlaySFX(const SFXStartInfo& info)
 {
-    PlatAudio::PlaySFX(info);
-    return 0; // TODO: PlatAudio::PlaySFX should return the voice ID
+    return PlatAudio::PlaySFX(info);
 }
 
 /**
