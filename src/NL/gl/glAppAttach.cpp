@@ -121,11 +121,12 @@ glModelPacket* glplatModifyPacket(eGLView view, const glModelPacket* pPacket)
         memcpy(streams, pFinal->streams, numOldStreams * sizeof(glModelStream));
 
         glModelStream* detail = getDetail(pFinal->streams, &pFinal->streams[pFinal->numStreams]);
-        memcpy(&streams[numOldStreams], detail, sizeof(glModelStream));
-        streams[numOldStreams].id = 4;
+        glModelStream* newStream = &streams[numOldStreams];
+        memcpy(newStream, detail, sizeof(glModelStream));
+        pFinal = p;
+        newStream->id = 4;
         p->streams = streams;
         p->numStreams = numNewStreams;
-        pFinal = p;
     }
 
     return pFinal;
