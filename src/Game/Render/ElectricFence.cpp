@@ -187,13 +187,9 @@ void EmitElectricFenceBallEffect(const nlVector3& pos, const nlVector3& dir, uns
 
 /**
  * Offset/Address/Size: 0xAB8 | 0x8016BAE8 | size: 0x1D4
- * TODO: 97.65% match - r31/r29/r30 register swap: controller should be r31 but gets r29, pos should be r30 but gets r31. MWCC register allocator heuristic difference, not related to -inline deferred.
  */
-void EmitElectricFenceCharacterEffect(const nlVector3& pos, const nlVector3& dir, unsigned long emitterID)
+static inline void EmitElectricFenceCharacterEffectImpl(const nlVector3& pos, const nlVector3& dir, unsigned long emitterID)
 {
-    if (g_pGame->mbCaptainShotToScoreOn)
-        return;
-
     if (!EmissionManager::IsPlaying(emitterID, fxGetGroup("fx_electric_fence_char")))
     {
         EmissionController* controller = EmissionManager::Create(fxGetGroup("fx_electric_fence_char"), 0);
@@ -217,6 +213,8 @@ void EmitElectricFenceCharacterEffect(const nlVector3& pos, const nlVector3& dir
 
         new (data) ElectricFenceData(controller);
 
+        Function<EmissionController&> finishedCb;
+
         {
             Function<EmissionController&> updateCb;
             updateCb.mTag = FREE_FUNCTION;
@@ -224,15 +222,20 @@ void EmitElectricFenceCharacterEffect(const nlVector3& pos, const nlVector3& dir
             controller->SetUpdateCallback(updateCb);
         }
 
-        {
-            Function<EmissionController&> finishedCb;
-            finishedCb.mTag = FREE_FUNCTION;
-            finishedCb.mFreeFunction = ElectricFenceFinished;
-            controller->SetFinishedCallback(finishedCb);
-        }
+        finishedCb.mTag = FREE_FUNCTION;
+        finishedCb.mFreeFunction = ElectricFenceFinished;
+        controller->SetFinishedCallback(finishedCb);
     }
 
     SidelineExplodableManager::TriggerExplosions(pos, g_pGame->m_pGameTweaks->fBobombMediumRadius * g_pGame->m_pGameTweaks->fPowerupExplosionRadius);
+}
+
+void EmitElectricFenceCharacterEffect(const nlVector3& pos, const nlVector3& dir, unsigned long emitterID)
+{
+    if (g_pGame->mbCaptainShotToScoreOn)
+        return;
+
+    EmitElectricFenceCharacterEffectImpl(pos, dir, emitterID);
 }
 
 /**

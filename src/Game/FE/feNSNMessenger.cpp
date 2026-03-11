@@ -180,8 +180,9 @@ static inline void CopyWideString(BasicStringInternal* data, const unsigned shor
     data->mData = (char*)nlMalloc((data->mSize + 1) * 2, 8, true);
     data->mCapacity = data->mSize;
 
-    int j = 0;
-    int i = j;
+    int j;
+    int i = 0;
+    j = i;
     while (i < data->mSize)
     {
         *(unsigned short*)(data->mData + j) = *text;
@@ -195,7 +196,7 @@ static inline void CopyWideString(BasicStringInternal* data, const unsigned shor
 
 /**
  * Offset/Address/Size: 0x274 | 0x800A1590 | size: 0x1A4
- * TODO: 96.24% match - r29/r30 register swap for this/data, li r5,0/mr r4,r5 instead of li r4,0/mr r5,r4
+ * TODO: 96.38% match - r29/r30 register swap for this/data
  */
 void NSNMessengerScene::SetDisplayMessage(const char* locMessage)
 {

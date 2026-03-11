@@ -175,29 +175,33 @@ void ISidekickGridComponent::RebuildInstanceTable()
 
 /**
  * Offset/Address/Size: 0x408 | 0x800C2C18 | size: 0x1AC
+ * TODO: 97.2% match - register allocation: this=r26 instead of r27,
+ * activeslide/this swapped, base=r31 instead of r25 in second loop
  */
+#pragma opt_strength_reduction off
 void ISidekickGridComponent::BuildMapMenu()
 {
-    // TODO: 91.79% match - remaining diff is register allocation in the grid AddItem loop.
+    CellItem* pItem;
     TLSlide* activeslide = mParentComponent->GetActiveSlide();
 
     mInstanceTable = (TLInstance**)nlMalloc(0x10, 8, false);
 
-    for (int i = 0; i < 4; i++)
+    pItem = SidekickCellItems;
+    for (int i = 0; i < 4; i++, pItem++)
     {
         TLInstance* inst = FEFinder<TLInstance, 2>::Find(
             activeslide,
-            InlineHasher(nlStringLowerHash(SidekickCellItems[i].mIconName)),
+            InlineHasher(nlStringLowerHash(pItem->mIconName)),
             InlineHasher(0),
             InlineHasher(0),
             InlineHasher(0),
             InlineHasher(0),
             InlineHasher(0));
 
-        mInstanceTable[SidekickCellItems[i].mIconType] = inst;
+        mInstanceTable[pItem->mIconType] = inst;
     }
 
-    for (int i = 0, itemIndexBase = 0; i < 2; i++, itemIndexBase += 2)
+    for (int itemIndexBase = 0, i = 0; i < 2; i++, itemIndexBase += 2)
     {
         int itemIndex = itemIndexBase;
 
@@ -231,6 +235,7 @@ void ISidekickGridComponent::BuildMapMenu()
 
     mMapMenu->SetSelectedItem(SidekickCellItems[0].mIconType);
 }
+#pragma opt_strength_reduction on
 
 /**
  * Offset/Address/Size: 0x5B4 | 0x800C2DC4 | size: 0x94

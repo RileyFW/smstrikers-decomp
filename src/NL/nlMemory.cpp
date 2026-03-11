@@ -111,26 +111,12 @@ void* nlVirtualAlloc(unsigned long size, bool bZero)
 
 /**
  * Offset/Address/Size: 0xA0 | 0x801D2140 | size: 0x1B8
+ * TODO: 97.4% match - mr r6,r3 (running pointer init) scheduled before first
+ * branch instead of inside >8 path; cleanup loop missing add r6,r3,r7 recompute
  */
 void nlInitMemory()
 {
-    u32 temp_r30;
-    uintptr_t temp_r31;
-    uintptr_t temp_r31_2;
-    uintptr_t temp_r31_3;
-    uintptr_t temp_r3;
-    uintptr_t temp_r3_2;
-    s32 var_ctr_2;
-    s8* var_r6_2;
-    u32 temp_r4;
-    u32 temp_r4_2;
-    u32 temp_r5;
-    u32 var_ctr;
-    u32 var_r7;
-    uintptr_t temp_r3_3;
-    uintptr_t var_r6;
-
-    if ((u8)s_MemoryInitialized == 0)
+    if (s_MemoryInitialized == 0)
     {
         s_MemoryInitialized = 1;
         VMInit(0x100000, 0x700000, 0x900000);
@@ -138,58 +124,31 @@ void nlInitMemory()
         DVDInit();
         VIInit();
         PADInit();
-        temp_r31 = (uintptr_t)OSGetArenaLo();
-        temp_r3 = (uintptr_t)OSGetArenaHi();
-        temp_r31_2 = (uintptr_t)OSInitAlloc((void*)temp_r31, (void*)temp_r3, 1);
-        OSSetArenaLo((void*)temp_r31_2); // not sure about the parameter
-        temp_r31_3 = temp_r3 & 0xFFFFFFE0;
-        temp_r3_2 = (temp_r31_2 + 0x1F) & 0xFFFFFFE0;
-        temp_r30 = temp_r31_3 - temp_r3_2;
-        OSCreateHeap((void*)temp_r3_2, (void*)temp_r31_3);
-        OSSetCurrentHeap(0); // not sure about the parameter
-        OSSetArenaLo((void*)temp_r31_3);
-        temp_r3_3 = (uintptr_t)OSAllocFromHeap(__OSCurrHeap, temp_r30 + 0xFFFC0000);
-        temp_r4 = temp_r30 + 0xFFFC0000;
-        var_r7 = 0U;
-        if (temp_r4 > 0U)
+
+        void* arenaLo = OSGetArenaLo();
+        void* arenaHi = OSGetArenaHi();
+        arenaLo = OSInitAlloc(arenaLo, arenaHi, 1);
+        OSSetArenaLo(arenaLo);
+
+        u32 alignedLo = ((u32)arenaLo + 0x1F) & ~0x1F;
+        arenaLo = (void*)((u32)arenaHi & ~0x1F);
+        u32 heapSize = (u32)arenaLo - alignedLo;
+
+        s32 heap = OSCreateHeap((void*)alignedLo, arenaLo);
+        OSSetCurrentHeap(heap);
+        OSSetArenaLo(arenaLo);
+
+        void* ptr = OSAllocFromHeap(__OSCurrHeap, heapSize - 0x40000);
+        s8* p = (s8*)ptr;
+
+        u32 i;
+        for (i = 0; i < heapSize - 0x40000; i++)
         {
-            temp_r5 = temp_r30 + 0xFFFBFFF8;
-            if (temp_r4 > 8U)
-            {
-                var_r6 = temp_r3_3;
-                var_ctr = (u32)(temp_r5 + 7) >> 3U;
-                if (temp_r5 > 0U)
-                {
-                    do
-                    {
-                        ((u8*)var_r6)[0] = -0x33;
-                        var_r7 += 8;
-                        ((u8*)var_r6)[1] = -0x33;
-                        ((u8*)var_r6)[2] = -0x33;
-                        ((u8*)var_r6)[3] = -0x33;
-                        ((u8*)var_r6)[4] = -0x33;
-                        ((u8*)var_r6)[5] = -0x33;
-                        ((u8*)var_r6)[6] = -0x33;
-                        ((u8*)var_r6)[7] = -0x33;
-                        var_r6 += 8;
-                        var_ctr -= 1;
-                    } while (var_ctr != 0);
-                }
-            }
-            temp_r4_2 = temp_r30 + 0xFFFC0000;
-            var_r6_2 = (s8*)(temp_r3_3 + var_r7);
-            var_ctr_2 = temp_r4_2 - var_r7;
-            if (var_r7 < temp_r4_2)
-            {
-                do
-                {
-                    *var_r6_2 = -0x33;
-                    var_r6_2 += 1;
-                    var_ctr_2 -= 1;
-                } while (var_ctr_2 != 0);
-            }
+            *p = -0x33;
+            p++;
         }
-        StandardAllocator.Initialize((void*)temp_r3_3, temp_r30 + 0xFFFC0000);
+
+        StandardAllocator.Initialize(ptr, heapSize - 0x40000);
         VirtualAllocator.Initialize((void*)0x7E000000, 0x900000);
         OSReport("After nlInitMemory\n");
         OSReport("Free Memory: %u\n", StandardAllocator.TotalFreeMemory());

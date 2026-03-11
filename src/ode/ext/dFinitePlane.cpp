@@ -185,15 +185,15 @@ int dCollideFinitePlaneSphere(dxGeom* planeGeomID, dxGeom* sphereGeomID, int, dC
     dMatrix4 sp28;
     dVector3 sp18;
     dVector3 sp8;
-    f32 plane_d;
-    f32 plane_c;
-    f32 plane_b;
     f32 plane_a;
+    f32 plane_b;
+    f32 plane_c;
+    f32 plane_d;
     f32 radius;
     f32 plane_param;
     f32 var_f25;
-    float* plane_rot;
     u32 plane_flag;
+    float* plane_rot;
     float* plane_pos;
     float* sphere_pos;
     FinitePlane* planeData;
@@ -211,22 +211,22 @@ int dCollideFinitePlaneSphere(dxGeom* planeGeomID, dxGeom* sphereGeomID, int, dC
     plane_rot = (float*)dGeomGetRotation(planeGeomID);
 
     dInvertRigidTransformation(&sp28[0], plane_rot, plane_pos);
-    dVector4Set(sp18, sphere_pos[0], sphere_pos[0], sphere_pos[0], 1.0f);
+    dVector4Set(sp18, sphere_pos[0], sphere_pos[1], sphere_pos[2], 1.0f);
     dMultiplyMatrix4Vector4(&sp8[0], &sp28[0], sp18);
 
     if (plane_flag != 0)
     {
-        var_f25 = sp8[1];
+        var_f25 = sp8[2];
     }
     else
     {
-        var_f25 = (f32)fabs(sp8[1]);
+        var_f25 = (f32)fabs(sp8[2]);
     }
 
-    if ((var_f25 < radius) && (sp8[0] > plane_a) && (sp8[0] < plane_b) && (sp8[2] > plane_c) && (sp8[2] < plane_d))
+    if ((var_f25 < radius) && (sp8[0] > plane_a) && (sp8[0] < plane_b) && (sp8[1] > plane_c) && (sp8[1] < plane_d))
     {
         dExtractColumn3(contact->normal, plane_rot, 2);
-        if ((sp8[1] > 0.0f) || (plane_flag != 0))
+        if ((sp8[2] > 0.0f) || (plane_flag != 0))
         {
             dVectorScale(contact->normal, -1.0f);
         }

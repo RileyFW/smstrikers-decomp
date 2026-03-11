@@ -409,6 +409,13 @@ inline float nlVec3Length(const nlVector3& a)
 
 /**
  * Offset/Address/Size: 0x984 | 0x80163158 | size: 0x1C4
+ * TODO: 98.0% match - remaining volatile FP register allocation diffs:
+ * viewVector x/y load order (f4/f6 swap), cascading to perp f5/f6/f4
+ * vs target f6/f7/f8 in both branches.
+ */
+/**
+ * Offset/Address/Size: 0x3DC | 0x80163158 | size: 0x1C4
+ * TODO: 98.63% match - volatile FPR allocation offset for perp values (f5,f6,f4 vs f6,f7,f8)
  */
 bool BlurHandler::ConstructViewOrientedPoints(nlVector3& topPoint, nlVector3& bottomPoint, nlVector3 position, const nlVector3& forwardVector)
 {
@@ -422,19 +429,23 @@ bool BlurHandler::ConstructViewOrientedPoints(nlVector3& topPoint, nlVector3& bo
     }
 
     float invLen = nlRecipSqrt(sLen1, 1);
-    nlVector3 normDir;
-    nlVec3Set(normDir, invLen * forwardVector.f.x, invLen * forwardVector.f.y, invLen * forwardVector.f.z);
+    float normX;
+    float normZ;
+    float normY;
+    normZ = invLen * forwardVector.f.z;
+    normY = invLen * forwardVector.f.y;
+    normX = invLen * forwardVector.f.x;
 
     cCameraManager::GetViewVector(viewVector);
-    if (nlVec3DotProduct(viewVector, normDir) < 0.99f)
+    if (viewVector.f.x * normX + viewVector.f.y * normY + viewVector.f.z * normZ < 0.99f)
     {
-        float normZ_2 = (-normDir.f.x * viewVector.f.z) + (normDir.f.z * viewVector.f.x);
-        float normY_2 = (normDir.f.y * viewVector.f.z) - (normDir.f.z * viewVector.f.y);
-        float normX_2 = (normDir.f.x * viewVector.f.y) - (normDir.f.y * viewVector.f.x);
+        float crossX = (normY * viewVector.f.z) - (normZ * viewVector.f.y);
+        float crossY = (-normX * viewVector.f.z) + (normZ * viewVector.f.x);
+        float crossZ = (normX * viewVector.f.y) - (normY * viewVector.f.x);
 
-        float invLen2 = nlRecipSqrt((normX_2 * normX_2) + ((normY_2 * normY_2) + (normZ_2 * normZ_2)), 1);
+        float invLen2 = nlRecipSqrt((crossZ * crossZ) + ((crossX * crossX) + (crossY * crossY)), 1);
 
-        nlVec3Set(perp, m_fLineWidth * (invLen2 * normY_2), m_fLineWidth * (invLen2 * normZ_2), m_fLineWidth * (invLen2 * normX_2));
+        nlVec3Set(perp, m_fLineWidth * (invLen2 * crossX), m_fLineWidth * (invLen2 * crossY), m_fLineWidth * (invLen2 * crossZ));
     }
     else
     {
@@ -476,7 +487,8 @@ void nlDeleteRing<BlurHandler>(BlurHandler** head)
         for (;;)
         {
             next = element->m_next;
-            if (element != NULL) {
+            if (element != NULL)
+            {
                 delete[] element->m_pointRingBuffer;
                 element->m_next = (BlurHandler*)m_BlurHandlerSlotPool__11BlurHandler.m_FreeList;
                 m_BlurHandlerSlotPool__11BlurHandler.m_FreeList = (SlotPoolEntry*)element;

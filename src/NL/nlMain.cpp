@@ -11,74 +11,47 @@ static const unsigned int crcTable[256]
 
 /**
  * Offset/Address/Size: 0x0 | 0x801D1040 | size: 0x1FC
+ * TODO: 99.2% match - explicit zero-length guard removes tail back-edge branches,
+ * but MWCC emits one extra beq before the tail crcTable setup.
  */
-void RunningChecksum::ChecksumData(const void* data, unsigned long len)
+void RunningChecksum::ChecksumData(const void* pData, unsigned long nDataLen)
 {
-    u8* var_r4 = (u8*)data;
-    u8* sp8;
-    u32 temp;
-    u32 var_ctr_2;
-    u32 var_ctr_3;
-    u32 _len = len;
+    const u8* pByte = (const u8*)pData;
+    u32 nData;
 
-    for (; (var_r4[0] & 3) && (_len != 0); var_r4++, _len--)
+    while (((u32)pByte & 3) && nDataLen != 0)
     {
+        u32 temp = m_unk_0x00;
+        nDataLen--;
+        u8 b = *pByte++;
+        m_unk_0x00 = (temp >> 8) ^ crcTable[b ^ (u8)temp];
+    }
+
+    while (nDataLen >= 4)
+    {
+        nData = *(const u32*)pByte;
+        nDataLen -= 4;
+        u32 temp = m_unk_0x00;
+        pByte += 4;
+        m_unk_0x00 = (temp >> 8) ^ crcTable[((u8*)&nData)[0] ^ (u8)temp];
         temp = m_unk_0x00;
-        m_unk_0x00 = (temp >> 8U) ^ crcTable[var_r4[0] ^ (u8)temp];
+        m_unk_0x00 = (temp >> 8) ^ crcTable[((u8*)&nData)[1] ^ (u8)temp];
+        temp = m_unk_0x00;
+        m_unk_0x00 = (temp >> 8) ^ crcTable[((u8*)&nData)[2] ^ (u8)temp];
+        temp = m_unk_0x00;
+        m_unk_0x00 = (temp >> 8) ^ crcTable[((u8*)&nData)[3] ^ (u8)temp];
     }
 
-    if (_len >= 4U)
+    if (nDataLen == 0)
     {
-        for (int var_ctr = _len >> 2U; var_ctr != 0; var_ctr--, var_r4 += 4, _len -= 4)
-        {
-            sp8 = var_r4;
-            temp = m_unk_0x00;
-            m_unk_0x00 = (temp >> 8U) ^ crcTable[sp8[0] ^ (u8)temp];
-            temp = m_unk_0x00;
-            m_unk_0x00 = (temp >> 8U) ^ crcTable[sp8[1] ^ (u8)temp];
-            temp = m_unk_0x00;
-            m_unk_0x00 = (temp >> 8U) ^ crcTable[sp8[2] ^ (u8)temp];
-            temp = m_unk_0x00;
-            m_unk_0x00 = (temp >> 8U) ^ crcTable[sp8[3] ^ (u8)temp];
-        }
+        return;
     }
 
-    if (_len != 0)
+    for (unsigned long m = nDataLen; m != 0; m--)
     {
-        var_ctr_2 = _len >> 2U;
-        if (var_ctr_2 != 0)
-        {
-            for (; var_ctr_2 != 0; var_ctr_2--, var_r4 += 4)
-            {
-                temp = m_unk_0x00;
-                m_unk_0x00 = (temp >> 8U) ^ crcTable[var_r4[0] ^ (u8)temp];
-                temp = m_unk_0x00;
-                m_unk_0x00 = (temp >> 8U) ^ crcTable[var_r4[1] ^ (u8)temp];
-                temp = m_unk_0x00;
-                m_unk_0x00 = (temp >> 8U) ^ crcTable[var_r4[2] ^ (u8)temp];
-                temp = m_unk_0x00;
-                m_unk_0x00 = (temp >> 8U) ^ crcTable[var_r4[3] ^ (u8)temp];
-            }
-            _len &= 3;
-            if (_len != 0)
-            {
-                goto block_10;
-            }
-        }
-        else
-        {
-
-        block_10:
-            var_ctr_3 = _len;
-            do
-            {
-                temp = m_unk_0x00;
-                u8 temp_r8_4 = var_r4[0];
-                var_r4 += 1;
-                m_unk_0x00 = (temp >> 8U) ^ crcTable[temp_r8_4 ^ (u8)temp];
-                var_ctr_3 -= 1;
-            } while (var_ctr_3 != 0);
-        }
+        u32 temp = m_unk_0x00;
+        u8 b = *pByte++;
+        m_unk_0x00 = (temp >> 8) ^ crcTable[b ^ (u8)temp];
     }
 }
 

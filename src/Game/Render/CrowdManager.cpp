@@ -248,98 +248,97 @@ void CrowdManager::Update(float deltaTime)
 
 /**
  * Offset/Address/Size: 0x0 | 0x80163E7C | size: 0x480
- * TODO: 96.89% match - top-level event-id dispatch still differs:
- * target uses `cmpwi 9; beq; bge; cmpwi 5` ordering and register allocation
- * (r0/r6) differs in duplicated Crowd_Idle transition blocks.
+ * TODO: 99.62% match - single r6/r0 register allocation diff in case 10's
+ *       if-block: target reuses szBundle's r6 for m_State=0 store, but
+ *       compiler uses r0 (from the m_State comparison) instead.
  */
 void CrowdManager::EventHandler(Event* event)
 {
+    const char* szBundle = NULL;
     s32 eventID = (s32)event->m_uEventID;
 
-    if (eventID >= 9)
+    switch (eventID)
     {
-        if (eventID < 11)
+    case 10:
+    {
+        if (m_State != Crowd_Idle)
         {
-            if (eventID != 9)
+            szBundle = NULL;
+            m_State = Crowd_Idle;
+            m_fTime = 0.0f;
+
+            switch (m_State)
             {
-                if (m_State != Crowd_Idle)
-                {
-                    const char* szBundle = NULL;
-                    m_State = Crowd_Idle;
-                    m_fTime = 0.0f;
+            case Crowd_Idle:
+                szBundle = "idle";
+                break;
+            case Crowd_Happy:
+                szBundle = "idle";
+                break;
+            case Crowd_Excited:
+                szBundle = "happy";
+                break;
+            default:
+                break;
+            }
 
-                    switch (m_State)
-                    {
-                    case Crowd_Idle:
-                        szBundle = "idle";
-                        break;
-                    case Crowd_Happy:
-                        szBundle = "idle";
-                        break;
-                    case Crowd_Excited:
-                        szBundle = "happy";
-                        break;
-                    default:
-                        break;
-                    }
-
-                    char szFilename[64];
-                    if (m_szStadium[0] == '\0')
-                    {
-                        nlSNPrintf(szFilename, 64, "crowd/%s.glt", szBundle);
-                    }
-                    else
-                    {
-                        nlSNPrintf(szFilename, 64, "crowd/%s_%s.glt", m_szStadium, szBundle);
-                    }
-
-                    glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
-
-                    m_nCurrentFrame = 0;
-                    nlStrNCpy(m_szTexture, "idle/idle", 64);
-                    SetFrameConstant();
-                }
+            char szFilename[64];
+            if (m_szStadium[0] == '\0')
+            {
+                nlSNPrintf(szFilename, 64, "crowd/%s.glt", szBundle);
             }
             else
             {
-                const char* szBundle = NULL;
-                m_State = Crowd_Idle;
-                m_fTime = 0.0f;
-
-                switch (m_State)
-                {
-                case Crowd_Idle:
-                    szBundle = "idle";
-                    break;
-                case Crowd_Happy:
-                    szBundle = "idle";
-                    break;
-                case Crowd_Excited:
-                    szBundle = "happy";
-                    break;
-                default:
-                    break;
-                }
-
-                char szFilename[64];
-                if (m_szStadium[0] == '\0')
-                {
-                    nlSNPrintf(szFilename, 64, "crowd/%s.glt", szBundle);
-                }
-                else
-                {
-                    nlSNPrintf(szFilename, 64, "crowd/%s_%s.glt", m_szStadium, szBundle);
-                }
-
-                glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
-
-                m_nCurrentFrame = 0;
-                nlStrNCpy(m_szTexture, "idle/idle", 64);
-                SetFrameConstant();
+                nlSNPrintf(szFilename, 64, "crowd/%s_%s.glt", m_szStadium, szBundle);
             }
+
+            glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
+
+            m_nCurrentFrame = 0;
+            nlStrNCpy(m_szTexture, "idle/idle", 64);
+            SetFrameConstant();
         }
+        break;
     }
-    else if (eventID == 5)
+    case 9:
+    {
+        szBundle = NULL;
+        m_State = Crowd_Idle;
+        m_fTime = 0.0f;
+
+        switch (m_State)
+        {
+        case Crowd_Idle:
+            szBundle = "idle";
+            break;
+        case Crowd_Happy:
+            szBundle = "idle";
+            break;
+        case Crowd_Excited:
+            szBundle = "happy";
+            break;
+        default:
+            break;
+        }
+
+        char szFilename[64];
+        if (m_szStadium[0] == '\0')
+        {
+            nlSNPrintf(szFilename, 64, "crowd/%s.glt", szBundle);
+        }
+        else
+        {
+            nlSNPrintf(szFilename, 64, "crowd/%s_%s.glt", m_szStadium, szBundle);
+        }
+
+        glBeginLoadTextureBundle(szFilename, CrowdBundleLoad_cb, (void*)m_BundleLoadBase);
+
+        m_nCurrentFrame = 0;
+        nlStrNCpy(m_szTexture, "idle/idle", 64);
+        SetFrameConstant();
+        break;
+    }
+    case 5:
     {
         EventData* gsd;
         s32 id = event->m_data.GetID();
@@ -366,7 +365,7 @@ void CrowdManager::EventHandler(Event* event)
         {
             if (m_State != Crowd_Excited)
             {
-                const char* szBundle = NULL;
+                szBundle = NULL;
                 m_State = Crowd_Excited;
                 m_fTime = 0.0f;
 
@@ -402,5 +401,7 @@ void CrowdManager::EventHandler(Event* event)
                 SetFrameConstant();
             }
         }
+        break;
+    }
     }
 }

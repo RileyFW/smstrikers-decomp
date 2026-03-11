@@ -537,9 +537,13 @@ float AbleToInterceptBall(cPlayer*)
 static inline bool check_goalie2(const Goalie* pGoalie, const eGoalieActionState actionState)
 {
     bool result = true;
-    if (actionState == (int)GOALIEACTION_STS_RECOVER)
+    if (actionState != (int)GOALIEACTION_STS_RECOVER)
     {
-        result = ((pGoalie->m_pBall == NULL) && (actionState != GOALIEACTION_PASS) && (actionState != GOALIEACTION_PASS_INTERCEPT) && (actionState != GOALIEACTION_MOVE) && (actionState != GOALIEACTION_MOVE_WB) && (actionState != GOALIEACTION_PASS_INTERCEPT) && (actionState != GOALIEACTION_PURSUE_BALL_CARRIER) && (actionState != GOALIEACTION_PURSUE_BALL_POUNCE) && (actionState != GOALIEACTION_LOOSEBALL_SETUP) && (actionState != GOALIEACTION_LOOSEBALL_CATCH) && (actionState != GOALIEACTION_LOOSEBALL_PICKUP) && (actionState != GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING) && (actionState != GOALIEACTION_LOOSEBALL_PURSUE_ROLLING));
+        bool isBusy = (pGoalie->m_pBall != NULL) || (actionState == GOALIEACTION_PASS) || (actionState == GOALIEACTION_PASS_INTERCEPT) || (actionState == GOALIEACTION_MOVE) || (actionState == GOALIEACTION_MOVE_WB) || (actionState == GOALIEACTION_PASS_INTERCEPT) || (actionState == GOALIEACTION_PURSUE_BALL_CARRIER) || (actionState == GOALIEACTION_PURSUE_BALL_POUNCE) || (actionState == GOALIEACTION_LOOSEBALL_SETUP) || (actionState == GOALIEACTION_LOOSEBALL_CATCH) || (actionState == GOALIEACTION_LOOSEBALL_PICKUP) || (actionState == GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING) || (actionState == GOALIEACTION_LOOSEBALL_PURSUE_ROLLING);
+        if (isBusy)
+        {
+            result = false;
+        }
     }
     return result;
 }
@@ -567,18 +571,33 @@ float AbleToInterceptBallForSwapController(cFielder* pFielder)
         if (pFielder->m_eClassType == 3)
         {
             Goalie* pGoalie = (Goalie*)pFielder;
-            var_f1 = !check_goalie2(pGoalie, pGoalie->mGoalieActionState) ? 1.0f : 0.0f;
+            bool result = true;
+            eGoalieActionState goalieState = pGoalie->mGoalieActionState;
+            int isRecover = (((int)GOALIEACTION_STS_RECOVER - goalieState) == 0);
+            if ((isRecover & 0xFF) == 0)
+            {
+                bool isBusy = (pGoalie->m_pBall != NULL) || (goalieState == GOALIEACTION_PASS) || (goalieState == GOALIEACTION_PASS_INTERCEPT) || (goalieState == GOALIEACTION_MOVE) || (goalieState == GOALIEACTION_MOVE_WB) || (goalieState == GOALIEACTION_PASS_INTERCEPT) || (goalieState == GOALIEACTION_PURSUE_BALL_CARRIER) || (goalieState == GOALIEACTION_PURSUE_BALL_POUNCE) || (goalieState == GOALIEACTION_LOOSEBALL_SETUP) || (goalieState == GOALIEACTION_LOOSEBALL_CATCH) || (goalieState == GOALIEACTION_LOOSEBALL_PICKUP) || (goalieState == GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING) || (goalieState == GOALIEACTION_LOOSEBALL_PURSUE_ROLLING);
+                if (isBusy)
+                {
+                    result = false;
+                }
+            }
+            var_f1 = result ? 1.0f : 0.0f;
         }
         else if (pFielder->m_eClassType == 2)
         {
-            var_f1 = pFielder->IsFrozen() || pFielder->IsFallenDown(25.0f) ? 1.0f : 0.0f;
-            // var_f1 = check_fielder(pFielder);
+            bool isFrozenOrDown = false;
+            if (pFielder->IsFrozen() || pFielder->IsFallenDown(25.0f))
+            {
+                isFrozenOrDown = true;
+            }
+            var_f1 = isFrozenOrDown ? 1.0f : 0.0f;
         }
     }
 
-    if (var_f1 == 0.0f)
+    float temp_cmp = 0.0f;
+    if (var_f1 == temp_cmp)
     {
-        // If fielder has ball, return 1.0f
         if (pFielder->m_pBall != NULL)
         {
             fScore = 1.0f;
@@ -586,19 +605,14 @@ float AbleToInterceptBallForSwapController(cFielder* pFielder)
         else
         {
             float temp_f31 = NormalizeVal(pFielder->m_pTeam->mfBallInterceptTimes[pFielder->m_ID], g_pGame->m_pFuzzyTweaks->vInterceptBallConfidenceTime);
-
-            // float distance = pFielder->m_v3Position.CalculateDistanceSquared2D(g_pBall->m_v3Position);
-            float distance = nlSqrt(g_pBall->m_v3Position.CalculateDistanceSquared2D(pFielder->m_v3Position), true);
-            // nlVector3* pPosition = &g_pBall->m_v3Position;
-            // float dx = pPosition->f.x - pFielder->m_v3Position.f.x;
-            // float dy = pPosition->f.y - pFielder->m_v3Position.f.y;
-            const float temp_f2 = g_pGame->m_pFuzzyTweaks->fInterceptBallSwapControlerScoreWeight;
-            // const float distance = nlSqrt(dx * dx + dy * dy, true);
-
-            fScore = (temp_f31 * temp_f2);
-            fScore += (1.0f - g_pGame->m_pFuzzyTweaks->fInterceptBallSwapControlerScoreWeight) * NormalizeVal(distance, g_pGame->m_pFuzzyTweaks->vInterceptBallConfidenceDistance);
-
-            // fScore = (temp_f31 * temp_f2) + NormalizeVal(distance, g_pGame->m_pFuzzyTweaks->vInterceptBallConfidenceDistance) * (1.0f - g_pGame->m_pFuzzyTweaks->fInterceptBallSwapControlerScoreWeight);
+            float temp_f0 = pFielder->m_v3Position.f.x;
+            float temp_f3 = g_pBall->m_v3Position.f.x - temp_f0;
+            temp_f0 = pFielder->m_v3Position.f.y;
+            float temp_f1 = g_pBall->m_v3Position.f.y - temp_f0;
+            float distance = nlSqrt((temp_f3 * temp_f3) + (temp_f1 * temp_f1), true);
+            float normalizedDistance = NormalizeVal(distance, g_pGame->m_pFuzzyTweaks->vInterceptBallConfidenceDistance);
+            float weight = g_pGame->m_pFuzzyTweaks->fInterceptBallSwapControlerScoreWeight;
+            fScore = (temp_f31 * weight) + (normalizedDistance * (1.0f - weight));
         }
     }
 

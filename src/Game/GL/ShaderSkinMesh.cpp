@@ -524,10 +524,17 @@ void* ShaderSkinMesh::MakeUserData(nlAVLTree<unsigned long, unsigned long, Defau
 
 /**
  * Offset/Address/Size: 0x108 | 0x801E074C | size: 0x1DC
- * TODO: 87.79% match - register allocation differs: target uses stmw r26, current uses stmw r27.
- *       Target directly moves GetNodeMatrix result to r26 (mr r26,r3), but current goes through
- *       r0 (mr r0,r3; mr r27,r0). This is a mwcc compiler register allocation quirk.
  */
+static inline cSHierarchy* GetPoseHierarchy(cPoseAccumulator* pPoseAccumulator)
+{
+    return pPoseAccumulator->m_BaseSHierarchy;
+}
+
+static inline nlMatrix4* GetPoseNodeMatrixPtr(cPoseAccumulator* pPoseAccumulator, int i)
+{
+    return &pPoseAccumulator->GetNodeMatrix(i);
+}
+
 void ShaderSkinMesh::Pose(cPoseAccumulator* pPoseAccumulator)
 {
     SkinMatrix* foundMatrix;
@@ -539,11 +546,10 @@ void ShaderSkinMesh::Pose(cPoseAccumulator* pPoseAccumulator)
 
     for (int i = 0; i < pPoseAccumulator->GetNumNodes(); i++)
     {
-        cSHierarchy* hierarchy = pPoseAccumulator->m_BaseSHierarchy;
-        nlMatrix4* nodeMatrix = &pPoseAccumulator->GetNodeMatrix(i);
+        cSHierarchy* hierarchy = GetPoseHierarchy(pPoseAccumulator);
+        nlMatrix4* nodeMatrix = GetPoseNodeMatrixPtr(pPoseAccumulator, i);
         nodeID = hierarchy->GetNodeID(i);
 
-        // Inline FindGet with bool return
         u8 found;
         {
             AVLTreeEntry<unsigned long, SkinMatrix>* node = boneMatrices.m_Root;
@@ -604,6 +610,11 @@ void ShaderSkinMesh::Pose(cPoseAccumulator* pPoseAccumulator)
                 *foundMatrix = result;
             }
         }
+    }
+
+    for (int j = 0; j < numMorphs; j++)
+    {
+        morphWeights[j] = pPoseAccumulator->m_MorphWeights.mData[j];
     }
 }
 

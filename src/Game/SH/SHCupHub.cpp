@@ -271,8 +271,26 @@ void CupHubScene::UpdateProgressIndicator()
 }
 
 /**
+ * Erased (inlined into ColourUserRow)
+ */
+static unsigned char IsUserRow(eTeamID teamInRow)
+{
+    GameInfoManager* gameInfo = nlSingleton<GameInfoManager>::s_pInstance;
+    eTeamID userTeam = gameInfo->GetUserSelectedCupTeam();
+    unsigned long teamMask = 1 << teamInRow;
+
+    if ((gameInfo->mCurrentCup->mHumanTeams & teamMask) == 0)
+        return 0;
+
+    if ((gameInfo->GetNumHumanTeams() == 1) && (teamInRow == userTeam))
+        return 1;
+
+    return 0;
+}
+
+/**
  * Offset/Address/Size: 0x1698 | 0x800EB3F4 | size: 0x1C8
- * TODO: 98.2% match - r26/r28 swap (row vs pTextInstance) and remaining move instructions around HUBstandingsRowNames/GameInfoManager setup.
+ * TODO: 99.1% match - extra mr r30,r0 for HUBstandingsRowNames address load (compiler scheduling artifact)
  */
 void CupHubScene::ColourUserRow()
 {
@@ -281,16 +299,13 @@ void CupHubScene::ColourUserRow()
     typedef TLTextInstance* (*FindTextByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
     typedef TLTextInstance* (*FindTextByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
 
-    extern int GetNumHumanTeams__15GameInfoManagerFv(GameInfoManager*);
-
     FEPresentation* pres = m_pFEPresentation;
     int standingsIndices[8];
     char** pRowName;
     int* pStandingsIndices;
-    int row;
+    TLTextInstance* pTextInstance;
     int numTeams = nlSingleton<GameInfoManager>::s_pInstance->GetNumPlayingTeams();
-    GameInfoManager* gameInfo;
-    eTeamID userTeam;
+    int row;
 
     nlSingleton<StatsTracker>::s_pInstance->GetSortedTeamStats(mAllTeamStats, numTeams, standingsIndices, numTeams);
 
@@ -300,7 +315,6 @@ void CupHubScene::ColourUserRow()
     for (row = 0; row < numTeams; row++)
     {
         volatile InlineHasher hB, hA, h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
-        TLTextInstance* pTextInstance;
 
         h0.m_Hash = 0;
         h1.m_Hash = 0;
@@ -378,27 +392,7 @@ void CupHubScene::ColourUserRow()
         if (row < numTeams)
         {
             eTeamID currentTeam = mAllTeamStats[*pStandingsIndices].mTeamIndex;
-            userTeam = (gameInfo = nlSingleton<GameInfoManager>::s_pInstance)->GetUserSelectedCupTeam();
-            unsigned long teamMask = 1 << currentTeam;
-            int isUserRow;
-
-            if ((gameInfo->mCurrentCup->mHumanTeams & teamMask) == 0)
-            {
-                isUserRow = 0;
-            }
-            else
-            {
-                if ((GetNumHumanTeams__15GameInfoManagerFv(gameInfo) == 1) && (currentTeam == userTeam))
-                {
-                    isUserRow = 1;
-                }
-                else
-                {
-                    isUserRow = 0;
-                }
-            }
-
-            if ((unsigned char)isUserRow != 0)
+            if (IsUserRow(currentTeam))
             {
                 pTextInstance->SetAssetColour(HUB_COLOUR_HIGHLIGHT);
                 break;
@@ -418,7 +412,8 @@ void CupHubScene::HandleButtonComponent()
     typedef TLComponentInstance* (*FindByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
     typedef TLComponentInstance* (*FindByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
 
-    union {
+    union
+    {
         FindByValue byValue;
         FindByRef byRef;
     } findComp;
@@ -515,15 +510,20 @@ void CupHubScene::LoadCaptainImage()
     hB.m_Hash = layerHash;
     hA.m_Hash = layerHash;
 
-    union {
+    union
+    {
         FindImageByValue byValue;
         FindImageByRef byRef;
     } findImage;
     findImage.byValue = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
     TLImageInstance* imageInst = findImage.byRef(
         m_pFEPresentation->m_currentSlide,
-        (InlineHasher&)hB, (InlineHasher&)h9, (InlineHasher&)h7,
-        (InlineHasher&)h5, (InlineHasher&)h3, (InlineHasher&)h1);
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
 
     eTeamID teamId;
     if (gameInfoMgr->IsInCupMode() || gameInfoMgr->GetNumHumanTeams() == 1)

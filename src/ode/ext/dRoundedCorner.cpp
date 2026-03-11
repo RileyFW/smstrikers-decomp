@@ -91,8 +91,8 @@ int dCollideRoundedCornerSphere(dxGeom* cornerGeomID, dxGeom* sphereGeomID, int,
     s32 temp_r4;
     s32 var_r0;
     s32 var_r0_2;
-    u32 c_flag2;
     u32 c_flag1;
+    u32 c_flag2;
     float* c_pos;
     RoundedCornerData* cornerData;
     float* s_pos;
@@ -104,84 +104,87 @@ int dCollideRoundedCornerSphere(dxGeom* cornerGeomID, dxGeom* sphereGeomID, int,
     s_radius = dGeomSphereGetRadius(sphereGeomID);
     c_pos = (float*)dGeomGetPosition(cornerGeomID);
     s_pos = (float*)dGeomGetPosition(sphereGeomID);
-    temp_f5 = s_pos[1] - c_pos[1];
     temp_f6 = s_pos[0] - c_pos[0];
+    temp_f5 = s_pos[1] - c_pos[1];
 
-    if (((u32)(temp_f6 > 0.0f) != c_flag1) || ((u32)(temp_f5 > 0.0f) != c_flag2))
     {
-        var_r0 = 0;
-    }
-    else
-    {
-        temp_f4 = c_param - s_radius;
-        var_f7 = (temp_f6 * temp_f6) + (temp_f5 * temp_f5);
-        // M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-        if (var_f7 == (temp_f4 * temp_f4))
+        u32 x_check = (u32)(temp_f6 > 0.0f);
+        u32 y_check = (u32)(temp_f5 > 0.0f);
+        if (x_check != c_flag1 || y_check != c_flag2)
         {
-            if (var_f7 > 0.0f)
-            {
-                temp_f1 = __frsqrte(var_f7);
-                temp_f1_2 = 0.5 * temp_f1 * -(((f64)var_f7 * (temp_f1 * temp_f1)) - 3.0);
-                temp_f1_3 = 0.5 * temp_f1_2 * -(((f64)var_f7 * (temp_f1_2 * temp_f1_2)) - 3.0);
-                var_f7 = (f32)((f64)var_f7 * (0.5 * temp_f1_3 * -(((f64)var_f7 * (temp_f1_3 * temp_f1_3)) - 3.0)));
-            }
-            else if (var_f7 < 0.0)
-            {
-                var_f7 = *(float*)&__float_nan;
-            }
-            else
-            {
-                sp8 = var_f7;
-                temp_r4 = *(s32*)&sp8 & 0x7F800000;
-                switch (temp_r4)
-                { /* irregular */
-                case 0x7F800000:
-                    if (*(s32*)&sp8 & 0x7FFFFF)
-                    {
-                        var_r0_2 = 1;
-                    }
-                    else
-                    {
-                        var_r0_2 = 2;
-                    }
-                    break;
-                case 0x0:
-                    if (*(s32*)&sp8 & 0x7FFFFF)
-                    {
-                        var_r0_2 = 5;
-                    }
-                    else
-                    {
-                        var_r0_2 = 3;
-                    }
-                    break;
-                default:
-                    var_r0_2 = 4;
-                    break;
-                }
-                if (var_r0_2 == 1)
-                {
-                    var_f7 = *(float*)&__float_nan;
-                }
-            }
-
-            temp_f3 = temp_f6 / var_f7;
-            var_r0 = 1;
-            temp_f5_2 = temp_f5 / var_f7;
-
-            contact->pos[0] = (f32)((c_param * temp_f3) + c_pos[0]);
-            contact->pos[1] = (f32)((c_param * temp_f5_2) + c_pos[1]);
-            contact->pos[2] = (f32)c_pos[2];
-            contact->normal[0] = temp_f3;
-            contact->normal[1] = temp_f5_2;
-            contact->normal[2] = 0.0f;
-            contact->depth = (f32)(var_f7 - temp_f4);
-            contact->g1 = cornerGeomID;
-            contact->g2 = sphereGeomID;
+            var_r0 = 0;
         }
         else
         {
-            var_r0 = 0;
+            var_f7 = (temp_f6 * temp_f6) + (temp_f5 * temp_f5);
+            temp_f4 = c_param - s_radius;
+            if (var_f7 >= (temp_f4 * temp_f4))
+            {
+                if (var_f7 > 0.0f)
+                {
+                    temp_f1 = __frsqrte(var_f7);
+                    temp_f1_2 = 0.5 * temp_f1 * -(((f64)var_f7 * (temp_f1 * temp_f1)) - 3.0);
+                    temp_f1_3 = 0.5 * temp_f1_2 * -(((f64)var_f7 * (temp_f1_2 * temp_f1_2)) - 3.0);
+                    var_f7 = (f32)((f64)var_f7 * (0.5 * temp_f1_3 * -(((f64)var_f7 * (temp_f1_3 * temp_f1_3)) - 3.0)));
+                }
+                else if (var_f7 < 0.0)
+                {
+                    var_f7 = *(float*)&__float_nan;
+                }
+                else
+                {
+                    sp8 = var_f7;
+                    temp_r4 = *(s32*)&sp8 & 0x7F800000;
+                    switch (temp_r4)
+                    { /* irregular */
+                    case 0x7F800000:
+                        if (*(s32*)&sp8 & 0x7FFFFF)
+                        {
+                            var_r0_2 = 1;
+                        }
+                        else
+                        {
+                            var_r0_2 = 2;
+                        }
+                        break;
+                    case 0x0:
+                        if (*(s32*)&sp8 & 0x7FFFFF)
+                        {
+                            var_r0_2 = 5;
+                        }
+                        else
+                        {
+                            var_r0_2 = 3;
+                        }
+                        break;
+                    default:
+                        var_r0_2 = 4;
+                        break;
+                    }
+                    if (var_r0_2 == 1)
+                    {
+                        var_f7 = *(float*)&__float_nan;
+                    }
+                }
+
+                temp_f3 = temp_f6 / var_f7;
+                var_r0 = 1;
+                temp_f5_2 = temp_f5 / var_f7;
+
+                contact->pos[0] = (f32)((c_param * temp_f3) + c_pos[0]);
+                contact->pos[1] = (f32)((c_param * temp_f5_2) + c_pos[1]);
+                contact->pos[2] = s_pos[2];
+                contact->normal[0] = temp_f3;
+                contact->normal[1] = temp_f5_2;
+                contact->normal[2] = 0.0f;
+                contact->depth = (f32)(var_f7 - temp_f4);
+                contact->g1 = cornerGeomID;
+                contact->g2 = sphereGeomID;
+            }
+            else
+            {
+                var_r0 = 0;
+            }
         }
     }
     return var_r0;
@@ -192,13 +195,12 @@ int dCollideRoundedCornerSphere(dxGeom* cornerGeomID, dxGeom* sphereGeomID, int,
  */
 int dCollideRoundedCornerColumn(dxGeom* cor_GeomID, dxGeom* col_GeomID, int, dContactGeom* contact, int)
 {
-    dVector4 spC;
+    f32 col_radius;
     f32 sp8;
     f32 cor_param;
     f32 temp_f3;
     f32 temp_f4;
     f32 temp_f5;
-    f32 temp_f5_2;
     f32 temp_f6;
     f32 var_f7;
     f64 temp_f1;
@@ -207,8 +209,8 @@ int dCollideRoundedCornerColumn(dxGeom* cor_GeomID, dxGeom* col_GeomID, int, dCo
     s32 temp_r4;
     s32 var_r0;
     s32 var_r0_2;
-    u8 cor_flag2;
-    u8 cor_flag1;
+    u32 cor_flag1;
+    u32 cor_flag2;
     float* cor_pos;
     RoundedCornerData* c_data;
     float* col_pos;
@@ -217,84 +219,89 @@ int dCollideRoundedCornerColumn(dxGeom* cor_GeomID, dxGeom* col_GeomID, int, dCo
     cor_param = c_data->param;
     cor_flag1 = c_data->flag1;
     cor_flag2 = c_data->flag2;
-    dGeomColumnGetParams(col_GeomID, spC);
+    dGeomColumnGetParams(col_GeomID, &col_radius);
     cor_pos = (float*)dGeomGetPosition(cor_GeomID);
     col_pos = (float*)dGeomGetPosition(col_GeomID);
-    temp_f5 = col_pos[1] - cor_pos[1];
     temp_f6 = col_pos[0] - cor_pos[0];
-    if (((u32)(temp_f6 > 0.0f) != cor_flag1) || ((u32)(temp_f5 > 0.0f) != cor_flag2))
+    temp_f5 = col_pos[1] - cor_pos[1];
+    temp_f4 = col_radius;
+
     {
-        var_r0 = 0;
-    }
-    else
-    {
-        temp_f4 = cor_param - spC[0];
-        var_f7 = (temp_f6 * temp_f6) + (temp_f5 * temp_f5);
-        // M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-        if (var_f7 == (temp_f4 * temp_f4))
+        u32 x_check = (u32)(temp_f6 > 0.0f);
+        u32 y_check = (u32)(temp_f5 > 0.0f);
+        if (x_check != cor_flag1 || y_check != cor_flag2)
         {
-            if (var_f7 > 0.0f)
-            {
-                temp_f1 = __frsqrte(var_f7);
-                temp_f1_2 = 0.5 * temp_f1 * -(((f64)var_f7 * (temp_f1 * temp_f1)) - 3.0);
-                temp_f1_3 = 0.5 * temp_f1_2 * -(((f64)var_f7 * (temp_f1_2 * temp_f1_2)) - 3.0);
-                var_f7 = (f32)((f64)var_f7 * (0.5 * temp_f1_3 * -(((f64)var_f7 * (temp_f1_3 * temp_f1_3)) - 3.0)));
-            }
-            else if (var_f7 < 0.0)
-            {
-                var_f7 = *(float*)&__float_nan;
-            }
-            else
-            {
-                sp8 = var_f7;
-                temp_r4 = *(s32*)&sp8 & 0x7F800000;
-                switch (temp_r4)
-                { /* irregular */
-                case 0x7F800000:
-                    if (*(s32*)&sp8 & 0x7FFFFF)
-                    {
-                        var_r0_2 = 1;
-                    }
-                    else
-                    {
-                        var_r0_2 = 2;
-                    }
-                    break;
-                case 0x0:
-                    if (*(s32*)&sp8 & 0x7FFFFF)
-                    {
-                        var_r0_2 = 5;
-                    }
-                    else
-                    {
-                        var_r0_2 = 3;
-                    }
-                    break;
-                default:
-                    var_r0_2 = 4;
-                    break;
-                }
-                if (var_r0_2 == 1)
-                {
-                    var_f7 = *(float*)&__float_nan;
-                }
-            }
-            temp_f3 = temp_f6 / var_f7;
-            var_r0 = 1;
-            temp_f5_2 = temp_f5 / var_f7;
-            contact->pos[0] = (f32)((cor_param * temp_f3) + cor_pos[0]);
-            contact->pos[1] = (f32)((cor_param * temp_f5_2) + cor_pos[1]);
-            contact->pos[2] = (f32)col_pos[2];
-            contact->normal[0] = temp_f3;
-            contact->normal[1] = temp_f5_2;
-            contact->normal[2] = 0.0f;
-            contact->depth = (f32)(var_f7 - temp_f4);
-            contact->g1 = cor_GeomID;
-            contact->g2 = col_GeomID;
+            var_r0 = 0;
         }
         else
         {
-            var_r0 = 0;
+            var_f7 = (temp_f6 * temp_f6) + (temp_f5 * temp_f5);
+            temp_f4 = cor_param - temp_f4;
+            if (var_f7 >= (temp_f4 * temp_f4))
+            {
+                if (var_f7 > 0.0f)
+                {
+                    temp_f1 = __frsqrte(var_f7);
+                    temp_f1_2 = 0.5 * temp_f1 * -(((f64)var_f7 * (temp_f1 * temp_f1)) - 3.0);
+                    temp_f1_3 = 0.5 * temp_f1_2 * -(((f64)var_f7 * (temp_f1_2 * temp_f1_2)) - 3.0);
+                    var_f7 = (f32)((f64)var_f7 * (0.5 * temp_f1_3 * -(((f64)var_f7 * (temp_f1_3 * temp_f1_3)) - 3.0)));
+                }
+                else if (var_f7 < 0.0)
+                {
+                    var_f7 = *(float*)&__float_nan;
+                }
+                else
+                {
+                    sp8 = var_f7;
+                    temp_r4 = *(s32*)&sp8 & 0x7F800000;
+                    switch (temp_r4)
+                    { /* irregular */
+                    case 0x7F800000:
+                        if (*(s32*)&sp8 & 0x7FFFFF)
+                        {
+                            var_r0_2 = 1;
+                        }
+                        else
+                        {
+                            var_r0_2 = 2;
+                        }
+                        break;
+                    case 0x0:
+                        if (*(s32*)&sp8 & 0x7FFFFF)
+                        {
+                            var_r0_2 = 5;
+                        }
+                        else
+                        {
+                            var_r0_2 = 3;
+                        }
+                        break;
+                    default:
+                        var_r0_2 = 4;
+                        break;
+                    }
+                    if (var_r0_2 == 1)
+                    {
+                        var_f7 = *(float*)&__float_nan;
+                    }
+                }
+                temp_f3 = temp_f6 / var_f7;
+                contact->pos[0] = cor_pos[0] + cor_param * temp_f3;
+                temp_f5 = temp_f5 / var_f7;
+                contact->pos[1] = cor_pos[1] + cor_param * temp_f5;
+                contact->pos[2] = col_pos[2];
+                contact->normal[0] = temp_f3;
+                contact->normal[1] = temp_f5;
+                contact->normal[2] = 0.0f;
+                contact->depth = var_f7 - temp_f4;
+                contact->g1 = cor_GeomID;
+                contact->g2 = col_GeomID;
+                var_r0 = 1;
+            }
+            else
+            {
+                var_r0 = 0;
+            }
         }
     }
     return var_r0;

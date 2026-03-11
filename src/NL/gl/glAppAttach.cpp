@@ -85,10 +85,8 @@ inline glModelStream* getDetail(glModelStream* start, const glModelStream* end)
  */
 glModelPacket* glplatModifyPacket(eGLView view, const glModelPacket* pPacket)
 {
-    glModelPacket* pFinal = (glModelPacket*)pPacket; // r28
+    glModelPacket* pFinal = (glModelPacket*)pPacket;
     glModelPacket* p;
-    glModelStream* streams; // r0
-    glModelStream* detail;  // r29
 
     if ((((s32)view == 0xC) || ((s32)view == 0xD)) && ((u32)pPacket->indexBuffer != 0U) && (glUserHasType((eGLUserData)0x10, pPacket) == 0))
     {
@@ -117,20 +115,19 @@ glModelPacket* glplatModifyPacket(eGLView view, const glModelPacket* pPacket)
         glSetTextureState(p->state.texturestate, (eGLTextureState)7, 0U);
         glSetTextureState(p->state.texturestate, (eGLTextureState)8, 0U);
 
-        u32 numNewStreams = p->numStreams + 1;
         u32 numOldStreams = p->numStreams;
-        streams = (glModelStream*)glFrameAlloc(numNewStreams * sizeof(glModelStream), (eGLMemory)0);
-        memcpy(streams, pFinal->streams, numNewStreams * sizeof(glModelStream));
+        u32 numNewStreams = numOldStreams + 1;
+        glModelStream* streams = (glModelStream*)glFrameAlloc(numNewStreams * sizeof(glModelStream), (eGLMemory)0);
+        memcpy(streams, pFinal->streams, numOldStreams * sizeof(glModelStream));
 
-        detail = getDetail(pFinal->streams, &pFinal->streams[pFinal->numStreams]);
-        memcpy(&streams[numNewStreams], detail, sizeof(glModelStream));
-
-        streams[numNewStreams].id = 4;
-        // streams[numNewStreams].id = 4;
+        glModelStream* detail = getDetail(pFinal->streams, &pFinal->streams[pFinal->numStreams]);
+        memcpy(&streams[numOldStreams], detail, sizeof(glModelStream));
+        streams[numOldStreams].id = 4;
         p->streams = streams;
         p->numStreams = numNewStreams;
         pFinal = p;
     }
+
     return pFinal;
 }
 
