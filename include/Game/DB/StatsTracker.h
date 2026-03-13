@@ -106,6 +106,7 @@ struct PlayerStats
 
 struct TeamStats
 {
+    TeamStats();
     /* 0x0 */ eTeamID mTeamIndex;
     /* 0x4 */ unsigned short mNumWins;
     /* 0x6 */ unsigned short mNumLosses;

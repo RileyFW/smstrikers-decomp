@@ -57,7 +57,7 @@ public:
         }
         ~MCInternalFunctorBase();
         virtual void Call(unsigned long, long);
-        virtual void Destroy();
+        void Destroy();
 
         /* 0x04 */ void* m_pData;
     };
@@ -66,7 +66,7 @@ public:
     class MCMemberFunctor : public MCInternalFunctorBase
     {
     public:
-        typedef void (T::*MemberCB)(unsigned long, long, void*);
+        typedef unsigned long (T::*MemberCB)(unsigned long, long, void*);
 
         MCMemberFunctor(T* obj, const MemberCB& cb)
         {
@@ -77,7 +77,7 @@ public:
         }
         ~MCMemberFunctor();
         virtual void Call(unsigned long, long);
-        virtual void Destroy();
+        void Destroy();
 
         /* 0x08 */ void* m_pFunc;
         /* 0x0C */ unsigned long m_Slot;
@@ -133,15 +133,15 @@ public:
     static void WriteFileDoneCB(long channel, long result);
 
     long BeginCardAccess(const MemCardFunctor&);
-    void CreateFile(const char*, unsigned long, MemCard::ICON_CONFIG*, MemCard::MC_FILE*&, const MemCardFunctor&);
-    void OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*);
+    long CreateFile(const char*, unsigned long, MemCard::ICON_CONFIG*, MemCard::MC_FILE*&, const MemCardFunctor&);
+    long OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*);
     long FormatCard(const MemCardFunctor&);
     long DeleteFile(const char*, const MemCardFunctor&);
     long InternalReadFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&);
     long InternalWriteFile(MemCard::MC_FILE*, void*, unsigned long, unsigned long, const MemCardFunctor&, bool);
     long CloseFile(MemCard::MC_FILE*);
     long FileExists(const char*);
-    void WriteFileIconData(MemCard::MC_FILE*, void*, const MemCardFunctor&);
+    long WriteFileIconData(MemCard::MC_FILE*, void*, const MemCardFunctor&);
     unsigned long AlignBytesToSectorSize(unsigned long);
 
     s64 GetSerialID() const;

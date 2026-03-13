@@ -1,5 +1,20 @@
 #include "Game/Drawable/DrawableNetMesh.h"
 #include "Game/Replay.h"
+#include "Game/Field.h"
+#include "Game/Net.h"
+#include "NL/gl/gl.h"
+#include "NL/gl/glDraw3.h"
+#include "NL/gl/glMatrix.h"
+#include "NL/gl/glState.h"
+
+static unsigned long UnlitProgram = glGetProgram("3d unlit");
+static unsigned long LitProgram = glGetProgram("3d pointlit");
+static unsigned long LightTexture = glGetTexture("global/lightramp");
+static unsigned long BlackTexture = glGetTexture("global/black");
+static unsigned long WhiteTexture = glGetTexture("global/white");
+static unsigned long NetMeshTexture = glGetTexture("global/netmesh");
+static unsigned long CheckerTexture = glGetTexture("global/checker");
+static int siInvisiblePlaneAlpha;
 /**
  * Offset/Address/Size: 0xC4C | 0x80114BA8 | size: 0x24
  */
@@ -37,9 +52,73 @@ DrawableNetMesh::~DrawableNetMesh()
 
 /**
  * Offset/Address/Size: 0x91C | 0x80114878 | size: 0x264
+ * TODO: 88.56% match - matrix row constant register assignment (f0/f3) and
+ *       instruction scheduling around netPlaneX setup remain mismatched.
  */
 void DrawableNetMesh::RenderInvisiblePlanes() const
 {
+    float goalLineX = cField::GetGoalLineX(1U);
+    float netHeight = cNet::m_fNetHeight;
+    float netWidth = cNet::m_fNetWidth;
+
+    glSetDefaultState(true);
+    glSetRasterState(GLS_DepthWrite, 1);
+    glSetRasterState(GLS_AlphaBlend, 1);
+    glSetRasterState(GLS_Culling, 0);
+    glSetCurrentRasterState(glHandleizeRasterState());
+
+    glSetCurrentTexture(WhiteTexture, GLTT_Diffuse);
+    glSetTextureState(GLTS_DiffuseWrap, 0);
+    glSetCurrentTextureState(glHandleizeTextureState());
+
+    nlMatrix4 matrix;
+    nlMakeRotationMatrixY(matrix, 1.5707964f);
+
+    float halfHeight = 0.5f * netHeight;
+    float netPlaneX;
+
+    nlColour c = { 0xFF, 0xFF, 0xFF, 0x00 };
+    c.c[3] = (u8)siInvisiblePlaneAlpha;
+
+    glQuad3 quad;
+
+    netPlaneX = goalLineX - 1.0f;
+    matrix.m[3][0] = netPlaneX;
+    matrix.m[3][1] = 0.0f;
+    matrix.m[3][2] = halfHeight;
+    matrix.m[3][3] = 1.0f;
+    quad.SetupRotatedRectangle(netHeight, netWidth, matrix, false, false);
+    quad.SetColour(c);
+    glAttachQuad3(GLV_InvisiblePlane, 1, &quad, true);
+
+    netPlaneX = 1.0f + goalLineX;
+    matrix.m[3][0] = netPlaneX;
+    matrix.m[3][1] = 0.0f;
+    matrix.m[3][2] = halfHeight;
+    matrix.m[3][3] = 1.0f;
+    quad.SetupRotatedRectangle(netHeight, netWidth, matrix, false, false);
+    quad.SetColour(c);
+    glAttachQuad3(GLV_InvisiblePlane, 1, &quad, true);
+
+    netPlaneX = -goalLineX - 1.0f;
+    matrix.m[3][0] = netPlaneX;
+    matrix.m[3][1] = 0.0f;
+    matrix.m[3][2] = halfHeight;
+    matrix.m[3][3] = 1.0f;
+    quad.SetupRotatedRectangle(netHeight, netWidth, matrix, false, false);
+    quad.SetColour(c);
+    glAttachQuad3(GLV_InvisiblePlane, 1, &quad, true);
+
+    netPlaneX = 1.0f - goalLineX;
+    matrix.m[3][0] = netPlaneX;
+    matrix.m[3][1] = 0.0f;
+    matrix.m[3][2] = halfHeight;
+    matrix.m[3][3] = 1.0f;
+    quad.SetupRotatedRectangle(netHeight, netWidth, matrix, false, false);
+    quad.SetColour(c);
+    glAttachQuad3(GLV_InvisiblePlane, 1, &quad, true);
+
+    glSetDefaultState(false);
 }
 
 /**

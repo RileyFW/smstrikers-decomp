@@ -178,9 +178,45 @@ void cCameraManager::PushCameraWithTransition(cBaseCamera*, float, eCameraTransi
 
 /**
  * Offset/Address/Size: 0x590 | 0x801A6C18 | size: 0x268
+ * TODO: 98.67% match - local string label relocation (@1258 vs @250) on nlPrintf literal.
  */
-/* static */ void cCameraManager::PopCameraWithTransition(float, eCameraTransition, void (*)(eCameraMessage))
+/* static */ void cCameraManager::PopCameraWithTransition(float fDuration, eCameraTransition transition, void (*pCallback)(eCameraMessage))
 {
+    extern float m_fTransitionSpeed__14cCameraManager;
+    extern float m_fTransitionTime__14cCameraManager;
+    extern float m_fPrevFOV__14cCameraManager;
+
+    if (cCameraManager::m_transition != eCT_NONE)
+    {
+        nlPrintf("Camera Transition In Progress\n");
+        if (cCameraManager::m_pCallback != NULL)
+        {
+            (*cCameraManager::m_pCallback)(eCM_ABORTED_BY_POP);
+        }
+    }
+
+    cCameraManager::m_matPrevView = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->GetViewMatrix();
+    m_fPrevFOV__14cCameraManager = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->GetFOV();
+
+    if (nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter != NULL)
+    {
+        nlMatrix4 matView;
+        nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter->Filter(cCameraManager::m_matPrevView, matView);
+        cCameraManager::m_matPrevView = matView;
+    }
+
+    cCameraManager::m_transition = transition;
+    cCameraManager::m_pCallback = pCallback;
+    m_fTransitionSpeed__14cCameraManager = 1.0f / fDuration;
+    m_fTransitionTime__14cCameraManager = 1.0f - m_fTransitionTime__14cCameraManager;
+
+    nlDLRingRemoveStart<cBaseCamera>(&cCameraManager::m_cameraStack);
+
+    if (nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter != NULL)
+    {
+        nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter->Reset();
+        nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->Reactivate();
+    }
 }
 
 /**

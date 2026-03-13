@@ -224,8 +224,91 @@ void ICaptainGridComponent::UpdateSuperTeamIconState()
 /**
  * Offset/Address/Size: 0x318 | 0x800C1A0C | size: 0x264
  */
-void ICaptainGridComponent::Update(eFEINPUT_PAD)
+void ICaptainGridComponent::Update(eFEINPUT_PAD pad)
 {
+    if (!g_e3_Build)
+    {
+        if (GameInfoManager::Instance()->IsSuperTeamUnlocked() && mMapMenu->IsItemActive(8))
+        {
+            mMapMenu->SetItemActive(8, true);
+        }
+        else
+        {
+            mMapMenu->SetItemActive(8, false);
+        }
+    }
+
+    int oldSelected = mMapMenu->GetSelectedItem();
+    mHasChangedSinceLastUpdate = false;
+
+    if (g_pFEInput->IsAutoPressed(pad, 0xB, true, NULL))
+    {
+        if (mIsMirrored)
+        {
+            mMapMenu->MoveRight(false);
+        }
+        else
+        {
+            mMapMenu->MoveLeft(false);
+        }
+
+        FEAudio::PlayAnimAudioEvent("sfx_option_scroll_left", false);
+    }
+    else if (g_pFEInput->IsAutoPressed(pad, 0xC, true, NULL))
+    {
+        if (mIsMirrored)
+        {
+            mMapMenu->MoveLeft(false);
+        }
+        else
+        {
+            mMapMenu->MoveRight(false);
+        }
+
+        FEAudio::PlayAnimAudioEvent("sfx_option_scroll_right", false);
+    }
+    else if (g_pFEInput->IsAutoPressed(pad, 0xD, true, NULL))
+    {
+        mMapMenu->MoveUp(false);
+        FEAudio::PlayAnimAudioEvent("sfx_option_scroll_up", false);
+    }
+    else if (g_pFEInput->IsAutoPressed(pad, 0xE, true, NULL))
+    {
+        mMapMenu->MoveDown(false);
+        FEAudio::PlayAnimAudioEvent("sfx_option_scroll_down", false);
+    }
+
+    if (oldSelected != mMapMenu->GetSelectedItem())
+    {
+        mHasChangedSinceLastUpdate = true;
+    }
+
+    if (mHighliteVisibilityAtAnimEnd)
+    {
+        TLSlide* activeSlide = mParentComponent->GetActiveSlide();
+        bool shouldShow;
+
+        if (activeSlide == NULL)
+        {
+            shouldShow = true;
+        }
+        else if (activeSlide->m_time >= activeSlide->m_start + activeSlide->m_duration)
+        {
+            shouldShow = true;
+        }
+        else
+        {
+            shouldShow = false;
+        }
+
+        if (shouldShow)
+        {
+            mHighliteVisibilityAtAnimEnd = false;
+            mHighliteComponent->m_bVisible = true;
+        }
+    }
+
+    mMapMenu->Update(0.016666668f);
 }
 
 /**

@@ -44,6 +44,7 @@ public:
     void UpdateForMain(float);
     void UpdateForSubOptionMenus(float);
     void ChangeMenuState(eMenuState);
+    static s32 mLastSelectedIndex;
 
     /* 0x01C */ OptionsSubMenu* m_subMenu;                // size 0x4
     /* 0x020 */ eMenuState m_curMenuState;                // size 0x4

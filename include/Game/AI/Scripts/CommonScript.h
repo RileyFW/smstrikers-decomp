@@ -21,28 +21,28 @@ struct StdMapStub
 class Fuzzy
 {
 public:
-    void GetStrategicBallCarrier(cTeam*);
-    void GetBestBallInterceptor(cTeam*);
-    void GetSwapControllerScore(cPlayer*);
+    static FuzzyVariant GetStrategicBallCarrier(cTeam*);
+    static FuzzyVariant GetBestBallInterceptor(cTeam*);
+    static FuzzyVariant GetSwapControllerScore(cPlayer*);
     static FuzzyVariant ShouldIStrafeBall(cFielder*);
     static FuzzyVariant ShouldIStrafeMark(cFielder*);
-    void ShouldIMarkBallOwner(cFielder*);
-    void ShouldIAttemptOneTimer(cFielder*);
-    void GetBestLooseBallPassTarget(cFielder*);
-    void GetBestPassTarget(cPlayer*);
-    void GoodPassTargetFrom(cFielder*, cFielder*);
-    void GetBestHitTarget(cFielder*);
-    void GetPassDirection(cPlayer*, cPlayer*);
-    void GoodToShoot(cFielder*);
-    void GoodToChipShot(cFielder*);
-    void GetBestPassReceiveAction(cFielder*);
-    void GetBestLooseBallAction(cFielder*);
-    void GetBestWindupShotAction(cFielder*);
-    void GetPowerupToUseForPassReceiveDefence(cFielder*);
-    void GetPowerupToUseForWindupDefence(cFielder*);
-    void InDanger(cFielder*);
-    void InDangerDelayed(cFielder*);
-    void GoalieAndGonnaPickupBall(cPlayer*);
+    static FuzzyVariant ShouldIMarkBallOwner(cFielder*);
+    static FuzzyVariant ShouldIAttemptOneTimer(cFielder*);
+    static FuzzyVariant GetBestLooseBallPassTarget(cFielder*);
+    static FuzzyVariant GetBestPassTarget(cPlayer*);
+    static FuzzyVariant GoodPassTargetFrom(cFielder*, cFielder*);
+    static FuzzyVariant GetBestHitTarget(cFielder*);
+    static FuzzyVariant GetPassDirection(cPlayer*, cPlayer*);
+    static FuzzyVariant GoodToShoot(cFielder*);
+    static FuzzyVariant GoodToChipShot(cFielder*);
+    static FuzzyVariant GetBestPassReceiveAction(cFielder*);
+    static FuzzyVariant GetBestLooseBallAction(cFielder*);
+    static FuzzyVariant GetBestWindupShotAction(cFielder*);
+    static FuzzyVariant GetPowerupToUseForPassReceiveDefence(cFielder*);
+    static FuzzyVariant GetPowerupToUseForWindupDefence(cFielder*);
+    static FuzzyVariant InDanger(cFielder*);
+    static FuzzyVariant InDangerDelayed(cFielder*);
+    static FuzzyVariant GoalieAndGonnaPickupBall(cPlayer*);
 };
 
 // class FuzzyVariant
@@ -54,7 +54,15 @@ public:
 class SaveConfidence
 {
 public:
+    SaveConfidence(float* pFloat)
+        : m_savedValue(*pFloat)
+        , m_pFloat(pFloat)
+    {
+    }
     ~SaveConfidence();
+
+    float m_savedValue;
+    float* m_pFloat;
 };
 
 class ScriptQuestionCache : public nlSingleton<ScriptQuestionCache>

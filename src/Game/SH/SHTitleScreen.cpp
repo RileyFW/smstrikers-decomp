@@ -113,20 +113,38 @@ TitleScene::~TitleScene()
 {
 }
 
-static const char sPressStart[] = "pressstart";
-static const char sPressStartText[] = "PressStart";
+// static const char sPressStart[] __attribute__((section(".sdata2"))) = "pressstart";
+// static const char sPressStartText[] __attribute__((section(".sdata2"))) = "PressStart";
 
 /**
  * Offset/Address/Size: 0x688 | 0x800ACC44 | size: 0x10C
- * TODO: 99.7% match - Find symbol mangling (const InlineHasher& vs InlineHasher by-value);
- *       build needs -sdata2 16 for correct SDA21 string placement
  */
 void TitleScene::SceneCreated()
 {
+    typedef TLComponentInstance* (*FindCompByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindCompByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+    typedef TLTextInstance* (*FindTextByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLTextInstance* (*FindTextByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindCompByValue byValue;
+        FindCompByRef byRef;
+    } findComp;
+
+    union
+    {
+        FindTextByValue byValue;
+        FindTextByRef byRef;
+    } findText;
+
     FEMusic::StopStream();
     AudioLoader::PlayFETitleMusicWithFade();
 
     volatile InlineHasher hB, hA, h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+
+    findComp.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+
     h0.m_Hash = 0;
     h1.m_Hash = 0;
     h2.m_Hash = 0;
@@ -138,20 +156,23 @@ void TitleScene::SceneCreated()
     u32 hash = nlStringLowerHash("title_screen_fe");
     h8.m_Hash = hash;
     h9.m_Hash = hash;
-    hash = nlStringLowerHash(sPressStart);
+    hash = nlStringLowerHash("Layer2");
     hB.m_Hash = hash;
     hA.m_Hash = hash;
 
-    TLComponentInstance* comp = FEFinder<TLComponentInstance, 4>::Find<TLSlide>(
+    TLComponentInstance* comp = findComp.byRef(
         m_pFEPresentation->m_currentSlide,
-        (const InlineHasher&)hB,
-        (const InlineHasher&)h9,
-        (const InlineHasher&)h7,
-        (const InlineHasher&)h5,
-        (const InlineHasher&)h3,
-        (const InlineHasher&)h1);
+        (InlineHasher&)hB,
+        (InlineHasher&)h9,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
 
     volatile InlineHasher g7, g6, g5, g4, g3, g2, g1, g0;
+
+    findText.byValue = FEFinder<TLTextInstance, 3>::Find<TLSlide>;
+
     g0.m_Hash = 0;
     h1.m_Hash = 0;
     g1.m_Hash = 0;
@@ -162,18 +183,18 @@ void TitleScene::SceneCreated()
     h7.m_Hash = 0;
     g4.m_Hash = 0;
     g5.m_Hash = 0;
-    hash = nlStringLowerHash(sPressStartText);
+    hash = nlStringLowerHash("Text");
     g6.m_Hash = hash;
     g7.m_Hash = hash;
 
-    mTextPressStart = FEFinder<TLTextInstance, 3>::Find<TLSlide>(
+    mTextPressStart = findText.byRef(
         comp->GetActiveSlide(),
-        (const InlineHasher&)g7,
-        (const InlineHasher&)g5,
-        (const InlineHasher&)h7,
-        (const InlineHasher&)h5,
-        (const InlineHasher&)h3,
-        (const InlineHasher&)h1);
+        (InlineHasher&)g7,
+        (InlineHasher&)g5,
+        (InlineHasher&)h7,
+        (InlineHasher&)h5,
+        (InlineHasher&)h3,
+        (InlineHasher&)h1);
 }
 
 /**

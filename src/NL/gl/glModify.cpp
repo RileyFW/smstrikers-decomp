@@ -62,67 +62,94 @@ void gl_ModifyClearMappings()
 
 /**
  * Offset/Address/Size: 0x84 | 0x801D90C0 | size: 0x1F8
+ * TODO: 99.29% match - SDA21 load scheduling: MWCC loads GLTT_*_bit@sda21 before struct field, target does reverse
  */
-void gl_Modify(const glModelPacket* arg0)
+static inline glModelPacket* gl_ModifyClonePacket(const glModelPacket* pPacket)
 {
-    glModelPacket* packet = NULL;
-    for (u32 i = 0; i < glNumModifiers; i++)
+    glModelPacket* packet = (glModelPacket*)glFrameAlloc(0x4A, GLM_Header);
+    memcpy(packet, pPacket, 0x4A);
+    return packet;
+}
+
+glModelPacket* gl_Modify(const glModelPacket* pPacket)
+{
+    glModelPacket* newPacket = NULL;
+    s32 i;
+
+    for (i = 0; i < (s32)glNumModifiers; i++)
     {
         switch (glModifier[i].m_modifier)
-        { /* irregular */
+        {
         case eGLModifier_0:
-            if (arg0->state.program == glModifier[i].m_unk_0x04)
+            if (pPacket->state.program == glModifier[i].m_unk_0x04)
             {
-                if (packet == NULL)
+                if (newPacket == NULL)
                 {
-                    packet = (glModelPacket*)glFrameAlloc(0x4A, GLM_Header);
-                    memcpy(packet, (u32*)arg0->userData, 0x4A);
+                    newPacket = gl_ModifyClonePacket(pPacket);
                 }
-                packet->state.program = glModifier[i].m_unk_0x08;
+                newPacket->state.program = glModifier[i].m_unk_0x08;
             }
             break;
+
         case eGLModifier_1:
-            // u32 temp_r4 = glModifier[i].m_unk_0x04;
-            if (glModifier[i].m_unk_0x04 + 0x10000 == -1U)
+            if ((u32)glModifier[i].m_unk_0x04 == 0xFFFFFFFF)
             {
-                if (packet == NULL)
+                u32 tex;
+                u32 bit;
+
+                if (newPacket == NULL)
                 {
-                    packet = (glModelPacket*)glFrameAlloc(0x4A, GLM_Header);
-                    memcpy(packet, (u32*)arg0->userData, 0x4A);
+                    newPacket = gl_ModifyClonePacket(pPacket);
                 }
-                packet->state.texture[0] = glModifier[i].m_unk_0x08;
-                packet->state.texconfig = packet->state.texconfig | GLTT_Diffuse_bit;
+
+                tex = glModifier[i].m_unk_0x08;
+                bit = GLTT_Diffuse_bit;
+                newPacket->state.texture[0] = tex;
+                newPacket->state.texconfig = (u8)(bit | newPacket->state.texconfig);
             }
-            else if (arg0->state.texture[0] == glModifier[i].m_unk_0x04)
+            else if (pPacket->state.texture[0] == glModifier[i].m_unk_0x04)
             {
-                if (packet == NULL)
+                u32 tex;
+                u32 bit;
+
+                if (newPacket == NULL)
                 {
-                    packet = (glModelPacket*)glFrameAlloc(0x4A, GLM_Header);
-                    memcpy(packet, (u32*)arg0->userData, 0x4A);
+                    newPacket = gl_ModifyClonePacket(pPacket);
                 }
-                packet->state.texture[0] = glModifier[i].m_unk_0x08;
-                packet->state.texconfig = (u8)(GLTT_Diffuse_bit | packet->state.texconfig);
+
+                tex = glModifier[i].m_unk_0x08;
+                bit = GLTT_Diffuse_bit;
+                newPacket->state.texture[0] = tex;
+                newPacket->state.texconfig = (u8)(bit | newPacket->state.texconfig);
             }
             break;
+
         case eGLModifier_2:
-            if (packet == NULL)
+        {
+            u32 tex;
+            u32 bit;
+            if (newPacket == NULL)
             {
-                packet = (glModelPacket*)glFrameAlloc(0x4A, GLM_Header);
-                memcpy(packet, (u32*)arg0->userData, 0x4A);
+                newPacket = gl_ModifyClonePacket(pPacket);
             }
-            packet->state.texture[4] = glModifier[i].m_unk_0x08;
-            packet->state.texconfig = (u8)(GLTT_Gloss_bit | packet->state.texconfig);
+            tex = glModifier[i].m_unk_0x08;
+            bit = GLTT_Gloss_bit;
+            newPacket->state.texture[4] = tex;
+            newPacket->state.texconfig = (u8)(bit | newPacket->state.texconfig);
             break;
+        }
+
         case eGLModifier_3:
-            if (packet == NULL)
+            if (newPacket == NULL)
             {
-                packet = (glModelPacket*)glFrameAlloc(0x4A, GLM_Header);
-                memcpy(packet, (u32*)arg0->userData, 0x4A);
+                newPacket = gl_ModifyClonePacket(pPacket);
             }
-            packet->state.texconfig = (u8)(packet->state.texconfig & glModifier[i].m_unk_0x08);
+            newPacket->state.texconfig &= glModifier[i].m_unk_0x08;
             break;
         }
     }
+
+    return newPacket;
 }
 
 /**

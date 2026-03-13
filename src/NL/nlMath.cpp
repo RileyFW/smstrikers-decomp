@@ -28,98 +28,59 @@ extern void seedMT(u32 p);
  */
 float nlBezier(float* controlPoints, int degree, float t)
 {
-    f32* currentPoint;
-    f32 temp_f0;
-    f32 temp_f1;
-    f32 oneMinusT;
-    f32 result;
-    f32 tPower;
-    f32 tPowerInv;
-    s32 temp_r0;
-    s32 factorial;
-    s32 temp_r3;
-    s32 temp_r3_2;
-    s32 temp_r4;
-    s32 temp_r5;
-    s32 temp_r6;
-    s32 temp_r7;
-    s32 loopCounter2;
-    s32 loopCounter3;
-    s32 factorialInv;
-    s32 factorialResult;
-    s32 factorialDivisor;
-    s32 loopIndex;
-    s32 unrolledLoopIndex;
-    u32 unrolledLoopCount;
+    float oneMinusT;
+    float powVal;
+    float result;
+    float tPower;
+    float tPowerInv;
+    float coeffF;
+    float powTerm;
+    int factorialResult;
+    int factorialInv;
+    int i;
+    float* currentPoint;
+    int factorialDivisor;
+    int loopIndex;
 
     if (t == 1.0f)
     {
-        return controlPoints[(degree - 1)];
+        return controlPoints[degree - 1];
     }
+
     oneMinusT = 1.0f - t;
     factorialResult = 1;
     factorialInv = 1;
-    temp_f1 = pow(oneMinusT, degree);
+    powVal = pow(oneMinusT, (float)degree);
+    tPower = powVal;
     tPowerInv = 1.0f;
-    unrolledLoopIndex = 1;
-    tPower = temp_f1;
-    if (degree >= 1)
+
+    for (i = 1; i <= degree; i++)
     {
-        temp_r3 = degree - 8;
-        if (degree > 8)
-        {
-            unrolledLoopCount = (temp_r3 + 7) >> 3;
-            if (temp_r3 >= 1)
-            {
-                do
-                {
-                    temp_r7 = unrolledLoopIndex + 2;
-                    temp_r6 = unrolledLoopIndex + 3;
-                    temp_r5 = unrolledLoopIndex + 4;
-                    temp_r4 = unrolledLoopIndex + 5;
-                    factorialResult = factorialResult * unrolledLoopIndex * (unrolledLoopIndex + 1);
-                    temp_r3_2 = unrolledLoopIndex + 6;
-                    temp_r0 = unrolledLoopIndex + 7;
-                    unrolledLoopIndex += 8;
-                    factorialResult = factorialResult * temp_r7 * temp_r6 * temp_r5 * temp_r4 * temp_r3_2 * temp_r0;
-                    unrolledLoopCount -= 1;
-                } while (unrolledLoopCount != 0);
-            }
-        }
-        loopCounter2 = (degree + 1) - unrolledLoopIndex;
-        if (unrolledLoopIndex <= degree)
-        {
-            do
-            {
-                factorialResult *= unrolledLoopIndex;
-                unrolledLoopIndex += 1;
-                loopCounter2 -= 1;
-            } while (loopCounter2 != 0);
-        }
+        factorialResult *= i;
     }
+
     factorialDivisor = factorialResult;
-    currentPoint = controlPoints + 4;
-    result = *controlPoints * temp_f1;
-    loopIndex = 1;
-    loopCounter3 = degree;
-    if (degree >= 1)
+    currentPoint = controlPoints + 1;
+    result = *controlPoints * powVal;
+
+    for (loopIndex = 1; loopIndex <= degree; loopIndex++)
     {
-        do
+        factorialInv *= loopIndex;
+        if (loopIndex != degree)
         {
-            factorialInv *= loopIndex;
-            if (loopIndex != degree)
-            {
-                factorialDivisor = factorialDivisor / ((degree - loopIndex) + 1);
-            }
-            temp_f0 = *currentPoint;
-            tPower /= oneMinusT;
-            currentPoint += 4;
-            loopIndex += 1;
-            tPowerInv *= t;
-            result += (factorialResult / (factorialInv * factorialDivisor)) * (tPowerInv * tPower) * temp_f0;
-            loopCounter3 -= 1;
-        } while (loopCounter3 != 0);
+            factorialDivisor /= (degree - loopIndex) + 1;
+        }
+
+        tPower /= oneMinusT;
+        tPowerInv *= t;
+        coeffF = (float)(factorialResult / (factorialInv * factorialDivisor));
+        powTerm = tPowerInv * tPower;
+        coeffF = coeffF * powTerm;
+        coeffF = coeffF * *currentPoint;
+        result = result + coeffF;
+        currentPoint += 1;
     }
+
     return result;
 }
 

@@ -55,7 +55,7 @@ public:
     void UpdateParticle(ParticleReturn*, Particle*, EffectsTemplate*, const nlVector3&, const nlVector3&, const nlMatrix4*);
     void RenderAllParticles(eGLView);
     void Die();
-    void Update(float);
+    bool Update(float);
     float GetRemainingTime() const;
 
     /* 0x08 */ EffectsSpec* m_pSpec;          // offset 0x8, size 0x4

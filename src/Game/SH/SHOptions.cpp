@@ -1,4 +1,7 @@
 #include "Game/SH/SHOptions.h"
+#include "Game/FE/feMusic.h"
+#include "Game/GameInfo.h"
+#include "Game/SH/SHCredits.h"
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800B5004 | size: 0x40
@@ -86,6 +89,8 @@
 //     BindExp2<void, Detail::MemFunImpl<void, void (OptionsScene::*)(eMenuState)>, OptionsScene*, eMenuState>>::Clone() const
 // {
 // }
+
+s32 OptionsScene::mLastSelectedIndex;
 
 /**
  * Offset/Address/Size: 0x1460 | 0x800B4A1C | size: 0x8C
@@ -177,6 +182,75 @@ void OptionsScene::UpdateForSubOptionMenus(float)
 /**
  * Offset/Address/Size: 0x0 | 0x800B35BC | size: 0x268
  */
-void OptionsScene::ChangeMenuState(eMenuState)
+void OptionsScene::ChangeMenuState(eMenuState newState)
 {
+    FEPresentation* pres = m_pFEScene->m_pFEPackage->GetPresentation();
+
+    if (m_subMenu != NULL)
+    {
+        delete m_subMenu;
+        m_subMenu = NULL;
+    }
+
+    switch (newState)
+    {
+    case MS_MAIN:
+    {
+        mMenuItems.mCurrentIndex = mLastSelectedIndex;
+
+        int idx = mMenuItems.mCurrentIndex;
+        Tag tag = mMenuItems.mMenuItems[idx].mCallbacks[1].mTag;
+
+        if (((u32)((-((s32)tag)) | tag) >> 31) != 0)
+        {
+            TLComponentInstance* item = mMenuItems.mMenuItems[idx].mType;
+
+            if (tag == FREE_FUNCTION)
+            {
+                mMenuItems.mMenuItems[idx].mCallbacks[1].mFreeFunction(item);
+            }
+            else
+            {
+                (*mMenuItems.mMenuItems[idx].mCallbacks[1].mFunctor)(item);
+            }
+        }
+        break;
+    }
+    case MS_AUDIO:
+        m_subMenu = new ((OptionsAudioMenuV2*)nlMalloc(sizeof(OptionsAudioMenuV2), 8, false))
+            OptionsAudioMenuV2(pres, ButtonComponent::BS_B_ONLY, nlSingleton<GameInfoManager>::s_pInstance->mUserInfo.mAudioOptions);
+        break;
+    case MS_VISUAL:
+        m_subMenu = new ((OptionsVisualMenuV2*)nlMalloc(sizeof(OptionsVisualMenuV2), 8, false))
+            OptionsVisualMenuV2(pres, ButtonComponent::BS_B_ONLY, nlSingleton<GameInfoManager>::s_pInstance->mUserInfo.mVisualOptions);
+        break;
+    case MS_GAMEPLAY:
+    {
+        bool showLegend = nlSingleton<GameInfoManager>::s_pInstance->IsLegendSkillUnlocked();
+        m_subMenu = new ((OptionsGameplayMenuV2*)nlMalloc(sizeof(OptionsGameplayMenuV2), 8, false))
+            OptionsGameplayMenuV2(pres,
+                ButtonComponent::BS_B_ONLY,
+                nlSingleton<GameInfoManager>::s_pInstance->mUserInfo.mGameplayOptions,
+                !showLegend ? 4 : -1);
+        break;
+    }
+    case MS_CHEATS:
+        m_subMenu = new ((OptionsCheatsMenu*)nlMalloc(sizeof(OptionsCheatsMenu), 8, false))
+            OptionsCheatsMenu(pres, ButtonComponent::BS_B_ONLY, nlSingleton<GameInfoManager>::s_pInstance->mUserInfo.mCheatOptions);
+        break;
+    case MS_SAVE_LOAD:
+        m_subMenu = new ((OptionsSaveLoad*)nlMalloc(sizeof(OptionsSaveLoad), 8, false))
+            OptionsSaveLoad(pres, ButtonComponent::BS_A_AND_B);
+        break;
+    case MS_NUMMENUSTATES:
+        nlSingleton<GameSceneManager>::s_pInstance->PopEntireStack();
+        nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_CREDITS, SCREEN_NOTHING, false);
+        CreditScene::mNextScene = SCENE_OPTIONS;
+        FEMusic::StopStream();
+        break;
+    default:
+        break;
+    }
+
+    m_curMenuState = newState;
 }

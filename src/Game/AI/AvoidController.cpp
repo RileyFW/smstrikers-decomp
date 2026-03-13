@@ -96,10 +96,106 @@ void AvoidController::Update(float)
 
 /**
  * Offset/Address/Size: 0x1060 | 0x800086B4 | size: 0x25C
+ * TODO: 96.62% match - remaining diffs are x/z delta load order,
+ * GetClosingSpeed2D setup register allocation, and fContribution/output FPR allocation.
  */
-bool AvoidController::CalcFielderRepulsionVector(nlVector3&)
+bool AvoidController::CalcFielderRepulsionVector(nlVector3& v3OutRepulsion)
 {
-    return false;
+    extern cTeam* g_pTeams[];
+    extern cTeam* g_pCurrentlyUpdatingTeam;
+    extern float GetClosingSpeed2D(const nlVector3&, const nlVector3&, const nlVector3&, const nlVector3&);
+    extern float NormalizeVal(float, float, float);
+
+    bool bAvoidedSomething = false;
+    float fDeltaX, fDeltaY, fDeltaZ;
+    float fDistance, fMagnitude, fClosingSpeed;
+
+    v3OutRepulsion.f.x = 0.0f;
+    v3OutRepulsion.f.y = 0.0f;
+    v3OutRepulsion.f.z = 0.0f;
+
+    for (int i_team = 0; i_team < 2; i_team++)
+    {
+        for (int i_fielder = 0; i_fielder < 4; i_fielder++)
+        {
+            cFielder* pFielder = g_pTeams[i_team]->GetFielder(i_fielder);
+            if (pFielder == m_pFielder)
+            {
+                continue;
+            }
+
+            fDeltaZ = m_pFielder->m_v3Position.f.y - pFielder->m_v3Position.f.y;
+            fDeltaY = m_pFielder->m_v3Position.f.x - pFielder->m_v3Position.f.x;
+            fDeltaX = m_pFielder->m_v3Position.f.z - pFielder->m_v3Position.f.z;
+
+            float fDistanceSq = fDeltaZ * fDeltaZ;
+            fDistanceSq += fDeltaX * fDeltaX;
+            fDistanceSq += fDeltaY * fDeltaY;
+            if (fDistanceSq > 25.0f)
+            {
+                continue;
+            }
+
+            fDistance = nlSqrt(fDistanceSq, true);
+
+            float fInvDistance = 1.0f / fDistance;
+            fDeltaZ = fInvDistance * fDeltaZ;
+            fDeltaY = fInvDistance * fDeltaY;
+            fDeltaX = fInvDistance * fDeltaX;
+
+            fDistance -= pFielder->m_pTweaks->fPhysCapsuleRadius + m_pFTweaks->fPhysCapsuleRadius;
+            fClosingSpeed = GetClosingSpeed2D(m_pFielder->m_v3Position, m_pFielder->m_v3Velocity, pFielder->m_v3Position, pFielder->m_v3Velocity);
+
+            fMagnitude = 10.0f * NormalizeVal(fDistance, 3.0f, 1.0f);
+            fMagnitude += 3.0f * NormalizeVal(fClosingSpeed, 0.0f, 3.0f);
+
+            if (m_UseMinimumAvoidance)
+            {
+                fMagnitude *= 2.0f;
+            }
+
+            m_pFielder->IsOnSameTeam(pFielder);
+            if (m_pFielder->m_pMark == pFielder)
+            {
+                fMagnitude *= 0.5f;
+            }
+
+            if (pFielder == m_pIgnoreThisPlayer)
+            {
+                fMagnitude *= 2.0f;
+            }
+
+            if (m_pFielder->m_pBall != NULL)
+            {
+                SkillTweaks* pSkillTweaks = SkillTweaks::GetSkillTweaks(g_pCurrentlyUpdatingTeam->m_nSide);
+                fMagnitude *= 2.0f * pSkillTweaks->Off_Avoidance;
+            }
+
+            if (fMagnitude <= 0.0f)
+            {
+                continue;
+            }
+
+            float fContribution = 10.0f;
+            if (fMagnitude <= fContribution)
+            {
+                fContribution = fMagnitude;
+            }
+
+            float fOutY = v3OutRepulsion.f.y;
+            float fOutX = v3OutRepulsion.f.x;
+            fOutY = fContribution * fDeltaZ + fOutY;
+            float fOutZ = v3OutRepulsion.f.z;
+            fOutX = fContribution * fDeltaY + fOutX;
+            fOutZ = fContribution * fDeltaX + fOutZ;
+            v3OutRepulsion.f.x = fOutX;
+            v3OutRepulsion.f.y = fOutY;
+            v3OutRepulsion.f.z = fOutZ;
+            bAvoidedSomething = true;
+        }
+    }
+
+    return bAvoidedSomething;
 }
 
 /**

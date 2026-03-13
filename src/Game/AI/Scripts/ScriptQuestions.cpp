@@ -880,15 +880,17 @@ float FarToTheirNet(cPlayer* pPlayer)
 /**
  * Offset/Address/Size: 0x4934 | 0x800833BC | size: 0x394
  */
-void Pressured(cFielder*)
+float Pressured(cFielder*)
 {
+    return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x4490 | 0x80082F18 | size: 0x4A4
  */
-void Attacked(cFielder*)
+float Attacked(cFielder*)
 {
+    return 0.0f;
 }
 
 /**
@@ -991,11 +993,81 @@ float FallenDown(cFielder* pFielder)
 
 /**
  * Offset/Address/Size: 0x3FA0 | 0x80082A28 | size: 0x268
+ * TODO: 95.81% match - remaining FP temp register allocation (f0/f2 swap for 65536.0f constant),
+ *   fGoalDeltaX fmuls operand order, and goalie delta scheduling (compiler computes DeltaY before DeltaX)
  */
-float LikelyToScoreFromPosition(const nlVector3&, const nlVector3&, const cNet*, bool)
+float LikelyToScoreFromPosition(const nlVector3& v3Position, const nlVector3& v3GoaliePosition, const cNet* pNet, bool)
 {
-    FORCE_DONT_INLINE;
-    return 0.0f;
+    float fNetHalfWidth;
+    float fGoalLine;
+    unsigned short aNetAngle;
+    unsigned short aGoalieAngle1;
+    unsigned short aGoalieAngle2;
+    unsigned short aNetOpenAngle;
+    unsigned short aNetOpenAngle2;
+    float fNetOpenScore;
+    float fGoalieDeltaY;
+    float fGoalieDeltaX;
+
+    float fSideSign = pNet->m_sideSign;
+    float fOpenAngle = g_pGame->m_pGameTweaks->unk2D4;
+    fOpenAngle *= 65536.0f;
+    fNetHalfWidth = 0.5f * cNet::m_fNetWidth;
+    aNetAngle = ((s32)fOpenAngle) / 360;
+
+    fGoalLine = pNet->GetGoalLineX();
+
+    float fGoalDeltaX = (fGoalLine - v3Position.f.x) * fSideSign;
+    float fPositionY = v3Position.f.y;
+
+    float fUpperAngle = nlATan2f(fNetHalfWidth - fPositionY, fGoalDeltaX);
+    float fLowerAngle = nlATan2f(-fNetHalfWidth - fPositionY, fGoalDeltaX);
+
+    aGoalieAngle1 = (u16)(s32)(10430.378f * fLowerAngle);
+    aGoalieAngle2 = (u16)(s32)(10430.378f * fUpperAngle);
+    aNetOpenAngle = aGoalieAngle2 - aGoalieAngle1;
+
+    fGoalieDeltaX = v3GoaliePosition.f.x - v3Position.f.x;
+    fGoalieDeltaX *= fSideSign;
+    fGoalieDeltaY = v3GoaliePosition.f.y - fPositionY;
+
+    float fGoalieCenterAngle = nlATan2f(fGoalieDeltaY, fGoalieDeltaX);
+    float fGoalieHalfAngle = nlATan2f(0.5f, nlSqrt(fGoalieDeltaX * fGoalieDeltaX + fGoalieDeltaY * fGoalieDeltaY, true));
+
+    u16 aGoalieHalfOpen = (u16)(s32)(10430.378f * fGoalieHalfAngle);
+    u16 aGoalieCenter = (u16)(s32)(10430.378f * fGoalieCenterAngle);
+
+    u16 aMinOpen = (aGoalieCenter - aGoalieHalfOpen) - aGoalieAngle1;
+    u16 aMaxOpen = (aGoalieCenter + aGoalieHalfOpen) - aGoalieAngle1;
+
+    if (aMinOpen < aNetOpenAngle && aMaxOpen < aNetOpenAngle)
+    {
+        u16 aGap = aNetOpenAngle - aMaxOpen;
+        aNetOpenAngle2 = aGap;
+        if (aMinOpen >= aGap)
+        {
+            aNetOpenAngle2 = aMinOpen;
+        }
+    }
+    else if (aMinOpen < aNetOpenAngle)
+    {
+        aNetOpenAngle2 = aMinOpen;
+    }
+    else if (aMaxOpen < aNetOpenAngle)
+    {
+        aNetOpenAngle2 = aNetOpenAngle - aMaxOpen;
+    }
+    else if (aMinOpen > aMaxOpen && aMaxOpen > aNetOpenAngle)
+    {
+        aNetOpenAngle2 = 0;
+    }
+    else
+    {
+        aNetOpenAngle2 = aNetOpenAngle;
+    }
+
+    fNetOpenScore = InterpolateRangeClamped(0.0f, 1.0f, 0.0f, (float)aNetAngle, (float)aNetOpenAngle2);
+    return fNetOpenScore;
 }
 
 /**

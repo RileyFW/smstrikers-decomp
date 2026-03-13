@@ -3,6 +3,7 @@
 #include "NL/nlPrint.h"
 #include "NL/nlEndian.h"
 #include "NL/nlMemory.h"
+#include "NL/nlConfig.h"
 
 #include "dolphin/GX.h"
 #include "dolphin/VI.h"
@@ -21,6 +22,7 @@ int glx_SwapMode = 0;
 u8 glx_ResetCaptureFrame = 0;
 
 static u8 glx_bLoadingIndicator = 0;
+static u8 glx_bAllowDrawSync = 0;
 
 u8 glx_ScreenShot = 0;
 u8 glx_MovieOutput = 0;
@@ -285,11 +287,67 @@ void glxSwapPre(bool bSend)
     }
 }
 
+static inline void fillStringData(BasicStringInternal* data, const char* str)
+{
+    data->mData = 0;
+    const char* s = str;
+    data->mSize = 0;
+    data->mCapacity = 0;
+    while ((signed char)*s++ != 0)
+    {
+        data->mSize++;
+    }
+    data->mSize++;
+    data->mData = (char*)Detail::TempStringAllocator::allocate(data->mSize + 1);
+    data->mCapacity = data->mSize;
+    for (s32 i = 0; i < data->mSize; i++)
+    {
+        data->mData[i] = *str++;
+    }
+    data->mRefCount = 1;
+}
+
 /**
  * Offset/Address/Size: 0x734 | 0x801BF484 | size: 0x260
+ * TODO: 97.99% match - r30/r31 register swap for data and str pointers
+ * in the string construction section (offsets 0x48-0xE4). MWCC allocator
+ * assigns data=r31/str=r30 instead of target data=r30/str=r31.
  */
-void glxInitSwap(void*, void*)
+void glxInitSwap(void* arg0, void* arg1)
 {
+    BasicStringInternal* data;
+
+    glx_FrameBuffer[0] = arg0;
+    glx_FrameBuffer[1] = arg1;
+    glx_nBuffer = 0;
+    nFirstFrame = 3;
+    glx_bAllowDrawSync = 1;
+
+    data = (BasicStringInternal*)nlMalloc(0x10, 8, true);
+    if (data != 0)
+    {
+        fillStringData(data, "hitz");
+    }
+
+    BasicString<char, Detail::TempStringAllocator> mode(
+        Config::Global().Get<BasicString<char, Detail::TempStringAllocator> >(
+            "swapmode", BasicString<char, Detail::TempStringAllocator>(data)));
+
+    glx_SwapMode = !(mode == "simple");
+    switch (glx_SwapMode)
+    {
+    case 1:
+        GXSetDrawDone();
+        GXFlush();
+        VISetPreRetraceCallback(vi_pre_cb);
+        VISetPostRetraceCallback(vi_post_cb);
+        break;
+    case 0:
+        break;
+    default:
+        nlBreak();
+        break;
+    }
 }
 
 /**
@@ -449,7 +507,8 @@ void glx_ScreenCapture(bool isMovie)
     FILE* file;
     TargaHeader header;
     u32 argbColor;
-    union {
+    union
+    {
         u32 word;
         u8 bytes[4];
     } colorBytes;

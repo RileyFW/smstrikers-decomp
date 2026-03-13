@@ -68,6 +68,7 @@ public:
 class EventManager
 {
 public:
+    EventManager(unsigned long uEventCount, unsigned long uEventSize);
     static void Create(unsigned long, unsigned long);
     void SetupDestArray();
     EventHandler* AddEventHandler(EventCallback, void*, unsigned long);
@@ -83,7 +84,7 @@ public:
     /* 0x10 */ Event* m_queue;
     /* 0x14 */ Event* m_deferred;
     /* 0x18 */ u32* m_dest;
-    /* 0x1C */ void* m_pool;
+    /* 0x1C */ char* m_pool;
     /* 0x20 */ u32 m_count;
     /* 0x24 */ u32 m_size;
 

@@ -401,9 +401,18 @@
 
 /**
  * Offset/Address/Size: 0xA3C | 0x8018DEEC | size: 0x60
+ * TODO: 99.79% match - remaining i-diff is helper ctor symbol name in the
+ * branch target (`@class$264CustomTournament_cpp` vs generated `@class$319code_c`).
  */
 CustomTournament::CustomTournament()
 {
+    m_fenceBoundary = 0x1234ABCD;
+    m_cup = NULL;
+    m_tournMode = TM_INVALID;
+    m_numTeams = 0;
+    m_numGamesPerTeam = 0;
+    m_cupConstructed = false;
+    m_largestCupSize = sizeof(m_dataSpace);
 }
 
 /**

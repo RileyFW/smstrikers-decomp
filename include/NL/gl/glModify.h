@@ -15,7 +15,7 @@ void gl_ModifyAddMapping(eGLModifier, unsigned long);
 void gl_ModifyAddMapping(eGLModifier, unsigned long, unsigned long);
 void gl_ModifyClearLastMapping();
 void gl_ModifyClearMappings();
-void gl_Modify(const glModelPacket*);
+glModelPacket* gl_Modify(const glModelPacket*);
 u32 gl_ModifyGetNum();
 
 #endif // _GLMODIFY_H_

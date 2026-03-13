@@ -3,6 +3,35 @@
 #include "Game/Team.h"
 #include "Game/Player.h"
 #include "Game/AI/Fielder.h"
+#include "Game/Ball.h"
+#include "Game/Field.h"
+
+extern "C" double fabs(double);
+
+float InBetweenMyNetAnd(cFielder*, cFielder*);
+float InBetweenMyNetAnd(cFielder*, cBall*);
+float AbleToInterceptBall(cPlayer*);
+float AbleToInterceptBallForSwapController(cFielder*);
+float ClosingTo(cPlayer*, cBall*);
+float CloseToBall(cPlayer*);
+float GoalieType(cPlayer*);
+float StrategicBallOwner(cFielder*);
+float BallOwner(cPlayer*);
+float BallOwnerT(cTeam*);
+float UserControlled(cFielder*);
+float Defensive(cTeam*);
+float Offensive(cTeam*);
+float InOffensiveZone(cPlayer*);
+float FarToMyNet(cPlayer*);
+float FarToTheirNet(cPlayer*);
+float FarToBall(cPlayer*);
+float ReceivingPass(cFielder*);
+float ReceivingVolleyPass(cPlayer*);
+float NormalizeVal(float fromVal, float fromMin, float fromMax);
+
+extern cBall* g_pScriptBall;
+extern cTeam* g_pScriptCurrentTeam;
+extern cTeam* g_pScriptOtherTeam;
 
 // /**
 //  * Offset/Address/Size: 0x654 | 0x8007A56C | size: 0x80
@@ -187,6 +216,7 @@ const FuzzyVariant& ScriptQuestionCache::AddToCache(unsigned long key, const Fuz
  */
 SaveConfidence::~SaveConfidence()
 {
+    *m_pFloat = m_savedValue;
 }
 
 /**
@@ -198,156 +228,506 @@ SaveConfidence::~SaveConfidence()
 
 /**
  * Offset/Address/Size: 0xF1B0 | 0x80079380 | size: 0x7D4
+ * TODO: 67.3% match - blocked by -inline deferred (Lookup/AddToCache inlined in target)
  */
-void Fuzzy::GetStrategicBallCarrier(cTeam*)
+FuzzyVariant Fuzzy::GetStrategicBallCarrier(cTeam* TheTeam)
 {
+    FuzzyVariant bestValue;
+    float confidence = 1.0f;
+    float bestConfidence = 0.0f;
+
+    FuzzyVariant fvTeam(TheTeam);
+    unsigned long hash = (unsigned long)GetStrategicBallCarrier + ((Variant*)&fvTeam)->GetHash();
+    FuzzyVariant fvTeam2(TheTeam);
+
+    if (ScriptQuestionCache::Instance()->Lookup(hash, bestValue, "GetStrategicBallCarrier"))
+    {
+        ScriptQuestionCache::Instance()->AddToCache(hash, bestValue, "GetStrategicBallCarrier");
+        return bestValue;
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        cFielder* fielder = TheTeam->GetFielder(i);
+        float score = StrategicBallOwner(fielder);
+        float complement = 1.0f - score;
+        float minVal = (score <= complement) ? score : complement;
+        float maxVal = (score >= complement) ? score : complement;
+        float ratio = minVal / maxVal;
+
+        if (score > 0.0f)
+        {
+            SaveConfidence sc(&confidence);
+            if (confidence > score)
+                confidence = score;
+            if (confidence < score && score < 1.0f)
+                confidence = (float)confidence * ratio;
+            if (confidence > bestConfidence)
+            {
+                bestConfidence = confidence;
+                bestValue = FuzzyVariant((cPlayer*)fielder);
+            }
+        }
+    }
+
+    bestValue.Confidence = bestConfidence;
+    ScriptQuestionCache::Instance()->AddToCache(hash, bestValue, "GetStrategicBallCarrier");
+    return bestValue;
 }
 
 /**
  * Offset/Address/Size: 0xE9DC | 0x80078BAC | size: 0x7D4
+ * TODO: 67.3% match - blocked by -inline deferred (Lookup/AddToCache inlined in target)
  */
-void Fuzzy::GetBestBallInterceptor(cTeam*)
+FuzzyVariant Fuzzy::GetBestBallInterceptor(cTeam* TheTeam)
 {
+    FuzzyVariant bestValue;
+    float confidence = 1.0f;
+    float bestConfidence = 0.0f;
+
+    FuzzyVariant fvTeam(TheTeam);
+    unsigned long hash = (unsigned long)GetBestBallInterceptor + ((Variant*)&fvTeam)->GetHash();
+    FuzzyVariant fvTeam2(TheTeam);
+
+    if (ScriptQuestionCache::Instance()->Lookup(hash, bestValue, "GetBestBallInterceptor"))
+    {
+        ScriptQuestionCache::Instance()->AddToCache(hash, bestValue, "GetBestBallInterceptor");
+        return bestValue;
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        cFielder* fielder = TheTeam->GetFielder(i);
+        float score = AbleToInterceptBall((cPlayer*)fielder);
+        float complement = 1.0f - score;
+        float minVal = (score <= complement) ? score : complement;
+        float maxVal = (score >= complement) ? score : complement;
+        float ratio = minVal / maxVal;
+
+        if (score > 0.0f)
+        {
+            SaveConfidence sc(&confidence);
+            if (confidence > score)
+                confidence = score;
+            if (confidence < score && score < 1.0f)
+                confidence = (float)confidence * ratio;
+            if (confidence > bestConfidence)
+            {
+                bestConfidence = confidence;
+                bestValue = FuzzyVariant((cPlayer*)fielder);
+            }
+        }
+    }
+
+    bestValue.Confidence = bestConfidence;
+    ScriptQuestionCache::Instance()->AddToCache(hash, bestValue, "GetBestBallInterceptor");
+    return bestValue;
 }
 
 /**
  * Offset/Address/Size: 0xE40C | 0x800785DC | size: 0x5D0
+ * TODO: 87.88% match - blocked by -inline deferred store scheduling:
+ * mType/mData stores placed after ExtraData.Reset() bctrl instead of before
  */
-void Fuzzy::GetSwapControllerScore(cPlayer*)
+FuzzyVariant Fuzzy::GetSwapControllerScore(cPlayer* ThePlayer)
 {
+    FuzzyVariant bestValue;
+
+    FuzzyVariant fvPlayer((cPlayer*)ThePlayer);
+    ((Variant*)&fvPlayer)->GetHash();
+
+    FuzzyVariant fvPlayer2((cPlayer*)ThePlayer);
+
+    unsigned char flag = 0;
+    float weightedSum = 0.0f;
+    float totalWeight = 0.0f;
+    float passWeight = 0.0f;
+
+    cFielder* passTarget = (cFielder*)g_pBall->GetPassTargetFielder();
+
+    if (ReceivingPass(passTarget) != 0.0f && passTarget != (cFielder*)ThePlayer)
+    {
+        cTeam* targetTeam = passTarget != NULL ? passTarget->m_pTeam : NULL;
+        cTeam* playerTeam = ThePlayer != NULL ? ThePlayer->m_pTeam : NULL;
+
+        if (playerTeam != targetTeam)
+        {
+            flag = 1;
+            if (ReceivingVolleyPass((cPlayer*)passTarget) != 0.0f)
+            {
+                passWeight = 2.0f;
+            }
+            else
+            {
+                passWeight = 1.0f;
+            }
+        }
+    }
+
+    cTeam* team = ThePlayer != NULL ? ThePlayer->m_pTeam : NULL;
+    if (team->GetNumAssignedControllers() > 1)
+    {
+        team = ThePlayer != NULL ? ThePlayer->m_pTeam : NULL;
+        if (BallOwnerT(team) != 0.0f && ThePlayer->m_eClassType == FIELDER)
+        {
+            Fuzzy::GoodToShoot((cFielder*)ThePlayer);
+            float weight = 0.5f;
+            flag = 0;
+            totalWeight += weight;
+            weightedSum += weight * bestValue.mData.f;
+        }
+    }
+
+    if (flag)
+    {
+        float dt = 1.0f;
+        float pz = ThePlayer->m_v3Position.f.y + dt * ThePlayer->m_v3Velocity.f.y;
+        float tz = passTarget->m_v3Position.f.y + dt * passTarget->m_v3Velocity.f.y;
+        float px = ThePlayer->m_v3Position.f.x + dt * ThePlayer->m_v3Velocity.f.x;
+        float tx = passTarget->m_v3Position.f.x + dt * passTarget->m_v3Velocity.f.x;
+        float dy = pz - tz;
+        float dx = px - tx;
+        float dist = nlSqrt(dx * dx + dy * dy, true);
+        float maxDist = 2.0f * cField::mv3FieldPosition.f.x;
+        float range = 0.5f * maxDist;
+        float normalized = NormalizeVal(dist, range, 0.0f);
+        weightedSum += normalized * passWeight;
+        totalWeight += passWeight;
+    }
+
+    if (ThePlayer->m_eClassType == FIELDER)
+    {
+        float intercept = AbleToInterceptBallForSwapController((cFielder*)ThePlayer);
+        weightedSum += intercept;
+        totalWeight += 1.0f;
+        float offensive = InOffensiveZone(ThePlayer);
+        float defense = 1.0f - offensive;
+        team = ThePlayer != NULL ? ThePlayer->m_pTeam : NULL;
+        float defResult = Defensive(team);
+        if (defResult > defense)
+            defResult = defense;
+        if (defResult != 0.0f)
+        {
+            float inBetween = InBetweenMyNetAnd((cFielder*)ThePlayer, g_pBall);
+            float weight = 0.5f;
+            weightedSum += weight * inBetween;
+            totalWeight += weight;
+        }
+        team = ThePlayer != NULL ? ThePlayer->m_pTeam : NULL;
+        float notBallOwner = 1.0f - BallOwnerT(team);
+        if (notBallOwner != 0.0f)
+            ClosingTo(ThePlayer, g_pBall);
+    }
+
+    float result = 0.0f;
+    if (totalWeight > 0.0f)
+        result = weightedSum / totalWeight;
+
+    unsigned char isIdle = 0;
+    float absVal = (float)fabs((double)ThePlayer->m_v3ScreenPosition.f.x);
+    if (absVal <= 1.0f)
+    {
+        absVal = (float)fabs((double)ThePlayer->m_v3ScreenPosition.f.y);
+        if (absVal <= 1.0f)
+            isIdle = 1;
+    }
+
+    FuzzyVariant fvResult(result);
+    bestValue = fvResult;
+    bestValue.Confidence = 1.0f;
+    return bestValue;
 }
 
 /**
  * Offset/Address/Size: 0xDC78 | 0x80077E48 | size: 0x794
+ * TODO: 87.0% match - MWCC store scheduling: mType/mData stores placed after ExtraData.Reset()
+ * bctrl instead of before. Same issue in all FuzzyVariant template ctor inlines.
  */
-FuzzyVariant Fuzzy::ShouldIStrafeBall(cFielder*)
+FuzzyVariant Fuzzy::ShouldIStrafeBall(cFielder* TheFielder)
 {
-    return FuzzyVariant();
+    FuzzyVariant bestValue;
+
+    float confidence = 0.0f;
+
+    FuzzyVariant fvFielder((cPlayer*)TheFielder);
+    ((Variant*)&fvFielder)->GetHash();
+
+    FuzzyVariant fvFielder2((cPlayer*)TheFielder);
+
+    if (StrategicBallOwner(TheFielder) == 0.0f)
+    {
+        if (BallOwner(g_pScriptCurrentTeam->GetGoalie()) != 0.0f || BallOwner(g_pScriptOtherTeam->GetGoalie()) != 0.0f)
+        {
+            confidence = 1.0f;
+            FuzzyVariant fvResult(0.25f);
+            bestValue = fvResult;
+        }
+        else if (UserControlled(TheFielder) == 0.0f && TheFielder->m_fDesiredSpeed < 0.1f)
+        {
+            confidence = 1.0f;
+            FuzzyVariant fvResult(0.75f);
+            bestValue = fvResult;
+        }
+        else
+        {
+            cTeam* team = TheFielder != NULL ? TheFielder->m_pTeam : NULL;
+            if (Defensive(team) != 0.0f)
+            {
+                confidence = 1.0f;
+                float farToMyNet = FarToMyNet(TheFielder);
+                float inBetween = InBetweenMyNetAnd(TheFielder, g_pScriptBall);
+                float val = (1.0f - farToMyNet) * 0.5f + inBetween * 0.5f;
+                FuzzyVariant fvResult(val);
+                bestValue = fvResult;
+            }
+            else
+            {
+                team = TheFielder != NULL ? TheFielder->m_pTeam : NULL;
+                if (Offensive(team) != 0.0f)
+                {
+                    confidence = 1.0f;
+                    float farToTheirNet = FarToTheirNet(TheFielder);
+                    FuzzyVariant fvResult(1.0f - farToTheirNet);
+                    bestValue = fvResult;
+                }
+                else
+                {
+                    confidence = 1.0f;
+                    float farToBall = FarToBall(TheFielder);
+                    FuzzyVariant fvResult(1.0f - farToBall);
+                    bestValue = fvResult;
+                }
+            }
+        }
+    }
+
+    bestValue.Confidence = confidence;
+    return bestValue;
 }
 
 /**
  * Offset/Address/Size: 0xD92C | 0x80077AFC | size: 0x34C
+ * TODO: 88.1% match - MWCC store scheduling: mType/mData stores placed after ExtraData.Reset()
+ * bctrl instead of before. Same issue in all 3 FuzzyVariant template ctor inlines.
  */
-FuzzyVariant Fuzzy::ShouldIStrafeMark(cFielder*)
+FuzzyVariant Fuzzy::ShouldIStrafeMark(cFielder* TheFielder)
 {
-    return FuzzyVariant();
+    FuzzyVariant bestValue;
+
+    FuzzyVariant fvFielder((cPlayer*)TheFielder);
+    ((Variant*)&fvFielder)->GetHash();
+
+    FuzzyVariant fvFielder2((cPlayer*)TheFielder);
+
+    cFielder* mark = TheFielder != NULL ? TheFielder->m_pMark : NULL;
+    float inBetween = InBetweenMyNetAnd(TheFielder, mark);
+
+    FuzzyVariant fvResult(inBetween);
+
+    bestValue = fvResult;
+
+    return bestValue;
 }
 
 /**
  * Offset/Address/Size: 0xD188 | 0x80077358 | size: 0x7A4
  */
-void Fuzzy::ShouldIMarkBallOwner(cFielder*)
+FuzzyVariant Fuzzy::ShouldIMarkBallOwner(cFielder*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0xC144 | 0x80076314 | size: 0x1044
  */
-void Fuzzy::ShouldIAttemptOneTimer(cFielder*)
+FuzzyVariant Fuzzy::ShouldIAttemptOneTimer(cFielder*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0xB89C | 0x80075A6C | size: 0x8A8
  */
-void Fuzzy::GetBestLooseBallPassTarget(cFielder*)
+FuzzyVariant Fuzzy::GetBestLooseBallPassTarget(cFielder*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0xAC34 | 0x80074E04 | size: 0xC68
  */
-void Fuzzy::GetBestPassTarget(cPlayer*)
+FuzzyVariant Fuzzy::GetBestPassTarget(cPlayer*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0xA138 | 0x80074308 | size: 0xAFC
  */
-void Fuzzy::GoodPassTargetFrom(cFielder*, cFielder*)
+FuzzyVariant Fuzzy::GoodPassTargetFrom(cFielder*, cFielder*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x95A0 | 0x80073770 | size: 0xB98
  */
-void Fuzzy::GetBestHitTarget(cFielder*)
+FuzzyVariant Fuzzy::GetBestHitTarget(cFielder*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x8D80 | 0x80072F50 | size: 0x820
  */
-void Fuzzy::GetPassDirection(cPlayer*, cPlayer*)
+FuzzyVariant Fuzzy::GetPassDirection(cPlayer*, cPlayer*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x801C | 0x800721EC | size: 0xD64
  */
-void Fuzzy::GoodToShoot(cFielder*)
+FuzzyVariant Fuzzy::GoodToShoot(cFielder*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x71F4 | 0x800713C4 | size: 0xE28
  */
-void Fuzzy::GoodToChipShot(cFielder*)
+FuzzyVariant Fuzzy::GoodToChipShot(cFielder*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x57C4 | 0x8006F994 | size: 0x1A30
  */
-void Fuzzy::GetBestPassReceiveAction(cFielder*)
+FuzzyVariant Fuzzy::GetBestPassReceiveAction(cFielder*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x3FD0 | 0x8006E1A0 | size: 0x17F4
  */
-void Fuzzy::GetBestLooseBallAction(cFielder*)
+FuzzyVariant Fuzzy::GetBestLooseBallAction(cFielder*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x2CB4 | 0x8006CE84 | size: 0x131C
  */
-void Fuzzy::GetBestWindupShotAction(cFielder*)
+FuzzyVariant Fuzzy::GetBestWindupShotAction(cFielder*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x1A48 | 0x8006BC18 | size: 0x126C
  */
-void Fuzzy::GetPowerupToUseForPassReceiveDefence(cFielder*)
+FuzzyVariant Fuzzy::GetPowerupToUseForPassReceiveDefence(cFielder*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x1620 | 0x8006B7F0 | size: 0x428
+ * TODO: 81.85% match - blocked by -inline deferred store scheduling +
+ * tempResult construction order (declared before fvFielder for stack layout)
  */
-void Fuzzy::GetPowerupToUseForWindupDefence(cFielder*)
+FuzzyVariant Fuzzy::GetPowerupToUseForWindupDefence(cFielder* TheFielder)
 {
+    FuzzyVariant bestValue;
+
+    float confidence = 0.0f;
+    float bestConfidence = 0.0f;
+    FuzzyVariant tempResult;
+
+    FuzzyVariant fvFielder((cPlayer*)TheFielder);
+    ((Variant*)&fvFielder)->GetHash();
+
+    FuzzyVariant fvFielder2((cPlayer*)TheFielder);
+
+    tempResult = Fuzzy::GetPowerupToUseForPassReceiveDefence(TheFielder);
+
+    float conf = tempResult.Confidence;
+    float negConf = -conf;
+
+    float minC = (conf <= negConf) ? conf : negConf;
+    float maxC = (conf >= negConf) ? conf : negConf;
+    float ratio = minC / maxC;
+
+    if (conf > 0.0f)
+    {
+        SaveConfidence save(&bestConfidence);
+
+        if (bestConfidence > conf)
+            bestConfidence = conf;
+
+        if (bestConfidence < conf && conf < 1.0f)
+            bestConfidence = (float)bestConfidence * ratio;
+
+        if (bestConfidence > 0.0f)
+        {
+            confidence = bestConfidence;
+            bestValue = tempResult;
+        }
+    }
+
+    bestValue.Confidence = confidence;
+    return bestValue;
 }
 
 /**
  * Offset/Address/Size: 0xE64 | 0x8006B034 | size: 0x7BC
  */
-void Fuzzy::InDanger(cFielder*)
+FuzzyVariant Fuzzy::InDanger(cFielder*)
 {
+    FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
  * Offset/Address/Size: 0x3B4 | 0x8006A584 | size: 0xAB0
  */
-void Fuzzy::InDangerDelayed(cFielder*)
+FuzzyVariant Fuzzy::InDangerDelayed(cFielder*)
 {
+    FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x8006A1D0 | size: 0x3B4
  */
-void Fuzzy::GoalieAndGonnaPickupBall(cPlayer*)
+/**
+ * TODO: 87.8% match - Same MWCC store scheduling quirk as ShouldIStrafeMark
+ * (mType/mData stores after ExtraData.Reset bctrl in template ctor inlines)
+ */
+FuzzyVariant Fuzzy::GoalieAndGonnaPickupBall(cPlayer* ThePlayer)
 {
+    FuzzyVariant bestValue;
+
+    FuzzyVariant fvPlayer((cPlayer*)ThePlayer);
+    ((Variant*)&fvPlayer)->GetHash();
+
+    FuzzyVariant fvPlayer2((cPlayer*)ThePlayer);
+
+    float ableToIntercept = AbleToInterceptBall(ThePlayer);
+    float closingTo = ClosingTo(ThePlayer, g_pScriptBall);
+    float closeToBall = CloseToBall(ThePlayer);
+    float goalieType = GoalieType(ThePlayer);
+
+    closingTo = (closingTo <= ableToIntercept) ? closingTo : ableToIntercept;
+    closeToBall = (closeToBall <= closingTo) ? closeToBall : closingTo;
+    if (goalieType <= closeToBall)
+        closeToBall = goalieType;
+
+    FuzzyVariant fvResult(closeToBall);
+
+    bestValue = fvResult;
+
+    return bestValue;
 }

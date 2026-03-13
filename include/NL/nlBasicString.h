@@ -83,6 +83,36 @@ public:
     {
     }
 
+    BasicString(const CharT* str)
+    {
+        BasicStringInternal* data = (BasicStringInternal*)Allocator::allocate(sizeof(BasicStringInternal));
+        if (data != 0)
+        {
+            data->mData = 0;
+            data->mSize = 0;
+            data->mCapacity = 0;
+            const CharT* s = str;
+            while ((signed char)*s++ != 0)
+            {
+                data->mSize++;
+            }
+            data->mSize++;
+            data->mData = (char*)Allocator::allocate(data->mSize + 1);
+            data->mCapacity = data->mSize;
+            for (int i = 0; i < data->mSize; i++)
+            {
+                data->mData[i] = *str++;
+            }
+            data->mRefCount = 1;
+        }
+        m_data = data;
+    }
+
+    BasicString(BasicStringInternal* p)
+        : m_data(p)
+    {
+    }
+
     BasicString(const BasicString& other)
     {
         BasicStringInternal* data;

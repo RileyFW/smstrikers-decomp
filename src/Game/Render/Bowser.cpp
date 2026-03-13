@@ -462,6 +462,86 @@ void Bowser::ActionReset()
  */
 void Bowser::ActionLeave()
 {
+    if (meBowserState == BOWSER_STATE_LEAVE)
+        return;
+
+    if (GameInfoManager::s_pInstance->IsBowserAttackEnabled())
+    {
+        g_pEventManager->CreateValidEvent(0x3b, 0x14);
+    }
+
+    meBowserState = BOWSER_STATE_LEAVE;
+    mAnimID = BOWSER_ANIM_JUMP;
+
+    cPN_SAnimController* controller = NULL;
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&cPN_SAnimController::m_SAnimControllerSlotPool, sizeof(cPN_SAnimController));
+    }
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList != NULL)
+    {
+        controller = (cPN_SAnimController*)cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList;
+        cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList = cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList->m_next;
+    }
+
+    controller = new (controller) cPN_SAnimController(mpAnim[BOWSER_ANIM_JUMP], (const AnimRetarget*)0, PM_HOLD, (void (*)(unsigned int, cPN_SAnimController*))0, (unsigned int)0, (bool)0);
+
+    cPN_Blender* blender;
+
+    if (mpFeatherBlender->GetChild(0) != NULL)
+    {
+        blender = NULL;
+
+        if (cPN_Blender::m_BlenderSlotPool.m_FreeList == NULL)
+        {
+            SlotPoolBase::BaseAddNewBlock(&cPN_Blender::m_BlenderSlotPool, sizeof(cPN_Blender));
+        }
+
+        if (cPN_Blender::m_BlenderSlotPool.m_FreeList != NULL)
+        {
+            blender = (cPN_Blender*)cPN_Blender::m_BlenderSlotPool.m_FreeList;
+            cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
+        }
+
+        if (blender != NULL)
+        {
+            blender = __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(blender, *mpFeatherBlender->GetChildPtr(0), controller, 1.0f);
+        }
+    }
+    else
+    {
+        blender = (cPN_Blender*)controller;
+    }
+
+    mpFeatherBlender->SetChild(0, blender);
+    mpAnimController = controller;
+
+    cBaseCamera* camera = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack);
+    nlVector3 v3CameraTarget = camera->GetTargetPosition();
+
+    nlVector3 v3Velocity = { 200.0f, 0.0f, 0.0f };
+
+    unsigned short aDesired = 0;
+
+    if (v3CameraTarget.f.x > mv3Position.f.x)
+    {
+        v3Velocity.f.x *= -1.0f;
+        aDesired = 0x8000;
+    }
+
+    maDesiredFacingDirection = aDesired;
+    mv3Velocity = v3Velocity;
+
+    mtStateTimer.SetSeconds(3.0f);
+
+    if (mpFeatherBlender->GetChild(1) != NULL)
+    {
+        mpFeatherBlender->BeginBlendOut(0.25f);
+    }
+
+    mpFeatherController = NULL;
 }
 
 /**

@@ -91,7 +91,7 @@ public:
         }
         else
         {
-            val = 0.f;
+            val = T();
         }
         return val;
     };

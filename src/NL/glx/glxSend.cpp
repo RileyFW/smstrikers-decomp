@@ -9,6 +9,7 @@
 #include "dolphin/mtx.h"
 #include "NL/gl/glLightUserData.h"
 #include "NL/gl/glMatrix.h"
+#include "NL/gl/glState.h"
 #include "NL/gl/glUserData.h"
 #include "NL/glx/glxGX.h"
 #include "NL/glx/glxMatrix.h"
@@ -304,8 +305,114 @@ void glx_SwitchStreams(const glModelPacket* pPacket)
 /**
  * Offset/Address/Size: 0x2434 | 0x801BBF34 | size: 0x25C
  */
-void glx_SwitchRaster(const glModelPacket*)
+void glx_SwitchRaster(const glModelPacket* p)
 {
+    static _GXCompare gx_DepthFunc[] = {
+        GX_ALWAYS,
+        GX_LEQUAL,
+        GX_EQUAL,
+        GX_LESS,
+    };
+    static _GXCompare gx_AlphaTest[] = {
+        GX_ALWAYS,
+        GX_GREATER,
+    };
+    static _GXCullMode gx_Culling[] = {
+        GX_CULL_NONE,
+        GX_CULL_FRONT,
+        GX_CULL_BACK,
+        GX_CULL_ALL,
+    };
+
+    unsigned long DepthTest;
+    unsigned long DepthWrite;
+    int DepthFunc;
+    int AlphaTest;
+    unsigned long AlphaTestRef;
+    unsigned long AlphaBlend;
+    int Culling;
+    int ColourWrite;
+
+    glUnHandleizeRasterState(p->state.raster);
+
+    DepthTest = glGetRasterState(GLS_DepthTest);
+    DepthWrite = glGetRasterState(GLS_DepthWrite);
+    DepthFunc = glGetRasterState(GLS_DepthFunc);
+    gxSetZMode((bool)DepthTest, gx_DepthFunc[DepthFunc], (bool)DepthWrite);
+
+    AlphaTest = glGetRasterState(GLS_AlphaTest);
+    AlphaTestRef = glGetRasterState(GLS_AlphaTestRef);
+    gxSetAlphaCompare(gx_AlphaTest[AlphaTest], (unsigned char)AlphaTestRef);
+
+    if (AlphaTest != 0)
+    {
+        gxSetZCompLoc(false);
+    }
+    else
+    {
+        gxSetZCompLoc(true);
+    }
+
+    AlphaBlend = glGetRasterState(GLS_AlphaBlend);
+
+    switch (AlphaBlend)
+    {
+    case 0:
+        gxSetBlendMode(false, (_GXBlendFactor)1, (_GXBlendFactor)0, false);
+        break;
+    case 1:
+        gxSetBlendMode(true, (_GXBlendFactor)4, (_GXBlendFactor)5, false);
+        break;
+    case 2:
+        gxSetBlendMode(true, (_GXBlendFactor)1, (_GXBlendFactor)1, false);
+        break;
+    case 3:
+        gxSetBlendMode(true, (_GXBlendFactor)4, (_GXBlendFactor)1, false);
+        break;
+    case 4:
+        gxSetBlendMode(true, (_GXBlendFactor)2, (_GXBlendFactor)0, false);
+        break;
+    case 5:
+        gxSetBlendMode(true, (_GXBlendFactor)3, (_GXBlendFactor)1, false);
+        break;
+    case 6:
+        gxSetBlendMode(true, (_GXBlendFactor)1, (_GXBlendFactor)0, false);
+        break;
+    case 7:
+        gxSetBlendMode(true, (_GXBlendFactor)2, (_GXBlendFactor)0, true);
+        break;
+    }
+
+    Culling = glGetRasterState(GLS_Culling);
+    gxSetCullMode(gx_Culling[Culling]);
+
+    ColourWrite = glGetRasterState(GLS_ColourWrite);
+    switch (ColourWrite)
+    {
+    case 0:
+        gxSetColourUpdate(false);
+        gxSetAlphaUpdate(false);
+        break;
+    case 1:
+        gxSetColourUpdate(true);
+        gxSetAlphaUpdate(false);
+        break;
+    case 2:
+        gxSetColourUpdate(false);
+        gxSetAlphaUpdate(true);
+        break;
+    case 3:
+        gxSetColourUpdate(true);
+        if (prev_view == GLV_ShadowTexture)
+        {
+            gxSetAlphaUpdate(true);
+        }
+        else
+        {
+            gxSetAlphaUpdate(false);
+        }
+        break;
+    }
 }
 
 /**

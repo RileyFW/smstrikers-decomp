@@ -582,13 +582,100 @@ void World::Update(float fDeltaT)
 /**
  * Offset/Address/Size: 0x191C | 0x801965E0 | size: 0x260
  */
+class FlareHandler
+{
+public:
+    static FlareHandler instance;
+    void AddHalo(const nlMatrix4&);
+    void AddGlow(const nlMatrix4&);
+
+    char _pad[0x70];
+};
+
+template <typename CharT>
+int nlStrNICmp(const CharT* str1, const CharT* str2, unsigned long len);
+
 void World::CreateHelperObjFromChunk(nlChunk* chunk)
 {
-    const char* str = "hello world";
-    char* found = nlStrChr<char>(str, 'w');
-    if (found)
+    static int flareLen;
+    static signed char init;
+
+    HelperObject* pHelper;
+    WorldHelperChunkData* pWorldHelperChunkData;
+    char* substring;
+    const char* flashString;
+    const char* flareTag;
+    char flareName[64];
+
+    u32 chunkFlags = *(u32*)chunk;
+    u32 alignment = chunkFlags & 0x7F000000;
+
+    if ((((u32)(-(s32)alignment) | alignment) >> 31) != 0)
     {
-        nlBreak();
+        u32 shift = alignment >> 24;
+        u32 alignBytes = 1 << shift;
+        u8* pData = (u8*)chunk;
+        pData = pData + alignBytes;
+        pData = pData + 7;
+        pWorldHelperChunkData = (WorldHelperChunkData*)((u32)pData & ~(alignBytes - 1));
+    }
+    else
+    {
+        pWorldHelperChunkData = (WorldHelperChunkData*)((u8*)chunk + 8);
+    }
+
+    pHelper = (HelperObject*)nlMalloc(sizeof(HelperObject), 8, false);
+    pHelper->m_uHashID = pWorldHelperChunkData->m_uHashID;
+    pHelper->m_worldMatrix = pWorldHelperChunkData->m_worldMatrix;
+
+    substring = nlStrChr<char>(pWorldHelperChunkData->m_szName, '/');
+    flashString = "fx_camera_flash";
+    if (nlStrNICmp<char>(substring + 1, flashString, nlStrLen<char>(flashString)) == 0)
+    {
+        nlStrNCpy<char>(pHelper->m_szName, substring + 1, 0x40);
+    }
+    else
+    {
+        flareTag = "flare_";
+
+        if (!init)
+        {
+            flareLen = nlStrLen<char>(flareTag);
+            init = 1;
+        }
+
+        substring = strstr(pWorldHelperChunkData->m_szName, flareTag);
+        if (substring != NULL)
+        {
+            nlStrNCpy<char>(flareName, substring + flareLen, 0x40);
+
+            substring = strstr(flareName, "_");
+            if (substring != NULL)
+            {
+                *substring = '\0';
+            }
+
+            if (nlToLower<char>(flareName[0]) == 'h')
+            {
+                FlareHandler::instance.AddHalo(pWorldHelperChunkData->m_worldMatrix);
+            }
+            else
+            {
+                FlareHandler::instance.AddGlow(pWorldHelperChunkData->m_worldMatrix);
+            }
+
+            delete pHelper;
+            return;
+        }
+
+        nlStrNCpy<char>(pHelper->m_szName, pWorldHelperChunkData->m_szName, 0x40);
+    }
+
+    AVLTreeNode* pExistingNode;
+    m_helperMap.AddAVLNode((AVLTreeNode**)&m_helperMap.m_Root, pHelper, &pHelper, &pExistingNode, m_helperMap.m_NumElements);
+    if (pExistingNode == NULL)
+    {
+        m_helperMap.m_NumElements++;
     }
 }
 

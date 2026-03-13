@@ -37,6 +37,8 @@ struct BasicGameInfo
     /* 0x10 */ eStadiumID mStadiumIndex;
     /* 0x14 */ s16 mPadSides[4];
     /* 0x1C */ s16 mFinalScore[2];
+
+    BasicGameInfo() { }
 }; // total size: 0x20
 
 struct CupRecord
@@ -56,6 +58,17 @@ struct BaseCup
     /* 0xC, */ u16 mHumanTeams;
     /* 0xE, */ bool mCupStarted;
     /* 0x10 */ GameplaySettings mCupSettings;
+
+    BaseCup()
+        : mUserSelectedTeam(TEAM_INVALID)
+        , mUserSelectedSidekick(SK_INVALID)
+        , mRoundNumber(0)
+        , mGameNumber(0)
+        , mHumanTeams(0)
+        , mCupStarted(false)
+        , mCupSettings()
+    {
+    }
 
     virtual BasicGameInfo* GetGameInfo(int team, int round) = 0;
     virtual TeamStats* GetTeamStats(int team) = 0;
@@ -222,7 +235,7 @@ struct Knockout : public BaseCup
     }
     virtual int GetSaveDataSize() const { return 0x1B; };
 
-    BasicGameInfo mGameInfo[3];
+    BasicGameInfo mGameInfo[Teams - 1];
     TeamStats mTeamStats[Teams];
     signed char mRoundResults[3];
 }; // total size: 0x184

@@ -405,6 +405,7 @@ void EmitSpindularPosition(nlVector3& vPosition, nlVector3& vDirection, EffectsT
  */
 void ParticleSystem::CreateNewParticles(int)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -434,8 +435,86 @@ void ParticleSystem::Die()
 /**
  * Offset/Address/Size: 0x6F4 | 0x801F584C | size: 0x260
  */
-void ParticleSystem::Update(float)
+bool ParticleSystem::Update(float dt)
 {
+    if (m_fDelay > 0.0f)
+    {
+        m_fDelay -= dt;
+        if (m_fDelay < 0.0f)
+        {
+            m_fDelay = 0.0f;
+        }
+        return true;
+    }
+
+    m_fElapsedTime += dt;
+
+    if (m_pSpec != nullptr)
+    {
+        float lingerEnd = m_pSpec->m_fLingerEnd;
+        if ((lingerEnd >= 0.0f) && !m_bAmDying && (m_fElapsedTime > lingerEnd))
+        {
+            m_fElapsedTime = m_pSpec->m_fLingerStart;
+            if (m_pTemplate->m_fFountainLife <= 0.0f)
+            {
+                dt = 0.0f;
+            }
+        }
+    }
+
+    float fountainLife = m_pTemplate->m_fFountainLife;
+    if (fountainLife <= 0.0f)
+    {
+        if (!m_bAmDying && (m_Particles.m_headNode == nullptr))
+        {
+            if ((m_pSpec == nullptr) || (m_pSpec->m_fLingerStart < 0.0f))
+            {
+                m_bAmDying = true;
+            }
+            m_fNumParticlesToCreate += RandomizedValue(m_pTemplate->m_rNumber.base, m_pTemplate->m_rNumber.range);
+        }
+    }
+    else if (m_fElapsedTime >= fountainLife)
+    {
+        m_fElapsedTime = fountainLife;
+        m_bAmDying = true;
+    }
+    else
+    {
+        m_fNumParticlesToCreate += dt * RandomizedValue(m_pTemplate->m_rNumber.base, m_pTemplate->m_rNumber.range);
+    }
+
+    int numParticles = (int)m_fNumParticlesToCreate;
+    m_fNumParticlesToCreate -= (float)numParticles;
+    if (m_fNumParticlesToCreate < 0.0f)
+    {
+        m_fNumParticlesToCreate = 0.0f;
+    }
+
+    if (numParticles > 0)
+    {
+        CreateNewParticles(numParticles);
+    }
+
+    Particle* p = (Particle*)m_Particles.m_headNode;
+    while (p != nullptr)
+    {
+        Particle* next = (Particle*)p->m_nextNode;
+        p->timeElapsed += dt;
+        if (p->timeElapsed >= p->lifeSpan)
+        {
+            m_Particles.Remove(p);
+            freeParticles.Append(p);
+        }
+        p = next;
+    }
+
+    if (m_bAmDying && (m_Particles.m_headNode == nullptr))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 /**

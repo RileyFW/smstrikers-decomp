@@ -434,9 +434,7 @@ void Goalie::InitiatePanicGrab(cPlayer* pPlayer)
 
         cFielder* pFielder = static_cast<cFielder*>(pPlayer);
 
-        if (!pFielder->IsFallenDown(0.0f) && !pFielder->IsInvincible() &&
-            pPlayer != NULL && pPlayer->m_eClassType == FIELDER &&
-            !pFielder->IsFallenDown(0.0f))
+        if (!pFielder->IsFallenDown(0.0f) && !pFielder->IsInvincible() && pPlayer != NULL && pPlayer->m_eClassType == FIELDER && !pFielder->IsFallenDown(0.0f))
         {
             pPlayer->PlayRandomCharDialogue(CHAR_DIALOGUE_HIT, VECTORS, 100.0f, -1.0f);
 
@@ -534,16 +532,198 @@ bool Goalie::IsInsideGoalieBox(const nlVector3& rPos, float fXOffset, float fYOf
 /**
  * Offset/Address/Size: 0x6FE8 | 0x80049AE4 | size: 0x268
  */
+/**
+ * Offset/Address/Size: 0x6FF0 | 0x80049AE4 | size: 0x268
+ * TODO: 99.74% match - f30/f31 register swap between absX and saveIgnoreMargin
+ */
 float Goalie::CheckForDelflectAwayFromNet()
 {
+    if (muBallDeflectCount != g_pBall->m_bBallDeflectCount)
+    {
+        nlVector3 v3TargetPosition;
+        nlVector4 plane;
+        nlVector3 localVelocity;
+
+        float netX = m_pTeam->m_pNet->m_baseLocation.f.x;
+
+        if (netX < 0.0f)
+        {
+            plane.f.y = 0.0f;
+            plane.f.x = 1.0f;
+            plane.f.z = 0.0f;
+            plane.f.w = -netX;
+        }
+        else
+        {
+            plane.f.y = 0.0f;
+            plane.f.x = -1.0f;
+            plane.f.z = 0.0f;
+            plane.f.w = -netX;
+        }
+
+        float saveIgnoreMargin;
+        float absX;
+        float result = FakeBallWorld::GetPredictedPlaneIntersectTime(plane, v3TargetPosition, localVelocity);
+
+        if (!(result <= 0.0f))
+        {
+            absX = (float)fabs(v3TargetPosition.f.x);
+            saveIgnoreMargin = ((GoalieTweaks*)m_pTweaks)->fSaveIgnoreMargin;
+
+            bool bInNet;
+            if (absX > (cField::GetGoalLineX(1U) - 1.0f)
+                && (float)fabs(v3TargetPosition.f.y) < (saveIgnoreMargin + cNet::m_fNetWidth * 0.5f)
+                && v3TargetPosition.f.z < (saveIgnoreMargin + cNet::m_fNetHeight))
+            {
+                bInNet = true;
+            }
+            else
+            {
+                bInNet = false;
+            }
+
+            if (bInNet)
+                goto shotTarget;
+        }
+
+        CleanGoalieAction();
+
+        mPrevGoalieActionState = mGoalieActionState;
+        mGoalieActionState = GOALIEACTION_MOVE;
+        mnSubstate = 0;
+
+        SetAnimState(8, true, 0.2f, false, false);
+        InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+        mnSubstate = 1;
+        mMoveDirection = GOALIEDIR_IDLE;
+
+        m_pPhysicsCharacter->m_CanCollideWithBall = true;
+        mbShouldMiss = false;
+        mbDoNavigate = false;
+        m_pPhysicsCharacter->m_CanCollidedWithGoalLine = true;
+        m_pPhysicsCharacter->m_CanCollideWithWall = true;
+
+        if (mbStunEffectActive)
+        {
+            KillDaze(this);
+            mbStunEffectActive = false;
+        }
+
+        mpShooter = NULL;
+        mUrgency = URGENCY_LOW;
+        mfSpeedScale = 1.0f;
+        mbPosGoalieNetCheck = false;
+        mbNegGoalieNetCheck = false;
+        mbDoHeadTrack = true;
+        mbBallImpacted = false;
+        mbNoUserControl = false;
+        mbPickedUp = false;
+
+        result = -1.0f;
+        goto done;
+
+    shotTarget:
+        g_pBall->m_v3ShotTarget = v3TargetPosition;
+
+    done:
+        return result;
+    }
+
     return 0.0f;
 }
 
 /**
  * Offset/Address/Size: 0x6D80 | 0x8004987C | size: 0x268
+ * TODO: 98.38% match - remaining differences are in animation-gate bool/register allocation
+ * and resulting branch target offsets in the PRE_CROUCH transition tail.
  */
 bool Goalie::CheckForLooseBallShotInProgress()
 {
+    cBall* pBall = g_pBall;
+    if (pBall->m_pOwner == NULL)
+    {
+        cNet* pNet = m_pTeam->m_pNet;
+        f32 looseBallShotDistance = ((GoalieTweaks*)m_pTweaks)->fLooseBallShotDistance;
+        f32 d0 = pBall->m_v3Position.f.x - pNet->m_baseLocation.f.x;
+        f32 d1 = pBall->m_v3Position.f.y - pNet->m_baseLocation.f.y;
+        f32 distSq = (d0 * d0) + (d1 * d1);
+
+        if (distSq < (looseBallShotDistance * looseBallShotDistance))
+        {
+            cTeam* pOtherTeam = m_pTeam->GetOtherTeam();
+            cFielder* pShooter = NULL;
+            f32 closestDistSq = 0.0f;
+
+            for (s32 i = 0; i < 4; i++)
+            {
+                cFielder* pFielder = pOtherTeam->GetFielder(i);
+                if (pFielder->m_eActionState == 7)
+                {
+                    f32 d0 = pBall->m_v3Position.f.x - pFielder->m_v3Position.f.x;
+                    f32 d1 = pBall->m_v3Position.f.y - pFielder->m_v3Position.f.y;
+                    f32 shooterDistSq = (d0 * d0) + (d1 * d1);
+
+                    if (pShooter == NULL || shooterDistSq < closestDistSq)
+                    {
+                        pShooter = pFielder;
+                        closestDistSq = shooterDistSq;
+                    }
+                }
+            }
+
+            mpShooter = pShooter;
+            if (pShooter != NULL)
+            {
+                f32 d0 = pBall->m_v3Position.f.x - m_v3Position.f.x;
+                f32 d1 = pBall->m_v3Position.f.y - m_v3Position.f.y;
+                f32 goalieDistSq = (d0 * d0) + (d1 * d1);
+
+                if (goalieDistSq > closestDistSq)
+                {
+                    nlVector4 plane;
+                    nlVector3 v3Dir;
+                    nlVector3* pBallPos = &g_pBall->m_v3Position;
+
+                    v3Dir.f.x = pBallPos->f.y - mv3TargetPosition.f.y;
+                    v3Dir.f.y = mv3TargetPosition.f.x - pBallPos->f.x;
+                    v3Dir.f.z = 0.0f;
+
+                    MakePerpendicularPlane(*pBallPos, v3Dir, plane, 0.0f);
+
+                    float distance = (m_v3Position.f.x * plane.f.x) + (m_v3Position.f.y * plane.f.y) + (m_v3Position.f.z * plane.f.z) - plane.f.w;
+                    float absDistance = (float)fabsf(distance);
+
+                    if (absDistance <= 2.0f)
+                    {
+                        if (mGoalieActionState != GOALIEACTION_STS && mGoalieActionState != GOALIEACTION_STS_RECOVER)
+                        {
+                            mCrouchType = GOALIECROUCH_LOOSEBALL;
+                            CleanGoalieAction();
+
+                            mPrevGoalieActionState = mGoalieActionState;
+                            mGoalieActionState = GOALIEACTION_PRE_CROUCH;
+                            mnSubstate = 0;
+
+                            bool bShouldSetAnim = (m_eAnimID != 0x2E) || (m_pCurrentAnimController->m_ePlayMode == 1 && m_pCurrentAnimController->m_fTime == 1.0f);
+
+                            if (bShouldSetAnim)
+                            {
+                                SetAnimState(0x2E, true, 0.2f, false, false);
+                            }
+
+                            InitMovementFromAnim(0, v3Zero, 0.0f, false);
+                        }
+
+                        return true;
+                    }
+
+                    mUrgency = URGENCY_HIGH;
+                }
+            }
+        }
+    }
+
     return false;
 }
 

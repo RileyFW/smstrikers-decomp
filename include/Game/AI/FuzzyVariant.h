@@ -15,9 +15,18 @@ public:
         *this = other;
     }
 
+    template <typename T>
+    FuzzyVariant(const T& value)
+    {
+        *(T*)&mData = value;
+        mType = VariantTypeOf(value);
+        ExtraData.Reset();
+        Confidence = 0.0f;
+        SelectionChance = 1.0f;
+    }
+
     virtual void Reset()
     {
-        FORCE_DONT_INLINE;
         mType = FT_UNSPECIFIED;
         mData.vector.f.x = 0.0f;
         mData.vector.f.y = 0.0f;

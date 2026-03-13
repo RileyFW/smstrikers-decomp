@@ -26,27 +26,27 @@ public:
 class MemoryCardIDCallbacks
 {
 public:
-    void CardMountCB(unsigned long, long, void*);
+    unsigned long CardMountCB(unsigned long, long, void*);
 };
 
 class FileExistsCallbacks
 {
 public:
-    void CardMountCB(unsigned long, long, void*);
+    unsigned long CardMountCB(unsigned long, long, void*);
 };
 
 class FormatCallbacks
 {
 public:
-    void FormatDoneCB(unsigned long, long, void*);
-    void CardMountCB(unsigned long, long, void*);
+    unsigned long FormatDoneCB(unsigned long, long, void*);
+    unsigned long CardMountCB(unsigned long, long, void*);
 };
 
 class DeleteCallbacks
 {
 public:
-    void DeleteDoneCB(unsigned long, long, void*);
-    void CardMountCB(unsigned long, long, void*);
+    unsigned long DeleteDoneCB(unsigned long, long, void*);
+    unsigned long CardMountCB(unsigned long, long, void*);
 };
 
 // struct ICON_DATA_INFO
@@ -80,9 +80,9 @@ public:
 class LoadCallbacks
 {
 public:
-    void LoadIconDataDoneCB(unsigned long, long, void*);
-    void ReadDoneCB(unsigned long, long, void*);
-    void CardMountCB(unsigned long, long, void*);
+    unsigned long LoadIconDataDoneCB(unsigned long, long, void*);
+    unsigned long ReadDoneCB(unsigned long, long, void*);
+    unsigned long CardMountCB(unsigned long, long, void*);
 
     /* 0x00 */ void* m_pReadBuffer;
     /* 0x04 */ unsigned long m_AlignedReadBufferDataSize;
@@ -99,11 +99,11 @@ public:
 class SaveCallbacks
 {
 public:
-    void FileWriteCB(unsigned long, long, void*);
+    unsigned long FileWriteCB(unsigned long, long, void*);
     void DoSave(unsigned long);
-    void FileWriteIconCB(unsigned long, long, void*);
-    void CreateFileCB(unsigned long, long, void*);
-    void CardMountCB(unsigned long, long, void*);
+    unsigned long FileWriteIconCB(unsigned long, long, void*);
+    unsigned long CreateFileCB(unsigned long, long, void*);
+    unsigned long CardMountCB(unsigned long, long, void*);
 
     /* 0x00 */ MemCard::MC_FILE* m_pSaveFile;
     /* 0x04 */ void* m_pSaveGameBuffer;

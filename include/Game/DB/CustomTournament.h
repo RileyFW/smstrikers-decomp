@@ -27,16 +27,16 @@ public:
 
     union
     {
-        Cup<3, 7> cup31;                         // size 0x144
-        Cup<4, 7> cup41;                         // size 0x1E4
-        Cup<5, 7> cup51;                         // size 0x2A8
-        Cup<6, 7> cup61;                         // size 0x388
+        Cup<3, 3> cup31;                         // size 0x144
+        Cup<4, 3> cup41;                         // size 0x1E4
+        Cup<5, 5> cup51;                         // size 0x2A8
+        Cup<6, 5> cup61;                         // size 0x388
         Cup<7, 7> cup71;                         // size 0x488
         Cup<8, 7> cup81;                         // size 0x5A8
-        Cup<3, 14> cup32;                        // size 0x1A8
-        Cup<4, 14> cup42;                        // size 0x2A8
-        Cup<5, 14> cup52;                        // size 0x3EC
-        Cup<6, 14> cup62;                        // size 0x56C
+        Cup<3, 6> cup32;                         // size 0x1A8
+        Cup<4, 6> cup42;                         // size 0x2A8
+        Cup<5, 10> cup52;                        // size 0x3EC
+        Cup<6, 10> cup62;                        // size 0x56C
         Cup<7, 14> cup72;                        // size 0x730
         Cup<8, 14> cup82;                        // size 0x930
         Knockout<4> knockout4;                   // size 0x184

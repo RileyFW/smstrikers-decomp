@@ -502,15 +502,16 @@ s32 MemCard::BeginCardAccess(const MemCardFunctor& Callback)
 /**
  * Offset/Address/Size: 0xF28 | 0x801CA698 | size: 0x3B4
  */
-void MemCard::CreateFile(const char*, unsigned long, MemCard::ICON_CONFIG*, MemCard::MC_FILE*&, const MemCardFunctor&)
+long MemCard::CreateFile(const char*, unsigned long, MemCard::ICON_CONFIG*, MemCard::MC_FILE*&, const MemCardFunctor&)
 {
 }
 
 /**
  * Offset/Address/Size: 0xBE8 | 0x801CA358 | size: 0x340
  */
-void MemCard::OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*)
+long MemCard::OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*)
 {
+    return 0;
 }
 
 /**
@@ -797,7 +798,7 @@ s32 MemCard::FileExists(const char* fileName)
 /**
  * Offset/Address/Size: 0x204 | 0x801C9974 | size: 0x3D8
  */
-void MemCard::WriteFileIconData(MemCard::MC_FILE*, void*, const MemCardFunctor&)
+long MemCard::WriteFileIconData(MemCard::MC_FILE*, void*, const MemCardFunctor&)
 {
 }
 

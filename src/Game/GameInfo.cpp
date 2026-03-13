@@ -114,9 +114,6 @@ u16 GameInfoManager::GetNumRounds() const
 
 /**
  * Offset/Address/Size: 0x9AB8 | 0x8017F15C | size: 0x23C
- * TODO: 63.7% match - compiler emits 32-bit copies for TeamStats fields at
- * +0x4/+0x8, but target uses 16-bit copies at +0x4/+0x6/+0x8/+0xA before
- * 32-bit copies from +0xC onward.
  */
 TeamStats GameInfoManager::GetTeamStatsByIndex(unsigned short index)
 {

@@ -2096,10 +2096,55 @@ void cFielder::ClearVolleyPass()
 
 /**
  * Offset/Address/Size: 0x5B34 | 0x8001EE70 | size: 0x26C
+ * TODO: 97.26% match - r29/r31 register swap (this vs str param in BasicString ctor),
+ * inherent to -inline deferred scratch context difference
  */
 void cFielder::CleanActionShootToScore()
 {
-    FORCE_DONT_INLINE;
+    extern void SetTimeScale__18ParticleUpdateTaskFf(float);
+    extern void* Instance__14WorldDarkeningFv();
+    extern void Fade__14WorldDarkeningFff(void*, float, float);
+    extern void RenderAllCharacters__17DrawableCharacterFv();
+    extern char* GetTeamName__F7eTeamID(eTeamID);
+    extern void Remove__14cCameraManagerFRC11cBaseCamera(void*);
+    extern void AppendInPlace__45BasicString_c_Q26Detail19TempStringAllocator_FPCc(BasicString<char, Detail::TempStringAllocator>*, const char*);
+
+    extern unsigned char instance__17ShootToScoreMeter[];
+    extern unsigned char sSTSLighting__17DrawableCharacter;
+    extern unsigned char sbIsHyperShootToScoreRenderingEnabled__5World;
+
+    cFielder* pSelf = this;
+
+    Audio::FadeFilterFromCurrentToZero();
+    FixedUpdateTask::mTimeScale = 1.0f;
+    SetTimeScale__18ParticleUpdateTaskFf(1.0f);
+    g_pEventManager->CreateValidEvent(0x41, 0x14);
+
+    pSelf->mActionShootToScoreVars.isCurrentlyInvincible = false;
+    pSelf->mActionShootToScoreVars.isInUnbreakablePart = false;
+
+    Fade__14WorldDarkeningFff(Instance__14WorldDarkeningFv(), 1.0f, 0.0f);
+    instance__17ShootToScoreMeter[0x28] = 0;
+    RenderAllCharacters__17DrawableCharacterFv();
+    sSTSLighting__17DrawableCharacter = 0;
+    g_pGame->mbCaptainShotToScoreOn = false;
+
+    g_pBall->m_pDrawableBall->m_uObjectFlags &= ~0x40;
+
+    BasicString<char, Detail::TempStringAllocator> effectName(GetTeamName__F7eTeamID(nlSingleton<GameInfoManager>::s_pInstance->GetTeam((s16)pSelf->m_pTeam->m_nSide)));
+    AppendInPlace__45BasicString_c_Q26Detail19TempStringAllocator_FPCc(&effectName, "shoot_to_score_shot");
+    pSelf->KillEffect(fxGetGroup(effectName.c_str()));
+    pSelf->KillEffect(fxGetGroup("shoot_to_score_hyper"));
+
+    if (pSelf->mActionShootToScoreVars.captainStsCamera != NULL)
+    {
+        Remove__14cCameraManagerFRC11cBaseCamera(pSelf->mActionShootToScoreVars.captainStsCamera);
+        delete pSelf->mActionShootToScoreVars.captainStsCamera;
+        pSelf->mActionShootToScoreVars.captainStsCamera = NULL;
+    }
+
+    SetTimeScale__18ParticleUpdateTaskFf(1.0f);
+    sbIsHyperShootToScoreRenderingEnabled__5World = 0;
 }
 
 /**

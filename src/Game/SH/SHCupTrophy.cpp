@@ -3,6 +3,8 @@
 #include "Game/FE/feFinder.h"
 #include "Game/FE/tlComponentInstance.h"
 
+#include "NL/nlMemory.h"
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800CDAC8 | size: 0x38
 //  */
@@ -252,7 +254,7 @@ class Function0
 public:
     struct FunctorBase
     {
-        virtual ~FunctorBase() { }
+        virtual ~FunctorBase();
         virtual FunctorBase* Invoke() = 0;
         virtual FunctorBase* Clone() const = 0;
     };
@@ -261,9 +263,9 @@ public:
     struct FunctorImpl : public FunctorBase
     {
         BindType mBind;
-        virtual ~FunctorImpl() { }
-        virtual FunctorBase* Invoke() { return 0; }
-        virtual FunctorBase* Clone() const { return 0; }
+        virtual ~FunctorImpl();
+        virtual FunctorBase* Invoke();
+        virtual FunctorBase* Clone() const;
     };
 
     Tag mTag;
@@ -312,8 +314,6 @@ Detail::MemFunImpl<R, void (T::*)()> MemFun(void (T::*)());
 
 template <typename R, typename F, typename A>
 BindExp1<R, F, A> Bind(F fn, const A& arg);
-
-void* nlMalloc(unsigned long, unsigned int, bool);
 
 class FEPopupMenu
 {

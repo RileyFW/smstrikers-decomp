@@ -84,7 +84,9 @@ FormationManager::~FormationManager()
 
 /**
  * Offset/Address/Size: 0x281C | 0x8003AA6C | size: 0x158
- * TODO: 96.3% match - register allocation differs in nested loops
+ * TODO: 96.3% match - MWCC register allocation: r26/r28/r29 three-way swap
+ * for g_pTeams pointer, outer loop i, inner loop j. All instructions match.
+ * Likely -inline deferred context issue; repo builds at 97.9%.
  */
 void FormationManager::LoadFormationSets()
 {

@@ -2,6 +2,25 @@
 #include "Game/FE/tlComponentInstance.h"
 #include "Game/FE/tlImageInstance.h"
 
+static char* CREDITS_LINE_NAMES[] = {
+    "Line1",
+    "Line2",
+    "Line3",
+    "Line4",
+    "Line5",
+    "Line6",
+    "Line7",
+    "Line8",
+    "Line9",
+    "Line10",
+};
+
+class AudioLoader
+{
+public:
+    static void StartFEStream(const char*, bool, const char*);
+};
+
 // /**
 //  * Offset/Address/Size: 0x570 | 0x80110374 | size: 0x15C
 //  */
@@ -183,10 +202,59 @@ void CreditScene::GotoNextPhase()
 
 /**
  * Offset/Address/Size: 0x6E4 | 0x8010F840 | size: 0x268
+ * TODO: 93.69% match - stack frame 0xC0 vs 0xB0 from feVector3 copy,
+ *       CreditParser 8-byte offset discrepancy (DWARF 0x54 vs target 0x5C),
+ *       InlineHasher stack slot shifts from compiler stack reuse optimization
  */
 void CreditScene::SetupForCredits()
 {
-    FORCE_DONT_INLINE;
+    m_pFEPresentation->SetActiveSlide("CREDITS");
+    m_pFEPresentation->m_currentSlide->Update(0.0f);
+
+    s32 yOffset;
+    FEPresentation* presentation = m_pFEScene->m_pFEPackage->GetPresentation();
+
+    TLTextInstance* pFinalText = FEFinder<TLTextInstance, 3>::Find<FEPresentation>(
+        presentation,
+        InlineHasher(nlStringLowerHash("CREDITS")),
+        InlineHasher(nlStringLowerHash("Layer")),
+        InlineHasher(nlStringLowerHash("Final Message")),
+        InlineHasher(0),
+        InlineHasher(0),
+        InlineHasher(0));
+    pFinalText->m_bVisible = false;
+
+    mCreditParser.mFileData = (char*)nlLoadEntireFile("credits.txt", &mCreditParser.mFileSize, 0x20, (eAllocType)1);
+    mCreditParser.mParser.StartParsing(mCreditParser.mFileData, mCreditParser.mFileSize, false);
+
+    nlVector2 boxSize = { 1280.0f, 480.0f };
+
+    s32 i = 0;
+    yOffset = 0;
+    for (; i < 10; i++)
+    {
+        m_pTextLines[i] = FEFinder<TLTextInstance, 3>::Find<FEPresentation>(
+            presentation,
+            InlineHasher(nlStringLowerHash("CREDITS")),
+            InlineHasher(nlStringLowerHash("Layer")),
+            InlineHasher(nlStringLowerHash(CREDITS_LINE_NAMES[i])),
+            InlineHasher(0),
+            InlineHasher(0),
+            InlineHasher(0));
+
+        m_pTextLines[i]->SetAssetScale(0.75f, 0.75f, 1.0f);
+        m_pTextLines[i]->m_OverloadFlags |= 0x10;
+        m_pTextLines[i]->m_DrawOptions |= 0x10;
+        m_pTextLines[i]->m_OverloadedAttributes.BoxSize = boxSize;
+        m_pTextLines[i]->m_OverloadFlags |= 0x4;
+
+        feVector3 pos = m_pTextLines[i]->GetAssetPosition();
+        m_pTextLines[i]->SetAssetPosition(pos.f.x, (f32)(-230 - yOffset), pos.f.z);
+
+        yOffset += 46;
+    }
+
+    AudioLoader::StartFEStream("FE_Credits", true, "FE");
 }
 
 /**

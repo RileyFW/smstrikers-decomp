@@ -30,43 +30,39 @@ EventManager::~EventManager()
 
 /**
  * Offset/Address/Size: 0x370 | 0x801FACF0 | size: 0x118
- * TODO: 86.7% match - stmw/parameter register allocation differs (r23-r31 save set),
- *       extra beq remains from placement new NULL check, and loop is strength-reduced
- *       to running offset add instead of per-iteration mullw.
  */
+inline EventManager::EventManager(unsigned long uEventCount, unsigned long uEventSize)
+    : m_dispatching(false)
+    , m_handlers(NULL)
+    , m_free(NULL)
+    , m_keep(NULL)
+    , m_queue(NULL)
+    , m_deferred(NULL)
+    , m_dest(NULL)
+    , m_pool(NULL)
+    , m_count(uEventCount)
+    , m_size(uEventSize)
+{
+    u32 total = m_size * m_count;
+    m_pool = (char*)nlMalloc(total, 8, false);
+
+    nlPrintf("Event Manager: Allocating %d events of size %d. Total = %d bytes\n",
+        m_count,
+        m_size,
+        total);
+
+    for (u32 i = 0; i < uEventCount; i++)
+    {
+        Event* e = new (m_pool + m_size * i) Event();
+        nlDLRingAddEnd(&m_free, e);
+    }
+
+    SetupDestArray();
+}
+
 void EventManager::Create(unsigned long uEventCount, unsigned long uEventSize)
 {
-    EventManager* m = (EventManager*)nlMalloc(sizeof(EventManager), 8, false);
-    if (m)
-    {
-        new (m) EventManager();
-        m->m_dispatching = false;
-        m->m_handlers = NULL;
-        m->m_free = NULL;
-        m->m_keep = NULL;
-        m->m_queue = NULL;
-        m->m_deferred = NULL;
-        m->m_dest = NULL;
-        m->m_pool = NULL;
-        m->m_count = uEventCount;
-        m->m_size = uEventSize;
-
-        u32 total = m->m_size * m->m_count;
-        m->m_pool = (void*)nlMalloc(total, 8, false);
-
-        nlPrintf("Event Manager: Allocating %d events of size %d. Total = %d bytes\n",
-            m->m_count,
-            m->m_size,
-            total);
-
-        for (u32 i = 0; i < uEventCount; i++)
-        {
-            Event* e = new ((u8*)m->m_pool + uEventSize * i) Event();
-            nlDLRingAddEnd(&m->m_free, e);
-        }
-
-        m->SetupDestArray();
-    }
+    EventManager* m = new (nlMalloc(sizeof(EventManager), 8, false)) EventManager(uEventCount, uEventSize);
     g_pEventManager = m;
 }
 

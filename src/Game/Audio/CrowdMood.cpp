@@ -420,8 +420,9 @@ void CrowdMood::SetCrowdVolume(unsigned long Volume, unsigned long FadeTime)
 
 /**
  * Offset/Address/Size: 0x490 | 0x8014DBA4 | size: 0x1CC
- * TODO: register allocation differs for LPF flag/state/audio stream pointers,
- *       and both buffer-count checks still emit `beq` instead of target `ble`.
+ * TODO: 94.48% match (decomp.me) / 97.43% match (build) - register allocation
+ *       differs for LPF flag/state/audio stream pointers (decomp.me compiler
+ *       version issue), and both buffer-count checks emit `beq` (target `ble`).
  */
 void CrowdMood::ActivateLPF(bool Activate)
 {
@@ -450,9 +451,10 @@ void CrowdMood::ActivateLPF(bool Activate)
                 buf = pChant->m_Buffers[0];
             }
 
+            unsigned char act = (unsigned char)Activate;
             while (buf != NULL)
             {
-                if (Activate != buf->m_bLPFOn)
+                if (act != buf->m_bLPFOn)
                 {
                     sndStreamLPFParameter(buf->m_StreamId, Activate, buf->m_LPFFreq);
                     buf->m_bLPFOn = Activate;

@@ -21,6 +21,39 @@ enum eVariantType
     NUM_V_TYPES = 9,
 };
 
+inline eVariantType VariantTypeOf(bool)
+{
+    return FT_BOOL;
+}
+inline eVariantType VariantTypeOf(char)
+{
+    return FT_CHAR;
+}
+inline eVariantType VariantTypeOf(signed short)
+{
+    return FT_SHORT;
+}
+inline eVariantType VariantTypeOf(int)
+{
+    return FT_INT;
+}
+inline eVariantType VariantTypeOf(unsigned long)
+{
+    return FT_U32;
+}
+inline eVariantType VariantTypeOf(float)
+{
+    return FT_FLOAT;
+}
+inline eVariantType VariantTypeOf(cPlayer*)
+{
+    return FT_PLAYER;
+}
+inline eVariantType VariantTypeOf(cTeam*)
+{
+    return FT_TEAM;
+}
+
 class Variant
 {
 public:

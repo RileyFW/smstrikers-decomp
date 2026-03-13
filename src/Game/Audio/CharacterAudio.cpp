@@ -465,8 +465,8 @@ int cCharacterSFX::PlayRandomWalkFootstep(float, bool bAvoidCurrent)
 
 /**
  * Offset/Address/Size: 0x2F0 | 0x8014C694 | size: 0x1C8
- * TODO: 82.9% match in decomp.me - switch jump table generation and register
- *       allocation still differ from target.
+ * TODO: 94.1% match in decomp.me - compiler still emits compare branches for
+ *       the action LUT instead of the target jump-table bctr flow.
  */
 unsigned long cCharacterSFX::PlayNISRandomCharDialogue(CharDialogueType dialogueType, NisCharacterClass charIdentifier, float fVol, float fDelay, bool bIs3D, const nlVector3* pInitialPosVector, const nlVector3* pInitialDirVector, unsigned long* unkPtr)
 {
@@ -490,53 +490,58 @@ unsigned long cCharacterSFX::PlayNISRandomCharDialogue(CharDialogueType dialogue
 
     pChar = NULL;
 
-    switch ((u32)charId)
+    if ((u32)charId <= (u32)NIS_CHAR_CLASS_AWAY_GOALIE)
     {
-    case NIS_CHAR_CLASS_BIRDO:
-    case NIS_CHAR_CLASS_DAISY:
-    case NIS_CHAR_CLASS_DONKEYKONG:
-    case NIS_CHAR_CLASS_HAMMERBROS:
-    case NIS_CHAR_CLASS_KOOPA:
-    case NIS_CHAR_CLASS_LUIGI:
-    case NIS_CHAR_CLASS_MARIO:
-    case NIS_CHAR_CLASS_PEACH:
-    case NIS_CHAR_CLASS_TOAD:
-    case NIS_CHAR_CLASS_WALUIGI:
-    case NIS_CHAR_CLASS_WARIO:
-    case NIS_CHAR_CLASS_YOSHI:
-        for (int team = 0; team < 2; team++)
+        static const u32 actionLut[15] = {
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            2,
+            2,
+        };
+        u32 action = actionLut[(u32)charId];
+        if (action == 0)
         {
-            cTeam* pTeam = g_pTeams[team];
-            if ((u32)charId == (u32)pTeam->GetCaptain()->m_eCharacterClass)
+            for (int team = 0; team < 2; team++)
             {
-                pChar = pTeam->GetCaptain();
-                break;
+                cTeam* pTeam = g_pTeams[team];
+                if ((u32)charId == (u32)pTeam->GetCaptain()->m_eCharacterClass)
+                {
+                    pChar = pTeam->GetCaptain();
+                    break;
+                }
             }
         }
-        break;
-
-    case NIS_CHAR_CLASS_MYSTERY:
-        for (int team = 0; team < 2; team++)
+        else if (action == 1)
         {
-            if ((u32)charId == (u32)ConvertToCharacterClass(GameInfoManager::Instance()->GetSidekick((short)team)))
+            for (int team = 0; team < 2; team++)
             {
-                pChar = g_pTeams[team]->GetFielder(1);
-                break;
+                if ((u32)charId == (u32)ConvertToCharacterClass(GameInfoManager::Instance()->GetSidekick((short)team)))
+                {
+                    pChar = g_pTeams[team]->GetFielder(1);
+                    break;
+                }
             }
         }
-        break;
-
-    case NIS_CHAR_CLASS_HOME_GOALIE:
-    case NIS_CHAR_CLASS_AWAY_GOALIE:
-    {
-        int team = 0;
-        if (charId == NIS_CHAR_CLASS_AWAY_GOALIE)
+        else
         {
-            team = 1;
+            int team = 0;
+            if (charId == NIS_CHAR_CLASS_AWAY_GOALIE)
+            {
+                team = 1;
+            }
+            pChar = g_pTeams[team]->GetGoalie();
         }
-        pChar = g_pTeams[team]->GetGoalie();
-        break;
-    }
     }
 
     if (pChar == NULL)
@@ -557,7 +562,7 @@ unsigned long cCharacterSFX::PlayNISRandomCharDialogue(CharDialogueType dialogue
         sndAtr.mf_ReturnEmitterOnPlay = true;
     }
 
-    return pChar->m_pCharacterSFX->PlayRandomCharDialogue(dType, sndAtr, pType != NULL, NULL);
+    return pChar->m_pCharacterSFX->PlayRandomCharDialogue(dType, sndAtr, !!pType, NULL);
 }
 
 /**

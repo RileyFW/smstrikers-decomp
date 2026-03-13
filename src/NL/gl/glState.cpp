@@ -4,13 +4,7 @@
 #include "NL/gl/glMatrix.h"
 #include "NL/nlMemory.h"
 
-typedef struct PackedTextureInfo
-{
-    u32 start_bit; // packed_texture[s].0
-    u32 count;     // packed_texture[s].4
-} PackedTextureInfo;
-
-extern PackedTextureInfo packed_texture[]; // 8 bytes per entry
+extern gl_StateBitfield packed_texture[]; // 8 bytes per entry
 
 static glStateBundle _bundle;
 
@@ -156,39 +150,93 @@ void glSetRasterStateDefaults()
 }
 
 static inline unsigned long SetTextureStateImpl(unsigned long long* pState, eGLTextureState state, unsigned long value);
+static inline unsigned long SetTextureStateRefImpl(unsigned long long* pState, eGLTextureState state, unsigned long value);
 
 /**
  * Offset/Address/Size: 0x1CC | 0x801DBE10 | size: 0x12C
- * TODO: 85.5% match - helper inline is close, but the first function still has
- * callee-saved register assignment differences and second-loop high/low word
- * update ordering differences versus target assembly.
+ * TODO: 99.53% match - 5 diffs: else-branch NOT dest is r0 instead of r3
+ * (compiler in-place NOT vs separate dest reg). MWCC allocator decision
+ * immune to C-level changes.
  */
 unsigned long glSetTextureState(unsigned long long& texture, eGLTextureState state, unsigned long value)
 {
-    unsigned long long* pTexture = &texture;
-    return SetTextureStateImpl(pTexture, state, value);
+    return SetTextureStateRefImpl(&texture, state, value);
 }
 
-static inline unsigned long SetTextureStateImpl(unsigned long long* pState, eGLTextureState state, unsigned long value)
+static inline unsigned long SetTextureStateRefImpl(unsigned long long* pState, eGLTextureState state, unsigned long value)
 {
-    PackedTextureInfo* pInfo = &packed_texture[state];
+    s32* pNumBits;
+    gl_StateBitfield* pInfo = &packed_texture[state];
+    s32 numBits;
+    s32 j;
     unsigned long long tex = *pState;
+    s32 cnt;
     unsigned long out = 0;
-    s32 cnt = (s32)out;
     unsigned long long cmp = (unsigned long long)out;
     unsigned long one = 1;
-    s32 numBits = pInfo->count;
+    pNumBits = &pInfo->numBits;
+    numBits = *pNumBits;
+    cnt = (s32)out;
 
     for (; cnt < numBits; cnt++)
     {
-        unsigned long long mask = 1ULL << (cnt + pInfo->start_bit);
+        unsigned long long mask = 1ULL << (cnt + pInfo->startBit);
         if ((tex & mask) != cmp)
         {
             out |= (one << cnt);
         }
     }
 
-    numBits = pInfo->count;
+    for (j = 0; j < *pNumBits; j++)
+    {
+        if (value & (1 << j))
+        {
+            unsigned long long mask = 1ULL << (j + pInfo->startBit);
+            unsigned long hi = ((u32*)pState)[0];
+            unsigned long lo = ((u32*)pState)[1];
+            lo = lo | (u32)mask;
+            ((u32*)pState)[1] = lo;
+            lo = hi | (u32)(mask >> 32);
+            ((u32*)pState)[0] = lo;
+        }
+        else
+        {
+            s32 startBit = pInfo->startBit;
+            unsigned long lo = ((u32*)pState)[1];
+            unsigned long hi = ((u32*)pState)[0];
+            unsigned long mask32 = 1UL << (j + startBit);
+            unsigned long notMask = ~mask32;
+            lo = lo & notMask;
+            notMask = (unsigned long)((s32)notMask >> 31);
+            ((u32*)pState)[1] = lo;
+            lo = hi & notMask;
+            ((u32*)pState)[0] = lo;
+        }
+    }
+
+    return out;
+}
+
+static inline unsigned long SetTextureStateImpl(unsigned long long* pState, eGLTextureState state, unsigned long value)
+{
+    gl_StateBitfield* pInfo = &packed_texture[state];
+    unsigned long long tex = *pState;
+    unsigned long out = 0;
+    s32 cnt = (s32)out;
+    unsigned long long cmp = (unsigned long long)out;
+    unsigned long one = 1;
+    s32 numBits = pInfo->numBits;
+
+    for (; cnt < numBits; cnt++)
+    {
+        unsigned long long mask = 1ULL << (cnt + pInfo->startBit);
+        if ((tex & mask) != cmp)
+        {
+            out |= (one << cnt);
+        }
+    }
+
+    numBits = pInfo->numBits;
     cnt = 0;
     for (; cnt < numBits; cnt++)
     {
@@ -196,13 +244,13 @@ static inline unsigned long SetTextureStateImpl(unsigned long long* pState, eGLT
         unsigned long lo;
         if (value & (1 << cnt))
         {
-            unsigned long long mask = 1ULL << (cnt + pInfo->start_bit);
+            unsigned long long mask = 1ULL << (cnt + pInfo->startBit);
             hi = (unsigned long)(*pState >> 32) | (unsigned long)(mask >> 32);
             lo = (unsigned long)*pState | (unsigned long)mask;
         }
         else
         {
-            u32 startBit = pInfo->start_bit;
+            u32 startBit = pInfo->startBit;
             unsigned long mask32 = 1UL << (cnt + startBit);
             unsigned long notMask = ~mask32;
             lo = (unsigned long)*pState & notMask;
@@ -226,8 +274,8 @@ unsigned long glSetTextureState(eGLTextureState state, unsigned long value)
 
 static inline unsigned long GetTextureStateImpl(unsigned long long* pTexture, eGLTextureState texturestate)
 {
-    PackedTextureInfo* pInfo = &packed_texture[texturestate];
-    s32 numBits = pInfo->count;
+    gl_StateBitfield* pInfo = &packed_texture[texturestate];
+    s32 numBits = pInfo->numBits;
     unsigned long long texture = *pTexture;
     s32 cnt = 0;
     unsigned long out = 0;
@@ -237,7 +285,7 @@ static inline unsigned long GetTextureStateImpl(unsigned long long* pTexture, eG
 
     for (; cnt < numBits; cnt++)
     {
-        unsigned long long mask = 1ULL << (cnt + pInfo->start_bit);
+        unsigned long long mask = 1ULL << (cnt + pInfo->startBit);
         if ((texture & mask) != cmp)
         {
             out |= (one << cnt);
