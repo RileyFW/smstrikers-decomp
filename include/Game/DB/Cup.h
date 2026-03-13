@@ -38,7 +38,20 @@ struct BasicGameInfo
     /* 0x14 */ s16 mPadSides[4];
     /* 0x1C */ s16 mFinalScore[2];
 
-    BasicGameInfo() { }
+    BasicGameInfo()
+    {
+        mTeamIndex[0] = TEAM_MARIO;
+        mTeamIndex[1] = TEAM_LUIGI;
+        mSidekickIndex[0] = SK_TOAD;
+        mSidekickIndex[1] = SK_KOOPA;
+        mFinalScore[1] = 0;
+        mFinalScore[0] = 0;
+        mPadSides[0] = -1;
+        mPadSides[1] = -1;
+        mPadSides[2] = -1;
+        mPadSides[3] = -1;
+        mStadiumIndex = STAD_MARIO_STADIUM;
+    }
 }; // total size: 0x20
 
 struct CupRecord
@@ -170,7 +183,7 @@ struct Cup : public BaseCup
         src = (u8*)src + sizeof(mRoundResults);
         return src;
     }
-    virtual int GetSaveDataSize() const { return 0x1B; };
+    virtual int GetSaveDataSize() const { return 0x1B + sizeof(mGameInfo) + sizeof(mTeamStats) + sizeof(mRoundResults); };
 
     BasicGameInfo mGameInfo[Rounds][Teams / 2];
     TeamStats mTeamStats[Teams];
@@ -233,7 +246,7 @@ struct Knockout : public BaseCup
         src = (u8*)src + sizeof(mRoundResults);
         return src;
     }
-    virtual int GetSaveDataSize() const { return 0x1B; };
+    virtual int GetSaveDataSize() const { return 0x1B + sizeof(mGameInfo) + sizeof(mTeamStats) + sizeof(mRoundResults); };
 
     BasicGameInfo mGameInfo[Teams - 1];
     TeamStats mTeamStats[Teams];

@@ -480,8 +480,6 @@ void CupHubScene::UpdateRoundMessage(bool)
 
 /**
  * Offset/Address/Size: 0x0 | 0x800E9D5C | size: 0x1DC
- * TODO: 99.5% match - one early instruction reorder remains (stw 0xC(r1) emitted before
- *       singleton load), with an additional fixed +0x14 instruction lead-in in current asm.
  */
 void CupHubScene::LoadCaptainImage()
 {
@@ -538,8 +536,7 @@ void CupHubScene::LoadCaptainImage()
             u16 numTeams = gameInfoMgr->GetNumPlayingTeams();
             u32 randomResult = nlRandom(numTeams, &nlDefaultSeed);
             u16 randomIndex = (u16)randomResult;
-            TeamStats stats;
-            stats = gameInfoMgr->GetTeamStatsByIndex(randomIndex);
+            TeamStats stats = gameInfoMgr->GetTeamStatsByIndex(randomIndex);
             teamId = stats.mTeamIndex;
         }
         else
