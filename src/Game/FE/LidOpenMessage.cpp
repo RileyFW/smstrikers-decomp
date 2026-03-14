@@ -31,12 +31,159 @@ static u8 ResetWasPaused;
 static bool CanGetResetPauseState;
 static int OpenCloseRefCount;
 
+extern "C"
+{
+    void GXDrawDone(void);
+    void GXFlush(void);
+    void GXCopyDisp(void*, unsigned char);
+    void GXPokeColorUpdate(unsigned char);
+    void GXPokeBlendMode(int, int, int, int);
+    void GXPokeARGB(unsigned short, unsigned short, unsigned long);
+    void VIWaitForRetrace(void);
+    void VISetBlack(unsigned char);
+    void VIFlush(void);
+    void VISetNextFrameBuffer(void*);
+}
+
+void* glxGetDisplayedBuffer();
+void* glxGetBackBuffer();
+void glx_ClearXFB(void*);
+
+static inline void UncompressLidMessage(const unsigned char* compressed, int compressedSize, unsigned char* uncompressed)
+{
+    int index = 0;
+    int i = 0;
+    int k = 0;
+
+    while (i < (compressedSize - 1))
+    {
+        unsigned char value = compressed[i];
+        if (value == 0)
+        {
+            int run = 0;
+            unsigned char* dst = uncompressed + index;
+            while (run < compressed[i + 1])
+            {
+                *dst = (unsigned char)k;
+                index++;
+                dst++;
+                run++;
+            }
+            i++;
+        }
+        else
+        {
+            uncompressed[index] = value;
+            index++;
+        }
+        i++;
+    }
+
+    uncompressed[index] = compressed[compressedSize - 1];
+}
+
 /**
  * Offset/Address/Size: 0x624 | 0x80094540 | size: 0x26C
+ * TODO: 96.81% match - arg0 register r18 vs r21, expanded r20 vs r26,
+ * pass/xStart/xEnd shifted by 7 registers, missing addi r10,r4,1 and mr r19,r5.
+ * Likely -inline deferred register allocation difference.
  */
-void DisplayMessage(int, int, const unsigned char*, int, unsigned long, bool)
+void DisplayMessage(int arg0, int arg1, const unsigned char* arg2, int arg3, unsigned long arg4, bool arg5)
 {
-    FORCE_DONT_INLINE;
+    unsigned int centeredFlag;
+    int pass;
+    int xStart;
+    int xEnd;
+    int yCenter;
+    int yBottom;
+    int rowBytes;
+    void* fb;
+
+    GXDrawDone();
+    VIWaitForRetrace();
+    VISetBlack(1);
+    VIFlush();
+    VIWaitForRetrace();
+    VIWaitForRetrace();
+
+    lastImageWidth = arg0;
+    lastImageHeight = arg1;
+    lastImageData = arg2;
+    lastImageSize = arg3;
+
+    unsigned char* expanded = (unsigned char*)nlMalloc((unsigned long)((arg0 * arg1) / 8), 0x20, 1);
+
+    UncompressLidMessage(arg2, arg3, expanded);
+
+    GXPokeColorUpdate(1);
+    GXPokeBlendMode(0, 1, 0, 0xF);
+
+    xStart = (0x280 - arg0) / 2;
+    centeredFlag = ((unsigned char)arg5 == 0);
+    pass = 0;
+    xEnd = xStart + arg0;
+    yCenter = (0x1C0 - arg1) / 2;
+    yBottom = 0x1A0 - arg1;
+    rowBytes = arg0 / 8;
+
+    while (pass < 4)
+    {
+        int yStart;
+        int y;
+        int yEnd;
+
+        if ((pass == 0) || (pass == 2))
+        {
+            fb = glxGetDisplayedBuffer();
+        }
+        else
+        {
+            fb = glxGetBackBuffer();
+        }
+
+        glx_ClearXFB(fb);
+
+        yStart = yBottom;
+        if (centeredFlag != 0)
+        {
+            yStart = yCenter;
+        }
+
+        y = yStart;
+        yEnd = yStart + arg1;
+        while (y < yEnd)
+        {
+            int x = xStart;
+            int rowOffset = rowBytes * (y - yStart);
+            unsigned char* row = expanded + rowOffset;
+
+            while (x < xEnd)
+            {
+                int pixel = x - xStart;
+                if ((row[pixel / 8] & (1 << (pixel % 8))) != 0)
+                {
+                    GXPokeARGB((unsigned short)x, (unsigned short)y, arg4);
+                }
+                x++;
+            }
+            y++;
+        }
+
+        GXCopyDisp(fb, 1);
+        GXDrawDone();
+        GXFlush();
+        pass++;
+    }
+
+    GXPokeColorUpdate(0);
+    delete[] expanded;
+
+    VIWaitForRetrace();
+    VIWaitForRetrace();
+    VISetBlack(0);
+    VISetNextFrameBuffer(fb);
+    VIFlush();
+    VIWaitForRetrace();
 }
 
 /**

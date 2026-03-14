@@ -2,6 +2,8 @@
 #include "Game/GameInfo.h"
 #include "Game/GameSceneManager.h"
 #include "Game/FE/fePopupMenu.h"
+#include "Game/FE/feFinder.h"
+#include "NL/gl/glStruct.h"
 
 // /**
 //  * Offset/Address/Size: 0x2C4 | 0x800DCE10 | size: 0xBC
@@ -236,8 +238,141 @@ ChooseCupSceneV2::~ChooseCupSceneV2()
 /**
  * Offset/Address/Size: 0x1A2C | 0x800DBCB0 | size: 0x274
  */
+extern "C" void DisplayCup__16ChooseCupSceneV2Fv(ChooseCupSceneV2*);
+
 void ChooseCupSceneV2::SceneCreated()
 {
+    typedef TLImageInstance* (*FindImageByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLImageInstance* (*FindImageByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+    typedef TLTextInstance* (*FindTextByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLTextInstance* (*FindTextByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+    typedef TLComponentInstance* (*FindCompByValue)(FEPresentation*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindCompByRef)(FEPresentation*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindImageByValue byValue;
+        FindImageByRef byRef;
+    } findImage;
+
+    union
+    {
+        FindTextByValue byValue;
+        FindTextByRef byRef;
+    } findText;
+
+    union
+    {
+        FindCompByValue byValue;
+        FindCompByRef byRef;
+    } findComp;
+
+    volatile unsigned long hB, hA;
+    volatile unsigned long h9, h8, h7, h6, h5, h4, h3, h2, h1, h0;
+
+    volatile unsigned long sB, sA;
+    volatile unsigned long s9, s8, s6, s4, s2, s0;
+
+    volatile unsigned long p8, p7, p6, p5, p4, p3, p2, p1, p0;
+    volatile unsigned long q8, q7, q6, q5, q4, q3, q2, q1, q0;
+
+    TLSlide* slide = m_pFEScene->m_pFEPackage->GetPresentation()->m_currentSlide;
+
+    findImage.byValue = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
+
+    h0 = 0;
+    h1 = 0;
+    h2 = 0;
+    h3 = 0;
+    h4 = 0;
+    h5 = 0;
+    h6 = 0;
+    h7 = 0;
+
+    unsigned long hash = nlStringLowerHash("TROPHY");
+    h8 = hash;
+    h9 = hash;
+
+    hash = nlStringLowerHash("Layer");
+    hA = hash;
+    hB = hash;
+
+    TLImageInstance* pTrophyImage = findImage.byRef(slide, (InlineHasher&)hB, (InlineHasher&)h9, (InlineHasher&)h7, (InlineHasher&)h5, (InlineHasher&)h3, (InlineHasher&)h1);
+    mCupImage->mImageInstance = pTrophyImage;
+
+    DisplayCup__16ChooseCupSceneV2Fv(this);
+
+    findText.byValue = FEFinder<TLTextInstance, 3>::Find<TLSlide>;
+
+    s0 = 0;
+    h1 = 0;
+    s2 = 0;
+    h3 = 0;
+    s4 = 0;
+    h5 = 0;
+    s6 = 0;
+    h7 = 0;
+
+    hash = nlStringLowerHash("TickerText");
+    s8 = hash;
+    s9 = hash;
+
+    hash = nlStringLowerHash("Layer");
+    sA = hash;
+    sB = hash;
+
+    TLTextInstance* scrollText = findText.byRef(slide, (InlineHasher&)sB, (InlineHasher&)s9, (InlineHasher&)h7, (InlineHasher&)h5, (InlineHasher&)h3, (InlineHasher&)h1);
+
+    gl_ScreenInfo* screenInfo = glGetScreenInfo();
+    FEScrollText* ticker = new (nlMalloc(0x22C, 0x20, true)) FEScrollText(scrollText, 0, screenInfo->ScreenWidth + 0x32);
+    mTicker = ticker;
+    mTicker->SetDisplayMessage("CHOOSE_CUP_TICKER");
+
+    findComp.byValue = FEFinder<TLComponentInstance, 4>::Find<FEPresentation>;
+
+    p0 = 0;
+    h1 = 0;
+    p1 = 0;
+    h3 = 0;
+    p2 = 0;
+    h5 = 0;
+
+    hash = nlStringLowerHash("buttons");
+    p3 = hash;
+    p4 = hash;
+
+    hash = nlStringLowerHash("Layer");
+    p5 = hash;
+    p6 = hash;
+
+    hash = nlStringLowerHash("IN");
+    p8 = hash;
+    p7 = hash;
+
+    mButtons.mButtonInstance = findComp.byRef(m_pFEPresentation, (InlineHasher&)p8, (InlineHasher&)p6, (InlineHasher&)p4, (InlineHasher&)h5, (InlineHasher&)h3, (InlineHasher&)h1);
+    mButtons.SetState(ButtonComponent::BS_A_AND_B);
+
+    q0 = 0;
+    h1 = 0;
+    q1 = 0;
+    h3 = 0;
+    q2 = 0;
+    h5 = 0;
+
+    hash = nlStringLowerHash("buttons");
+    q3 = hash;
+    q4 = hash;
+
+    hash = nlStringLowerHash("Layer");
+    q5 = hash;
+    q6 = hash;
+
+    hash = nlStringLowerHash("CHANGE CUPS");
+    q8 = hash;
+    q7 = hash;
+
+    mButtons2.mButtonInstance = findComp.byRef(m_pFEPresentation, (InlineHasher&)q8, (InlineHasher&)q6, (InlineHasher&)q4, (InlineHasher&)h5, (InlineHasher&)h3, (InlineHasher&)h1);
+    mButtons2.SetState(ButtonComponent::BS_A_AND_B);
 }
 
 /**

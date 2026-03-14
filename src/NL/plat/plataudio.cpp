@@ -13,6 +13,7 @@ extern u32 sndStackGetAvailableSampleMemory(unsigned long id);
 extern "C" u32 sndStackSetCurrent(u32 id);
 extern "C" u32 sndStackGetSize(void);
 extern "C" unsigned long sndStackAdd(void* buffer, u32 aramAddr, u32 size);
+extern "C" u32 sndStackGetARAMAddressRange(u32 id, u32* start, u32* end);
 
 static void* gpEntireSampleFileBufferFirstHalf;
 static void* gpEntireSampleFileBufferSecondHalf;
@@ -1416,10 +1417,82 @@ void* ARAMTransferHelper::sndPushGroupCallback(unsigned long arg0, unsigned long
 
 /**
  * Offset/Address/Size: 0x2558 | 0x801C6D54 | size: 0x278
+ * TODO: 99.37% match - remaining i-diffs are local static/string pool symbol IDs in this partially decompiled TU.
  */
 void PrintSoundStackInfo()
 {
-    FORCE_DONT_INLINE;
+    static u32 prevAvailPrimaryStackSampleMem = PlatAudio::gPrimaryStackSize - 0x500;
+    static u32 prevAvailSecondaryStackSampleMem = 0x2B4000;
+    static bool bRunOnce = true;
+
+    for (int i = 0; i < 2; i++)
+    {
+        u32 available = sndStackGetAvailableSampleMemory(stack_list[i].id);
+        nlPrintf("Stack %d available sample memory %d\n", stack_list[i].id, available);
+
+        if (bRunOnce)
+        {
+            u32 start;
+            u32 end;
+            if ((unsigned char)sndStackGetARAMAddressRange(stack_list[i].id, &start, &end))
+            {
+                tDebugPrintManager::Print(DC_SOUND, "Stack %d ARAM range start 0x%x end 0x%x\n", stack_list[i].id, start, end);
+            }
+            else
+            {
+                tDebugPrintManager::Print(DC_SOUND, "Stack %d ARAM range not available\n", stack_list[i].id);
+            }
+        }
+
+        if (stack_list[i].id == 0xFFFFFFFE)
+        {
+            if (available < prevAvailPrimaryStackSampleMem)
+            {
+                tDebugPrintManager::Print(DC_SOUND, "Primary stack dropped by %d\n", prevAvailPrimaryStackSampleMem - available);
+                prevAvailPrimaryStackSampleMem = available;
+            }
+            else if (available > prevAvailPrimaryStackSampleMem)
+            {
+                tDebugPrintManager::Print(DC_SOUND, "Primary stack increased by %d\n", available - prevAvailPrimaryStackSampleMem);
+                prevAvailPrimaryStackSampleMem = available;
+            }
+            else if (available == prevAvailPrimaryStackSampleMem)
+            {
+                tDebugPrintManager::Print(DC_SOUND, "Primary stack unchanged\n");
+            }
+
+            if (available == PlatAudio::gPrimaryStackSize - 0x500)
+            {
+                prevAvailPrimaryStackSampleMem = PlatAudio::gPrimaryStackSize - 0x500;
+                tDebugPrintManager::Print(DC_SOUND, "Primary stack is fully available\n");
+            }
+        }
+        else
+        {
+            if (available < prevAvailSecondaryStackSampleMem)
+            {
+                tDebugPrintManager::Print(DC_SOUND, "Secondary stack dropped by %d\n", prevAvailSecondaryStackSampleMem - available);
+                prevAvailSecondaryStackSampleMem = available;
+            }
+            else if (available > prevAvailSecondaryStackSampleMem)
+            {
+                tDebugPrintManager::Print(DC_SOUND, "Secondary stack increased by %d\n", available - prevAvailSecondaryStackSampleMem);
+                prevAvailSecondaryStackSampleMem = available;
+            }
+            else if (available == prevAvailSecondaryStackSampleMem)
+            {
+                tDebugPrintManager::Print(DC_SOUND, "Secondary stack unchanged\n");
+            }
+
+            if (available == 0x2B4000)
+            {
+                prevAvailSecondaryStackSampleMem = 0x2B4000;
+                tDebugPrintManager::Print(DC_SOUND, "Secondary stack is fully available\n");
+            }
+        }
+    }
+
+    bRunOnce = false;
 }
 
 /**

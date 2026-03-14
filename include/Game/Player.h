@@ -118,7 +118,7 @@ public:
     virtual void SetAnimID(int);
     void GetAnimatedBallOrientation(nlQuaternion&);
     virtual void Update(float);
-    void SwapController();
+    u8 SwapController();
     void SetDesiredFacingDirection();
     void ResetDesiredDirections(unsigned short);
     void SetSpaceSearch(SpaceSearch*);

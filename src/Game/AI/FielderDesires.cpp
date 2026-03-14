@@ -13,6 +13,13 @@ extern FuzzyVariant fvNotSet;
 
 CommonDesireData g_vDesireCommonData[NUM_FIELDERDESIRES];
 
+static inline void CalcDeltaToTarget(nlVector3& outDelta, const nlVector3& target, const nlVector3& origin)
+{
+    outDelta.f.x = target.f.x - origin.f.x;
+    outDelta.f.y = target.f.y - origin.f.y;
+    outDelta.f.z = target.f.z - origin.f.z;
+}
+
 /**
  * Offset/Address/Size: 0x668C | 0x80037410 | size: 0x3C
  */
@@ -432,8 +439,92 @@ void cFielder::DesireReceivePassFromIdle(float)
 /**
  * Offset/Address/Size: 0x1DE8 | 0x80032B6C | size: 0x298
  */
-void cFielder::InitDesireReceivePassFromRun(const LooseBallContactAnimInfo*, const nlVector3&, bool, const nlVector3&)
+void cFielder::InitDesireReceivePassFromRun(const LooseBallContactAnimInfo* pAnimInfo, const nlVector3& rv3Velocity, bool bVolley, const nlVector3& v3PassIntercept)
 {
+    extern float g_fSimulationTick;
+
+    float fDesiredTime;
+
+    SetVelocity(rv3Velocity);
+    SetFacingDirection((unsigned short)(int)(10430.378f * nlATan2f(rv3Velocity.f.y, rv3Velocity.f.x)));
+
+    m_DesireReceivePassSharedVars.aDesiredFacingDirection = m_aActualFacingDirection;
+    m_DesireReceivePassSharedVars.nReceivePassAnim = pAnimInfo->nAnimID;
+
+    cSAnim* pAnim = m_pAnimInventory->GetAnim(pAnimInfo->nAnimID);
+    unsigned int nNumKeys = pAnim->m_nNumKeys;
+
+    m_DesireReceivePassSharedVars.fReceivePassAnimTime = pAnimInfo->fAnimContactFrame / (float)nNumKeys;
+    m_DesireReceivePassSharedVars.iAttemptOneTouchShot = 0;
+    m_DesireReceivePassSharedVars.bFailedToInitOneTouchShot = false;
+    m_DesireReceivePassSharedVars.iAttemptOneTouchPass = 0;
+    m_DesireReceivePassSharedVars.bVolleyPassReceive = bVolley;
+    m_DesireReceivePassSharedVars.pOneTouchPassTarget = NULL;
+
+    bool savedTiltForce = g_pBall->m_pPhysicsBall->m_bUseTiltForce;
+    g_pBall->m_pPhysicsBall->m_bUseTiltForce = false;
+
+    bool result = DoLooseBallContactFromRun(
+        m_DesireReceivePassSharedVars.v3DesiredPosition,
+        m_DesireReceivePassSharedVars.fDesiredTime,
+        m_DesireReceivePassSharedVars.v3BallPosition,
+        fDesiredTime,
+        pAnimInfo,
+        v3PassIntercept);
+
+    g_pBall->m_pPhysicsBall->m_bUseTiltForce = savedTiltForce;
+
+    if (result)
+    {
+        SetDesire(FIELDERDESIRE_RECEIVE_PASS_FROM_RUN, 0.5f);
+        SetDesireDuration(3.0f, false);
+
+        if (m_DesireReceivePassSharedVars.fDesiredTime > (2.0f * g_fSimulationTick))
+        {
+            nlVector3 v3DesiredDelta;
+
+            m_DesireReceivePassSharedVars.fDesiredTime -= g_fSimulationTick;
+            m_eDesireSubState = 0;
+
+            InitActionRunning();
+            SetRunningAnimState(0.1f);
+
+            nlVec3Set(*(nlVector3*)&v3DesiredDelta,
+                m_DesireReceivePassSharedVars.v3DesiredPosition.f.x - m_v3Position.f.x,
+                m_DesireReceivePassSharedVars.v3DesiredPosition.f.y - m_v3Position.f.y,
+                m_DesireReceivePassSharedVars.v3DesiredPosition.f.z - m_v3Position.f.z);
+            float fSpeed = nlGetLength2D(v3DesiredDelta.f.x, v3DesiredDelta.f.y) / m_DesireReceivePassSharedVars.fDesiredTime;
+
+            m_fDesiredSpeed = fSpeed;
+            m_fActualSpeed = fSpeed;
+
+            unsigned short aDesiredAngle = (unsigned short)(int)(10430.378f * nlATan2f(v3DesiredDelta.f.y, v3DesiredDelta.f.x));
+            m_aDesiredFacingDirection = aDesiredAngle;
+            m_aActualFacingDirection = aDesiredAngle;
+            m_aDesiredMovementDirection = m_aDesiredFacingDirection;
+        }
+        else
+        {
+            InitActionReceivePass(
+                m_DesireReceivePassSharedVars.nReceivePassAnim,
+                m_DesireReceivePassSharedVars.v3DesiredPosition,
+                m_DesireReceivePassSharedVars.fReceivePassAnimTime);
+
+            m_eDesireSubState = 1;
+
+            cSAnim* pReceivePassAnim = m_pAnimInventory->GetAnim(m_DesireReceivePassSharedVars.nReceivePassAnim);
+            m_pCurrentAnimController->m_fPlaybackSpeedScale = (m_DesireReceivePassSharedVars.fReceivePassAnimTime * ((float)pReceivePassAnim->m_nNumKeys / 30.0f)) / fDesiredTime;
+        }
+
+        SetNoPickUpTime(3.0f);
+        g_pBall->SetPassTargetTimer(fDesiredTime);
+        g_pBall->SetPassTarget(this, m_DesireReceivePassSharedVars.v3BallPosition, bVolley);
+
+        m_DesireCommonVars.tMiscTimer.m_uPackedTime = 0;
+        m_DesireCommonVars.fMisc = fDesiredTime;
+
+        m_pAvoidance->SetThingsToAvoid(0);
+    }
 }
 
 /**

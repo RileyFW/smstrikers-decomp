@@ -105,8 +105,9 @@ void PhysicsCharacter::PreCollide()
 /**
  * Offset/Address/Size: 0x708 | 0x80136920 | size: 0x384
  */
-void PhysicsCharacter::ResolvePhysicsBoneIDFromName(const char*)
+PhysicsBoneID PhysicsCharacter::ResolvePhysicsBoneIDFromName(const char*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

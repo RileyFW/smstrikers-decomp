@@ -14,7 +14,7 @@ public:
     ~FEScene();
 
     void AllResourcesLoadedCallback();
-    void LoadPackage(const char*);
+    bool LoadPackage(const char*);
     void UnloadPackage();
     void Update(float);
 

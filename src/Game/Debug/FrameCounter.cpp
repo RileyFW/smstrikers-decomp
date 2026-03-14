@@ -1,10 +1,17 @@
 #include "Game/Debug/FrameCounter.h"
 #include "Game/Debug/TimeRegions.h"
+#include "Game/GL/gluMeshWriter.h"
 
+#include "NL/gl/glMatrix.h"
+#include "NL/gl/glState.h"
+#include "NL/gl/glView.h"
 #include "NL/nlDebugFile.h"
 #include "NL/nlMemory.h"
 #include "NL/nlPrint.h"
 #include "NL/nlTicker.h"
+
+extern const u32 WhiteTexture;
+extern const u32 UnlitProgram;
 
 int FrameCounter::NUM_FRAMES_TO_AVERAGE_OVER = 0x1E;
 
@@ -72,6 +79,65 @@ void FrameCounter::StartTimer(int timerNum)
  */
 void FrameCounter::FinishTiming()
 {
+    u32 currentTick = nlGetTicker();
+    if (m_CurrTimerNum != -1)
+    {
+        m_CurrTimer[m_CurrTimerNum] += nlGetTickerDifference(m_StartTick, currentTick);
+    }
+
+    unk30++;
+
+    float totalFrameTime = 0.0f;
+
+    totalFrameTime += m_CurrTimer[0];
+    m_CurrFrame[0] += m_CurrTimer[0];
+    m_ContinuousFrameHistory[0][m_ContinuousFrameHistoryIndex] = m_CurrTimer[0];
+
+    totalFrameTime += m_CurrTimer[1];
+    m_CurrFrame[1] += m_CurrTimer[1];
+    m_ContinuousFrameHistory[1][m_ContinuousFrameHistoryIndex] = m_CurrTimer[1];
+
+    if (unk30 >= (u32)NUM_FRAMES_TO_AVERAGE_OVER)
+    {
+        m_LastFrame[0] = m_CurrFrame[0] / (float)unk30;
+        m_CurrFrame[0] = 0.0f;
+        m_LastFrame[1] = m_CurrFrame[1] / (float)unk30;
+        m_CurrFrame[1] = 0.0f;
+
+        unk2C = (float)unk28 / (float)unk30;
+        unk28 = 0;
+        unk30 = 0;
+    }
+
+    m_FrameHistory[unk34] = totalFrameTime;
+    if (totalFrameTime > 0.016666668f)
+    {
+        unk28++;
+    }
+
+    unk34 = ((u32)unk34 + 1) % 640;
+    m_ContinuousFrameHistoryIndex = (m_ContinuousFrameHistoryIndex + 1) % 200;
+
+    ListEntry<TimeRegion*>* entry = TimeRegion::sTimeRegionList.m_Head;
+    while (entry != NULL)
+    {
+        TimeRegion* region = entry->data;
+        if (region->m_pConditionFunc())
+        {
+            region->m_unk14++;
+            if (totalFrameTime > 0.016666668f)
+            {
+                region->m_unk10++;
+            }
+            region->m_fThreshold += totalFrameTime;
+        }
+
+        entry = entry->next;
+    }
+
+    m_CurrTimer[0] = 0.0f;
+    m_CurrTimer[1] = 0.0f;
+    m_CurrTimerNum = -1;
 }
 
 /**
@@ -107,8 +173,63 @@ void FrameCounter::WriteFrameRateStatsToFile(const char* fileName)
 /**
  * Offset/Address/Size: 0xC5C | 0x801FD7F8 | size: 0x27C
  */
-void DrawCircle(nlVector3, float, float, nlColour)
+void DrawCircle(nlVector3 p0, float fRadius, float fScaleX, nlColour colour)
 {
+    GLMeshWriter mesh;
+
+    glSetDefaultState(true);
+    glSetCurrentMatrix(glGetIdentityMatrix());
+    glSetCurrentTexture(WhiteTexture, GLTT_Diffuse);
+    glSetCurrentProgram(UnlitProgram);
+
+    const eGLStream stream_decl[3] = { GLStream_Position, GLStream_Colour, GLStream_Diffuse };
+
+    if (mesh.Begin(31, GLP_TriFan, 3, stream_decl, false))
+    {
+        nlVector3 v3point;
+        nlVector2 uv0;
+
+        v3point.f.z = p0.f.z;
+        v3point.f.x = p0.f.x;
+        v3point.f.y = p0.f.y;
+
+        float fRadians = 0.0f;
+
+        mesh.Colour(colour);
+        uv0.f.x = 0.0f;
+        uv0.f.y = 0.0f;
+        ((GLMeshWriterCore*)&mesh)->Texcoord(uv0);
+        mesh.Vertex(v3point);
+
+        const float angleScale = 10430.378f;
+        int i = 0;
+        const float uvZero = 0.0f;
+        const float angleStep = 0.20943952f;
+        nlVector2 uv1;
+
+        while (i < 30)
+        {
+            nlSinCos(&v3point.f.x, &v3point.f.y, (unsigned short)(int)(angleScale * fRadians));
+            v3point.f.x = p0.f.x + fScaleX * (v3point.f.x * fRadius);
+            v3point.f.y = p0.f.y + v3point.f.y * fRadius;
+
+            mesh.Colour(colour);
+            uv1.f.x = uvZero;
+            uv1.f.y = uvZero;
+            ((GLMeshWriterCore*)&mesh)->Texcoord(uv1);
+            mesh.Vertex(v3point);
+
+            i++;
+            fRadians += angleStep;
+        }
+
+        if (!mesh.End())
+        {
+            return;
+        }
+
+        glViewAttachModel(GLV_Debug, 2, mesh.GetModel());
+    }
 }
 
 /**

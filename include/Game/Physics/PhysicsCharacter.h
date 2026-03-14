@@ -15,7 +15,7 @@ public:
     virtual void PostUpdate();
     virtual void PreCollide();
     virtual ContactType Contact(PhysicsObject*, dContact*, int, PhysicsObject*);
-    virtual void ResolvePhysicsBoneIDFromName(const char*);
+    virtual PhysicsBoneID ResolvePhysicsBoneIDFromName(const char*);
 
     void SetCharacterVelocityXY(const nlVector3&);
     void GetCharacterVelocityXY(nlVector3*);

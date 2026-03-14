@@ -1,6 +1,7 @@
 #include "Game/Effects/EffectsTemplate.h"
 #include "Game/Effects/EmissionController.h"
 #include "Game/Effects/EmissionManager.h"
+#include "stdlib.h"
 #include "NL/nlAVLTree.h"
 #include "NL/nlMath.h"
 #include "NL/nlString.h"
@@ -8,6 +9,48 @@
 
 static nlAVLTree<unsigned long, EffectsTemplate*, DefaultKeyCompare<unsigned long> >* pTemplateMap = nullptr;
 static unsigned int uSeed = 0x9184EB0C;
+
+struct ColourKey
+{
+    int index;
+    int value;
+};
+
+template <typename T>
+class DLListEntry
+{
+public:
+    DLListEntry<T>* m_next;
+    DLListEntry<T>* m_prev;
+    T m_data;
+};
+
+template <typename T>
+void nlDLRingAddEnd(T**, T*);
+
+template <typename T>
+T* nlDLRingGetStart(T*);
+
+template <typename T>
+bool nlDLRingIsEnd(T*, T*);
+
+template <typename T, typename Adapter>
+class DLListContainerBase
+{
+public:
+    void DeleteEntry(DLListEntry<T>*);
+
+    Adapter m_Allocator;
+    DLListEntry<T>* m_Head;
+};
+
+template <typename T>
+class nlDLListContainer : public DLListContainerBase<T, NewAdapter<DLListEntry<T> > >
+{
+};
+
+template <typename T, typename CallbackType>
+void nlWalkDLRing(T*, CallbackType*, void (CallbackType::*)(T*));
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x801F29E8 | size: 0x60
@@ -170,10 +213,93 @@ float RandomizedValue(float base, float range)
 
 /**
  * Offset/Address/Size: 0xFD4 | 0x801F1B98 | size: 0x28C
+ * TODO: 84.24% match - stmw r24 vs r25 register allocation mismatch;
+ * compiler uses 8 callee-saved regs instead of 7, causing cascading
+ * stack frame (0x90 vs 0xa0) and register assignment differences.
  */
-void GetColourComponent(SimpleParser*, nlColour*, int)
+static void BlendSpan(nlColour* pColour, int cindex, const ColourKey& k0, const ColourKey& k1)
 {
-    FORCE_DONT_INLINE;
+    pColour[k1.index].c[cindex] = k1.value;
+    int index = k0.index;
+    int value = k0.value;
+    int valueDiff = k1.value - value;
+    int indexDiff = k1.index - index;
+    float step = (float)valueDiff / (float)indexDiff;
+    float current = (float)value;
+    nlColour* p = pColour + index;
+    unsigned char* channel = (unsigned char*)p + cindex;
+    while (index < k1.index)
+    {
+        *channel = current + 0.5f;
+        p++;
+        current += step;
+        index++;
+        channel += sizeof(nlColour);
+    }
+}
+
+void GetColourComponent(SimpleParser* parser, nlColour* pColour, int cindex)
+{
+    char ind[8];
+    char val[8];
+    ColourKey key;
+    nlDLListContainer<ColourKey> keys;
+    keys.m_Head = NULL;
+    while (true)
+    {
+        char* token = parser->NextTokenOnLine(true);
+        if (token == NULL)
+            break;
+        char* cp = token;
+        int i = 0;
+        char* indp = ind;
+        while (*cp != ':')
+        {
+            *indp++ = *cp++;
+            i++;
+        }
+        ind[i] = 0;
+        cp++;
+        i = 0;
+        char* valp = val;
+        while ((char)*cp != 0)
+        {
+            *valp++ = *cp++;
+            i++;
+        }
+        val[i] = 0;
+        int index = atoi(ind);
+        int value = atoi(val);
+        key.index = index;
+        key.value = value;
+        DLListEntry<ColourKey>* entry = (DLListEntry<ColourKey>*)nlMalloc(0x10, 8, false);
+        if (entry != NULL)
+        {
+            entry->m_next = NULL;
+            entry->m_prev = NULL;
+            entry->m_data.index = index;
+            entry->m_data.value = key.value;
+        }
+        nlDLRingAddEnd<DLListEntry<ColourKey> >(&keys.m_Head, entry);
+    }
+    DLListEntry<ColourKey>* start = nlDLRingGetStart<DLListEntry<ColourKey> >(keys.m_Head);
+    DLListEntry<ColourKey>* head = keys.m_Head;
+    DLListEntry<ColourKey>* current = start;
+    while (true)
+    {
+        if (nlDLRingIsEnd<DLListEntry<ColourKey> >(head, current) || current == NULL)
+            current = NULL;
+        else
+            current = current->m_next;
+        if (current == NULL)
+            break;
+        BlendSpan(pColour, cindex, start->m_data, current->m_data);
+        start->m_data.index = current->m_data.index;
+        start->m_data.value = current->m_data.value;
+    }
+    nlWalkDLRing<DLListEntry<ColourKey>, DLListContainerBase<ColourKey, NewAdapter<DLListEntry<ColourKey> > > >(
+        keys.m_Head, &keys, &DLListContainerBase<ColourKey, NewAdapter<DLListEntry<ColourKey> > >::DeleteEntry);
+    keys.m_Head = NULL;
 }
 
 /**

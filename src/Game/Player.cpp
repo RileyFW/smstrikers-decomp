@@ -7,6 +7,7 @@
 #include "Game/AI/Fielder.h"
 #include "Game/AI/SpaceSearch.h"
 #include "Game/AI/AiUtil.h"
+#include "Game/AI/Scripts/CommonScript.h"
 
 #include "Game/CharacterTemplate.h"
 #include "Game/SAnim/pnFeather.h"
@@ -611,6 +612,7 @@ bool cPlayer::IsOnSameTeam(cPlayer* other)
  */
 void cPlayer::SetAIPad(cAIPad*)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -918,8 +920,97 @@ void cPlayer::Update(float fDeltaT)
 /**
  * Offset/Address/Size: 0x2A50 | 0x80059FA0 | size: 0x27C
  */
-void cPlayer::SwapController()
+u8 cPlayer::SwapController()
 {
+    cPlayer* pSwapPlayer;
+    s32 i;
+    s32 iPadID;
+    cPlayer* pPotentialSwapPlayer;
+
+    if (m_bCanTestController != 0)
+    {
+        if (g_pBall->m_pPassTarget == NULL || g_pBall->m_pPassTarget != this)
+        {
+            pSwapPlayer = NULL;
+            iPadID = ((m_pController != NULL) ? m_pController->m_pPad : NULL)->m_padIndex;
+
+            for (i = 0; i < 4; i++)
+            {
+                pPotentialSwapPlayer = m_pTeam->GetPlayer(i);
+                if (pPotentialSwapPlayer != this)
+                {
+                    cGlobalPad* pPotentialSwapPad = (pPotentialSwapPlayer->m_pController != NULL) ? pPotentialSwapPlayer->m_pController->m_pPad : NULL;
+                    if (pPotentialSwapPad == NULL)
+                    {
+                        if (pSwapPlayer == NULL || (pPotentialSwapPlayer->m_tSwapControllerTimer[iPadID].GetSeconds() == 0.0f && pSwapPlayer->m_tSwapControllerTimer[iPadID].GetSeconds() > 0.0f))
+                        {
+                            pSwapPlayer = pPotentialSwapPlayer;
+                            continue;
+                        }
+
+                        float fSwapPlayerTime = pSwapPlayer->m_tSwapControllerTimer[iPadID].GetSeconds();
+                        if (pPotentialSwapPlayer->m_tSwapControllerTimer[iPadID].GetSeconds() <= fSwapPlayerTime)
+                        {
+                            float fPotentialScore = Fuzzy::GetSwapControllerScore(pPotentialSwapPlayer).mData.f;
+                            float fSwapScore = Fuzzy::GetSwapControllerScore(pSwapPlayer).mData.f;
+                            if (fPotentialScore > fSwapScore)
+                            {
+                                pSwapPlayer = pPotentialSwapPlayer;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (pSwapPlayer == NULL)
+            {
+                float fBestDist = 999999.9f;
+                s32 iFielder;
+                cFielder* pCandidate;
+
+                for (iFielder = 0; iFielder < 4; iFielder++)
+                {
+                    pCandidate = m_pTeam->GetFielder(iFielder);
+
+                    float dx, dy, dz;
+                    dy = pCandidate->m_v3Position.f.y - g_pBall->m_v3Position.f.y;
+                    dx = pCandidate->m_v3Position.f.x - g_pBall->m_v3Position.f.x;
+                    dz = pCandidate->m_v3Position.f.z - g_pBall->m_v3Position.f.z;
+                    float fDist = nlSqrt(dx * dx + dy * dy + dz * dz, true);
+
+                    if (pCandidate != this)
+                    {
+                        cGlobalPad* pCandidatePad = (pCandidate->m_pController != NULL) ? pCandidate->m_pController->m_pPad : NULL;
+                        if (pCandidatePad == NULL && fDist < fBestDist)
+                        {
+                            pSwapPlayer = pCandidate;
+                            fBestDist = fDist;
+                        }
+                    }
+                }
+
+                if (pSwapPlayer == NULL)
+                {
+                    return 0;
+                }
+            }
+
+            if (m_fActualSpeed > 1.0f)
+            {
+                pSwapPlayer->m_tSwapFacingTimer.SetSeconds(g_pGame->m_pGameTweaks->fSwapFacingTime);
+                pSwapPlayer->m_aSwapFacingDirection = pSwapPlayer->m_aActualMovementDirection;
+            }
+
+            m_tSwapControllerTimer[iPadID].SetSeconds(g_pGame->m_pGameTweaks->fSwapControllerTime);
+            pSwapPlayer->SetAIPad(m_pController);
+            pSwapPlayer->m_bCanTestController = false;
+            SetAIPad(NULL);
+
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 /**

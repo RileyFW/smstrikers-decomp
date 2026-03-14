@@ -6,6 +6,7 @@
 #include "Game/FE/feHelpFuncs.h"
 #include "Game/GameInfo.h"
 #include "NL/nlMath.h"
+#include "NL/nlMemory.h"
 #include "NL/nlPrint.h"
 
 static const char* CUP_HUB_LAYER_NAME;
@@ -13,6 +14,43 @@ static nlColour HUB_COLOUR_HIGHLIGHT;
 static char* HUBstandingsRowNames[10];
 
 extern "C" eTeamID FindWinningTeam__15GameInfoManagerFv(GameInfoManager*);
+
+class CupTrophyScene
+{
+public:
+    void CreateTrophyScene(eTrophyType, ButtonComponent::ButtonState, bool);
+};
+
+namespace Detail
+{
+template <typename R, typename F>
+struct MemFunImpl
+{
+    F mFuncPtr;
+};
+} // namespace Detail
+
+template <typename T, typename R>
+Detail::MemFunImpl<R, void (T::*)()> MemFun(void (T::*)());
+
+template <typename R, typename F, typename A>
+BindExp1<R, F, A> Bind(F fn, const A& arg);
+
+enum ePopupMenu
+{
+    POPUP_TOURNEY_OVER = 14,
+};
+
+class FEPopupMenu
+{
+public:
+    void Create(ePopupMenu, Function<FnVoidVoid>&, Function<FnVoidVoid>&);
+    static void Nothing();
+};
+
+typedef Detail::MemFunImpl<void, void (CupHubScene::*)()> MemFunImpl_CupHubScene_v;
+typedef BindExp1<void, MemFunImpl_CupHubScene_v, CupHubScene*> BindExp1_vfmfcp;
+typedef Function0<void>::FunctorImpl<BindExp1_vfmfcp> FunctorImpl_vfmfcp;
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800F1F90 | size: 0x38
@@ -191,9 +229,59 @@ void CupHubScene::Update(float)
 
 /**
  * Offset/Address/Size: 0x670C | 0x800F0468 | size: 0x298
+ * TODO: 94.92% match - first trophy condition keeps singleton in r4/r3 move pair; functor placement-new path still differs in null-check/vtable-init scheduling.
  */
 void CupHubScene::EndCup()
 {
+    if (nlSingleton<GameInfoManager>::s_pInstance->mDisplayTrophy[0] && nlSingleton<GameInfoManager>::s_pInstance->IsInCupMode())
+    {
+        nlSingleton<GameSceneManager>::s_pInstance->PopEntireStack();
+
+        CupTrophyScene* trophyScene = (CupTrophyScene*)nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_CUP_TROPHY, SCREEN_FORWARD, false);
+
+        eTrophyType trophyType = nlSingleton<GameInfoManager>::s_pInstance->GetTrophyTypeByCurrentMode();
+        trophyScene->CreateTrophyScene(trophyType, ButtonComponent::BS_A_ONLY, true);
+    }
+    else if (nlSingleton<GameInfoManager>::s_pInstance->IsInTournamentMode())
+    {
+        if (nlSingleton<GameInfoManager>::s_pInstance->GetNumHumanTeams() > 1)
+        {
+            nlSingleton<GameSceneManager>::s_pInstance->PopEntireStack();
+            nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_TOURNEY_BRAG, SCREEN_FORWARD, false);
+        }
+        else
+        {
+            FEPopupMenu* popup = (FEPopupMenu*)nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_POPUP_MENU, SCREEN_NOTHING, false);
+
+            BindExp1_vfmfcp bind = Bind<void, MemFunImpl_CupHubScene_v, CupHubScene*>(
+                MemFun<CupHubScene, void>(&CupHubScene::ReturnToMainMenu), this);
+
+            {
+                Function<FnVoidVoid> yes;
+                yes.mTag = FUNCTOR;
+
+                FunctorImpl_vfmfcp* functor = (FunctorImpl_vfmfcp*)nlMalloc(sizeof(FunctorImpl_vfmfcp), 8, false);
+                if (functor != NULL)
+                {
+                    functor = new (functor) FunctorImpl_vfmfcp();
+                    functor->mBind.mFuncPtr = bind.mFuncPtr;
+                    functor->mBind.mArg = bind.mArg;
+                }
+                yes.mFunctor = functor;
+
+                Function<FnVoidVoid> no;
+                no.mTag = FREE_FUNCTION;
+                no.mFreeFunction = FEPopupMenu::Nothing;
+
+                popup->Create(POPUP_TOURNEY_OVER, yes, no);
+            }
+        }
+    }
+    else
+    {
+        nlSingleton<GameSceneManager>::s_pInstance->PopEntireStack();
+        nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_CUP_BRAG, SCREEN_FORWARD, false);
+    }
 }
 
 /**

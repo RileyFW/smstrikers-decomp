@@ -81,7 +81,7 @@ public:
     virtual ~PhysicsCharacterBase();
     virtual int GetObjectType() const { return 0x08; };
     virtual void UpdatePose(cPoseAccumulator*, float);
-    virtual void ResolvePhysicsBoneIDFromName(const char*) = 0;
+    virtual PhysicsBoneID ResolvePhysicsBoneIDFromName(const char*) = 0;
 
     int GetNumBoneVolumePoints(bool includeEndpoints) const;
     void GetBoneVolumePoints(nlVector3*, bool);
