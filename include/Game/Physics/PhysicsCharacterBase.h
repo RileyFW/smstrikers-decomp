@@ -43,6 +43,7 @@ enum PhysicsBoneID
     PHYSBONE_GOALIE_STOMACH = 27,
     NUM_PHYSBONES = 28,
     PHYSBONE_UNKNOWN = 29,
+    PHYSBONE_ID_INVALID = 29,
 };
 
 class PhysicsBoneVolume

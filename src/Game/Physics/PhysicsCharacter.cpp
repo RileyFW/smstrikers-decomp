@@ -108,6 +108,7 @@ void PhysicsCharacter::PreCollide()
 PhysicsBoneID PhysicsCharacter::ResolvePhysicsBoneIDFromName(const char*)
 {
     FORCE_DONT_INLINE;
+    return PHYSBONE_UNKNOWN;
 }
 
 /**

@@ -23,7 +23,7 @@ void FEAudio::EnableSounds(bool enable)
 /**
  * Offset/Address/Size: 0x8 | 0x8009EDB4 | size: 0x27C
  */
-#pragma inline_depth(0)
+// #pragma inline_depth(0)
 void FEAudioEventHandler(Event* pEvent, void*)
 {
     if (!AudioLoader::IsInited())
@@ -106,7 +106,7 @@ void FEAudioEventHandler(Event* pEvent, void*)
         break;
     }
 }
-#pragma inline_depth()
+// #pragma inline_depth()
 
 /**
  * Offset/Address/Size: 0x284 | 0x8009F030 | size: 0xC

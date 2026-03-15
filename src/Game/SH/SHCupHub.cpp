@@ -88,12 +88,10 @@ typedef Function0<void>::FunctorImpl<BindExp1_vfmfcp> FunctorImpl_vfmfcp;
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x800F1E0C | size: 0x78
-//  */
-// void Function0<void>::FunctorImpl<BindExp1<void, Detail::MemFunImpl<void, void (CupHubScene::*)()>, CupHubScene*>>::Clone() const
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x800F1E0C | size: 0x78
+ * Clone() generated from inline definition in NL/nlFunction.h
+ */
 
 // /**
 //  * Offset/Address/Size: 0x680 | 0x800F1D88 | size: 0x84
