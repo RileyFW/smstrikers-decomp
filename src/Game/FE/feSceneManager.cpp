@@ -3,6 +3,7 @@
 #include "Game/FE/feRender.h"
 #include "NL/nlDLRing.h"
 #include "NL/nlDLListSlotPool.h"
+#include "NL/nlDebug.h"
 #include "NL/nlString.h"
 
 extern FEInput* g_pFEInput;
@@ -247,10 +248,117 @@ void FESceneManager::QueueScenePush(BaseSceneHandler* pSceneHandler, const char*
 
 /**
  * Offset/Address/Size: 0x540 | 0x8020DB8C | size: 0x270
+ * TODO: 99.04% match - r24/r27 register swap for szFilename/pFEScene in push block,
+ * r25/r26 swap for sceneEntry_pop/msg in pop block
  */
 void FESceneManager::ProcessPushPopQueue()
 {
-    FORCE_DONT_INLINE;
+    FESceneManager* pSceneManager = this;
+    PackagePushPopMessage* pPackagePushPopMessage;
+    DLListEntry<PackagePushPopMessage*>** queueHead = &m_pushPopMessageQueue.m_Head;
+
+    while (*queueHead != NULL)
+    {
+        DLListEntry<PackagePushPopMessage*>* msgEntry = nlDLRingRemoveStart(queueHead);
+
+        if (&pPackagePushPopMessage != NULL)
+        {
+            pPackagePushPopMessage = msgEntry->m_data;
+        }
+
+        msgEntry->m_next = (DLListEntry<PackagePushPopMessage*>*)m_pushPopMessageQueue.m_Allocator.m_FreeList;
+        m_pushPopMessageQueue.m_Allocator.m_FreeList = (SlotPoolEntry*)msgEntry;
+
+        if (pPackagePushPopMessage->m_bPush != false)
+        {
+            BaseSceneHandler* pHandler;
+            DLListEntry<BaseSceneHandler*>* sceneEntry = NULL;
+            FESceneManager* pInstance;
+            char* szFilename;
+            BaseSceneHandler* pSceneHandler = pPackagePushPopMessage->m_pSceneHandler;
+
+            if (pSceneManager->m_sceneHandlerStack.m_Allocator.m_FreeList == NULL)
+            {
+                SlotPoolBase::BaseAddNewBlock((SlotPoolBase*)&pSceneManager->m_sceneHandlerStack, sizeof(DLListEntry<BaseSceneHandler*>));
+            }
+
+            if (pSceneManager->m_sceneHandlerStack.m_Allocator.m_FreeList != NULL)
+            {
+                sceneEntry = (DLListEntry<BaseSceneHandler*>*)pSceneManager->m_sceneHandlerStack.m_Allocator.m_FreeList;
+                pSceneManager->m_sceneHandlerStack.m_Allocator.m_FreeList = pSceneManager->m_sceneHandlerStack.m_Allocator.m_FreeList->m_next;
+            }
+
+            if (sceneEntry != NULL)
+            {
+                sceneEntry->m_next = NULL;
+                sceneEntry->m_prev = NULL;
+                sceneEntry->m_data = pSceneHandler;
+            }
+
+            nlDLRingAddStart(&pSceneManager->m_sceneHandlerStack.m_Head, sceneEntry);
+
+            pInstance = nlSingleton<FESceneManager>::s_pInstance;
+            pHandler = pPackagePushPopMessage->m_pSceneHandler;
+            szFilename = pPackagePushPopMessage->m_szFilename;
+
+            FEScene* pFEScene = new (nlMalloc(0x70, 8, false)) FEScene();
+
+            pFEScene->m_uHashID = nlStringLowerHash(szFilename);
+
+            if (!pFEScene->LoadPackage(szFilename))
+            {
+                nlPrintf("Error: failed to load package!\n");
+                nlBreak();
+            }
+            else
+            {
+                pFEScene->m_uRenderView = pInstance->m_uDefaultRenderView;
+                pHandler->m_pFEScene = pFEScene;
+                pHandler->SetPresentation(pFEScene->m_pFEPackage->GetPresentation());
+                pHandler->SceneCreated();
+                pHandler->InitializeSubHandlers();
+            }
+        }
+        else
+        {
+            DLListEntry<BaseSceneHandler*>* headEntry;
+            PackagePushPopMessage* msg;
+            DLListEntry<BaseSceneHandler*>* sceneEntry = nlDLRingGetStart(pSceneManager->m_sceneHandlerStack.m_Head);
+            headEntry = pSceneManager->m_sceneHandlerStack.m_Head;
+            msg = pPackagePushPopMessage;
+
+            while (sceneEntry != NULL)
+            {
+                if (sceneEntry->m_data == msg->m_pSceneHandler)
+                {
+                    nlDLRingIsEnd(headEntry, sceneEntry);
+                    nlDLRingRemove(&pSceneManager->m_sceneHandlerStack.m_Head, sceneEntry);
+                    sceneEntry->m_next = (DLListEntry<BaseSceneHandler*>*)pSceneManager->m_sceneHandlerStack.m_Allocator.m_FreeList;
+                    pSceneManager->m_sceneHandlerStack.m_Allocator.m_FreeList = (SlotPoolEntry*)sceneEntry;
+                    break;
+                }
+
+                if (nlDLRingIsEnd(headEntry, sceneEntry) || sceneEntry == NULL)
+                {
+                    sceneEntry = NULL;
+                }
+                else
+                {
+                    sceneEntry = sceneEntry->m_next;
+                }
+            }
+
+            pPackagePushPopMessage->m_pSceneHandler->m_pFEScene->UnloadPackage();
+
+            FEScene* pFEScene = pPackagePushPopMessage->m_pSceneHandler->m_pFEScene;
+
+            delete pPackagePushPopMessage->m_pSceneHandler;
+            delete pFEScene;
+        }
+
+        ((SlotPoolEntry*)pPackagePushPopMessage)->m_next = m_PushPopMessageSlotPool__21PackagePushPopMessage.m_FreeList;
+        m_PushPopMessageSlotPool__21PackagePushPopMessage.m_FreeList = (SlotPoolEntry*)pPackagePushPopMessage;
+    }
 }
 
 /**

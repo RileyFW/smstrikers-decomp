@@ -3,6 +3,7 @@
 #include "Game/Audio/SoundEventScript.h"
 #include "Game/Camera/CameraMan.h"
 #include "Game/Game.h"
+#include "Game/Sys/PlatStream.h"
 #include "Game/Sys/debug.h"
 #include "dolphin/arq.h"
 
@@ -615,9 +616,147 @@ void AudioLoader::SetupSoundBuffers()
 
 /**
  * Offset/Address/Size: 0x20E4 | 0x80145EB0 | size: 0x298
+ * TODO: 99.94% match - MWCC shrink-wraps the stack frame and emits local
+ * FE/FE2 labels (@856/@857) instead of target @3134/@3135.
  */
-void AudioLoader::LoadFE(bool)
+void AudioLoader::LoadFE(bool bLoadSampleFile)
 {
+    if (gbDisableAudio)
+    {
+        return;
+    }
+
+    if (bLoadSampleFile)
+    {
+        gbAsyncLoadEntireSampleFileIntoMemRequestMade = true;
+        PlatAudio::ReadEntireSampleFileIntoMemSync(sebringAudioFileData.szSampleFile);
+
+        if (!gbDisableAudio)
+        {
+            bool bAlreadyLoaded = false;
+            if (sebringAudioGroups[3].uLoadOrder > -1 && sebringAudioGroups[3].stackEnum > -1)
+            {
+                bAlreadyLoaded = true;
+            }
+
+            if (!bAlreadyLoaded)
+            {
+                if (!gbDisableAudio)
+                {
+                    bool isInited;
+                    if (gbDisableAudio)
+                    {
+                        isInited = false;
+                    }
+                    else
+                    {
+                        isInited = Audio::IsInited();
+                    }
+
+                    if (isInited)
+                    {
+                        PlatAudio::LoadSoundGroup(sebringAudioFileData, 3, 1, false);
+                    }
+                }
+            }
+        }
+
+        if (!gbDisableAudio)
+        {
+            bool bAlreadyLoaded = false;
+            if (sebringAudioGroups[4].uLoadOrder > -1 && sebringAudioGroups[4].stackEnum > -1)
+            {
+                bAlreadyLoaded = true;
+            }
+
+            if (!bAlreadyLoaded)
+            {
+                if (!gbDisableAudio)
+                {
+                    bool isInited;
+                    if (gbDisableAudio)
+                    {
+                        isInited = false;
+                    }
+                    else
+                    {
+                        isInited = Audio::IsInited();
+                    }
+
+                    if (isInited)
+                    {
+                        PlatAudio::LoadSoundGroup(sebringAudioFileData, 4, 1, false);
+                    }
+                }
+            }
+        }
+
+        bool bAlreadyLoaded = false;
+        if (sebringAudioGroups[0].uLoadOrder > -1 && sebringAudioGroups[0].stackEnum > -1)
+        {
+            bAlreadyLoaded = true;
+        }
+
+        if (!bAlreadyLoaded)
+        {
+            if (!gbDisableAudio)
+            {
+                bool isInited;
+                if (gbDisableAudio)
+                {
+                    isInited = false;
+                }
+                else
+                {
+                    isInited = Audio::IsInited();
+                }
+
+                if (isInited)
+                {
+                    PlatAudio::LoadSoundGroup(sebringAudioFileData, 0, 1, false);
+                }
+            }
+        }
+
+        bAlreadyLoaded = false;
+        if (sebringAudioGroups[1].uLoadOrder > -1 && sebringAudioGroups[1].stackEnum > -1)
+        {
+            bAlreadyLoaded = true;
+        }
+
+        if (!bAlreadyLoaded)
+        {
+            if (!gbDisableAudio)
+            {
+                bool isInited;
+                if (gbDisableAudio)
+                {
+                    isInited = false;
+                }
+                else
+                {
+                    isInited = Audio::IsInited();
+                }
+
+                if (isInited)
+                {
+                    PlatAudio::LoadSoundGroup(sebringAudioFileData, 1, 1, false);
+                }
+            }
+        }
+
+        ARQSetChunkSize(0x1000);
+        PlatAudio::PurgeSampleFileBuffer();
+        gbAsyncLoadEntireSampleFileIntoMemRequestMade = false;
+    }
+
+    Audio::LoadWorldSFX();
+    CrowdMood::SetCrowdVolume(0, 0);
+    g_pTrackManager->StopAllTracks(0);
+    PlatAudio::ConfigureStreamBuffers(4);
+    g_pTrackManager->DestroyAllTracks();
+    g_pTrackManager->CreateTrack("FE", MasterVolume::VG_Music);
+    g_pTrackManager->CreateTrack("FE2", MasterVolume::VG_Music);
 }
 
 /**

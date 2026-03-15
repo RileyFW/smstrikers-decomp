@@ -131,10 +131,58 @@ int GetNumLeafNodesInHierarchy(cSHierarchy& hierarchy, int nodeIndex, int count)
 
 /**
  * Offset/Address/Size: 0x1BCC | 0x80203C90 | size: 0x294
+ * TODO: 98.00% match - GPR renaming from int next var; first-loop volatile FPR
+ * from CalculateDistanceSquared inline; direction f1/f4 scheduling - all likely
+ * -inline deferred vs auto
  */
-void ShuffleIntoOutline(Vector<nlVector3, DefaultAllocator>&)
+void ShuffleIntoOutline(Vector<nlVector3, DefaultAllocator>& polygon)
 {
-    FORCE_DONT_INLINE;
+    float min = 9999.0f;
+
+    for (int i = 1; i < polygon.mSize; i++)
+    {
+        float dist = nlGetLengthSquared3D(polygon.mData[0].f.x - polygon.mData[i].f.x, polygon.mData[0].f.y - polygon.mData[i].f.y, polygon.mData[0].f.z - polygon.mData[i].f.z);
+
+        if (dist < min)
+        {
+            nlVector3 tmp = polygon.mData[i];
+            min = dist;
+            polygon.mData[i] = polygon.mData[1];
+            polygon.mData[1] = tmp;
+        }
+    }
+
+    nlVector3 dir;
+
+    for (int i = 1; i < polygon.mSize - 1; i++)
+    {
+        float max = 1.0f;
+        nlRecipSqrt(dir.f.x * dir.f.x + dir.f.y * dir.f.y + dir.f.z * dir.f.z, true);
+
+        int prev = i - 1;
+        nlVec3Set(dir, polygon.mData[i].f.x - polygon.mData[prev].f.x, polygon.mData[i].f.y - polygon.mData[prev].f.y, polygon.mData[i].f.z - polygon.mData[prev].f.z);
+
+        int next = i + 1;
+
+        for (int j = i + 1; j < polygon.mSize; j++)
+        {
+            float x, y, z;
+            y = polygon.mData[i].f.y - polygon.mData[j].f.y;
+            x = polygon.mData[i].f.x - polygon.mData[j].f.x;
+            z = polygon.mData[i].f.z - polygon.mData[j].f.z;
+
+            float recip = nlRecipSqrt(x * x + y * y + z * z, true);
+            float dot = dir.f.x * (recip * x) + dir.f.y * (recip * y) + dir.f.z * (recip * z);
+
+            if (dot <= max)
+            {
+                max = dot;
+                nlVector3 tmp = polygon.mData[next];
+                polygon.mData[next] = polygon.mData[j];
+                polygon.mData[j] = tmp;
+            }
+        }
+    }
 }
 
 /**

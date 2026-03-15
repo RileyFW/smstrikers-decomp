@@ -244,11 +244,121 @@ void PhysicsCharacterBase::UpdatePose(cPoseAccumulator* pose, float heightOffset
     }
 }
 
+struct AddBoneVolumesElement
+{
+    nlMatrix4 matLocalToParent;
+    s8 szName[32];
+    u32 uHashID;
+    s8 szParentName[32];
+    u32 uParentHashID;
+    u32 uPrimitiveType;
+    f32 fWidth;
+    f32 fLength;
+    f32 fHeight;
+    f32 fRadius;
+    u32 uReserved;
+};
+
+extern void* __vt__Q220PhysicsCharacterBase17PhysicsSphereBone[];
+extern void* __vt__Q220PhysicsCharacterBase18PhysicsCapsuleBone[];
+extern "C" void __ct__13PhysicsSphereFP14CollisionSpaceP12PhysicsWorldf(PhysicsSphere*, CollisionSpace*, PhysicsWorld*, float);
+extern "C" void __ct__14PhysicsCapsuleFP14CollisionSpaceP12PhysicsWorldff(PhysicsCapsule*, CollisionSpace*, PhysicsWorld*, float, float);
+
 /**
  * Offset/Address/Size: 0x80 | 0x801FEB7C | size: 0x280
+ * TODO: 95.34% match - remaining 100 diffs are register-only (pose→r31 vs target r21),
+ * caused by -inline deferred vs -inline auto register allocator difference.
  */
-void PhysicsCharacterBase::AddBoneVolumes(PhysicsWorld*, CollisionSpace*, cPoseAccumulator*, const CharacterPhysicsData*, unsigned long, unsigned long)
+void PhysicsCharacterBase::AddBoneVolumes(PhysicsWorld* physicsWorld, CollisionSpace* collisionSpace, cPoseAccumulator* pose, const CharacterPhysicsData* physicsData, unsigned long category, unsigned long collideMask)
 {
+    ListEntry<PhysicsBoneVolume*>** pTail = &m_BoneVolumes.m_Tail;
+    ListEntry<PhysicsBoneVolume*>** pHead = &m_BoneVolumes.m_Head;
+    unsigned long i = 0;
+    unsigned long offset = 0;
+    u8* elements = *(u8**)((u8*)physicsData + 8);
+    unsigned long count = *(u32*)((u8*)physicsData + 4);
+
+    while (i < count)
+    {
+        AddBoneVolumesElement* element = (AddBoneVolumesElement*)(elements + offset);
+        PhysicsObject* obj = NULL;
+
+        switch (element->uPrimitiveType)
+        {
+        case 1:
+        {
+            PhysicsSphereBone* sphere = (PhysicsSphereBone*)nlMalloc(0x30, 8, false);
+            if (sphere != NULL)
+            {
+                __ct__13PhysicsSphereFP14CollisionSpaceP12PhysicsWorldf((PhysicsSphere*)sphere, collisionSpace, physicsWorld, element->fRadius);
+                *(void**)sphere = __vt__Q220PhysicsCharacterBase17PhysicsSphereBone;
+                sphere->m_boneVolume = NULL;
+            }
+            obj = sphere;
+            obj->GetObjectType();
+            break;
+        }
+
+        case 2:
+        {
+            PhysicsCapsuleBone* capsule = (PhysicsCapsuleBone*)nlMalloc(0x30, 8, false);
+            if (capsule != NULL)
+            {
+                __ct__14PhysicsCapsuleFP14CollisionSpaceP12PhysicsWorldff((PhysicsCapsule*)capsule, collisionSpace, physicsWorld, element->fRadius, element->fHeight);
+                *(void**)capsule = __vt__Q220PhysicsCharacterBase18PhysicsCapsuleBone;
+                capsule->m_boneVolume = NULL;
+            }
+            obj = capsule;
+            break;
+        }
+
+        default:
+            break;
+        }
+
+        obj->SetCategory(category);
+        obj->SetCollide(collideMask);
+
+        unsigned int boneIndex = pose->m_BaseSHierarchy->GetNodeIndexByID(element->uParentHashID);
+        int transformHandle = AddObject(obj);
+        PhysicsBoneID boneID = ResolvePhysicsBoneIDFromName((const char*)element->szName);
+
+        PhysicsBoneVolume* boneVolume = (PhysicsBoneVolume*)nlMalloc(sizeof(PhysicsBoneVolume), 8, false);
+        if (boneVolume != NULL)
+        {
+            boneVolume->m_pObject = obj;
+            boneVolume->m_BoneIndex = boneIndex;
+            boneVolume->m_Transform = element->matLocalToParent;
+            boneVolume->m_TransformHandle = transformHandle;
+            boneVolume->m_ID = boneID;
+        }
+
+        ListEntry<PhysicsBoneVolume*>* listNode = (ListEntry<PhysicsBoneVolume*>*)nlMalloc(8, 8, false);
+        if (listNode != NULL)
+        {
+            listNode->next = NULL;
+            listNode->data = boneVolume;
+        }
+
+        nlListAddStart(pHead, listNode, pTail);
+
+        switch (element->uPrimitiveType)
+        {
+        case 1:
+            ((PhysicsSphereBone*)obj)->m_boneVolume = boneVolume;
+            break;
+
+        case 2:
+            ((PhysicsCapsuleBone*)obj)->m_boneVolume = boneVolume;
+            break;
+
+        default:
+            break;
+        }
+
+        offset += 0xA0;
+        i++;
+    }
 }
 
 /**

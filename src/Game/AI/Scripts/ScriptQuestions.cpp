@@ -1278,10 +1278,109 @@ float WideOpenPosition(const nlVector3&, cTeam*, cPlayer*)
 
 /**
  * Offset/Address/Size: 0x2B10 | 0x80081598 | size: 0x274
+ * TODO: 88.47% match - float load order (f30/f31), dead code pattern at redundant NULL
+ * check (bne vs beq), ppPlayer/pPlayer/isIncap register allocation (r25/r27/r24 vs
+ * r27/r24/r25), and instruction scheduling around inner loop init (li r31,0 placement).
  */
-float Open(cFielder*)
+float Open(cFielder* pFielder)
 {
-    return 0.0f;
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    int j;
+    int i;
+    cTeam* pOtherTeam = pFielder->m_pTeam->GetOtherTeam();
+    f32 fWeight = 1.0f;
+    f32 fTotal = 0.0f;
+    const nlVector2* pOpenRadius = &g_pGame->m_pFuzzyTweaks->vOpenRadius;
+
+    pOtherTeam->GetOtherTeam();
+
+    for (i = 0; i < 5; i++)
+    {
+        cPlayer* pPlayers[2] = { pOtherTeam->GetPlayer(i), NULL };
+
+        for (j = 0; j < 2; j++)
+        {
+            cPlayer* pPlayer = pPlayers[j];
+            if (pPlayer == NULL)
+            {
+                continue;
+            }
+
+            f32 fIncapacitated = 0.0f;
+            if (pPlayer != NULL)
+            {
+                fIncapacitated = 0.0f;
+                if (pPlayer->m_eClassType == GOALIE)
+                {
+                    Goalie* pGoalie = (Goalie*)pPlayer;
+                    bool result = true;
+                    eGoalieActionState actionState = pGoalie->mGoalieActionState;
+                    int isRecover = (((int)GOALIEACTION_STS_RECOVER - (int)actionState) == 0);
+
+                    if ((isRecover & 0xFF) == 0)
+                    {
+                        bool isBusy = (pGoalie->m_pBall != NULL)
+                                   || (actionState == GOALIEACTION_PASS)
+                                   || (actionState == GOALIEACTION_PASS_INTERCEPT)
+                                   || (actionState == GOALIEACTION_MOVE)
+                                   || (actionState == GOALIEACTION_MOVE_WB)
+                                   || (actionState == GOALIEACTION_PASS_INTERCEPT)
+                                   || (actionState == GOALIEACTION_PURSUE_BALL_CARRIER)
+                                   || (actionState == GOALIEACTION_PURSUE_BALL_POUNCE)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_SETUP)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_CATCH)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_PICKUP)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_PURSUE_ROLLING);
+                        if (isBusy)
+                        {
+                            result = false;
+                        }
+                    }
+                    fIncapacitated = result ? 1.0f : 0.0f;
+                }
+                else if (pPlayer->m_eClassType == FIELDER)
+                {
+                    u8 isIncap = 0;
+                    if (((cFielder*)pPlayer)->IsFrozen() || ((cFielder*)pPlayer)->IsFallenDown(25.0f))
+                    {
+                        isIncap = 1;
+                    }
+                    fIncapacitated = isIncap ? 1.0f : 0.0f;
+                }
+            }
+
+            if (fIncapacitated == 0.0f)
+            {
+                f32 dy = pFielder->m_v3Position.f.y - pPlayer->m_v3Position.f.y;
+                f32 dx = pFielder->m_v3Position.f.x - pPlayer->m_v3Position.f.x;
+                f32 dist = nlSqrt(dx * dx + dy * dy, true);
+                f32 normalized = NormalizeVal(dist, *pOpenRadius);
+                if (normalized > 0.0f)
+                {
+                    fTotal += fWeight * normalized;
+                    fWeight *= 0.5f;
+                }
+            }
+        }
+    }
+
+    f32 fResult = 1.0f - fTotal;
+    if (fResult < 0.0f)
+    {
+        fResult = 0.0f;
+    }
+
+    if (fResult > 1.0f)
+    {
+        fResult = 1.0f;
+    }
+
+    return fResult;
 }
 
 /**

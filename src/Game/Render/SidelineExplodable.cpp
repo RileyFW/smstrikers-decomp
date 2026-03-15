@@ -1,6 +1,7 @@
 #include "Game/Render/SidelineExplodable.h"
 #include "Game/Render/AnimatedModelExplodable.h"
 #include "Game/Render/StaticModelExplodable.h"
+#include "Game/Field.h"
 #include "Game/WorldManager.h"
 #include "NL/glx/glxTexture.h"
 #include "NL/nlMath.h"
@@ -196,10 +197,123 @@ void SidelineExplodable::Update(float)
 
 /**
  * Offset/Address/Size: 0x1710 | 0x80168A70 | size: 0x290
+ * TODO: 98.45% match - lbz r0 vs r3 CSE diff on first mbIsActive check (compiler
+ * caches value in r3 instead of using r0+reload), causing extra li r0,0 and lwz r4 vs r0.
  */
-void SidelineExplodable::DestroyAllActiveFragments(bool)
+void SidelineExplodable::DestroyAllActiveFragments(bool renewExplodables)
 {
-    FORCE_DONT_INLINE;
+    if (mNumActiveFragments != 0)
+    {
+        SlotPool<DrawableFragmentHandleNode>* pPool = &DrawableFragmentHandleNode::sDrawableFragmentHandleNodePool;
+        int fragmentOffset = 0;
+        DrawableFragmentHandleNode** pTail = &SidelineExplodableManager::sUnusedDrawableFragments.m_pEnd;
+        ExplosionFragment* fragment;
+        int i = 0;
+
+        while (i < mNumFragmentModels)
+        {
+            fragment = (ExplosionFragment*)((u8*)mExplosionFragments.mData + fragmentOffset);
+            if (fragment->mbIsActive)
+            {
+                if (renewExplodables || !fragment->mbInfiniteLifespan)
+                {
+                    if (fragment->mbIsActive)
+                    {
+                        if (fragment->mpPhysicsObject != NULL)
+                        {
+                            delete fragment->mpPhysicsObject;
+                        }
+
+                        DrawableObject* drawable = WorldManager::s_World->FindDrawableObject(fragment->mFragmentModelHash);
+                        drawable->m_uObjectFlags &= ~1;
+                        fragment->mpPhysicsObject = NULL;
+                        u16 handle = fragment->mDrawableFragmentID;
+                        DrawableFragmentHandleNode* node = NULL;
+
+                        if (pPool->m_FreeList == NULL)
+                        {
+                            SlotPoolBase::BaseAddNewBlock(&DrawableFragmentHandleNode::sDrawableFragmentHandleNodePool, 8);
+                        }
+
+                        SlotPoolEntry* entry = pPool->m_FreeList;
+                        if (entry != NULL)
+                        {
+                            node = (DrawableFragmentHandleNode*)entry;
+                            pPool->m_FreeList = (SlotPoolEntry*)entry->m_next;
+                        }
+
+                        if (node != NULL)
+                        {
+                            node->mID = 0;
+                            node->next = NULL;
+                        }
+
+                        node->mID = handle;
+                        nlListAddEnd<DrawableFragmentHandleNode>(&SidelineExplodableManager::sUnusedDrawableFragments.m_pStart, pTail, node);
+                        SidelineExplodableManager::sFragmentLookupTable[handle] = NULL;
+                        fragment->mDrawableFragmentID = 0xFFFF;
+                        fragment->mbIsActive = false;
+                    }
+
+                    fragment->mFragmentModelHash = 0;
+
+                    EmissionController* pSmokeControl = fragment->mpSmokeEmissionController;
+                    if (pSmokeControl != NULL)
+                    {
+                        Function1<void, EmissionController&> empty;
+                        empty.mTag = EMPTY;
+
+                        if (pSmokeControl->mUpdateCallback.mTag == FUNCTOR)
+                        {
+                            delete pSmokeControl->mUpdateCallback.mFunctor;
+                        }
+
+                        pSmokeControl->mUpdateCallback.mTag = EMPTY;
+                        pSmokeControl->mUpdateCallback.mTag = empty.mTag;
+
+                        if (pSmokeControl->mUpdateCallback.mTag == FREE_FUNCTION)
+                        {
+                            pSmokeControl->mUpdateCallback.mFreeFunction = empty.mFreeFunction;
+                        }
+                        else if (pSmokeControl->mUpdateCallback.mTag == FUNCTOR)
+                        {
+                            pSmokeControl->mUpdateCallback.mFunctor = empty.mFunctor->Clone();
+                        }
+
+                        if (empty.mTag == FUNCTOR)
+                        {
+                            delete empty.mFunctor;
+                        }
+
+                        *(volatile int*)&empty.mTag = EMPTY;
+                    }
+
+                    if (fragment->mStationaryTransform != NULL)
+                    {
+                        operator delete(fragment->mStationaryTransform);
+                        fragment->mStationaryTransform = NULL;
+                    }
+
+                    mNumActiveFragments--;
+                    ExplodableCategoryData& categoryData = GetCategoryData();
+                    if (mNumActiveFragments == categoryData.mNumStationaryFragments)
+                    {
+                        g_pEventManager->CreateValidEvent(0x67, 0x14);
+                    }
+                }
+            }
+
+            fragmentOffset += 0x20;
+            i++;
+        }
+    }
+
+    if (renewExplodables)
+    {
+        mbIsMainModelVisible = true;
+    }
+
+    mfExplodeTime = 0.0f;
 }
 
 /**
@@ -212,9 +326,70 @@ void SidelineExplodable::Explode()
 
 /**
  * Offset/Address/Size: 0xC08 | 0x80167F68 | size: 0x27C
+ * TODO: 98.40% match - remaining diffs are late-function register allocation/order in the two final nlAddPolarToCartesian setups and min/max output stores.
  */
 void SidelineExplodable::FindExplosionAngleRange(unsigned short& min, unsigned short& max) const
 {
+    if (!mbAngleRangeInitialized)
+    {
+        float explosionRadius = cField::GetSidelineY(1U);
+        const nlMatrix4& worldMatrix = GetWorldMatrix();
+        u16 angleToCentreOfField = (u16)(s32)(10430.378f * nlATan2f(worldMatrix.f.m42, worldMatrix.f.m41));
+        angleToCentreOfField = (u16)(angleToCentreOfField + 0x8000);
+
+        nlPolar polar = { 0, explosionRadius };
+        polar.a = angleToCentreOfField;
+
+        nlVector3 particleDestination = *(nlVector3*)&GetWorldMatrix().f.m41;
+        nlAddPolarToCartesian(particleDestination, polar);
+
+        polar.a = angleToCentreOfField;
+        bool foundMax = false;
+        while (!foundMax)
+        {
+            particleDestination = *(nlVector3*)&GetWorldMatrix().f.m41;
+            nlAddPolarToCartesian(particleDestination, polar);
+            if (!cField::IsOnField(particleDestination))
+            {
+                foundMax = true;
+                ((SidelineExplodable*)this)->mMaxExplosionAngle = polar.a - 0x38E;
+            }
+            else
+            {
+                polar.a += 0x38E;
+            }
+        }
+
+        polar.a = angleToCentreOfField;
+        bool foundMin = false;
+        while (!foundMin)
+        {
+            particleDestination = *(nlVector3*)&GetWorldMatrix().f.m41;
+            nlAddPolarToCartesian(particleDestination, polar);
+            if (!cField::IsOnField(particleDestination))
+            {
+                foundMin = true;
+                ((SidelineExplodable*)this)->mMinExplosionAngle = polar.a + 0x38E;
+            }
+            else
+            {
+                polar.a -= 0x38E;
+            }
+        }
+
+        particleDestination = *(nlVector3*)&GetWorldMatrix().f.m41;
+        polar.a = mMinExplosionAngle;
+        nlAddPolarToCartesian(particleDestination, polar);
+
+        particleDestination = *(nlVector3*)&GetWorldMatrix().f.m41;
+        polar.a = mMaxExplosionAngle;
+        nlAddPolarToCartesian(particleDestination, polar);
+
+        ((SidelineExplodable*)this)->mbAngleRangeInitialized = true;
+    }
+
+    min = mMinExplosionAngle;
+    max = mMaxExplosionAngle;
 }
 
 /**

@@ -55,6 +55,10 @@ public:
             : m_pData(NULL)
         {
         }
+        MCInternalFunctorBase(void* pData)
+            : m_pData(pData)
+        {
+        }
         ~MCInternalFunctorBase();
         virtual void Call(unsigned long, long);
         void Destroy();
@@ -69,6 +73,14 @@ public:
         typedef unsigned long (T::*MemberCB)(unsigned long, long, void*);
 
         MCMemberFunctor(T* obj, const MemberCB& cb)
+        {
+            m_pFunc = ((void**)&cb)[0];
+            m_Slot = ((unsigned long*)&cb)[1];
+            m_pfnCB = ((void**)&cb)[2];
+            m_pObject = obj;
+        }
+        MCMemberFunctor(T* obj, const MemberCB& cb, void* pData)
+            : MCInternalFunctorBase(pData)
         {
             m_pFunc = ((void**)&cb)[0];
             m_Slot = ((unsigned long*)&cb)[1];

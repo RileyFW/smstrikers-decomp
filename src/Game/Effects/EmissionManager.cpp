@@ -4,6 +4,15 @@
 #include "Game/Sys/debug.h"
 #include "Game/ReplaySpecializations.h"
 
+template <>
+void Replayable<0, LoadFrame, unsigned short>(LoadFrame& frame, unsigned short& value);
+
+template <>
+void Replayable<0, LoadFrame, unsigned long>(LoadFrame& frame, unsigned long& value);
+
+template <>
+void Replayable<0, LoadFrame, EmissionController>(LoadFrame& frame, EmissionController& controller);
+
 static class efList* controllers = nullptr;
 static class efList* errors = nullptr;
 static nlAVLTree<unsigned long, LingerMessage*, DefaultKeyCompare<unsigned long> >* lingerers = nullptr;
@@ -340,9 +349,119 @@ void EmissionManager::AddError(const char*, ...)
 
 /**
  * Offset/Address/Size: 0x24C | 0x801F8B6C | size: 0x284
+ * TODO: 98.57% match - register allocation diffs (r3/r4 swap in controllers swap section,
+ * r28/r29 swap in inner loop, cmpw operand order) likely due to -inline deferred vs -inline auto
  */
-void EmissionManager::Replay(LoadFrame&)
+void EmissionManager::Replay(LoadFrame& frame)
 {
+    int i;
+    EmissionController* next;
+    EmissionController* current;
+
+    if (m_bRecording)
+    {
+        if (controllers != nullptr)
+        {
+            current = (EmissionController*)controllers->m_headNode;
+            while (current != nullptr)
+            {
+                next = (EmissionController*)current->m_nextNode;
+                if ((current->m_GlView == defaultView) && (current->m_uUserData + 0x21530000 != 0x0000BEEF))
+                {
+                    controllers->Remove(current);
+                    delete current;
+                }
+                current = next;
+            }
+        }
+        m_bRecording = false;
+    }
+
+    int numEffects = 0;
+    Replayable<0>(frame, numEffects);
+
+    efList oldControllers;
+    oldControllers.m_headNode = nullptr;
+    oldControllers.m_tailNode = nullptr;
+    oldControllers.m_numNodes = 0;
+
+    efList* ctrl = controllers;
+
+    efBaseNode* head = ctrl->m_headNode;
+    ctrl->m_headNode = oldControllers.m_headNode;
+    oldControllers.m_headNode = head;
+
+    efBaseNode* tail = ctrl->m_tailNode;
+    ctrl->m_tailNode = oldControllers.m_tailNode;
+    oldControllers.m_tailNode = tail;
+
+    int num = ctrl->m_numNodes;
+    ctrl->m_numNodes = oldControllers.m_numNodes;
+    oldControllers.m_numNodes = num;
+
+    i = 0;
+    while (i < numEffects)
+    {
+        unsigned short id;
+        Replayable<0>(frame, id);
+
+        unsigned long group = 0;
+        Replayable<0>(frame, group);
+
+        current = (EmissionController*)oldControllers.m_headNode;
+        while (current != nullptr)
+        {
+            next = (EmissionController*)current->m_nextNode;
+            if (id == current->m_Id)
+            {
+                Replayable<0>(frame, *current);
+                oldControllers.Remove(current);
+                controllers->Insert(current);
+                break;
+            }
+            current = next;
+        }
+
+        if (current == nullptr)
+        {
+            unsigned short idToUse = id;
+            static u16 globalIdCounter = 1;
+
+            if (idToUse == 0)
+            {
+                idToUse = globalIdCounter;
+                globalIdCounter++;
+            }
+
+            if (globalIdCounter > 0x7E16)
+            {
+                globalIdCounter = 0;
+            }
+
+            current = new (nlMalloc(sizeof(EmissionController), 8, false)) EmissionController((EffectsGroup*)group, idToUse, defaultView);
+            controllers->Append(current);
+            Replayable<0>(frame, *current);
+        }
+
+        i++;
+    }
+
+    current = (EmissionController*)oldControllers.m_headNode;
+    while (current != nullptr)
+    {
+        next = (EmissionController*)current->m_nextNode;
+        if (defaultView != current->m_GlView)
+        {
+            oldControllers.Remove(current);
+            controllers->Insert(current);
+        }
+        else
+        {
+            oldControllers.Remove(current);
+            delete current;
+        }
+        current = next;
+    }
 }
 
 /**

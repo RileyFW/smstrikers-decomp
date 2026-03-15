@@ -1,10 +1,20 @@
 #include "Game/FE/feScene.h"
 
+#include "NL/nlDebug.h"
+#include "NL/nlFileGC.h"
 #include "NL/nlMemory.h"
 #include "NL/gl/glMatrix.h"
 #include "NL/nlDLRing.h"
 
 extern bool gSebringLoadPackageToVirtualMemory;
+
+struct FE_FILE_HEADER
+{
+    char Thumbprint[4];
+    unsigned int Version;
+    unsigned int DataLength;
+    unsigned int PointerTableLength;
+};
 
 // FEResourceHandle FEScene::m_resourceHandler;
 
@@ -51,11 +61,74 @@ void UnloadResourceCallback::Callback(FEResourceHandle* handle)
     m_resourceManager->UnloadResource(handle);
 }
 
+static inline void RelocatePointer(unsigned long* pPointer, void* pData)
+{
+    unsigned long value = *pPointer;
+    unsigned long mask = ~((value + 1) | ((unsigned long)-1 - value));
+    unsigned long sum = value + (unsigned long)pData;
+    mask = (unsigned long)((long)mask >> 31);
+    *pPointer = sum & ~mask;
+}
+
 /**
  * Offset/Address/Size: 0xE0 | 0x80209E54 | size: 0x26C
  */
-void FEScene::LoadPackage(const char*)
+bool FEScene::LoadPackage(const char* szPackageFileName)
 {
+    nlFile* file;
+    FE_FILE_HEADER FenHdr ATTRIBUTE_ALIGN(32);
+    void* pData;
+    unsigned long* pPointerLocation;
+    unsigned long* pLastPointer;
+    unsigned long* pCurrentPointer;
+    unsigned long* pPointer;
+
+    file = nlOpen(szPackageFileName);
+    nlRead(file, &FenHdr, 0x10);
+
+    if (gSebringLoadPackageToVirtualMemory)
+    {
+        pData = nlVirtualAlloc(FenHdr.DataLength, false);
+        if (pData == NULL)
+        {
+            nlBreak();
+        }
+        nlReadToVirtualMemory(file, pData, FenHdr.DataLength, 0x4000);
+    }
+    else
+    {
+        pData = nlMalloc(FenHdr.DataLength, 0x20, false);
+        nlRead(file, pData, FenHdr.DataLength);
+    }
+
+    pPointerLocation = (unsigned long*)nlMalloc(FenHdr.PointerTableLength, 0x20, true);
+    nlRead(file, pPointerLocation, FenHdr.PointerTableLength);
+    nlClose(file);
+
+    m_pFEPackage = (FEPackage*)pData;
+
+    pLastPointer = (unsigned long*)((unsigned char*)pPointerLocation + (FenHdr.PointerTableLength & ~3));
+    for (pCurrentPointer = pPointerLocation; pCurrentPointer < pLastPointer; pCurrentPointer++)
+    {
+        pPointer = (unsigned long*)((unsigned char*)pData + *pCurrentPointer);
+        RelocatePointer(pPointer, pData);
+    }
+
+    nlFree(pPointerLocation);
+
+    file = (nlFile*)m_pFEPackage;
+    QueueResourceLoadCallback cb;
+
+    cb.m_resourceManager = FEResourceManager::Instance();
+    m_feSceneResourceHandle.m_pFESceneContext = this;
+    m_feSceneResourceHandle.m_hashID = m_uHashID;
+    m_feSceneResourceHandle.m_next = 0;
+    m_feSceneResourceHandle.m_prev = 0;
+    m_feSceneResourceHandle.m_type = FERT_SCENE;
+
+    FEResourceManager::Instance()->QueueResourceLoad(&m_feSceneResourceHandle);
+    nlWalkRing<FEResourceHandle, QueueResourceLoadCallback>(((FEPackage*)file)->m_pResourceList, &cb, &QueueResourceLoadCallback::Callback);
+    return true;
 }
 
 /**

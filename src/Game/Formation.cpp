@@ -520,13 +520,95 @@ float FormationEval::GetWeight()
  */
 void FormationEval::AssignPositionsToFielders(unsigned int*, float (*)[4])
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
  * Offset/Address/Size: 0x1798 | 0x800399E8 | size: 0x27C
+ * TODO: 96.82% match - register allocation diffs (this/team/pFielder GPR swap, float reg cascade) due to -inline deferred context
  */
-void FormationEval::SortPlayers(const nlVector2*)
+void FormationEval::SortPlayers(const nlVector2* v2Center)
 {
+    float fFielderToPositionDistance[4][4];
+    nlVector2 av2FormationPositions[4];
+    nlVector3 av3FielderAILocs[4];
+    cFielder* pFielder;
+    nlVector2* pFormPositions;
+    int i;
+    nlVector2 v2CenterOfPlayers;
+    int i_fielder;
+    int i_pos;
+
+    if (m_pFormationSpec == NULL)
+    {
+        return;
+    }
+
+    cTeam* team = m_pFormationManager->m_pTeam;
+    memset(fFielderToPositionDistance, 0, sizeof(fFielderToPositionDistance));
+
+    for (i = 0; i < 4; i++)
+    {
+        pFielder = team->GetFielder(i);
+        if (pFielder->GetGlobalPad() != NULL)
+        {
+            av3FielderAILocs[i].f.x = 0.4f * pFielder->m_v3Velocity.f.x + pFielder->m_v3Position.f.x;
+            av3FielderAILocs[i].f.y = 0.4f * pFielder->m_v3Velocity.f.y + pFielder->m_v3Position.f.y;
+            av3FielderAILocs[i].f.z = 0.4f * pFielder->m_v3Velocity.f.z + pFielder->m_v3Position.f.z;
+        }
+        else
+        {
+            av3FielderAILocs[i].f.x = 0.15f * pFielder->m_v3Velocity.f.x + pFielder->m_v3Position.f.x;
+            av3FielderAILocs[i].f.y = 0.15f * pFielder->m_v3Velocity.f.y + pFielder->m_v3Position.f.y;
+            av3FielderAILocs[i].f.z = 0.15f * pFielder->m_v3Velocity.f.z + pFielder->m_v3Position.f.z;
+        }
+
+        if (team->m_nSide != 0)
+        {
+            f32 nx = av3FielderAILocs[i].f.x;
+            f32 ny = av3FielderAILocs[i].f.y;
+            av3FielderAILocs[i].f.x = -nx;
+            av3FielderAILocs[i].f.y = -ny;
+            av3FielderAILocs[i].f.z = 0.0f;
+        }
+    }
+
+    if (v2Center != NULL)
+    {
+        v2CenterOfPlayers = *v2Center;
+    }
+    else
+    {
+        v2CenterOfPlayers = m_pFormationManager->m_v2AIFielderCenter;
+        v2CenterOfPlayers.f.y -= m_pFormationSpec->m_v2Center.f.y;
+        v2CenterOfPlayers.f.x -= m_pFormationSpec->m_v2Center.f.x;
+    }
+
+    av2FormationPositions[0].f.y = m_pFormationSpec->m_Positions[0].m_Location.f.y + v2CenterOfPlayers.f.y;
+    av2FormationPositions[1].f.y = m_pFormationSpec->m_Positions[1].m_Location.f.y + v2CenterOfPlayers.f.y;
+    av2FormationPositions[2].f.y = m_pFormationSpec->m_Positions[2].m_Location.f.y + v2CenterOfPlayers.f.y;
+    av2FormationPositions[3].f.y = m_pFormationSpec->m_Positions[3].m_Location.f.y + v2CenterOfPlayers.f.y;
+
+    av2FormationPositions[0].f.x = m_pFormationSpec->m_Positions[0].m_Location.f.x + v2CenterOfPlayers.f.x;
+    av2FormationPositions[1].f.x = m_pFormationSpec->m_Positions[1].m_Location.f.x + v2CenterOfPlayers.f.x;
+    av2FormationPositions[2].f.x = m_pFormationSpec->m_Positions[2].m_Location.f.x + v2CenterOfPlayers.f.x;
+    av2FormationPositions[3].f.x = m_pFormationSpec->m_Positions[3].m_Location.f.x + v2CenterOfPlayers.f.x;
+
+    pFormPositions = av2FormationPositions;
+    GetKeyPlayer();
+
+    for (i_fielder = 0; i_fielder < 4; i_fielder++)
+    {
+        team->GetFielder(i_fielder);
+        for (i_pos = 0; i_pos < 4; i_pos++)
+        {
+            float dy = pFormPositions[i_pos].f.y - av3FielderAILocs[i_fielder].f.y;
+            float dx = pFormPositions[i_pos].f.x - av3FielderAILocs[i_fielder].f.x;
+            fFielderToPositionDistance[i_fielder][i_pos] = nlSqrt(dx * dx + dy * dy, true);
+        }
+    }
+
+    AssignPositionsToFielders(m_iFielderFormationPos, fFielderToPositionDistance);
 }
 
 /**

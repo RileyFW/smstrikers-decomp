@@ -100,7 +100,7 @@ class SaveCallbacks
 {
 public:
     unsigned long FileWriteCB(unsigned long, long, void*);
-    void DoSave(unsigned long);
+    long DoSave(unsigned long);
     unsigned long FileWriteIconCB(unsigned long, long, void*);
     unsigned long CreateFileCB(unsigned long, long, void*);
     unsigned long CardMountCB(unsigned long, long, void*);

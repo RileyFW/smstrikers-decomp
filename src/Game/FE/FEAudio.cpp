@@ -1,12 +1,16 @@
 #include "Game/FE/FEAudio.h"
 
 #include "Game/Audio/AudioLoader.h"
+#include "Game/Sys/eventman.h"
 #include "NL/nlString.h"
-
-class Event;
 
 static bool mIsEnabled = true;
 static void* gpLastSoundFromPlayer;
+
+struct FrontEndAnimAudioData : EventData
+{
+    /* 0x04 */ unsigned long audioIdentifier;
+}; // total size: 0x8
 
 /**
  * Offset/Address/Size: 0x0 | 0x8009EDAC | size: 0x8
@@ -19,9 +23,90 @@ void FEAudio::EnableSounds(bool enable)
 /**
  * Offset/Address/Size: 0x8 | 0x8009EDB4 | size: 0x27C
  */
-void FEAudioEventHandler(Event*, void*)
+// #pragma inline_depth(0)
+void FEAudioEventHandler(Event* pEvent, void*)
 {
+    if (!AudioLoader::IsInited())
+    {
+        return;
+    }
+
+    switch (pEvent->m_uEventID)
+    {
+    case 0x48:
+        Audio::gWorldSFX.Play(Audio::WORLDSFX_PLACEHOLDER, 1.0f, 0.0f, false, 1.0f);
+        break;
+    case 0x49:
+        Audio::gWorldSFX.Play(Audio::WORLDSFX_PLACEHOLDER, 1.0f, 0.0f, false, 1.0f);
+        break;
+    case 0x4A:
+        Audio::gWorldSFX.Play(Audio::WORLDSFX_PLACEHOLDER, 1.0f, 0.0f, false, 1.0f);
+        break;
+    case 0x4B:
+        Audio::gWorldSFX.Play(Audio::WORLDSFX_PLACEHOLDER, 1.0f, 0.0f, false, 1.0f);
+        break;
+    case 0x4C:
+        Audio::gWorldSFX.Play(Audio::WORLDSFX_FE_BUTTON_GEN_SELECT_ACCEPT, 1.0f, 0.0f, false, 1.0f);
+        break;
+    case 0x4D:
+        Audio::gWorldSFX.Play(Audio::WORLDSFX_FE_BUTTON_GEN_SELECT_BACK, 1.0f, 0.0f, false, 1.0f);
+        break;
+    case 0x4E:
+        AudioLoader::PlayPauseMenuMusic();
+        break;
+    case 0x4F:
+        Audio::gWorldSFX.Play(Audio::WORLDSFX_FE_SCREEN_GEN_BEGIN, 1.0f, 0.0f, false, 1.0f);
+        break;
+    case 0x50:
+        Audio::gWorldSFX.Play(Audio::WORLDSFX_FE_SCREEN_GEN_END, 1.0f, 0.0f, false, 1.0f);
+        break;
+    case 0x51:
+        Audio::gWorldSFX.Play(Audio::WORLDSFX_FE_DENY, 1.0f, 0.0f, false, 1.0f);
+        break;
+    case 0x52:
+    {
+        FrontEndAnimAudioData* data;
+        if ((s32)pEvent->m_data.GetID() == -1)
+        {
+            nlPrintf("Error: Trying to get event data on event with none!\n");
+            data = NULL;
+        }
+        else if ((s32)pEvent->m_data.GetID() != 0x16D)
+        {
+            nlPrintf("Error: GetData() failed! Data types do not match!\n");
+            data = NULL;
+        }
+        else
+        {
+            data = (FrontEndAnimAudioData*)&pEvent->m_data;
+        }
+
+        unsigned long stackHash = data->audioIdentifier;
+        AnimAudioEventLookup* result = nlBSearch<AnimAudioEventLookup, unsigned long>(stackHash, gp_AnimAudioEventTable, gNumAnimAudioEvents);
+        AnimAudioEventLookup* event;
+        if (result)
+        {
+            event = result;
+        }
+        else
+        {
+            event = NULL;
+        }
+
+        if (AudioLoader::IsInited() && mIsEnabled)
+        {
+            Audio::PlayWorldSFXbyStr(event->szSFXType, 1.0f, 0.0f, true, true, NULL, NULL, NULL);
+        }
+
+        break;
+    }
+    case 0x53:
+    case 0x54:
+    default:
+        break;
+    }
 }
+// #pragma inline_depth()
 
 /**
  * Offset/Address/Size: 0x284 | 0x8009F030 | size: 0xC

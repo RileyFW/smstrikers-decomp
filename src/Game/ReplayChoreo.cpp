@@ -10,6 +10,71 @@ struct GoalScoredDataExt
     int sideOfInterest;
 };
 
+namespace Detail
+{
+class TempStringAllocator;
+}
+
+struct BasicStringDataHack
+{
+    char* mData;
+    int mSize;
+    int mCapacity;
+    int mRefCount;
+};
+
+template <typename CharT, typename Allocator>
+class BasicString
+{
+public:
+    BasicStringDataHack* m_data;
+
+    ~BasicString()
+    {
+        if (m_data)
+        {
+            BasicStringDataHack* data = m_data;
+            if (--data->mRefCount == 0)
+            {
+                if (data)
+                {
+                    if (data)
+                    {
+                        delete[] data->mData;
+                    }
+                    if (data)
+                    {
+                        nlFree(data);
+                    }
+                }
+            }
+        }
+    }
+
+    const CharT* c_str() const
+    {
+        static CharT emptyString = '\0';
+        return m_data ? (const CharT*)m_data->mData : &emptyString;
+    }
+};
+
+class NetMesh
+{
+public:
+    static NetMesh* spPositiveXNetMesh;
+    static NetMesh* spNegativeXNetMesh;
+
+    void UpdateUntilRelaxed();
+};
+
+extern "C" void CalcAutoReplayScriptName__12ReplayChoreoCF10ReplayType(
+    BasicString<char, Detail::TempStringAllocator>*, const ReplayChoreo*, ReplayType);
+
+namespace
+{
+char scriptName[128];
+}
+
 // /**
 //  * Offset/Address/Size: 0xEC4 | 0x80129A38 | size: 0xD74
 //  */
@@ -165,9 +230,85 @@ void ReplayChoreo::CalcAutoReplayScriptName(ReplayType) const
 
 /**
  * Offset/Address/Size: 0x428 | 0x80127A94 | size: 0x270
+ * TODO: 95.00% match - remaining diffs are register allocation in highlight init/copy block and scriptName symbol placement.
  */
-void ReplayChoreo::StartAutoReplay(ReplayType)
+void ReplayChoreo::StartAutoReplay(ReplayType rt)
 {
+    mReplayManager = ReplayManager::Instance();
+    mReplay = mReplayManager->mReplay;
+
+    NetMesh::spNegativeXNetMesh->UpdateUntilRelaxed();
+    NetMesh::spPositiveXNetMesh->UpdateUntilRelaxed();
+
+    if (!cCameraManager::HasCamera(&mCamera))
+    {
+        mCamera.mNoDampenForOneUpdate = true;
+        cCameraManager::PushCamera(&mCamera);
+    }
+
+    if (rt == REPLAY_TYPE_HIGHLIGHT)
+    {
+        mReplayManager = ReplayManager::Instance();
+        int i = 0;
+        int validReels = i;
+        mReplay = mReplayManager->mReplay;
+
+        while (i < 3)
+        {
+            if (mReplay->IsReelValid(i + 1))
+            {
+                validReels++;
+            }
+            i++;
+        }
+
+        mNumHighlights = mNumHighlights - 1;
+        if (mNumHighlights < 0)
+        {
+            mNumHighlights = validReels - 1;
+        }
+
+        do
+        {
+            mHighlightIndex = mHighlightIndex + 1;
+            mHighlightIndex = mHighlightIndex % 3;
+        } while (!mReplay->IsReelValid(mHighlightIndex + 1));
+
+        mReplay->PlayReel(mHighlightIndex + 1);
+        int highlightOffset = mHighlightIndex * 0x34;
+        int* highlight = (int*)((char*)this + highlightOffset);
+        mCamera.SetSideOfInterest(*(int*)((char*)highlight + 0x238));
+
+        int* pHighlight = (int*)((char*)this + mHighlightIndex * 0x34 + 0x23C);
+        int* pGoal = (int*)((char*)&mGoalScoredData + 0x4);
+        pGoal[0] = pHighlight[1];
+        int p8 = pHighlight[2];
+        int pC = pHighlight[3];
+        pGoal[1] = p8;
+        pGoal[2] = pC;
+        pGoal[3] = pHighlight[4];
+        pGoal[4] = pHighlight[5];
+        pGoal[5] = pHighlight[6];
+        int p1C = pHighlight[7];
+        int p20 = pHighlight[8];
+        pGoal[6] = p1C;
+        pGoal[7] = p20;
+        pGoal[8] = pHighlight[9];
+
+        rt = REPLAY_TYPE_GOAL;
+    }
+    else
+    {
+        mReplay->mReelIdx = 0;
+    }
+
+    {
+        BasicString<char, Detail::TempStringAllocator> name;
+        CalcAutoReplayScriptName__12ReplayChoreoCF10ReplayType(&name, this, rt);
+        nlStrNCpy(scriptName, name.c_str(), 0x80);
+    }
+
+    CallFunction(nlStringHash(scriptName));
 }
 
 /**

@@ -535,6 +535,7 @@ FuzzyVariant Fuzzy::ShouldIStrafeMark(cFielder* TheFielder)
 FuzzyVariant Fuzzy::ShouldIMarkBallOwner(cFielder*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
@@ -543,6 +544,7 @@ FuzzyVariant Fuzzy::ShouldIMarkBallOwner(cFielder*)
 FuzzyVariant Fuzzy::ShouldIAttemptOneTimer(cFielder*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
@@ -551,6 +553,7 @@ FuzzyVariant Fuzzy::ShouldIAttemptOneTimer(cFielder*)
 FuzzyVariant Fuzzy::GetBestLooseBallPassTarget(cFielder*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
@@ -559,6 +562,7 @@ FuzzyVariant Fuzzy::GetBestLooseBallPassTarget(cFielder*)
 FuzzyVariant Fuzzy::GetBestPassTarget(cPlayer*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
@@ -567,6 +571,7 @@ FuzzyVariant Fuzzy::GetBestPassTarget(cPlayer*)
 FuzzyVariant Fuzzy::GoodPassTargetFrom(cFielder*, cFielder*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
@@ -575,6 +580,7 @@ FuzzyVariant Fuzzy::GoodPassTargetFrom(cFielder*, cFielder*)
 FuzzyVariant Fuzzy::GetBestHitTarget(cFielder*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
@@ -583,6 +589,7 @@ FuzzyVariant Fuzzy::GetBestHitTarget(cFielder*)
 FuzzyVariant Fuzzy::GetPassDirection(cPlayer*, cPlayer*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
@@ -591,6 +598,7 @@ FuzzyVariant Fuzzy::GetPassDirection(cPlayer*, cPlayer*)
 FuzzyVariant Fuzzy::GoodToShoot(cFielder*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
@@ -599,6 +607,7 @@ FuzzyVariant Fuzzy::GoodToShoot(cFielder*)
 FuzzyVariant Fuzzy::GoodToChipShot(cFielder*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
@@ -607,6 +616,7 @@ FuzzyVariant Fuzzy::GoodToChipShot(cFielder*)
 FuzzyVariant Fuzzy::GetBestPassReceiveAction(cFielder*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
@@ -615,6 +625,7 @@ FuzzyVariant Fuzzy::GetBestPassReceiveAction(cFielder*)
 FuzzyVariant Fuzzy::GetBestLooseBallAction(cFielder*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
@@ -623,6 +634,7 @@ FuzzyVariant Fuzzy::GetBestLooseBallAction(cFielder*)
 FuzzyVariant Fuzzy::GetBestWindupShotAction(cFielder*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**
@@ -631,6 +643,7 @@ FuzzyVariant Fuzzy::GetBestWindupShotAction(cFielder*)
 FuzzyVariant Fuzzy::GetPowerupToUseForPassReceiveDefence(cFielder*)
 {
     FORCE_DONT_INLINE;
+    return FuzzyVariant();
 }
 
 /**

@@ -762,11 +762,144 @@ void World::HandleObjectCreation(WorldObjectData*)
 
 /**
  * Offset/Address/Size: 0x3420 | 0x801980E4 | size: 0x274
+ * TODO: 97.48% match - remaining diffs are key/register ordering in the inlined DrawableMap FindGet path
+ *       and float register assignment/order in bounding-radius max selection.
  */
 bool World::LoadGeometry(glModel* gModel, unsigned long uNumModels, bool bMakeDrawables, bool keepTransform, unsigned long* pDrawableObjectHashes, int* pNumObjectsLoaded, bool bVar)
 {
-    FORCE_DONT_INLINE;
-    return false;
+    struct WorldObjectDataLocal
+    {
+        unsigned long m_uObjectCreationFlags;
+        unsigned long m_uHashID;
+        unsigned long m_uModelID;
+        unsigned long m_uShadowHashID;
+        unsigned long m_uRenderLayer;
+        nlMatrix4 m_worldMatrix;
+        float m_fRadius;
+        nlVector3 m_v3Offset;
+    };
+
+    struct glModelPacketMatrixRef
+    {
+        char pad[0x24];
+        unsigned long matrix;
+    };
+
+    struct DrawableModelProxy
+    {
+        char pad[0x9C];
+        glModel* m_pModel;
+    };
+
+    extern void glGetMatrix(unsigned long, nlMatrix4&);
+    extern unsigned long eOC_ENV_SHINY;
+
+    WorldObjectDataLocal data;
+    AABBDimensions aabb;
+    DrawableObject** foundValue;
+    DrawableObject* pObject;
+
+    m_pModels = gModel;
+    m_uNumModels = uNumModels;
+
+    if (bMakeDrawables)
+    {
+        unsigned long* pHash = pDrawableObjectHashes;
+        glModel* pModelStart = m_pModels;
+        nlMatrix4* pWorldMtx = &data.m_worldMatrix;
+        glModel* pModel = pModelStart;
+        bool keep = keepTransform;
+        glModel* pEndModel = pModelStart + m_uNumModels;
+        bool checkEnvShiny = bVar;
+        int count = 0;
+        float radius = 0.0f;
+
+        while (pModel < pEndModel)
+        {
+            nlZeroMemory(&data, sizeof(WorldObjectDataLocal));
+
+            data.m_uHashID = pModel->id;
+            data.m_uModelID = pModel->id;
+            data.m_uShadowHashID = (unsigned long)-1;
+
+            if (keep)
+            {
+                glGetMatrix(((glModelPacketMatrixRef*)pModel->packets)->matrix, *pWorldMtx);
+            }
+            else
+            {
+                pWorldMtx->SetIdentity();
+            }
+
+            data.m_fRadius = radius;
+            HandleObjectCreation((WorldObjectData*)&data);
+
+            if (((DrawableMapFindHelper*)&m_drawableMap)->FindGet(pModel->id, &foundValue))
+            {
+                pObject = *foundValue;
+            }
+            else
+            {
+                pObject = NULL;
+            }
+
+            pObject->m_uObjectFlags |= 0x4;
+
+            if (checkEnvShiny)
+            {
+                DrawableModel* model = pObject->AsDrawableModel();
+                if (model != NULL)
+                {
+                    unsigned long envShiny = eOC_ENV_SHINY;
+                    glModelPacket* pPacket = ((DrawableModelProxy*)model)->m_pModel->packets;
+                    while (pPacket < ((DrawableModelProxy*)model)->m_pModel->packets + ((DrawableModelProxy*)model)->m_pModel->numPackets)
+                    {
+                        if (pPacket->state.texconfig & 0x10)
+                        {
+                            pObject->m_uObjectCreationFlags |= envShiny;
+                        }
+                        pPacket++;
+                    }
+                }
+            }
+
+            pObject->GetAABBDimensions(aabb, false);
+
+            /**
+             * TODO: 97.83% match - r0/r4 register swap in DrawableMapFindHelper::FindGet
+             * inlined BST lookup (MWCC volatile register allocation quirk, 7 diffs) and
+             * ble-+b vs bgt- branch structure difference (MWCC optimizes && to || negation, 3 diffs)
+             */
+            {
+                float dimX = aabb.mDim.f.x;
+                if (!(dimX >= aabb.mDim.f.y) || !(dimX > aabb.mDim.f.z))
+                {
+                    dimX = aabb.mDim.f.z;
+                    if (aabb.mDim.f.y >= dimX)
+                    {
+                        dimX = aabb.mDim.f.y;
+                    }
+                }
+                pObject->m_fBoundingRadius = dimX;
+            }
+
+            if (pDrawableObjectHashes != NULL)
+            {
+                *pHash = pObject->m_uHashID;
+            }
+
+            pHash++;
+            count++;
+            pModel++;
+        }
+
+        if (pNumObjectsLoaded != NULL)
+        {
+            *pNumObjectsLoaded = count;
+        }
+    }
+
+    return m_pModels != NULL;
 }
 
 /**

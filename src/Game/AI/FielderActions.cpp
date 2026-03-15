@@ -1435,9 +1435,113 @@ void cFielder::ActionRunningWBTurbo(float)
 
 /**
  * Offset/Address/Size: 0x3CA8 | 0x8002A7E0 | size: 0x280
+ * TODO: 95.41% match - remaining diffs in turbo-speed branch inversion and
+ * r3/r4 register allocation in mirror-swap logic before SetRunTurboAnimState.
  */
-void cFielder::ActionRunningWBTurboTurn(float)
+void cFielder::ActionRunningWBTurboTurn(float fDeltaT)
 {
+    if (m_pBall == nullptr)
+    {
+        if (ShouldStartCrossBlend(7))
+        {
+            SetAction(ACTION_NEED_ACTION);
+        }
+    }
+    else
+    {
+        if (GetGlobalPad() != nullptr)
+        {
+            if (m_pController->IsTurboPressed())
+            {
+                if (m_pController->GetMovementStickMagnitude() > 0.001f)
+                {
+                    bool bShotMeterActive = false;
+                    eShotMeterState state = m_pShotMeter->m_eShotMeterState;
+                    if (state == SHOT_METER_ACTIVE || state == SHOT_METER_STS_ACTIVE || state == SHOT_METER_STS_TRANSISTION)
+                    {
+                        bShotMeterActive = true;
+                    }
+
+                    if (!bShotMeterActive)
+                        goto setTurboSpeed;
+                }
+            }
+
+            m_fDesiredSpeed = ((FielderTweaks*)m_pTweaks)->fRunningWBSpeed;
+            goto testButtons;
+
+        setTurboSpeed:
+            m_fDesiredSpeed = ((FielderTweaks*)m_pTweaks)->fRunningWBTurboSpeedLevel1;
+
+        testButtons:
+            TestButtonsToQueueActions(fDeltaT);
+        }
+
+        if (ShouldStartCrossBlend(7))
+        {
+            if (TestQueuedActions())
+            {
+                m_eLastPadAction = PAD_NONE;
+            }
+            else if (m_fDesiredSpeed > (((FielderTweaks*)m_pTweaks)->fRunningWBSpeed + 0.1f))
+            {
+                m_aDesiredMovementDirection = m_aActualFacingDirection;
+                m_aActualMovementDirection = m_aDesiredMovementDirection;
+
+                if (m_ePowerup == POWER_UP_MUSHROOM || m_ePowerup == POWER_UP_STAR)
+                {
+                    SetAction(ACTION_RUNNING_WB);
+                    mActionRunningWBVars.bWaitForAnimToFinish = false;
+                    mActionRunningVars.eLastStrafeDirection = STRAFE_IDLE;
+                    m_aActualMovementDirection = m_aActualFacingDirection;
+                }
+                else
+                {
+                    SetAction(ACTION_RUNNING_WB_TURBO);
+                    InitMovementRunningNoTurn(((FielderTweaks*)m_pTweaks)->fRunningWBTurboAccel, ((FielderTweaks*)m_pTweaks)->fRunningWBTurboDecel);
+
+                    bool bForceMirrorSwap;
+                    cPN_SAnimController* pController = m_pCurrentAnimController;
+                    if (!pController->m_bMirror)
+                    {
+                        bForceMirrorSwap = false;
+                        if (m_eAnimID == 0x1A)
+                        {
+                            if (pController->m_fTime > 0.25f && pController->m_fTime < 0.75)
+                            {
+                                bForceMirrorSwap = true;
+                            }
+                        }
+                        mActionRunningWBTurboVars.bForcedMirrorSwap = bForceMirrorSwap;
+                    }
+                    else
+                    {
+                        bForceMirrorSwap = false;
+                        if (m_eAnimID == 0x1A)
+                        {
+                            if (pController->m_fTime < 0.25f || pController->m_fTime > 0.75)
+                            {
+                                bForceMirrorSwap = true;
+                            }
+                        }
+                        mActionRunningWBTurboVars.bForcedMirrorSwap = bForceMirrorSwap;
+                    }
+
+                    SetRunTurboAnimState(0x1D, mActionRunningWBTurboVars.bForcedMirrorSwap);
+                }
+            }
+            else
+            {
+                m_aDesiredMovementDirection = m_aActualFacingDirection;
+                m_aActualMovementDirection = m_aDesiredMovementDirection;
+                SetAction(ACTION_RUNNING_WB);
+                mActionRunningWBVars.bWaitForAnimToFinish = false;
+                mActionRunningVars.eLastStrafeDirection = STRAFE_IDLE;
+                m_aActualMovementDirection = m_aActualFacingDirection;
+                InitMovementRunning(m_pTweaks->fRunningDirectionSeekSpeed, m_pTweaks->fRunningDirectionSeekFalloff, ((FielderTweaks*)m_pTweaks)->fRunningAccel, ((FielderTweaks*)m_pTweaks)->fRunningDecel);
+            }
+        }
+    }
 }
 
 /**

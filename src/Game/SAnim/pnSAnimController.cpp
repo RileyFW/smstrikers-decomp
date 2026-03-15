@@ -239,9 +239,79 @@ void cPN_SAnimController::Evaluate(int nodeIndex, float weight, cPoseAccumulator
 
 /**
  * Offset/Address/Size: 0x35C | 0x801EA9B8 | size: 0x280
+ * TODO: 89.98% match - stack/local slot packing differs (0x44..0x4C vs 0x50..0x58),
+ * causing a smaller frame and shifted prologue/epilogue offsets.
  */
-void cPN_SAnimController::BlendRootTrans(nlVector3*, float, float*)
+static inline void GetRootTransDelta(cPN_SAnimController* pController, nlVector3* pRootTrans, float fStartTime, float fEndTime)
 {
+    nlVector3 v3LastFrame;
+
+    pController->m_pSAnim->GetRootTrans(fEndTime, pRootTrans);
+    pController->m_pSAnim->GetRootTrans(fStartTime, &v3LastFrame);
+
+    pRootTrans->f.x = pRootTrans->f.x - v3LastFrame.f.x;
+    pRootTrans->f.y = pRootTrans->f.y - v3LastFrame.f.y;
+    pRootTrans->f.z = pRootTrans->f.z - v3LastFrame.f.z;
+}
+
+/**
+ * Offset/Address/Size: 0x3DC | 0x801EA9B8 | size: 0x280
+ * TODO: 91.51% match - volatile workaround for -inline deferred stack frame (0x90 vs 0xa0).
+ * decomp.me overlaps v3RootTransLocal/v3Extra; volatile prevents this but changes
+ * register allocation in sin/cos+blend section (3 extra lfs reloads, r diffs).
+ */
+void cPN_SAnimController::BlendRootTrans(nlVector3* pRootTrans, float fNodeWeight, float* fAccumulatedWeight)
+{
+    unsigned short aLastFrameFacing;
+    nlVector3 v3RootTrans;
+    volatile nlVector3 v3RootTransLocal;
+    unsigned short aMirrorAdjust;
+    nlVector3 v3Extra;
+    float fBlendPercent;
+
+    aMirrorAdjust = 0;
+
+    if (m_fTime < m_fPrevTime)
+    {
+        GetRootTransDelta(this, &v3RootTrans, m_fPrevTime, 1.0f);
+        GetRootTransDelta(this, &v3Extra, 0.0f, m_fTime);
+
+        v3RootTrans.f.x = v3RootTrans.f.x + v3Extra.f.x;
+        v3RootTrans.f.y = v3RootTrans.f.y + v3Extra.f.y;
+        v3RootTrans.f.z = v3RootTrans.f.z + v3Extra.f.z;
+    }
+    else
+    {
+        GetRootTransDelta(this, &v3RootTrans, m_fPrevTime, m_fTime);
+    }
+
+    m_pSAnim->GetRootRot(m_fPrevTime, &aLastFrameFacing);
+
+    if (m_bMirror != 0)
+    {
+        aMirrorAdjust = (unsigned short)((aLastFrameFacing - (unsigned short)(int)(10430.378f * nlATan2f(v3RootTrans.f.y, v3RootTrans.f.x))) << 1);
+    }
+
+    {
+        float fCos;
+        float fSin;
+
+        nlSinCos(&fSin, &fCos, aMirrorAdjust - aLastFrameFacing);
+
+        *fAccumulatedWeight += fNodeWeight;
+
+        v3RootTransLocal.f.x = v3RootTrans.f.x * fCos - v3RootTrans.f.y * fSin;
+        v3RootTransLocal.f.y = v3RootTrans.f.y * fCos + v3RootTrans.f.x * fSin;
+        v3RootTransLocal.f.z = v3RootTrans.f.z;
+    }
+
+    if (*fAccumulatedWeight != 0.0f)
+    {
+        fBlendPercent = fNodeWeight / *fAccumulatedWeight;
+        pRootTrans->f.x = (1.0f - fBlendPercent) * pRootTrans->f.x + fBlendPercent * v3RootTransLocal.f.x;
+        pRootTrans->f.y = (1.0f - fBlendPercent) * pRootTrans->f.y + fBlendPercent * v3RootTransLocal.f.y;
+        pRootTrans->f.z = (1.0f - fBlendPercent) * pRootTrans->f.z + fBlendPercent * v3RootTransLocal.f.z;
+    }
 }
 
 /**

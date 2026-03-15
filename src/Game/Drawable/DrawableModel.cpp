@@ -1,4 +1,5 @@
 #include "Game/Drawable/DrawableModel.h"
+#include "Game/Debug/ShapeRender.h"
 #include "Game/Render/RenderShadow.h"
 #include "NL/gl/glMatrix.h"
 #include "NL/gl/glDraw3.h"
@@ -570,10 +571,133 @@ void DrawableModel::DrawPlanarShadow()
 
 /**
  * Offset/Address/Size: 0x964 | 0x80120770 | size: 0x290
+ * TODO: 87.04% match - float register allocation/scheduling still differs in
+ *       AABB corner initialization and projected matrix coefficient setup.
  */
-void GetShadowBoundingSquare(const glModel*, const nlMatrix4&, float&, float&, float&, float&, unsigned long)
+void GetShadowBoundingSquare(const glModel* model, const nlMatrix4& matrix, float& x0, float& x1, float& y0, float& y1, unsigned long userData)
 {
-    FORCE_DONT_INLINE;
+    extern World* s_World__12WorldManager;
+
+    AABBDimensions dimensions;
+    GetAABBDimensions(model, dimensions, userData);
+
+    float zero = 0.0f;
+    nlVector4 points[8];
+    nlVector4* point = points;
+    int i = 0;
+
+    float minX = dimensions.mMin.f.x;
+    float minY = dimensions.mMin.f.y;
+    float minZ = dimensions.mMin.f.z;
+    float maxZ = dimensions.mMax.f.z;
+    float maxY = dimensions.mMax.f.y;
+    float maxX = dimensions.mMax.f.x;
+
+    points[0].f.x = minX;
+    points[0].f.y = minY;
+    float m13 = matrix.f.m13;
+    points[0].f.z = minZ;
+    float m11 = matrix.f.m11;
+    points[0].f.w = zero;
+    float m23 = matrix.f.m23;
+
+    points[1].f.x = minX;
+    float m21 = matrix.f.m21;
+    points[1].f.y = minY;
+    float m33 = matrix.f.m33;
+    points[1].f.z = maxZ;
+    float m31 = matrix.f.m31;
+    points[1].f.w = zero;
+    float m43 = matrix.f.m43;
+
+    points[2].f.x = minX;
+    float m41 = matrix.f.m41;
+    points[2].f.y = maxY;
+    float m12 = matrix.f.m12;
+    points[2].f.z = minZ;
+    float m22 = matrix.f.m22;
+    points[2].f.w = zero;
+    float m32 = matrix.f.m32;
+
+    points[3].f.x = minX;
+    points[3].f.y = maxY;
+    float one = 1.0f;
+    points[3].f.z = maxZ;
+    points[3].f.w = zero;
+
+    points[4].f.x = maxX;
+    points[4].f.y = minY;
+    points[4].f.z = minZ;
+    points[4].f.w = zero;
+
+    points[5].f.x = maxX;
+    points[5].f.y = minY;
+    points[5].f.z = maxZ;
+    points[5].f.w = zero;
+
+    points[6].f.x = maxX;
+    points[6].f.y = maxY;
+    points[6].f.z = minZ;
+    points[6].f.w = zero;
+
+    points[7].f.x = maxX;
+    points[7].f.y = maxY;
+    points[7].f.z = maxZ;
+    points[7].f.w = zero;
+
+    u32 lightPtr = *(u32*)((u8*)s_World__12WorldManager + 0x138);
+    float lightX = *(float*)(lightPtr + 4);
+    float lightY = *(float*)(lightPtr + 8);
+    float lightZ = *(float*)(lightPtr + 0xC);
+
+    lightX = -lightX;
+    lightY = -lightY;
+
+    nlMatrix4 projected;
+    projected.f.m13 = one;
+    float xOverZ = lightX / lightZ;
+    projected.f.m23 = one;
+    projected.f.m33 = one;
+    projected.f.m43 = one;
+    projected.f.m14 = one;
+    projected.f.m24 = one;
+    float yOverZ = lightY / lightZ;
+    projected.f.m34 = one;
+    projected.f.m44 = zero;
+
+    projected.f.m13 = m11 + xOverZ * m13;
+    projected.f.m23 = m21 + xOverZ * m23;
+    projected.f.m33 = m31 + xOverZ * m33;
+    projected.f.m43 = m41 + xOverZ * m43;
+    projected.f.m14 = m12 + yOverZ * m13;
+    projected.f.m24 = m22 + yOverZ * m23;
+    projected.f.m34 = m32 + yOverZ * m33;
+    projected.f.m44 = matrix.f.m42 + yOverZ * m43;
+
+    for (; i < 8; i++, point++)
+    {
+        nlMultVectorMatrix(*point, *point, projected);
+
+        if (i == 0 || point->f.x < x0)
+        {
+            x0 = point->f.x;
+        }
+
+        if (i == 0 || point->f.x > x1)
+        {
+            x1 = point->f.x;
+        }
+
+        if (i == 0 || point->f.y < y0)
+        {
+            y0 = point->f.y;
+        }
+
+        if (i == 0 || point->f.y > y1)
+        {
+            y1 = point->f.y;
+        }
+    }
 }
 
 /**
@@ -711,9 +835,56 @@ float GetCoPlanar0Z()
 
 /**
  * Offset/Address/Size: 0x3C | 0x8011FE48 | size: 0x26C
+ * TODO: 99.19% match - float register allocation cycle (f4/f6/f2/f3) in AABB corner setup, r26/r27 instruction order
  */
-void RenderBoundingBox(const glModel*, const nlMatrix4&)
+void RenderBoundingBox(const glModel* model, const nlMatrix4& matrix)
 {
+    AABBDimensions dimensions;
+    GetAABBDimensions(model, dimensions, 0);
+
+    nlVector4 points[8];
+
+    nlVector4* p1 = &points[1];
+    nlVector4* p2 = &points[2];
+    nlVector4* p3 = &points[3];
+    nlVector4* p5 = &points[5];
+    nlVector4* p4 = &points[4];
+    nlVector4* p6 = &points[6];
+    nlVector4* p7 = &points[7];
+    nlVector4* p0 = &points[0];
+    int i = 0;
+
+    nlVec4Set(points[0], dimensions.mMin.f.x, dimensions.mMin.f.y, dimensions.mMin.f.z, 1.0f);
+    nlVec4Set(*p1, dimensions.mMin.f.x, dimensions.mMin.f.y, dimensions.mMax.f.z, 1.0f);
+    nlVec4Set(*p2, dimensions.mMin.f.x, dimensions.mMax.f.y, dimensions.mMax.f.z, 1.0f);
+    nlVec4Set(*p3, dimensions.mMin.f.x, dimensions.mMax.f.y, dimensions.mMin.f.z, 1.0f);
+    nlVec4Set(*p4, dimensions.mMax.f.x, dimensions.mMin.f.y, dimensions.mMin.f.z, 1.0f);
+    nlVec4Set(*p5, dimensions.mMax.f.x, dimensions.mMin.f.y, dimensions.mMax.f.z, 1.0f);
+    nlVec4Set(*p6, dimensions.mMax.f.x, dimensions.mMax.f.y, dimensions.mMax.f.z, 1.0f);
+    nlVec4Set(*p7, dimensions.mMax.f.x, dimensions.mMax.f.y, dimensions.mMin.f.z, 1.0f);
+
+    for (; i < 8; i++, p0++)
+    {
+        nlMultVectorMatrix(*p0, *p0, matrix);
+    }
+
+    static const nlColour white = { 0xFF, 0xFF, 0xFF, 0xFF };
+    nlColour colour = white;
+
+    g_ShapeRenderer.DrawLine3D((nlVector3&)points[0], (nlVector3&)*p1, colour, true);
+    g_ShapeRenderer.DrawLine3D((nlVector3&)*p1, (nlVector3&)*p2, colour, true);
+    g_ShapeRenderer.DrawLine3D((nlVector3&)*p2, (nlVector3&)*p3, colour, true);
+    g_ShapeRenderer.DrawLine3D((nlVector3&)*p3, (nlVector3&)points[0], colour, true);
+
+    g_ShapeRenderer.DrawLine3D((nlVector3&)*p4, (nlVector3&)*p5, colour, true);
+    g_ShapeRenderer.DrawLine3D((nlVector3&)*p5, (nlVector3&)*p6, colour, true);
+    g_ShapeRenderer.DrawLine3D((nlVector3&)*p6, (nlVector3&)*p7, colour, true);
+    g_ShapeRenderer.DrawLine3D((nlVector3&)*p7, (nlVector3&)*p4, colour, true);
+
+    g_ShapeRenderer.DrawLine3D((nlVector3&)*p4, (nlVector3&)points[0], colour, true);
+    g_ShapeRenderer.DrawLine3D((nlVector3&)*p5, (nlVector3&)*p1, colour, true);
+    g_ShapeRenderer.DrawLine3D((nlVector3&)*p6, (nlVector3&)*p2, colour, true);
+    g_ShapeRenderer.DrawLine3D((nlVector3&)*p7, (nlVector3&)*p3, colour, true);
 }
 
 /**

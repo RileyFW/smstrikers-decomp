@@ -1,6 +1,8 @@
 #ifndef _FEFUNCTION_H_
 #define _FEFUNCTION_H_
 
+#include "NL/nlMemory.h"
+
 enum Tag
 {
     EMPTY = 0,
@@ -66,7 +68,7 @@ public:
         BindType mBind;
         virtual ~FunctorImpl() { }
         virtual void Invoke() { }
-        virtual FunctorBase* Clone() const { return 0; }
+        virtual FunctorBase* Clone() const { return new (nlMalloc(sizeof(FunctorImpl), 8, false)) FunctorImpl(*this); }
     };
 
     enum Tag mTag; // offset 0x0, size 0x4

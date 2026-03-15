@@ -1,5 +1,7 @@
 #include "Game/Audio/CrowdMood.h"
 #include "Game/Audio/WorldAudio.h"
+#include "Game/AI/AiUtil.h"
+#include "Game/Game.h"
 #include "Game/Sys/GCStream.h"
 
 #include "NL/nlConfig.h"
@@ -286,9 +288,102 @@ void PlayMoodDef(MOOD_DEFINITION& MoodDef)
 
 /**
  * Offset/Address/Size: 0x2A0C | 0x80150120 | size: 0x270
+ * TODO: 92.37% match - remaining f1/f2 register allocation and clamp control-flow
+ *       differences in the dead decay block and volume-fade clamp path.
  */
-void UpdateTiming(float)
+void UpdateTiming(float dtArg)
 {
+    float dt = g_pGame->GetGameTime() - g_CrowdState.LastGameTime;
+
+    if (!g_DoDecay)
+    {
+        dt = dtArg;
+    }
+
+    g_CrowdState.LastGameTime = g_pGame->GetGameTime();
+
+    do
+    {
+        if (g_DoDecay)
+        {
+            break;
+        }
+
+        if (!g_CrowdState.AtDestination)
+        {
+            float speed = g_CrowdState.BlendFast ? g_Settings.BlendSpeedFast : g_Settings.BlendSpeedNormal;
+            g_CrowdState.Interpolant += dt / speed;
+        }
+
+        if (g_CrowdState.ChantState.Ready)
+        {
+            g_CrowdState.ChantState.SinceLast += dt;
+        }
+
+        if (g_CrowdState.HeckleState.Ready)
+        {
+            g_CrowdState.HeckleState.SinceLast += dt;
+        }
+
+        if (!g_DoDecay)
+        {
+            break;
+        }
+
+        g_CrowdState._unk78 += dt;
+
+        if (g_CrowdState.AtDestination)
+        {
+            if (g_CrowdState._unk78 > g_Settings.MoodDecayDelay)
+            {
+                float f2 = g_CrowdState.SinceMoodDest;
+                if (f2 != 0.0f)
+                {
+                    if (g_DoDecay)
+                    {
+                        float f0 = g_Settings.MoodDecayRate;
+                        if (f0 <= f2)
+                        {
+                            f2 = f0;
+                        }
+
+                        f2 = g_CrowdState.SinceMoodDest - f2;
+                        g_CrowdState.SinceMoodDest = f2;
+                        f2 = (f2 >= 0.0f) ? f2 : 0.0f;
+
+                        {
+                            float f1 = (float)f2;
+                            g_CrowdState.SinceMoodDest = f2;
+                            g_CrowdState.DestMoodLevel = (unsigned char)(255.0f * f1);
+                            g_CrowdState.CurrentMoodBlend[(s8)g_CrowdState.CurrentMood] = f1;
+                            g_CrowdState.SkipBlend = true;
+                        }
+                    }
+                }
+            }
+        }
+    } while (0);
+
+    if (g_CrowdState.VolumeFade.Time > 0.0f)
+    {
+        float f3 = g_CrowdState.VolumeFade.Interp + (dtArg / g_CrowdState.VolumeFade.Time);
+        g_CrowdState.VolumeFade.Interp = f3;
+        f3 = (f3 <= 1.0f) ? f3 : 1.0f;
+
+        {
+            float f2 = (float)f3;
+            g_CrowdState.VolumeFade.Interp = f3;
+
+            if (fabsf(f2 - 1.0f) <= 0.01f)
+            {
+                g_CrowdState.VolumeFade.Time = 0.0f;
+            }
+        }
+
+        ChangeCrowdVolume(Interpolate(g_CrowdState.VolumeFade.StartVol,
+            g_CrowdState.VolumeFade.EndVol,
+            g_CrowdState.VolumeFade.Interp));
+    }
 }
 
 /**

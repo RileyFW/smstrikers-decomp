@@ -135,6 +135,57 @@ void glx_DOFGrab()
  */
 void glx_ShadowTextureGrab()
 {
+    char updatedName[32] = "target/pshadow_updated00";
+    char textureName[32] = "target/pshadow00";
+    bool colorUpdate = gxSetColourUpdate(true);
+    bool alphaUpdate = gxSetAlphaUpdate(true);
+
+    gxSaveZMode();
+    gxSetZMode(false, GX_LEQUAL, true);
+
+    for (s32 i = 0; i < 10; i++)
+    {
+        int tens = (i / 10) + '0';
+        int ones = (i % 10) + '0';
+
+        updatedName[22] = tens;
+        updatedName[23] = ones;
+
+        if (glConstantGet(updatedName).f.x == 1.0f)
+        {
+            if ((u8)glx_SharedLock != 0)
+            {
+                return;
+            }
+
+            textureName[14] = tens;
+            textureName[15] = ones;
+
+            u32 handle = glGetTexture(textureName);
+            GXSetTexCopySrc((u16)((i % 4) * 160), (u16)((i / 4) * 148), 160, 148);
+            GXSetTexCopyDst(80, 74, (GXTexFmt)0x27, true);
+            GXCopyTex(glx_GetTex(handle, true, true)->m_SwizzledData, false);
+        }
+
+        GXPixModeSync();
+    }
+
+    u32* clearColour = glGetClearColour();
+    GXColor clear;
+
+    clear.r = ((u8*)clearColour)[0];
+    clear.g = ((u8*)clearColour)[1];
+    clear.b = ((u8*)clearColour)[2];
+    clear.a = ((u8*)clearColour)[3];
+
+    GXSetCopyClear(clear, 0xFFFFFF);
+    GXSetTexCopySrc(0, 0, 640, 448);
+    GXSetTexCopyDst(320, 224, (_GXTexFmt)0x28, true);
+    GXCopyTex(clearz_mem, true);
+
+    gxSetColourUpdate(colorUpdate);
+    gxSetAlphaUpdate(alphaUpdate);
+    gxRestoreZMode();
 }
 
 /**

@@ -315,6 +315,8 @@ void Bowser::ActionStomp()
 }
 
 extern "C" cPN_Blender* __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(cPN_Blender*, cPoseNode*, cPoseNode*, float);
+extern "C" bool CheckForAbort__6BowserFv(Bowser*);
+extern "C" cPN_SAnimController* __ct__19cPN_SAnimControllerFP6cSAnimPC12AnimRetarget9ePlayModePFUiP19cPN_SAnimController_vUib(cPN_SAnimController*, cSAnim*, const AnimRetarget*, ePlayMode, void (*)(unsigned int, cPN_SAnimController*), unsigned int, bool);
 
 /**
  * Offset/Address/Size: 0x2314 | 0x8015B088 | size: 0x1A0
@@ -383,6 +385,97 @@ void Bowser::ActionDescend(float fBlendTime)
  */
 void Bowser::ActionFall()
 {
+    float timerSeconds = g_pGame->m_pGameTweaks->unk314;
+    nlVector3 vel;
+
+    if (timerSeconds < g_pGame->m_pGameTweaks->unk318)
+    {
+        timerSeconds += nlRandomf(g_pGame->m_pGameTweaks->unk318 - timerSeconds, &nlDefaultSeed);
+    }
+
+    mtActiveTimer.SetSeconds(timerSeconds);
+    mAnimID = BOWSER_ANIM_LAND;
+
+    cPN_SAnimController* controller = NULL;
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&cPN_SAnimController::m_SAnimControllerSlotPool, sizeof(cPN_SAnimController));
+    }
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList != NULL)
+    {
+        controller = (cPN_SAnimController*)cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList;
+        cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList = cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList->m_next;
+    }
+
+    if (controller != NULL)
+    {
+        controller = __ct__19cPN_SAnimControllerFP6cSAnimPC12AnimRetarget9ePlayModePFUiP19cPN_SAnimController_vUib(
+            controller,
+            mpAnim[BOWSER_ANIM_LAND],
+            (const AnimRetarget*)0,
+            PM_HOLD,
+            (void (*)(unsigned int, cPN_SAnimController*))0,
+            (unsigned int)0,
+            (bool)0);
+    }
+
+    if (mpFeatherBlender->GetChild(0) != NULL)
+    {
+        delete mpFeatherBlender->GetChild(0);
+    }
+
+    mpFeatherBlender->SetChild(0, controller);
+    mpAnimController = controller;
+
+    meBowserState = BOWSER_STATE_FALL;
+    mfDesiredSpeed = 0.0f;
+
+    cBaseCamera* camera = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack);
+    mv3TargetPos = camera->GetTargetPosition();
+
+    nlVector3 targetPos = mv3TargetPos;
+
+    float goalLineX = cField::GetGoalLineX(1U);
+    float limitX = goalLineX - 5.0f;
+    if ((float)fabs(targetPos.f.x) > limitX)
+    {
+        if (targetPos.f.x > 0.0f)
+        {
+            targetPos.f.x = limitX;
+        }
+        else
+        {
+            targetPos.f.x = -limitX;
+        }
+    }
+
+    float sidelineY = cField::GetSidelineY(1U);
+    float limitY = sidelineY - 5.0f;
+    if ((float)fabs(targetPos.f.y) > limitY)
+    {
+        if (targetPos.f.y < 0.0f)
+        {
+            targetPos.f.y = -limitY;
+        }
+        else
+        {
+            targetPos.f.y = limitY;
+        }
+    }
+
+    targetPos.f.z = 200.0f;
+    targetPos.f.z = 0.0f;
+    targetPos.f.y += 5.0f;
+    SetPosition(targetPos);
+
+    maFacingDirection = 0xC000;
+    maDesiredFacingDirection = 0xC000;
+
+    vel = v3Zero;
+    vel.f.y = 50.0f;
+    mv3Velocity = vel;
 }
 
 /**
@@ -601,6 +694,90 @@ void Bowser::Move(float fDeltaT)
  */
 void Bowser::ActionIdle()
 {
+    if (CheckForAbort__6BowserFv(this))
+    {
+        return;
+    }
+
+    meBowserState = BOWSER_STATE_IDLE;
+
+    if (mAnimID != BOWSER_ANIM_WALK)
+    {
+        mAnimID = BOWSER_ANIM_WALK;
+
+        cPN_SAnimController* controller = NULL;
+
+        if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList == NULL)
+        {
+            SlotPoolBase::BaseAddNewBlock(&cPN_SAnimController::m_SAnimControllerSlotPool, sizeof(cPN_SAnimController));
+        }
+
+        if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList != NULL)
+        {
+            controller = (cPN_SAnimController*)cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList;
+            cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList = cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList->m_next;
+        }
+
+        controller = new (controller) cPN_SAnimController(
+            mpAnim[BOWSER_ANIM_WALK],
+            (const AnimRetarget*)0,
+            PM_CYCLIC,
+            (void (*)(unsigned int, cPN_SAnimController*))0,
+            (unsigned int)0,
+            (bool)0);
+
+        cPN_Blender* blender;
+
+        if (mpFeatherBlender->GetChild(0) != NULL)
+        {
+            blender = NULL;
+
+            if (cPN_Blender::m_BlenderSlotPool.m_FreeList == NULL)
+            {
+                SlotPoolBase::BaseAddNewBlock(&cPN_Blender::m_BlenderSlotPool, sizeof(cPN_Blender));
+            }
+
+            if (cPN_Blender::m_BlenderSlotPool.m_FreeList != NULL)
+            {
+                blender = (cPN_Blender*)cPN_Blender::m_BlenderSlotPool.m_FreeList;
+                cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
+            }
+
+            if (blender != NULL)
+            {
+                blender = __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(blender, *mpFeatherBlender->GetChildPtr(0), controller, 0.5f);
+            }
+        }
+        else
+        {
+            blender = (cPN_Blender*)controller;
+        }
+
+        mpFeatherBlender->SetChild(0, blender);
+        mpAnimController = controller;
+    }
+
+    nlVector3 pos = mv3Position;
+    pos.f.z = 0.0f;
+    SetPosition(pos);
+
+    mv3Velocity = v3Zero;
+
+    mtStateTimer.SetSeconds(g_pGame->m_pGameTweaks->unk320);
+
+    EmissionManager::Destroy((unsigned long)this, fxGetGroup("bowser_fire"));
+    g_pEventManager->CreateValidEvent(0x65, 0x14);
+
+    EmissionController* controller = EmissionManager::Create(fxGetGroup("bowser_fire"), 0);
+    controller->m_uUserData = (unsigned long)this;
+    {
+        Function<EmissionController&> update;
+        update.mTag = FREE_FUNCTION;
+        update.mFreeFunction = UpdateFireEmitter;
+        controller->SetUpdateCallback(update);
+    }
+
+    g_pEventManager->CreateValidEvent(0x64, 0x14);
 }
 
 /**
