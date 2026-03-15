@@ -126,7 +126,6 @@ bool IsPointInCone(const nlVector3& v3Point, const nlVector3& v3Pivot, const nlV
 
 /**
  * Offset/Address/Size: 0x110C | 0x80006BB8 | size: 0xF8
- * TODO: 96.2% match - r30/r31 register swap (current/diff allocation)
  */
 #undef abs
 extern "C" int abs(int n);
@@ -135,8 +134,9 @@ unsigned short SeekDirection(unsigned short aCurrent, unsigned short aDesired, f
 {
     u16 current = aCurrent;
     u16 desired = aDesired;
-    s16 diff = (s16)(desired - current);
     s16 delta;
+    // + 0 here to get 100%
+    s16 diff = (s16)(desired - current) + 0;
 
     if (diff != 0)
     {
@@ -488,14 +488,14 @@ void GetRotationBetweenVectors(nlQuaternion& quat, const nlVector3& v3Vec1, cons
     f32 fInvR1R2 = 1.0f / nlSqrt((v3Vec1.f.x * v3Vec1.f.x + v3Vec1.f.y * v3Vec1.f.y + v3Vec1.f.z * v3Vec1.f.z) * (v3Vec2.f.x * v3Vec2.f.x + v3Vec2.f.y * v3Vec2.f.y + v3Vec2.f.z * v3Vec2.f.z), true);
     f32 fCosAngle = fInvR1R2 * (v3Vec1.f.x * v3Vec2.f.x + v3Vec1.f.y * v3Vec2.f.y + v3Vec1.f.z * v3Vec2.f.z);
 
-    if (fCosAngle > 0.999999f)
+    if (fCosAngle > 0.99999f)
     {
         quat.f.x = 0.0f;
         quat.f.y = 0.0f;
         quat.f.z = 0.0f;
         quat.f.w = 1.0f;
     }
-    else if (fCosAngle < -0.999999f)
+    else if (fCosAngle < -0.99999f)
     {
         f32 ay;
         f32 az;
@@ -527,7 +527,7 @@ void GetRotationBetweenVectors(nlQuaternion& quat, const nlVector3& v3Vec1, cons
     }
     else
     {
-        f32 fMagic = nlSqrt((f32)(0.5 * (1.0 + fCosAngle)), true);
+        f32 fMagic = nlSqrt((f32)(2 * (1.0 + fCosAngle)), true);
         f32 fMultiplier = fInvR1R2 / fMagic;
 
         f32 cx = v3Vec1.f.z * v3Vec2.f.y;
@@ -661,7 +661,7 @@ float InterpolateRangeClamped(float fResultMin, float fResultMax, float fInputMi
     }
 
     range = fInputMax - fInputMin;
-    if (fabsf(range) < 0.001f)
+    if (fabsf(range) < 0.00001f)
     {
         return fResultMax;
     }
@@ -831,11 +831,11 @@ void SortToMinOrMaxTotalSum(unsigned int* result, float (*data)[4], bool findMin
 
     if (findMin)
     {
-        bestSum = 100000.0f;
+        bestSum = 10000000000.0f;
     }
     else
     {
-        bestSum = -100000.0f;
+        bestSum = -10000000000.0f;
     }
 
     for (s32 i = 0; i < 4; i++)
