@@ -1,7 +1,14 @@
 #include "Game/FE/Overlay/OverlayHandlerSummary.h"
 #include "Game/FE/feFinder.h"
 #include "Game/FE/feSlideMenu.h"
+#include "Game/FE/FEAudio.h"
+#include "Game/FE/feManager.h"
 #include "Game/Audio/CrowdMood.h"
+#include "Game/GameInfo.h"
+#include "Game/OverlayManager.h"
+#include "Game/SH/SHPause.h"
+
+extern bool g_e3_Build;
 
 // /**
 //  * Offset/Address/Size: 0x468 | 0x800FF898 | size: 0x84
@@ -146,8 +153,100 @@ void SummaryOverlay::SceneCreated()
 /**
  * Offset/Address/Size: 0x1834 | 0x800FE3D4 | size: 0x2CC
  */
-void SummaryOverlay::Update(float)
+void SummaryOverlay::Update(float fDeltaT)
 {
+    BaseSceneHandler::Update(fDeltaT);
+    mButtons.CentreButtons();
+
+    if (!mSummaryDisplayed)
+    {
+        DisplayMatchSummary(SUMMARY_MATCH);
+        mSummaryDisplayed = true;
+    }
+
+    if (g_pFEInput->JustPressed(m_controllingInput, PAD_TRIGGER_L, false, NULL)
+        && (FrontEnd::m_feStateCurrent != FE_ALL_PADS || mContext == PAUSE))
+    {
+        if (mSlideMenu->PrevItem())
+        {
+            mCurrentSummaryIndex--;
+            if (mCurrentSummaryIndex < 0)
+            {
+                mCurrentSummaryIndex = NUM_SUMMARIES - 1;
+            }
+
+            eSummaryType summaryType = summaryOrder[mCurrentSummaryIndex];
+            if (summaryType == SUMMARY_MATCH || summaryType == SUMMARY_CUMULATIVE_MATCH)
+            {
+                DisplayMatchSummary(summaryType);
+            }
+            else
+            {
+                DisplayUserSummary(summaryType);
+            }
+        }
+    }
+    else if (g_pFEInput->JustPressed(m_controllingInput, PAD_TRIGGER_R, false, NULL)
+             && (FrontEnd::m_feStateCurrent != FE_ALL_PADS || mContext == PAUSE))
+    {
+        if (mSlideMenu->NextItem())
+        {
+            mCurrentSummaryIndex++;
+            if (mCurrentSummaryIndex == NUM_SUMMARIES)
+            {
+                mCurrentSummaryIndex = 0;
+            }
+
+            eSummaryType summaryType = summaryOrder[mCurrentSummaryIndex];
+            if (summaryType == SUMMARY_MATCH || summaryType == SUMMARY_CUMULATIVE_MATCH)
+            {
+                DisplayMatchSummary(summaryType);
+            }
+            else
+            {
+                DisplayUserSummary(summaryType);
+            }
+        }
+    }
+
+    bool showAButton = mButtonState == ButtonComponent::BS_A_AND_B || mButtonState == ButtonComponent::BS_A_ONLY;
+    bool showBButton = mButtonState == ButtonComponent::BS_A_AND_B || mButtonState == ButtonComponent::BS_B_ONLY;
+
+    if (mContext == PAUSE)
+    {
+        if (showBButton && g_pFEInput->JustPressed(m_controllingInput, PAD_BUTTON_B, false, NULL))
+        {
+            PauseMenuScene* pauseScene = (PauseMenuScene*)nlSingleton<OverlayManager>::s_pInstance->Push(IGSCENE_PAUSE, SCREEN_BACK, true);
+            pauseScene->mStartAnimAtEnd = true;
+            FEAudio::PlayAnimAudioEvent("sfx_back", false);
+        }
+    }
+    else if (mContext == ENDGAME)
+    {
+        if (showAButton && g_pFEInput->JustPressed(FE_ALL_PADS, PAD_BUTTON_A, false, NULL))
+        {
+            if (FrontEnd::m_feStateCurrent != FE_ALL_PADS)
+            {
+                if (nlSingleton<GameInfoManager>::s_pInstance->mCurrentMode == GameInfoManager::GM_FRIENDLY)
+                {
+                    if (g_e3_Build)
+                    {
+                        FrontEnd::ReturnToFE();
+                    }
+                    else
+                    {
+                        nlSingleton<OverlayManager>::s_pInstance->Push(IGSCENE_PAUSE_POST_GAME, SCREEN_FORWARD, true);
+                    }
+                }
+                else
+                {
+                    FrontEnd::ReturnToFE();
+                }
+
+                FEAudio::PlayAnimAudioEvent("sfx_accept", false);
+            }
+        }
+    }
 }
 
 /**
@@ -155,6 +254,7 @@ void SummaryOverlay::Update(float)
  */
 void SummaryOverlay::DisplayMatchSummary(eSummaryType)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -162,4 +262,5 @@ void SummaryOverlay::DisplayMatchSummary(eSummaryType)
  */
 void SummaryOverlay::DisplayUserSummary(eSummaryType)
 {
+    FORCE_DONT_INLINE;
 }

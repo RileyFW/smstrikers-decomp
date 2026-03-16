@@ -522,6 +522,110 @@ void TournTeamSetupSceneV2::FindSidekickSlideName(eSidekickID)
  */
 void TournTeamSetupSceneV2::AutoFill()
 {
+    bool changed = false;
+    int i = 0;
+
+    for (; i < mTournInfo.m_numTeams; i++)
+    {
+        if (mTeamData[i].isEmpty)
+        {
+            eTeamID randCapt;
+            u8 alreadySelected;
+
+            do
+            {
+                if (nlSingleton<GameInfoManager>::s_pInstance->IsSuperTeamUnlocked())
+                {
+                    randCapt = (eTeamID)nlRandom(9, &nlDefaultSeed);
+                }
+                else
+                {
+                    randCapt = (eTeamID)nlRandom(8, &nlDefaultSeed);
+                }
+
+                for (int k = 0; k < mTournInfo.m_numTeams; k++)
+                {
+                    if (!mTeamData[k].isEmpty && mTeamData[k].captain == randCapt)
+                    {
+                        alreadySelected = 1;
+                        goto done_select_check;
+                    }
+                }
+
+                alreadySelected = 0;
+            done_select_check:;
+            } while (alreadySelected);
+
+            if (!(*(u8*)((u8*)this + 0x334)))
+            {
+                mTeamData[mCurrentRow].isHumanPlayer = true;
+                *(u8*)((u8*)this + 0x334) = true;
+            }
+
+            mTeamData[i].isEmpty = false;
+            mTeamData[i].sidekick = (eSidekickID)nlRandom(4, &nlDefaultSeed);
+            mTeamData[i].captain = randCapt;
+            mCaptainGrid->SetValid(randCapt, false);
+            changed = true;
+        }
+    }
+
+    if (changed)
+    {
+        int numRows = mTournInfo.m_numTeams == 3 ? 3 : 4;
+        mRowOffset = mTournInfo.m_numTeams - numRows;
+
+        {
+            int currentIndex = mMenuItems.mCurrentIndex;
+            int tag = mMenuItems.mMenuItems[currentIndex].mCallbacks[2].mTag;
+            if (((u32)((-tag) | tag) >> 31) != 0)
+            {
+                TLComponentInstance* type = mMenuItems.mMenuItems[currentIndex].mType;
+                if (tag == FREE_FUNCTION)
+                {
+                    mMenuItems.mMenuItems[currentIndex].mCallbacks[2].mFreeFunction(type);
+                }
+                else
+                {
+                    (*mMenuItems.mMenuItems[currentIndex].mCallbacks[2].mFunctor)(type);
+                }
+            }
+        }
+
+        mMenuItems.mCurrentIndex = numRows - 1;
+
+        {
+            int selIdx = mMenuItems.mCurrentIndex;
+            int tag = mMenuItems.mMenuItems[selIdx].mCallbacks[1].mTag;
+            if (((u32)((-tag) | tag) >> 31) != 0)
+            {
+                TLComponentInstance* type = mMenuItems.mMenuItems[selIdx].mType;
+                if (tag == FREE_FUNCTION)
+                {
+                    mMenuItems.mMenuItems[selIdx].mCallbacks[1].mFreeFunction(type);
+                }
+                else
+                {
+                    (*mMenuItems.mMenuItems[selIdx].mCallbacks[1].mFunctor)(type);
+                }
+            }
+        }
+
+        mCurrentRow = mRowOffset + mMenuItems.mCurrentIndex;
+        mCurrentCaptain = mTeamData[mCurrentRow].captain;
+        mCurrentSK = mTeamData[mCurrentRow].sidekick;
+
+        mCaptainGrid->MoveHighlightToTarget(mCurrentCaptain);
+        ((IGridComponent*)mSKGrid)->MoveHighlightToTarget((eTeamID)mCurrentSK);
+        UpdateCaptainName();
+
+        int j = 0;
+        int numRows2 = ((u32)(3 - (u32)mTournInfo.m_numTeams) >> 31) + 3;
+        for (; j < numRows2; j++)
+        {
+            UpdateRow(j);
+        }
+    }
 }
 
 /**

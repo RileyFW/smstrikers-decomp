@@ -1281,10 +1281,125 @@ void cFielder::DoClearBall()
 
 /**
  * Offset/Address/Size: 0x8CA8 | 0x80021FE4 | size: 0x2B4
+ * TODO: 89.88% match - remaining gap due to -inline deferred (jump table for
+ * ACTION_SLIDE_FAIL_REACT switch, r4 vs r3 register allocation for ShotMeter*,
+ * bne+b vs beq for ACTION_DEKE check, missing state reload instructions)
  */
 void cFielder::DoHandleActiveShotMeter()
 {
-    FORCE_DONT_INLINE;
+    if (GetGlobalPad() == NULL)
+    {
+        return;
+    }
+
+    if ((u32)m_eActionState <= ACTION_SLIDE_FAIL_REACT)
+    {
+        if (m_eActionState == ACTION_SLIDE_FAIL_REACT)
+        {
+            m_pShotMeter->Abort(this);
+            return;
+        }
+    }
+
+    if (m_pBall == NULL)
+    {
+        m_pShotMeter->Abort(this);
+        return;
+    }
+
+    bool bReturn;
+    if (m_eActionState == ACTION_RUNNING_WB_TURBO && m_pCurrentAnimController->m_fTime > 0.2f && m_pCurrentAnimController->m_fTime < 1.0f)
+    {
+        bReturn = true;
+    }
+    else
+    {
+        bReturn = false;
+    }
+
+    if (bReturn)
+    {
+        return;
+    }
+
+    if (m_eActionState == ACTION_DEKE)
+    {
+        return;
+    }
+
+    ShotMeter* pShotMeter = m_pShotMeter;
+    bool bIsActive = false;
+    if (pShotMeter->m_eShotMeterState == SHOT_METER_ACTIVE || pShotMeter->m_eShotMeterState == SHOT_METER_STS_ACTIVE || pShotMeter->m_eShotMeterState == SHOT_METER_STS_TRANSISTION)
+    {
+        bIsActive = true;
+    }
+    if (bIsActive)
+    {
+        if (pShotMeter->m_eShotMeterState == SHOT_METER_STS_TRANSISTION)
+        {
+            KillWindup(this, "ball_shot_windup", false);
+            EmitWindupAtCharacter(this, "ball_sts_windup");
+        }
+    }
+
+    bool bIsChipShot = false;
+    if (GetGlobalPad() != NULL)
+    {
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        if (GetGlobalPad()->GetPressure(PAD_AIM, true) > pTweaks->unk2B0)
+        {
+            bIsChipShot = true;
+        }
+    }
+
+    pShotMeter = m_pShotMeter;
+    bIsActive = false;
+    if (pShotMeter->m_eShotMeterState == SHOT_METER_ACTIVE || pShotMeter->m_eShotMeterState == SHOT_METER_STS_ACTIVE || pShotMeter->m_eShotMeterState == SHOT_METER_STS_TRANSISTION)
+    {
+        bIsActive = true;
+    }
+    if (bIsActive)
+    {
+        bool bCanShootToScore = false;
+        if (pShotMeter->m_eShotMeterState == SHOT_METER_STS_TRANSISTION)
+        {
+            cNet* pOtherNet = m_pTeam->GetOtherNet();
+            if ((m_v3Position.f.x * pOtherNet->m_sideSign) <= 0.0f)
+            {
+                bCanShootToScore = true;
+            }
+        }
+
+        if (GetGlobalPad()->IsPressed(PAD_SHOOT, true))
+        {
+            if (!bCanShootToScore)
+            {
+                return;
+            }
+        }
+
+        mActionShotVars.bIsChipShot = bIsChipShot;
+        m_pShotMeter->ShotReleased(this);
+        InitActionShot(mActionShotVars.bIsChipShot);
+    }
+    else if (m_eActionState != ACTION_SHOT && pShotMeter->m_eShotMeterState == SHOT_METER_RELEASED)
+    {
+        mActionShotVars.bIsChipShot = bIsChipShot;
+        m_pShotMeter->ShotReleased(this);
+
+        if (GetGlobalPad() != NULL)
+        {
+            InitActionShot(mActionShotVars.bIsChipShot);
+        }
+        else
+        {
+            InitActionShot(false);
+        }
+    }
+    else if (m_eActionState != ACTION_SHOT && pShotMeter->m_eShotMeterState == SHOT_METER_STS_RELEASED)
+    {
+        InitActionShootToScore();
+    }
 }
 
 /**
@@ -2208,9 +2323,90 @@ void cFielder::CanBreakOutOfSlideTackle()
 /**
  * Offset/Address/Size: 0x5F54 | 0x8001F290 | size: 0x2DC
  */
-eStrafeDirection cFielder::CalculateStrafeDirection(unsigned short, unsigned short)
+eStrafeDirection cFielder::CalculateStrafeDirection(unsigned short aDesiredFacingDir, unsigned short aDesiredMovementDir)
 {
-    return STRAFE_IDLE;
+    s32 lastStrafeDirection = mActionRunningVars.eLastStrafeDirection;
+    s16 angleDelta = (s16)(aDesiredMovementDir - aDesiredFacingDir);
+    float strafeToRunDelta;
+    float backwardsToStrafeRunDelta;
+
+    switch (lastStrafeDirection)
+    {
+    case STRAFE_RIGHT:
+    case STRAFE_LEFT:
+        strafeToRunDelta = (float)g_pGame->m_pGameTweaks->nStrafeToRunOutDirectionDelta;
+        backwardsToStrafeRunDelta = (float)g_pGame->m_pGameTweaks->nBackwardsToStrafeRunOutDirectionDelta;
+        break;
+
+    default:
+        strafeToRunDelta = (float)g_pGame->m_pGameTweaks->nStrafeToRunInDirectionDelta;
+        backwardsToStrafeRunDelta = (float)g_pGame->m_pGameTweaks->nBackwardsToStrafeRunInDirectionDelta;
+        break;
+    }
+
+    float zero = 0.0f;
+    float desiredSpeed = m_fDesiredSpeed;
+
+    if (!(desiredSpeed > zero))
+    {
+        return STRAFE_IDLE;
+    }
+
+    float runningSpeed = zero + m_pTweaks->fRunningSpeed;
+    if (desiredSpeed > runningSpeed)
+    {
+        float swapFacingSeconds = m_tSwapFacingTimer.GetSeconds();
+        if (swapFacingSeconds == zero)
+        {
+            return STRAFE_FORWARD;
+        }
+
+        if ((float)(u16)((angleDelta < 0) ? -angleDelta : angleDelta) < strafeToRunDelta)
+        {
+            return STRAFE_FORWARD;
+        }
+
+        if ((float)angleDelta > -backwardsToStrafeRunDelta)
+        {
+            if ((float)angleDelta <= strafeToRunDelta)
+            {
+                return STRAFE_RIGHT;
+            }
+        }
+
+        if ((float)angleDelta < backwardsToStrafeRunDelta)
+        {
+            if ((float)angleDelta >= -strafeToRunDelta)
+            {
+                return STRAFE_LEFT;
+            }
+        }
+
+        return STRAFE_BACK;
+    }
+
+    if ((float)(u16)((angleDelta < 0) ? -angleDelta : angleDelta) < strafeToRunDelta)
+    {
+        return STRAFE_FORWARD;
+    }
+
+    if ((float)angleDelta > -backwardsToStrafeRunDelta)
+    {
+        if ((float)angleDelta <= strafeToRunDelta)
+        {
+            return STRAFE_RIGHT;
+        }
+    }
+
+    if ((float)angleDelta < backwardsToStrafeRunDelta)
+    {
+        if ((float)angleDelta >= -strafeToRunDelta)
+        {
+            return STRAFE_LEFT;
+        }
+    }
+
+    return STRAFE_BACK;
 }
 
 /**

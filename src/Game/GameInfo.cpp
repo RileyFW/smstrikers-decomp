@@ -521,11 +521,132 @@ void GameInfoManager::SetupBowserKnockout()
 {
 }
 
+extern eStadiumID PickStadium__15GameInfoManagerCFb10eStadiumID(const GameInfoManager*, bool, eStadiumID);
+
 /**
  * Offset/Address/Size: 0x7EF0 | 0x8017D594 | size: 0x2DC
  */
-void GameInfoManager::SetupTournamentKnockout(eTeamID*, eSidekickID*)
+void GameInfoManager::SetupTournamentKnockout(eTeamID* pTeamIDs, eSidekickID* pSidekickIDs)
 {
+    int zero = 0;
+    u16 numGames;
+    s16 roundParam = mCurrentCup->mRoundNumber;
+
+    if (roundParam == -4)
+    {
+        numGames = 4;
+    }
+    else if (roundParam == -3)
+    {
+        numGames = 2;
+    }
+    else if (roundParam == -2 || roundParam == -1)
+    {
+        numGames = 1;
+    }
+    else if (roundParam == -5 && mDoingKnockout)
+    {
+        numGames = 1;
+    }
+    else
+    {
+        if (mDoingKnockout)
+        {
+            numGames = mPreviousCup->GetNumTeams() >> 1;
+        }
+        else
+        {
+            u16 temp;
+
+            if (mCurrentMode == GM_BOWSER_CUP || mCurrentMode == GM_SUPER_BOWSER_CUP)
+            {
+                temp = 8;
+            }
+            else
+            {
+                temp = mCurrentCup->GetNumTeams();
+            }
+
+            numGames = temp >> 1;
+        }
+    }
+
+    mCurrentCup->mCupStarted = true;
+    int numGamesCount = numGames;
+    mCurrentCup->mGameNumber = zero;
+    mLastHumanStadium = STAD_INVALID;
+
+    u16 numTeams = (u16)mCurrentCup->GetNumTeams();
+
+    *mCurrentCup->GetRoundResults(0) = 1;
+    *mCurrentCup->GetRoundResults(1) = 1;
+    *mCurrentCup->GetRoundResults(2) = 1;
+
+    eTeamID* pTeamInfo = pTeamIDs;
+    eSidekickID* pSidekickInfo = pSidekickIDs;
+
+    for (int i = 0; i < numGamesCount; i++)
+    {
+        BasicGameInfo* pGameInfo = mCurrentCup->GetGameInfo(0, i);
+
+        pGameInfo->mTeamIndex[0] = TEAM_MARIO;
+        pGameInfo->mTeamIndex[1] = TEAM_LUIGI;
+        pGameInfo->mSidekickIndex[0] = SK_TOAD;
+        pGameInfo->mSidekickIndex[1] = SK_KOOPA;
+        pGameInfo->mFinalScore[1] = zero;
+        pGameInfo->mFinalScore[0] = zero;
+        pGameInfo->mPadSides[0] = -1;
+        pGameInfo->mPadSides[1] = -1;
+        pGameInfo->mPadSides[2] = -1;
+        pGameInfo->mPadSides[3] = -1;
+        pGameInfo->mStadiumIndex = STAD_MARIO_STADIUM;
+
+        {
+            eTeamID team1 = pTeamInfo[1];
+            eSidekickID sidekick0 = pSidekickInfo[0];
+            eSidekickID sidekick1 = pSidekickInfo[1];
+            eTeamID team0 = pTeamInfo[0];
+
+            pGameInfo->mTeamIndex[0] = team0;
+            pGameInfo->mTeamIndex[1] = team1;
+            pGameInfo->mSidekickIndex[0] = sidekick0;
+            pGameInfo->mSidekickIndex[1] = sidekick1;
+        }
+
+        {
+            eStadiumID pickedStadium = PickStadium__15GameInfoManagerCFb10eStadiumID(this, false, mLastHumanStadium);
+            pGameInfo->mStadiumIndex = pickedStadium;
+
+            u16 humanTeams = mCurrentCup->mHumanTeams;
+            if ((humanTeams & (1 << pGameInfo->mTeamIndex[0])) || (humanTeams & (1 << pGameInfo->mTeamIndex[1])))
+            {
+                mLastHumanStadium = pickedStadium;
+            }
+        }
+
+        pTeamInfo += 2;
+        pSidekickInfo += 2;
+    }
+
+    TeamStats* pStats = mCurrentCup->GetTeamStats(0);
+    eTeamID* pTeamStatsID = pTeamIDs;
+
+    for (int i = 0; i < numTeams; i++)
+    {
+        eTeamID team = *pTeamStatsID;
+
+        memset(&pStats->mPlayerTotalStats, zero, 0x34);
+        pStats->mPlayerTotalStats.mRecordType.mTeamID = team;
+        pStats->mPlayerTotalStats.mType = TYPE_TEAM;
+        pStats->mTeamIndex = team;
+        pStats->mNumWins = zero;
+        pStats->mNumLosses = zero;
+        pStats->mNumOTLosses = zero;
+        pStats->mNumPoints = zero;
+
+        pTeamStatsID++;
+        pStats++;
+    }
 }
 
 /**
@@ -605,7 +726,21 @@ void GameInfoManager::IncreaseGameNumber(bool shouldIncreaseRound)
  */
 int GameInfoManager::GetNumHumanTeams()
 {
-    return 0;
+    int numHumanTeams = 0;
+    int i = 0;
+
+    while (i < GetNumPlayingTeams())
+    {
+        eTeamID teamIndex = GetTeamStatsByIndex(i).mTeamIndex;
+        if (mCurrentCup->mHumanTeams & (1 << teamIndex))
+        {
+            numHumanTeams++;
+        }
+
+        i++;
+    }
+
+    return numHumanTeams;
 }
 
 /**
@@ -1418,9 +1553,104 @@ bool GameInfoManager::IsCustomFreezingUnlocked() const
 
 /**
  * Offset/Address/Size: 0x41C | 0x80175AC0 | size: 0x2B4
+ * TODO: 96.79% match - prologue still differs on the redundant second mode check/load
+ * sequence and one inlined GetNumGamesPerRound path keeps reloading mCurrentCup.
  */
-void GameInfoManager::HasHumanGameBeenPlayed() const
+bool GameInfoManager::HasHumanGameBeenPlayed() const
 {
+    if (mCurrentMode != GM_TOURNAMENT)
+    {
+        return true;
+    }
+
+    eGameModes mode;
+    BaseCup* currentCup;
+    int currentRound;
+    int currentGame;
+    int round;
+    int game;
+
+    currentRound = mCurrentCup->mRoundNumber;
+    currentGame = mCurrentCup->mGameNumber;
+
+    if ((mCurrentMode == GM_TOURNAMENT) && (mCustomTournamentInfo.m_tournMode == TM_KNOCKOUT))
+    {
+        u16 numRounds = mCurrentCup->GetNumRounds();
+        round = -4;
+
+        if (numRounds == 2)
+        {
+            round = -3;
+        }
+    }
+    else
+    {
+        round = 0;
+    }
+
+    currentCup = mCurrentCup;
+    mode = mCurrentMode;
+    game = 0;
+
+    while (round != -5)
+    {
+        if ((round == currentRound) && (game == currentGame))
+        {
+            return false;
+        }
+
+        BaseCup* cup = currentCup;
+        s16 lookupRound = round;
+
+        if ((mode == GM_BOWSER_CUP) || (mode == GM_SUPER_BOWSER_CUP))
+        {
+            if (lookupRound == -3)
+            {
+                lookupRound = 0;
+            }
+            else if ((lookupRound == -2) || (lookupRound == -5) || (lookupRound == -1))
+            {
+                lookupRound = 1;
+            }
+            else if (mDoingKnockout)
+            {
+                cup = mPreviousCup;
+            }
+        }
+        else
+        {
+            if (lookupRound == -4)
+            {
+                lookupRound = currentCup->GetNumRounds() - 3;
+            }
+            else if (lookupRound == -3)
+            {
+                lookupRound = currentCup->GetNumRounds() - 2;
+            }
+            else if (lookupRound == -2)
+            {
+                lookupRound = currentCup->GetNumRounds() - 1;
+            }
+        }
+
+        BasicGameInfo* gameInfo = cup->GetGameInfo(lookupRound, (u16)game);
+        u16 humanTeams = currentCup->mHumanTeams;
+
+        if ((humanTeams & (1 << gameInfo->mTeamIndex[0])) || (humanTeams & (1 << gameInfo->mTeamIndex[1])))
+        {
+            return true;
+        }
+
+        game++;
+
+        if (game == GetNumGamesPerRound(round))
+        {
+            game = 0;
+            round = GetNextRoundNumber(round);
+        }
+    }
+
+    return false;
 }
 
 /**

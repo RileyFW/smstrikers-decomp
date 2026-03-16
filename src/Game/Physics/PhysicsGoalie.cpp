@@ -62,11 +62,88 @@ bool PhysicsGoalie::SweepTestForBallContact(const nlVector3& ballPrevPosition, c
 
 /**
  * Offset/Address/Size: 0x4A8 | 0x80139F28 | size: 0x2D8
+ * TODO: 77.03% match - callee-saved register assignment and constant-pool selection still differ.
  */
-bool PhysicsGoalie::SweepTestEveryBone(float, const nlVector3&, const nlVector3&, nlVector3&, nlVector3&) const
+bool PhysicsGoalie::SweepTestEveryBone(float ballRadius, const nlVector3& ballPrevPosition, const nlVector3& ballCurrentPosition, nlVector3& outContactNormal, nlVector3& outContactPos) const
 {
-    FORCE_DONT_INLINE;
-    return false;
+    ListEntry<PhysicsBoneVolume*>* boneVolumeEntry = m_BoneVolumes.m_Head;
+    nlVector3 accumulatedNormal = { 0.0f, 0.0f, 0.0f };
+    float smallestSweepResult = 1.0f;
+    bool didHitBone = false;
+    int hitCount = 0;
+
+    if (boneVolumeEntry == NULL)
+    {
+        return false;
+    }
+
+    float cantCollide = CANT_COLLIDE;
+
+    while (boneVolumeEntry != NULL)
+    {
+        PhysicsBoneVolume* boneVolume = boneVolumeEntry->data;
+        PhysicsObject* object = boneVolume->m_pObject;
+        nlVector3& currentBonePos = object->GetPosition();
+        nlVector3& prevBonePos = boneVolume->m_PrevPosition;
+
+        float sweepResult = SweepSpheres(
+            ballRadius,
+            ballPrevPosition,
+            ballCurrentPosition,
+            ((PhysicsSphere*)object)->GetRadius(),
+            prevBonePos,
+            currentBonePos);
+
+        if ((sweepResult != cantCollide) && (sweepResult > 0.0f) && (sweepResult < 1.0f))
+        {
+            if (sweepResult < smallestSweepResult)
+            {
+                smallestSweepResult = sweepResult;
+            }
+
+            float oneMinusSweepResult = 1.0f - sweepResult;
+
+            outContactPos.f.x = (sweepResult * ballCurrentPosition.f.x) + (oneMinusSweepResult * ballPrevPosition.f.x);
+            outContactPos.f.y = (sweepResult * ballCurrentPosition.f.y) + (oneMinusSweepResult * ballPrevPosition.f.y);
+            outContactPos.f.z = (sweepResult * ballCurrentPosition.f.z) + (oneMinusSweepResult * ballPrevPosition.f.z);
+
+            outContactNormal.f.x = outContactPos.f.x - ((sweepResult * currentBonePos.f.x) + (oneMinusSweepResult * prevBonePos.f.x));
+            outContactNormal.f.y = outContactPos.f.y - ((sweepResult * currentBonePos.f.y) + (oneMinusSweepResult * prevBonePos.f.y));
+            outContactNormal.f.z = outContactPos.f.z - ((sweepResult * currentBonePos.f.z) + (oneMinusSweepResult * prevBonePos.f.z));
+
+            float normalRecipLength = nlRecipSqrt((outContactNormal.f.x * outContactNormal.f.x) + (outContactNormal.f.y * outContactNormal.f.y) + (outContactNormal.f.z * outContactNormal.f.z),
+                true);
+
+            outContactNormal.f.x = normalRecipLength * outContactNormal.f.x;
+            outContactNormal.f.y = normalRecipLength * outContactNormal.f.y;
+            outContactNormal.f.z = normalRecipLength * outContactNormal.f.z;
+
+            didHitBone = true;
+            hitCount += 1;
+
+            accumulatedNormal.f.z = accumulatedNormal.f.z + outContactNormal.f.z;
+            accumulatedNormal.f.x = accumulatedNormal.f.x + outContactNormal.f.x;
+            accumulatedNormal.f.y = accumulatedNormal.f.y + outContactNormal.f.y;
+        }
+
+        boneVolumeEntry = boneVolumeEntry->next;
+    }
+
+    if (didHitBone)
+    {
+        float oneMinusSweepResult = 1.0f - smallestSweepResult;
+        float invHitCount = 1.0f / (float)hitCount;
+
+        outContactNormal.f.x = invHitCount * accumulatedNormal.f.x;
+        outContactNormal.f.y = invHitCount * accumulatedNormal.f.y;
+        outContactNormal.f.z = invHitCount * accumulatedNormal.f.z;
+
+        outContactPos.f.x = (smallestSweepResult * ballCurrentPosition.f.x) + (oneMinusSweepResult * ballPrevPosition.f.x);
+        outContactPos.f.y = (smallestSweepResult * ballCurrentPosition.f.y) + (oneMinusSweepResult * ballPrevPosition.f.y);
+        outContactPos.f.z = (smallestSweepResult * ballCurrentPosition.f.z) + (oneMinusSweepResult * ballPrevPosition.f.z);
+    }
+
+    return didHitBone;
 }
 
 /**

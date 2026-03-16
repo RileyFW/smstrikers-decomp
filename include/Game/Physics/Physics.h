@@ -1,6 +1,7 @@
 #ifndef _PHYSICS_H_
 #define _PHYSICS_H_
 
+#include "Game/Loader.h"
 #include "Game/Physics/PhysicsWorld.h"
 #include "Game/Physics/PhysicsObject.h"
 
@@ -17,12 +18,12 @@ void* ODEAlloc(unsigned long);
 
 // void nlListAddEnd<ListEntry<PhysicsObject*>>(ListEntry<PhysicsObject*>**, ListEntry<PhysicsObject*>**, ListEntry<PhysicsObject*>*);
 
-class PhysicsLoader
+class PhysicsLoader : public Loader
 {
 public:
     void DestroyPhysics();
     void ConstructStaticPhysicsPrimitives(CharacterPhysicsData*);
-    void StartLoad(LoadingManager*);
+    bool StartLoad(LoadingManager*);
 };
 
 // class PhysicsRoundedCorner : public PhysicsObject

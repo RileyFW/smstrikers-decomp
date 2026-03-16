@@ -3,6 +3,7 @@
 #include "Game/GL/gluMeshWriter.h"
 
 #include "NL/gl/glDraw2.h"
+#include "NL/gl/glMemory.h"
 #include "NL/gl/glMatrix.h"
 #include "NL/gl/glState.h"
 
@@ -17,9 +18,72 @@ void ShapeRender::CreateHemisphereGeometry(PrimitiveShape&)
 
 /**
  * Offset/Address/Size: 0x11C0 | 0x801FC450 | size: 0x2DC
+ * TODO: 66.07% match - register allocation and constant ordering in the segment loop still differ.
  */
-void ShapeRender::CreateFlatCylinderEndGeometry(PrimitiveShape&)
+void ShapeRender::CreateFlatCylinderEndGeometry(PrimitiveShape& prim)
 {
+    nlVector3 vNormal;
+    int nSegment;
+    nlVector3* pdst;
+    nlVector3* ndst;
+    nlVector2* tdst;
+    float x0;
+    float y0;
+    float x1;
+    float y1;
+
+    prim.vertCount = 0x20;
+    prim.position = (nlVector3*)glResourceAlloc(0x180, GLM_VertexData);
+    prim.normal = (nlVector3*)glResourceAlloc(0x180, GLM_VertexData);
+    prim.texcoord = (nlVector2*)glResourceAlloc(0x100, GLM_VertexData);
+
+    pdst = prim.position;
+    ndst = prim.normal;
+    tdst = prim.texcoord;
+
+    for (nSegment = 0; nSegment < 0x10; nSegment++)
+    {
+        u16 angle = (u16)(10430.378f * ((float)nSegment * 0.3926991f));
+
+        x0 = 2.0f * (0.5f * nlSin(angle));
+        y0 = 2.0f * (0.5f * nlSin((u16)(angle + 0x4000)));
+        x1 = 2.0f * (1.0f * nlSin(angle));
+        y1 = 2.0f * (1.0f * nlSin((u16)(angle + 0x4000)));
+
+        pdst->f.x = x0;
+        pdst->f.y = y0;
+        pdst->f.z = 0.5f;
+
+        {
+            float invLen = nlRecipSqrt((0.5f * 0.5f) + (x0 * x0 + y0 * y0), true);
+            vNormal.f.x = invLen * x0;
+            vNormal.f.y = invLen * y0;
+            vNormal.f.z = invLen * 0.5f;
+        }
+        *ndst = vNormal;
+
+        tdst->f.x = (float)nSegment / 16.0f;
+        tdst->f.y = 0.5f;
+
+        pdst[1].f.x = x1;
+        pdst[1].f.y = y1;
+        pdst[1].f.z = 0.5f;
+
+        {
+            float invLen = nlRecipSqrt((0.5f * 0.5f) + (x1 * x1 + y1 * y1), true);
+            vNormal.f.x = invLen * x1;
+            vNormal.f.y = invLen * y1;
+            vNormal.f.z = invLen * 0.5f;
+        }
+        ndst[1] = vNormal;
+
+        tdst[1].f.x = (float)nSegment / 16.0f;
+        tdst[1].f.y = 1.0f;
+
+        pdst += 2;
+        ndst += 2;
+        tdst += 2;
+    }
 }
 
 /**

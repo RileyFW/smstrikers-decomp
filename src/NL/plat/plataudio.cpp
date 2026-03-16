@@ -206,9 +206,199 @@ void Update3DSFXEmitter(SFXEmitter* pSFXEmitter, const nlVector3& position, cons
 
 /**
  * Offset/Address/Size: 0x588 | 0x801C4D84 | size: 0x2E4
+ * TODO: 98.03% match - remaining MWCC f-register scheduling in reverb/volume conversion blocks
+ * and pitch-frequency register allocation around debug print/filter branches.
  */
-void Add3DSFXEmitter(const EmitterStartInfo&)
+void Add3DSFXEmitter(const EmitterStartInfo& info)
 {
+    SND_FVECTOR svPos;
+    SND_FVECTOR svDir;
+    SFXEmitter* pSFXEmitter;
+    unsigned long flags;
+    unsigned long numPara;
+    int currParaIndex;
+    SND_PARAMETER_INFO* pParaInfo;
+    SND_PARAMETER* pParaArray;
+    SND_PARAMETER_INFO tempParaInfo;
+    SND_PARAMETER tempParaArray[4];
+
+    svPos.x = info.position.f.x;
+    svPos.y = info.position.f.y;
+    svPos.z = info.position.f.z;
+
+    svDir.x = info.direction.f.x;
+    svDir.y = info.direction.f.y;
+    svDir.z = info.direction.f.z;
+
+    pSFXEmitter = info.pSFXEmitter;
+    flags = 0;
+
+    if (pSFXEmitter == NULL)
+    {
+        flags = 0;
+    }
+    else
+    {
+        if (info.bContinuous)
+        {
+            flags |= SND_EMITTER_CONTINUOUS;
+        }
+
+        if (info.bRestartable)
+        {
+            flags |= SND_EMITTER_RESTARTABLE;
+        }
+
+        if (info.bPausable)
+        {
+            flags |= SND_EMITTER_PAUSABLE;
+        }
+
+        if (info.bUseDoppler)
+        {
+            flags |= SND_EMITTER_DOPPLERFX;
+        }
+
+        if (info.bHardStart)
+        {
+            flags |= SND_EMITTER_HARDSTART;
+        }
+    }
+
+    numPara = 0;
+    currParaIndex = 0;
+    pParaInfo = NULL;
+    pParaArray = NULL;
+
+    if (info.fVolReverb != 0.0f)
+    {
+        numPara = 1;
+    }
+
+    if (info.pitch != 0x2000)
+    {
+        numPara += 1;
+    }
+
+    if (info.bActivateFilter)
+    {
+        numPara += 2;
+    }
+
+    if (numPara != 0)
+    {
+        if (pSFXEmitter == NULL)
+        {
+            pParaInfo = &tempParaInfo;
+            pParaArray = tempParaArray;
+        }
+        else
+        {
+            void* alloc = nlMalloc(8, 8, false);
+            pParaInfo = (SND_PARAMETER_INFO*)alloc;
+            pParaArray = (SND_PARAMETER*)nlMalloc(numPara * sizeof(SND_PARAMETER), 8, false);
+        }
+
+        pParaInfo->numPara = numPara;
+        pParaInfo->paraArray = pParaArray;
+    }
+
+    if (info.fVolReverb != 0.0f)
+    {
+        float f0 = 0.0f;
+        float f1v = 127.0f * info.fVolReverb;
+
+        pParaArray[0].ctrl = 0x5B;
+        if (f1v < f0)
+        {
+            f0 = -0.5f;
+        }
+        else
+        {
+            f0 = 0.5f;
+        }
+        f0 = f1v + f0;
+
+        currParaIndex = 1;
+        pParaArray[0].paraData.value7 = (u8)(s32)f0;
+    }
+
+    if (info.pitch != 0x2000)
+    {
+        if (info.pitch != 0x2000)
+        {
+            const char* msg = "pitch bend should be non-default\n";
+            tDebugPrintManager::Print(DC_SOUND, msg);
+        }
+
+        pParaArray[currParaIndex].ctrl = 0x80;
+        pParaArray[currParaIndex].paraData.value14 = info.pitch;
+        currParaIndex += 1;
+    }
+
+    if (info.bActivateFilter)
+    {
+        unsigned long idx = currParaIndex;
+        unsigned long freq = info.filterFreq;
+
+        pParaArray[idx].ctrl = 0x4F;
+        pParaArray[idx].paraData.value14 = 0x2000;
+
+        if (freq > 0x3FFF)
+        {
+            freq = 0x3FFF;
+        }
+
+        idx = currParaIndex + 1;
+        pParaArray[idx].ctrl = 1;
+        pParaArray[idx].paraData.value14 = (u16)freq;
+
+        if (pSFXEmitter != NULL)
+        {
+            pSFXEmitter->bIsFilterOn = true;
+        }
+    }
+
+    if (pSFXEmitter != NULL)
+    {
+        pSFXEmitter->pMIDIControllerInfo = pParaInfo;
+    }
+
+    {
+        float f2 = 127.0f;
+        float f1 = info.minVol;
+        float f0 = 0.0f;
+
+        f1 = f2 * f1;
+        if (f1 < f0)
+        {
+            f0 = -0.5f;
+        }
+        else
+        {
+            f0 = 0.5f;
+        }
+
+        float f3 = f1 + f0;
+
+        f2 = 127.0f;
+        f1 = info.maxVol;
+        f0 = 0.0f;
+        u8 minVol = (u8)(s32)f3;
+
+        f1 = f2 * f1;
+        if (f1 < f0)
+        {
+            f0 = -0.5f;
+        }
+        else
+        {
+            f0 = 0.5f;
+        }
+        f0 = f1 + f0;
+
+        sndAddEmitter2StudioPara((SND_EMITTER*)pSFXEmitter, &svPos, &svDir, info.maxDist, info.comp, flags, (u16)info.uSFXID, (u8)(s32)f0, minVol, 0, pParaInfo);
+    }
 }
 
 /**

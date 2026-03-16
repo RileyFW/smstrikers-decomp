@@ -74,12 +74,173 @@ void PacketCallbackManager::TexCallback(const glModelPacket* const& key, unsigne
     DoCallback(key, *count);
 }
 
+struct PacketCallbackManagerLayout
+{
+    /* 0x00 */ eGLView m_View;
+    /* 0x04 */ glViewPacketCallback m_Cb;
+    /* 0x08 */ unsigned long m_LastProgram;
+    /* 0x0C */ unsigned long m_LastRaster;
+    /* 0x10 */ unsigned long long m_LastTextureState;
+    /* 0x18 */ unsigned long m_LastMatrix;
+    /* 0x1C */ unsigned long m_LastTexconfig;
+    /* 0x20 */ unsigned long m_LastUserdata;
+    /* 0x24 */ unsigned long m_LastNumStreams;
+    /* 0x28 */ glModelStream* m_LastStreams;
+    /* 0x2C */ unsigned long m_LastTexture[6];
+    /* 0x44 */ unsigned long m_LastUserStateKey;
+    /* 0x48 */ unsigned long m_LastMaterialSet;
+}; // total size: 0x50
+
+static unsigned long glv_UserDataChanged;
+static unsigned long glv_MaterialChanged;
+static unsigned long glv_UserStateKeyChanged;
+static unsigned long glv_RasterChanged;
+static unsigned long glv_TextureStateChanged;
+static unsigned long glv_MatrixChanged;
+static unsigned long glv_TexConfigChanged;
+static unsigned long glv_TextureChanged;
+static unsigned long glv_StreamsChanged;
+
 /**
  * Offset/Address/Size: 0x748 | 0x801D9A08 | size: 0x298
+ * TODO: 92.38% match - MWCC strength-reduction optimization for texture array
+ * (addi r5,r30,4 pointer iteration) not reproducible in decomp.me compiler.
  */
-void PacketCallbackManager::DoCallback(const glModelPacket*, unsigned int)
+void PacketCallbackManager::DoCallback(const glModelPacket* p, unsigned int count)
 {
-    FORCE_DONT_INLINE;
+    PacketCallbackManagerLayout* self = (PacketCallbackManagerLayout*)this;
+    unsigned long flags = 0;
+
+    if (p->state.program != self->m_LastProgram)
+    {
+        flags |= 0x86;
+        self->m_LastProgram = p->state.program;
+    }
+
+    if (p->userData == 0)
+    {
+        if (self->m_LastUserdata != 0)
+        {
+            unsigned long userDataChanged = glv_UserDataChanged;
+            self->m_LastUserdata = p->userData;
+            flags |= userDataChanged;
+        }
+    }
+    else
+    {
+        unsigned long userDataChanged = glv_UserDataChanged;
+        self->m_LastUserdata = p->userData;
+        flags |= userDataChanged;
+    }
+
+    if (p->materialset != self->m_LastMaterialSet)
+    {
+        unsigned long materialChanged = glv_MaterialChanged;
+        flags |= materialChanged;
+    }
+
+    if (p->state.userStateKey != self->m_LastUserStateKey)
+    {
+        unsigned long userStateKeyChanged = glv_UserStateKeyChanged;
+        self->m_LastUserStateKey = p->state.userStateKey;
+        flags |= userStateKeyChanged;
+    }
+
+    if (p->state.raster != self->m_LastRaster)
+    {
+        unsigned long rasterChanged = glv_RasterChanged;
+        self->m_LastRaster = p->state.raster;
+        flags |= rasterChanged;
+    }
+
+    unsigned long textureStateLow = ((const unsigned long*)&p->state.texturestate)[0];
+    unsigned long lastTextureStateLow = ((const unsigned long*)&self->m_LastTextureState)[0];
+    unsigned long textureStateHigh = ((const unsigned long*)&p->state.texturestate)[1];
+    unsigned long lastTextureStateHigh = ((const unsigned long*)&self->m_LastTextureState)[1];
+    unsigned long textureStateDiffLow = textureStateLow ^ lastTextureStateLow;
+    unsigned long textureStateDiffHigh = textureStateHigh ^ lastTextureStateHigh;
+    if ((textureStateDiffHigh | textureStateDiffLow) != 0)
+    {
+        ((unsigned long*)&self->m_LastTextureState)[1] = textureStateHigh;
+        unsigned long textureStateChanged = glv_TextureStateChanged;
+        ((unsigned long*)&self->m_LastTextureState)[0] = textureStateLow;
+        flags |= textureStateChanged;
+    }
+
+    if (p->state.matrix != self->m_LastMatrix)
+    {
+        unsigned long matrixChanged = glv_MatrixChanged;
+        self->m_LastMatrix = p->state.matrix;
+        flags |= matrixChanged;
+    }
+
+    unsigned long texConfig = p->state.texconfig;
+    unsigned long lastTexConfig = self->m_LastTexconfig;
+    if (texConfig != lastTexConfig)
+    {
+        unsigned long texConfigChanged = glv_TexConfigChanged;
+        unsigned long textureChanged = glv_TextureChanged;
+        flags |= texConfigChanged;
+        self->m_LastTexconfig = texConfig;
+        flags |= textureChanged;
+    }
+
+    {
+        unsigned long textureChanged = glv_TextureChanged;
+        int i;
+        for (i = 0; i < 6; i++)
+        {
+            if (p->state.texture[i] != self->m_LastTexture[i])
+            {
+                self->m_LastTexture[i] = p->state.texture[i];
+                flags |= textureChanged;
+            }
+        }
+    }
+
+    glModelStream* lastStreams = self->m_LastStreams;
+    unsigned int numStreams = p->numStreams;
+    unsigned int streamChanged;
+
+    if (self->m_LastNumStreams != numStreams)
+    {
+        streamChanged = 1;
+    }
+    else
+    {
+        glModelStream* streams = p->streams;
+
+        for (unsigned int i = numStreams; i > 0; i--)
+        {
+            if (streams->address != lastStreams->address)
+            {
+                streamChanged = 1;
+                goto stream_compare_done;
+            }
+            lastStreams = (glModelStream*)((u8*)lastStreams + 6);
+            streams = (glModelStream*)((u8*)streams + 6);
+        }
+
+        streamChanged = 0;
+    }
+
+stream_compare_done:
+    if ((streamChanged & 0xFF) != 0)
+    {
+        self->m_LastNumStreams = numStreams;
+        glModelStream* streams = p->streams;
+        unsigned long streamsChanged = glv_StreamsChanged;
+        self->m_LastStreams = streams;
+        flags |= streamsChanged;
+    }
+
+    unsigned int stage = flags | 0x800;
+
+    while (count != 0)
+    {
+        self->m_Cb(self->m_View, stage, p);
+        count--;
+    }
 }
 
 /**

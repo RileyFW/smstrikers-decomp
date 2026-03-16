@@ -20,6 +20,84 @@ static bool sbNonMovingAABBsInitialized;
 
 void dClearCachedData();
 
+extern "C"
+{
+    typedef void* dAllocFunction(unsigned long);
+    typedef void* dReallocFunction(void*, unsigned long, unsigned long);
+    typedef void dFreeFunction(void*, unsigned long);
+
+    void dSetAllocHandler(dAllocFunction* fn);
+    void dSetReallocHandler(dReallocFunction* fn);
+    void dSetFreeHandler(dFreeFunction* fn);
+}
+
+class SimpleCollisionSpace : public CollisionSpace
+{
+public:
+    SimpleCollisionSpace(PhysicsWorld*);
+};
+
+class PhysicsGroundPlane : public PhysicsObject
+{
+public:
+    PhysicsGroundPlane(CollisionSpace*);
+    virtual int GetObjectType() const { return 0; }
+};
+
+class PhysicsWall : public PhysicsObject
+{
+public:
+    PhysicsWall(CollisionSpace*, float, float, float);
+    virtual int GetObjectType() const { return 0; }
+};
+
+struct sSideLinePlane
+{
+    nlVector2 vNormal;
+    float fDistance;
+};
+
+struct sCornerSegment
+{
+    nlVector2 vCenter;
+    unsigned short thetaStart;
+    unsigned short thetaEnd;
+    float fRadius;
+};
+
+class cField
+{
+public:
+    static sSideLinePlane mSidelines[4];
+    static sCornerSegment mCorners[4];
+};
+
+class BasicStadium
+{
+public:
+    static BasicStadium* GetCurrentStadium();
+
+    unsigned char _pad0[0x134];
+    CharacterPhysicsData* m_pCharacterPhysicsData;
+    unsigned char _pad138[0x30];
+    char m_szBaseName[0x20];
+};
+
+extern "C" void ConstructStaticPhysicsPrimitives__13PhysicsLoaderFP20CharacterPhysicsData(
+    PhysicsLoader*,
+    CharacterPhysicsData*);
+extern "C" PhysicsWorld* __ct__12PhysicsWorldFv(PhysicsWorld*);
+extern "C" SimpleCollisionSpace* __ct__20SimpleCollisionSpaceFP12PhysicsWorld(SimpleCollisionSpace*, PhysicsWorld*);
+extern "C" PhysicsGroundPlane* __ct__18PhysicsGroundPlaneFP14CollisionSpace(PhysicsGroundPlane*, CollisionSpace*);
+extern "C" PhysicsWall* __ct__11PhysicsWallFP14CollisionSpacefff(PhysicsWall*, CollisionSpace*, float, float, float);
+extern "C" PhysicsRoundedCorner* __ct__20PhysicsRoundedCornerFP14CollisionSpaceRC9nlVector2fbb(
+    PhysicsRoundedCorner*,
+    CollisionSpace*,
+    const nlVector2&,
+    float,
+    bool,
+    bool);
+
 /**
  * Offset/Address/Size: 0x0 | 0x80132B10 | size: 0x14C
  */
@@ -150,9 +228,117 @@ void PhysicsLoader::ConstructStaticPhysicsPrimitives(CharacterPhysicsData*)
 
 /**
  * Offset/Address/Size: 0x728 | 0x80133238 | size: 0x2C0
+ * TODO: 94.0% match - stack frame is 0x120 instead of 0x130, register allocation starts at r26
+ *       instead of r24. Target uses add base+offset loop pattern, current uses pointer advancement.
+ *       MWCC register allocator difference with -inline deferred.
  */
-void PhysicsLoader::StartLoad(LoadingManager*)
+bool PhysicsLoader::StartLoad(LoadingManager*)
 {
+    PhysicsLoader* pThis = this;
+    ListEntry<PhysicsObject*>** pHead;
+    ListEntry<PhysicsObject*>** pTail;
+    int i;
+    int j;
+    unsigned long uPositiveNetMeshID;
+    unsigned long uNegativeNetMeshID;
+    char szTemp[0x100];
+
+    dSetAllocHandler(ODEAlloc);
+    dSetReallocHandler(ODERealloc);
+    dSetFreeHandler(ODEFree);
+
+    PhysicsWorld* pWorld = (PhysicsWorld*)nlMalloc(0x10, 8, false);
+    if (pWorld != NULL)
+    {
+        pWorld = __ct__12PhysicsWorldFv(pWorld);
+    }
+    g_PhysicsWorld = pWorld;
+
+    SimpleCollisionSpace* pSpace = (SimpleCollisionSpace*)nlMalloc(0x10, 8, false);
+    if (pSpace != NULL)
+    {
+        pSpace = __ct__20SimpleCollisionSpaceFP12PhysicsWorld(pSpace, g_PhysicsWorld);
+    }
+    g_CollisionSpace = pSpace;
+
+    g_PhysicsWorld->SetCFM(0.00001f);
+    g_PhysicsWorld->SetERP(0.2f);
+
+    PhysicsGroundPlane* pGroundPlane = (PhysicsGroundPlane*)nlMalloc(0x2C, 8, false);
+    if (pGroundPlane != NULL)
+    {
+        pGroundPlane = __ct__18PhysicsGroundPlaneFP14CollisionSpace(pGroundPlane, g_CollisionSpace);
+    }
+
+    ListEntry<PhysicsObject*>* pEntry = (ListEntry<PhysicsObject*>*)nlMalloc(8, 8, false);
+    if (pEntry != NULL)
+    {
+        pEntry->next = NULL;
+        pEntry->data = pGroundPlane;
+    }
+
+    pHead = &g_StaticPhysicsPrimitives.m_Head;
+    pTail = &g_StaticPhysicsPrimitives.m_Tail;
+    nlListAddEnd(pHead, pTail, pEntry);
+
+    for (i = 0; i < 4; i++)
+    {
+        PhysicsWall* pWall = (PhysicsWall*)nlMalloc(0x2C, 8, false);
+        if (pWall != NULL)
+        {
+            pWall = __ct__11PhysicsWallFP14CollisionSpacefff(pWall,
+                g_CollisionSpace,
+                cField::mSidelines[i].vNormal.f.x,
+                cField::mSidelines[i].vNormal.f.y,
+                cField::mSidelines[i].fDistance);
+        }
+
+        pEntry = (ListEntry<PhysicsObject*>*)nlMalloc(8, 8, false);
+        if (pEntry != NULL)
+        {
+            pEntry->next = NULL;
+            pEntry->data = pWall;
+        }
+
+        nlListAddEnd(pHead, pTail, pEntry);
+    }
+
+    for (j = 0; j < 4; j++)
+    {
+        PhysicsRoundedCorner* pCorner = (PhysicsRoundedCorner*)nlMalloc(0x2C, 8, false);
+        if (pCorner != NULL)
+        {
+            pCorner = __ct__20PhysicsRoundedCornerFP14CollisionSpaceRC9nlVector2fbb(pCorner,
+                g_CollisionSpace,
+                cField::mCorners[j].vCenter,
+                cField::mCorners[j].fRadius,
+                cField::mCorners[j].vCenter.f.x > 0.0f,
+                cField::mCorners[j].vCenter.f.y > 0.0f);
+        }
+        corners[j] = pCorner;
+    }
+
+    PhysicsNet::StaticInit(g_CollisionSpace);
+
+    if (NetMesh::s_bAnimatedNetMeshEnabled)
+    {
+        const char* pBaseName = BasicStadium::GetCurrentStadium()->m_szBaseName;
+
+        nlStrNCat<char>(szTemp, pBaseName, "/NetMesh", 0x100);
+        uPositiveNetMeshID = nlStringLowerHash(szTemp);
+
+        nlStrNCat<char>(szTemp, pBaseName, "/NetMesh01", 0x100);
+        uNegativeNetMeshID = nlStringLowerHash(szTemp);
+
+        PhysicsNet::spPhysNetPositiveX->mpNetMesh->Initialize(uPositiveNetMeshID);
+        PhysicsNet::spPhysNetNegativeX->mpNetMesh->Initialize(uNegativeNetMeshID);
+    }
+
+    ConstructStaticPhysicsPrimitives__13PhysicsLoaderFP20CharacterPhysicsData(
+        pThis,
+        BasicStadium::GetCurrentStadium()->m_pCharacterPhysicsData);
+
+    return true;
 }
 
 /**

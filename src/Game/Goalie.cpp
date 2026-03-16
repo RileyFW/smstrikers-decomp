@@ -19,6 +19,7 @@
 #include "types.h"
 
 extern cTeam* g_pCurrentlyUpdatingTeam;
+extern f32 gfRepositionThreshold;
 
 static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
@@ -397,9 +398,109 @@ void Goalie::FindDesiredGoaliePosition(nlVector3&, nlVector3&, nlVector3&, unsig
 
 /**
  * Offset/Address/Size: 0x8024 | 0x8004AB20 | size: 0x2CC
+ * TODO: 99.72% match - FP register allocation mismatch in nav-target delta/atan2 setup
  */
-void Goalie::ShouldReposition()
+bool Goalie::ShouldReposition()
 {
+    if (mfWaitTime < 0.07f)
+    {
+        return false;
+    }
+
+    bool bDesiredDirSet = false;
+
+    if (!mbShouldMiss)
+    {
+        cBall* pBall = g_pBall;
+
+        if (!pBall->m_unk_0xA6)
+        {
+            if ((0.3f + mBlendInfo.mv3BlendedSavePos.f.z) < mv3LocalContactPosition.f.z)
+            {
+                nlVector3 v3ContactVel;
+                float fDropTime = FakeBallWorld::GetPredictedHeightLimitTime(2.0f, 0.04f, mv3NavTarget, v3ContactVel, true);
+                float fGoalGapDist = cField::GetGoalLineX(1U) - 0.5f;
+                float fBoxGapDist = 0.5f + cField::GetPenaltyBoxX(1U);
+                float fTargetX;
+                bool bCalcIntersect = false;
+                float navAbsX = (float)fabs(mv3NavTarget.f.x);
+
+                if (navAbsX > fGoalGapDist)
+                {
+                    if (m_v3Position.f.x > 0.0f)
+                    {
+                        fTargetX = fGoalGapDist;
+                    }
+                    else
+                    {
+                        fTargetX = -fGoalGapDist;
+                    }
+
+                    bCalcIntersect = true;
+                }
+                else if (navAbsX < fBoxGapDist)
+                {
+                    FakeBallWorld::GetPredictedHeightLimitTime(2.0f, 0.25f + fDropTime, mv3NavTarget, v3ContactVel, true);
+
+                    if ((float)fabs(mv3NavTarget.f.x) < fBoxGapDist)
+                    {
+                        if (m_v3Position.f.x > 0.0f)
+                        {
+                            fTargetX = fBoxGapDist;
+                        }
+                        else
+                        {
+                            fTargetX = -fBoxGapDist;
+                        }
+                    }
+
+                    bCalcIntersect = true;
+                }
+
+                if (bCalcIntersect)
+                {
+                    if ((float)fabs(v3ContactVel.f.x) > 0.5f)
+                    {
+                        float ballX = pBall->m_v3Position.f.x;
+                        float ballY = pBall->m_v3Position.f.y;
+
+                        mv3NavTarget.f.y = ballY + ((fTargetX - ballX) * (mv3NavTarget.f.y - ballY) / (mv3NavTarget.f.x - ballX));
+                    }
+
+                    mv3NavTarget.f.x = fTargetX;
+                }
+
+                fTargetX = mv3NavTarget.f.y - m_v3Position.f.y;
+                fDropTime = mv3NavTarget.f.x - m_v3Position.f.x;
+
+                m_aDesiredFacingDirection = (u16)(s32)(10430.378f * nlATan2f(pBall->m_v3Position.f.y - m_v3Position.f.y, pBall->m_v3Position.f.x - m_v3Position.f.x));
+
+                if (((fDropTime * fDropTime) + (fTargetX * fTargetX)) > 0.25f)
+                {
+                    mUrgency = URGENCY_MED;
+                    return true;
+                }
+
+                bDesiredDirSet = true;
+            }
+        }
+    }
+
+    if ((float)fabs(mBlendInfo.mv3BlendedSavePos.f.y) > gfRepositionThreshold)
+    {
+        if (!bDesiredDirSet)
+        {
+            cBall* pBall = g_pBall;
+            m_aDesiredFacingDirection = (u16)(s32)(10430.378f * nlATan2f(pBall->m_v3Position.f.y - m_v3Position.f.y, pBall->m_v3Position.f.x - m_v3Position.f.x));
+        }
+
+        GetWorldPoint(mv3NavTarget, mBlendInfo.mv3BlendedSavePos, m_v3Position, m_aDesiredFacingDirection);
+        mv3NavTarget.f.z = 0.0f;
+
+        return true;
+    }
+
+    return false;
 }
 
 /**

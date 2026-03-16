@@ -172,8 +172,9 @@ void FakeBallWorld::GetPredictedPosAtDistance(float, nlVector3&, nlVector3&)
 /**
  * Offset/Address/Size: 0xDB0 | 0x8013819C | size: 0x3FC
  */
-void FakeBallWorld::GetPredictedHeightLimitTime(float, float, nlVector3&, nlVector3&, bool)
+float FakeBallWorld::GetPredictedHeightLimitTime(float, float, nlVector3&, nlVector3&, bool)
 {
+    return 0.0f;
 }
 
 /**

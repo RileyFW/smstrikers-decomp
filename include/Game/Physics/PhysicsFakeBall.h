@@ -27,7 +27,7 @@ public:
     static void GetNextBallPosition(nlVector3&);
     void ResetBallIterator();
     void GetPredictedPosAtDistance(float, nlVector3&, nlVector3&);
-    void GetPredictedHeightLimitTime(float, float, nlVector3&, nlVector3&, bool);
+    static float GetPredictedHeightLimitTime(float, float, nlVector3&, nlVector3&, bool);
     static float GetPredictedPlaneIntersectTime(const nlVector4&, nlVector3&, nlVector3&);
     static bool GetPredictedBallPosition(float, nlVector3&, nlVector3&);
     static void InvalidateBallCache();
@@ -53,7 +53,10 @@ class FakePhysicsBall : public PhysicsBall
 {
 public:
     FakePhysicsBall(CollisionSpace* cs, PhysicsWorld* pw, float r, FakeBallWorld& w)
-        : PhysicsBall(cs, pw, r), mWorld(w) {}
+        : PhysicsBall(cs, pw, r)
+        , mWorld(w)
+    {
+    }
     virtual ~FakePhysicsBall();
     virtual int GetObjectType() const { return 0x10; };
     virtual ContactType Contact(PhysicsObject*, dContact*, int);

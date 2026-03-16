@@ -421,6 +421,111 @@ void cGame::BeginGame(bool, bool)
  */
 void cGame::CheckForGoal()
 {
+    struct GoalScoredDataExt
+    {
+        GoalScoredData data;
+        int sideOfInterest;
+    };
+
+    int nSide;
+
+    if (g_pBall->GetInNet(nSide))
+    {
+        if (!m_bBallInNet)
+        {
+            g_pBall->HandleBuzzerBeater(-1.0f);
+
+            nSide += 1;
+            nSide %= 2;
+            m_nLastTeamToScore = nSide;
+
+            if (m_eGameState == GS_OVERTIME)
+            {
+                if (m_eGameState != GS_END_GAME)
+                {
+                    InitGameState(GS_END_GAME);
+                }
+            }
+            else if (m_eGameState != GS_POST_GOAL)
+            {
+                InitGameState(GS_POST_GOAL);
+            }
+
+            if (m_pScorer != g_pBall->m_pLastTouch && g_pBall->m_pLastTouch->m_eClassType != GOALIE)
+            {
+                float fDirection = g_pBall->m_pLastTouch->m_pTeam->m_pNet->m_baseLocation.f.x * g_pBall->m_v3Position.f.x;
+                if (fDirection >= 0.0f)
+                {
+                    g_pBall->m_uGoalType = 5;
+                }
+                else
+                {
+                    g_pBall->m_uGoalType = 3;
+                }
+
+                cPlayer* pPlayer = g_pBall->m_pLastTouch;
+                if (m_pScorer != NULL && pPlayer != NULL && m_pScorer != pPlayer && m_pScorer->IsOnSameTeam(pPlayer))
+                {
+                    m_pAssister = m_pScorer;
+                }
+                else
+                {
+                    m_pAssister = NULL;
+                }
+
+                m_pScorer = pPlayer;
+
+                if (pPlayer != NULL && pPlayer->m_eClassType == FIELDER)
+                {
+                    m_pTeamTouch[pPlayer->m_pTeam->m_nSide] = pPlayer;
+                }
+            }
+            else if (m_pScorer != NULL)
+            {
+                if (nSide != m_pScorer->m_pTeam->m_nSide)
+                {
+                    g_pBall->m_uGoalType = 5;
+                }
+            }
+
+            unsigned long uNumGoalsScored;
+            if (g_pBall->m_uGoalType == 6)
+            {
+                World::sbIsHyperShootToScoreRenderingEnabled = false;
+                uNumGoalsScored = 2;
+            }
+            else
+            {
+                uNumGoalsScored = 1;
+            }
+
+            g_pTeams[nSide]->m_nScore += uNumGoalsScored;
+
+            GoalScoredDataExt* pGoalScored = new ((u8*)g_pEventManager->CreateValidEvent(5, 0x3C) + 0x10) GoalScoredDataExt();
+            pGoalScored->data.uNumGoalsScored = uNumGoalsScored;
+            pGoalScored->data.uTeamIndex = nSide;
+            pGoalScored->data.uGoalType = g_pBall->m_uGoalType;
+            pGoalScored->data.uIsHyper = g_pBall->m_unk_0xA5;
+            pGoalScored->data.v3ShotPosition = g_pBall->m_v3ShotOrigin;
+            pGoalScored->data.pScorer = m_pScorer;
+            pGoalScored->data.pAssister = m_pAssister;
+
+            if (m_pScorer != NULL && m_pScorer->GetGlobalPad() != NULL)
+            {
+                pGoalScored->sideOfInterest = m_pScorer->GetGlobalPad()->m_padIndex;
+            }
+            else
+            {
+                pGoalScored->sideOfInterest = -1;
+            }
+
+            pGoalScored->data.pLastTouch[0] = m_pTeamTouch[0];
+            pGoalScored->data.pLastTouch[1] = m_pTeamTouch[1];
+
+            g_pBall->m_uGoalType = 4;
+            m_bBallInNet = true;
+        }
+    }
 }
 
 /**

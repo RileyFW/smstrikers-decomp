@@ -5,6 +5,26 @@ u8 StaticModelExplodable::bIsModelLoaded[2];
 nlList<SidelineExplodableNode> StaticModelExplodable::sStaticModelExplodableList;
 ExplodableCategoryData StaticModelExplodable::sCategoryData[NUM_STATIC_MODEL_EXPLODABLE_CATEGORIES];
 
+class World;
+extern World* s_World__12WorldManager;
+
+extern "C" StaticModelExplodable* __ct__21StaticModelExplodableF29StaticModelExplodableCategoryRC9nlMatrix4(
+    StaticModelExplodable*, StaticModelExplodableCategory, const nlMatrix4&);
+
+struct StaticModelExplodableHelperTreeWalkData
+{
+    AVLTreeEntry<unsigned long, HelperObject*>** mStack;
+    unsigned int mCount;
+};
+
+struct StaticModelExplodableWorldHelperMapView
+{
+    char _pad0[0x74];
+    AVLTreeEntry<unsigned long, HelperObject*>* mRoot;
+    DefaultKeyCompare<unsigned long>* mCompare;
+    unsigned int mNumElements;
+};
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80165D2C | size: 0x138
 //  */
@@ -17,6 +37,126 @@ ExplodableCategoryData StaticModelExplodable::sCategoryData[NUM_STATIC_MODEL_EXP
  */
 void StaticModelExplodable::CreateExplodablesFromHelperObjects()
 {
+    StaticModelExplodableHelperTreeWalkData* pWalkData;
+    World* pWorld;
+    void* pNode;
+
+    pWorld = s_World__12WorldManager;
+    pWalkData = (StaticModelExplodableHelperTreeWalkData*)nlMalloc(8, 8, false);
+
+    if (pWalkData != NULL)
+    {
+        pNode = ((StaticModelExplodableWorldHelperMapView*)pWorld)->mRoot;
+        pWalkData->mStack = (AVLTreeEntry<unsigned long, HelperObject*>**)nlMalloc((((StaticModelExplodableWorldHelperMapView*)pWorld)->mNumElements + 1) * 4, 8, false);
+        pWalkData->mCount = 0;
+
+        if (pNode != NULL)
+        {
+            while (((AVLTreeEntry<unsigned long, HelperObject*>*)pNode)->node.left != NULL)
+            {
+                pWalkData->mStack[pWalkData->mCount] = (AVLTreeEntry<unsigned long, HelperObject*>*)pNode;
+                pWalkData->mCount++;
+                pNode = ((AVLTreeEntry<unsigned long, HelperObject*>*)pNode)->node.left;
+            }
+
+            pWalkData->mStack[pWalkData->mCount] = (AVLTreeEntry<unsigned long, HelperObject*>*)pNode;
+            pWalkData->mCount++;
+        }
+    }
+
+    SlotPool<SidelineExplodableNode>* pPool = &SidelineExplodableNode::sSidelineExplodableNodeSlotPool;
+    SidelineExplodableNode** pTail = &sStaticModelExplodableList.m_pEnd;
+
+    while (pWalkData->mCount != 0)
+    {
+        HelperObject* helper = pWalkData->mStack[pWalkData->mCount - 1]->value;
+
+        if (pWorld->CompareNameToGenericName(helper->m_szName, "bench1") == 0)
+        {
+            pNode = NULL;
+            if (pPool->m_FreeList == NULL)
+            {
+                SlotPoolBase::BaseAddNewBlock(&SidelineExplodableNode::sSidelineExplodableNodeSlotPool, 8);
+            }
+
+            SlotPoolEntry* pEntry = pPool->m_FreeList;
+            if (pEntry != NULL)
+            {
+                pNode = pEntry;
+                pPool->m_FreeList = pEntry->m_next;
+            }
+
+            if (pNode != NULL)
+            {
+                ((SidelineExplodableNode*)pNode)->mpExplodable = NULL;
+                ((SidelineExplodableNode*)pNode)->next = NULL;
+            }
+
+            StaticModelExplodable* pExplodable = (StaticModelExplodable*)nlMalloc(0x74, 8, false);
+            if (pExplodable != NULL)
+            {
+                pExplodable = __ct__21StaticModelExplodableF29StaticModelExplodableCategoryRC9nlMatrix4(
+                    pExplodable, EXPLODABLE_BENCH1, helper->m_worldMatrix);
+            }
+
+            ((SidelineExplodableNode*)pNode)->mpExplodable = pExplodable;
+            nlListAddEnd<SidelineExplodableNode>(&sStaticModelExplodableList.m_pStart, pTail, (SidelineExplodableNode*)pNode);
+        }
+
+        if (pWorld->CompareNameToGenericName(helper->m_szName, "bench2") == 0)
+        {
+            pNode = NULL;
+            if (pPool->m_FreeList == NULL)
+            {
+                SlotPoolBase::BaseAddNewBlock(&SidelineExplodableNode::sSidelineExplodableNodeSlotPool, 8);
+            }
+
+            SlotPoolEntry* pEntry = pPool->m_FreeList;
+            if (pEntry != NULL)
+            {
+                pNode = pEntry;
+                pPool->m_FreeList = pEntry->m_next;
+            }
+
+            if (pNode != NULL)
+            {
+                ((SidelineExplodableNode*)pNode)->mpExplodable = NULL;
+                ((SidelineExplodableNode*)pNode)->next = NULL;
+            }
+
+            StaticModelExplodable* pExplodable = (StaticModelExplodable*)nlMalloc(0x74, 8, false);
+            if (pExplodable != NULL)
+            {
+                pExplodable = __ct__21StaticModelExplodableF29StaticModelExplodableCategoryRC9nlMatrix4(
+                    pExplodable, EXPLODABLE_BENCH2, helper->m_worldMatrix);
+            }
+
+            ((SidelineExplodableNode*)pNode)->mpExplodable = pExplodable;
+            nlListAddEnd<SidelineExplodableNode>(&sStaticModelExplodableList.m_pStart, pTail, (SidelineExplodableNode*)pNode);
+        }
+
+        pWalkData->mCount--;
+        pNode = (void*)pWalkData->mStack[pWalkData->mCount]->node.right;
+
+        if (pNode != NULL)
+        {
+            while (((AVLTreeEntry<unsigned long, HelperObject*>*)pNode)->node.left != NULL)
+            {
+                pWalkData->mStack[pWalkData->mCount] = (AVLTreeEntry<unsigned long, HelperObject*>*)pNode;
+                pWalkData->mCount++;
+                pNode = ((AVLTreeEntry<unsigned long, HelperObject*>*)pNode)->node.left;
+            }
+
+            pWalkData->mStack[pWalkData->mCount] = (AVLTreeEntry<unsigned long, HelperObject*>*)pNode;
+            pWalkData->mCount++;
+        }
+    }
+
+    if (pWalkData != NULL)
+    {
+        delete[] (u8*)pWalkData->mStack;
+        delete (u8*)pWalkData;
+    }
 }
 
 /**

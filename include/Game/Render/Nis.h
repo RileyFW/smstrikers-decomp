@@ -162,8 +162,9 @@ public:
     /* 0x070 */ int mNumTriggers;                               // offset 0x70, size 0x4
     /* 0x074 */ Trigger mTriggers[48];                          // offset 0x74, size 0x6C0
     /* 0x734 */ int mMainCharacterIndex;                        // offset 0x734, size 0x4
-    /* 0x738 */ NisAudioData* mNisAudioDataList;                // offset 0x738, size 0x4
-}; // total size: 0x73C
+    /* 0x738 */ int mUnk_0x738;                                 // offset 0x738, size 0x4
+    /* 0x73C */ NisAudioData* mNisAudioDataList;                // offset 0x73C, size 0x4
+}; // total size: 0x740
 
 // class Function1<void, EmissionController&>
 // {

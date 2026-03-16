@@ -553,8 +553,111 @@ void CupHubScene::HandleButtonComponent()
 /**
  * Offset/Address/Size: 0x12EC | 0x800EB048 | size: 0x2D8
  */
-void CupHubScene::SetRoundColours(eHubColour*, int)
+void CupHubScene::SetRoundColours(eHubColour* coloursArray, int sizeOfArray)
 {
+    GameInfoManager* gameInfo = nlSingleton<GameInfoManager>::s_pInstance;
+    int i;
+
+    for (i = 0; i < sizeOfArray; i++)
+    {
+        coloursArray[i] = (eHubColour)2;
+    }
+
+    if (!gameInfo->IsInTournamentMode())
+    {
+        if (!gameInfo->mDoingKnockout)
+        {
+            int currentRound = (s16)gameInfo->GetCurrentRoundNumber();
+            int firstRound = (s16)gameInfo->GetFirstRoundNumber();
+            if (currentRound != firstRound)
+            {
+                int lastPlayedRound = (s16)gameInfo->GetPreviousRoundNumber((s16)currentRound);
+                BaseCup* cup = gameInfo->mCurrentCup;
+                eHubColour* pColour = coloursArray;
+                int green = 1;
+                int red = 0;
+                int yellow = 3;
+                int k;
+
+                for (k = 0; k <= lastPlayedRound; k++)
+                {
+                    int roundResult = *cup->GetRoundResults(k);
+                    if (roundResult == 0)
+                    {
+                        *pColour = (eHubColour)green;
+                    }
+                    else if (roundResult == 1)
+                    {
+                        *pColour = (eHubColour)red;
+                    }
+                    else if (roundResult == 2)
+                    {
+                        *pColour = (eHubColour)yellow;
+                    }
+
+                    pColour++;
+                }
+            }
+        }
+        else
+        {
+            BaseCup* previousCup = gameInfo->mPreviousCup;
+            int numRounds = previousCup->GetNumRounds();
+            eHubColour* pColour = coloursArray;
+            int k = 0;
+            int green = 1;
+            int red = 0;
+            int yellow = 3;
+
+            while (k < numRounds)
+            {
+                int roundResult = *previousCup->GetRoundResults(k);
+                if (roundResult == 0)
+                {
+                    *pColour = (eHubColour)green;
+                }
+                else if (roundResult == 1)
+                {
+                    *pColour = (eHubColour)red;
+                }
+                else if (roundResult == 2)
+                {
+                    *pColour = (eHubColour)yellow;
+                }
+
+                pColour++;
+                k++;
+            }
+
+            BaseCup* currentCup = gameInfo->mCurrentCup;
+            int round = gameInfo->GetCurrentRoundNumber();
+            if (((u32)(round + 2) <= 1) || (round == -5))
+            {
+                int roundResult = *currentCup->GetRoundResults(0);
+                if (roundResult == 0)
+                {
+                    coloursArray[numRounds] = (eHubColour)1;
+                }
+                else if ((roundResult == 1) || (roundResult == 2))
+                {
+                    coloursArray[numRounds] = (eHubColour)0;
+                }
+            }
+
+            if (round == -5)
+            {
+                int roundResult = *currentCup->GetRoundResults(1);
+                if (roundResult == 0)
+                {
+                    coloursArray[numRounds + 1] = (eHubColour)1;
+                }
+                else if ((roundResult == 1) || (roundResult == 2))
+                {
+                    coloursArray[numRounds + 1] = (eHubColour)0;
+                }
+            }
+        }
+    }
 }
 
 /**

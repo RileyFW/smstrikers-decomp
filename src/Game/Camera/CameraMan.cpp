@@ -171,9 +171,53 @@ void cCameraManager::Remove(eCameraType type, bool bDeleteAfterRemoving)
 
 /**
  * Offset/Address/Size: 0x7F8 | 0x801A6E80 | size: 0x29C
+ * TODO: 99.55% match - nlPrintf literal label relocation (@1258 vs @267)
  */
-void cCameraManager::PushCameraWithTransition(cBaseCamera*, float, eCameraTransition, void (*)(eCameraMessage))
+/* static */ void cCameraManager::PushCameraWithTransition(cBaseCamera* pCamera, float fDuration, eCameraTransition transition, void (*pCallback)(eCameraMessage))
 {
+    extern float m_fTransitionSpeed__14cCameraManager;
+    extern float m_fTransitionTime__14cCameraManager;
+    extern float m_fPrevFOV__14cCameraManager;
+
+    if (cCameraManager::m_transition != eCT_NONE)
+    {
+        nlPrintf("Camera Transition In Progress\n");
+        if (cCameraManager::m_pCallback != NULL)
+        {
+            (*cCameraManager::m_pCallback)(eCM_ABORTED_BY_PUSH);
+        }
+    }
+
+    cCameraManager::m_matPrevView = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->GetViewMatrix();
+    m_fPrevFOV__14cCameraManager = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->GetFOV();
+
+    if (nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter != NULL)
+    {
+        nlMatrix4 matView;
+        nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter->Filter(cCameraManager::m_matPrevView, matView);
+        cCameraManager::m_matPrevView = matView;
+    }
+
+    cCameraManager::m_transition = transition;
+    cCameraManager::m_pCallback = pCallback;
+    m_fTransitionSpeed__14cCameraManager = 1.0f / fDuration;
+    m_fTransitionTime__14cCameraManager = 0.0f;
+
+    if ((nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack) != NULL)
+        && (nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter != 0))
+    {
+        cRumbleFilter* filter1 = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter;
+        cRumbleFilter* filter2 = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter;
+
+        nlVector2 diff_pos;
+        nlVec2Set(diff_pos, filter2->v2Pos0.f.x - filter1->v2Pos1.f.x, filter2->v2Pos0.f.y - filter1->v2Pos1.f.y);
+        if (nlSqrt((diff_pos.f.x * diff_pos.f.x) + (diff_pos.f.y * diff_pos.f.y), 1) > 0.0f)
+        {
+            g_pEventManager->CreateValidEvent(0x58, 0x14);
+        }
+    }
+
+    nlDLRingAddStart<cBaseCamera>(&cCameraManager::m_cameraStack, pCamera);
 }
 
 /**

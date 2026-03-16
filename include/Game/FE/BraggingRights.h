@@ -1,16 +1,25 @@
 #ifndef _BRAGGINGRIGHTS_H_
 #define _BRAGGINGRIGHTS_H_
 
-class BraggingRightsScene
+#include "Game/BaseSceneHandler.h"
+#include "Game/FE/feButtonComponent.h"
+
+class BraggingRightsScene : public BaseSceneHandler
 {
 public:
     BraggingRightsScene();
     ~BraggingRightsScene();
     void SceneCreated();
     void Update(float);
+
+    /* 0x001C */ u16 mBuffer[5][256];
+    /* 0x0A1C */ u16 mThisCupBuffer[5][256];
+    /* 0x141C */ u16 mRatioBuffer[256];
+    /* 0x161C */ s8 mUserPlace;
+    /* 0x1620 */ ButtonComponent mButtons;
 };
 
-class BraggingRightsOverlay
+class BraggingRightsOverlay : public BaseSceneHandler
 {
 public:
     BraggingRightsOverlay();

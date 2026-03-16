@@ -50,7 +50,7 @@ public:
     void QueueResourceLoad(FEResourceHandle*);
     void UnloadResource(FEResourceHandle*);
     void UnloadPermanentResourceBundle();
-    void TextureResourceLoadComplete(void*, unsigned long, unsigned long);
+    static void TextureResourceLoadComplete(void*, unsigned long uReadSize, unsigned long uParam);
 
     // static nlSingleton<FEResourceManager> s_pInstance;
 

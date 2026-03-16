@@ -41,6 +41,59 @@ void DrawableCharacter::Replay<SaveFrame>(SaveFrame& frame)
 template <>
 void DrawableCharacter::Replay<LoadFrame>(LoadFrame& frame)
 {
+    Replayable<1>(frame, (unsigned char&)mDirt);
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mPosition.f.x));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mPosition.f.y));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mPosition.f.z));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mBip01Position.f.x));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mBip01Position.f.y));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mBip01Position.f.z));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mHeadPosition.f.x));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mHeadPosition.f.y));
+    Replayable<1>(frame, FloatCompressor<-128, 128, 8>(mHeadPosition.f.z));
+    Replayable<1>(frame, FloatCompressor<-512, 512, 8>(mVelocity.f.x));
+    Replayable<1>(frame, FloatCompressor<-512, 512, 8>(mVelocity.f.y));
+    Replayable<1>(frame, FloatCompressor<-512, 512, 8>(mVelocity.f.z));
+    Replayable<1>(frame, mVisible);
+    Replayable<1>(frame, mFacingDirection);
+    Replayable<1>(frame, mHeadSpin);
+    Replayable<1>(frame, mHeadTilt);
+    Replayable<1>(frame, (unsigned long&)mEffectsTexturing);
+    ReplayablePolymorphic<1>(frame, mPoseTree);
+
+    if (frame.mInterval == 1)
+    {
+        mPoseAccumulator->InitAccumulators();
+        mPoseTree->Evaluate(1.0f, mPoseAccumulator);
+
+        nlMatrix4 worldMatrix;
+        float angle = 0.0000958738f * (float)mFacingDirection;
+        nlMakeRotationMatrixZ(worldMatrix, angle);
+        worldMatrix.SetRow_(3, mPosition);
+
+        if (mCharacter != nullptr)
+        {
+            mPoseAccumulator->SetBuildNodeMatrixCallback(mCharacter->m_nHeadJointIndex, DrawableCharacterHeadTrackCallback, (unsigned int)this, 0);
+        }
+        else if (mBowser != nullptr)
+        {
+            mPoseAccumulator->SetBuildNodeMatrixCallback(mBowser->mnHeadJointIndex, DrawableBowserHeadTrackCallback, (unsigned int)this, 0);
+        }
+
+        mPoseAccumulator->BuildNodeMatrices(worldMatrix);
+
+        if (mCharacter != nullptr)
+        {
+            mPoseAccumulator->SetBuildNodeMatrixCallback(mCharacter->m_nHeadJointIndex, nullptr, 0, 0);
+        }
+        else if (mBowser != nullptr)
+        {
+            mPoseAccumulator->SetBuildNodeMatrixCallback(mBowser->mnHeadJointIndex, nullptr, 0, 0);
+        }
+
+        delete mPoseTree;
+        mPoseTree = nullptr;
+    }
 }
 
 /**

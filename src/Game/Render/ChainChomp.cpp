@@ -111,8 +111,98 @@ void UpdateChainEmitter(EmissionController& controller)
 /**
  * Offset/Address/Size: 0x608 | 0x8015E30C | size: 0x2E0
  */
-void ChainChomp::FindTarget(cTeam*)
+void ChainChomp::FindTarget(cTeam* pTeam)
 {
+    float fBestScore = 99999.9f;
+    cFielder* pBestCandidate = NULL;
+    cFielder* pFielder;
+    cFielder* pFielder2;
+    int i;
+    float fTempScore;
+    cFielder* pCandidate;
+
+    if (g_pBall->GetOwnerFielder() != NULL)
+    {
+        pFielder = g_pBall->GetOwnerFielder();
+
+        if (pFielder->IsOnSameTeam(pTeam->GetStriker()) && !pFielder->IsFallenDown(0.0f) && pFielder != mpTarget)
+        {
+            pBestCandidate = g_pBall->GetOwnerFielder();
+        }
+    }
+    else if (g_pBall->GetPassTargetFielder() != NULL)
+    {
+        pFielder2 = (cFielder*)g_pBall->GetPassTargetFielder();
+
+        if (pFielder2->IsOnSameTeam(pTeam->GetStriker()) && !pFielder2->IsFallenDown(0.0f) && pFielder2 != mpTarget)
+        {
+            pBestCandidate = pFielder2;
+        }
+    }
+
+    if (pBestCandidate == NULL)
+    {
+        for (i = 0; i < 4; i++)
+        {
+            fTempScore = 999999.9f;
+            pCandidate = pTeam->GetFielder(i);
+
+            if (!pCandidate->IsFallenDown(0.0f) && pCandidate != mpTarget)
+            {
+                float dy = pCandidate->m_v3Position.f.y - mv3Position.f.y;
+                float dx = pCandidate->m_v3Position.f.x - mv3Position.f.x;
+                float fDist = nlSqrt(dx * dx + dy * dy, true);
+                float fConverted = 10430.378f * nlATan2f(dy, dx);
+                s16 angleDiff = (s16)(maFacingDirection - (u16)(s32)fConverted);
+                u16 absDelta = (u16)((angleDiff < 0) ? -angleDiff : angleDiff);
+                float fAngleWeighting = g_pGame->m_pGameTweaks->fAngleWeighting;
+                float fInvWeight = 1.0f - fAngleWeighting;
+                fTempScore = fDist * fInvWeight + (float)absDelta * fAngleWeighting;
+            }
+
+            if (fTempScore < fBestScore)
+            {
+                pBestCandidate = pCandidate;
+                fBestScore = fTempScore;
+            }
+        }
+    }
+
+    if (pBestCandidate == NULL)
+    {
+        float fTargetX;
+        float fTargetY;
+        float fY;
+
+        mtStateTimer.SetSeconds(0.0f);
+        meChainChompState = CHAIN_STATE_LEAVE;
+
+        if ((0.5f * g_pBall->m_v3Velocity.f.x + g_pBall->m_v3Position.f.x) < 0.0f)
+        {
+            fTargetX = 40.0f;
+        }
+        else
+        {
+            fTargetX = -40.0f;
+        }
+
+        fY = mv3Position.f.y;
+
+        if (fY < 0.0f)
+        {
+            fTargetY = -8.0f;
+        }
+        else
+        {
+            fTargetY = 8.0f;
+        }
+
+        maDesiredFacingDirection = (u16)(s32)(10430.378f * nlATan2f(fTargetY - fY, fTargetX - mv3Position.f.x));
+        mfDesiredSpeed = g_pGame->m_pGameTweaks->fChainChompSpeed;
+        pBestCandidate = pTeam->GetStriker();
+    }
+
+    mpTarget = pBestCandidate;
 }
 
 /**

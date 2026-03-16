@@ -154,7 +154,7 @@ public:
     bool IsCustomGiantUnlocked() const;
     bool IsCustomExplosiveUnlocked() const;
     bool IsCustomFreezingUnlocked() const;
-    void HasHumanGameBeenPlayed() const;
+    bool HasHumanGameBeenPlayed() const;
     void SetRoundResult(bool, int);
     bool IsStunnedGoaliesOn() const;
     bool IsInfinitePowerupsOn() const;

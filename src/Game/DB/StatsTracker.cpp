@@ -286,6 +286,65 @@ void StatsTracker::CompileEndOfGameStats()
  */
 void StatsTracker::SimulateRemainingGames()
 {
+    BaseCup* cup;
+    int round;
+    int numGames;
+    int numRounds;
+    eTeamID userTeam;
+    int game;
+    u16 gamesPerRound;
+    u16 roundsTotal;
+
+    round = nlSingleton<GameInfoManager>::s_pInstance->mCurrentCup->mRoundNumber;
+    gamesPerRound = nlSingleton<GameInfoManager>::s_pInstance->GetNumGamesPerRound(round);
+    numGames = gamesPerRound;
+    roundsTotal = nlSingleton<GameInfoManager>::s_pInstance->GetNumRounds();
+    numRounds = roundsTotal;
+    userTeam = nlSingleton<GameInfoManager>::s_pInstance->GetUserSelectedCupTeam();
+    cup = nlSingleton<GameInfoManager>::s_pInstance->mCurrentCup;
+
+    m_pSimulator->InitializeStats();
+
+    if (round == -4)
+    {
+        round = numRounds - 3;
+    }
+
+    if (round == -3)
+    {
+        round = numRounds - 2;
+    }
+
+    if (round == -2)
+    {
+        round = numRounds - 1;
+    }
+
+    if (round == -1)
+    {
+        return;
+    }
+
+    for (game = 0; game < numGames; game++)
+    {
+        if (userTeam == cup->GetGameInfo(round, game)->mTeamIndex[0])
+        {
+            continue;
+        }
+
+        if (userTeam == cup->GetGameInfo(round, game)->mTeamIndex[1])
+        {
+            continue;
+        }
+
+        SetBasicGameInfoPointer(cup->GetGameInfo(round, game), true);
+        SimulateGame();
+
+        if (nlSingleton<GameInfoManager>::s_pInstance->GetResultsOfLastUserGame() != RESULT_USER_DOES_NOT_PLAYOFF_QUALIFY)
+        {
+            CompileEndOfGameStats();
+        }
+    }
 }
 
 /**
@@ -584,8 +643,181 @@ void StatsTracker::AwardCup(eUserGameResult gameResult)
 /**
  * Offset/Address/Size: 0x148 | 0x801816A8 | size: 0x2D0
  */
+template <typename StringType, typename Arg0, typename Arg1, typename Arg2, typename Arg3, typename Arg4>
+void Format(StringType& result,
+    const StringType& format,
+    const Arg0& arg0,
+    const Arg1& arg1,
+    const Arg2& arg2,
+    const Arg3& arg3,
+    const Arg4& arg4);
+
+extern "C" char* GetStadiumFilename__11WorldLoaderCF10eStadiumID(void*, eStadiumID);
+extern "C" char TheWorldLoader;
+extern "C" unsigned long fwrite(const void*, unsigned long, unsigned long, void*);
+
+/**
+ * Offset/Address/Size: 0x3DC | 0x801816A8 | size: 0x2D0
+ * TODO: 93.78% match - r29/r31 register swap for file/formatTemplate variables
+ */
 void StatsTracker::WriteCurrentlyPlaying() const
 {
+    const char* formatTemplate;
+    FILE* file = fopen("currently_playing.txt", "wt");
+    if (file == 0)
+    {
+        return;
+    }
+
+    BasicStringInternal* formatData = (BasicStringInternal*)nlMalloc(0x10, 8, true);
+    if (formatData != 0)
+    {
+        formatTemplate = "Home: {0} with {1}\nAway: {2} with {3}\nStadium: {4}\n";
+        formatData->mData = 0;
+        formatData->mSize = 0;
+        formatData->mCapacity = 0;
+
+        const char* p = formatTemplate;
+        while ((s8)*p++ != 0)
+        {
+            formatData->mSize++;
+        }
+
+        formatData->mSize++;
+        formatData->mData = (char*)nlMalloc(formatData->mSize + 1, 8, true);
+        formatData->mCapacity = formatData->mSize;
+
+        int i = 0;
+        while (i < formatData->mSize)
+        {
+            formatData->mData[i] = formatTemplate[i];
+            i++;
+        }
+
+        formatData->mRefCount = 1;
+    }
+
+    BasicStringInternal* retainedData;
+    BasicStringInternal* formatDataTmp;
+    const char* homeTeamName;
+    const char* homeSidekickName;
+    const char* awayTeamName;
+    const char* awaySidekickName;
+    const char* stadiumName;
+    BasicStringInternal* outputData;
+
+    formatDataTmp = formatData;
+
+    stadiumName = GetStadiumFilename__11WorldLoaderCF10eStadiumID(
+        &TheWorldLoader,
+        nlSingleton<GameInfoManager>::s_pInstance->GetStadium());
+    awaySidekickName = GetSidekickName(nlSingleton<GameInfoManager>::s_pInstance->GetSidekick(1));
+    awayTeamName = GetTeamName(nlSingleton<GameInfoManager>::s_pInstance->GetTeam(1));
+    homeSidekickName = GetSidekickName(nlSingleton<GameInfoManager>::s_pInstance->GetSidekick(0));
+    homeTeamName = GetTeamName(nlSingleton<GameInfoManager>::s_pInstance->GetTeam(0));
+
+    Format(*(BasicString<char, Detail::TempStringAllocator>*)&outputData,
+        *(BasicString<char, Detail::TempStringAllocator>*)&formatDataTmp,
+        homeTeamName,
+        homeSidekickName,
+        awayTeamName,
+        awaySidekickName,
+        stadiumName);
+
+    if (outputData != 0)
+    {
+        outputData->mRefCount++;
+        retainedData = outputData;
+    }
+    else
+    {
+        retainedData = 0;
+    }
+
+    if (outputData != 0)
+    {
+        if (--outputData->mRefCount == 0)
+        {
+            if (outputData != 0)
+            {
+                if (outputData != 0)
+                {
+                    delete[] outputData->mData;
+                }
+                if (outputData != 0)
+                {
+                    nlFree(outputData);
+                }
+            }
+        }
+    }
+
+    if (formatData != 0)
+    {
+        if (--formatData->mRefCount == 0)
+        {
+            if (formatData != 0)
+            {
+                if (formatData != 0)
+                {
+                    delete[] formatData->mData;
+                }
+                if (formatData != 0)
+                {
+                    nlFree(formatData);
+                }
+            }
+        }
+    }
+
+    s32 len;
+    if (retainedData != 0)
+    {
+        len = retainedData->mSize - 1;
+    }
+    else
+    {
+        len = 0;
+    }
+
+    static char emptyString;
+    static bool init;
+    if (!init)
+    {
+        emptyString = 0;
+        init = true;
+    }
+
+    const char* str;
+    if (retainedData != 0)
+    {
+        str = retainedData->mData;
+    }
+    else
+    {
+        str = &emptyString;
+    }
+
+    fwrite(str, 1, len, file);
+    fclose(file);
+
+    if (retainedData != 0)
+    {
+        if (--retainedData->mRefCount == 0)
+        {
+            if (retainedData != 0)
+            {
+                if (retainedData != 0)
+                {
+                    delete[] retainedData->mData;
+                }
+                if (retainedData != 0)
+                {
+                    nlFree(retainedData);
+                }
+            }
+        }
+    }
 }
 
 /**

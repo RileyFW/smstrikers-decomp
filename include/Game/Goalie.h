@@ -148,7 +148,7 @@ public:
     void InitActionPursueRecover();
     void DoNavigation(float, float, Goalie::eNaviMode);
     void FindDesiredGoaliePosition(nlVector3&, nlVector3&, nlVector3&, unsigned short&, const nlVector3*);
-    void ShouldReposition();
+    bool ShouldReposition();
     void HandleSTSContact(cBall*);
     bool InitiatePickup();
     void InitiatePanicGrab(cPlayer*);
