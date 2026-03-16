@@ -113,6 +113,7 @@ void UpdateChainEmitter(EmissionController& controller)
  */
 void ChainChomp::FindTarget(cTeam* pTeam)
 {
+    // TODO: 99.24% match - remaining FPR allocation/scheduling mismatch in score weighting.
     float fBestScore = 99999.9f;
     cFielder* pBestCandidate = NULL;
     cFielder* pFielder;
@@ -149,15 +150,18 @@ void ChainChomp::FindTarget(cTeam* pTeam)
 
             if (!pCandidate->IsFallenDown(0.0f) && pCandidate != mpTarget)
             {
-                float dy = pCandidate->m_v3Position.f.y - mv3Position.f.y;
-                float dx = pCandidate->m_v3Position.f.x - mv3Position.f.x;
+                float dx;
+                float dy;
+
+                dy = pCandidate->m_v3Position.f.y - mv3Position.f.y;
+                dx = pCandidate->m_v3Position.f.x - mv3Position.f.x;
                 float fDist = nlSqrt(dx * dx + dy * dy, true);
                 float fConverted = 10430.378f * nlATan2f(dy, dx);
                 s16 angleDiff = (s16)(maFacingDirection - (u16)(s32)fConverted);
                 u16 absDelta = (u16)((angleDiff < 0) ? -angleDiff : angleDiff);
                 float fAngleWeighting = g_pGame->m_pGameTweaks->fAngleWeighting;
-                float fInvWeight = 1.0f - fAngleWeighting;
-                fTempScore = fDist * fInvWeight + (float)absDelta * fAngleWeighting;
+
+                fTempScore = fDist * (1.0f - fAngleWeighting) + (float)absDelta * fAngleWeighting;
             }
 
             if (fTempScore < fBestScore)

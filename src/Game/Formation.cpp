@@ -898,7 +898,7 @@ extern FormationPositionThresholds g_aDefensiveFormationThresholds[4];
 
 /**
  * Offset/Address/Size: 0xE70 | 0x800390C0 | size: 0x2E0
- * TODO: 89.46% match - remaining diffs are MWCC floating-point register allocation and operation ordering in the extended scoring path.
+ * TODO: 91.90% match - remaining diffs are MWCC floating-point register allocation around fInPosition in the near-zero branch.
  */
 float FormationDefensive::IsFielderInPosition(cFielder* pFielder, nlVector3 v3DesiredPosition, bool bInPosition)
 {
@@ -955,7 +955,10 @@ float FormationDefensive::IsFielderInPosition(cFielder* pFielder, nlVector3 v3De
         float fLateralScore = (float)fabs(v3FielderPos.f.y - v3DesiredPosition.f.y)
                             / (fPercent * pPositionThresholds->fOutLateral);
 
-        float fScore = (nlMaxEquals(fUpScore, 0.0f) + nlMaxEquals(fDownScore, 0.0f) + nlMaxEquals(fLateralScore, 0.0f)) * 0.33333334f;
+        float fScore = nlMaxEquals(fUpScore, 0.0f);
+        fScore += nlMaxEquals(fDownScore, 0.0f);
+        fScore += nlMaxEquals(fLateralScore, 0.0f);
+        fScore *= 0.33333334f;
         fScore = nlMinEquals(nlMaxEquals(fScore, 0.0f), 1.0f);
         fInPosition = 1.0f - fScore;
     }

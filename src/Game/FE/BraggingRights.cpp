@@ -194,14 +194,14 @@ void BraggingRightsScene::Update(float fDeltaT)
     }
     else if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x100, false, NULL))
     {
-        SceneList nextScene = SCENE_MAIN_MENU;
-        GameInfoManager::eGameModes mode;
+        SceneList nextScene;
 
         nlSingleton<GameSceneManager>::s_pInstance->PopEntireStack();
 
         info = nlSingleton<GameInfoManager>::s_pInstance;
-        mode = info->mCurrentMode;
-        if (mode == GameInfoManager::GM_BOWSER_CUP || mode == GameInfoManager::GM_SUPER_BOWSER_CUP)
+        nextScene = SCENE_MAIN_MENU;
+        if (info->mCurrentMode == GameInfoManager::GM_BOWSER_CUP
+            || info->mCurrentMode == GameInfoManager::GM_SUPER_BOWSER_CUP)
         {
             if (mUserPlace == 0)
             {
@@ -226,15 +226,12 @@ void BraggingRightsScene::Update(float fDeltaT)
     }
     else if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x200, false, NULL))
     {
-        GameInfoManager::eGameModes mode;
-
         info = nlSingleton<GameInfoManager>::s_pInstance;
-        mode = info->mCurrentMode;
-        if (mode == GameInfoManager::GM_BOWSER_CUP)
+        if (info->mCurrentMode == GameInfoManager::GM_BOWSER_CUP)
         {
             nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_CUP_STANDINGS_FINAL_ANIM, SCREEN_BACK, true);
         }
-        else if (mode == GameInfoManager::GM_SUPER_BOWSER_CUP)
+        else if (info->mCurrentMode == GameInfoManager::GM_SUPER_BOWSER_CUP)
         {
             nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_SUPER_CUP_STANDINGS_FINAL_ANIM, SCREEN_BACK, true);
         }

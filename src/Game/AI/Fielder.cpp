@@ -3906,9 +3906,129 @@ void cFielder::UpdateActionState(float dt)
 
 /**
  * Offset/Address/Size: 0x17CC | 0x8001AB08 | size: 0x2E8
+ * TODO: 98.39% match - branch shape mismatch in ACTION_ONETIMER anim-range gate
+ * around 0x8001AB58..0x8001AB70 (bge/b pattern vs blt path).
  */
 void cFielder::UpdateHeadTracking(float)
 {
+    switch (m_eActionState)
+    {
+    case ACTION_NEED_ACTION:
+    case ACTION_DEKE:
+    case ACTION_ELECTROCUTION:
+    case ACTION_HIT:
+    case ACTION_HIT_REACT:
+    case ACTION_IDLE_TURN:
+    case ACTION_LATE_ONETIMER_FROM_VOLLEY:
+    case ACTION_ONETOUCH_PASS_FROM_VOLLEY:
+    case ACTION_RUNNING_WB_TURBO:
+    case ACTION_RUNNING_WB_TURBO_TURN:
+    case ACTION_SHOT:
+    case ACTION_SHOOT_TO_SCORE:
+    case ACTION_SLIDE_ATTACK_REACT:
+    case ACTION_BOMB_REACT:
+    case ACTION_SHELL_REACT:
+    case ACTION_BANANA_REACT:
+    case ACTION_STS_HIT_REACT:
+    case ACTION_SQUISH_REACT:
+    case ACTION_SLIDE_FAIL_REACT:
+        m_pHeadTrack->m_bTrackOOI = false;
+        break;
+
+    case ACTION_ONETIMER:
+        if (m_eAnimID < 0x50)
+        {
+            if (!(m_eAnimID < 0x48))
+            {
+                m_pHeadTrack->m_bTrackOOI = false;
+                break;
+            }
+        }
+
+        if (m_pCurrentAnimController->m_fTime > mActionOneTimerVars.fOneTimerAnimTime)
+        {
+            m_pHeadTrack->m_bTrackOOI = false;
+        }
+        else
+        {
+            m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+            m_pHeadTrack->m_bTrackOOI = true;
+        }
+        break;
+
+    case ACTION_LOOSE_BALL_PASS:
+    case ACTION_LOOSE_BALL_SHOT:
+        if (m_pCurrentAnimController->m_fTime > mActionOneTimerVars.fOneTimerAnimTime)
+        {
+            m_pHeadTrack->m_bTrackOOI = false;
+        }
+        else
+        {
+            m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+            m_pHeadTrack->m_bTrackOOI = true;
+        }
+        break;
+
+    case ACTION_PASS:
+    case ACTION_RECEIVE_PASS:
+    case ACTION_SLIDE_ATTACK:
+        if (m_pBall == nullptr)
+        {
+            if (m_eAnimID != 0x35)
+            {
+                m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+                m_pHeadTrack->m_bTrackOOI = true;
+                break;
+            }
+        }
+
+        m_pHeadTrack->m_bTrackOOI = false;
+        break;
+
+    case ACTION_RUNNING_WB:
+        if (!BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp->IsHidden())
+        {
+            m_pHeadTrack->m_v3OOI = BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp->mv3Position;
+            m_pHeadTrack->m_bTrackOOI = true;
+        }
+        else
+        {
+            m_pHeadTrack->m_bTrackOOI = false;
+        }
+        break;
+
+    case ACTION_RUNNING:
+        if (!BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp->IsHidden())
+        {
+            m_pHeadTrack->m_v3OOI = BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp->mv3Position;
+        }
+        else
+        {
+            m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+        }
+        m_pHeadTrack->m_bTrackOOI = true;
+        break;
+
+    case ACTION_POST_WHISTLE:
+    {
+        cPlayer* pScorer = g_pGame->m_pScorer;
+        if (pScorer != nullptr)
+        {
+            m_pHeadTrack->m_v3OOI = pScorer->m_v3Position;
+        }
+        else
+        {
+            m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+        }
+        m_pHeadTrack->m_bTrackOOI = true;
+        break;
+    }
+
+    case ACTION_WAIT:
+        m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+        m_pHeadTrack->m_bTrackOOI = true;
+        break;
+    }
 }
 
 /**
