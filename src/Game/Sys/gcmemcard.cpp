@@ -504,6 +504,7 @@ s32 MemCard::BeginCardAccess(const MemCardFunctor& Callback)
  */
 long MemCard::CreateFile(const char*, unsigned long, MemCard::ICON_CONFIG*, MemCard::MC_FILE*&, const MemCardFunctor&)
 {
+    return 0;
 }
 
 /**
@@ -800,6 +801,7 @@ s32 MemCard::FileExists(const char* fileName)
  */
 long MemCard::WriteFileIconData(MemCard::MC_FILE*, void*, const MemCardFunctor&)
 {
+    return 0;
 }
 
 /**

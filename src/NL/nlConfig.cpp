@@ -347,6 +347,12 @@ Config& Config::Global()
  */
 Config::~Config()
 {
+    if (mTvpHash != NULL)
+    {
+        ::operator delete[]((char*)mTvpHash - 0x10);
+    }
+
+    ::operator delete[](mStringMemory);
 }
 
 /**

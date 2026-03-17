@@ -9,6 +9,45 @@ namespace
 bool renderMemoryLayout = false;
 }
 
+struct ReplayDestructorChain
+{
+    ReplayDestructorChain* next;
+    void* destructor;
+    void* object;
+};
+
+extern "C"
+{
+    void __ct__12SlotPoolBaseFv(void*);
+    void* __register_global_object(void* object, void* destructor, void* registration);
+    void ReplayFrameSlotPoolDtor(void* obj, int)
+    {
+        ((SlotPool<Replay::Frame>*)obj)->~SlotPool<Replay::Frame>();
+    }
+}
+
+/**
+ * Offset/Address/Size: 0x964 | 0x80214210 | size: 0x68
+ * TODO: 87.69% match - extra addic./beq null-check before SlotPoolBase ctor
+ * and unresolved dtor/registration symbols (@228 and
+ * __dt__25SlotPool<Q26Replay5Frame>Fv).
+ */
+extern "C" void __sinit_Replay_cpp()
+{
+    static ReplayDestructorChain chain;
+    SlotPool<Replay::Frame>* pool = &Replay::Frame::mSlotPool;
+
+    if (pool)
+    {
+        __ct__12SlotPoolBaseFv(pool);
+    }
+
+    pool->m_Initial = 0x400;
+    SlotPoolBase::BaseAddNewBlock(pool, 0x1C);
+    pool->m_Delta = 0x80;
+    __register_global_object(pool, (void*)ReplayFrameSlotPoolDtor, &chain);
+}
+
 /**
  * Offset/Address/Size: 0x7C8 | 0x80214074 | size: 0x188
  */

@@ -92,6 +92,12 @@ void nlFont::Load(const char*, char*, unsigned long)
  */
 nlFont::~nlFont()
 {
+    ::operator delete[](m_pKernTable);
+    m_pKernTable = NULL;
+    if (m_pExtendedGlyphs != NULL)
+    {
+        ::operator delete[](m_pExtendedGlyphs);
+    }
 }
 
 /**

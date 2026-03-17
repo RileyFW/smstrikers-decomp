@@ -104,8 +104,7 @@ void __VMMappingErrorAlert(u32 virtualPage)
 
 void __VMSetARAMPageAsDirty(u32 virtualPage)
 {
-    u32 idx = VMToARAMOffset(virtualPage) >> 2;
-    g_baseVMtoARAM[idx] |= 0x80000000;
+    g_baseVMtoARAM[(virtualPage >> 12) & 0x1FFF] |= 0x80000000;
 }
 
 BOOL __VMIsARAMPageDirty(u32 virtualPage)

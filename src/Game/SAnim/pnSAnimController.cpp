@@ -4,6 +4,41 @@
 
 SlotPool<cPN_SAnimController> cPN_SAnimController::m_SAnimControllerSlotPool;
 
+extern "C"
+{
+    void __ct__12SlotPoolBaseFv(void*);
+    void* __register_global_object(void* object, void* destructor, void* registration);
+}
+
+struct SAnimControllerDestructorChain
+{
+    SAnimControllerDestructorChain* next;
+    void* destructor;
+    void* object;
+};
+
+void SAnimControllerSlotPoolDtor(void* obj, int)
+{
+    ((SlotPool<cPN_SAnimController>*)obj)->~SlotPool<cPN_SAnimController>();
+}
+
+/**
+ * Offset/Address/Size: 0x1064 | 0x801EB4B4 | size: 0x68
+ * TODO: 99.23% match - relocation symbols differ for slot-pool destructor and
+ * @185 registration chain.
+ */
+extern "C" void __sinit_pnSAnimController_cpp()
+{
+    static SAnimControllerDestructorChain chain;
+    SlotPoolBase* pool = (SlotPoolBase*)&cPN_SAnimController::m_SAnimControllerSlotPool;
+
+    __ct__12SlotPoolBaseFv(pool);
+    pool->m_Initial = 0x10;
+    SlotPoolBase::BaseAddNewBlock(pool, 0x54);
+    pool->m_Delta = 0x10;
+    __register_global_object(pool, (void*)SAnimControllerSlotPoolDtor, &chain);
+}
+
 /**
  * Offset/Address/Size: 0xDC0 | 0x801EB41C | size: 0x98
  */

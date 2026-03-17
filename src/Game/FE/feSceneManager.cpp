@@ -492,15 +492,17 @@ FESceneManager::FESceneManager()
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x8020E26C | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<BaseSceneHandler*>, DLListContainerBase<BaseSceneHandler*,
-// BasicSlotPool<DLListEntry<BaseSceneHandler*>>>>(DLListEntry<BaseSceneHandler*>*, DLListContainerBase<BaseSceneHandler*,
-// BasicSlotPool<DLListEntry<BaseSceneHandler*>>>*, void (DLListContainerBase<BaseSceneHandler*,
-// BasicSlotPool<DLListEntry<BaseSceneHandler*>>>::*)(DLListEntry<BaseSceneHandler*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x8020E26C | size: 0x3C
+ * TODO: 96% match - stw LR save scheduling differs by one slot
+ * (target emits first lwz from callbackFunc before stw r0,0x24(r1)).
+ */
+template void nlWalkDLRing<DLListEntry<BaseSceneHandler*>,
+    DLListContainerBase<BaseSceneHandler*, BasicSlotPool<DLListEntry<BaseSceneHandler*> > > >(
+    DLListEntry<BaseSceneHandler*>* head,
+    DLListContainerBase<BaseSceneHandler*, BasicSlotPool<DLListEntry<BaseSceneHandler*> > >* callback,
+    void (DLListContainerBase<BaseSceneHandler*, BasicSlotPool<DLListEntry<BaseSceneHandler*> > >::*callbackFunc)(
+        DLListEntry<BaseSceneHandler*>*));
 
 // /**
 //  * Offset/Address/Size: 0x3C | 0x8020E2A8 | size: 0x38
@@ -572,15 +574,17 @@ FESceneManager::FESceneManager()
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x218 | 0x8020E484 | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<PackagePushPopMessage*>, DLListContainerBase<PackagePushPopMessage*,
-// BasicSlotPool<DLListEntry<PackagePushPopMessage*>>>>(DLListEntry<PackagePushPopMessage*>*, DLListContainerBase<PackagePushPopMessage*,
-// BasicSlotPool<DLListEntry<PackagePushPopMessage*>>>*, void (DLListContainerBase<PackagePushPopMessage*,
-// BasicSlotPool<DLListEntry<PackagePushPopMessage*>>>::*)(DLListEntry<PackagePushPopMessage*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x218 | 0x8020E484 | size: 0x3C
+ * TODO: 96% match - stw LR save scheduling differs by one slot
+ * (target emits first lwz from callbackFunc before stw r0,0x24(r1)).
+ */
+template void nlWalkDLRing<DLListEntry<PackagePushPopMessage*>,
+    DLListContainerBase<PackagePushPopMessage*, BasicSlotPool<DLListEntry<PackagePushPopMessage*> > > >(
+    DLListEntry<PackagePushPopMessage*>* head,
+    DLListContainerBase<PackagePushPopMessage*, BasicSlotPool<DLListEntry<PackagePushPopMessage*> > >* callback,
+    void (DLListContainerBase<PackagePushPopMessage*, BasicSlotPool<DLListEntry<PackagePushPopMessage*> > >::*callbackFunc)(
+        DLListEntry<PackagePushPopMessage*>*));
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8020E4C0 | size: 0x60

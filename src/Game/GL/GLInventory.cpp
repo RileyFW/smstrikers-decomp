@@ -3,6 +3,36 @@
 
 GLInventory glInventory;
 
+template <>
+nlAVLTree<unsigned long, nlChunk*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
+{
+}
+
+template <>
+nlAVLTree<unsigned long, GLMaterialList*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
+{
+}
+
+template <>
+nlAVLTree<unsigned long, GLVertexAnim*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
+{
+}
+
+template <>
+nlAVLTree<unsigned long, GLTextureAnim*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
+{
+}
+
+template <>
+nlAVLTree<unsigned long, GLShadowVolume*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
+{
+}
+
+template <>
+nlAVLTree<unsigned long, glModel*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
+{
+}
+
 /**
  * Offset/Address/Size: 0x1058 | 0x801E32F0 | size: 0x50
  */

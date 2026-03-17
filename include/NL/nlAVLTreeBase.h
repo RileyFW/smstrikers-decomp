@@ -61,10 +61,7 @@ public:
         m_Compare = nullptr;
     };
 
-    ~AVLTreeBase()
-    {
-        Clear();
-    }
+    ~AVLTreeBase();
 
     void DeleteEntry(AVLTreeEntry<KeyType, ValueType>* entry);
     void Clear();
@@ -188,6 +185,14 @@ void AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::DeleteEntry(AV
 {
     m_Allocator.Free(entry);
 }
+
+#ifndef NL_AVLTREEBASE_DECLARE_ONLY
+template <typename KeyType, typename ValueType, typename AllocatorType, typename CompareType>
+AVLTreeBase<KeyType, ValueType, AllocatorType, CompareType>::~AVLTreeBase()
+{
+    Clear();
+}
+#endif
 
 // Fix DestroyTree method signature to match DeleteEntry
 template <typename KeyType, typename ValueType, typename AllocatorType, typename CompareType>

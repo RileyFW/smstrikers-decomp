@@ -1,3 +1,5 @@
+#define NL_AVLTREE_DECLARE_ONLY
+#define NL_AVLTREEBASE_DECLARE_ONLY
 #include "Game/World.h"
 #include "Game/LightObject.h"
 
@@ -944,6 +946,14 @@ World::~World()
 }
 
 /**
+ * Offset/Address/Size: 0x3D54 | 0x80198A18 | size: 0x60
+ */
+template <>
+nlAVLTree<unsigned long, LightObject*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
+{
+}
+
+/**
  * Offset/Address/Size: 0x3DB4 | 0x80198A78 | size: 0x19C
  */
 World::World(const char*)
@@ -980,12 +990,13 @@ World::World(const char*)
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x80 | 0x80198C9C | size: 0x60
-//  */
-// void nlAVLTree<unsigned long, DrawableObject*, DefaultKeyCompare<unsigned long>>::~nlAVLTree()
-// {
-// }
+/**
+ * Offset/Address/Size: 0x80 | 0x80198C9C | size: 0x60
+ */
+template <>
+nlAVLTree<unsigned long, DrawableObject*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
+{
+}
 
 // /**
 //  * Offset/Address/Size: 0xE0 | 0x80198CFC | size: 0x5C
@@ -995,20 +1006,23 @@ World::World(const char*)
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x13C | 0x80198D58 | size: 0x60
-//  */
-// void nlAVLTree<unsigned long, HelperObject*, DefaultKeyCompare<unsigned long>>::~nlAVLTree()
-// {
-// }
+/**
+ * Offset/Address/Size: 0x13C | 0x80198D58 | size: 0x60
+ */
+template <>
+nlAVLTree<unsigned long, HelperObject*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
+{
+}
 
-// /**
-//  * Offset/Address/Size: 0x19C | 0x80198DB8 | size: 0x5C
-//  */
-// void AVLTreeBase<unsigned long, HelperObject*, NewAdapter<AVLTreeEntry<unsigned long, HelperObject*>>, DefaultKeyCompare<unsigned
-// long>>::~AVLTreeBase()
-// {
-// }
+/**
+ * Offset/Address/Size: 0x19C | 0x80198DB8 | size: 0x5C
+ */
+template <>
+AVLTreeBase<unsigned long, HelperObject*, NewAdapter<AVLTreeEntry<unsigned long, HelperObject*> >, DefaultKeyCompare<unsigned long> >::~AVLTreeBase()
+{
+    FORCE_DONT_INLINE;
+    Clear();
+}
 
 // /**
 //  * Offset/Address/Size: 0x1F8 | 0x80198E14 | size: 0x58
@@ -1233,15 +1247,16 @@ World::World(const char*)
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x8019A9BC | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<WorldAnimController*>, DLListContainerBase<WorldAnimController*,
-// NewAdapter<DLListEntry<WorldAnimController*>>>>(DLListEntry<WorldAnimController*>*, DLListContainerBase<WorldAnimController*,
-// NewAdapter<DLListEntry<WorldAnimController*>>>*, void (DLListContainerBase<WorldAnimController*,
-// NewAdapter<DLListEntry<WorldAnimController*>>>::*)(DLListEntry<WorldAnimController*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x8019A9BC | size: 0x3C
+ * TODO: 96.00% match - prologue scheduling mismatch remains.
+ * Target orders `lwz r7, 0(r5)` before saving LR; current MWCC output saves LR first.
+ */
+template void nlWalkDLRing<DLListEntry<WorldAnimController*>, DLListContainerBase<WorldAnimController*,
+                                                                  NewAdapter<DLListEntry<WorldAnimController*> > > >(
+    DLListEntry<WorldAnimController*>* head,
+    DLListContainerBase<WorldAnimController*, NewAdapter<DLListEntry<WorldAnimController*> > >* callback,
+    void (DLListContainerBase<WorldAnimController*, NewAdapter<DLListEntry<WorldAnimController*> > >::*)(DLListEntry<WorldAnimController*>*));
 
 // /**
 //  * Offset/Address/Size: 0x3C | 0x8019A9F8 | size: 0x20

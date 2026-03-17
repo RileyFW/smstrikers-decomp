@@ -353,7 +353,7 @@ float SSearchRunToNet::EvaluatePosition(const nlVector3& v3TestPosition, const n
  * Offset/Address/Size: 0x158 | 0x80062AA8 | size: 0x3C
  */
 SSearchCutAndBreak::SSearchCutAndBreak(cPlayer* pPlayer)
-    : SpaceSearch(pPlayer)
+    : SpaceSearch(pPlayer->m_pTeam->m_pNet->m_sideSign)
 {
     m_pPlayer = pPlayer;
 }

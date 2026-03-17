@@ -451,15 +451,15 @@ FETweener::~FETweener()
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x800A2D38 | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<FETweener*>, DLListContainerBase<FETweener*,
-// BasicSlotPool<DLListEntry<FETweener*>>>>(DLListEntry<FETweener*>*, DLListContainerBase<FETweener*,
-// BasicSlotPool<DLListEntry<FETweener*>>>*, void (DLListContainerBase<FETweener*,
-// BasicSlotPool<DLListEntry<FETweener*>>>::*)(DLListEntry<FETweener*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x800A2D38 | size: 0x3C
+ * TODO: 96.00% match - prologue scheduling mismatch remains.
+ * Target orders `lwz r7, 0(r5)` before `stw r0, 0x24(r1)`.
+ */
+template void nlWalkDLRing<DLListEntry<FETweener*>, DLListContainerBase<FETweener*, BasicSlotPool<DLListEntry<FETweener*> > > >(
+    DLListEntry<FETweener*>* head,
+    DLListContainerBase<FETweener*, BasicSlotPool<DLListEntry<FETweener*> > >* callback,
+    void (DLListContainerBase<FETweener*, BasicSlotPool<DLListEntry<FETweener*> > >::*callbackFunc)(DLListEntry<FETweener*>*));
 
 // /**
 //  * Offset/Address/Size: 0x3C | 0x800A2D74 | size: 0x20

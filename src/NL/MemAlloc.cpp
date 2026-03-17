@@ -374,21 +374,25 @@ void MemoryAllocator::Free(void* arg0)
     }
 }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x801CDDB0 | size: 0x3C
-//  */
-// void nlWalkDLRing<FreeBlockList, LargestFreeBlockCallback>(FreeBlockList*, LargestFreeBlockCallback*,
-//                                                            void (LargestFreeBlockCallback::*)(FreeBlockList*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x801CDDB0 | size: 0x3C
+ * TODO: 96.00% match - prologue scheduling mismatch remains.
+ * Target orders `lwz r7, 0(r5)` before saving LR; current MWCC output saves LR first.
+ */
+template void nlWalkDLRing<FreeBlockList, LargestFreeBlockCallback>(
+    FreeBlockList* head,
+    LargestFreeBlockCallback* callback,
+    void (LargestFreeBlockCallback::*callbackFunc)(FreeBlockList*));
 
-// /**
-//  * Offset/Address/Size: 0x3C | 0x801CDDEC | size: 0x3C
-//  */
-// void nlWalkDLRing<FreeBlockList, TotalFreeMemCallback>(FreeBlockList*, TotalFreeMemCallback*,
-//                                                        void (TotalFreeMemCallback::*)(FreeBlockList*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x3C | 0x801CDDEC | size: 0x3C
+ * TODO: 96.00% match - prologue scheduling mismatch remains.
+ * Target orders `lwz r7, 0(r5)` before saving LR; current MWCC output saves LR first.
+ */
+template void nlWalkDLRing<FreeBlockList, TotalFreeMemCallback>(
+    FreeBlockList* head,
+    TotalFreeMemCallback* callback,
+    void (TotalFreeMemCallback::*callbackFunc)(FreeBlockList*));
 
 // /**
 //  * Offset/Address/Size: 0x78 | 0x801CDE28 | size: 0x10

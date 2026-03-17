@@ -27,7 +27,7 @@ class FilteredRandomReal
 {
 public:
     FilteredRandomReal();
-    ~FilteredRandomReal();
+    ~FilteredRandomReal() { }
     float genrand();
 
     /* 0x00 */ bool m_change;                             // size 0x1

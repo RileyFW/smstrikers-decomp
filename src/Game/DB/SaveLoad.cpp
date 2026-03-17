@@ -2321,7 +2321,10 @@ u8 SaveLoad::HasEnoughFreeSpace(int Slot)
     if (alignedSize > mc->m_CardInfo.FreeBytes)
         return 0;
 
-    return mc->m_CardInfo.FreeFiles >= 1;
+    if (mc->m_CardInfo.FreeFiles >= 1)
+        return 1;
+
+    return 0;
 }
 
 /**
@@ -2355,4 +2358,5 @@ void SaveLoad::FreeAllCallbackMemory()
 void SaveLoad::RememberCurrentMemCardSerialID(int id)
 {
     mLastKnownMemCardID.serialID = g_MemCards[id]->GetSerialID();
+    return;
 }

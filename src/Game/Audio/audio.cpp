@@ -49,6 +49,24 @@ extern SoundPropAccessor* gpPWRUPSoundPropAccessor;
 extern SoundPropAccessor* gpSTADGENSoundPropAccessor;
 extern SoundPropAccessor* gpCROWDSoundPropAccessor;
 
+/**
+ * Offset/Address/Size: 0xF0 | 0x801413B0 | size: 0x28
+ */
+template <>
+void nlListAddStart<FadeAudioData>(FadeAudioData** head, FadeAudioData* entry, FadeAudioData** tail)
+{
+    if (tail != 0)
+    {
+        if (*head == 0)
+        {
+            *tail = entry;
+        }
+    }
+
+    entry->next = *head;
+    *head = entry;
+}
+
 namespace Audio
 {
 
@@ -1251,13 +1269,6 @@ void SoundAttributes::Init()
 //  * Offset/Address/Size: 0x54 | 0x80141314 | size: 0x9C
 //  */
 // void nlListRemoveElement<FadeAudioData>(FadeAudioData**, FadeAudioData*, FadeAudioData**)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0xF0 | 0x801413B0 | size: 0x28
-//  */
-// void nlListAddStart<FadeAudioData>(FadeAudioData**, FadeAudioData*, FadeAudioData**)
 // {
 // }
 

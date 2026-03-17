@@ -57,15 +57,16 @@ enum ResourceResult
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x108 | 0x8020D358 | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<FEResourceHandle*>, DLListContainerBase<FEResourceHandle*,
-// BasicSlotPool<DLListEntry<FEResourceHandle*>>>>(DLListEntry<FEResourceHandle*>*, DLListContainerBase<FEResourceHandle*,
-// BasicSlotPool<DLListEntry<FEResourceHandle*>>>*, void (DLListContainerBase<FEResourceHandle*,
-// BasicSlotPool<DLListEntry<FEResourceHandle*>>>::*)(DLListEntry<FEResourceHandle*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x108 | 0x8020D358 | size: 0x3C
+ * TODO: 96.00% match - prologue scheduling mismatch remains.
+ * Target orders `lwz r7, 0(r5)` before saving LR; current MWCC output saves LR first.
+ */
+template void nlWalkDLRing<DLListEntry<FEResourceHandle*>,
+    DLListContainerBase<FEResourceHandle*, BasicSlotPool<DLListEntry<FEResourceHandle*> > > >(
+    DLListEntry<FEResourceHandle*>* head,
+    DLListContainerBase<FEResourceHandle*, BasicSlotPool<DLListEntry<FEResourceHandle*> > >* callback,
+    void (DLListContainerBase<FEResourceHandle*, BasicSlotPool<DLListEntry<FEResourceHandle*> > >::*)(DLListEntry<FEResourceHandle*>*));
 
 // /**
 //  * Offset/Address/Size: 0xD0 | 0x8020D320 | size: 0x38

@@ -477,12 +477,15 @@ GLRenderList::GLRenderList()
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x3C | 0x801DBAD0 | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<const glModelPacket*>, DLListContainerBase<const glModelPacket*, BasicSlotPool<DLListEntry<const glModelPacket*>>>>(DLListEntry<const glModelPacket*>*, DLListContainerBase<const glModelPacket*, BasicSlotPool<DLListEntry<const glModelPacket*>>>*, void (DLListContainerBase<const glModelPacket*, BasicSlotPool<DLListEntry<const glModelPacket*>>>::*)(DLListEntry<const glModelPacket*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x3C | 0x801DBAD0 | size: 0x3C
+ * TODO: 96% match - stw LR save scheduling differs by one slot
+ * (target emits first lwz from callbackFunc before stw r0,0x24(r1)).
+ */
+template void nlWalkDLRing<DLListEntry<const glModelPacket*>, GLPacketListBase>(
+    DLListEntry<const glModelPacket*>* head,
+    GLPacketListBase* callback,
+    void (GLPacketListBase::*callbackFunc)(DLListEntry<const glModelPacket*>*));
 
 // /**
 //  * Offset/Address/Size: 0x78 | 0x801DBB0C | size: 0x3C

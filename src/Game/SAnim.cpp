@@ -5,6 +5,24 @@
 #include "NL/nlList.h"
 
 /**
+ * Offset/Address/Size: 0x1420 | 0x801EA634 | size: 0x28
+ */
+template <>
+void nlListAddStart<cSAnimCallback>(cSAnimCallback** head, cSAnimCallback* entry, cSAnimCallback** tail)
+{
+    if (tail != 0)
+    {
+        if (*head == 0)
+        {
+            *tail = entry;
+        }
+    }
+
+    entry->next = *head;
+    *head = entry;
+}
+
+/**
  * Offset/Address/Size: 0xD40 | 0x801E9F54 | size: 0x68C
  */
 cSAnim* cSAnim::Initialize(nlChunk* arg0)

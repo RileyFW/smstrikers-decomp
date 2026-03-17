@@ -5,6 +5,8 @@
 static nlAVLTree<int, SaveData*, DefaultKeyCompare<int> > gSaveMap;
 static nlListContainer<SaveData*> gSaveGrid[7][5];
 
+struct MyMiniData;
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80056D60 | size: 0xA4
 //  */
@@ -61,12 +63,15 @@ static nlListContainer<SaveData*> gSaveGrid[7][5];
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x80056BC8 | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<MyMiniData*>, DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*>>>>(DLListEntry<MyMiniData*>*, DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*>>>*, void (DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*>>>::*)(DLListEntry<MyMiniData*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x80056BC8 | size: 0x3C
+ * TODO: 96.00% match - prologue scheduling mismatch remains.
+ * Target orders `lwz r7, 0(r5)` before `stw r0, 0x24(r1)`.
+ */
+template void nlWalkDLRing<DLListEntry<MyMiniData*>, DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*> > > >(
+    DLListEntry<MyMiniData*>* head,
+    DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*> > >* callback,
+    void (DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*> > >::*callbackFunc)(DLListEntry<MyMiniData*>*));
 
 // /**
 //  * Offset/Address/Size: 0x68 | 0x80056BA0 | size: 0x28

@@ -7,6 +7,40 @@
 
 SlotPool<cPN_SingleAxisBlender> cPN_SingleAxisBlender::m_SingleAxisBlenderSlotPool;
 
+extern "C"
+{
+    void __ct__12SlotPoolBaseFv(void*);
+    void* __register_global_object(void* object, void* destructor, void* registration);
+}
+
+struct SingleAxisBlenderDestructorChain
+{
+    SingleAxisBlenderDestructorChain* next;
+    void* destructor;
+    void* object;
+};
+
+void SingleAxisBlenderSlotPoolDtor(void* obj, int)
+{
+    ((SlotPool<cPN_SingleAxisBlender>*)obj)->~SlotPool<cPN_SingleAxisBlender>();
+}
+
+/**
+ * Offset/Address/Size: 0x6B0 | 0x801EF3F4 | size: 0x68
+ * TODO: 99.23% match - relocation symbols differ for slot-pool destructor and @157 registration chain.
+ */
+extern "C" void __sinit_pnSingleAxisBlender_cpp()
+{
+    static SingleAxisBlenderDestructorChain chain;
+    SlotPoolBase* pool = (SlotPoolBase*)&cPN_SingleAxisBlender::m_SingleAxisBlenderSlotPool;
+
+    __ct__12SlotPoolBaseFv(pool);
+    pool->m_Initial = 0x10;
+    SlotPoolBase::BaseAddNewBlock(pool, 0x28);
+    pool->m_Delta = 0x10;
+    __register_global_object(pool, (void*)SingleAxisBlenderSlotPoolDtor, &chain);
+}
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x801EF4C0 | size: 0x6C
 //  */

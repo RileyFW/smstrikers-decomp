@@ -40,12 +40,20 @@
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x80209BE0 | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<nlFont*>, DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*>>>>(DLListEntry<nlFont*>*, DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*>>>*, void (DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*>>>::*)(DLListEntry<nlFont*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x80209BE0 | size: 0x3C
+ * TODO: 96.00% match - prologue scheduling mismatch remains.
+ * Target orders `lwz r7, 0(r5)` before saving LR; current MWCC output saves LR first.
+ */
+template <>
+void nlWalkDLRing<DLListEntry<nlFont*>, DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*> > > >(
+    DLListEntry<nlFont*>* head,
+    DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*> > >* callback,
+    void (DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*> > >::*callbackFunc)(DLListEntry<nlFont*>*))
+{
+    void (DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*> > >::*func)(DLListEntry<nlFont*>*) = callbackFunc;
+    nlWalkRing(head, callback, func);
+}
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80209BD0 | size: 0x10

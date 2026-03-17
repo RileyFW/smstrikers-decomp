@@ -488,13 +488,17 @@ u32 glSetCurrentProgram(unsigned long program)
     return temp_r0;
 }
 
+static inline unsigned long GetCurrentTextureImpl(eGLTextureType type)
+{
+    return _bundle.texture[type];
+}
+
 /**
  * Offset/Address/Size: 0x858 | 0x801DC49C | size: 0x50
- * TODO: 98.8% match - r5/r7 register swap in add/lwzu pair for texture array
  */
 unsigned long glSetCurrentTexture(unsigned long texture, eGLTextureType type)
 {
-    unsigned long prev = _bundle.texture[type];
+    unsigned long prev = GetCurrentTextureImpl(type);
     unsigned long mask = 1u << type;
 
     if (texture == 0xFFFFFFFFu)

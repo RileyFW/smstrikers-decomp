@@ -856,17 +856,20 @@ void SidelineExplodableManager::AssociateEffectWithNearbyFloatingCamera(Emission
     }
 }
 
+static inline EmissionController* GetAssociatedEffect(SidelineExplodable* explodable)
+{
+    return explodable->mpAssociatedEffect;
+}
+
 /**
  * Offset/Address/Size: 0x70 | 0x801673D0 | size: 0x30
- * TODO: 97.9% match - r4/r5 register swap for mpExplodable/mpAssociatedEffect temps.
- * Likely -inline deferred context-dependent register allocation difference.
  */
 void SidelineExplodableManager::UnAssociateEffectWithNearbyFloatingCamera(EmissionController* pEmissionController)
 {
     SidelineExplodableNode* node = sSidelineExplodableList.m_pStart;
     while (node != NULL)
     {
-        if (node->mpExplodable->mpAssociatedEffect == pEmissionController)
+        if (GetAssociatedEffect(node->mpExplodable) == pEmissionController)
         {
             node->mpExplodable->mpAssociatedEffect = 0;
         }

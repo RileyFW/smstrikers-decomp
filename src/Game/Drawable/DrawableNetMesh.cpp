@@ -20,8 +20,7 @@ static int siInvisiblePlaneAlpha;
  */
 DrawableNetMesh::DrawableNetMesh(bool isPositiveXNet)
 {
-    int netFlag = (u32)isPositiveXNet;
-    miNetIndex = (netFlag == 0);
+    miNetIndex = isPositiveXNet ? 0 : 1;
     mNumQuads = 0;
     mNumVertices = 0;
     mbInitialized = false;

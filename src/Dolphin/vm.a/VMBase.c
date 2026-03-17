@@ -297,43 +297,60 @@ void __VMBASEInvalidateEntireTLB(void)
 
 void __VMBASESetupVMRegisters(void)
 {
-    u32 msr = PPCMfmsr();
-    u32 pageTableBase = (u32)g_vmBasePageTable;
+    register u32 msr;
+    register u32 sr7;
+    register u32 pageTableBase;
+    register u32 sdr1;
+    register u32 sdr1Low;
 
-    g_originalSR7 = 0;
-    g_originalSDR1 = 0;
+    msr = 0;
 
-    __VMBASESetupSDR1(msr & ~(MSR_IR | MSR_DR), pageTableBase & 0xFFFF0000, 0);
+    asm {
+        mfsr sr7, 7
+        mtsr 7, msr
+    }
+
+    g_originalSR7 = sr7;
+
+    asm {
+        mfmsr msr
+        mfsdr1 sdr1
+    }
+
+    pageTableBase = (u32)g_vmBasePageTable;
+    sdr1Low = sdr1 & 0xFFFF;
+
+    __VMBASESetupSDR1(msr & ~(MSR_IR | MSR_DR), (g_originalSDR1 = sdr1, sdr1Low + (pageTableBase & 0x7FFF0000)), 0);
 }
 
 #pragma scheduling off
-static void __VMBASESetupSDR1(register u32 srr1, register u32 sdr1, register u32 unused)
+static asm void __VMBASESetupSDR1(register u32 srr1, register u32 sdr1, register u32 unused)
 {
     // clang-format off
-    asm {
-        mtsrr1 srr1
-        lis unused, __VMBASESetupVMRegisters_SetSDR1@ha
-        addi unused, unused, __VMBASESetupVMRegisters_SetSDR1@l
-        clrlwi unused, unused, 1
-        mtsrr0 unused
-        rfi
+    nofralloc
 
-    __VMBASESetupVMRegisters_SetSDR1:
-        sync
-        mtsdr1 sdr1
-        sync
-        mfmsr srr1
-        ori srr1, srr1, 0x30
-        mtsrr1 srr1
-        lis unused, __VMBASESetupVMRegisters_End@ha
-        addi unused, unused, __VMBASESetupVMRegisters_End@l
-        mtsrr0 unused
-        rfi
+    mtsrr1 srr1
+    lis unused, __VMBASESetupVMRegisters_SetSDR1@ha
+    addi unused, unused, __VMBASESetupVMRegisters_SetSDR1@l
+    clrlwi unused, unused, 1
+    mtsrr0 unused
+    rfi
 
-    __VMBASESetupVMRegisters_End:
-        nop
-        blr
-    }
+__VMBASESetupVMRegisters_SetSDR1:
+    sync
+    mtsdr1 sdr1
+    sync
+    mfmsr srr1
+    ori srr1, srr1, 0x30
+    mtsrr1 srr1
+    lis unused, __VMBASESetupVMRegisters_End@ha
+    addi unused, unused, __VMBASESetupVMRegisters_End@l
+    mtsrr0 unused
+    rfi
+
+__VMBASESetupVMRegisters_End:
+    nop
+    blr
     // clang-format on
 }
 #pragma scheduling reset
@@ -455,12 +472,7 @@ void __VMBASEDSIServiceException(OSContext* context, u32 faultAddr)
 
     OSClearContext(&tempContext);
     OSSetCurrentContext(&tempContext);
-
-    if (cbVMSwapPageIn != NULL)
-    {
-        cbVMSwapPageIn(faultAddr);
-    }
-
+    cbVMSwapPageIn(faultAddr);
     OSSetCurrentContext(context);
     OSLoadContext(context);
 }

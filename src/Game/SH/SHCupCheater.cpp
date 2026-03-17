@@ -97,7 +97,13 @@
  * Offset/Address/Size: 0x1C00 | 0x800E9350 | size: 0x4C
  */
 CupCheaterScene::CupCheaterScene()
+    : BaseSceneHandler()
 {
+    mSniper = 0;
+    mStriker = 0;
+    mTactician = 0;
+    mParamedic = 0;
+    mVeteran = 0;
 }
 
 /**

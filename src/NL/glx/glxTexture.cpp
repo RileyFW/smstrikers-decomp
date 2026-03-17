@@ -935,14 +935,10 @@ glxTextureLoadCallback_t glx_SetLoadCallback(glxTextureLoadCallback_t callback)
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x840 | 0x801B94E8 | size: 0x44
-//  */
-// void AVLTreeBase<unsigned long, PlatTexture*, NewAdapter<AVLTreeEntry<unsigned long, PlatTexture*>>, DefaultKeyCompare<unsigned
-// long>>::Walk<TexDestructor>(TexDestructor*, void (TexDestructor::*)(const unsigned long&, PlatTexture**))
-// {
-// }
-
+/**
+ * Offset/Address/Size: 0x840 | 0x801B94E8 | size: 0x44
+ * TODO: 96.47% match - prologue scheduling differs (`lwz r8, 0(r5)` placement).
+ */
 // /**
 //  * Offset/Address/Size: 0x884 | 0x801B952C | size: 0x2CC
 //  */

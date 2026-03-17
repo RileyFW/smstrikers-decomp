@@ -108,12 +108,16 @@ extern nlVector3 sharedMorphBuffer[];
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x801E1434 | size: 0x44
-//  */
-// void AVLTreeBase<unsigned long, unsigned long, NewAdapter<AVLTreeEntry<unsigned long, unsigned long> >, DefaultKeyCompare<unsigned long> >::Walk<UserDataBuilder>(UserDataBuilder*, void (UserDataBuilder::*)(const unsigned long&, unsigned long*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x801E1434 | size: 0x44
+ * TODO: 96.47% match - prologue scheduling differs (`lwz r8, 0(r5)` placement).
+ */
+template <>
+void AVLTreeBase<unsigned long, unsigned long, NewAdapter<AVLTreeEntry<unsigned long, unsigned long> >, DefaultKeyCompare<unsigned long> >::Walk<UserDataBuilder>(
+    UserDataBuilder* cbClass, void (UserDataBuilder::*cb)(const unsigned long&, unsigned long*))
+{
+    InorderWalk(m_Root, cbClass, cb);
+}
 
 /**
  * Offset/Address/Size: 0xD28 | 0x801E136C | size: 0xC8
@@ -122,12 +126,13 @@ ShaderSkinMesh::ShaderSkinMesh()
 {
 }
 
-// /**
-//  * Offset/Address/Size: 0xCC8 | 0x801E130C | size: 0x60
-//  */
-// void nlAVLTree<unsigned long, SkinMatrix, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
-// {
-// }
+/**
+ * Offset/Address/Size: 0xCC8 | 0x801E130C | size: 0x60
+ */
+template <>
+nlAVLTree<unsigned long, SkinMatrix, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
+{
+}
 
 /**
  * Offset/Address/Size: 0xBE4 | 0x801E1228 | size: 0xE4

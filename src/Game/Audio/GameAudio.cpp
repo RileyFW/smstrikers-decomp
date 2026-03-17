@@ -1002,15 +1002,20 @@ cGameSFX::cGameSFX()
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x80153C14 | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<SFXPlaySet*>, DLListContainerBase<SFXPlaySet*,
-// NewAdapter<DLListEntry<SFXPlaySet*>>>>(DLListEntry<SFXPlaySet*>*, DLListContainerBase<SFXPlaySet*,
-// NewAdapter<DLListEntry<SFXPlaySet*>>>*, void (DLListContainerBase<SFXPlaySet*,
-// NewAdapter<DLListEntry<SFXPlaySet*>>>::*)(DLListEntry<SFXPlaySet*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x80153C14 | size: 0x3C
+ * TODO: 96.00% match - prologue scheduling mismatch remains.
+ * Target orders `lwz r7, 0(r5)` before `stw r0, 0x24(r1)`.
+ */
+template <>
+void nlWalkDLRing<DLListEntry<SFXPlaySet*>, DLListContainerBase<SFXPlaySet*, NewAdapter<DLListEntry<SFXPlaySet*> > > >(
+    DLListEntry<SFXPlaySet*>* head,
+    DLListContainerBase<SFXPlaySet*, NewAdapter<DLListEntry<SFXPlaySet*> > >* callback,
+    void (DLListContainerBase<SFXPlaySet*, NewAdapter<DLListEntry<SFXPlaySet*> > >::*callbackFunc)(DLListEntry<SFXPlaySet*>*))
+{
+    void (DLListContainerBase<SFXPlaySet*, NewAdapter<DLListEntry<SFXPlaySet*> > >::*func)(DLListEntry<SFXPlaySet*>*) = callbackFunc;
+    nlWalkRing(head, callback, func);
+}
 
 // /**
 //  * Offset/Address/Size: 0x3C | 0x80153C50 | size: 0x20

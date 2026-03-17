@@ -42,6 +42,12 @@ public:
     /* 0x44 */ char m_szName[64];       // size 0x40
 }; // total size: 0x84
 
+template <>
+AVLTreeBase<unsigned long, HelperObject*, NewAdapter<AVLTreeEntry<unsigned long, HelperObject*> >, DefaultKeyCompare<unsigned long> >::~AVLTreeBase();
+
+template <>
+nlAVLTree<unsigned long, HelperObject*, DefaultKeyCompare<unsigned long> >::~nlAVLTree();
+
 class World
 {
 public:

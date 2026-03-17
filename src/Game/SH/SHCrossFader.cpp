@@ -44,6 +44,13 @@
  */
 CrossFaderScene::CrossFaderScene()
 {
+    mNumImages = 0;
+    mCurrentImage = 0;
+    mImageInstances = NULL;
+    mTimer = 0.0f;
+    mAlpha = 0.0f;
+    mFadeState = FS_INVALID;
+    mFadeToBlackTimer = 0.0f;
 }
 
 /**
