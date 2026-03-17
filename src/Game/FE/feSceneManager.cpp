@@ -449,18 +449,15 @@ FESceneManager::~FESceneManager()
 
 /**
  * Offset/Address/Size: 0x9C4 | 0x8020E010 | size: 0x70
+ * TODO: 73.21% match - m_sceneHandlerStack ctor ordering and register allocation differ
+ * (r31/r30 usage and m_Head/m_Delta store order around BaseAddNewBlock).
  */
 FESceneManager::FESceneManager()
-// : m_sceneHandlerStack()
+    : m_sceneHandlerStack(0x14, 0)
 {
-    // new (&m_sceneHandlerStack.m_Allocator) SlotPoolBase();
-    // m_sceneHandlerStack.m_Head = nullptr;
-    // m_sceneHandlerStack.m_Allocator.m_Initial = 0x14;
-    // SlotPoolBase::BaseAddNewBlock(&m_sceneHandlerStack.m_Allocator, sizeof(DLListEntry<BaseSceneHandler*>));
-    // m_sceneHandlerStack.m_Allocator.m_Delta = 0;
-    // m_uDefaultRenderView = -1;
-    // m_topMostScene = nullptr;
-    // FERender::Initialize();
+    m_uDefaultRenderView = -1;
+    m_topMostScene = nullptr;
+    FERender::Initialize();
 }
 
 // /**

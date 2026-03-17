@@ -3388,16 +3388,19 @@ float InOffensiveZone(cPlayer* pPlayer)
 /**
  * Offset/Address/Size: 0x6C | 0x8007EAF4 | size: 0x6C
  */
+template <typename T>
+nlVector3& PositionOf(T pObject);
+
 float InDefensiveZoneOfPlayer(cBall* pBall, cPlayer* pPlayer)
 {
     nlVector3 aiLoc;
-    if ((pBall == NULL) || (pPlayer == NULL))
+    if ((pBall == NULL) && (pPlayer != NULL))
     {
-        return 0.0f;
+        return 1.0f;
     }
 
     eTeamSide teamSide = (eTeamSide)(pPlayer->m_pTeam->m_nSide);
-    nlVector3& ballPos = PositionOf(pBall);
+    nlVector3& ballPos = PositionOf<cBall*>(pBall);
     FieldLocToAILoc(aiLoc, ballPos, teamSide);
 
     return NormalizeVal(aiLoc.f.x, g_pGame->m_pFuzzyTweaks->vDefensiveConfidenceDistances);

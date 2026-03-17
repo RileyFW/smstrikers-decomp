@@ -372,14 +372,6 @@ bool fxLoadTemplateBundle(void* data, unsigned long size)
 }
 
 /**
- * Offset/Address/Size: 0xDC | 0x801F0CA0 | size: 0x60
- */
-template <>
-nlAVLTree<unsigned long, EffectsTemplate*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
-{
-}
-
-/**
  * Offset/Address/Size: 0x90 | 0x801F0C54 | size: 0x4C
  */
 bool fxUnloadTemplates()

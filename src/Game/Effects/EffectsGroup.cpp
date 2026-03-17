@@ -5,11 +5,6 @@
 #include "NL/nlMain.h"
 #include "NL/nlString.h"
 
-template <>
-nlAVLTree<unsigned long, EffectsGroup*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
-{
-}
-
 nlAVLTree<unsigned long, EffectsGroup*, DefaultKeyCompare<unsigned long> >* pGroupMap = nullptr;
 nlAVLTree<unsigned long, EffectsTerrainSpec*, DefaultKeyCompare<unsigned long> >* pTerrainSpecMap = nullptr;
 
@@ -511,14 +506,6 @@ bool fxLoadGroupBundle(void* data, unsigned long size)
 
     nlFree(data);
     return true;
-}
-
-/**
- * Offset/Address/Size: 0x118 | 0x801F2B60 | size: 0x60
- */
-template <>
-nlAVLTree<unsigned long, EffectsTerrainSpec*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
-{
 }
 
 /**
