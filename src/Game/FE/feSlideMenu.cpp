@@ -218,8 +218,18 @@ FESlideMenu::~FESlideMenu()
 /**
  * Offset/Address/Size: 0x5C8 | 0x8009721C | size: 0x8C
  */
-FESlideMenu::FESlideMenu(TLComponentInstance*)
+FESlideMenu::FESlideMenu(TLComponentInstance* pWorkPres)
 {
+    m_size = 0;
+    m_currentSlide = 0;
+    m_doWrapAround = 0;
+    m_pMenuComp = pWorkPres;
+    m_lockInput = 0;
+    m_callbackParam = 0;
+    mLastChosenSlide = -1;
+    mLastRandomSlide = -1;
+    mNumCyclesRemaining = 0;
+    mRandDeltaTime = 0.0f;
 }
 
 /**

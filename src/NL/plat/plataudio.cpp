@@ -104,7 +104,7 @@ void PlatAudio::InitEmitter(unsigned long idx)
     SFXEmitter* emitter = &gEmitters[idx];
     SND_PARAMETER_INFO** ppInfo = &emitter->pMIDIControllerInfo;
 
-    emitter->bKeepTrack = true;
+    gEmitters[idx].bKeepTrack = true;
     emitter->Init();
 
     emitter->pos.vPos.f.x = 0.0f;

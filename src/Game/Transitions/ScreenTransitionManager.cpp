@@ -128,7 +128,18 @@
  * Offset/Address/Size: 0x9DC | 0x80205ACC | size: 0xA4
  */
 ScreenTransitionManager::ScreenTransitionManager()
+    : m_pActiveTransition(nullptr)
+    , m_TransitionMap()
+    , m_eView(GLV_Transitions)
+    , m_pCallback(nullptr)
+    , m_SelectedTransition(nullptr)
+    , m_fCurrentTime(0.0f)
 {
+    m_Transitions.mData = nullptr;
+    m_Transitions.mSize = 0;
+    m_Transitions.mCapacity = 0;
+    m_Cut = false;
+    m_Transitions.reserve(16);
 }
 
 // /**
@@ -140,11 +151,14 @@ ScreenTransitionManager::ScreenTransitionManager()
 
 /**
  * Offset/Address/Size: 0x8FC | 0x802059EC | size: 0x80
+ * TODO: 99.84% match - remaining mismatch is the call target encoding at the
+ * DeleteAllTransitions callsite after forcing out-of-line behavior.
  */
 ScreenTransitionManager::~ScreenTransitionManager()
 {
-    DeleteAllTransitions();
-    delete[] m_Transitions.mData;
+    extern void DeleteAllTransitions__23ScreenTransitionManagerFv(ScreenTransitionManager*);
+
+    DeleteAllTransitions__23ScreenTransitionManagerFv(this);
 }
 
 /**

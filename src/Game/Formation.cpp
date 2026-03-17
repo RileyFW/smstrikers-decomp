@@ -20,6 +20,8 @@ static nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 FormationSet* FormationManager::m_FormationSetArray = nullptr;
 int FormationManager::m_NumFormationSets = 0;
 
+static inline void ClearFormationEvals(FormationEval** pp);
+
 /**
  * Offset/Address/Size: 0x5C | 0x8003ADB4 | size: 0x5C
  */
@@ -70,16 +72,7 @@ FormationManager::FormationManager(cTeam* pTeam)
  */
 FormationManager::~FormationManager()
 {
-    s32 i = 0;
-    FormationEval** pp = (FormationEval**)this;
-    FormationEval* null = (FormationEval*)i;
-    do
-    {
-        FormationEval* p = pp[1];
-        delete p;
-        i++;
-        *++pp = null;
-    } while (i < 3);
+    ClearFormationEvals((FormationEval**)this);
 }
 
 /**
@@ -1053,6 +1046,11 @@ float FormationOffensive::GetWeight()
  */
 FormationBallPosition::~FormationBallPosition()
 {
+    if (m_pNextClosestFormation != NULL)
+    {
+        delete m_pNextClosestFormation;
+        m_pNextClosestFormation = NULL;
+    }
 }
 
 /**

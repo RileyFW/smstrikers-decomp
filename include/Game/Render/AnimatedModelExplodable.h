@@ -20,6 +20,7 @@ enum AnimatedModelExplodableCategory
 class AnimatedModelExplodable : public SidelineExplodable
 {
 public:
+    static nlList<SidelineExplodableNode> sAnimatedModelExplodableList;
     static ExplodableCategoryData sCategoryData[NUM_ANIMATED_MODEL_EXPLODABLE_CATEGORIES];
     static u8 bIsModelLoaded[2];
     static void CleanUp();

@@ -197,6 +197,7 @@ CupTrophyScene::CupTrophyScene()
  */
 CupTrophyScene::~CupTrophyScene()
 {
+    delete *(AsyncImage**)&unk_gap[125];
 }
 
 /**

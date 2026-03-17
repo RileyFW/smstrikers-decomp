@@ -128,14 +128,16 @@ done_select:
 
 u32 __VMPageReplacementRandom(void)
 {
+    u32 page;
+
     while (TRUE)
     {
-        u32 page;
-
-        if (g_vmFreePagesExist != 0)
+        if ((s32)g_vmFreePagesExist != 0)
         {
-            page = g_vmNextPageToSwap;
-            g_vmNextPageToSwap++;
+            u32 nextPage = g_vmNextPageToSwap;
+
+            g_vmNextPageToSwap = nextPage + 1;
+            page = nextPage;
             if (g_vmNextPageToSwap >= __VMGetNumPagesInMRAM())
             {
                 g_vmFreePagesExist = 0;
@@ -145,14 +147,17 @@ u32 __VMPageReplacementRandom(void)
         else
         {
             u32 numPages = __VMGetNumPagesInMRAM();
-            page = (numPages == 0) ? 0 : (OSGetTick() % numPages);
+
+            page = OSGetTick() % numPages;
         }
 
         if (!VMBASEIsPageLocked(page))
         {
-            return page;
+            break;
         }
     }
+
+    return page;
 }
 
 u32 __VMPageReplacementFIFO(void)

@@ -111,6 +111,10 @@ CupCheaterScene::CupCheaterScene()
  */
 CupCheaterScene::~CupCheaterScene()
 {
+    if (m_SlideMenu != NULL)
+    {
+        delete m_SlideMenu;
+    }
 }
 
 /**

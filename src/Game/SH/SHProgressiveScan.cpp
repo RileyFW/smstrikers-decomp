@@ -78,6 +78,9 @@ ProgressiveScanScene::ProgressiveScanScene(bool)
  */
 ProgressiveScanScene::~ProgressiveScanScene()
 {
+    delete mUseProgressiveImage[0];
+    delete mUseProgressiveImage[1];
+    delete mConfirmationImage;
 }
 
 /**

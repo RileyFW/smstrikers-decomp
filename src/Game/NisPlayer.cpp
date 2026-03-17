@@ -369,13 +369,13 @@ void NisPlayer::PlayCharacterDirection()
 {
     Event* event = g_pEventManager->CreateValidEvent(7, 0x20);
     CharacterDirectionData* pData = new (&event->m_data) CharacterDirectionData();
-    pData->home = &mCharDirections[0];
-    pData->away = &mCharDirections[4];
+    pData->home = &mBeginPositions[0];
+    pData->away = &mBeginPositions[4];
     for (int i = 0; i < 10; i++)
     {
-        mCharDirections[i].f.x = nlRandomf(-20.0f, 20.0f, &nlDefaultSeed);
-        mCharDirections[i].f.y = nlRandomf(-50.0f, 10.0f, &nlDefaultSeed);
-        mCharDirections[i].f.z = 0.0f;
+        mBeginPositions[i].f.x = nlRandomf(-20.0f, 20.0f, &nlDefaultSeed);
+        mBeginPositions[i].f.y = nlRandomf(-50.0f, 10.0f, &nlDefaultSeed);
+        mBeginPositions[i].f.z = 0.0f;
     }
 }
 

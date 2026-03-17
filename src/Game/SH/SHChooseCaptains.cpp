@@ -146,7 +146,12 @@ void IChooseCaptain::SetPhaseReady(int homeaway)
 /**
  * Offset/Address/Size: 0xE64 | 0x800D78AC | size: 0x9C
  */
-ChooseCaptainsSceneV2::ChooseCaptainsSceneV2(ChooseCaptainsSceneV2::SceneType)
+#pragma inline_depth(8)
+ChooseCaptainsSceneV2::ChooseCaptainsSceneV2(ChooseCaptainsSceneV2::SceneType sceneType)
+    : mSceneType(sceneType)
+    , mDesiredSceneType(sceneType)
+    , mTicker(NULL)
+    , mMoveForwardFrameDelay(-1)
 {
 }
 

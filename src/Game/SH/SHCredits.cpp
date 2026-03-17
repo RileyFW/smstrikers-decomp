@@ -113,6 +113,15 @@ CreditScene::CreditScene()
  */
 CreditScene::~CreditScene()
 {
+    if (&mCreditParser.mParser != NULL)
+    {
+        char** data = (char**)&mCreditParser.mParser;
+        if (data[1] != NULL)
+        {
+            nlFree(data[1]);
+            data[1] = NULL;
+        }
+    }
 }
 
 /**

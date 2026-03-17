@@ -69,7 +69,13 @@
  * Offset/Address/Size: 0x52FC | 0x8018685C | size: 0xA0
  */
 StatsTracker::StatsTracker()
+    : mBasicGameInfo(NULL)
+    , mEventHandler(NULL)
 {
+    mIsUserCupWinner = false;
+    mHasGameEnded = false;
+
+    m_pSimulator = new (nlMalloc(0xB8, 8, false)) Simulator();
 }
 
 /**

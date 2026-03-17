@@ -145,7 +145,18 @@
  * Offset/Address/Size: 0x19F4 | 0x800CF4F4 | size: 0xCC
  */
 MilestoneTrophyScene::MilestoneTrophyScene()
+    : BaseSceneHandler()
+    , mTrophy((eTrophyType)-1)
+    , mCreated(false)
+    , mIsNew(false)
+    , mFirstSlideChange(true)
+    , mDoBlockLoad(true)
+    , mButtonState(ButtonComponent::BS_A_AND_B)
 {
+    const char* trophyImagePath = "art/fe/TrophiesUI.res";
+
+    AsyncImage* pTrophyImage = new ((AsyncImage*)nlMalloc(0x1C, 0x20, true)) AsyncImage(trophyImagePath, NULL);
+    mAsyncTrophy = pTrophyImage;
 }
 
 /**
@@ -153,6 +164,7 @@ MilestoneTrophyScene::MilestoneTrophyScene()
  */
 MilestoneTrophyScene::~MilestoneTrophyScene()
 {
+    delete mAsyncTrophy;
 }
 
 /**

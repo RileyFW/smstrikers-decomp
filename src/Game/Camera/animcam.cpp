@@ -108,6 +108,20 @@ void cAnimCamera::FreeCameraAnimations()
  */
 cAnimCamera::cAnimCamera()
 {
+    m_bUseSimulationTime = false;
+    m_LetManagerDoUpdate = true;
+    m_bUnusedPad = false;
+    m_fAnimationTime = 0.0f;
+    m_fAnimationSpeed = 1.0f;
+    m_fLastSimulationTime = -1.0f;
+    m_pActiveCameraData = NULL;
+    mFacingAngle = 0;
+    m_EndOfAnimationCallback = NULL;
+    nlVec3Set(m_vecTarget, 0.0f, 0.0f, 0.0f);
+    nlVec3Set(m_OffsetPos, 0.0f, 0.0f, 0.0f);
+    nlVec3Set(m_Mirror, 1.0f, 1.0f, 1.0f);
+    m_pActiveCameraData = m_cameraDataList;
+    m_bCyclic = true;
 }
 
 /**

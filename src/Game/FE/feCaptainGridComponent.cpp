@@ -420,6 +420,18 @@ void ICaptainGridComponent::BuildMapMenu()
  */
 ICaptainGridComponent::~ICaptainGridComponent()
 {
+    IGridComponent::~IGridComponent();
+
+    if (mInstanceTable != NULL)
+    {
+        delete[] mInstanceTable;
+        mInstanceTable = NULL;
+    }
+
+    delete mMapMenu;
+    mMapMenu = NULL;
+
+    // TODO: 85.95% match; remaining mismatch is IGridComponent<eTeamID> vtable/destructor shape.
 }
 
 /**

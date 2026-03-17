@@ -163,6 +163,10 @@ static LooseBallContactAnimInfo LeadVolleyContactAnims[3] = {
  */
 cFielder::~cFielder()
 {
+    CleanUpAction();
+    delete m_pAvoidance;
+    delete m_pShotMeter;
+    delete m_pCurrentPlay;
 }
 
 /**

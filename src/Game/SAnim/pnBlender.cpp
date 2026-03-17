@@ -6,6 +6,43 @@ f32 CANT_COLLIDE = *(f32*)__float_max;
 
 SlotPool<cPN_Blender> cPN_Blender::m_BlenderSlotPool;
 
+extern "C"
+{
+    void __ct__12SlotPoolBaseFv(void*);
+    void* __register_global_object(void* object, void* destructor, void* registration);
+}
+
+struct DestructorChain
+{
+    DestructorChain* next;
+    void* destructor;
+    void* object;
+};
+
+void BlenderSlotPoolDtor(void* obj, int)
+{
+    ((SlotPool<cPN_Blender>*)obj)->~SlotPool<cPN_Blender>();
+}
+
+/**
+ * Offset/Address/Size: 0x4D8 | 0x801EEBF8 | size: 0x74
+ * TODO: 99.31% match - relocation symbols differ for slot-pool destructor and @163 registration chain.
+ */
+extern "C" void __sinit_pnBlender_cpp()
+{
+    static DestructorChain chain;
+    SlotPool<cPN_Blender>* pool = &cPN_Blender::m_BlenderSlotPool;
+
+    CANT_COLLIDE = *(f32*)__float_max;
+
+    SlotPoolBase* basePool = (SlotPoolBase*)pool;
+    __ct__12SlotPoolBaseFv(basePool);
+    basePool->m_Initial = 0x10;
+    SlotPoolBase::BaseAddNewBlock(basePool, 0x1C);
+    basePool->m_Delta = 0x10;
+    __register_global_object(basePool, (void*)BlenderSlotPoolDtor, &chain);
+}
+
 void cPN_Blender::operator delete(void* ptr)
 {
     ((SlotPoolEntry*)ptr)->m_next = m_BlenderSlotPool.m_FreeList;

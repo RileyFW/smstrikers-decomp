@@ -101,6 +101,17 @@ Replay::Replay(char* memory, int memorySize, int maxFrameSize)
  */
 Replay::~Replay()
 {
+    Frame* frame = mFree;
+
+    do
+    {
+        Frame* next = frame->mNext;
+        ((SlotPoolEntry*)frame)->m_next = Frame::mSlotPool.m_FreeList;
+        Frame::mSlotPool.m_FreeList = (SlotPoolEntry*)frame;
+        frame = next;
+    } while (frame != mFree);
+
+    SlotPoolBase::BaseFreeBlocks(&Frame::mSlotPool, sizeof(Frame));
 }
 
 /**

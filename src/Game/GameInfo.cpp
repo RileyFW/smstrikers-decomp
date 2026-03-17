@@ -53,6 +53,8 @@ GameInfoManager::GameInfoManager()
  */
 GameInfoManager::~GameInfoManager()
 {
+    delete mGameInfo[0];
+    delete mGameInfo[10];
 }
 
 /**

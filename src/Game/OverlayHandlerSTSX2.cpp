@@ -9,9 +9,8 @@
  * Offset/Address/Size: 0x280 | 0x8010705C | size: 0xA8
  */
 STSX2Overlay::STSX2Overlay()
-    : BaseOverlayHandler(0xA)
+    : BaseOverlayHandler(0x102, (ScreenPosition)0xA)
 {
-    m_uHashID = 0x102;
     m_EventHandler = NULL;
     m_EventHandler = g_pEventManager->AddEventHandler(EventHandlerFunc, this, 1);
 }

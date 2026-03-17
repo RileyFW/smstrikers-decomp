@@ -214,10 +214,29 @@ static int s_initialEdgeCount = 1;
 
 /**
  * Offset/Address/Size: 0x12C8 | 0x80131420 | size: 0x78
+ * TODO: 99.00% match - two remaining call-target diffs on slot-pool deleting destructors.
  */
 NetMeshModelLoader::~NetMeshModelLoader()
 {
-    FORCE_DONT_INLINE;
+    struct NetMeshEdge
+    {
+        ~NetMeshEdge()
+        {
+            FORCE_DONT_INLINE;
+        }
+    };
+
+    struct NetMeshVertex
+    {
+        ~NetMeshVertex()
+        {
+            FORCE_DONT_INLINE;
+        }
+    };
+
+    delete (NetMeshEdge*)m_EdgeList;
+    delete (NetMeshVertex*)m_VertexList;
+    delete m_TriStripIndices;
 }
 
 /**

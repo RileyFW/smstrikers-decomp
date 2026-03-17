@@ -7,6 +7,58 @@ static nlListContainer<SaveData*> gSaveGrid[7][5];
 
 struct MyMiniData;
 
+extern "C"
+{
+    typedef void (*ConstructorDestructor)(void*);
+    void* __register_global_object(void* object, void* destructor, void* registration);
+    void __construct_array(void* ptr, ConstructorDestructor ctor, ConstructorDestructor dtor, unsigned long size, unsigned long n);
+
+    void __vt__18AVLTreeUntemplated(void);
+    void vtAVLTreeBaseSave(void);
+    void vtNlAVLTreeSave(void);
+    void SaveMapDtor(void*, int);
+    void SaveGridCtor(void*);
+    void SaveGridDtor(void*);
+    void SaveGridArrayDtor(void*, int);
+}
+
+#pragma alias vtAVLTreeBaseSave "__vt__91AVLTreeBase<i,P8SaveData,40NewAdapter<26AVLTreeEntry<i,P8SaveData>>,20DefaultKeyCompare<i>>"
+#pragma alias vtNlAVLTreeSave "__vt__46nlAVLTree<i,P8SaveData,20DefaultKeyCompare<i>>"
+#pragma alias SaveMapDtor "__dt__46nlAVLTree<i,P8SaveData,20DefaultKeyCompare<i>>Fv"
+#pragma alias SaveGridCtor "__ct__27nlListContainer<P8SaveData>Fv"
+#pragma alias SaveGridDtor "__dt__27nlListContainer<P8SaveData>Fv"
+#pragma alias SaveGridArrayDtor "__arraydtor$565"
+
+struct GoalieSaveDestructorChain
+{
+    GoalieSaveDestructorChain* next;
+    void* destructor;
+    void* object;
+};
+
+/**
+ * Offset/Address/Size: 0x0 | 0x80056D60 | size: 0xA4
+ * TODO: 96.10% match - relocation/symbol label diffs remain for @564/@566
+ * chain objects and templated vtable/ctor/dtor symbols.
+ */
+extern "C" void __sinit_GoalieSave_cpp()
+{
+    static GoalieSaveDestructorChain chain1;
+    static GoalieSaveDestructorChain chain2;
+
+    u32* map = (u32*)&gSaveMap;
+    map[0] = (u32)__vt__18AVLTreeUntemplated;
+    map[0] = (u32)vtAVLTreeBaseSave;
+    map[4] = 0;
+    map[2] = 0;
+    map[3] = 0;
+    map[0] = (u32)vtNlAVLTreeSave;
+    __register_global_object(map, (void*)SaveMapDtor, &chain1);
+
+    __construct_array(gSaveGrid, SaveGridCtor, SaveGridDtor, 0xC, 0x23);
+    __register_global_object(0, (void*)SaveGridArrayDtor, &chain2);
+}
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80056D60 | size: 0xA4
 //  */

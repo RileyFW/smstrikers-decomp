@@ -121,9 +121,35 @@ void AVLTreeBase<unsigned long, unsigned long, NewAdapter<AVLTreeEntry<unsigned 
 
 /**
  * Offset/Address/Size: 0xD28 | 0x801E136C | size: 0xC8
+ * TODO: 78.70% match - prologue/register allocation differs (vtable pointer setup and r5/r8 zero register usage).
  */
 ShaderSkinMesh::ShaderSkinMesh()
 {
+    pModel = NULL;
+    numBaseVerts = 0;
+    numMorphs = 0;
+    morphNumDeltas = NULL;
+    morphData = NULL;
+    morphBuffer = NULL;
+    boneMaps = NULL;
+    morphIDs = NULL;
+
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+
+    numSoftwareVerts = 0;
+    softwareVertices = NULL;
+    tempNormals = NULL;
+    tempMatrices = NULL;
+    skinPairs = NULL;
+    stitchArray = NULL;
+    numPackets = 0;
 }
 
 /**

@@ -326,11 +326,18 @@ void Config::LoadFromFile(const char* filename)
  */
 Config::Config(Config::AllocateWhere allocateWhere)
 {
-    mTvpHash = new (nlMalloc(sizeof(TagValuePair) * 1024 + 0x10, 8, false)) TagValuePair[1024];
-    char* mem = (char*)nlMalloc(0x2800, 8, false);
-    mStringMemory = mem;
-    mStringEnd = mem;
-    mem[0x27FF] = '\0';
+    if (allocateWhere == ALLOCATE_LOW)
+    {
+        mTvpHash = new (nlMalloc(sizeof(TagValuePair) * 1024 + 0x10, 8, false)) TagValuePair[1024];
+        mStringMemory = (char*)nlMalloc(0x2800, 8, false);
+    }
+    else
+    {
+        mTvpHash = new (nlMalloc(sizeof(TagValuePair) * 1024 + 0x10, 0x20, true)) TagValuePair[1024];
+        mStringMemory = (char*)nlMalloc(0x2800, 0x20, true);
+    }
+    mStringEnd = mStringMemory;
+    mStringMemory[0x27FF] = '\0';
 }
 
 /**

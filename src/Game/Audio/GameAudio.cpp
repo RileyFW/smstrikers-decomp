@@ -969,11 +969,6 @@ void cGameSFX::Init()
 cGameSFX::~cGameSFX()
 {
     DeInit();
-    if (mpCurPlaySet.m_Head != NULL)
-    {
-        nlWalkDLRing<DLListEntry<SFXPlaySet*>, nlDLListContainer<SFXPlaySet*> >(mpCurPlaySet.m_Head, &mpCurPlaySet, &nlDLListContainer<SFXPlaySet*>::DeleteEntry);
-        mpCurPlaySet.m_Head = NULL;
-    }
 }
 
 /**

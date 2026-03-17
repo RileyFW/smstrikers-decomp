@@ -517,9 +517,6 @@ long MemCard::OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*)
 
 /**
  * Offset/Address/Size: 0xB28 | 0x801CA298 | size: 0xC0
- * TODO: 91% match - r5/r6 register swap and load/store scheduling difference
- * in 24-byte MemCardFunctor copy. MWCC scheduler interleaves loads across
- * pairs instead of target's load-load-store-store pattern.
  */
 s32 MemCard::FormatCard(const MemCardFunctor& Callback)
 {
@@ -528,7 +525,39 @@ s32 MemCard::FormatCard(const MemCardFunctor& Callback)
         return -100;
     }
 
-    m_CB[4] = Callback;
+    struct FunctorWords
+    {
+        unsigned long w0;
+        unsigned long w1;
+        unsigned long w2;
+        unsigned long w3;
+        unsigned long w4;
+        unsigned long w5;
+    };
+
+    volatile FunctorWords* dst = (volatile FunctorWords*)&m_CB[4];
+    const volatile FunctorWords* src = (const volatile FunctorWords*)&Callback;
+    unsigned long b;
+    unsigned long a;
+    unsigned long e;
+    unsigned long d;
+    unsigned long c;
+
+    a = src->w0;
+    b = src->w1;
+    dst->w0 = a;
+    dst->w1 = b;
+
+    d = src->w2;
+    e = src->w3;
+    dst->w2 = d;
+    dst->w3 = e;
+
+    b = src->w4;
+    c = src->w5;
+    dst->w4 = b;
+    dst->w5 = c;
+
     m_State = IS_FORMATTING;
     m_CardState = CS_FORMATTING;
     m_LastTransferSize = CARDGetXferredBytes(m_Slot);

@@ -193,6 +193,7 @@ CupHubScene::CupHubScene(bool, bool)
  */
 CupHubScene::~CupHubScene()
 {
+    delete mCaptainImage;
 }
 
 /**

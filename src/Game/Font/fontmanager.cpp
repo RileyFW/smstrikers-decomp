@@ -62,12 +62,22 @@ void nlWalkDLRing<DLListEntry<nlFont*>, DLListContainerBase<nlFont*, BasicSlotPo
 // {
 // }
 
+template <>
+nlDLListSlotPool<nlFont*>::nlDLListSlotPool()
+{
+    this->m_Head = NULL;
+    this->m_Allocator.m_Initial = 8;
+    SlotPoolBase::BaseAddNewBlock((SlotPoolBase*)&this->m_Allocator, sizeof(DLListEntry<nlFont*>));
+    this->m_Allocator.m_Delta = 0;
+}
+
 /**
  * Offset/Address/Size: 0x4CC | 0x80209B60 | size: 0x70
+ * TODO: 96.25% match - remaining mismatch is r30/r31 nonvolatile register
+ * allocation in the inlined m_fonts slot-pool constructor path.
  */
 FontManager::FontManager()
 {
-    // SlotPoolBase::BaseAddNewBlock(&m_fonts.m_Allocator, 0xC);
 }
 
 /**

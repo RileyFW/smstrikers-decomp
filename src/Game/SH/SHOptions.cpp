@@ -135,6 +135,10 @@ OptionsScene::OptionsScene()
  */
 OptionsScene::~OptionsScene()
 {
+    if (m_subMenu != NULL)
+    {
+        delete m_subMenu;
+    }
 }
 
 /**

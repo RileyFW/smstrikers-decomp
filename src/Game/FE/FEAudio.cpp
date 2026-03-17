@@ -228,7 +228,6 @@ long FEAudio::PlayAnimAudioEvent(const char* eventName, bool)
     }
 
     Audio::PlayWorldSFXbyStr(event->szSFXType, 1.0f, 0.0f, false, true, NULL, NULL, NULL);
-    return 0;
 }
 
 /**

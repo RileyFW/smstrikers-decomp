@@ -379,6 +379,18 @@ SaveLoadScene::SaveLoadScene(SaveLoadScene::eSaveLoadMode)
  */
 SaveLoadScene::~SaveLoadScene()
 {
+    extern bool mIsFirstTimeAboutIPL__13SaveLoadScene;
+
+    g_pFEInput->PopExclusiveInputLock(this);
+    mInstance = NULL;
+
+    if (mButtonComponent != NULL)
+    {
+        delete mButtonComponent;
+        mButtonComponent = NULL;
+    }
+
+    mIsFirstTimeAboutIPL__13SaveLoadScene = false;
 }
 
 /**

@@ -906,7 +906,6 @@ void AudioLoader::LoadNLGDialogueGroup(bool bAsync)
 
 /**
  * Offset/Address/Size: 0x1D8C | 0x80145B58 | size: 0x90
- * TODO: 99.2% match - r4/r5 register allocation swap
  */
 void AudioLoader::LoadFEButtonSoundGroup()
 {
@@ -915,14 +914,7 @@ void AudioLoader::LoadFEButtonSoundGroup()
         return;
     }
 
-    bool alreadyLoaded = false;
-    if (sebringAudioGroups[2].uLoadOrder > -1)
-    {
-        if (sebringAudioGroups[2].stackEnum > -1)
-        {
-            alreadyLoaded = true;
-        }
-    }
+    bool alreadyLoaded = (sebringAudioGroups[2].uLoadOrder > -1) && (sebringAudioGroups[2].stackEnum > -1);
 
     if (alreadyLoaded)
     {

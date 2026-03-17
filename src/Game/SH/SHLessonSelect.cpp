@@ -131,6 +131,13 @@ void LessonTickerDoneCB()
  * Offset/Address/Size: 0x1774 | 0x8010C5C4 | size: 0xBC
  */
 LessonSelectScene::LessonSelectScene()
+    : BaseSceneHandler()
+    , mMenuItems()
+    , mDoSlideIn(true)
+    , mStartAnimAtEnd(false)
+    , mButtons()
+    , mUpArrow(NULL)
+    , mDownArrow(NULL)
 {
 }
 

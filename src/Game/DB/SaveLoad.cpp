@@ -2358,5 +2358,4 @@ void SaveLoad::FreeAllCallbackMemory()
 void SaveLoad::RememberCurrentMemCardSerialID(int id)
 {
     mLastKnownMemCardID.serialID = g_MemCards[id]->GetSerialID();
-    return;
 }

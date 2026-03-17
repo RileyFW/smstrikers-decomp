@@ -359,8 +359,12 @@ NSNMessengerScene::~NSNMessengerScene()
  * Offset/Address/Size: 0xAC0 | 0x800A1DDC | size: 0x84
  */
 NSNMessengerScene::NSNMessengerScene()
-    : BaseOverlayHandler(0, POSITION_TOP)
+    : BaseOverlayHandler(3, POSITION_BOTTOM)
 {
+    m_messageFinishedCB.mTag = EMPTY;
+    m_curState = MS_INVALID;
+    m_messageDisplayTime = 0.0f;
+    m_scrollText = NULL;
 }
 
 // /**

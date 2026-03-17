@@ -63,9 +63,7 @@ void PhysicsBall::ScaleAngularVelocity(float scale)
     if (m_bUseAngularVel != 0)
     {
         GetAngularVelocity(&v);
-        v.f.z = scale * v.f.z;
-        v.f.x = scale * v.f.x;
-        v.f.y = scale * v.f.y;
+        _nlVec3Scale(v, scale);
         SetAngularVelocity(v);
     }
 }

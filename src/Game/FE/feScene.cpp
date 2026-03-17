@@ -155,13 +155,11 @@ FEScene::~FEScene()
  * Offset/Address/Size: 0x3C8 | 0x8020A13C | size: 0x8C
  */
 FEScene::FEScene()
+    : m_pFEPackage(NULL)
+    , m_uHashID(0)
+    , m_bValid(false)
+    , m_uRenderView(0)
 {
-    m_pFEPackage = NULL;
-    m_uHashID = 0;
-    m_bValid = false;
-    m_uRenderView = 0;
-    // m_feSceneResourceHandle constructor called automatically here
-
     nlVector3 FROM;
     nlVec3Set(FROM, 0.0f, 0.0f, 600.0f);
     nlVector3 TO;

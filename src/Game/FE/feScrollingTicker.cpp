@@ -221,6 +221,11 @@ ScrollingTickerScene::~ScrollingTickerScene()
  * Offset/Address/Size: 0xE00 | 0x800A0A58 | size: 0x88
  */
 ScrollingTickerScene::ScrollingTickerScene()
+    : BaseSceneHandler()
+    , m_active(false)
+    , m_cbFunc()
+    , m_textScroller(NULL)
+    , m_pFETweenManager()
 {
 }
 

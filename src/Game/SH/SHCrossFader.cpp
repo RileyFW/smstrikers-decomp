@@ -58,6 +58,11 @@ CrossFaderScene::CrossFaderScene()
  */
 CrossFaderScene::~CrossFaderScene()
 {
+    if (mImageInstances != NULL)
+    {
+        delete[] mImageInstances;
+        mImageInstances = NULL;
+    }
 }
 
 /**

@@ -60,7 +60,7 @@ void VMBASEInit(VMSwapPageInCallback cb)
     u32 arenaLo;
     u32 freeIn64K;
 
-    if (g_baseInitialized != 0)
+    if ((s32)g_baseInitialized != 0)
     {
         return;
     }
@@ -209,6 +209,7 @@ void VMBASESetPageLocked(u32 mramPage, BOOL locked)
     g_vmBaseLockedPageTable[mramPage] = 0;
 }
 
+#pragma dont_inline on
 void __VMBASESetSwapPageCallback(VMSwapPageInCallback cb)
 {
     cbVMSwapPageIn = cb;
@@ -270,7 +271,12 @@ void __VMBASEInvalidateLockedPageTable(void)
 
 void __VMBASEInvalidateReversePageTable(void)
 {
-    memset(g_vmBaseVMReversePageTable, 0, 0x4000);
+    u32 offset;
+
+    for (offset = 0; offset < 0x4000; offset += 4)
+    {
+        *(u32*)((u8*)g_vmBaseVMReversePageTable + offset) = 0;
+    }
 }
 
 u32* __VMBASEVirtualAddrToPageTableAddr(u32 virtualAddr)
@@ -375,6 +381,7 @@ void __VMBASESetupExceptionHandlers(void)
     s_prevDSIHandler = __OSSetExceptionHandler(__OS_EXCEPTION_DSI, __VMBASEDSIExceptionHandler);
     s_prevISIHandler = __OSSetExceptionHandler(__OS_EXCEPTION_ISI, __VMBASEISIExceptionHandler);
 }
+#pragma dont_inline reset
 
 #pragma scheduling off
 static asm void __VMBASEDSIExceptionHandler(__OSException exception, OSContext* context)

@@ -79,6 +79,10 @@ SummaryOverlay::SummaryOverlay(SummaryOverlay::eSummaryContext)
  */
 SummaryOverlay::~SummaryOverlay()
 {
+    if (mSlideMenu != NULL)
+    {
+        delete mSlideMenu;
+    }
 }
 
 static const char* SUMMARY_SLIDE_NAME = "SUMMARY";
