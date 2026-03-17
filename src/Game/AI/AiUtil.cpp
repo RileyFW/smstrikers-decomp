@@ -549,8 +549,6 @@ void GetRotationBetweenVectors(nlQuaternion& quat, const nlVector3& v3Vec1, cons
 
 /**
  * Offset/Address/Size: 0x70C | 0x800061B8 | size: 0x108
- * TODO: 99.09% match - remaining f8/f9 allocation swap for quat.z/quat.w values
- * through ww/zz and xz2/zw2 term generation.
  */
 void RotateVector(nlVector3& result, const nlVector3& v, nlQuaternion& q)
 {
@@ -592,8 +590,8 @@ void RotateVector(nlVector3& result, const nlVector3& v, nlQuaternion& q)
     f32 B;
 
     xx = q.f.x * q.f.x;
-    ww = q.f.w * q.f.w;
     zz = q.f.z * q.f.z;
+    ww = q.f.w * q.f.w;
     x2 = 2.0f * q.f.x;
     z2 = 2.0f * q.f.z;
     vy = v.f.y;

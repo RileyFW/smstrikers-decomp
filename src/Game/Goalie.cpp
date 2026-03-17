@@ -934,10 +934,10 @@ bool Goalie::IsPassThreat()
         if (!IsOnSameTeam(pPassTarget))
         {
             cBall* pBall = g_pBall;
+            float absPassX = (float)fabs(pBall->m_v3PassIntercept.f.x);
             float ballPassX = pBall->m_v3PassIntercept.f.x;
 
-            if (
-                ((float)fabs(pBall->m_v3PassIntercept.f.x) > (cField::GetPenaltyBoxX(1U) - 2.0f))
+            if ((absPassX > (cField::GetPenaltyBoxX(1U) - 2.0f))
                 && (ballPassX * m_v3Position.f.x > 0.0f)
                 && ((float)fabs(pBall->m_v3PassIntercept.f.y) < (cField::GetPenaltyBoxY() + 2.0f)))
             {

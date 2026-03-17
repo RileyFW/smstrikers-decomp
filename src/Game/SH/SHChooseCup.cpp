@@ -224,8 +224,32 @@ void continueCup(bool isSuperCup)
 /**
  * Offset/Address/Size: 0x1DF8 | 0x800DC07C | size: 0x104
  */
-ChooseCupSceneV2::ChooseCupSceneV2(bool)
+ChooseCupSceneV2::ChooseCupSceneV2(bool isSuperCup)
+    : mIsSuperCup(isSuperCup)
+    , mUpdateSlide(false)
+    , mIsFirstSlide(true)
+    , mTicker(NULL)
 {
+    ((u8*)this)[0x480] = 0;
+
+    const char* TROPHY_FILE_NAME = "art/fe/TrophiesUI.res";
+
+    ((u8*)this)[0x481] = 0;
+
+    mCupImage = new ((AsyncImage*)nlMalloc(0x1C, 0x20, true)) AsyncImage(TROPHY_FILE_NAME, NULL);
+
+    if (mIsSuperCup)
+    {
+        mCupToDisplay = TROPHY_SUPER_MUSHROOM_CUP;
+        mMinCup = TROPHY_SUPER_MUSHROOM_CUP;
+        mMaxCup = TROPHY_SUPER_BOWSER_CUP;
+    }
+    else
+    {
+        mCupToDisplay = TROPHY_MUSHROOM_CUP;
+        mMinCup = TROPHY_MUSHROOM_CUP;
+        mMaxCup = TROPHY_BOWSER_CUP;
+    }
 }
 
 /**
