@@ -1598,11 +1598,90 @@ bool cFielder::DoLooseBallContactFromRun(nlVector3& v3AnimStartPosition, float& 
 
 /**
  * Offset/Address/Size: 0x84AC | 0x800217E8 | size: 0x2FC
+ * TODO: 65.09% match - stack/register allocation and loop branch shape still differ in Z filtering and final timing math.
  */
-bool cFielder::DoLooseBallContactFromRunVolley(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&)
+bool cFielder::DoLooseBallContactFromRunVolley(nlVector3& v3AnimStartPosition, float& fAnimStartTime, nlVector3& v3BallContactPosition, float& fBallContactTime,
+    const LooseBallContactAnimInfo* pBestBallContactAnimInfo, const nlVector3& v3PassIntercept)
 {
-    FORCE_DONT_INLINE;
-    return false;
+    const cSAnim* pGuessContactAnim = m_pAnimInventory->GetAnim(pBestBallContactAnimInfo->nAnimID);
+    float fAnimTimeToContact = pBestBallContactAnimInfo->fAnimContactFrame / (float)pGuessContactAnim->m_nNumKeys;
+
+    nlVector3 v3ContactOffsetLocal;
+    GetJointPositionFuture(&v3ContactOffsetLocal, pBestBallContactAnimInfo->nAnimID, m_nBallJointIndex, fAnimTimeToContact, true, true, false);
+
+    float fCos;
+    float fSin;
+    nlSinCos(&fSin, &fCos, m_aActualFacingDirection);
+
+    nlVector3 v3ContactOffsetWorld;
+    float ySin = v3ContactOffsetLocal.f.y * fSin;
+    float xSin = v3ContactOffsetLocal.f.x * fSin;
+    v3ContactOffsetWorld.f.x = (v3ContactOffsetLocal.f.x * fCos) - ySin;
+    v3ContactOffsetWorld.f.y = (v3ContactOffsetLocal.f.y * fCos) + xSin;
+    v3ContactOffsetWorld.f.z = v3ContactOffsetLocal.f.z;
+
+    FakeBallWorld::ResetBallIterator();
+
+    float fSimulatedTime = 0.0f;
+    float fPrevBallZ = 0.0f;
+    float fContactZ = v3ContactOffsetWorld.f.z;
+    float bestTime;
+    nlVector3 bestIntercept;
+
+    while (fSimulatedTime < 5.0f)
+    {
+        nlVector3 v3SimulatedBallPos;
+        FakeBallWorld::GetNextBallPosition(v3SimulatedBallPos);
+        fSimulatedTime += FixedUpdateTask::GetPhysicsUpdateTick();
+
+        float prevDistZ = (float)fabs(fPrevBallZ - fContactZ);
+        float currDistZ = (float)fabs(v3SimulatedBallPos.f.z - fContactZ);
+
+        if (fSimulatedTime > FixedUpdateTask::GetPhysicsUpdateTick())
+        {
+            bool bIsCrossingZ =
+                ((v3SimulatedBallPos.f.z >= fContactZ) && (fPrevBallZ < fContactZ)) || ((v3SimulatedBallPos.f.z < fContactZ) && (fPrevBallZ >= fContactZ));
+
+            if (bIsCrossingZ || (currDistZ <= prevDistZ))
+            {
+                float deltaY = v3SimulatedBallPos.f.y - v3PassIntercept.f.y;
+                float deltaX = v3SimulatedBallPos.f.x - v3PassIntercept.f.x;
+                if ((deltaY * deltaY + deltaX * deltaX) < 1.0f)
+                {
+                    bestTime = fSimulatedTime;
+                    bestIntercept = v3SimulatedBallPos;
+                    break;
+                }
+            }
+        }
+
+        fPrevBallZ = v3SimulatedBallPos.f.z;
+    }
+
+    if (fSimulatedTime >= 5.0f)
+    {
+        return false;
+    }
+
+    float fDesiredSpeedToAnimStart = (float)pGuessContactAnim->m_nNumKeys / 30.0f;
+    float fBestSpeedToAnimStartDelta = fAnimTimeToContact * fDesiredSpeedToAnimStart;
+
+    v3AnimStartPosition.f.x = bestIntercept.f.x - v3ContactOffsetWorld.f.x;
+    v3AnimStartPosition.f.y = bestIntercept.f.y - v3ContactOffsetWorld.f.y;
+    v3AnimStartPosition.f.z = bestIntercept.f.z - v3ContactOffsetWorld.f.z;
+    v3AnimStartPosition.f.z = 0.0f;
+
+    fAnimStartTime = bestTime - fBestSpeedToAnimStartDelta;
+
+    v3BallContactPosition = bestIntercept;
+    fBallContactTime = bestTime;
+
+    if (!m_bHasBeenUpdated)
+    {
+        fAnimStartTime += g_fSimulationTick;
+    }
+
+    return true;
 }
 
 /**
