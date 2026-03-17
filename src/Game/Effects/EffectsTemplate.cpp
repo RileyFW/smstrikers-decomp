@@ -3,6 +3,8 @@
 #include "Game/Effects/EmissionManager.h"
 #include "stdlib.h"
 #include "NL/nlAVLTree.h"
+#include "NL/nlDLListContainer.h"
+#include "NL/nlDLRing.h"
 #include "NL/nlMath.h"
 #include "NL/nlString.h"
 #include "Game/Sys/simpleparser.h"
@@ -16,41 +18,11 @@ struct ColourKey
     int value;
 };
 
-template <typename T>
-class DLListEntry
+struct ColourKeyListShim
 {
-public:
-    DLListEntry<T>* m_next;
-    DLListEntry<T>* m_prev;
-    T m_data;
+    NewAdapter<DLListEntry<ColourKey> > m_Allocator;
+    DLListEntry<ColourKey>* m_Head;
 };
-
-template <typename T>
-void nlDLRingAddEnd(T**, T*);
-
-template <typename T>
-T* nlDLRingGetStart(T*);
-
-template <typename T>
-bool nlDLRingIsEnd(T*, T*);
-
-template <typename T, typename Adapter>
-class DLListContainerBase
-{
-public:
-    void DeleteEntry(DLListEntry<T>*);
-
-    Adapter m_Allocator;
-    DLListEntry<T>* m_Head;
-};
-
-template <typename T>
-class nlDLListContainer : public DLListContainerBase<T, NewAdapter<DLListEntry<T> > >
-{
-};
-
-template <typename T, typename CallbackType>
-void nlWalkDLRing(T*, CallbackType*, void (CallbackType::*)(T*));
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x801F29E8 | size: 0x60
@@ -240,10 +212,11 @@ static void BlendSpan(nlColour* pColour, int cindex, const ColourKey& k0, const 
 
 void GetColourComponent(SimpleParser* parser, nlColour* pColour, int cindex)
 {
+    typedef DLListContainerBase<ColourKey, NewAdapter<DLListEntry<ColourKey> > > ColourKeyList;
     char ind[8];
     char val[8];
     ColourKey key;
-    nlDLListContainer<ColourKey> keys;
+    ColourKeyListShim keys;
     keys.m_Head = NULL;
     while (true)
     {
@@ -297,8 +270,8 @@ void GetColourComponent(SimpleParser* parser, nlColour* pColour, int cindex)
         start->m_data.index = current->m_data.index;
         start->m_data.value = current->m_data.value;
     }
-    nlWalkDLRing<DLListEntry<ColourKey>, DLListContainerBase<ColourKey, NewAdapter<DLListEntry<ColourKey> > > >(
-        keys.m_Head, &keys, &DLListContainerBase<ColourKey, NewAdapter<DLListEntry<ColourKey> > >::DeleteEntry);
+    nlWalkDLRing<DLListEntry<ColourKey>, ColourKeyList>(
+        keys.m_Head, (ColourKeyList*)&keys, &ColourKeyList::DeleteEntry);
     keys.m_Head = NULL;
 }
 

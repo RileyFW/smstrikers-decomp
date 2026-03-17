@@ -189,7 +189,17 @@
  * Offset/Address/Size: 0x27B0 | 0x800CBE64 | size: 0xD4
  */
 CupTrophyScene::CupTrophyScene()
+    : mTrophy((eTrophyType)-1)
+    , mCreated(false)
+    , mIsNew(false)
+    , mFirstSlideChange(true)
+    , mButtonState((ButtonComponent::ButtonState)(*(int*)&unk_gap[121] = 0, *(int*)&unk_gap[123] = 0,
+          *(bool*)&unk_gap[127] = true, 0))
 {
+    CupTrophyScene* self = this;
+    const char* asyncPath = "art/fe/TrophiesUI.res";
+    AsyncImage* image = new (nlMalloc(0x1C, 0x20, true)) AsyncImage(asyncPath, NULL);
+    *(AsyncImage**)&self->unk_gap[125] = image;
 }
 
 /**
