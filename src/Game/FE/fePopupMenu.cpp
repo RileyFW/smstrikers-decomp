@@ -109,7 +109,28 @@ FEPopupMenu::~FEPopupMenu()
  * Offset/Address/Size: 0x3834 | 0x8009BAE0 | size: 0xFC
  */
 FEPopupMenu::FEPopupMenu()
+    : mMenuDisplayed(false)
+    , mMenuCreated(false)
+    , mRunCallBack(false)
+    , mUnknownA1F(false)
+    , mHighlightedOption(0)
+    , mAcceptDelayTime(0.0f)
+    , mControlInput(FE_ALL_PADS)
+    , mUnknownA64(0)
+    , mType(INVALID_TYPE)
+    , mButtons()
+    , mUnknownAA4(true)
+    , mUnknownAA5(false)
 {
+    mPopup.numOptions = 0;
+    mPopup.pMessage = NULL;
+    mPopup.pOptionLabels[0] = NULL;
+    mPopup.pOptionLabels[1] = NULL;
+    mPopup.pOptionLabels[2] = NULL;
+    mPopup.pOptionLabels[3] = NULL;
+
+    g_pFEInput->PushExclusiveInputLock(this, 0x1B);
+    FEAudio::EnableSounds(false);
 }
 
 // /**

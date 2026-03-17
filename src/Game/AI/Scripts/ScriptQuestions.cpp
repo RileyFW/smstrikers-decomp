@@ -528,10 +528,97 @@ float RepeatingLastDesire(cFielder* pFielder, eScriptFielderDesire desire)
 /**
  * Offset/Address/Size: 0x54B4 | 0x80083F3C | size: 0x2E8
  */
-float AbleToInterceptBall(cPlayer*)
+float AbleToInterceptBall(cPlayer* pPlayer)
 {
-    FORCE_DONT_INLINE;
-    return 0.0f;
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    float fScore = 0.0f;
+
+    float var_f1;
+    if (pPlayer == NULL)
+    {
+        var_f1 = 0.0f;
+    }
+    else
+    {
+        var_f1 = 0.0f;
+        if (pPlayer->m_eClassType == GOALIE)
+        {
+            Goalie* pGoalie = (Goalie*)pPlayer;
+            bool canIntercept = true;
+            eGoalieActionState goalieState = pGoalie->mGoalieActionState;
+            int isRecover = (((int)GOALIEACTION_STS_RECOVER - goalieState) == 0);
+            if ((isRecover & 0xFF) == 0)
+            {
+                bool isBusy = (pGoalie->m_pBall != NULL) || (goalieState == GOALIEACTION_PASS) || (goalieState == GOALIEACTION_PASS_INTERCEPT) || (goalieState == GOALIEACTION_MOVE) || (goalieState == GOALIEACTION_MOVE_WB) || (goalieState == GOALIEACTION_PASS_INTERCEPT) || (goalieState == GOALIEACTION_PURSUE_BALL_CARRIER) || (goalieState == GOALIEACTION_PURSUE_BALL_POUNCE) || (goalieState == GOALIEACTION_LOOSEBALL_SETUP) || (goalieState == GOALIEACTION_LOOSEBALL_CATCH) || (goalieState == GOALIEACTION_LOOSEBALL_PICKUP) || (goalieState == GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING) || (goalieState == GOALIEACTION_LOOSEBALL_PURSUE_ROLLING);
+                if (isBusy)
+                {
+                    canIntercept = false;
+                }
+            }
+            var_f1 = canIntercept ? 1.0f : 0.0f;
+        }
+        else if (pPlayer->m_eClassType == FIELDER)
+        {
+            bool isDisabled = false;
+            if (((cFielder*)pPlayer)->IsFrozen() || ((cFielder*)pPlayer)->IsFallenDown(25.0f))
+            {
+                isDisabled = true;
+            }
+            var_f1 = isDisabled ? 1.0f : 0.0f;
+        }
+    }
+
+    float temp_cmp = 0.0f;
+    if (var_f1 == temp_cmp)
+    {
+        if (pPlayer->m_pBall != NULL)
+        {
+            fScore = 1.0f;
+        }
+        else
+        {
+            int classType = pPlayer->m_eClassType;
+            if (classType == FIELDER)
+            {
+                float temp_f31 = NormalizeVal(pPlayer->m_pTeam->mfBallInterceptTimes[pPlayer->m_ID], g_pGame->m_pFuzzyTweaks->vInterceptBallConfidenceTime);
+                float temp_f0 = pPlayer->m_v3Position.f.x;
+                float temp_f3 = g_pBall->m_v3Position.f.x - temp_f0;
+                temp_f0 = pPlayer->m_v3Position.f.y;
+                float temp_f1 = g_pBall->m_v3Position.f.y - temp_f0;
+                float distance = nlSqrt((temp_f3 * temp_f3) + (temp_f1 * temp_f1), true);
+                float normalizedDistance = NormalizeVal(distance, g_pGame->m_pFuzzyTweaks->vInterceptBallConfidenceDistance);
+                float weight = g_pGame->m_pFuzzyTweaks->fInterceptBallScoreWeight;
+                fScore = (temp_f31 * weight) + (normalizedDistance * (1.0f - weight));
+            }
+            else if (classType == GOALIE)
+            {
+                bool isBusy = (pPlayer->m_pBall != NULL) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_PASS) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_PASS_INTERCEPT) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_MOVE) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_MOVE_WB) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_PASS_INTERCEPT) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_PURSUE_BALL_CARRIER) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_PURSUE_BALL_POUNCE) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_LOOSEBALL_SETUP) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_LOOSEBALL_CATCH) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_LOOSEBALL_PICKUP) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_LOOSEBALL_PURSUE_ROLLING);
+                if (isBusy)
+                {
+                    float result;
+                    if (pPlayer == NULL)
+                    {
+                        result = 0.0f;
+                    }
+                    else
+                    {
+                        float temp_f0 = pPlayer->m_v3Position.f.x;
+                        float temp_f3 = g_pScriptBall->m_v3Position.f.x - temp_f0;
+                        temp_f0 = pPlayer->m_v3Position.f.y;
+                        float temp_f1 = g_pScriptBall->m_v3Position.f.y - temp_f0;
+                        result = NormalizeVal(nlSqrt((temp_f3 * temp_f3) + (temp_f1 * temp_f1), true), g_pGame->m_pFuzzyTweaks->vCloseBallConfidenceDistance);
+                    }
+                    fScore = result;
+                }
+            }
+        }
+    }
+
+    return fScore;
 }
 
 static inline bool check_goalie2(const Goalie* pGoalie, const eGoalieActionState actionState)

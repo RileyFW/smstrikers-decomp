@@ -103,9 +103,25 @@ public:
 
 /**
  * Offset/Address/Size: 0xBCC | 0x8010FD28 | size: 0xDC
+ * TODO: 92.64% match - current CreditScene/CreditParser layout emits
+ *       SimpleParser construction at +0x5C instead of target +0x64, which
+ *       keeps the zero-init stores around 0x50/0x58/0x5C/0x60 out of order.
  */
 CreditScene::CreditScene()
+    : mAreCreditsOver(false)
+    , mFinalMessageDisplayed(false)
 {
+    *(u8*)&mTimeElapsed = 0;
+    mCreditParser.mFileData = NULL;
+    ((CreditParser*)((char*)&mCreditParser + 8))->mFileSize = 0;
+    ((CreditParser*)((char*)&mCreditParser + 8))->mFileData = NULL;
+    *(f32*)&mCreditParser.mFileSize = 0.0f;
+
+    for (int i = 0; i < 10; i++)
+    {
+        m_pTextLines[i] = NULL;
+        mLineOnScreen[i] = false;
+    }
 }
 
 /**

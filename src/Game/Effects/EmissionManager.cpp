@@ -1,6 +1,8 @@
 #include "Game/Effects/EmissionManager.h"
 #include "dolphin/types.h"
 #include "NL/nlAVLTree.h"
+#include "NL/gl/glFont.h"
+#include "Game/NisPlayer.h"
 #include "Game/Sys/debug.h"
 #include "Game/ReplaySpecializations.h"
 
@@ -27,6 +29,16 @@ static EffectsLight g_EffectsLights[3];
 extern eGLView defaultView;
 
 static unsigned long fx_sTerrain;
+
+typedef AVLTreeEntry<unsigned long, LingerMessage*> LMEntry;
+
+struct nlAVLTreeIter
+{
+    LMEntry** m_Stack;
+    unsigned int m_NumStackEntries;
+};
+
+static const nlColour kLingerColour = { 0xFF, 0xFF, 0xFF, 0xFF };
 
 /**
  * Offset/Address/Size: 0xE38 | 0x801F9758 | size: 0x20
@@ -117,9 +129,134 @@ bool EmissionManager::Shutdown()
 
 /**
  * Offset/Address/Size: 0x930 | 0x801F9250 | size: 0x2EC
+ * TODO: 99.97% match - remaining immediate relocation mismatch on linger colour load
  */
-void EmissionManager::Update(float)
+void EmissionManager::Update(float dt)
 {
+    if (NisPlayer::Instance()->WorldIsFrozen())
+    {
+        dt = 0.0f;
+    }
+
+    EmissionController* p = (EmissionController*)controllers->m_headNode;
+    while (p != NULL)
+    {
+        bool stillAlive = p->Update(dt);
+        if (stillAlive)
+        {
+            p = (EmissionController*)p->m_nextNode;
+        }
+        else
+        {
+            EmissionController* toBeDeleted = p;
+            p = (EmissionController*)p->m_nextNode;
+            controllers->Remove(toBeDeleted);
+            delete toBeDeleted;
+        }
+    }
+
+    // KillOldest inlined
+    {
+        int num = controllers->m_numNodes - 128;
+        float currentBestAge = 0.0f;
+        float prevBestAge = currentBestAge;
+
+        while (num > 0)
+        {
+            EmissionController* toKill = NULL;
+            float bestAge = 0.0f;
+            EmissionController* current = (EmissionController*)controllers->m_headNode;
+
+            while (current != NULL)
+            {
+                if (current->m_uUserData + 0x21530000 != 0x0000BEEF)
+                {
+                    float age = current->m_Age;
+                    if (bestAge < age && (prevBestAge == currentBestAge || age < currentBestAge))
+                    {
+                        bestAge = age;
+                        toKill = current;
+                        currentBestAge = age;
+                    }
+                }
+                current = (EmissionController*)current->m_nextNode;
+            }
+
+            if (toKill == NULL)
+            {
+                break;
+            }
+
+            toKill->Die();
+            num--;
+        }
+    }
+
+    // Lingerers display
+    if (lingerers->m_Root != NULL)
+    {
+        nlColour colour = kLingerColour;
+        nlAVLTreeIter* iter;
+        int y = 3;
+        glFontBegin(false);
+
+        nlAVLTree<unsigned long, LingerMessage*, DefaultKeyCompare<unsigned long> >* tree = lingerers;
+        iter = (nlAVLTreeIter*)nlMalloc(sizeof(nlAVLTreeIter), 8, false);
+        if (iter != NULL)
+        {
+            unsigned int numEntries = tree->m_NumElements;
+            LMEntry* node = tree->m_Root;
+            iter->m_Stack = (LMEntry**)nlMalloc((numEntries + 1) * 4, 8, false);
+            iter->m_NumStackEntries = 0;
+
+            if (node != NULL)
+            {
+                while (node->node.left != NULL)
+                {
+                    iter->m_Stack[iter->m_NumStackEntries] = node;
+                    iter->m_NumStackEntries++;
+                    node = (LMEntry*)node->node.left;
+                }
+                iter->m_Stack[iter->m_NumStackEntries] = node;
+                iter->m_NumStackEntries++;
+            }
+        }
+
+        while (iter->m_NumStackEntries != 0)
+        {
+            LMEntry* entry = iter->m_Stack[iter->m_NumStackEntries - 1];
+            LingerMessage* l = entry->value;
+
+            glFontPrintf((eGLView)0x21, 0, y, colour, "%s: %d (%d)", l->szMessage, l->nLingers, l->nParticles);
+
+            iter->m_NumStackEntries--;
+
+            entry = iter->m_Stack[iter->m_NumStackEntries];
+            LMEntry* right = (LMEntry*)entry->node.right;
+            if (right != NULL)
+            {
+                while (right->node.left != NULL)
+                {
+                    iter->m_Stack[iter->m_NumStackEntries] = right;
+                    iter->m_NumStackEntries++;
+                    right = (LMEntry*)right->node.left;
+                }
+                iter->m_Stack[iter->m_NumStackEntries] = right;
+                iter->m_NumStackEntries++;
+            }
+
+            y++;
+        }
+
+        if (iter != NULL)
+        {
+            delete[] iter->m_Stack;
+            delete iter;
+        }
+
+        glFontEnd();
+        ResetLingerers();
+    }
 }
 
 /**

@@ -104,30 +104,17 @@ nlVector3 cPlayer::GetAIDefNetLocation(const nlVector3* v3ReferencePos)
 
 /**
  * Offset/Address/Size: 0x114 | 0x80057664 | size: 0xE0
- * TODO: 97.6% match - improved with swapped max_float args, but MWCC still differs in clamp codegen:
- * first negative clamp compare order is fcmpo cr0,f0,f3 (target f3,f0), and clamp stores via f0
- * instead of f3. Positive clamp also keeps result in f0 (extra fmr f0,f3 before limit assign).
  */
 nlVector3 cPlayer::GetAIOffNetLocation(const nlVector3* v3ReferencePos)
 {
     nlVector3 v3NetLocation = m_pTeam->GetOtherNet()->m_baseLocation;
-
-    float yCoord;
-    if (v3ReferencePos != NULL)
-    {
-        yCoord = v3ReferencePos->f.y;
-    }
-    else
-    {
-        yCoord = m_v3Position.f.y;
-    }
+    float yCoord = (v3ReferencePos != NULL) ? v3ReferencePos->f.y : m_v3Position.f.y;
 
     float fNetWidth = 0.5f * cNet::m_fNetWidth;
 
     if (yCoord < 0.0f)
     {
-        float negHalf = -1.0f * fNetWidth;
-        yCoord = max_float(negHalf, yCoord);
+        yCoord = max_float(yCoord, -1.0f * fNetWidth);
         v3NetLocation.f.y = yCoord;
     }
     else
@@ -669,8 +656,132 @@ void cPlayer::PlayAttackReactionSounds(float fScale)
 /**
  * Offset/Address/Size: 0x1FAC | 0x800594FC | size: 0x2EC
  */
-void cPlayer::PickupBall(cBall*)
+void cPlayer::PickupBall(cBall* pBall)
 {
+    if (m_eClassType == GOALIE && ((Goalie*)this)->mbNoUserControl)
+    {
+    }
+    else
+    {
+        cGlobalPad* hasPad = (m_pController != NULL) ? m_pController->m_pPad : NULL;
+        if (hasPad == NULL)
+        {
+            cPlayer* closest = NULL;
+
+            cAIPad* goalieCtrl = m_pTeam->GetGoalie()->m_pController;
+            cGlobalPad* goaliePad = (goalieCtrl != NULL) ? goalieCtrl->m_pPad : NULL;
+            if (goaliePad != NULL)
+            {
+                closest = m_pTeam->GetGoalie();
+            }
+            else
+            {
+                f32 bestDistSq;
+                for (s32 i = 0; i < 4; i++)
+                {
+                    cPlayer* player = m_pTeam->GetPlayer(i);
+                    cGlobalPad* playerPad = (player->m_pController != NULL) ? player->m_pController->m_pPad : NULL;
+                    if (playerPad == NULL)
+                        continue;
+
+                    if (closest != NULL)
+                    {
+                        f32 dy = player->m_v3Position.f.y - m_v3Position.f.y;
+                        f32 dx = player->m_v3Position.f.x - m_v3Position.f.x;
+                        cPlayer* passTarget = g_pBall->m_pPassTarget;
+                        f32 distSq = dx * dx + dy * dy;
+
+                        if (passTarget == NULL || closest != g_pBall->m_pPrevOwner)
+                        {
+                            if (distSq < bestDistSq)
+                            {
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+
+                        if (passTarget != NULL && player == g_pBall->m_pPrevOwner)
+                        {
+                            continue;
+                        }
+
+                        bestDistSq = distSq;
+                        closest = player;
+                    }
+                    else
+                    {
+                        closest = player;
+                    }
+                }
+            }
+
+            if (closest != NULL)
+            {
+                SetAIPad(closest->m_pController);
+                closest->SetAIPad(NULL);
+            }
+        }
+    }
+
+    Event* event = g_pEventManager->CreateValidEvent(0xD, 0x20);
+    ReceiveBallData* data = new (&event->m_data) ReceiveBallData();
+    data->pReceiver = this;
+    data->eResult = RECEIVEBALL_LOOSE_PICKUP;
+
+    cPlayer* prevPassTarget = pBall->m_pPassTarget;
+    if (prevPassTarget != NULL)
+    {
+        if (prevPassTarget == this)
+        {
+            data->eResult = RECEIVEBALL_PASS_COMPLETE;
+        }
+        else if (prevPassTarget->m_pTeam != m_pTeam)
+        {
+            data->eResult = RECEIVEBALL_PASS_INTERCEPT;
+        }
+    }
+
+    if (data->eResult == RECEIVEBALL_PASS_COMPLETE)
+    {
+        bool bOneTouchShot = false;
+        if (m_eClassType == FIELDER)
+        {
+            if (((cFielder*)this)->GetOneTouchShotDesire() != 0)
+            {
+                bOneTouchShot = true;
+            }
+        }
+        if (!bOneTouchShot)
+        {
+            EmitBallImpact(this, false);
+        }
+    }
+
+    m_tBallPossessionTimer.m_uPackedTime = 0;
+    m_tBallUnPossessionTimer.m_uPackedTime = 0;
+    m_pBall = pBall;
+    m_pBall->SetOwner(this);
+
+    if (m_pBall != NULL)
+    {
+        m_pBall->m_pPhysicsBall->EnableCollisions();
+        m_pPhysicsCharacter->ContainObject(m_pBall->m_pPhysicsBall);
+    }
+
+    if (m_pBall != NULL)
+    {
+        nlVector3& jointPos = GetJointPosition(m_nBallJointIndex);
+        nlVector3 pos = jointPos;
+        m_pPhysicsCharacter->m_SubObject.SetSubObjectPosition(pos, PhysicsObject::WORLD_COORDINATES);
+    }
+
+    m_ResetBaseBallOrientation = true;
+    if (m_eClassType == FIELDER)
+    {
+        ((cFielder*)this)->ClearVolleyPass();
+    }
 }
 
 /**

@@ -329,7 +329,7 @@ public:
     void DesireMark(float);
     void DesireSupportBall(float, bool);
     bool InitDesireGetOpen();
-    void InitDesireOneTimerFromRun(unsigned short, const nlVector3&, const nlVector3&, bool, bool);
+    bool InitDesireOneTimerFromRun(unsigned short, const nlVector3&, const nlVector3&, bool, bool);
     void DesireOneTimer(float);
     void InitDesireReceivePassFromIdle(const LooseBallContactAnimInfo*, unsigned short, bool);
     void DesireReceivePassFromIdle(float);

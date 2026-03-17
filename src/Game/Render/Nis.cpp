@@ -131,12 +131,157 @@ void Nis::UpdateTriggers(float oldTime, float newTime, float duration)
     }
 }
 
+struct BasicStringInternal
+{
+    char* mData;
+    int mSize;
+    int mCapacity;
+    int mRefCount;
+};
+
+namespace Detail
+{
+class TempStringAllocator
+{
+public:
+    static void* allocate(unsigned long size)
+    {
+        return nlMalloc(size, 8, true);
+    }
+
+    static void deallocate(void* ptr)
+    {
+        nlFree(ptr);
+    }
+};
+} // namespace Detail
+
+template <typename CharT, typename Allocator>
+class BasicString
+{
+public:
+    BasicStringInternal* m_data;
+
+    BasicString()
+        : m_data(0)
+    {
+    }
+
+    BasicString(const CharT* str)
+    {
+        BasicStringInternal* data = (BasicStringInternal*)Allocator::allocate(sizeof(BasicStringInternal));
+        if (data != 0)
+        {
+            data->mData = 0;
+            data->mSize = 0;
+            data->mCapacity = 0;
+
+            const CharT* s = str;
+            while ((signed char)*s++ != 0)
+            {
+                data->mSize++;
+            }
+            data->mSize++;
+
+            data->mData = (char*)Allocator::allocate(data->mSize + 1);
+            data->mCapacity = data->mSize;
+
+            for (int i = 0; i < data->mSize; i++)
+            {
+                data->mData[i] = *str++;
+            }
+
+            data->mRefCount = 1;
+        }
+        m_data = data;
+    }
+
+    BasicString(const BasicString& other)
+    {
+        BasicStringInternal* data;
+        if (other.m_data)
+        {
+            other.m_data->mRefCount++;
+            data = other.m_data;
+        }
+        else
+        {
+            data = 0;
+        }
+        m_data = data;
+    }
+
+    ~BasicString()
+    {
+        if (m_data)
+        {
+            BasicStringInternal* data = m_data;
+            if (--data->mRefCount == 0)
+            {
+                if (data)
+                {
+                    if (data)
+                    {
+                        delete[] data->mData;
+                    }
+                    if (data)
+                    {
+                        nlFree(data);
+                    }
+                }
+            }
+        }
+    }
+
+    const CharT* c_str() const
+    {
+        static CharT emptyString = '\0';
+        return m_data ? m_data->mData : &emptyString;
+    }
+};
+
+template <typename StringType, typename Arg0, typename Arg1>
+StringType Format(const StringType&, const Arg0&, const Arg1&);
+
 /**
  * Offset/Address/Size: 0xF80 | 0x8012C390 | size: 0x2F0
+ * TODO: 96.01% match - remaining diffs are MWCC register allocation and literal
+ * symbol selection (`this`/camera/temp register rotation and local constant labels).
  */
-void Nis::SelectCamera(cAnimCamera&, int)
+void Nis::SelectCamera(cAnimCamera& camera, int cameraIndex)
 {
-    FORCE_DONT_INLINE;
+    if (mNumCameras == 0)
+    {
+        return;
+    }
+
+    int index = cameraIndex % mNumCameras;
+    BasicString<char, Detail::TempStringAllocator> cameraName = Format(BasicString<char, Detail::TempStringAllocator>("{0}_{1}"), mHeader->name, index);
+
+    camera.SelectCameraAnimation(cameraName.c_str());
+
+    if (mMirrored)
+    {
+        camera.m_Mirror = (nlVector3) { -1.0f, 1.0f, 1.0f };
+    }
+    else
+    {
+        camera.m_Mirror = (nlVector3) { 1.0f, 1.0f, 1.0f };
+    }
+
+    camera.m_fAnimationTime = 0.0f;
+    camera.BuildAnimViewMatrix(camera.m_matView);
+
+    if (strstr(mHeader->name, "cup") != NULL)
+    {
+        camera.m_bCyclic = true;
+    }
+    else
+    {
+        camera.m_bCyclic = false;
+    }
+
+    mCamera = &camera;
 }
 
 /**

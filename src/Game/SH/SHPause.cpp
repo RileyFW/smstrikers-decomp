@@ -12,6 +12,7 @@
 
 extern FEInput* g_pFEInput;
 extern nlColour MenuHighliteColour;
+extern float mDelayBeforeUnpause__14PauseMenuScene;
 
 namespace DoubleHighlite
 {
@@ -189,8 +190,20 @@ void OpenItem(TLComponentInstance*);
 /**
  * Offset/Address/Size: 0x225C | 0x800AF754 | size: 0xDC
  */
-PauseMenuScene::PauseMenuScene(PauseMenuScene::ScreenContext)
+PauseMenuScene::PauseMenuScene(PauseMenuScene::ScreenContext context)
+    : BaseSceneHandler()
+    , mContext(context)
+    , mGameIsOver(false)
+    , mQuitDelay(0.0f)
+    , mQuittingController(FE_ALL_PADS)
+    , mMenuItems()
+    , mTransitionTo(TT_IN)
+    , mIsInTransition(false)
+    , mStartAnimAtEnd(false)
+    , mButtons()
+    , mButtons2()
 {
+    mDelayBeforeUnpause__14PauseMenuScene = 0.1f;
 }
 
 /**

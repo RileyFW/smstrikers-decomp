@@ -456,8 +456,6 @@ void MemCard::WriteFileDoneCB(long channel, long result)
 
 /**
  * Offset/Address/Size: 0x12DC | 0x801CAA4C | size: 0xF4
- * TODO: 92.95% match - MWCC still hoists two functor-copy loads ahead of
- * preceding stores in the 24-byte copy to m_CB[1] (8 instruction diffs).
  */
 s32 MemCard::BeginCardAccess(const MemCardFunctor& Callback)
 {
@@ -466,7 +464,38 @@ s32 MemCard::BeginCardAccess(const MemCardFunctor& Callback)
         return -100;
     }
 
-    m_CB[1] = Callback;
+    struct FunctorWords
+    {
+        unsigned long w0;
+        unsigned long w1;
+        unsigned long w2;
+        unsigned long w3;
+        unsigned long w4;
+        unsigned long w5;
+    };
+
+    volatile FunctorWords* dst = (volatile FunctorWords*)&m_CB[1];
+    const volatile FunctorWords* src = (const volatile FunctorWords*)&Callback;
+    unsigned long b;
+    unsigned long a;
+    unsigned long e;
+    unsigned long d;
+    unsigned long c;
+
+    a = src->w0;
+    b = src->w1;
+    dst->w0 = a;
+    dst->w1 = b;
+
+    d = src->w2;
+    e = src->w3;
+    dst->w2 = d;
+    dst->w3 = e;
+
+    b = src->w4;
+    a = src->w5;
+    dst->w4 = b;
+    dst->w5 = a;
 
     s32 result = CARDProbeEx(m_Slot, &m_CardInfo.CardSize, &m_CardInfo.SectorSize);
     if (result != 0)

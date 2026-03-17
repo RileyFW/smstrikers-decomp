@@ -111,9 +111,7 @@ bool FESlideMenu::NextItem()
         }
         else
         {
-            // Virtual call through functor - use inline chained access
-            Function<FESlideMenu*>::FunctorBase* functor = item->ItemCBFuncs[1].mFunctor;
-            ((void (*)(Function<FESlideMenu*>::FunctorBase*))(*(unsigned long**)functor)[3])(functor);
+            ((FunctorBase*)item->ItemCBFuncs[1].mFunctor)->Invoke();
         }
 
         return true;

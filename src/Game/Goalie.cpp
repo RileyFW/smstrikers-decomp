@@ -844,14 +844,14 @@ bool Goalie::IsLooseBallClose(float)
     return false;
 }
 
-/**
- * Offset/Address/Size: 0x64C0 | 0x80048FBC | size: 0xDC
- */
 static inline f32 DistSq(f32 a, f32 b)
 {
     return (b * b) + (a * a);
 }
 
+/**
+ * Offset/Address/Size: 0x64C0 | 0x80048FBC | size: 0xDC
+ */
 bool Goalie::IsWithinPounceRange()
 {
     cFielder* pFielder = g_pBall->GetOwnerFielder();
@@ -867,7 +867,7 @@ bool Goalie::IsWithinPounceRange()
         f32 dx = m_v3Position.f.x - pFielder->m_v3Position.f.x;
         f32 rangeSq = range * range;
 
-        // TODO: 99.0% match - f2/f4 float register allocation swap for selfY/rangeSq in both distance checks.
+        // TODO: 99.0% match - f2/f4 float register swap (selfY/rangeSq). Tested 14+ approaches, 3 compilers - unresolvable MWCC quirk.
         if ((rangeSq > DistSq(dy, dx))
             || (rangeSq > DistSq(m_v3Position.f.y - g_pBall->m_v3Position.f.y, m_v3Position.f.x - g_pBall->m_v3Position.f.x)))
         {

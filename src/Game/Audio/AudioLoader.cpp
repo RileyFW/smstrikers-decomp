@@ -7,6 +7,8 @@
 #include "Game/Sys/debug.h"
 #include "dolphin/arq.h"
 
+int nlSNPrintf(char*, unsigned long, const char*, ...);
+
 /**
  * Helper struct for inlining FindGet with bool return to match target assembly.
  * The target uses a bool found flag pattern (li r0,1 / li r0,0 / clrlwi.)
@@ -544,9 +546,42 @@ bool AudioLoader::IsInited()
 
 /**
  * Offset/Address/Size: 0x31D4 | 0x80146FA0 | size: 0x2F0
+ * TODO: 96.68% match - branch form for `gbStream`, fade-in default register
+ * assignment, and a temporary move before hashing `pSoundName` differ.
  */
-void AudioLoader::StartFEStream(const char*, bool, const char*)
+void AudioLoader::StartFEStream(const char* pSoundName, bool bLoop, const char* pTrackName)
 {
+    if (gbDisableAudio)
+    {
+        return;
+    }
+
+    if (!gbStream)
+    {
+        return;
+    }
+
+    char var_68[64];
+    nlSNPrintf(var_68, 64, "%s/%s", pSoundName, "Volume");
+    float volume = GetConfigFloat(g_FEStreamConfig, var_68, 0.0f);
+    volume /= 100.0f;
+
+    nlSNPrintf(var_68, 64, "%s/%s", pSoundName, "FadeIn");
+    s32 fadeIn = GetConfigInt(g_FEStreamConfig, var_68, 0);
+    s32 interruptFadeOut = GetConfigInt(g_FEStreamConfig, "InterruptFadeOut", 0);
+
+    if (volume > 0.0f)
+    {
+        AudioStreamTrack::TrackManagerBase* pTrackMgr = g_pTrackManager;
+        AudioStreamTrack::StreamTrack* track = pTrackMgr->GetTrack(nlStringLowerHash(pTrackName));
+        track->PlayStream(nlStringLowerHash(pSoundName), volume, bLoop, fadeIn, interruptFadeOut, "", MasterVolume::VG_Music);
+    }
+    else
+    {
+        AudioStreamTrack::TrackManagerBase* pTrackMgr = g_pTrackManager;
+        AudioStreamTrack::StreamTrack* track = pTrackMgr->GetTrack(nlStringLowerHash(pTrackName));
+        track->Stop(interruptFadeOut);
+    }
 }
 
 /**

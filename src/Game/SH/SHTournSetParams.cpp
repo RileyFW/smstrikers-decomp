@@ -46,6 +46,10 @@ TournSetParamsScene::TournSetParamsScene()
  */
 TournSetParamsScene::~TournSetParamsScene()
 {
+    for (int i = 0; i < 3; i++)
+    {
+        delete mSlideMenuLists[i];
+    }
 }
 
 /**

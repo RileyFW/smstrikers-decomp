@@ -1,6 +1,10 @@
 #include "Game/Physics/PhysicsCharacterBase.h"
 #include "Game/PoseAccumulator.h"
 
+void dBodySetUpdateMode(dxBody*, int, int);
+dxJoint* dJointCreateCharacter(dxWorld*, dxJointGroup*);
+void dJointSetCharacterNoMotionDirection(dxJoint*, float*);
+
 // /**
 //  * Offset/Address/Size: 0x68 | 0x801FF680 | size: 0x28
 //  */
@@ -111,14 +115,52 @@ void PhysicsCharacterBase::GetBoneVolumePoints(nlVector3* points, bool includeEn
  */
 PhysicsCharacterBase::PhysicsCharacterBase(CollisionSpace* collisionSpace, PhysicsWorld* physicsWorld, float centreOfMassHeight)
     : PhysicsCompositeObject(physicsWorld)
+    , m_CentreOfMassHeight(centreOfMassHeight)
 {
+    m_BoneVolumes.m_Head = NULL;
+    m_BoneVolumes.m_Tail = NULL;
+
+    dBodySetUpdateMode(m_bodyID, 1, 0);
+    dBodySetGravityMode(m_bodyID, 0);
+
+    m_CharMoveJoint = dJointCreateCharacter(physicsWorld->m_World, NULL);
+    dJointAttach(m_CharMoveJoint, m_bodyID, NULL);
+
+    float norm[4];
+    norm[0] = 0.0f;
+    norm[1] = 0.0f;
+    norm[2] = 1.0f;
+    dJointSetCharacterNoMotionDirection(m_CharMoveJoint, norm);
+
+    dBodySetAutoDisableFlag(m_bodyID, 0);
 }
 
 /**
  * Offset/Address/Size: 0x69C | 0x801FF198 | size: 0xE8
+ * TODO: 99.57% match - nlWalkList callback resolves to the global PhysicsBoneVolume template
+ * instantiation, while target uses the nested PhysicsCharacterBase::PhysicsBoneVolume symbol.
  */
 PhysicsCharacterBase::~PhysicsCharacterBase()
 {
+    dJointDestroy(m_CharMoveJoint);
+
+    ListEntry<PhysicsBoneVolume*>* entry = m_BoneVolumes.m_Head;
+    while (entry != NULL)
+    {
+        delete entry->data;
+        entry = entry->next;
+    }
+
+    if (&m_BoneVolumes != NULL)
+    {
+        if (&m_BoneVolumes != NULL)
+        {
+            typedef ListContainerBase<PhysicsBoneVolume*, NewAdapter<ListEntry<PhysicsBoneVolume*> > > BoneVolumesListBase;
+            nlWalkList(m_BoneVolumes.m_Head, (BoneVolumesListBase*)&m_BoneVolumes, &BoneVolumesListBase::DeleteEntry);
+            m_BoneVolumes.m_Head = NULL;
+            m_BoneVolumes.m_Tail = NULL;
+        }
+    }
 }
 
 /**

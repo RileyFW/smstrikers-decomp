@@ -35,9 +35,9 @@ void PhysicsBall::CalcAngularFromLinearVelocity(nlVector3& v3AngularVel)
     v3Look.f.x = v3Velocity.f.x;
     v3Look.f.y = v3Velocity.f.y;
 
-    v3AngularVel.f.x = v3Up.f.y * v3Look.f.z - v3Up.f.z * v3Look.f.y;
+    v3AngularVel.f.x = v3Up.f.y * v3Look.f.z - v3Look.f.y * v3Up.f.z;
     v3AngularVel.f.y = -v3Up.f.x * v3Look.f.z + v3Up.f.z * v3Look.f.x;
-    v3AngularVel.f.z = v3Up.f.x * v3Look.f.y - v3Up.f.y * v3Look.f.x;
+    v3AngularVel.f.z = v3Look.f.y * v3Up.f.x - v3Up.f.y * v3Look.f.x;
 }
 
 /**

@@ -26,6 +26,79 @@ enum ResourceResult
     FERR_AlreadyLoaded = 1,
 };
 
+extern "C"
+{
+    void __ct__12SlotPoolBaseFv(void*);
+    void* __register_global_object(void* object, void* destructor, void* registration);
+}
+
+struct FeResourceManagerDestructorChain
+{
+    FeResourceManagerDestructorChain* next;
+    void* destructor;
+    void* object;
+};
+
+void LoadedResourceListDtor(void* obj, int)
+{
+    ((nlAVLTreeSlotPool<unsigned long, FEResourceHandle*, DefaultKeyCompare<unsigned long> >*)obj)
+        ->~nlAVLTreeSlotPool<unsigned long, FEResourceHandle*, DefaultKeyCompare<unsigned long> >();
+}
+
+void PendingResourceQueueDtor(void* obj, int)
+{
+    ((nlDLListSlotPool<FEResourceHandle*>*)obj)->~nlDLListSlotPool<FEResourceHandle*>();
+}
+
+/**
+ * Offset/Address/Size: 0x0 | 0x8020D394 | size: 0xFC
+ * TODO: 90.21% match - still differs in r30/r31 alias usage and
+ * destructor/registration relocation symbols.
+ */
+extern "C" void __sinit_feResourceManager_cpp()
+{
+    static FeResourceManagerDestructorChain chain1;
+    static FeResourceManagerDestructorChain chain2;
+
+    u32* loaded = (u32*)&s_loadedResourceList;
+    u32* loaded31 = loaded;
+    u32* loaded30 = loaded;
+
+    loaded[0] = 0x802A4B5C;
+    loaded[0] = 0x80303850;
+    __ct__12SlotPoolBaseFv((void*)(loaded + 1));
+
+    u32 loadedVt = 0x8030383C;
+    u32 zero = 0;
+    u32 initial = 0x100;
+
+    loaded31[9] = zero;
+    loaded31[7] = zero;
+    loaded31[8] = zero;
+    loaded30[0] = loadedVt;
+    loaded30[1] = initial;
+    SlotPoolBase::BaseAddNewBlock((SlotPoolBase*)(loaded30 + 1), 0x14);
+    loaded30[2] = 0;
+
+    __register_global_object((void*)loaded30, (void*)LoadedResourceListDtor, &chain1);
+
+    SlotPoolBase* queue = (SlotPoolBase*)&pendingResourceQueue;
+    SlotPoolBase* queue31 = queue;
+    SlotPoolBase* queue30 = queue;
+
+    __ct__12SlotPoolBaseFv((void*)queue);
+
+    u32 zeroQueue = 0;
+    u32 initialQueue = 0x80;
+
+    ((nlDLListSlotPool<FEResourceHandle*>*)queue30)->m_Head = 0;
+    queue31->m_Initial = initialQueue;
+    SlotPoolBase::BaseAddNewBlock(queue30, 0xC);
+    queue31->m_Delta = zeroQueue;
+
+    __register_global_object((void*)queue31, (void*)PendingResourceQueueDtor, &chain2);
+}
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8020D5A8 | size: 0x60
 //  */
