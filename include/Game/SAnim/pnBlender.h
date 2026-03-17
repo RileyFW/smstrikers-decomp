@@ -4,6 +4,11 @@
 #include "NL/nlSlotPool.h"
 #include "Game/PoseAccumulator.h"
 
+// static void operator delete(void* ptr)
+// {
+//     m_BlenderSlotPool.Free(static_cast<cPN_Blender*>(ptr));
+// }
+
 class cPN_Blender : public cPoseNode
 {
 public:
@@ -15,6 +20,8 @@ public:
     /* 0x1C */ virtual int GetType() { return 0x0; };
     /* 0x20 */ virtual void BlendRootTrans(nlVector3*, float, float*);
     /* 0x24 */ virtual void BlendRootRot(unsigned short*, float, float*);
+
+    inline void operator delete(void* ptr);
 
     /* 0x14 */ float m_fBlendTime;
     /* 0x18 */ float m_fBlendDuration;

@@ -3409,9 +3409,9 @@ float InDefensiveZoneOfPlayer(cBall* pBall, cPlayer* pPlayer)
 float InOffensiveZoneOfPlayer(cBall* pBall, cPlayer* pPlayer)
 {
     nlVector3 aiLoc;
-    if ((pBall == NULL) || (pPlayer == NULL))
+    if ((pBall == NULL) && (pPlayer != NULL))
     {
-        return 0.0f;
+        return 1.0f;
     }
 
     eTeamSide teamSide = (eTeamSide)(pPlayer->m_pTeam->m_nSide);

@@ -10,6 +10,7 @@ class cPN_SingleAxisBlender : public cPoseNode
 public:
     cPN_SingleAxisBlender(int, void (*)(unsigned int, cPN_SingleAxisBlender*), unsigned int, float);
     /* 0x08 */ virtual ~cPN_SingleAxisBlender() { };
+    static void operator delete(void* ptr);
     /* 0x14 */ virtual void Evaluate(int, float, cPoseAccumulator*) const;
     /* 0x10 */ virtual void Evaluate(float, cPoseAccumulator*) const;
     /* 0x18 */ virtual cPoseNode* Update(float);

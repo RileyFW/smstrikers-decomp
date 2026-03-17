@@ -55,7 +55,10 @@ public:
 
     ~FormationSet()
     {
-        delete[] m_FormationDefArray;
+        if (m_AutoDelete)
+        {
+            delete[] m_FormationDefArray;
+        }
     };
 
     FormationSpec* GetFormationSpec(int) const;

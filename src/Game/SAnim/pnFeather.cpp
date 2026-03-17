@@ -7,6 +7,12 @@ f32 CANT_COLLIDE = *(f32*)__float_max;
 
 SlotPool<cPN_Feather> cPN_Feather::m_FeatherSlotPool;
 
+void cPN_Feather::operator delete(void* ptr)
+{
+    ((SlotPoolEntry*)ptr)->m_next = m_FeatherSlotPool.m_FreeList;
+    m_FeatherSlotPool.m_FreeList = (SlotPoolEntry*)ptr;
+}
+
 /**
  * Offset/Address/Size: 0x890 | 0x801EFDC4 | size: 0xEC
  */

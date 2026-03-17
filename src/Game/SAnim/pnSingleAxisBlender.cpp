@@ -48,6 +48,12 @@ extern "C" void __sinit_pnSingleAxisBlender_cpp()
 // {
 // }
 
+void cPN_SingleAxisBlender::operator delete(void* ptr)
+{
+    ((SlotPoolEntry*)ptr)->m_next = m_SingleAxisBlenderSlotPool.m_FreeList;
+    m_SingleAxisBlenderSlotPool.m_FreeList = (SlotPoolEntry*)ptr;
+}
+
 /**
  * Offset/Address/Size: 0x5DC | 0x801EF320 | size: 0xD4
  */

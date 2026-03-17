@@ -171,10 +171,18 @@ void VMBASESetPageReferenced(u32 virtualAddr, BOOL referenced)
     OSRestoreInterrupts(oldInterrupts);
 }
 
-void __VMBASEClearPageFromTLB(u32 virtualAddr)
-{
-    (void)virtualAddr;
+#pragma scheduling off
+asm void __VMBASEClearPageFromTLB(register u32 virtualAddr) {
+    // clang-format off
+    nofralloc
+
+    rlwinm r0, virtualAddr, 0, 14, 19
+    tlbsync
+    tlbie r0
+    blr
+    // clang-format on
 }
+#pragma scheduling reset
 
 u32 VMBASEGetVirtualAddrFromPageInMRAM(u32 mramPage)
 {
@@ -239,9 +247,16 @@ void __VMBASEInitReversePageTable(void)
 
 void __VMBASEInvalidatePageTable(void)
 {
+    void __VMBASEInvalidateEntireTLB();
     u32 oldInterrupts = OSDisableInterrupts();
+    u32 offset;
 
-    memset(g_vmBasePageTable, 0, 0x10000);
+    for (offset = 0; offset < 0x10000; offset += 8)
+    {
+        ((u32*)((u8*)g_vmBasePageTable + offset))[0] = 0;
+        ((u32*)((u8*)g_vmBasePageTable + offset))[1] = 0;
+    }
+
     DCStoreRange(g_vmBasePageTable, 0x10000);
     __VMBASEInvalidateEntireTLB();
 

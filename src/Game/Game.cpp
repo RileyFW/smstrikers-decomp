@@ -530,8 +530,8 @@ void cGame::CheckForGoal()
 
 /**
  * Offset/Address/Size: 0xDF0 | 0x8003D364 | size: 0x6C
- * TODO: 97.96% match - posX in f2 instead of f1 (dead parameter register).
- * MWCC allocator starts local FP regs from f2, won't reuse dead param f1.
+ * TODO: 98.33% match - posX stays in f2 (target uses f1), cascading to
+ * y/z temp register allocation (f1/f2 swap in distance math chain).
  */
 void cGame::BlowUpPowerups(const nlVector3& v3ExplosionPosition, float fExplosionRadius)
 {
@@ -546,9 +546,10 @@ void cGame::BlowUpPowerups(const nlVector3& v3ExplosionPosition, float fExplosio
         PowerupBase* pPowerup = g_pPowerups[i];
         if (pPowerup != nullptr)
         {
-            float dz = posZ - pPowerup->m_v3Position.f.z;
-            float dx = posX - pPowerup->m_v3Position.f.x;
-            float dy = posY - pPowerup->m_v3Position.f.y;
+            float dx, dy, dz;
+            dy = posY - pPowerup->m_v3Position.f.y;
+            dz = posZ - pPowerup->m_v3Position.f.z;
+            dx = posX - pPowerup->m_v3Position.f.x;
 
             if (dx * dx + dy * dy + dz * dz < fExplosionRadius)
             {

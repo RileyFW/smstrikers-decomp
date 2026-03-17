@@ -159,8 +159,7 @@ u32 __VMPageReplacementFIFO(void)
 {
     while (TRUE)
     {
-        u32 page = g_vmNextPageToSwap;
-        g_vmNextPageToSwap++;
+        u32 page = g_vmNextPageToSwap++;
 
         if (g_vmNextPageToSwap >= __VMGetNumPagesInMRAM())
         {
