@@ -46,6 +46,69 @@ GLInventory::~GLInventory()
  */
 void GLInventory::Create()
 {
+    m_bCreated = true;
+
+    nlListContainer<void*>** current = m_pFileData;
+    int i = 0;
+
+    for (; i < 16; i++, current++)
+    {
+        nlListContainer<void*>* fileData = (nlListContainer<void*>*)nlMalloc(sizeof(nlListContainer<void*>), 8, false);
+        if (fileData != NULL)
+        {
+            fileData->m_Head = NULL;
+            fileData->m_Tail = NULL;
+        }
+        *current = fileData;
+
+        freeing_GLInventory<nlChunk>* pSkinData = (freeing_GLInventory<nlChunk>*)nlMalloc(sizeof(freeing_GLInventory<nlChunk>), 8, false);
+        if (pSkinData != NULL)
+        {
+            pSkinData->m_pItems = new (nlMalloc(sizeof(nlAVLTree<unsigned long, nlChunk*, DefaultKeyCompare<unsigned long> >), 8, false))
+                nlAVLTree<unsigned long, nlChunk*, DefaultKeyCompare<unsigned long> >();
+        }
+        ((freeing_GLInventory<nlChunk>**)current)[16] = pSkinData;
+
+        clearing_GLInventory<glModel>* pModels = (clearing_GLInventory<glModel>*)nlMalloc(sizeof(clearing_GLInventory<glModel>), 8, false);
+        if (pModels != NULL)
+        {
+            pModels->m_pItems = new (nlMalloc(sizeof(nlAVLTree<unsigned long, glModel*, DefaultKeyCompare<unsigned long> >), 8, false))
+                nlAVLTree<unsigned long, glModel*, DefaultKeyCompare<unsigned long> >();
+        }
+        ((clearing_GLInventory<glModel>**)current)[32] = pModels;
+
+        deleting_GLInventory<GLShadowVolume>* pShadowVolumes = (deleting_GLInventory<GLShadowVolume>*)nlMalloc(sizeof(deleting_GLInventory<GLShadowVolume>), 8, false);
+        if (pShadowVolumes != NULL)
+        {
+            pShadowVolumes->m_pItems = new (nlMalloc(sizeof(nlAVLTree<unsigned long, GLShadowVolume*, DefaultKeyCompare<unsigned long> >), 8, false))
+                nlAVLTree<unsigned long, GLShadowVolume*, DefaultKeyCompare<unsigned long> >();
+        }
+        ((deleting_GLInventory<GLShadowVolume>**)current)[48] = pShadowVolumes;
+
+        deleting_GLInventory<GLTextureAnim>* pTextureAnims = (deleting_GLInventory<GLTextureAnim>*)nlMalloc(sizeof(deleting_GLInventory<GLTextureAnim>), 8, false);
+        if (pTextureAnims != NULL)
+        {
+            pTextureAnims->m_pItems = new (nlMalloc(sizeof(nlAVLTree<unsigned long, GLTextureAnim*, DefaultKeyCompare<unsigned long> >), 8, false))
+                nlAVLTree<unsigned long, GLTextureAnim*, DefaultKeyCompare<unsigned long> >();
+        }
+        ((deleting_GLInventory<GLTextureAnim>**)current)[64] = pTextureAnims;
+
+        deleting_GLInventory<GLVertexAnim>* pVertexAnims = (deleting_GLInventory<GLVertexAnim>*)nlMalloc(sizeof(deleting_GLInventory<GLVertexAnim>), 8, false);
+        if (pVertexAnims != NULL)
+        {
+            pVertexAnims->m_pItems = new (nlMalloc(sizeof(nlAVLTree<unsigned long, GLVertexAnim*, DefaultKeyCompare<unsigned long> >), 8, false))
+                nlAVLTree<unsigned long, GLVertexAnim*, DefaultKeyCompare<unsigned long> >();
+        }
+        ((deleting_GLInventory<GLVertexAnim>**)current)[80] = pVertexAnims;
+
+        deleting_GLInventory<GLMaterialList>* pMaterialLists = (deleting_GLInventory<GLMaterialList>*)nlMalloc(sizeof(deleting_GLInventory<GLMaterialList>), 8, false);
+        if (pMaterialLists != NULL)
+        {
+            pMaterialLists->m_pItems = new (nlMalloc(sizeof(nlAVLTree<unsigned long, GLMaterialList*, DefaultKeyCompare<unsigned long> >), 8, false))
+                nlAVLTree<unsigned long, GLMaterialList*, DefaultKeyCompare<unsigned long> >();
+        }
+        ((deleting_GLInventory<GLMaterialList>**)current)[96] = pMaterialLists;
+    }
 }
 
 /**

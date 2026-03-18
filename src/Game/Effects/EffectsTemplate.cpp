@@ -296,8 +296,6 @@ bool fxLoadTemplateBundle(const char* filename)
 
 /**
  * Offset/Address/Size: 0x13C | 0x801F0D00 | size: 0x140
- * TODO: 99.19% match - MWCC reorders begin-branch setup (`lwz r30,pTemplateMap`
- * before `mr r5,r3`) and uses `stw r3,0xc(r1)` instead of `stw r5,0xc(r1)`.
  */
 bool fxLoadTemplateBundle(void* data, unsigned long size)
 {
@@ -322,13 +320,15 @@ bool fxLoadTemplateBundle(void* data, unsigned long size)
         if (nlStrCmp<char>(token, "begin") == 0)
         {
             EffectsTemplate* template_ptr;
+            EffectsTemplate* template_value;
             nlAVLTree<unsigned long, EffectsTemplate*, DefaultKeyCompare<unsigned long> >* tree;
             AVLTreeNode* existingNode;
 
             template_ptr = parse_template(&parser, false);
+            template_value = template_ptr;
             tree = pTemplateMap;
 
-            tree->AddAVLNode((AVLTreeNode**)&tree->m_Root, &template_ptr->m_uHashID, &template_ptr, &existingNode, tree->m_NumElements);
+            tree->AddAVLNode((AVLTreeNode**)&tree->m_Root, &template_value->m_uHashID, &template_value, &existingNode, tree->m_NumElements);
             if (existingNode == nullptr)
             {
                 tree->m_NumElements++;

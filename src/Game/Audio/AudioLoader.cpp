@@ -574,7 +574,7 @@ void AudioLoader::StartFEStream(const char* pSoundName, bool bLoop, const char* 
     {
         AudioStreamTrack::TrackManagerBase* pTrackMgr = g_pTrackManager;
         AudioStreamTrack::StreamTrack* track = pTrackMgr->GetTrack(nlStringLowerHash(pTrackName));
-        track->PlayStream(nlStringLowerHash(pSoundName), volume, bLoop, fadeIn, interruptFadeOut, "", MasterVolume::VG_Music);
+        track->PlayStream(nlStringLowerHash(pSoundName), volume, bLoop, fadeIn, interruptFadeOut, "", Audio::MasterVolume::VG_Music);
     }
     else
     {
@@ -589,6 +589,37 @@ void AudioLoader::StartFEStream(const char* pSoundName, bool bLoop, const char* 
  */
 void AudioLoader::PlayFETitleMusicWithFade()
 {
+    if (gbDisableAudio)
+    {
+        return;
+    }
+
+    if (!gbStream)
+    {
+        return;
+    }
+
+    char var_68[64];
+    nlSNPrintf(var_68, 64, "%s/%s", "FE_Main_Title_With_Fade_In", "Volume");
+    float volume = GetConfigFloat(g_FEStreamConfig, var_68, 0.0f);
+    volume /= 100.0f;
+
+    nlSNPrintf(var_68, 64, "%s/%s", "FE_Main_Title_With_Fade_In", "FadeIn");
+    unsigned long fadeIn = GetConfigInt(g_FEStreamConfig, var_68, 0);
+    unsigned long interruptFadeOut = GetConfigInt(g_FEStreamConfig, "InterruptFadeOut", 0);
+
+    if (volume > 0.0f)
+    {
+        AudioStreamTrack::TrackManagerBase* pTrackMgr = g_pTrackManager;
+        AudioStreamTrack::StreamTrack* track = pTrackMgr->GetTrack(nlStringLowerHash("FE"));
+        track->PlayStream(nlStringLowerHash("FE_Main_Title_With_Fade_In"), volume, true, fadeIn, interruptFadeOut, "", Audio::MasterVolume::VG_Music);
+    }
+    else
+    {
+        AudioStreamTrack::TrackManagerBase* pTrackMgr = g_pTrackManager;
+        AudioStreamTrack::StreamTrack* track = pTrackMgr->GetTrack(nlStringLowerHash("FE"));
+        track->Stop(interruptFadeOut);
+    }
 }
 
 /**
@@ -596,6 +627,37 @@ void AudioLoader::PlayFETitleMusicWithFade()
  */
 void AudioLoader::PlayFEMenuMusic()
 {
+    if (gbDisableAudio)
+    {
+        return;
+    }
+
+    if (!gbStream)
+    {
+        return;
+    }
+
+    char var_68[64];
+    nlSNPrintf(var_68, 64, "%s/%s", "FEMenuMusic", "Volume");
+    float volume = GetConfigFloat(g_FEStreamConfig, var_68, 0.0f);
+    volume /= 100.0f;
+
+    nlSNPrintf(var_68, 64, "%s/%s", "FEMenuMusic", "FadeIn");
+    unsigned long fadeIn = GetConfigInt(g_FEStreamConfig, var_68, 0);
+    unsigned long interruptFadeOut = GetConfigInt(g_FEStreamConfig, "InterruptFadeOut", 0);
+
+    if (volume > 0.0f)
+    {
+        AudioStreamTrack::TrackManagerBase* pTrackMgr = g_pTrackManager;
+        AudioStreamTrack::StreamTrack* track = pTrackMgr->GetTrack(nlStringLowerHash("FE"));
+        track->PlayStream(nlStringLowerHash("FEMenuMusic"), volume, true, fadeIn, interruptFadeOut, "", Audio::MasterVolume::VG_Music);
+    }
+    else
+    {
+        AudioStreamTrack::TrackManagerBase* pTrackMgr = g_pTrackManager;
+        AudioStreamTrack::StreamTrack* track = pTrackMgr->GetTrack(nlStringLowerHash("FE"));
+        track->Stop(interruptFadeOut);
+    }
 }
 
 /**
@@ -610,6 +672,37 @@ void AudioLoader::PlayLoadLoopMusic()
  */
 void AudioLoader::PlayPauseMenuMusic()
 {
+    if (gbDisableAudio)
+    {
+        return;
+    }
+
+    if (!gbStream)
+    {
+        return;
+    }
+
+    char var_68[64];
+    nlSNPrintf(var_68, 64, "%s/%s", "PauseMenuMusic", "Volume");
+    float volume = GetConfigFloat(g_FEStreamConfig, var_68, 0.0f);
+    volume /= 100.0f;
+
+    nlSNPrintf(var_68, 64, "%s/%s", "PauseMenuMusic", "FadeIn");
+    unsigned long fadeIn = GetConfigInt(g_FEStreamConfig, var_68, 0);
+    unsigned long interruptFadeOut = GetConfigInt(g_FEStreamConfig, "InterruptFadeOut", 0);
+
+    if (volume > 0.0f)
+    {
+        AudioStreamTrack::TrackManagerBase* pTrackMgr = g_pTrackManager;
+        AudioStreamTrack::StreamTrack* track = pTrackMgr->GetTrack(nlStringLowerHash("Announcer"));
+        track->PlayStream(nlStringLowerHash("PauseMenuMusic"), volume, true, fadeIn, interruptFadeOut, "", Audio::MasterVolume::VG_Music);
+    }
+    else
+    {
+        AudioStreamTrack::TrackManagerBase* pTrackMgr = g_pTrackManager;
+        AudioStreamTrack::StreamTrack* track = pTrackMgr->GetTrack(nlStringLowerHash("Announcer"));
+        track->Stop(interruptFadeOut);
+    }
 }
 
 /**
@@ -790,8 +883,8 @@ void AudioLoader::LoadFE(bool bLoadSampleFile)
     g_pTrackManager->StopAllTracks(0);
     PlatAudio::ConfigureStreamBuffers(4);
     g_pTrackManager->DestroyAllTracks();
-    g_pTrackManager->CreateTrack("FE", MasterVolume::VG_Music);
-    g_pTrackManager->CreateTrack("FE2", MasterVolume::VG_Music);
+    g_pTrackManager->CreateTrack("FE", Audio::MasterVolume::VG_Music);
+    g_pTrackManager->CreateTrack("FE2", Audio::MasterVolume::VG_Music);
 }
 
 /**
@@ -1213,6 +1306,9 @@ extern SoundPropAccessor* gpCRITTERMETALSoundPropAccessor;
 extern SoundPropAccessor* gpBOWSERMETALSoundPropAccessor;
 extern SoundPropAccessor* gpCRITTERRUBBERSoundPropAccessor;
 extern SoundPropAccessor* gpBOWSERRUBBERSoundPropAccessor;
+extern SoundPropAccessor* gpCRITTERROBOTSoundPropAccessor;
+extern eCharacterClass ConvertToCharacterClass(eTeamID);
+extern eCharacterClass ConvertToCharacterClass(eSidekickID);
 
 /**
  * Offset/Address/Size: 0xF90 | 0x80144D5C | size: 0x1E0
@@ -1273,9 +1369,103 @@ SoundPropAccessor* GetSoundPropTableFromPlayerStadium(eStadiumID stadiumId, eCha
 
 /**
  * Offset/Address/Size: 0xC88 | 0x80144A54 | size: 0x308
+ * TODO: 98.97% match - persistent r29/r30/r31 register assignment rotation
+ * and prologue offset.
  */
 void AudioLoader::SetupCharStadiumSoundTable()
 {
+    if (gbDisableAudio)
+    {
+        return;
+    }
+
+    eStadiumID stadium;
+    stadium = nlSingleton<GameInfoManager>::s_pInstance->GetStadium();
+
+    eCharacterClass homeCaptainClass = ConvertToCharacterClass(nlSingleton<GameInfoManager>::s_pInstance->GetTeam(0));
+    eCharacterClass awayCaptainClass = ConvertToCharacterClass(nlSingleton<GameInfoManager>::s_pInstance->GetTeam(1));
+    eCharacterClass homeSidekickClass = ConvertToCharacterClass(nlSingleton<GameInfoManager>::s_pInstance->GetSidekick(0));
+    eCharacterClass awaySidekickClass = ConvertToCharacterClass(nlSingleton<GameInfoManager>::s_pInstance->GetSidekick(1));
+
+    SoundPropAccessor* homeCaptainPropTable = GetSoundPropTableFromPlayerStadium(stadium, homeCaptainClass);
+    SoundPropAccessor* awayCaptainPropTable = GetSoundPropTableFromPlayerStadium(stadium, awayCaptainClass);
+    SoundPropAccessor* homeSidekickPropTable = GetSoundPropTableFromPlayerStadium(stadium, homeSidekickClass);
+    SoundPropAccessor* awaySidekickPropTable = GetSoundPropTableFromPlayerStadium(stadium, awaySidekickClass);
+
+    cTeam** ppTeam = g_pTeams;
+    for (int team = 0; team < 2; team++, ppTeam++)
+    {
+        cTeam* pTeam = *ppTeam;
+        for (int player = 0; player < 5; player++)
+        {
+            cPlayer* pPlayer = pTeam->GetPlayer(player);
+            if (pPlayer->m_eClassType == GOALIE)
+            {
+                SoundPropAccessor* goaliePropTable = GetSoundPropTableFromPlayerStadium(stadium, (*ppTeam)->GetGoalie()->m_eCharacterClass);
+                (*ppTeam)->GetGoalie()->m_pCharacterSFX->SetSFX(goaliePropTable);
+                if (((cCharacter*)(*ppTeam)->GetCaptain())->m_eCharacterClass == MYSTERY)
+                {
+                    (*ppTeam)->GetGoalie()->m_pCharacterSFX->SetSFX(gpCRITTERROBOTSoundPropAccessor);
+                }
+            }
+            else if (pPlayer->IsCaptain())
+            {
+                if (team == 0)
+                {
+                    pPlayer->m_pCharacterSFX->SetSFX(homeCaptainPropTable);
+                }
+                else
+                {
+                    pPlayer->m_pCharacterSFX->SetSFX(awayCaptainPropTable);
+                }
+            }
+            else
+            {
+                if (team == 0)
+                {
+                    pPlayer->m_pCharacterSFX->SetSFX(homeSidekickPropTable);
+                }
+                else
+                {
+                    pPlayer->m_pCharacterSFX->SetSFX(awaySidekickPropTable);
+                }
+            }
+        }
+    }
+
+    if (((cCharacter*)g_pTeams[0]->GetCaptain())->m_eCharacterClass == MYSTERY || ((cCharacter*)g_pTeams[1]->GetCaptain())->m_eCharacterClass == MYSTERY)
+    {
+        bool bAlreadyLoaded = false;
+        if (sebringAudioGroups[13].uLoadOrder > -1 && sebringAudioGroups[13].stackEnum > -1)
+        {
+            bAlreadyLoaded = true;
+        }
+
+        if (!bAlreadyLoaded)
+        {
+            bool loaded;
+            if (gbDisableAudio)
+            {
+                loaded = true;
+            }
+            else
+            {
+                if (!AudioLoader::IsInited())
+                {
+                    loaded = false;
+                }
+                else
+                {
+                    loaded = ((bool (*)(AudioFileData&, unsigned long, unsigned long, bool))PlatAudio::LoadSoundGroup)(sebringAudioFileData, 13, 1, true);
+                }
+            }
+
+            if (!loaded)
+            {
+                tDebugPrintManager::Print(DC_SOUND, "Could not load mystery stadium sound group onto secondary sound stack.\n");
+            }
+        }
+    }
 }
 
 /**

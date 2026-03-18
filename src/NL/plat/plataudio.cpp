@@ -1098,7 +1098,6 @@ bool IsEntireSampleFileInMem()
 
 /**
  * Offset/Address/Size: 0x1A20 | 0x801C621C | size: 0x124
- * TODO: 99.5% match - r0/r3 register swap at offsets 0x58-0x70 (first-half alloc size min calculation). MWCC allocates freeMem-0x400 to r0 instead of keeping it in r3. Tried 20+ permutations including variable reordering, type changes, condition flips, ternaries - all produce same 8 register-only diffs.
  */
 unsigned char ReadEntireSampleFileIntoMemSync(const char* sampleFile)
 {
@@ -1115,11 +1114,7 @@ unsigned char ReadEntireSampleFileIntoMemSync(const char* sampleFile)
     if (fileSize != 0)
     {
         gEntireSampleFileFirstHalfAllocSize = glx_GetFreeMemory() - 0x400;
-        unsigned long firstHalfSize = fileSize;
-        if (gEntireSampleFileFirstHalfAllocSize <= fileSize)
-        {
-            firstHalfSize = gEntireSampleFileFirstHalfAllocSize;
-        }
+        unsigned long firstHalfSize = (gEntireSampleFileFirstHalfAllocSize <= fileSize) ? gEntireSampleFileFirstHalfAllocSize : fileSize;
         gEntireSampleFileFirstHalfAllocSize = firstHalfSize;
 
         gEntireSampleMarker = glResourceMark();

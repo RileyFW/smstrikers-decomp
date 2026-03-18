@@ -25,9 +25,70 @@ void FEPopupMenu::SetOptionTextColourOnCurrent(bool)
 
 /**
  * Offset/Address/Size: 0x164 | 0x80098410 | size: 0x2FC
+ * TODO: 53.25% match - extra saved register/stack layout differences and missing
+ * StringDrawInfo copy loop before the highlite component lookup.
  */
 void FEPopupMenu::ResizeHighlight()
 {
+    FEPresentation* presentation;
+    TLTextInstance* pText;
+    TLComponentInstance* pHighlight;
+    feVector3 textPosition;
+    feVector3 highlightPosition;
+    u16 rowCount;
+
+    presentation = m_pFEScene->m_pFEPackage->GetPresentation();
+
+    pText = FEFinder<TLTextInstance, 3>::Find<FEPresentation>(
+        presentation,
+        InlineHasher(nlStringLowerHash("Slide1")),
+        InlineHasher(nlStringLowerHash("Layer")),
+        InlineHasher(nlStringLowerHash(optionNames[mHighlightedOption])),
+        InlineHasher(0),
+        InlineHasher(0),
+        InlineHasher(0));
+    pText->SetAssetColour(*(nlColour*)((u8*)this + 0xA6C));
+
+    pText = FEFinder<TLTextInstance, 3>::Find<FEPresentation>(
+        presentation,
+        InlineHasher(nlStringLowerHash("Slide1")),
+        InlineHasher(nlStringLowerHash("Layer")),
+        InlineHasher(nlStringLowerHash(optionNames[mHighlightedOption])),
+        InlineHasher(0),
+        InlineHasher(0),
+        InlineHasher(0));
+
+    rowCount = pText->m_DrawInfo.RowCount;
+
+    pHighlight = FEFinder<TLComponentInstance, 4>::Find<FEPresentation>(
+        presentation,
+        InlineHasher(nlStringLowerHash("Slide1")),
+        InlineHasher(nlStringLowerHash("Layer")),
+        InlineHasher(nlStringLowerHash("highlite")),
+        InlineHasher(0),
+        InlineHasher(0),
+        InlineHasher(0));
+
+    textPosition = pText->GetAssetPosition();
+    highlightPosition = pHighlight->GetAssetPosition();
+    pHighlight->SetAssetPosition(highlightPosition.e[0], textPosition.e[1], highlightPosition.e[2]);
+    pHighlight->SetActiveSlide(pHighlight->GetActiveSlide());
+    pHighlight->Update(0.0f);
+
+    ((TLInstance*)FEFinder<TLImageInstance, 2>::Find<TLSlide>(
+         pHighlight->GetActiveSlide(),
+         InlineHasher(nlStringLowerHash("Highlight")),
+         InlineHasher(0),
+         InlineHasher(0),
+         InlineHasher(0),
+         InlineHasher(0),
+         InlineHasher(0)))
+        ->SetAssetScale(
+            mHighlightSize.e[0],
+            mHighlightSize.e[1] * (float)rowCount,
+            mHighlightSize.e[2]);
+
+    SetOptionTextColourOnCurrent(true);
 }
 
 /**

@@ -53,19 +53,22 @@ template void nlWalkDLRing<DLListEntry<GLDrawableData*>, DLListContainerBase<GLD
 
 /**
  * Offset/Address/Size: 0x0 | 0x801E7FB0 | size: 0x124
+ * TODO: 95.21% match - post-loop cleanup still emits nlWalkRing calls
+ * instead of nlWalkDLRing with target argument setup.
  */
 GLRenderBuffer::~GLRenderBuffer()
 {
+    DLListEntry<GLDrawableData*>* head;
     DLListEntry<GLDrawableData*>* current = nlDLRingGetStart<DLListEntry<GLDrawableData*> >(m_drawableData.m_Head);
-    DLListEntry<GLDrawableData*>* head = m_drawableData.m_Head;
+    head = m_drawableData.m_Head;
 
-    while (current != nullptr)
+    while (current != 0)
     {
         nlFree(current->m_data);
 
-        if (nlDLRingIsEnd<DLListEntry<GLDrawableData*> >(head, current))
+        if (nlDLRingIsEnd<DLListEntry<GLDrawableData*> >(head, current) || current == 0)
         {
-            current = nullptr;
+            current = 0;
         }
         else
         {
@@ -73,12 +76,10 @@ GLRenderBuffer::~GLRenderBuffer()
         }
     }
 
-    m_drawableData.m_Head = nullptr;
-
     nlWalkDLRing<DLListEntry<GLDrawableData*>, DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > > >(
         m_drawableData.m_Head,
         &m_drawableData,
         &DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > >::DeleteEntry);
 
-    m_drawableData.m_Head = nullptr;
+    m_drawableData.m_Head = 0;
 }

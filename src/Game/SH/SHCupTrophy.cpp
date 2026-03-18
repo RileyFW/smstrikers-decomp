@@ -3,6 +3,7 @@
 #include "Game/FE/feFinder.h"
 #include "Game/FE/tlComponentInstance.h"
 
+#include "NL/nlFunktion.h"
 #include "NL/nlMemory.h"
 
 // /**
@@ -250,60 +251,6 @@ enum ePopupMenu
     NUM_POPUP_MENUS = 47,
 };
 
-enum Tag
-{
-    EMPTY = 0,
-    FREE_FUNCTION = 1,
-    FUNCTOR = 2,
-};
-
-typedef void FnVoidVoid();
-
-template <typename ReturnType>
-class Function0
-{
-public:
-    struct FunctorBase
-    {
-        virtual ~FunctorBase();
-        virtual FunctorBase* Invoke() = 0;
-        virtual FunctorBase* Clone() const = 0;
-    };
-
-    template <typename BindType>
-    struct FunctorImpl : public FunctorBase
-    {
-        BindType mBind;
-        virtual ~FunctorImpl();
-        virtual FunctorBase* Invoke();
-        virtual FunctorBase* Clone() const;
-    };
-
-    Tag mTag;
-    union
-    {
-        ReturnType (*mFreeFunction)();
-        FunctorBase* mFunctor;
-    };
-
-    ~Function0()
-    {
-        if (mTag == FUNCTOR)
-        {
-            delete mFunctor;
-        }
-        mTag = EMPTY;
-    }
-};
-
-template <typename T>
-class Function;
-
-template <>
-class Function<FnVoidVoid> : public Function0<void>
-{
-};
-
 namespace Detail
 {
 template <typename R, typename F>
@@ -313,18 +260,8 @@ struct MemFunImpl
 };
 } // namespace Detail
 
-template <typename R, typename F, typename A>
-struct BindExp1
-{
-    F mFuncPtr;
-    A mArg;
-};
-
 template <typename T, typename R>
 Detail::MemFunImpl<R, void (T::*)()> MemFun(void (T::*)());
-
-template <typename R, typename F, typename A>
-BindExp1<R, F, A> Bind(F fn, const A& arg);
 
 class FEPopupMenu
 {

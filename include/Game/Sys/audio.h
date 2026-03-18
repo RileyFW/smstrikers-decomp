@@ -6,6 +6,7 @@
 #include "NL/plat/plataudio.h"
 
 #include "Game/Render/Nis.h"
+#include "Game/Audio/StreamTrack.h"
 
 // void ReadVolGroupSettings();
 // void nlDeleteList<FadeAudioData>(FadeAudioData**);
@@ -132,14 +133,6 @@ struct SoundAttributes
 
 namespace MasterVolume
 {
-
-enum VOLUME_GROUP
-{
-    VG_Special = 0,
-    VG_Music = 1,
-    VG_SFX = 2,
-    VG_Voice = 3,
-};
 
 float GetVoiceVolume();
 void SetVoiceVolume(float, int);

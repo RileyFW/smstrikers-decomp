@@ -148,8 +148,28 @@ static unsigned long TOURN_CAPTAIN_DESCRIPTIONS[] = {
  * Offset/Address/Size: 0x4DBC | 0x800E6C60 | size: 0x124
  */
 TournTeamSetupSceneV2::TournTeamSetupSceneV2()
-    : mTournInfo(s_dummyTourn)
+    : BaseSceneHandler()
+    , mMenuItems()
+    , mRowOffset(0)
+    , mCurrentRow(0)
+    , mTournInfo(nlSingleton<GameInfoManager>::s_pInstance->mCustomTournamentInfo)
+    , mCurrentState(STATE_IN)
+    , mCurrentCaptain(TEAM_MARIO)
+    , mCurrentSK(SK_TOAD)
+    , mButtons1()
+    , mButtons2()
 {
+    int i = 0;
+
+    *(u8*)((u8*)this + 0x334) = false;
+
+    for (; i < mTournInfo.m_numTeams; i++)
+    {
+        mTeamData[i].isEmpty = true;
+        mTeamData[i].isHumanPlayer = false;
+        mTeamData[i].captain = TEAM_MARIO;
+        mTeamData[i].sidekick = SK_TOAD;
+    }
 }
 
 /**

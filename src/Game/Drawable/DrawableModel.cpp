@@ -6,22 +6,32 @@
 #include "NL/gl/glState.h"
 #include "NL/gl/glAppAttach.h"
 #include "NL/gl/glUserData.h"
+#include "NL/nlString.h"
 
 bool g_bShadowVolumes = true;
 bool g_bEnableDrawableSkinModel = true;
 bool g_bSkinModelTextureLighting = true;
 const u32 GLTT_BumpLocal_bit = 1 << (int)GLTT_BumpLocal;
 
-const unsigned long UnlitProgram = glGetProgram("3d unlit");
-const unsigned long LitProgram = glGetProgram("3d pointlit");
-const unsigned long LightTexture = glGetTexture("global/lightramp");
-const unsigned long BlackTexture = glGetTexture("global/black");
-const unsigned long WhiteTexture = glGetTexture("global/white");
+static unsigned long UnlitProgram;
+static unsigned long LitProgram;
+static unsigned long LightTexture;
+static unsigned long BlackTexture;
+static unsigned long WhiteTexture;
+static unsigned long UnlitCrowdProgram;
+static unsigned long LitCrowdProgram;
+static unsigned long BallModelID;
 
 static float sfCoPlanarZ = 0.1f;
 static float sfCoPlanar0Z = 0.041666668f;
 static float sfPlanarShadowOpacity = 0.3f;
 static nlAVLTreeSlotPool<unsigned long, AABBDimensions, DefaultKeyCompare<unsigned long> > boundingBoxCache;
+
+extern "C"
+{
+    void __ct__12SlotPoolBaseFv(void*);
+    void* __register_global_object(void* object, void* destructor, void* registration);
+}
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8011FE0C | size: 0x3C
@@ -232,6 +242,45 @@ static nlAVLTreeSlotPool<unsigned long, AABBDimensions, DefaultKeyCompare<unsign
 // void AVLTreeBase<unsigned long, AABBDimensions, BasicSlotPool<AVLTreeEntry<unsigned long, AABBDimensions>>, DefaultKeyCompare<unsigned long>>::DeleteEntry(AVLTreeEntry<unsigned long, AABBDimensions>*)
 // {
 // }
+
+/**
+ * Offset/Address/Size: 0x8B4 | 0x80122740 | size: 0x12C
+ * TODO: 90.11% match - still differs in r30/r31 aliasing and relocation-backed
+ *       symbol loads for vtable/destructor labels in the cache init block.
+ */
+extern "C" void __sinit_DrawableModel_cpp()
+{
+    UnlitProgram = glGetProgram("3d unlit");
+    LitProgram = glGetProgram("3d pointlit");
+    LightTexture = glGetTexture("global/lightramp");
+    BlackTexture = glGetTexture("global/black");
+    WhiteTexture = glGetTexture("global/white");
+    UnlitCrowdProgram = glGetProgram("3d crowd");
+    LitCrowdProgram = glGetProgram("3d crowd lit");
+
+    unsigned long* cache = (unsigned long*)&boundingBoxCache;
+    unsigned long* cache30 = cache;
+    unsigned long* cache31 = cache;
+
+    cache[0] = 0x802A4B5C;
+    cache[0] = 0x802AECF0;
+
+    __ct__12SlotPoolBaseFv((void*)(cache + 1));
+
+    cache31[9] = 0;
+    cache31[7] = 0;
+    cache31[8] = 0;
+    cache30[0] = 0x802AECDC;
+    cache30[1] = 0x10;
+
+    SlotPoolBase::BaseAddNewBlock((SlotPoolBase*)(cache30 + 1), 0x34);
+
+    cache30[2] = 0x10;
+
+    __register_global_object((void*)cache30, (void*)0x80121EB4, (void*)0x80321F88);
+
+    BallModelID = nlStringHash("gameplay/ball");
+}
 
 /**
  * Offset/Address/Size: 0x958 | 0x8012286C | size: 0x7C
@@ -726,7 +775,7 @@ void DrawCoPlanarReference(eGLView view, const glModel& model, const nlMatrix4& 
     float y1;
     GetShadowBoundingSquare(&model, mtx, x0, x1, y0, y1, userData);
 
-    nlVector3 points[4] = {};
+    nlVector3 points[4] = { };
     points[0].f.x = x0;
     points[0].f.y = y0;
     points[0].f.z = z;

@@ -286,11 +286,13 @@ SSearchIdealShot::~SSearchIdealShot()
 
 /**
  * Offset/Address/Size: 0x380 | 0x80062CD0 | size: 0x130
+ * TODO: 97.76% match - extra early m_SSearchIdealShot.m_pGoalie store and vtable store order mismatch.
  */
 SSearchRunToNet::SSearchRunToNet(cPlayer* pPlayer)
-    : SpaceSearch(pPlayer)
-    , m_SSearchIdealShot(pPlayer ? pPlayer->m_pTeam->GetOtherTeam()->GetGoalie() : NULL)
+    : SpaceSearch(pPlayer->m_pTeam->m_pNet->m_sideSign)
+    , m_SSearchIdealShot((Goalie*)pPlayer)
 {
+    m_SSearchIdealShot.m_pGoalie = pPlayer->m_pTeam->GetOtherTeam()->GetGoalie();
 }
 
 /**

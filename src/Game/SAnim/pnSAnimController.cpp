@@ -210,9 +210,200 @@ cPoseNode* cPN_SAnimController::Update(float dt)
 /**
  * Offset/Address/Size: 0x7E8 | 0x801EAE44 | size: 0x308
  */
-void cPN_SAnimController::UpdateSynchronized(float)
+void cPN_SAnimController::UpdateSynchronized(float time)
 {
-    FORCE_DONT_INLINE;
+    /**
+     * TODO: 99.56% match - r30/r31 swap for this vs pCallback in first block, and pController in last block.
+     */
+    cSAnimCallback* pCallback;
+
+    m_fPrevTime = m_fTime;
+    m_fTime = time;
+
+    if (!m_bIgnoreTriggers)
+    {
+        pCallback = m_pSAnim->m_pCallbackList;
+
+        while (pCallback != nullptr)
+        {
+            float callbackTime = pCallback->m_fTime;
+            if (callbackTime == 0.0f)
+            {
+                extern float __float_min[];
+                callbackTime = __float_min[0];
+            }
+
+            float currTime = m_fTime;
+            float prevTime = m_fPrevTime;
+            bool shouldTrigger;
+
+            if (currTime < prevTime)
+            {
+                shouldTrigger = false;
+                if (callbackTime <= currTime || callbackTime > prevTime)
+                {
+                    shouldTrigger = true;
+                }
+            }
+            else
+            {
+                shouldTrigger = false;
+                if (callbackTime <= currTime && callbackTime > prevTime)
+                {
+                    shouldTrigger = true;
+                }
+            }
+
+            if (shouldTrigger)
+            {
+                pCallback->m_funcCallback(pCallback->m_nParam1);
+            }
+
+            pCallback = pCallback->next;
+        }
+    }
+
+    cPN_SAnimController* pController = m_pSynchronizedController;
+    if (pController == nullptr)
+    {
+        return;
+    }
+
+    pController->m_fPrevTime = pController->m_fTime;
+    pController->m_fTime = time;
+
+    if (!pController->m_bIgnoreTriggers)
+    {
+        pCallback = pController->m_pSAnim->m_pCallbackList;
+
+        while (pCallback != nullptr)
+        {
+            float callbackTime = pCallback->m_fTime;
+            if (callbackTime == 0.0f)
+            {
+                extern float __float_min[];
+                callbackTime = __float_min[0];
+            }
+
+            float currTime = pController->m_fTime;
+            float prevTime = pController->m_fPrevTime;
+            bool shouldTrigger;
+
+            if (currTime < prevTime)
+            {
+                shouldTrigger = false;
+                if (callbackTime <= currTime || callbackTime > prevTime)
+                {
+                    shouldTrigger = true;
+                }
+            }
+            else
+            {
+                shouldTrigger = false;
+                if (callbackTime <= currTime && callbackTime > prevTime)
+                {
+                    shouldTrigger = true;
+                }
+            }
+
+            if (shouldTrigger)
+            {
+                pCallback->m_funcCallback(pCallback->m_nParam1);
+            }
+
+            pCallback = pCallback->next;
+        }
+    }
+
+    pController = pController->m_pSynchronizedController;
+    if (pController == nullptr)
+    {
+        return;
+    }
+
+    pController->m_fPrevTime = pController->m_fTime;
+    pController->m_fTime = time;
+
+    if (!pController->m_bIgnoreTriggers)
+    {
+        pCallback = pController->m_pSAnim->m_pCallbackList;
+
+        while (pCallback != nullptr)
+        {
+            float callbackTime = pCallback->m_fTime;
+            if (callbackTime == 0.0f)
+            {
+                extern float __float_min[];
+                callbackTime = __float_min[0];
+            }
+
+            float currTime = pController->m_fTime;
+            float prevTime = pController->m_fPrevTime;
+            bool shouldTrigger;
+
+            if (currTime < prevTime)
+            {
+                shouldTrigger = false;
+                if (callbackTime <= currTime || callbackTime > prevTime)
+                {
+                    shouldTrigger = true;
+                }
+            }
+            else
+            {
+                shouldTrigger = false;
+                if (callbackTime <= currTime && callbackTime > prevTime)
+                {
+                    shouldTrigger = true;
+                }
+            }
+
+            if (shouldTrigger)
+            {
+                pCallback->m_funcCallback(pCallback->m_nParam1);
+            }
+
+            pCallback = pCallback->next;
+        }
+    }
+
+    pController = pController->m_pSynchronizedController;
+    if (pController == nullptr)
+    {
+        return;
+    }
+
+    pController->m_fPrevTime = pController->m_fTime;
+    pController->m_fTime = time;
+
+    if (!pController->m_bIgnoreTriggers)
+    {
+        pCallback = pController->m_pSAnim->GetCallbackList();
+
+        while (pCallback != nullptr)
+        {
+            if (pController->TestTrigger(pCallback->m_fTime))
+            {
+                pCallback->m_funcCallback(pCallback->m_nParam1);
+            }
+
+            pCallback = pCallback->next;
+        }
+    }
+
+    pController = pController->m_pSynchronizedController;
+    if (pController == nullptr)
+    {
+        return;
+    }
+
+    pController->SetTime(time);
+    pController->ProcessCallbacks();
+
+    if (pController->m_pSynchronizedController != nullptr)
+    {
+        pController->m_pSynchronizedController->UpdateSynchronized(time);
+    }
 }
 
 /**

@@ -1639,8 +1639,7 @@ bool cFielder::DoLooseBallContactFromRunVolley(nlVector3& v3AnimStartPosition, f
 
         if (fSimulatedTime > FixedUpdateTask::GetPhysicsUpdateTick())
         {
-            bool bIsCrossingZ =
-                ((v3SimulatedBallPos.f.z >= fContactZ) && (fPrevBallZ < fContactZ)) || ((v3SimulatedBallPos.f.z < fContactZ) && (fPrevBallZ >= fContactZ));
+            bool bIsCrossingZ = ((v3SimulatedBallPos.f.z >= fContactZ) && (fPrevBallZ < fContactZ)) || ((v3SimulatedBallPos.f.z < fContactZ) && (fPrevBallZ >= fContactZ));
 
             if (bIsCrossingZ || (currDistZ <= prevDistZ))
             {
@@ -2114,14 +2113,12 @@ LooseBallContactAnimInfo* cFielder::GetOneTimerBallContactAnimInfo(unsigned shor
 
 /**
  * Offset/Address/Size: 0x6AEC | 0x8001FE28 | size: 0x130
- * TODO: there are some regswaps in the section with min/max angle checks, need to fix them
+ * TODO: 99.47% match - immediate-only diffs remain for contact anim table symbols and the angle scale float label
  */
 const LooseBallContactAnimInfo* cFielder::GetReceivePassBallContactAnimInfo(cBall* pBall, const nlVector3& rv3Pos, unsigned short aAngle, bool bLeadPass, bool bVolleyPass)
 {
     const LooseBallContactAnimInfo* pBallContactAnimInfo;
     int nNumContactAnims;
-    const LooseBallContactAnimInfo* pResult;
-    int i;
 
     if (bLeadPass)
     {
@@ -2150,29 +2147,23 @@ const LooseBallContactAnimInfo* cFielder::GetReceivePassBallContactAnimInfo(cBal
         }
     }
 
-    s32 angle32 = (s32)(10430.378f * nlATan2f(pBall->m_v3Position.f.y - rv3Pos.f.y, pBall->m_v3Position.f.x - rv3Pos.f.x));
-    u16 normalizedAngle = (u16)angle32 - aAngle;
-
-    pResult = nullptr;
-
-    for (i = 0; i < nNumContactAnims; i++)
+    u16 aNetAngle = (u16)(s32)(10430.378f * nlATan2f(pBall->m_v3Position.f.y - rv3Pos.f.y, pBall->m_v3Position.f.x - rv3Pos.f.x)) - aAngle;
+    const LooseBallContactAnimInfo* pBestBallContactAnimInfo = NULL;
+    for (int i = 0; i < nNumContactAnims; i++)
     {
-        const u16 minAngle = pBallContactAnimInfo[i].aIncomingAngleMin;
-        const u16 maxAngle = pBallContactAnimInfo[i].aIncomingAngleMax;
-
-        if (minAngle < maxAngle)
+        if (pBallContactAnimInfo[i].aIncomingAngleMin < pBallContactAnimInfo[i].aIncomingAngleMax)
         {
-            if ((normalizedAngle >= minAngle) && (normalizedAngle <= maxAngle))
+            if ((aNetAngle >= pBallContactAnimInfo[i].aIncomingAngleMin) && (aNetAngle <= pBallContactAnimInfo[i].aIncomingAngleMax))
             {
-                pResult = &pBallContactAnimInfo[i];
+                pBestBallContactAnimInfo = &pBallContactAnimInfo[i];
             }
         }
-        else if ((normalizedAngle >= minAngle) || (normalizedAngle <= maxAngle))
+        else if ((aNetAngle >= pBallContactAnimInfo[i].aIncomingAngleMin) || (aNetAngle <= pBallContactAnimInfo[i].aIncomingAngleMax))
         {
-            pResult = &pBallContactAnimInfo[i];
+            pBestBallContactAnimInfo = &pBallContactAnimInfo[i];
         }
     }
-    return pResult;
+    return pBestBallContactAnimInfo;
 }
 /**
  * Offset/Address/Size: 0x68F0 | 0x8001FC2C | size: 0x110

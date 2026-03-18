@@ -189,10 +189,143 @@ void SidelineExplodable::Allocate()
 
 /**
  * Offset/Address/Size: 0x19A0 | 0x80168D00 | size: 0x2FC
+ * TODO: 99.32% match - remaining diff is register allocation in the fragment
+ * cleanup path (m_uObjectFlags clear + mpPhysicsObject NULL store uses r4/r0
+ * instead of r0/r24 sequence).
  */
-void SidelineExplodable::Update(float)
+void SidelineExplodable::Update(float fDeltaT)
 {
-    FORCE_DONT_INLINE;
+    if (mNumActiveFragments != 0)
+    {
+        SlotPool<DrawableFragmentHandleNode>* pPool = &DrawableFragmentHandleNode::sDrawableFragmentHandleNodePool;
+        int fragmentOffset;
+        DrawableFragmentHandleNode** pTail = &SidelineExplodableManager::sUnusedDrawableFragments.m_pEnd;
+        ExplosionFragment* fragment;
+        int i;
+
+        i = 0;
+        fragmentOffset = 0;
+
+        while (i < mNumFragmentModels)
+        {
+            fragment = (ExplosionFragment*)((u8*)mExplosionFragments.mData + fragmentOffset);
+
+            if (fragment->mfRemainingLifespan <= 0.0f)
+            {
+                if (fragment->mbIsActive)
+                {
+                    if (fragment->mbIsActive)
+                    {
+                        if (fragment->mpPhysicsObject != NULL)
+                        {
+                            delete fragment->mpPhysicsObject;
+                        }
+
+                        DrawableObject* drawable = WorldManager::s_World->FindDrawableObject(fragment->mFragmentModelHash);
+                        drawable->m_uObjectFlags = (drawable->m_uObjectFlags & ~1);
+                        fragment->mpPhysicsObject = NULL;
+                        u16 handle = fragment->mDrawableFragmentID;
+                        DrawableFragmentHandleNode* node = NULL;
+
+                        if (pPool->m_FreeList == NULL)
+                        {
+                            SlotPoolBase::BaseAddNewBlock(&DrawableFragmentHandleNode::sDrawableFragmentHandleNodePool, 8);
+                        }
+
+                        SlotPoolEntry* entry = pPool->m_FreeList;
+                        if (entry != NULL)
+                        {
+                            node = (DrawableFragmentHandleNode*)entry;
+                            pPool->m_FreeList = (SlotPoolEntry*)entry->m_next;
+                        }
+
+                        if (node != NULL)
+                        {
+                            node->mID = 0;
+                            node->next = NULL;
+                        }
+
+                        node->mID = handle;
+                        nlListAddEnd<DrawableFragmentHandleNode>(&SidelineExplodableManager::sUnusedDrawableFragments.m_pStart, pTail, node);
+                        SidelineExplodableManager::sFragmentLookupTable[handle] = NULL;
+                        fragment->mDrawableFragmentID = 0xFFFF;
+                        fragment->mbIsActive = false;
+                    }
+
+                    fragment->mFragmentModelHash = 0;
+
+                    EmissionController* pSmokeControl = fragment->mpSmokeEmissionController;
+                    if (pSmokeControl != NULL)
+                    {
+                        Function1<void, EmissionController&> empty;
+                        empty.mTag = EMPTY;
+
+                        if (pSmokeControl->mUpdateCallback.mTag == FUNCTOR)
+                        {
+                            delete pSmokeControl->mUpdateCallback.mFunctor;
+                        }
+
+                        pSmokeControl->mUpdateCallback.mTag = EMPTY;
+                        pSmokeControl->mUpdateCallback.mTag = empty.mTag;
+
+                        if (pSmokeControl->mUpdateCallback.mTag == FREE_FUNCTION)
+                        {
+                            pSmokeControl->mUpdateCallback.mFreeFunction = empty.mFreeFunction;
+                        }
+                        else if (pSmokeControl->mUpdateCallback.mTag == FUNCTOR)
+                        {
+                            pSmokeControl->mUpdateCallback.mFunctor = empty.mFunctor->Clone();
+                        }
+
+                        if (empty.mTag == FUNCTOR)
+                        {
+                            delete empty.mFunctor;
+                        }
+
+                        *(volatile int*)&empty.mTag = EMPTY;
+                    }
+
+                    if (fragment->mStationaryTransform != NULL)
+                    {
+                        operator delete(fragment->mStationaryTransform);
+                        fragment->mStationaryTransform = NULL;
+                    }
+
+                    mNumActiveFragments--;
+                    ExplodableCategoryData& categoryData = GetCategoryData();
+                    if (mNumActiveFragments == categoryData.mNumStationaryFragments)
+                    {
+                        g_pEventManager->CreateValidEvent(0x67, 0x14);
+                    }
+                }
+            }
+            else if (!fragment->mbInfiniteLifespan)
+            {
+                fragment->mfRemainingLifespan -= fDeltaT;
+            }
+
+            fragmentOffset += 0x20;
+            i++;
+        }
+
+        if (mbIsMainModelVisible)
+        {
+            DestroyAllActiveFragments(true);
+        }
+    }
+    else
+    {
+        if (mfExplodeTime > 0.0f)
+        {
+            mfExplodeTime -= fDeltaT;
+        }
+
+        if (mfExplodeTime < 0.0f)
+        {
+            Explode();
+            mfExplodeTime = 0.0f;
+        }
+    }
 }
 
 /**

@@ -5,9 +5,10 @@
 
 /**
  * Offset/Address/Size: 0x0 | 0x800FF91C | size: 0x140
- * TODO: 97.3% match - MWCC strength-reduces TIMESTATE_TIMES loop:
+ * TODO: 97.31% match - MWCC strength-reduces TIMESTATE_TIMES loop:
  * pre-computes base+offset outside loop (r0) instead of keeping base in r6
- * and recomputing add inside loop body. 7 instruction diffs, all in loop area.
+ * and recomputing add inside loop body (5 diffs). Remaining 2 diffs:
+ * loop-back target and 25.0f literal pool symbol.
  */
 void FEInGameMessengerManager::Update(float fDeltaT)
 {
@@ -67,7 +68,7 @@ void FEInGameMessengerManager::Update(float fDeltaT)
     delete entry;
 
     m_messenger->SetDisplayMessage(*(const BasicString<unsigned short, Detail::TempStringAllocator>*)&m_messageList[(int)msg]);
-    m_messenger->OpenMessengerNow();
+    m_messenger->OpenMessenger();
     m_waitingToDisplay = false;
 }
 

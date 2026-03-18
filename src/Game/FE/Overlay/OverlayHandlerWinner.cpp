@@ -1,4 +1,22 @@
 #include "Game/FE/Overlay/OverlayHandlerWinner.h"
+#include "Game/FE/feFinder.h"
+#include "Game/FE/feInput.h"
+#include "Game/FE/Overlay/OverlayHandlerSummary.h"
+#include "Game/OverlayManager.h"
+
+static char* WINNER_TEXTURES[9][3] = {
+    { "fe/winners/daisy_action", "fe/winners/daisy_action_OUTLINE", "fe/winners/daisy_action_WHITE" },
+    { "fe/winners/dk_action", "fe/winners/dk_action_OUTLINE", "fe/winners/dk_action_WHITE" },
+    { "fe/winners/luigi_action", "fe/winners/luigi_action_OUTLINE", "fe/winners/luigi_action_WHITE" },
+    { "fe/winners/mario_action", "fe/winners/mario_action_OUTLINE", "fe/winners/mario_action_WHITE" },
+    { "fe/winners/peach_action", "fe/winners/peach_action_OUTLINE", "fe/winners/peach_action_WHITE" },
+    { "fe/winners/waluigi_action", "fe/winners/waluigi_action_OUTLINE", "fe/winners/waluigi_action_WHITE" },
+    { "fe/winners/wario_action", "fe/winners/wario_action_OUTLINE", "fe/winners/wario_action_WHITE" },
+    { "fe/winners/yoshi_action", "fe/winners/yoshi_action_OUTLINE", "fe/winners/yoshi_action_WHITE" },
+    { "fe/winners/mario_action", "fe/winners/mario_action_OUTLINE", "fe/winners/mario_action_WHITE" },
+};
+
+static const char* WINNER_HANDLER_LAYER_NAME = "Layer";
 
 // /**
 //  * Offset/Address/Size: 0x4EC | 0x80106C80 | size: 0x15C
@@ -94,6 +112,157 @@ void WinnerOverlay::SceneCreated()
 /**
  * Offset/Address/Size: 0x0 | 0x8010566C | size: 0x304
  */
-void WinnerOverlay::Update(float)
+void WinnerOverlay::Update(float fDeltaT)
 {
+    typedef TLImageInstance* (*FindImageByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLImageInstance* (*FindImageByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindImageByValue byValue;
+        FindImageByRef byRef;
+    } findImage;
+
+    unsigned long hash;
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8;
+    volatile InlineHasher h7, h6, h5, h4, h3, h2, h1, h0;
+    volatile InlineHasher gB, gA;
+    volatile InlineHasher g5, g4, g3, g2, g1, g0;
+    volatile InlineHasher fB, fA;
+    volatile InlineHasher f5, f4, f3, f2, f1, f0;
+
+    BaseSceneHandler::Update(fDeltaT);
+
+    mWinnerAction->Update(true);
+    mWinnerActionOutline->Update(true);
+    mWinnerActionWhite->Update(true);
+
+    mInputDelay -= fDeltaT;
+
+    TLSlide* slide = m_pFEPresentation->m_currentSlide;
+
+    if (mDoingOutTransition)
+    {
+        if (slide->m_time >= (slide->m_start + slide->m_duration))
+        {
+            SummaryOverlay* pSummary = (SummaryOverlay*)nlSingleton<OverlayManager>::s_pInstance->Push(OVERLAY_SUMMARY, SCREEN_NOTHING, true);
+            pSummary->mButtonState = (ButtonComponent::ButtonState)1;
+            return;
+        }
+    }
+
+    if (!mDoingOutTransition)
+    {
+        if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x100, false, NULL) == false)
+        {
+            return;
+        }
+
+        if (slide->m_time >= (slide->m_start + slide->m_duration))
+        {
+        }
+        else
+        {
+            return;
+        }
+
+        if (mInputDelay <= 0.0)
+        {
+        }
+        else
+        {
+            return;
+        }
+
+        mDoingOutTransition = true;
+        m_pFEPresentation->SetActiveSlide("MENU IN2");
+
+        findImage.byValue = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
+
+        h0.m_Hash = 0;
+        h1.m_Hash = 0;
+        h2.m_Hash = 0;
+        h3.m_Hash = 0;
+        h4.m_Hash = 0;
+        h5.m_Hash = 0;
+        h6.m_Hash = 0;
+        h7.m_Hash = 0;
+
+        hash = nlStringLowerHash("action");
+        h8.m_Hash = hash;
+        h9.m_Hash = hash;
+
+        hash = nlStringLowerHash(WINNER_HANDLER_LAYER_NAME);
+        hB.m_Hash = hash;
+        hA.m_Hash = hash;
+
+        mWinnerAction->mImageInstance = findImage.byRef(
+            m_pFEPresentation->m_currentSlide,
+            (InlineHasher&)hB,
+            (InlineHasher&)h9,
+            (InlineHasher&)h7,
+            (InlineHasher&)h5,
+            (InlineHasher&)h3,
+            (InlineHasher&)h1);
+
+        mWinnerAction->QueueLoad(WINNER_TEXTURES[mWinningTeam][0], false);
+
+        g0.m_Hash = 0;
+        h1.m_Hash = 0;
+        g1.m_Hash = 0;
+        h3.m_Hash = 0;
+        g2.m_Hash = 0;
+        h5.m_Hash = 0;
+        g3.m_Hash = 0;
+        h7.m_Hash = 0;
+
+        hash = nlStringLowerHash("action_OUTLINE");
+        g4.m_Hash = hash;
+        g5.m_Hash = hash;
+
+        hash = nlStringLowerHash(WINNER_HANDLER_LAYER_NAME);
+        gB.m_Hash = hash;
+        gA.m_Hash = hash;
+
+        mWinnerActionOutline->mImageInstance = findImage.byRef(
+            m_pFEPresentation->m_currentSlide,
+            (InlineHasher&)gB,
+            (InlineHasher&)g5,
+            (InlineHasher&)h7,
+            (InlineHasher&)h5,
+            (InlineHasher&)h3,
+            (InlineHasher&)h1);
+
+        mWinnerActionOutline->QueueLoad(WINNER_TEXTURES[mWinningTeam][1], false);
+
+        f0.m_Hash = 0;
+        h1.m_Hash = 0;
+        f1.m_Hash = 0;
+        h3.m_Hash = 0;
+        f2.m_Hash = 0;
+        h5.m_Hash = 0;
+        f3.m_Hash = 0;
+        h7.m_Hash = 0;
+
+        hash = nlStringLowerHash("action_WHITE");
+        f4.m_Hash = hash;
+        f5.m_Hash = hash;
+
+        hash = nlStringLowerHash(WINNER_HANDLER_LAYER_NAME);
+        fB.m_Hash = hash;
+        fA.m_Hash = hash;
+
+        mWinnerActionWhite->mImageInstance = findImage.byRef(
+            m_pFEPresentation->m_currentSlide,
+            (InlineHasher&)fB,
+            (InlineHasher&)f5,
+            (InlineHasher&)h7,
+            (InlineHasher&)h5,
+            (InlineHasher&)h3,
+            (InlineHasher&)h1);
+
+        mWinnerActionWhite->QueueLoad(WINNER_TEXTURES[mWinningTeam][2], false);
+    }
 }

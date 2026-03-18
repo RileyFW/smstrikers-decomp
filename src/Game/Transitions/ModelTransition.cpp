@@ -314,9 +314,13 @@ void ModeledScreenTransition::Update(float dt)
 
 /**
  * Offset/Address/Size: 0x13EC | 0x802034B0 | size: 0x134
+ * TODO: 99.29% match - remaining r26/r29/r30 register cycle between modelOffset, pNodeMatrix, and matrixHandle.
  */
 void ModeledScreenTransition::Render(eGLView)
 {
+    const nlMatrix4* pNodeMatrix;
+    u32 matrixHandle;
+
     if (m_pLight != NULL && m_pPoseTree != NULL)
     {
         m_pLight->ApplyLight(m_pPoseTree->m_fTime);
@@ -329,11 +333,11 @@ void ModeledScreenTransition::Render(eGLView)
     {
         for (u32 packetIndex = 0; packetIndex < m_pModels[modelOffset / 0x10].numPackets; packetIndex++)
         {
-            const nlMatrix4& nodeMatrix = m_pPoseAccumulator->GetNodeMatrix(m_pModelMap[modelMapIndex]);
-            u32 matrixHandle = glAllocMatrix();
+            pNodeMatrix = &m_pPoseAccumulator->GetNodeMatrix(m_pModelMap[modelMapIndex]);
+            matrixHandle = glAllocMatrix();
             if (matrixHandle != 0xFFFFFFFF)
             {
-                glSetMatrix(matrixHandle, nodeMatrix);
+                glSetMatrix(matrixHandle, *pNodeMatrix);
             }
             m_pModels[modelOffset / 0x10].packets[packetIndex].state.matrix = matrixHandle;
         }

@@ -330,7 +330,7 @@ void CupWinStingerDone()
         emptyCallback.mTag = EMPTY;
         pTrack->m_IdleCallback = Function<FnVoidVoid>(emptyCallback);
     }
-    pTrack->PlayStream(nlStringLowerHash("STAD_Intro"), 0.5f, true, 500, 500, "Stadium", MasterVolume::VG_Special);
+    pTrack->PlayStream(nlStringLowerHash("STAD_Intro"), 0.5f, true, 500, 500, "Stadium", Audio::MasterVolume::VG_Special);
 }
 
 /**

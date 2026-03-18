@@ -71,23 +71,25 @@ int PhysicsCompositeObject::AddObject(PhysicsObject* object)
 
 /**
  * Offset/Address/Size: 0x164 | 0x801FF80C | size: 0x110
+ * TODO: 96.54% match - remaining mismatch is in auto-generated
+ * m_Components cleanup (nlWalkDLRing vs nlWalkRing call shape/register order).
  */
 PhysicsCompositeObject::~PhysicsCompositeObject()
 {
-    DLListEntry<PhysicsTransform*>* current = nlDLRingGetStart<DLListEntry<PhysicsTransform*> >(m_Components.m_Head);
+    DLListEntry<PhysicsTransform*>* head;
+    DLListEntry<PhysicsTransform*>* current;
+
+    current = nlDLRingGetStart<DLListEntry<PhysicsTransform*> >(m_Components.m_Head);
+    head = m_Components.m_Head;
 
     while (current != nullptr)
     {
         PhysicsTransform* transform = (PhysicsTransform*)current->m_data;
 
-        // if (transform != nullptr)
-        {
-            transform->m_parentObject = nullptr;
+        transform->m_bodyID = nullptr;
+        delete transform;
 
-            delete transform;
-        }
-
-        if (nlDLRingIsEnd<DLListEntry<PhysicsTransform*> >(m_Components.m_Head, current))
+        if (nlDLRingIsEnd<DLListEntry<PhysicsTransform*> >(head, current) || current == nullptr)
         {
             current = nullptr;
         }
@@ -95,16 +97,6 @@ PhysicsCompositeObject::~PhysicsCompositeObject()
         {
             current = current->m_next;
         }
-    }
-
-    if (m_Components.m_Head != nullptr)
-    {
-        nlWalkDLRing<DLListEntry<PhysicsTransform*>, DLListContainerBase<PhysicsTransform*, NewAdapter<DLListEntry<PhysicsTransform*> > > >(
-            m_Components.m_Head,
-            &m_Components,
-            &DLListContainerBase<PhysicsTransform*, NewAdapter<DLListEntry<PhysicsTransform*> > >::DeleteEntry);
-
-        m_Components.m_Head = nullptr;
     }
 }
 

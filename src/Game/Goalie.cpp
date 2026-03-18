@@ -18,6 +18,24 @@
 #include "NL/plat/plataudio.h"
 #include "types.h"
 
+namespace Audio
+{
+enum eWorldSFX
+{
+    WORLDSFX_DUMMY = 0,
+};
+
+class cWorldSFX : public cGameSFX
+{
+public:
+    void Stop(eWorldSFX, cGameSFX::StopFlag);
+    unsigned long Play(Audio::SoundAttributes&);
+};
+
+extern cWorldSFX gCrowdSFX;
+extern cWorldSFX gStadGenSFX;
+} // namespace Audio
+
 extern cTeam* g_pCurrentlyUpdatingTeam;
 extern f32 gfRepositionThreshold;
 
@@ -181,10 +199,107 @@ bool Goalie::PreCollideWithBallCallback(const dContact& contact)
 
 /**
  * Offset/Address/Size: 0x9D18 | 0x8004C814 | size: 0x304
+ * TODO: 97.78% match - remaining diffs are in pounce hit-distance float register
+ * ordering and action-transition tail register allocation around the 0x33 anim gate.
  */
-void Goalie::ExecutePounce(cPlayer*, bool)
+void Goalie::ExecutePounce(cPlayer* pPlayer, bool bCheckHitDistance)
 {
-    FORCE_DONT_INLINE;
+    cFielder* pFldr = static_cast<cFielder*>(pPlayer);
+    bool bDoHit = false;
+
+    if (!pFldr->IsFallenDown(0.0f) && !pFldr->IsInvincible())
+    {
+        bDoHit = true;
+    }
+
+    if (bDoHit && bCheckHitDistance)
+    {
+        float fPlayerRadius;
+        float fGoalieRadius;
+
+        m_pPhysicsCharacter->GetRadius(&fGoalieRadius);
+        pFldr->m_pPhysicsCharacter->GetRadius(&fPlayerRadius);
+
+        float fDeltaX = m_v3Position.f.x - pFldr->m_v3Position.f.x;
+        float fMinHitDistance = fGoalieRadius + fPlayerRadius + 0.5f;
+        float fDeltaY = m_v3Position.f.y - pFldr->m_v3Position.f.y;
+
+        bDoHit = ((fDeltaX * fDeltaX) + (fDeltaY * fDeltaY)) < (fMinHitDistance * fMinHitDistance);
+    }
+
+    if (pFldr->m_eActionState == ACTION_SHOOT_TO_SCORE)
+    {
+        bDoHit = true;
+    }
+
+    bool bGetBall = false;
+    if (pPlayer->m_pBall != NULL && g_pBall->m_v3Position.f.z < 1.0f)
+    {
+        Audio::SoundAttributes sndAtr;
+        sndAtr.Init();
+        sndAtr.SetSoundType(0xB7, true);
+        sndAtr.UseStationaryPosVector(m_v3Position);
+        sndAtr.mf_Volume = 1.0f;
+        Audio::gStadGenSFX.Play(sndAtr);
+        bGetBall = true;
+    }
+
+    if (bDoHit)
+    {
+        if (pFldr != NULL && pFldr->m_eClassType == FIELDER && !pFldr->IsFallenDown(0.0f))
+        {
+            pFldr->PlayRandomCharDialogue(CHAR_DIALOGUE_HIT, VECTORS, 100.0f, -1.0f);
+
+            if (pFldr->m_pBall != NULL)
+            {
+                pFldr->ReleaseBall();
+            }
+
+            if (IsOnSameTeam(pFldr))
+            {
+                pFldr->EndDesire(false);
+                pFldr->EndAction();
+            }
+            else
+            {
+                pFldr->InitActionSlideAttackReact(this, false);
+            }
+        }
+    }
+    else if (pFldr != NULL && pFldr->m_eClassType == FIELDER && pFldr->m_pBall != NULL)
+    {
+        pFldr->ReleaseBall();
+
+        if (pFldr->m_eFielderDesireState != FIELDERDESIRE_FINISH_ACTION)
+        {
+            pFldr->EndDesire(false);
+            pFldr->EndAction();
+        }
+    }
+
+    if (bGetBall)
+    {
+        PickupBall(g_pBall);
+        mbPickedUp = true;
+        g_pBall->ClearShotInProgress();
+        EmitGoalieCatch(this, "goalie_catch", false);
+
+        if (mGoalieActionState != GOALIEACTION_PURSUE_BALL_POUNCE)
+        {
+            CleanGoalieAction();
+
+            mPrevGoalieActionState = mGoalieActionState;
+            mGoalieActionState = GOALIEACTION_PURSUE_BALL_POUNCE;
+            mnSubstate = 0;
+
+            if (m_eAnimID != 0x33 || (m_pCurrentAnimController->m_ePlayMode == 1 && m_pCurrentAnimController->m_fTime == 1.0f))
+            {
+                SetAnimState(0x33, true, 0.2f, false, false);
+            }
+
+            InitMovementFromAnimSeek(m_pTweaks->fRunningDirectionSeekSpeed, m_pTweaks->fRunningDirectionSeekFalloff);
+        }
+    }
 }
 
 /**

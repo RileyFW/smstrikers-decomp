@@ -12,6 +12,23 @@
 static const char* CUP_HUB_LAYER_NAME;
 static nlColour HUB_COLOUR_HIGHLIGHT;
 static char* HUBstandingsRowNames[10];
+static unsigned char gHubLeagueMovementSoundIsPlaying;
+
+namespace Audio
+{
+enum eWorldSFX
+{
+    WORLDSFX_DUMMY = 0,
+};
+
+class cWorldSFX : public cGameSFX
+{
+public:
+    void Stop(eWorldSFX, cGameSFX::StopFlag);
+};
+
+extern cWorldSFX gWorldSFX;
+} // namespace Audio
 
 extern "C" eTeamID FindWinningTeam__15GameInfoManagerFv(GameInfoManager*);
 
@@ -295,8 +312,10 @@ void CupHubScene::ReturnToMainMenu()
 /**
  * Offset/Address/Size: 0x5F08 | 0x800EFC64 | size: 0x7C0
  */
-void CupHubScene::UpdateDisplayedStat()
+unsigned char CupHubScene::UpdateDisplayedStat()
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**
@@ -312,6 +331,7 @@ void CupHubScene::CreateLeague()
  */
 void CupHubScene::CreateBowserLeague()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -324,9 +344,128 @@ void CupHubScene::CreateKnockout()
 
 /**
  * Offset/Address/Size: 0x2FF4 | 0x800ECD50 | size: 0x308
+ * TODO: 99.15% match - persistent r29/r30 allocation swap around shouldStartSound/index pointers.
  */
-void CupHubScene::UpdateLeague(float)
+unsigned char CupHubScene::UpdateLeague(float fDeltaT)
 {
+    unsigned char shouldStartSound = 0;
+
+    mStatUpdateDelay += fDeltaT;
+
+    if (mUpdatingStats)
+    {
+        if (mStatUpdateDelay >= 0.2)
+        {
+            mStatUpdateDelay = 0.0f;
+
+            if (UpdateDisplayedStat())
+            {
+                return 0;
+            }
+
+            int i = 0;
+            while (i < nlSingleton<GameInfoManager>::s_pInstance->GetNumPlayingTeams())
+            {
+                int oldRank = mOldRanks[mAllTeamStats[i].mTeamIndex];
+                int newRank = mNewRanks[mAllTeamStats[i].mTeamIndex];
+
+                if (oldRank != newRank)
+                {
+                    mRowMovement[oldRank] = (float)((oldRank - newRank) * 24);
+                }
+
+                i++;
+            }
+
+            mUpdatingStats = false;
+            shouldStartSound = 1;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    unsigned char shouldBreak = 0;
+    unsigned int i = 0;
+
+    while (i < 8)
+    {
+        if (mRowMovement[i] > 1.0)
+        {
+            mRowMovement[i] -= 1.0f;
+
+            feVector3 position = mAnimComponents[i]->GetAssetPosition();
+            mAnimComponents[i]->SetAssetPosition(position.f.x, position.f.y + 1.0f, position.f.z);
+
+            shouldBreak = 1;
+        }
+        else if (mRowMovement[i] < -1.0)
+        {
+            mRowMovement[i] += 1.0f;
+
+            feVector3 position = mAnimComponents[i]->GetAssetPosition();
+            mAnimComponents[i]->SetAssetPosition(position.f.x, position.f.y - 1.0f, position.f.z);
+
+            shouldBreak = 1;
+        }
+
+        i++;
+    }
+
+    if (shouldBreak)
+    {
+        if (shouldStartSound)
+        {
+            if (!gHubLeagueMovementSoundIsPlaying)
+            {
+                FEAudio::PlayAnimAudioEvent("sfx_hub_league_movement", true);
+            }
+
+            gHubLeagueMovementSoundIsPlaying = true;
+        }
+
+        return 0;
+    }
+
+    ColourUserRow();
+
+    if (mHubState == HUB_BOWSER_TRANSITION)
+    {
+        CreateBowserLeague();
+        ColourUserRow();
+        mDoAnimations = false;
+    }
+    else
+    {
+        mDoAnimations = false;
+        UpdateProgressIndicator();
+    }
+
+    if (gHubLeagueMovementSoundIsPlaying)
+    {
+        Audio::gWorldSFX.Stop((Audio::eWorldSFX)0x11, cGameSFX::SFX_STOP_FIRST);
+    }
+
+    gHubLeagueMovementSoundIsPlaying = false;
+
+    if (nlSingleton<GameInfoManager>::s_pInstance->GetCurrentRoundNumber() != 0)
+    {
+        int i = 0;
+
+        while (i < nlSingleton<GameInfoManager>::s_pInstance->GetNumPlayingTeams())
+        {
+            if (mNewRanks[mAllTeamStats[i].mTeamIndex] == 0)
+            {
+                FECharacterSound::PlayCaptainName(mAllTeamStats[i].mTeamIndex);
+                break;
+            }
+
+            i++;
+        }
+    }
+
+    return 1;
 }
 
 /**
@@ -355,6 +494,7 @@ void CupHubScene::UpdateKnockout2(float)
  */
 void CupHubScene::UpdateProgressIndicator()
 {
+    FORCE_DONT_INLINE;
 }
 
 /**

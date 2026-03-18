@@ -21,9 +21,17 @@ KnotTableBlendEntry::KnotTableBlendEntry()
 
 /**
  * Offset/Address/Size: 0xCC8 | 0x801AA308 | size: 0x110
+ * TODO: 59.26% match - near/far zoom scalar initialization ordering around
+ * __construct_array still differs.
  */
 GameplayCamera::GameplayCamera()
 {
+    m_bDynamicZoom = true;
+    m_fZoom = 0.0f;
+    m_fDesiredZoom = 0.0f;
+    m_fZoomSeekSpeed = 0.0f;
+    m_ForceNeutralAndNearZoom = false;
+    m_matView.SetIdentity();
 }
 
 /**

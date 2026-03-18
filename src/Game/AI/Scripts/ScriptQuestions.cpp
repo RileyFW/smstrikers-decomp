@@ -2334,8 +2334,8 @@ float NearToSideline(const nlVector3& v3Position)
 
 /**
  * Offset/Address/Size: 0x1AB8 | 0x80080540 | size: 0x11C
- * TODO: 89.75% match - pre-loop register allocation differs for confidence/offset
- *       locals, and dy/dx load ordering before nlSqrt is still swapped.
+ * TODO: 92.25% match - pre-loop callee-saved register allocation still differs
+ *       for sideline base/offset setup and g_pGame->m_pFuzzyTweaks load register.
  */
 float CloseToSideline(cFielder* pFielder)
 {
@@ -2344,12 +2344,14 @@ float CloseToSideline(cFielder* pFielder)
         return 0.0f;
     }
 
-    float fScore = 0.0f;
-    f32 fZero = fScore;
+    s32 offset = 0;
+    s32 i = 0;
     const nlVector2* pConfidence = &g_pGame->m_pFuzzyTweaks->vCloseToSidelineDistanceConfidence;
     const u8* pBase = (const u8*)cField::mSidelines;
+    float fScore = 0.0f;
+    f32 fZero = fScore;
 
-    for (int i = 0, offset = i; i < 4; i++, offset += 0xC)
+    for (; i < 4; i++, offset += 0xC)
     {
         const sSideLinePlane* sideline = (const sSideLinePlane*)(pBase + offset);
         nlVector3 v3SidelinePos;
@@ -2368,9 +2370,9 @@ float CloseToSideline(cFielder* pFielder)
             v3SidelinePos.f.x = sideline->fDistance * sideline->vNormal.f.x;
         }
 
-        f32 dy = v3SidelinePos.f.y - pFielder->m_v3Position.f.y;
         f32 dx = v3SidelinePos.f.x - pFielder->m_v3Position.f.x;
-        float fDistance = nlSqrt(dy * dy + dx * dx, true);
+        f32 dy = v3SidelinePos.f.y - pFielder->m_v3Position.f.y;
+        float fDistance = nlSqrt(dx * dx + dy * dy, true);
 
         float fNormalized = NormalizeVal(fDistance, *pConfidence);
 

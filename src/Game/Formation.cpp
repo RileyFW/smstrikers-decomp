@@ -16,6 +16,7 @@
 extern cTeam* g_pTeams[];
 
 static nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
+static const float g_fFormationCaptainPosBonus[4] = { 0.55f, 0.5f, 0.0f, 0.0f };
 
 FormationSet* FormationManager::m_FormationSetArray = nullptr;
 int FormationManager::m_NumFormationSets = 0;
@@ -510,11 +511,133 @@ float FormationEval::GetWeight()
 
 /**
  * Offset/Address/Size: 0x1A14 | 0x80039C64 | size: 0x310
+ * TODO: 94.18% match - stack frame/register allocation and loop-counter hoist
+ * diffs around nested permutation loops (MWCC promotes i_pos array loads to
+ * callee-saved regs r29/r30/r31 instead of using volatile r0).
  */
-void FormationEval::AssignPositionsToFielders(unsigned int*, float (*)[4])
+#pragma opt_common_subs off
+void FormationEval::AssignPositionsToFielders(unsigned int* pFielderPosAssignments, float (*fFielderToPositionDistance)[4])
 {
-    FORCE_DONT_INLINE;
+    float fBestDistance = 100000000000.0f;
+    cPlayer* pKeyPlayer = GetKeyPlayer();
+    cTeam* pTeam = m_pFormationManager->m_pTeam;
+    int aiAssignedPos[4];
+
+    for (aiAssignedPos[0] = 0; aiAssignedPos[0] < 4; aiAssignedPos[0]++)
+    {
+        float fDistance = fFielderToPositionDistance[0][aiAssignedPos[0]];
+
+        for (aiAssignedPos[1] = 0; aiAssignedPos[1] < 4; aiAssignedPos[1]++)
+        {
+            if (aiAssignedPos[1] == aiAssignedPos[0])
+            {
+                continue;
+            }
+
+            float fDistancePos1 = fDistance;
+            fDistance += fFielderToPositionDistance[1][aiAssignedPos[1]];
+
+            for (aiAssignedPos[2] = 0; aiAssignedPos[2] < 4; aiAssignedPos[2]++)
+            {
+                if (aiAssignedPos[2] == aiAssignedPos[1])
+                {
+                    continue;
+                }
+
+                if (aiAssignedPos[2] == aiAssignedPos[0])
+                {
+                    continue;
+                }
+
+                float fDistancePos2 = fDistance;
+                fDistance += fFielderToPositionDistance[2][aiAssignedPos[2]];
+
+                for (aiAssignedPos[3] = 0; aiAssignedPos[3] < 4; aiAssignedPos[3]++)
+                {
+                    if (aiAssignedPos[3] == aiAssignedPos[2])
+                    {
+                        continue;
+                    }
+
+                    if (aiAssignedPos[3] == aiAssignedPos[1])
+                    {
+                        continue;
+                    }
+
+                    if (aiAssignedPos[3] == aiAssignedPos[0])
+                    {
+                        continue;
+                    }
+
+                    float fDistancePos3 = fDistance;
+                    fDistance += fFielderToPositionDistance[3][aiAssignedPos[3]];
+
+                    float fCaptainPosScore = 0.0f;
+                    float fCaptainPosCount = fCaptainPosScore;
+                    int* piAssignedPos = aiAssignedPos;
+
+                    for (int iFielder = 0; iFielder < 4; iFielder++)
+                    {
+                        if (iFielder == pKeyPlayer->m_ID)
+                        {
+                            if (*piAssignedPos == m_pFormationSpec->m_iKeyIndex)
+                            {
+                                fCaptainPosScore += 0.5f;
+                                fCaptainPosCount += 1.0f;
+                            }
+                        }
+
+                        cFielder* pFielder = pTeam->GetFielder(iFielder);
+                        if (pFielder->IsCaptain() && pFielder->GetGlobalPad() == NULL)
+                        {
+                            for (int iPos = 0; iPos < 4; iPos++)
+                            {
+                                if (iPos == *piAssignedPos)
+                                {
+                                    if (g_fFormationCaptainPosBonus[iPos] > 0.0f)
+                                    {
+                                        fCaptainPosCount += 1.0f;
+                                        fCaptainPosScore += 1.0f - g_fFormationCaptainPosBonus[iPos];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        piAssignedPos++;
+                    }
+
+                    float fCaptainPosMult = 0.0f;
+                    if (fCaptainPosCount > 0.0f)
+                    {
+                        fCaptainPosMult = fCaptainPosScore / fCaptainPosCount;
+                    }
+
+                    if (fCaptainPosMult > 0.0f)
+                    {
+                        fDistance *= fCaptainPosMult;
+                    }
+
+                    if (fDistance < fBestDistance)
+                    {
+                        fBestDistance = fDistance;
+                        pFielderPosAssignments[0] = aiAssignedPos[0];
+                        pFielderPosAssignments[1] = aiAssignedPos[1];
+                        pFielderPosAssignments[2] = aiAssignedPos[2];
+                        pFielderPosAssignments[3] = aiAssignedPos[3];
+                    }
+
+                    fDistance = fDistancePos3;
+                }
+
+                fDistance = fDistancePos2;
+            }
+
+            fDistance = fDistancePos1;
+        }
+    }
 }
+#pragma opt_common_subs on
 
 /**
  * Offset/Address/Size: 0x1798 | 0x800399E8 | size: 0x27C

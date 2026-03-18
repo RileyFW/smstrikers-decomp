@@ -294,44 +294,44 @@ loop_19:
 
 /**
  * Offset/Address/Size: 0x534 | 0x801CDC80 | size: 0x130
- * TODO: 95.39% match - MWCC keeps swapping r30/r31 roles between allocator head pointer and free block pointer.
  */
 void MemoryAllocator::Free(void* arg0)
 {
-    MemoryAllocator* self;
     FreeBlockList* block;
+    MemoryAllocator* self;
     FreeBlockList* start;
     FreeBlockList* iter;
     FreeBlockList* next;
     FreeBlockList* prev;
+    s32 size;
     s32 header;
     s32 offset;
-    s32 size;
-    u32 blockSize;
 
     if (arg0 == NULL)
     {
         return;
     }
 
-    self = this;
-    header = *(u32*)((char*)arg0 - 4);
     block = (FreeBlockList*)((char*)arg0 - 4);
-    size = ((header & 0x3FFFFFFF) + 3) & 0xFFFFFFFC;
+    self = this;
+    header = *(u32*)block;
+    size = header & 0x3FFFFFFF;
+    size += 3;
+    size &= 0xFFFFFFFC;
     if (header & 0x40000000)
     {
         size += *(u32*)((char*)arg0 + size);
     }
 
-    blockSize = size + 4;
+    size += 4;
     if (header & 0x80000000)
     {
         offset = *(u32*)((char*)block - 4);
         block = (FreeBlockList*)((char*)block - offset);
-        blockSize += offset;
+        size += offset;
     }
 
-    block->m_unk_0x08 = blockSize;
+    block->m_unk_0x08 = size;
     start = nlDLRingGetStart<FreeBlockList>(self->m_free_block_list);
     if ((start > block) || (start == NULL))
     {

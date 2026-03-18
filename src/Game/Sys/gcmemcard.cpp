@@ -309,17 +309,23 @@ void MemCard::ReadFileDoneCB(long channel, long result)
 
 /**
  * Offset/Address/Size: 0x1F0 | 0x801CAD30 | size: 0x138
+ * TODO: 99.62% match - result/file register allocation still swapped
+ * (target r29/r30 vs current r30/r29), and remaining rodata label mismatch on
+ * the two nlPrintf format strings.
  */
 void MemCard::SetStatusDoneCB(long channel, long result)
 {
     MemCard* card = g_MemCards[channel];
+    MC_FILE* file;
+    unsigned long remainder;
     s32 err = 0;
+
     if (result == 0)
     {
         card->m_State = IS_MOUNTED;
-        unsigned long headerSize = card->m_pFileCB->TotalHeaderSize;
-        MC_FILE* file = card->m_pFileCB;
+        file = card->m_pFileCB;
         void* data = card->m_pDataCB;
+        unsigned long headerSize = file->TotalHeaderSize;
 
         if (card->m_State != IS_MOUNTED)
         {
@@ -328,7 +334,7 @@ void MemCard::SetStatusDoneCB(long channel, long result)
         else
         {
             unsigned long sectorSize = card->m_CardInfo.SectorSize;
-            unsigned long remainder = headerSize % sectorSize;
+            remainder = headerSize % sectorSize;
             if (remainder != 0)
             {
                 nlPrintf("MC: Header size (%d) not aligned to sector (%d), rounding to %d\n", headerSize, sectorSize, headerSize + sectorSize - remainder);
