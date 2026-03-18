@@ -476,10 +476,13 @@ cGlobalPad* cPlayer::GetGlobalPad()
     return NULL;
 }
 
+static inline cFielder* GetAIOrderedFielder(cTeam* pTeam, s32 i)
+{
+    return pTeam->m_pAIOrderedFielders[i];
+}
+
 /**
  * Offset/Address/Size: 0x1700 | 0x80058C50 | size: 0x230
- * TODO: 99.64% match - r30/r31 register swap between pTarget and compiler-generated
- *       strength-reduction loop offset variable. MWCC internal register allocator ordering.
  */
 cPlayer* cPlayer::DoFindBestPassTarget(bool bAllowLeadPass, bool bIsPerfectPass)
 {
@@ -489,7 +492,7 @@ cPlayer* cPlayer::DoFindBestPassTarget(bool bAllowLeadPass, bool bIsPerfectPass)
 
     for (s32 i = 0; i < 4; i++)
     {
-        pTarget = m_pTeam->m_pAIOrderedFielders[i];
+        pTarget = GetAIOrderedFielder(m_pTeam, i);
 
         if (pTarget == this)
             continue;

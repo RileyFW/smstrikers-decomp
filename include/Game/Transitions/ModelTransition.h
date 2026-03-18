@@ -13,7 +13,7 @@
 #include "Game/SHierarchy.h"
 #include "Game/SAnim.h"
 
-void UpdateEffectsFromLeafNodes(cPoseAccumulator&, EmissionController**, cSHierarchy&, int, int);
+int UpdateEffectsFromLeafNodes(cPoseAccumulator&, EmissionController**, cSHierarchy&, int, int);
 void ShuffleIntoOutline(Vector<nlVector3, DefaultAllocator>&);
 int GetNumLeafNodesInHierarchy(cSHierarchy&, int, int);
 

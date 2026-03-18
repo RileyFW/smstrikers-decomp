@@ -176,6 +176,8 @@ bool glViewGetDepthClear(eGLView view)
 
 /**
  * Offset/Address/Size: 0x30C | 0x801DE7B0 | size: 0x164
+ * TODO: 97.58% match - r24/r28 register allocation swap in setup and loop
+ * index path (views base/init ordering still differs).
  */
 void gl_ViewStartup()
 {
@@ -230,6 +232,10 @@ void gl_ViewStartup()
 
         view = views[offset / 4];
         view->m_target = GLTG_None;
+
+        viewEnable++;
+
+        view = views[offset / 4];
         view->m_unk_0x04 = 0;
         view->m_unk_0x08 = 0;
         view->m_screenWidth = screenWidth;
@@ -246,7 +252,6 @@ void gl_ViewStartup()
 
         (*viewSlot)->renderList->m_unk_0x00 = i;
 
-        viewEnable++;
         viewSlot++;
         offset += 4;
         i++;

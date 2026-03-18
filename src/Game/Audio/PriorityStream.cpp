@@ -169,7 +169,7 @@ void PriorityStream::TrackIdleCB()
         {
             if (m_HasCrowdStream && m_PStream.m_Active)
             {
-                u32 streamId = m_PStream.m_StreamId;
+                int streamId = m_PStream.m_StreamId;
                 switch (streamId)
                 {
                 case 0x436E3953:

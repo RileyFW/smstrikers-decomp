@@ -8,12 +8,7 @@
 #include "Game/FE/feAsyncImage.h"
 #include "Game/FE/feButtonComponent.h"
 
-class Spoil
-{
-public:
-    Spoil();
-    ~Spoil();
-};
+struct Spoil;
 
 class CupTrophyScene : public BaseSceneHandler
 {

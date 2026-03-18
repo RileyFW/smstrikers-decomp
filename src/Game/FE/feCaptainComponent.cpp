@@ -373,8 +373,8 @@ void IChooseCaptain::SceneCreated(FEPresentation*)
 
 /**
  * Offset/Address/Size: 0x890 | 0x800BE22C | size: 0x220
- * TODO: 93.9% match - remaining diffs are r23/r31 register allocation, float register
- * ordering (f2/f1 vs f1/f0), and instruction scheduling in blocks 1/3.
+ * TODO: 96.7% match - remaining diffs are prologue r23/r31 register allocation and
+ * float register ordering in the slide-duration setup path.
  * File uses -inline deferred but decomp.me tests with -inline auto.
  */
 void IChooseCaptain::SetupCaptainComponent(TLComponentInstance* compinstance, int homeaway)
@@ -394,7 +394,7 @@ void IChooseCaptain::SetupCaptainComponent(TLComponentInstance* compinstance, in
     mCaptainComponents[homeaway] = compinstance;
 
     TLSlide* slide = compinstance->GetActiveSlide();
-    mCaptainSlideDurations[homeaway] = (slide->m_start + slide->m_duration) * 0.5f;
+    mCaptainSlideDurations[homeaway] = (slide->m_start + slide->m_duration) / 2.0f;
 
     {
         InlineHasher* p1 = (InlineHasher*)&h1;
@@ -414,9 +414,7 @@ void IChooseCaptain::SetupCaptainComponent(TLComponentInstance* compinstance, in
         h8.m_Hash = 0;
         h9.m_Hash = 0;
 
-        const char* name = "CAPT_R";
-        if (homeaway == 0)
-            name = "CAPT_L";
+        const char* name = (homeaway == 0) ? "CAPT_L" : "CAPT_R";
 
         unsigned long hash = nlStringLowerHash(name);
         hA.m_Hash = hash;
@@ -453,9 +451,7 @@ void IChooseCaptain::SetupCaptainComponent(TLComponentInstance* compinstance, in
         n8.m_Hash = 0;
         h9.m_Hash = 0;
 
-        const char* name = "CAPT_R_OUT";
-        if (homeaway == 0)
-            name = "CAPT_L_OUT";
+        const char* name = (homeaway == 0) ? "CAPT_L_OUT" : "CAPT_R_OUT";
 
         unsigned long hash = nlStringLowerHash(name);
         nA.m_Hash = hash;
@@ -492,9 +488,7 @@ void IChooseCaptain::SetupCaptainComponent(TLComponentInstance* compinstance, in
         m8.m_Hash = 0;
         h9.m_Hash = 0;
 
-        const char* name = "CAPT_R_WHITE";
-        if (homeaway == 0)
-            name = "CAPT_L_WHITE";
+        const char* name = (homeaway == 0) ? "CAPT_L_WHITE" : "CAPT_R_WHITE";
 
         unsigned long hash = nlStringLowerHash(name);
         mA.m_Hash = hash;
@@ -782,8 +776,8 @@ void IChooseCaptain::PushPlayer(eFEINPUT_PAD pad, int side)
 
 /**
  * Offset/Address/Size: 0x1DC | 0x800BDB78 | size: 0x15C
- * TODO: 98.2% match - mIsSinglePlayerInput=false still stores from r0 (target uses r4),
- *       side-count else entry still emits lbz reload before mr r3,r4
+ * TODO: 98.4% match - still emits lbz reload for side-count init in else path,
+ *       and mIsSinglePlayerInput=false stores from r0 (target uses r4)
  */
 void IChooseCaptain::PopPlayer(eFEINPUT_PAD pad)
 {
@@ -834,14 +828,17 @@ void IChooseCaptain::PopPlayer(eFEINPUT_PAD pad)
         }
     }
 
-    if (mNumTotalPushedPlayers != 0 && mIsSinglePlayerInput && mComponentState[1].mCurrentPhase != PHASE_READY && mComponentState[0].mCurrentPhase != PHASE_READY)
+    if (mNumTotalPushedPlayers != 0 && mIsSinglePlayerInput && mComponentState[1].mCurrentPhase != PHASE_READY)
     {
-        mComponentState[1].SetCurrentPhase(PHASE_IDLE);
-    }
+        if (mComponentState[0].mCurrentPhase != PHASE_READY)
+        {
+            mComponentState[1].SetCurrentPhase(PHASE_IDLE);
+        }
 
-    if (mNumTotalPushedPlayers == 1)
-    {
-        mAllPushedPlayerSides[0] = 0;
+        if (mNumTotalPushedPlayers == 1)
+        {
+            mAllPushedPlayerSides[0] = 0;
+        }
     }
 }
 

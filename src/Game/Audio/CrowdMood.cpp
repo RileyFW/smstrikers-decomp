@@ -211,10 +211,172 @@ void MoodDefFromBlend(float*, MOOD_DEFINITION&)
 
 /**
  * Offset/Address/Size: 0x2EA0 | 0x801505B4 | size: 0x358
+ * TODO: 96.89% match - remaining diffs are m_BufferCount gate branch opcodes
+ *       (`beq` vs `ble`) and LPF loop r28/r29 register allocation swap.
+ *       Both appear to be MWCC compiler behavior differences.
  */
-bool PlayVocal(const CROWD_VOCAL_DEFINITION&, CROWD_STATE::VOCALIZATION_STATE&, GCAudioStreaming::AudioStream*)
+bool PlayVocal(const CROWD_VOCAL_DEFINITION& VocalDef, CROWD_STATE::VOCALIZATION_STATE& VocalState, GCAudioStreaming::AudioStream* pStream)
 {
-    FORCE_DONT_INLINE;
+    if (g_Settings.NoStreaming)
+    {
+        return false;
+    }
+
+    float zero = 0.0f;
+    if (fabsf(VocalDef.Volume - zero) <= 0.01f)
+    {
+        return false;
+    }
+
+    if (VocalState.SinceLast > VocalDef.Delay)
+    {
+        bool playNow;
+        float delayRange = VocalDef.DelayRange;
+        if (delayRange != zero)
+        {
+            playNow = ((VocalState.SinceLast - VocalDef.Delay) / delayRange) > VocalState.NextAt;
+        }
+        else
+        {
+            playNow = VocalState.SinceLast > VocalDef.Delay;
+        }
+
+        if (playNow)
+        {
+            ___blank("Crowd vocal\n");
+
+            float randVol = nlRandomf(VocalDef.VolumeRange, &nlDefaultSeed);
+            float scalar = 127.0f;
+            float vocalVol = VocalDef.Volume;
+            vocalVol = vocalVol + randVol;
+            float crowdVol = g_CrowdState.CrowdVolume;
+            crowdVol = crowdVol * vocalVol;
+            scalar = scalar * crowdVol;
+            int tmpVol = (int)scalar;
+            unsigned long streamVol = 0x7F;
+
+            if ((unsigned char)tmpVol <= 0x7F)
+            {
+                streamVol = tmpVol;
+            }
+
+            if (pStream->m_State >= GCAudioStreaming::SS_Warming)
+            {
+                GCAudioStreaming::AudioStreamBuffer* buf;
+                volatile unsigned long i = (unsigned long)(buf = NULL);
+
+                if (pStream->m_BufferCount > 0)
+                {
+                    buf = pStream->m_Buffers[0];
+                }
+
+                while (buf != NULL)
+                {
+                    buf->m_Volume = streamVol;
+                    sndStreamMixParameterEx(buf->m_StreamId, buf->m_Volume, buf->m_Pan, buf->m_SurroundPan, 0, 0);
+
+                    unsigned long ci = i + 1;
+                    i = ci;
+                    if (ci < pStream->m_BufferCount)
+                    {
+                        buf = pStream->m_Buffers[ci];
+                    }
+                    else
+                    {
+                        buf = NULL;
+                    }
+                }
+            }
+
+            pStream->m_Volume = (unsigned char)streamVol;
+
+            unsigned short lpfFreq = (unsigned short)g_CrowdState.LPFFreq;
+            if (pStream->m_State >= GCAudioStreaming::SS_Warming)
+            {
+                volatile unsigned long i;
+                GCAudioStreaming::AudioStreamBuffer* pBuf;
+                i = (unsigned long)(pBuf = NULL);
+
+                if (pStream->m_BufferCount > 0)
+                {
+                    pBuf = pStream->m_Buffers[0];
+                }
+
+                while (pBuf != NULL)
+                {
+                    unsigned char lpfOn = pBuf->m_bLPFOn;
+                    if (lpfOn != 0)
+                    {
+                        sndStreamLPFParameter(pBuf->m_StreamId, lpfOn, lpfFreq);
+                    }
+
+                    pBuf->m_LPFFreq = lpfFreq;
+
+                    unsigned long ci = i + 1;
+                    i = ci;
+                    if (ci < pStream->m_BufferCount)
+                    {
+                        pBuf = pStream->m_Buffers[ci];
+                    }
+                    else
+                    {
+                        pBuf = NULL;
+                    }
+                }
+            }
+
+            pStream->m_LPFFreq = lpfFreq;
+
+            pStream->m_Flags &= ~(1 << GCAudioStreaming::SF_Loop);
+            pStream->m_Flags = (pStream->m_Flags & ~(1 << GCAudioStreaming::SF_CoolOnStop)) | (1 << GCAudioStreaming::SF_CoolOnStop);
+
+            switch (pStream->m_State)
+            {
+            case GCAudioStreaming::SS_Initd:
+                pStream->m_Flags = (pStream->m_Flags & ~(1 << GCAudioStreaming::SF_Play)) | (1 << GCAudioStreaming::SF_Play);
+                pStream->WarmReadDone((GCAudioStreaming::AudioStreamBuffer*)1);
+                break;
+            case GCAudioStreaming::SS_Warming:
+                pStream->m_Flags = (pStream->m_Flags & ~(1 << GCAudioStreaming::SF_Play)) | (1 << GCAudioStreaming::SF_Play);
+                break;
+            case GCAudioStreaming::SS_Warm:
+            {
+                GCAudioStreaming::AudioStreamBuffer* buf;
+                volatile unsigned long i = (unsigned long)(buf = NULL);
+
+                if (pStream->m_BufferCount > 0)
+                {
+                    buf = pStream->m_Buffers[0];
+                }
+
+                while (buf != NULL)
+                {
+                    sndStreamActivate(buf->m_StreamId);
+
+                    unsigned long ci = i + 1;
+                    i = ci;
+                    if (ci < pStream->m_BufferCount)
+                    {
+                        buf = pStream->m_Buffers[ci];
+                    }
+                    else
+                    {
+                        buf = NULL;
+                    }
+                }
+
+                pStream->m_State = GCAudioStreaming::SS_Playing;
+                break;
+            }
+            }
+
+            VocalState.Ready = false;
+            VocalState.SinceLast = 0.0f;
+            VocalState.NextAt = nlRandomf(1.0f, &nlDefaultSeed);
+            return true;
+        }
+    }
+
     return false;
 }
 

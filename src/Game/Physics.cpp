@@ -3,9 +3,11 @@
 #include "NL/nlMemory.h"
 #include "Game/Ball.h"
 #include "Game/Inventory.h"
+#include "Game/Physics/CharacterPhysicsElement.h"
 #include "Game/Physics/CollisionSpace.h"
 #include "Game/Physics/LoadablePhysicsMesh.h"
 #include "Game/Physics/PhysicsNet.h"
+#include "Game/Physics/PhysicsSphere.h"
 #include "ode/NLGAdditions.h"
 
 extern PhysicsWorld* g_PhysicsWorld;
@@ -17,6 +19,8 @@ static PhysicsRoundedCorner* corners[4];
 static cInventory<LoadablePhysicsMesh*> s_PhysicsMeshes;
 static bool sbDisableCollisionDetection;
 static bool sbNonMovingAABBsInitialized;
+static float sfStaticFinitePlaneThinDepth;
+static float sfStaticFinitePlaneThickDepth;
 
 void dClearCachedData();
 
@@ -149,8 +153,8 @@ void PhysicsUpdate(PhysicsWorld* pWorld, float fDeltaT)
 
 /**
  * Offset/Address/Size: 0x14C | 0x80132C5C | size: 0x244
- * TODO: 92.7% match - r29/r30 register swap throughout, stack offsets off by 4 bytes,
- *       nlWalkList member function pointer constants differ. Likely -inline deferred related.
+ * TODO: 95.6% match - r29/r30/r31 register assignment still shifted in early loops,
+ *       plus @425/@438 member-function pointer constant index differences.
  */
 void PhysicsLoader::DestroyPhysics()
 {
@@ -191,8 +195,12 @@ void PhysicsLoader::DestroyPhysics()
 
     while (s_PhysicsMeshes.m_lMemList.m_Head != NULL)
     {
-        ListEntry<LoadablePhysicsMesh*>* removed = nlListRemoveStart(&s_PhysicsMeshes.m_lMemList.m_Head, &s_PhysicsMeshes.m_lMemList.m_Tail);
-        LoadablePhysicsMesh* mesh = removed->data;
+        ListEntry<char*>* removed = nlListRemoveStart((ListEntry<char*>**)&s_PhysicsMeshes.m_lMemList.m_Head, (ListEntry<char*>**)&s_PhysicsMeshes.m_lMemList.m_Tail);
+        void* mesh;
+        if (&mesh != NULL)
+        {
+            mesh = removed->data;
+        }
         ::operator delete(removed);
         ::operator delete(mesh);
     }
@@ -200,10 +208,7 @@ void PhysicsLoader::DestroyPhysics()
     s_PhysicsMeshes.m_nItemCount = 0;
     g_TerrainMesh = NULL;
 
-    if (g_CollisionSpace != NULL)
-    {
-        delete g_CollisionSpace;
-    }
+    delete g_CollisionSpace;
     g_CollisionSpace = NULL;
 
     delete g_PhysicsWorld;
@@ -221,9 +226,128 @@ PhysicsRoundedCorner::~PhysicsRoundedCorner()
 
 /**
  * Offset/Address/Size: 0x3F0 | 0x80132F00 | size: 0x338
+ * TODO: 95.7% match - remaining diffs are -inline deferred vs -inline auto optimizer
+ *       differences: i/offset r29/r28 register swap, f0/f1 for centre.x in nlVec3Set,
+ *       m31 control flow (hoisted load + shared li vs duplicate), v1/v2 float register naming.
  */
-void PhysicsLoader::ConstructStaticPhysicsPrimitives(CharacterPhysicsData*)
+void PhysicsLoader::ConstructStaticPhysicsPrimitives(CharacterPhysicsData* pPhysicsData)
 {
+    unsigned int i = 0;
+    unsigned int offset = 0;
+    ListEntry<PhysicsObject*>** pStaticTail = &g_StaticPhysicsPrimitives.m_Tail;
+    ListEntry<PhysicsObject*>** pStaticHead = &g_StaticPhysicsPrimitives.m_Head;
+    ListEntry<PhysicsObject*>** pNetTail = &g_NetPhysicsObjects.m_Tail;
+    ListEntry<PhysicsObject*>** pNetHead = &g_NetPhysicsObjects.m_Head;
+
+    while (i < pPhysicsData->physicsElementCount)
+    {
+        PhysicsObject* obj = NULL;
+        CharacterPhysicsElement* physElement = (CharacterPhysicsElement*)((char*)pPhysicsData->pPhysicsElements + offset);
+
+        switch (physElement->uPrimitiveType)
+        {
+        case 1:
+            obj = new (nlMalloc(0x2C, 8, false)) PhysicsSphere(NULL, NULL, physElement->fRadius);
+            obj->SetWorldMatrix(physElement->matLocalToParent);
+            {
+                void* p = nlMalloc(8, 8, false);
+                ListEntry<PhysicsObject*>* entry = (ListEntry<PhysicsObject*>*)p;
+                if (p != NULL)
+                {
+                    ((ListEntry<PhysicsObject*>*)p)->next = NULL;
+                    ((ListEntry<PhysicsObject*>*)p)->data = obj;
+                }
+                nlListAddEnd(pStaticHead, pStaticTail, entry);
+            }
+            break;
+
+        case 2:
+            obj = new (nlMalloc(0x2C, 8, false)) PhysicsCapsule(NULL, NULL, physElement->fRadius, physElement->fHeight);
+            obj->SetWorldMatrix(physElement->matLocalToParent);
+            {
+                void* p = nlMalloc(8, 8, false);
+                ListEntry<PhysicsObject*>* entry = (ListEntry<PhysicsObject*>*)p;
+                if (p != NULL)
+                {
+                    ((ListEntry<PhysicsObject*>*)p)->next = NULL;
+                    ((ListEntry<PhysicsObject*>*)p)->data = obj;
+                }
+                nlListAddEnd(pStaticHead, pStaticTail, entry);
+            }
+            break;
+
+        case 4:
+        {
+            nlVector3 centre;
+            nlVector3 v1;
+            nlVector3 v2;
+            bool normalPointsAwayFromField = false;
+
+            nlVec3Set(centre, physElement->matLocalToParent.f.m41, physElement->matLocalToParent.f.m42, physElement->matLocalToParent.f.m43);
+            nlVec3Set(v1, physElement->matLocalToParent.f.m11, physElement->matLocalToParent.f.m12, physElement->matLocalToParent.f.m13);
+            nlVec3Set(v2, physElement->matLocalToParent.f.m21, physElement->matLocalToParent.f.m22, physElement->matLocalToParent.f.m23);
+
+            if (centre.f.x > 0.0f)
+            {
+                if (physElement->matLocalToParent.f.m31 > 0.0f)
+                {
+                    normalPointsAwayFromField = true;
+                }
+            }
+            else if (centre.f.x < 0.0f)
+            {
+                if (physElement->matLocalToParent.f.m31 < 0.0f)
+                {
+                    normalPointsAwayFromField = true;
+                }
+            }
+
+            {
+                float halfWidth = 0.5f * physElement->fWidth;
+                v1.f.z = halfWidth * v1.f.z;
+                v1.f.y = halfWidth * v1.f.y;
+                v1.f.x = halfWidth * v1.f.x;
+            }
+
+            {
+                float halfLength = 0.5f * physElement->fLength;
+                v2.f.z = halfLength * v2.f.z;
+                v2.f.y = halfLength * v2.f.y;
+                v2.f.x = halfLength * v2.f.x;
+            }
+
+            obj = new (nlMalloc(0x44, 8, false)) PhysicsFinitePlane(NULL, centre, v1, v2, true, normalPointsAwayFromField ? sfStaticFinitePlaneThinDepth : sfStaticFinitePlaneThickDepth);
+            {
+                void* p = nlMalloc(8, 8, false);
+                ListEntry<PhysicsObject*>* entry = (ListEntry<PhysicsObject*>*)p;
+                if (p != NULL)
+                {
+                    ((ListEntry<PhysicsObject*>*)p)->next = NULL;
+                    ((ListEntry<PhysicsObject*>*)p)->data = obj;
+                }
+                nlListAddEnd(pStaticHead, pStaticTail, entry);
+            }
+            break;
+        }
+        }
+
+        obj->SetCategory(0x800);
+        obj->SetCollide(0x20);
+        {
+            void* p = nlMalloc(8, 8, false);
+            ListEntry<PhysicsObject*>* entry = (ListEntry<PhysicsObject*>*)p;
+            if (p != NULL)
+            {
+                ((ListEntry<PhysicsObject*>*)p)->next = NULL;
+                ((ListEntry<PhysicsObject*>*)p)->data = obj;
+            }
+            nlListAddEnd(pNetHead, pNetTail, entry);
+        }
+
+        sbNonMovingAABBsInitialized = false;
+        i++;
+        offset += 0xA0;
+    }
 }
 
 /**

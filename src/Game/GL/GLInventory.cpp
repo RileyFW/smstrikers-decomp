@@ -33,6 +33,13 @@ nlAVLTree<unsigned long, glModel*, DefaultKeyCompare<unsigned long> >::~nlAVLTre
 {
 }
 
+template <>
+clearing_GLInventory<glModel>::~clearing_GLInventory()
+{
+    m_pItems->Clear();
+    delete m_pItems;
+}
+
 /**
  * Offset/Address/Size: 0x1058 | 0x801E32F0 | size: 0x50
  */
@@ -624,152 +631,284 @@ void GLInventory::AddSkinData(unsigned long key, nlChunk* skinData)
 
 /**
  * Offset/Address/Size: 0x334 | 0x801E25CC | size: 0x1A0
- * TODO: 96.39% match - remaining diff is register allocation/branch layout in the two AVL-search loops.
+ * TODO: 99.38% match - remaining diff is an r6/r7/r8 allocation swap in the inlined AVL search loops.
  */
 GLSkinMesh* GLInventory::MakeSkinMesh(unsigned long hashID)
 {
-    int i = m_nLevel;
-    nlChunk* pChunk;
-
-    for (; i >= 0; i--)
+    struct SkinDataHelper
     {
-        bool found;
-        nlChunk** pResult;
-        AVLTreeEntry<unsigned long, nlChunk*>* node = m_pSkinData[i]->m_pItems->m_Root;
-
-        while (node != nullptr)
+        static inline nlChunk* Get(GLInventory* self, unsigned long id)
         {
-            int cmpResult;
+            for (int i = self->m_nLevel; i >= 0; i--)
+            {
+                bool found;
+                nlChunk** pResult;
+                AVLTreeEntry<unsigned long, nlChunk*>* node = self->m_pSkinData[i]->m_pItems->m_Root;
 
-            if (hashID == node->key)
-            {
-                cmpResult = 0;
-            }
-            else if (hashID < node->key)
-            {
-                cmpResult = -1;
-            }
-            else
-            {
-                cmpResult = 1;
-            }
-
-            if (cmpResult == 0)
-            {
-                if (&pResult != nullptr)
+                while (node != nullptr)
                 {
-                    pResult = &node->value;
+                    int cmpResult;
+
+                    if (id == node->key)
+                    {
+                        cmpResult = 0;
+                    }
+                    else if (id < node->key)
+                    {
+                        cmpResult = -1;
+                    }
+                    else
+                    {
+                        cmpResult = 1;
+                    }
+
+                    if (cmpResult == 0)
+                    {
+                        if (&pResult != nullptr)
+                        {
+                            pResult = &node->value;
+                        }
+                        found = true;
+                        goto check_found;
+                    }
+                    else if (cmpResult < 0)
+                    {
+                        node = (AVLTreeEntry<unsigned long, nlChunk*>*)node->node.left;
+                    }
+                    else
+                    {
+                        node = (AVLTreeEntry<unsigned long, nlChunk*>*)node->node.right;
+                    }
                 }
-                found = true;
-                goto check_skin_found;
+
+                found = false;
+            check_found:
+                nlChunk* result;
+
+                if (found)
+                {
+                    result = *pResult;
+                }
+                else
+                {
+                    result = nullptr;
+                }
+
+                if (result != nullptr)
+                {
+                    return result;
+                }
             }
-            else if (cmpResult < 0)
-            {
-                node = (AVLTreeEntry<unsigned long, nlChunk*>*)node->node.left;
-            }
-            else
-            {
-                node = (AVLTreeEntry<unsigned long, nlChunk*>*)node->node.right;
-            }
+
+            return nullptr;
         }
+    };
 
-        found = false;
-    check_skin_found:
-        nlChunk* result;
-
-        if (found)
-        {
-            result = *pResult;
-        }
-        else
-        {
-            result = nullptr;
-        }
-
-        if (result != nullptr)
-        {
-            pChunk = result;
-            goto skin_found;
-        }
-    }
-
-    pChunk = nullptr;
-
-skin_found:
-    glModel* pModel;
-
-    i = m_nLevel;
-    for (; i >= 0; i--)
+    struct ModelHelper
     {
-        bool found;
-        glModel** pResult;
-        AVLTreeEntry<unsigned long, glModel*>* node = m_pModels[i]->m_pItems->m_Root;
-
-        while (node != nullptr)
+        static inline glModel* Get(GLInventory* self, unsigned long id)
         {
-            int cmpResult;
+            for (int i = self->m_nLevel; i >= 0; i--)
+            {
+                bool found;
+                glModel** pResult;
+                AVLTreeEntry<unsigned long, glModel*>* node = self->m_pModels[i]->m_pItems->m_Root;
 
-            if (hashID == node->key)
-            {
-                cmpResult = 0;
-            }
-            else if (hashID < node->key)
-            {
-                cmpResult = -1;
-            }
-            else
-            {
-                cmpResult = 1;
-            }
-
-            if (cmpResult == 0)
-            {
-                if (&pResult != nullptr)
+                while (node != nullptr)
                 {
-                    pResult = &node->value;
+                    int cmpResult;
+
+                    if (id == node->key)
+                    {
+                        cmpResult = 0;
+                    }
+                    else if (id < node->key)
+                    {
+                        cmpResult = -1;
+                    }
+                    else
+                    {
+                        cmpResult = 1;
+                    }
+
+                    if (cmpResult == 0)
+                    {
+                        if (&pResult != nullptr)
+                        {
+                            pResult = &node->value;
+                        }
+                        found = true;
+                        goto check_found;
+                    }
+                    else if (cmpResult < 0)
+                    {
+                        node = (AVLTreeEntry<unsigned long, glModel*>*)node->node.left;
+                    }
+                    else
+                    {
+                        node = (AVLTreeEntry<unsigned long, glModel*>*)node->node.right;
+                    }
                 }
-                found = true;
-                goto check_model_found;
+
+                found = false;
+            check_found:
+                glModel* result;
+
+                if (found)
+                {
+                    result = *pResult;
+                }
+                else
+                {
+                    result = nullptr;
+                }
+
+                if (result != nullptr)
+                {
+                    return result;
+                }
             }
-            else if (cmpResult < 0)
-            {
-                node = (AVLTreeEntry<unsigned long, glModel*>*)node->node.left;
-            }
-            else
-            {
-                node = (AVLTreeEntry<unsigned long, glModel*>*)node->node.right;
-            }
+
+            return nullptr;
         }
+    };
 
-        found = false;
-    check_model_found:
-        glModel* result;
+    nlChunk* foundChunk = SkinDataHelper::Get(this, hashID);
+    nlChunk* pChunk = foundChunk;
+    glModel* pModel = ModelHelper::Get(this, hashID);
 
-        if (found)
-        {
-            result = *pResult;
-        }
-        else
-        {
-            result = nullptr;
-        }
-
-        if (result != nullptr)
-        {
-            pModel = result;
-            goto model_found;
-        }
-    }
-
-    pModel = nullptr;
-
-model_found:
     return glx_MakeSkinMesh(pChunk, pModel);
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x801E2298 | size: 0x334
+ * TODO: 98.20% match - remaining diff is an r29/r30/r31 role swap between level index, per-level pointer, and stack pointer in both update passes.
  */
-void GLInventory::Update(float)
+/**
+ * Offset/Address/Size: 0x3DC | 0x801E2298 | size: 0x334
+ * TODO: 99.56% match - r29/r31 register swap for level vs precomputed ptr in first loop only (-inline deferred artifact)
+ */
+void GLInventory::Update(float deltaTime)
 {
+    struct NodeStack
+    {
+        AVLTreeNode** m_Stack;
+        unsigned int m_Count;
+    };
+
+    int level;
+    NodeStack* stack = NULL;
+    for (level = m_nLevel; level >= 0; level--)
+    {
+        nlAVLTree<unsigned long, GLTextureAnim*, DefaultKeyCompare<unsigned long> >* tree = m_pTextureAnims[level]->m_pItems;
+
+        if (tree->m_Root != NULL)
+        {
+            stack = (NodeStack*)nlMalloc(sizeof(NodeStack), 8, false);
+            if (stack != NULL)
+            {
+                unsigned int numElements = tree->m_NumElements;
+                AVLTreeEntry<unsigned long, GLTextureAnim*>* node = tree->m_Root;
+
+                stack->m_Stack = (AVLTreeNode**)nlMalloc((numElements + 1) * sizeof(AVLTreeEntry<unsigned long, GLTextureAnim*>*), 8, false);
+                stack->m_Count = 0;
+
+                if (node != NULL)
+                {
+                    while (node->node.left != NULL)
+                    {
+                        stack->m_Stack[stack->m_Count] = (AVLTreeNode*)node;
+                        stack->m_Count++;
+                        node = (AVLTreeEntry<unsigned long, GLTextureAnim*>*)node->node.left;
+                    }
+
+                    stack->m_Stack[stack->m_Count] = (AVLTreeNode*)node;
+                    stack->m_Count++;
+                }
+            }
+
+            while (stack->m_Count != 0)
+            {
+                ((AVLTreeEntry<unsigned long, GLTextureAnim*>*)stack->m_Stack[stack->m_Count - 1])->value->Update(deltaTime);
+                stack->m_Count--;
+
+                AVLTreeEntry<unsigned long, GLTextureAnim*>* right = (AVLTreeEntry<unsigned long, GLTextureAnim*>*)((AVLTreeEntry<unsigned long, GLTextureAnim*>*)stack->m_Stack[stack->m_Count])->node.right;
+                if (right != NULL)
+                {
+                    while (right->node.left != NULL)
+                    {
+                        stack->m_Stack[stack->m_Count] = (AVLTreeNode*)right;
+                        stack->m_Count++;
+                        right = (AVLTreeEntry<unsigned long, GLTextureAnim*>*)right->node.left;
+                    }
+
+                    stack->m_Stack[stack->m_Count] = (AVLTreeNode*)right;
+                    stack->m_Count++;
+                }
+            }
+
+            if (stack != NULL)
+            {
+                delete[] stack->m_Stack;
+                delete stack;
+            }
+        }
+    }
+
+    for (level = m_nLevel; level >= 0; level--)
+    {
+        nlAVLTree<unsigned long, GLVertexAnim*, DefaultKeyCompare<unsigned long> >* tree = m_pVertexAnims[level]->m_pItems;
+
+        if (tree->m_Root != NULL)
+        {
+            stack = (NodeStack*)nlMalloc(sizeof(NodeStack), 8, false);
+            if (stack != NULL)
+            {
+                unsigned int numElements = tree->m_NumElements;
+                AVLTreeEntry<unsigned long, GLVertexAnim*>* node = tree->m_Root;
+
+                stack->m_Stack = (AVLTreeNode**)nlMalloc((numElements + 1) * sizeof(AVLTreeEntry<unsigned long, GLVertexAnim*>*), 8, false);
+                stack->m_Count = 0;
+
+                if (node != NULL)
+                {
+                    while (node->node.left != NULL)
+                    {
+                        stack->m_Stack[stack->m_Count] = (AVLTreeNode*)node;
+                        stack->m_Count++;
+                        node = (AVLTreeEntry<unsigned long, GLVertexAnim*>*)node->node.left;
+                    }
+
+                    stack->m_Stack[stack->m_Count] = (AVLTreeNode*)node;
+                    stack->m_Count++;
+                }
+            }
+
+            while (stack->m_Count != 0)
+            {
+                ((AVLTreeEntry<unsigned long, GLVertexAnim*>*)stack->m_Stack[stack->m_Count - 1])->value->Update(deltaTime);
+                stack->m_Count--;
+
+                AVLTreeEntry<unsigned long, GLVertexAnim*>* right = (AVLTreeEntry<unsigned long, GLVertexAnim*>*)((AVLTreeEntry<unsigned long, GLVertexAnim*>*)stack->m_Stack[stack->m_Count])->node.right;
+                if (right != NULL)
+                {
+                    while (right->node.left != NULL)
+                    {
+                        stack->m_Stack[stack->m_Count] = (AVLTreeNode*)right;
+                        stack->m_Count++;
+                        right = (AVLTreeEntry<unsigned long, GLVertexAnim*>*)right->node.left;
+                    }
+
+                    stack->m_Stack[stack->m_Count] = (AVLTreeNode*)right;
+                    stack->m_Count++;
+                }
+            }
+
+            if (stack != NULL)
+            {
+                delete[] stack->m_Stack;
+                delete stack;
+            }
+        }
+    }
 }

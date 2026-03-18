@@ -159,7 +159,6 @@ void cFielder::EndAction()
 
 /**
  * Offset/Address/Size: 0x7D0C | 0x8002E844 | size: 0x20C
- * TODO: 99.08% match - remaining r-only FPR allocation mismatch in fabs/frsp distance compare chain
  */
 nlVector3 GetClosestWallPoint(const nlVector3& pos)
 {
@@ -175,10 +174,10 @@ nlVector3 GetClosestWallPoint(const nlVector3& pos)
     nlVector3 bottomSideline = pos;
     bottomSideline.f.y = -topSideline.f.y;
 
-    f32 distTop = (f32)fabs(pos.f.y - topSideline.f.y);
-    f32 distBottom = (f32)fabs(pos.f.y - bottomSideline.f.y);
-    f32 distRight = (f32)fabs(pos.f.x - rightGoalLine.f.x);
-    f32 distLeft = (f32)fabs(pos.f.x - leftGoalLine.f.x);
+    f32 distTop = fabsf(pos.f.y - topSideline.f.y);
+    f32 distBottom = fabsf(pos.f.y - bottomSideline.f.y);
+    f32 distRight = fabsf(pos.f.x - rightGoalLine.f.x);
+    f32 distLeft = fabsf(pos.f.x - leftGoalLine.f.x);
 
     if (distTop < distBottom)
     {

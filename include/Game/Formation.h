@@ -104,11 +104,12 @@ class FormationBallPosition : public FormationEval
 {
 public:
     FormationBallPosition(FormationManager*, eFormationType, const FormationSet*);
+    FormationBallPosition(FormationManager*, eFormationType, const FormationSpec*);
     ~FormationBallPosition();
     void CalculateDesiredLocation(nlVector3&, cFielder*, bool);
     float GetWeight();
     void Update(float);
-    void SelectClosestBallFormations(const nlVector2&);
+    bool SelectClosestBallFormations(const nlVector2&);
 
     /* 0x28 */ const FormationSet* m_pFormationSet;
     /* 0x2C */ FormationBallPosition* m_pNextClosestFormation;

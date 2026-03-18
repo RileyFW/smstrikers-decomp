@@ -4,12 +4,33 @@ nlList<SidelineExplodableNode> AnimatedModelExplodable::sAnimatedModelExplodable
 ExplodableCategoryData AnimatedModelExplodable::sCategoryData[NUM_ANIMATED_MODEL_EXPLODABLE_CATEGORIES];
 u8 AnimatedModelExplodable::bIsModelLoaded[2];
 
-// /**
-//  * Offset/Address/Size: 0x70 | 0x80158C4C | size: 0x128
-//  */
-// void 0x8028D2FC..0x8028D300 | size: 0x4
-// {
-// }
+/**
+ * Offset/Address/Size: 0x70 | 0x80158C4C | size: 0x128
+ */
+extern "C" void __sinit_AnimatedModelExplodable_cpp(void)
+{
+    ExplodableCategoryData data0;
+    ExplodableCategoryData data1;
+
+    AnimatedModelExplodable::sAnimatedModelExplodableList.m_pEnd = 0;
+    AnimatedModelExplodable::sAnimatedModelExplodableList.m_pStart = 0;
+
+    data0.mBaseModelName = "environment/Sideline_Objects/camera_base";
+    data0.mFragmentModelName = "environment/Sideline_Objects/camera_d";
+    data0.mUnexplodedModelName = 0;
+    data0.mNumFragmentModels = 0;
+    data0.mUnexplodedModel = 0;
+    data0.mNumStationaryFragments = 0;
+    AnimatedModelExplodable::sCategoryData[0] = data0;
+
+    data1.mBaseModelName = "environment/Sideline_Objects/standupcamera_base";
+    data1.mFragmentModelName = "environment/Sideline_Objects/standupcamera_d";
+    data1.mUnexplodedModelName = 0;
+    data1.mNumFragmentModels = 0;
+    data1.mUnexplodedModel = 0;
+    data1.mNumStationaryFragments = 0;
+    AnimatedModelExplodable::sCategoryData[1] = data1;
+}
 
 /**
  * Offset/Address/Size: 0x44 | 0x80158C20 | size: 0x2C

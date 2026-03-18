@@ -90,13 +90,6 @@ public:
 */
 
 /*
-class PowerupAcquireEventData
-{
-public:
-    void GetID();
-};*/
-
-/*
 class Format<BasicString<unsigned short, Detail
 {
 public:

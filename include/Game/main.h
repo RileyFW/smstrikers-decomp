@@ -5,6 +5,10 @@
 #include "Game/Sys/audio.h"
 #include "NL/nlTask.h"
 
+extern bool g_e3_Build;
+extern bool g_Europe;
+extern int g_Language;
+
 int GetRegion();
 
 class ClockUpdateTask : public nlTask

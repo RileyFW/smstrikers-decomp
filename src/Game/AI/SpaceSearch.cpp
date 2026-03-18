@@ -146,11 +146,13 @@ float SSearchIdealShot::EvaluatePosition(const nlVector3& position, const nlVect
 /**
  * Offset/Address/Size: 0xCEC | 0x8006363C | size: 0x22C
  */
-SSearchBestPass::SSearchBestPass(cPlayer* pPlayer1, cPlayer* pPlayer2, bool, bool)
-    : SpaceSearch(pPlayer1)
-    , m_SSearchIdealShot(pPlayer2 ? pPlayer2->m_pTeam->GetOtherTeam()->GetGoalie() : NULL)
-    , m_SSearchOpenLane(pPlayer2, NULL)
+SSearchBestPass::SSearchBestPass(cPlayer* pBallOwner, cPlayer* pPassTarget, bool bAllowLeadPass, bool bIsPerfectPass)
+    : SpaceSearch(pBallOwner != NULL ? pBallOwner->m_pTeam->m_pNet->m_sideSign : pPassTarget->m_pTeam->m_pNet->m_sideSign)
+    , m_SSearchIdealShot(pPassTarget)
+    , m_SSearchOpenLane(pBallOwner, pPassTarget)
 {
+    m_bAllowLeadPass = bAllowLeadPass;
+    m_bIsPerfectPass = bIsPerfectPass;
 }
 
 /**

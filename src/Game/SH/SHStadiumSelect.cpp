@@ -131,17 +131,12 @@ StadiumSelectSceneV2::StadiumSelectSceneV2()
 
 /**
  * Offset/Address/Size: 0x1230 | 0x800D97B0 | size: 0x1D0
- * TODO: 86.25% match - extra beq in AsyncImage delete loop, BasicString destructor
- * register allocation (r4 vs r28), addic. vs addi for refcount decrement
  */
 StadiumSelectSceneV2::~StadiumSelectSceneV2()
 {
     for (int i = 0; i < 7; i++)
     {
-        if (mImages[i] != NULL)
-        {
-            delete mImages[i];
-        }
+        delete mImages[i];
     }
 
     if (mTempTextureBuffer != NULL)
@@ -149,7 +144,48 @@ StadiumSelectSceneV2::~StadiumSelectSceneV2()
         delete[] mTempTextureBuffer;
     }
 
-    delete m_pTicker;
+    BasicStringInternal* data;
+    FEScrollText* ticker = m_pTicker;
+    if (ticker != NULL)
+    {
+        if ((char*)ticker + 0x21C)
+        {
+            volatile FEScrollText* vticker = ticker;
+            if ((char*)vticker + 0x21C)
+            {
+                if (ticker->m_messageFinishedCB.mTag == FUNCTOR)
+                {
+                    delete ticker->m_messageFinishedCB.mFunctor;
+                }
+                ticker->m_messageFinishedCB.mTag = EMPTY;
+            }
+        }
+
+        if ((char*)ticker + 4)
+        {
+            data = ticker->m_message.m_data;
+            if (data != NULL)
+            {
+                if (--data->mRefCount == 0)
+                {
+                    if (data != NULL)
+                    {
+                        if (data != NULL)
+                        {
+                            delete[] data->mData;
+                        }
+                        if (data != NULL)
+                        {
+                            nlFree(data);
+                        }
+                    }
+                }
+            }
+        }
+
+        ::operator delete(ticker);
+    }
+
     m_pTicker = NULL;
 }
 

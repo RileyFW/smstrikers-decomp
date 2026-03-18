@@ -35,10 +35,11 @@ template <typename T, typename U>
 T* nlBSearch(const U&, T*, int);
 
 static float MESSAGE_DISPLAY_TIME;
+extern "C" FEScrollText* __ct__12FEScrollTextFP14TLTextInstanceii(FEScrollText*, TLTextInstance*, int, int);
 
 /**
  * Offset/Address/Size: 0x0 | 0x800A131C | size: 0x1C0
- * TODO: 99.02% match - constructor call immediate differs and one addic/beq pair remains in delete path
+ * TODO: 99.11% match - one redundant beq remains before callback teardown in delete path
  */
 void NSNMessengerScene::EnableScrolling(bool state)
 {
@@ -89,8 +90,6 @@ void NSNMessengerScene::EnableScrolling(bool state)
 
         if (m_scrollText == NULL)
         {
-            extern FEScrollText* __ct__12FEScrollTextFP14TLTextInstanceii(FEScrollText*, TLTextInstance*, int, int);
-
             gl_ScreenInfo* screeninfo = glGetScreenInfo();
             FEScrollText* scrolltext;
             if ((scrolltext = (FEScrollText*)nlMalloc(0x22C, 8, false)) != NULL)
@@ -106,11 +105,26 @@ void NSNMessengerScene::EnableScrolling(bool state)
     }
     else
     {
+        struct FEScrollTextDeleteType
+        {
+            TLTextInstance* m_controlText;
+            BasicString<unsigned short, Detail::TempStringAllocator> m_message;
+            int m_messageWidth;
+            int m_pos;
+            int m_width;
+            float m_leftEdge;
+            float m_msgTime;
+            unsigned short m_textBuffer[256];
+            Function<FnVoidVoid> m_messageFinishedCB;
+            unsigned char m_visible;
+            nlFont* m_textFont;
+        };
+
         if (m_scrollText != NULL)
         {
             if (m_scrollText != NULL)
             {
-                delete m_scrollText;
+                delete (FEScrollTextDeleteType*)m_scrollText;
             }
             m_scrollText = NULL;
         }
@@ -196,7 +210,7 @@ static inline void CopyWideString(BasicStringInternal* data, const unsigned shor
 
 /**
  * Offset/Address/Size: 0x274 | 0x800A1590 | size: 0x1A4
- * TODO: 96.38% match - r29/r30 register swap for this/data
+ * TODO: 98.71% match - post-call cleanup keeps data in r30 instead of reloading into r29 from stack
  */
 void NSNMessengerScene::SetDisplayMessage(const char* locMessage)
 {
@@ -208,23 +222,25 @@ void NSNMessengerScene::SetDisplayMessage(const char* locMessage)
         CopyWideString(data, text);
     }
 
-    BasicStringInternal* msgData = data;
-    SetDisplayMessage(*(const BasicString<unsigned short, Detail::TempStringAllocator>*)&msgData);
-
-    data = msgData;
-    if (data != 0)
     {
-        if (--data->mRefCount == 0)
+        BasicStringInternal* localMsgData = data;
+        SetDisplayMessage(*(const BasicString<unsigned short, Detail::TempStringAllocator>*)&localMsgData);
+    }
+
+    BasicStringInternal* msgData = data;
+    if (msgData != 0)
+    {
+        if (--msgData->mRefCount == 0)
         {
-            if (data != 0)
+            if (msgData != 0)
             {
-                if (data != 0)
+                if (msgData != 0)
                 {
-                    delete[] data->mData;
+                    delete[] msgData->mData;
                 }
-                if (data != 0)
+                if (msgData != 0)
                 {
-                    nlFree(data);
+                    nlFree(msgData);
                 }
             }
         }
@@ -350,9 +366,18 @@ void NSNMessengerScene::SceneCreated()
 
 /**
  * Offset/Address/Size: 0x940 | 0x800A1C5C | size: 0x180
+ * TODO: 96.72% match - one addic./beq pair remains in FEScrollText delete path and
+ *       one addic./beq pair remains before m_messageFinishedCB teardown.
  */
 NSNMessengerScene::~NSNMessengerScene()
 {
+    if (m_scrollText != NULL)
+    {
+        if (m_scrollText != NULL)
+        {
+            delete m_scrollText;
+        }
+    }
 }
 
 /**

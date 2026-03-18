@@ -793,8 +793,6 @@ ExplosionFragment* SidelineExplodableManager::GetFragmentFromHandle(unsigned sho
 
 /**
  * Offset/Address/Size: 0x358 | 0x801676B8 | size: 0x1B0
- * TODO: 99.68% match - remaining diffs are floating-point register allocation
- * in relative velocity length-squared computation (f1/f3/f4 assignment around fsubs/fmuls).
  */
 struct SwizzledVelocityProxy
 {
@@ -843,10 +841,16 @@ ContactType SidelineExplosionPhysicsObject::Contact(PhysicsObject* other, dConta
         if (player != NULL)
         {
             nlVector3* linearVelocity = &GetLinearVelocity();
-            float deltaX = linearVelocity->f.x - player->m_v3Velocity.y_field;
-            float deltaY = linearVelocity->f.y - player->m_v3Velocity.x_field;
-            float deltaZ = linearVelocity->f.z - player->m_v3Velocity.z_field;
-            float deltaSq = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+            float deltaX;
+            float deltaY;
+            float deltaZ;
+
+            deltaY = linearVelocity->f.y - player->m_v3Velocity.x_field;
+            deltaX = linearVelocity->f.x - player->m_v3Velocity.y_field;
+            deltaZ = linearVelocity->f.z - player->m_v3Velocity.z_field;
+
+            float deltaYSq = deltaY * deltaY;
+            float deltaSq = deltaYSq + deltaX * deltaX + deltaZ * deltaZ;
 
             if (deltaSq > 36.0f)
             {
@@ -890,7 +894,7 @@ bool SidelineExplosionPhysicsObject::SetContactInfo(dContact* contact, PhysicsOb
 
 /**
  * Offset/Address/Size: 0x1D4 | 0x80167534 | size: 0x164
- * TODO: 99.55% match - floating-point register allocation mismatch (f3/f4/f5)
+ * TODO: 99.66% match - floating-point register allocation mismatch (f4/f5 swap)
  * in angular velocity normalization/scaling around nlVec3Scale.
  */
 void SidelineExplosionPhysicsObject::PostUpdate()
@@ -903,9 +907,12 @@ void SidelineExplosionPhysicsObject::PostUpdate()
     {
         float recip = nlRecipSqrt(lenSq, true);
 
-        angularVelocity.f.z = recip * angularVelocity.f.z;
-        angularVelocity.f.y = recip * angularVelocity.f.y;
-        angularVelocity.f.x = recip * angularVelocity.f.x;
+        float xNorm = recip * angularVelocity.f.x;
+        float zNorm = recip * angularVelocity.f.z;
+        float yNorm = recip * angularVelocity.f.y;
+        angularVelocity.f.x = xNorm;
+        angularVelocity.f.y = yNorm;
+        angularVelocity.f.z = zNorm;
 
         nlVec3Scale(angularVelocity, angularVelocity, 10.0f);
         SetAngularVelocity(angularVelocity);

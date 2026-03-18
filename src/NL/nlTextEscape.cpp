@@ -35,71 +35,72 @@ nlColour nlEscapeSequence::GetExtendedColour()
  */
 nlEscapeSequence::nlEscapeSequence(const unsigned short* str)
 {
-    const unsigned short* extPtr = 0;
-    int count = 0;
-    unsigned long cmdKey = 0;
-
+    char Seq[4] = { ' ', ' ', ' ', ' ' };
+    const unsigned short* ExtendedStart = 0;
     const unsigned short* p = str;
-    char* cmdBuf = (char*)&cmdKey;
+    char* pSeq = Seq;
+    unsigned long Char = 0;
+    unsigned long key;
+    ESCAPE_LOOKUP* pEscape;
+    ESCAPE_TYPE type;
 
-    // Parse the command name between '{' and '}' or ':'
     while (true)
     {
-        unsigned short ch = p[1];
+        unsigned long ch = p[1];
+
         if (ch == '}')
+        {
             break;
+        }
+
         if (ch == ':')
         {
-            extPtr = str + count + 2;
+            const unsigned short* pExtended = str + Char;
+            ExtendedStart = pExtended + 2;
             break;
         }
-        if ((unsigned int)count < 4)
+
+        if (Char < 4)
         {
-            *cmdBuf = (char)ch;
+            *pSeq = (char)ch;
         }
+
         p++;
-        cmdBuf++;
-        count++;
+        pSeq++;
+        Char++;
     }
 
-    // Parse extended data after ':'
-    if (extPtr != 0)
+    if (ExtendedStart != 0)
     {
-        count = 0;
-        const unsigned short* ext = extPtr;
-        for (int i = 0; i < 15; i++)
+        Char = 0;
+        while (Char < 15)
         {
-            if (*ext == '}')
+            unsigned long ch = *ExtendedStart;
+            if (ch == '}')
+            {
                 break;
-            m_Extended[count++] = *ext++;
+            }
+
+            m_Extended[Char] = (unsigned short)ch;
+            ExtendedStart++;
+            Char++;
         }
     }
 
-    // Null-terminate extended data
-    m_Extended[count] = 0;
+    m_Extended[Char] = 0;
+    m_pEnd = (ExtendedStart ? ExtendedStart : str + 1) + Char + 1;
 
-    // Calculate end pointer (past the closing '}')
-    const unsigned short* end;
-    if (extPtr != 0)
+    key = *(unsigned long*)Seq;
+    pEscape = nlBSearch(key, s_EscapeLookup, ESC_COUNT);
+    if (pEscape != 0)
     {
-        end = extPtr;
+        type = pEscape->type;
     }
     else
     {
-        end = str + 1;
+        type = ESC_UNKNOWN;
     }
-    m_pEnd = end + count + 1;
-
-    // Look up escape type from command name
-    ESCAPE_LOOKUP* result = nlBSearch(cmdKey, s_EscapeLookup, ESC_COUNT);
-    if (result != 0)
-    {
-        m_Type = (ESCAPE_TYPE)result->type;
-    }
-    else
-    {
-        m_Type = ESC_UNKNOWN;
-    }
+    m_Type = type;
 }
 
 // /**

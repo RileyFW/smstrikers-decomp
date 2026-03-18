@@ -59,7 +59,7 @@ void EmitBallImpact(cPlayer*, bool);
 float GetCurrentAnimTriggerTime(cCharacter*, unsigned long, unsigned int);
 void GetAnimTriggerInfo(cCharacter*, int, bool (*)(float, float, unsigned long, float, void*), void*);
 void CharacterTriggerHandler(unsigned int);
-void EmitGeneric(cCharacter*, const char*, const char*);
+EmissionController* EmitGeneric(cCharacter*, const char*, const char*);
 void UpdateEmitterFromBall(EmissionController&);
 void UpdateEmitterPoseFromCharacter(EmissionController&);
 void UpdateEmitterFromCharacter(EmissionController&);

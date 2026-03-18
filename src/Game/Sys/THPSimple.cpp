@@ -11,6 +11,38 @@ static s16* LastAudioBuffer;
 static s16* CurAudioBuffer;
 static s32 AudioSystem;
 
+struct THPSimpleControlWork
+{
+    /* 0x00 */ nlFile* fileInfo;
+    /* 0x04 */ unsigned char _pad04[0x64];
+    /* 0x68 */ int open;
+    /* 0x6C */ unsigned char preFetchState;
+    /* 0x6D */ unsigned char audioState;
+    /* 0x6E */ unsigned char loop;
+    /* 0x6F */ unsigned char audioExist;
+    /* 0x70 */ long curOffset;
+    /* 0x74 */ int dvdError;
+    /* 0x78 */ unsigned long readProgress;
+    /* 0x7C */ long nextDecodeIndex;
+    /* 0x80 */ long readIndex;
+    /* 0x84 */ long readSize;
+    /* 0x88 */ long totalReadFrame;
+    /* 0x8C */ float curVolume;
+    /* 0x90 */ float targetVolume;
+    /* 0x94 */ float deltaVolume;
+    /* 0x98 */ long rampCount;
+    /* 0x9C */ THPReadBuffer readBuffer[16];
+    /* 0x15C */ THPTextureSet textureSet;
+    /* 0x16C */ THPAudioBuffer audioBuffer[6];
+    /* 0x1B4 */ long audioDecodeIndex;
+    /* 0x1B8 */ long audioOutputIndex;
+};
+
+extern int NumAudioBuffers;
+extern unsigned short VolumeTable[128];
+extern "C" void* memcpy(void*, const void*, unsigned long);
+extern "C" void* memset(void*, int, unsigned long);
+
 /**
  * Offset/Address/Size: 0x17E4 | 0x801CD748 | size: 0x4
  */
@@ -75,10 +107,219 @@ void __THPSimpleDVDCallback(nlFile* file, void* buffer, unsigned int bytesRead, 
 
 /**
  * Offset/Address/Size: 0x31C | 0x801CC280 | size: 0x368
+ * TODO: 89.5% match - MWCC register allocation puts requestSample in r0 vs r11, cascading to
+ * inner loop register diffs and post-loop addressing mode differences (addi+lwzx vs add+lwz)
  */
-void MixAudio(short*, short*, unsigned long)
+void MixAudio(short* destination, short* source, unsigned long sample)
 {
-    FORCE_DONT_INLINE;
+    unsigned long requestSample;
+    unsigned long i;
+    unsigned short vol;
+    long mix;
+    short* dst;
+    short* libsrc;
+    short* thpsrc;
+
+    if (AudioSystem == 1)
+    {
+        return;
+    }
+
+    if (source != NULL)
+    {
+        THPSimpleControlWork* simple = (THPSimpleControlWork*)&SimpleControl;
+
+        if ((simple->open != 0) && (simple->audioState == 1) && (simple->audioExist != 0))
+        {
+            while (1)
+            {
+                requestSample = simple->audioBuffer[simple->audioOutputIndex].mValidSample;
+                if (requestSample == 0)
+                {
+                    break;
+                }
+
+                if (requestSample >= sample)
+                {
+                    requestSample = sample;
+                }
+
+                thpsrc = simple->audioBuffer[simple->audioOutputIndex].mCurPtr;
+                dst = destination;
+                libsrc = source;
+
+                for (i = 0; i < requestSample; i++)
+                {
+                    if (simple->rampCount != 0)
+                    {
+                        simple->rampCount--;
+                        simple->curVolume += simple->deltaVolume;
+                    }
+                    else
+                    {
+                        simple->curVolume = simple->targetVolume;
+                    }
+
+                    vol = VolumeTable[(long)simple->curVolume];
+
+                    mix = libsrc[0] + ((vol * thpsrc[0]) >> 15);
+                    if (mix < -0x8000)
+                    {
+                        mix = -0x8000;
+                    }
+                    if (mix > 0x7FFF)
+                    {
+                        mix = 0x7FFF;
+                    }
+                    dst[0] = mix;
+
+                    mix = libsrc[1] + ((vol * thpsrc[1]) >> 15);
+                    if (mix < -0x8000)
+                    {
+                        mix = -0x8000;
+                    }
+                    if (mix > 0x7FFF)
+                    {
+                        mix = 0x7FFF;
+                    }
+                    dst[1] = mix;
+
+                    dst += 2;
+                    libsrc += 2;
+                    thpsrc += 2;
+                }
+
+                sample -= requestSample;
+
+                THPAudioBuffer* audio = &simple->audioBuffer[simple->audioOutputIndex];
+                audio->mValidSample -= requestSample;
+
+                audio = &simple->audioBuffer[simple->audioOutputIndex];
+                audio->mCurPtr = thpsrc;
+
+                audio = &simple->audioBuffer[simple->audioOutputIndex];
+                if (audio->mValidSample == 0)
+                {
+                    i = simple->audioOutputIndex + 1;
+                    simple->audioOutputIndex = i;
+                    if ((int)i >= NumAudioBuffers)
+                    {
+                        simple->audioOutputIndex = 0;
+                    }
+                }
+
+                if (sample == 0)
+                {
+                    return;
+                }
+
+                destination = dst;
+                source = libsrc;
+            }
+
+            memcpy(destination, source, sample << 2);
+        }
+        else
+        {
+            memcpy(destination, source, sample << 2);
+        }
+    }
+    else
+    {
+        THPSimpleControlWork* simple = (THPSimpleControlWork*)&SimpleControl;
+
+        if ((simple->open != 0) && (simple->audioState == 1) && (simple->audioExist != 0))
+        {
+            while (1)
+            {
+                requestSample = simple->audioBuffer[simple->audioOutputIndex].mValidSample;
+                if (requestSample == 0)
+                {
+                    break;
+                }
+
+                if (requestSample >= sample)
+                {
+                    requestSample = sample;
+                }
+
+                thpsrc = simple->audioBuffer[simple->audioOutputIndex].mCurPtr;
+                dst = destination;
+
+                for (i = 0; i < requestSample; i++)
+                {
+                    if (simple->rampCount != 0)
+                    {
+                        simple->rampCount--;
+                        simple->curVolume += simple->deltaVolume;
+                    }
+                    else
+                    {
+                        simple->curVolume = simple->targetVolume;
+                    }
+
+                    vol = VolumeTable[(long)simple->curVolume];
+
+                    mix = (vol * thpsrc[0]) >> 15;
+                    if (mix < -0x8000)
+                    {
+                        mix = -0x8000;
+                    }
+                    if (mix > 0x7FFF)
+                    {
+                        mix = 0x7FFF;
+                    }
+                    dst[0] = mix;
+
+                    mix = (vol * thpsrc[1]) >> 15;
+                    if (mix < -0x8000)
+                    {
+                        mix = -0x8000;
+                    }
+                    if (mix > 0x7FFF)
+                    {
+                        mix = 0x7FFF;
+                    }
+                    dst[1] = mix;
+
+                    dst += 2;
+                    thpsrc += 2;
+                }
+
+                sample -= requestSample;
+
+                THPAudioBuffer* audio = &simple->audioBuffer[simple->audioOutputIndex];
+                audio->mValidSample -= requestSample;
+
+                audio = &simple->audioBuffer[simple->audioOutputIndex];
+                audio->mCurPtr = thpsrc;
+
+                audio = &simple->audioBuffer[simple->audioOutputIndex];
+                if (audio->mValidSample == 0)
+                {
+                    i = simple->audioOutputIndex + 1;
+                    simple->audioOutputIndex = i;
+                    if ((int)i >= NumAudioBuffers)
+                    {
+                        simple->audioOutputIndex = 0;
+                    }
+                }
+
+                if (sample == 0)
+                {
+                    return;
+                }
+
+                destination = dst;
+            }
+
+            memset(destination, 0, sample << 2);
+        }
+        else
+        {
+            memset(destination, 0, sample << 2);
+        }
+    }
 }
 
 /**

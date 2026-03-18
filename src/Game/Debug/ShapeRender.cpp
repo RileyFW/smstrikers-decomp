@@ -8,6 +8,8 @@
 #include "NL/gl/glState.h"
 
 extern const u32 WhiteTexture;
+static unsigned char g_bLit;
+static unsigned long LitProgram;
 
 /**
  * Offset/Address/Size: 0x149C | 0x801FC72C | size: 0x418
@@ -95,9 +97,121 @@ void ShapeRender::CreateCylinderGeometry(PrimitiveShape&)
 
 /**
  * Offset/Address/Size: 0xAC0 | 0x801FBD50 | size: 0x354
+ * TODO: 98.85% match - callee-saved register assignment differs in both packet loops.
  */
-void ShapeRender::DrawSpherePrimitive(const nlMatrix4&, float, const nlColour&) const
+void ShapeRender::DrawSpherePrimitive(const nlMatrix4& mat_world, float radius, const nlColour& colour) const
 {
+    nlMatrix4 mat_hemiTop;
+    nlMatrix4 mat_hemiBottom;
+    nlMatrix4 mat_rot;
+
+    radius = radius / 100.0f;
+
+    nlMakeScaleMatrix(mat_hemiTop, radius, radius, radius);
+    nlMakeRotationMatrixX(mat_rot, 3.1415927f);
+    nlMultMatrices(mat_hemiBottom, mat_hemiTop, mat_rot);
+    nlMultMatrices(mat_hemiTop, mat_hemiTop, mat_world);
+    nlMultMatrices(mat_hemiBottom, mat_hemiBottom, mat_world);
+
+    {
+        unsigned long matrix = glAllocMatrix();
+        if (matrix + 0x10000 != 0xFFFF)
+        {
+            glSetMatrix(matrix, mat_hemiTop);
+        }
+
+        glModel* pModel = glModelDupNoStreams(m_Hemisphere.model, true, false);
+        void* pUserData;
+
+        if (g_bLit)
+        {
+            void* pColourData;
+            pUserData = glUserAlloc(GLUD_Diffuse, sizeof(nlFloatColour), false);
+            pColourData = glUserGetData(pUserData);
+
+            ((nlFloatColour*)pColourData)->c[0] = (float)colour.c[0] / 255.0f;
+            ((nlFloatColour*)pColourData)->c[1] = (float)colour.c[1] / 255.0f;
+            ((nlFloatColour*)pColourData)->c[2] = (float)colour.c[2] / 255.0f;
+            ((nlFloatColour*)pColourData)->c[3] = (float)colour.c[3] / 255.0f;
+        }
+        else
+        {
+            void* pColourData;
+            pUserData = glUserAlloc(GLUD_ConstantColour, sizeof(nlColour), false);
+            pColourData = glUserGetData(pUserData);
+            *(unsigned long*)pColourData = *(unsigned long*)&colour;
+        }
+
+        glModelPacket* packet = pModel->packets;
+        void* pLightData = m_pLightUserData;
+        unsigned long litProgram = LitProgram;
+
+        while (packet < &pModel->packets[pModel->numPackets])
+        {
+            packet->state.matrix = matrix;
+            glUserAttach(pUserData, packet, false);
+
+            if (g_bLit && pLightData != NULL)
+            {
+                packet->state.program = litProgram;
+                glUserAttach(pLightData, packet, false);
+            }
+
+            packet++;
+        }
+
+        glViewAttachModel(m_eView, pModel);
+    }
+
+    {
+        unsigned long matrix = glAllocMatrix();
+        if (matrix + 0x10000 != 0xFFFF)
+        {
+            glSetMatrix(matrix, mat_hemiBottom);
+        }
+
+        glModel* pModel = glModelDupNoStreams(m_Hemisphere.model, true, false);
+        void* pUserData;
+
+        if (g_bLit)
+        {
+            void* pColourData;
+            pUserData = glUserAlloc(GLUD_Diffuse, sizeof(nlFloatColour), false);
+            pColourData = glUserGetData(pUserData);
+
+            ((nlFloatColour*)pColourData)->c[0] = (float)colour.c[0] / 255.0f;
+            ((nlFloatColour*)pColourData)->c[1] = (float)colour.c[1] / 255.0f;
+            ((nlFloatColour*)pColourData)->c[2] = (float)colour.c[2] / 255.0f;
+            ((nlFloatColour*)pColourData)->c[3] = (float)colour.c[3] / 255.0f;
+        }
+        else
+        {
+            void* pColourData;
+            pUserData = glUserAlloc(GLUD_ConstantColour, sizeof(nlColour), false);
+            pColourData = glUserGetData(pUserData);
+            *(unsigned long*)pColourData = *(unsigned long*)&colour;
+        }
+
+        glModelPacket* packet = pModel->packets;
+        void* pLightData = m_pLightUserData;
+        unsigned long litProgram = LitProgram;
+
+        while (packet < &pModel->packets[pModel->numPackets])
+        {
+            packet->state.matrix = matrix;
+            glUserAttach(pUserData, packet, false);
+
+            if (g_bLit && pLightData != NULL)
+            {
+                packet->state.program = litProgram;
+                glUserAttach(pLightData, packet, false);
+            }
+
+            packet++;
+        }
+
+        glViewAttachModel(m_eView, pModel);
+    }
 }
 
 /**

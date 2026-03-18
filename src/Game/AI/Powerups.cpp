@@ -570,15 +570,15 @@ GreenShell::~GreenShell()
 
 /**
  * Offset/Address/Size: 0x1A80 | 0x8005C36C | size: 0x218
+ * TODO: 99.8% match - f1/f2/f4 register allocation swap in the 19.0f
+ * velocity-cap multiply sequence.
  */
 void GreenShell::Update(float dt)
 {
-    nlVector2 vel;
     nlPolar polar;
-    // float radius;
-    // float velLenSq;
-    nlVector3 newVel;
-    // float recipSqrt;
+    nlVector2 vel;
+    nlPolar polar2;
+    nlVector3 cappedVel;
 
     m_v3PrevPosition = m_v3Position;
     m_pPhysicsObject->GetPosition(&m_v3Position);
@@ -590,7 +590,7 @@ void GreenShell::Update(float dt)
         m_pPhysicsObject->SetPosition(m_v3Position, PhysicsObject::WORLD_COORDINATES);
     }
 
-    if (m_pBlurHandler != nullptr)
+    if (m_pBlurHandler != NULL)
     {
         m_pBlurHandler->AddViewOrientedPoint(m_v3Position, m_v3Velocity);
     }
@@ -600,43 +600,41 @@ void GreenShell::Update(float dt)
 
     UpdateTransform();
 
-    if (m_pBlurHandler != nullptr)
+    if (m_pBlurHandler != NULL)
     {
         nlCartesianToPolar(polar, m_v3Velocity.f.x, m_v3Velocity.f.y);
         if (polar.r < 0.5f)
         {
             m_pBlurHandler->Die(0.5f);
-            m_pBlurHandler = nullptr;
+            m_pBlurHandler = NULL;
         }
     }
 
     if (mtNoHitTimer.m_uPackedTime == 0)
     {
-        nlCartesianToPolar(polar, m_v3Velocity.f.x, m_v3Velocity.f.y);
-
-        if (polar.r < 3.0f)
+        nlCartesianToPolar(polar2, m_v3Velocity.f.x, m_v3Velocity.f.y);
+        if (polar2.r < 3.0f)
         {
             m_bShouldDestroy = true;
         }
-        else if (polar.r > 20.0f)
+        else if (polar2.r > 20.0f)
         {
-            nlVector2 vel = (*(nlVector2*)&m_v3Velocity);
-            float xx = vel.f.x * vel.f.x;
-            float yy = vel.f.y * vel.f.y;
-            // float velLenSq = xx + yy;
-            // velLenSq = m_v3Velocity.f.x * m_v3Velocity.f.x + m_v3Velocity.f.y * m_v3Velocity.f.y;
-            // newVel = m_v3Velocity;
-            // // float velLenSq = vel.f.x * vel.f.x + vel.f.y * vel.f.y;
-            float recipSqrt = nlRecipSqrt(xx + yy, true);
-
-            // nlVec3Set(newVel, 19.0f * (recipSqrt * m_v3Velocity.f.x), 19.0f * (recipSqrt * m_v3Velocity.f.y), m_v3Velocity.f.z);
-
-            newVel.f.x = 19.0f * (recipSqrt * m_v3Velocity.f.x);
-            newVel.f.y = 19.0f * (recipSqrt * m_v3Velocity.f.y);
-            newVel.f.z = m_v3Velocity.f.z;
-            m_v3Velocity = newVel;
-
-            m_pPhysicsObject->SetLinearVelocity(m_v3Velocity);
+            vel.as_u32[0] = m_v3Velocity.as_u32[0];
+            vel.as_u32[1] = m_v3Velocity.as_u32[1];
+            f32 velX = vel.f.x;
+            f32 velY = vel.f.y;
+            f32 sqX = velX * velX;
+            f32 sqY = velY * velY;
+            f32 recipLen = nlRecipSqrt(sqX + sqY, true);
+            vel.f.x = recipLen * velX;
+            vel.f.y = recipLen * velY;
+            vel.f.x = 19.0f * vel.f.x;
+            vel.f.y = 19.0f * vel.f.y;
+            cappedVel.f.y = vel.f.y;
+            cappedVel.f.x = vel.f.x;
+            cappedVel.f.z = m_v3Velocity.f.z;
+            m_v3Velocity = cappedVel;
+            m_pPhysicsObject->SetLinearVelocity(cappedVel);
         }
     }
 
@@ -1118,8 +1116,7 @@ void FreezeShell::Update(float fDeltaT)
             f32 recipLen = nlRecipSqrt(sqX + sqY, true);
             vel.f.x = recipLen * velX;
             vel.f.y = recipLen * velY;
-            vel.f.x = 19.0f * vel.f.x;
-            vel.f.y = 19.0f * vel.f.y;
+            nlVec2Set(vel, 19.0f * vel.f.x, 19.0f * vel.f.y);
             nlVector3 cappedVel;
             cappedVel.f.y = vel.f.y;
             cappedVel.f.x = vel.f.x;
@@ -1129,7 +1126,6 @@ void FreezeShell::Update(float fDeltaT)
         }
     }
 
-    // TODO: 99.78% match - f4/f1 register allocation diff in 19.0f multiplication, same MWCC version quirk as SpinyShell::Update
     if (m_bShouldDestroy)
     {
         m_pDrawableObj->m_uObjectFlags &= ~1u;

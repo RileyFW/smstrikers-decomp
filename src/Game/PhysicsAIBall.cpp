@@ -88,7 +88,11 @@ bool PhysicsAIBall::DidBallJustEnterNet(const nlVector3& oldPos, nlVector3 newPo
  * TODO: 96.37% match - sweep-contact bool live range still spills through r0,
  * and FP register allocation differs slightly in the reflection math block.
  */
-bool PhysicsAIBall::CheckIfBallWentThroughGoalPost()
+/**
+ * Offset/Address/Size: 0x0 | 0x80133C58 | size: 0x310
+ * TODO: 97.67% match - FPR allocation diffs: f4/f5 swap for 0.005f, f11/f7 f12/f10 f10/f11 for vel/normal temporaries
+ */
+void PhysicsAIBall::CheckIfBallWentThroughGoalPost()
 {
     if (m_parentObject == NULL)
     {

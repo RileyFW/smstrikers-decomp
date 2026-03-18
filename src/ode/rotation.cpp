@@ -234,9 +234,8 @@ void dRfromQ(dMatrix3 R, const dQuaternion q)
 
 /**
  * Offset/Address/Size: 0x610 | 0x802236D0 | size: 0x224
- * TODO: 96.4% match - float register allocation difference: MWCC puts 0.5f
- * constant in f6 instead of f9, shifting all matrix load registers by 3.
- * All instructions match, only register numbers differ (r diffs only).
+ * TODO: 97.2% match - float register allocation still differs in all four
+ * branches (mostly constant/load register choices around the 0.5f scale path).
  */
 void dQfromR(dQuaternion q, const dMatrix3 R)
 {
@@ -247,8 +246,7 @@ void dQfromR(dQuaternion q, const dMatrix3 R)
     if (tr >= 0)
     {
         dReal r;
-        dReal a, b, c, d, e, f;
-        dReal t1, t2, t3;
+        dReal c, b, a, d, e, f;
         dReal q0;
 
         s = dSqrt(tr + 1);
@@ -262,13 +260,10 @@ void dQfromR(dQuaternion q, const dMatrix3 R)
         q0 = REAL(0.5) * r;
         f = _R(0, 1);
         s = REAL(0.5) * s;
-        t1 = a - b;
-        t2 = c - d;
         q[0] = q0;
-        t3 = e - f;
-        q[1] = s * t1;
-        q[2] = s * t2;
-        q[3] = s * t3;
+        q[1] = s * (a - b);
+        q[2] = s * (c - d);
+        q[3] = s * (e - f);
     }
     else
     {
@@ -286,8 +281,7 @@ void dQfromR(dQuaternion q, const dMatrix3 R)
     case_0:
     {
         dReal r;
-        dReal a, b, c, d, e, f;
-        dReal t1, t2, t3;
+        dReal c, b, a, d, e, f;
         dReal q1;
 
         s = dSqrt((_R(0, 0) - (_R(1, 1) + _R(2, 2))) + 1);
@@ -301,21 +295,17 @@ void dQfromR(dQuaternion q, const dMatrix3 R)
         q1 = REAL(0.5) * r;
         f = _R(1, 2);
         s = REAL(0.5) * s;
-        t1 = a + b;
-        t2 = c + d;
         q[1] = q1;
-        t3 = e - f;
-        q[2] = s * t1;
-        q[3] = s * t2;
-        q[0] = s * t3;
+        q[2] = s * (a + b);
+        q[3] = s * (c + d);
+        q[0] = s * (e - f);
         return;
     }
 
     case_1:
     {
         dReal r;
-        dReal a, b, c, d, e, f;
-        dReal t1, t2, t3;
+        dReal c, b, a, d, e, f;
         dReal q2;
 
         s = dSqrt((_R(1, 1) - (_R(2, 2) + _R(0, 0))) + 1);
@@ -329,21 +319,17 @@ void dQfromR(dQuaternion q, const dMatrix3 R)
         q2 = REAL(0.5) * r;
         f = _R(2, 0);
         s = REAL(0.5) * s;
-        t1 = a + b;
-        t2 = c + d;
         q[2] = q2;
-        t3 = e - f;
-        q[3] = s * t1;
-        q[1] = s * t2;
-        q[0] = s * t3;
+        q[3] = s * (a + b);
+        q[1] = s * (c + d);
+        q[0] = s * (e - f);
         return;
     }
 
     case_2:
     {
         dReal r;
-        dReal a, b, c, d, e, f;
-        dReal t1, t2, t3;
+        dReal c, b, a, d, e, f;
         dReal q3;
 
         s = dSqrt((_R(2, 2) - (_R(0, 0) + _R(1, 1))) + 1);
@@ -357,13 +343,10 @@ void dQfromR(dQuaternion q, const dMatrix3 R)
         q3 = REAL(0.5) * r;
         f = _R(0, 1);
         s = REAL(0.5) * s;
-        t1 = a + b;
-        t2 = c + d;
         q[3] = q3;
-        t3 = e - f;
-        q[1] = s * t1;
-        q[2] = s * t2;
-        q[0] = s * t3;
+        q[1] = s * (a + b);
+        q[2] = s * (c + d);
+        q[0] = s * (e - f);
         return;
     }
     }

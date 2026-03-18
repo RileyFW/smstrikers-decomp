@@ -16,7 +16,7 @@ void ApplyChangesCB();
 
 enum eMenuState
 {
-    MS_INVALID = -1,
+    MENUSTATE_INVALID = -1,
     MS_MAIN = 0,
     MS_AUDIO = 1,
     MS_VISUAL = 2,

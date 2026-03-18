@@ -14,8 +14,8 @@ void Config::Parse(const char*, Config::Parser&)
 
 /**
  * Offset/Address/Size: 0x13EC | 0x801D4050 | size: 0x21C
- * TODO: 87.7% match - unresolved debug format literal for @2685 and remaining
- * r29/r30/r27 allocation/scheduling differences in buffer sizing and copy loops
+ * TODO: 91.0% match - unresolved debug format literal (@2685) and remaining
+ * r29/r30/r27 register-allocation differences in buffer sizing and copy loops
  */
 BasicString<char, Detail::TempStringAllocator> Config::LoadFileAsString(const char* filename)
 {
@@ -23,14 +23,14 @@ BasicString<char, Detail::TempStringAllocator> Config::LoadFileAsString(const ch
     nlFlushFileCash();
 
     unsigned long fileSize = 0;
-    char* buffer = (char*)nlLoadEntireFile(filename, &fileSize, 0x20, AllocateEnd);
-    if (buffer != 0)
+    char* src = (char*)nlLoadEntireFile(filename, &fileSize, 0x20, AllocateEnd);
+    if (src != 0)
     {
-        char* bufferEnd = buffer + fileSize;
+        char* end = src + fileSize;
         BasicStringInternal* data = (BasicStringInternal*)nlMalloc(0x10, 8, true);
         if (data != 0)
         {
-            s32 length = bufferEnd - buffer;
+            s32 length = end - src;
             s32 size = length + 1;
             data->mData = (char*)nlMalloc(size, 8, true);
             data->mSize = size;
@@ -42,16 +42,14 @@ BasicString<char, Detail::TempStringAllocator> Config::LoadFileAsString(const ch
             }
 
             data->mRefCount = 1;
-            char* src = buffer;
-            for (s32 i = 0; i < data->mSize - 1; i++, src++)
+            for (s32 i = 0; i < data->mSize - 1; i++)
             {
-                data->mData[i] = *src;
+                data->mData[i] = src[i];
             }
         }
 
-        BasicString<char, Detail::TempStringAllocator> s;
-        s.m_data = data;
-        nlFree(buffer);
+        BasicString<char, Detail::TempStringAllocator> s(data);
+        nlFree(src);
         nlFlushFileCash();
         return s;
     }

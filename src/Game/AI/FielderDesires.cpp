@@ -62,29 +62,29 @@ CommonDesireData& GetCommonDesireData(eFielderDesireState desireType)
 
 /**
  * Offset/Address/Size: 0x6484 | 0x80037208 | size: 0x174
- * TODO: 80.59% match - remaining diffs are register allocation and load scheduling around opt1/opt2 preload locals.
+ * TODO: 81.83% match - remaining diffs are register allocation around preloaded opt1/opt2 locals.
  */
 void cFielder::QueueDesire(eFielderDesireState eDesireType, float fDuration, FuzzyVariant opt1, FuzzyVariant opt2)
 {
-    float opt1SelectionChance = opt1.SelectionChance;
     eVariantType opt2Type = opt2.mType;
-    u32 opt1Data2 = opt1.mData.vector.as_u32[2];
-    eVariantType opt2ExtraType = opt2.ExtraData.mType;
-    u32 opt1Extra2 = opt1.ExtraData.mData.vector.as_u32[2];
+    u32 opt1Data0 = opt1.mData.vector.as_u32[0];
+    u32 opt1Data1 = opt1.mData.vector.as_u32[1];
+    eVariantType opt1Type = opt1.mType;
     float opt2Confidence = opt2.Confidence;
     float opt2SelectionChance = opt2.SelectionChance;
     eVariantType opt1ExtraType = opt1.ExtraData.mType;
-    u32 opt2Extra2 = opt2.ExtraData.mData.vector.as_u32[2];
-    u32 opt2Data1 = opt2.mData.vector.as_u32[1];
+    u32 opt1Data2 = opt1.mData.vector.as_u32[2];
     u32 opt1Extra1 = opt1.ExtraData.mData.vector.as_u32[1];
-    u32 opt1Data0 = opt1.mData.vector.as_u32[0];
+    u32 opt2Extra2 = opt2.ExtraData.mData.vector.as_u32[2];
+    eVariantType opt2ExtraType = opt2.ExtraData.mType;
     u32 opt1Extra0 = opt1.ExtraData.mData.vector.as_u32[0];
-    eVariantType opt1Type = opt1.mType;
+    u32 opt2Data1 = opt2.mData.vector.as_u32[1];
     u32 opt2Extra0 = opt2.ExtraData.mData.vector.as_u32[0];
-    u32 opt1Data1 = opt1.mData.vector.as_u32[1];
+    u32 opt1Extra2 = opt1.ExtraData.mData.vector.as_u32[2];
+    u32 opt2Data2 = opt2.mData.vector.as_u32[2];
     float opt1Confidence = opt1.Confidence;
     u32 opt2Extra1 = opt2.ExtraData.mData.vector.as_u32[1];
-    u32 opt2Data2 = opt2.mData.vector.as_u32[2];
+    float opt1SelectionChance = opt1.SelectionChance;
     u32 opt2Data0 = opt2.mData.vector.as_u32[0];
 
     ClearQueuedDesire();

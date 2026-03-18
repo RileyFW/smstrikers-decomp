@@ -241,12 +241,12 @@ void ScreenTransitionManager::DeleteAllTransitions()
  * Offset/Address/Size: 0x5A4 | 0x80205694 | size: 0x178
  */
 /**
- * TODO: 96.33% match - this/nameData register allocation is fixed, but MWCC hoists a m_Transitions pointer addi and keeps cleanup on r30 instead of target r29.
+ * TODO: 99.07% match - this/name register allocation (r31/r29) and stack-slot
+ * placement for outNode/nameString temp differ from target MWCC output.
  */
 void ScreenTransitionManager::AddTransitionToMap(char* name, ScreenTransition* pTransition)
 {
     u32 transitionHash = glHash(name);
-    BasicStringInternal* nameStringData;
     AVLTreeNode* outNode;
 
     m_TransitionMap.AddAVLNode((AVLTreeNode**)&m_TransitionMap.m_Root, &transitionHash, &pTransition, &outNode, m_TransitionMap.m_NumElements);
@@ -256,58 +256,8 @@ void ScreenTransitionManager::AddTransitionToMap(char* name, ScreenTransition* p
         m_TransitionMap.m_NumElements++;
     }
 
-    Vector<BasicString<char, Detail::TempStringAllocator>, DefaultAllocator>* transitions = &m_Transitions;
-    BasicStringInternal* nameData = (BasicStringInternal*)nlMalloc(16, 8, true);
-
-    if (nameData != nullptr)
-    {
-        nameData->mData = nullptr;
-        nameData->mSize = 0;
-        nameData->mCapacity = 0;
-
-        const char* namePtr = name;
-        while ((s8)*namePtr++ != 0)
-        {
-            nameData->mSize++;
-        }
-
-        nameData->mSize++;
-
-        nameData->mData = (char*)nlMalloc(nameData->mSize + 1, 8, true);
-        nameData->mCapacity = nameData->mSize;
-
-        s32 i = 0;
-        while (i < nameData->mSize)
-        {
-            nameData->mData[i] = *name;
-            name++;
-            i++;
-        }
-
-        nameData->mRefCount = 1;
-    }
-
-    nameStringData = nameData;
-    transitions->push_back(*(BasicString<char, Detail::TempStringAllocator>*)&nameStringData);
-
-    nameData = nameStringData;
-    if (nameData != nullptr)
-    {
-        if (--nameData->mRefCount == 0)
-        {
-            if (nameData != nullptr)
-            {
-                if (nameData != nullptr)
-                {
-                    delete[] nameData->mData;
-                }
-                if (nameData != nullptr)
-                {
-                    nlFree(nameData);
-                }
-            }
-        }
-    }
+    BasicString<char, Detail::TempStringAllocator> nameString(name);
+    m_Transitions.push_back(nameString);
 }
 
 /**

@@ -388,8 +388,8 @@ bool glxParseTextureBundle(const char* filedata)
  */
 /**
  * Offset/Address/Size: 0xAF4 | 0x801B7CB0 | size: 0x1D0
- * TODO: 97.3% match - MWCC optimizer eliminates uSize=uBaseOffset copy (mr r25,r29)
- *       and folds uBaseOffset+=0x20 into loop body instead of precomputing
+ * TODO: 99.05% match - MWCC still elides uSize/uBaseOffset register copy
+ *       before dictionary nlMalloc (missing mr r25,r29; uses r29 directly)
  */
 bool glplatLoadTextureBundle(const char* filename)
 {
@@ -400,6 +400,7 @@ bool glplatLoadTextureBundle(const char* filename)
     glTexBundleHeader* pHeader;
     unsigned char* pData;
     unsigned long uNumFiles;
+    unsigned long uSize;
 
     glx_FreeMemory0();
     nlStrNCat<char>(fullFilename, "art/", filename, 0x100);
@@ -414,15 +415,15 @@ bool glplatLoadTextureBundle(const char* filename)
     nlRead(pFile, pHeader, 0x20);
 
     uNumFiles = pHeader->numTextures;
-    uBaseOffset = uNumFiles * sizeof(glTexBundleDict);
+    uSize = uNumFiles * sizeof(glTexBundleDict);
 
-    pDictionary = (glTexBundleDict*)nlMalloc(uBaseOffset, 0x20, 1);
-    nlRead(pFile, pDictionary, uBaseOffset);
+    pDictionary = (glTexBundleDict*)nlMalloc((uBaseOffset = uSize), 0x20, 1);
+    nlRead(pFile, pDictionary, uSize);
 
     pData = (unsigned char*)nlMalloc(0x40800, 0x20, 1);
     nlQSort<glTexBundleDict>(pDictionary, uNumFiles, BundleSortProc);
 
-    uBaseOffset += 0x20;
+    uBaseOffset = uSize + 0x20;
 
     for (unsigned long i = 0; i < uNumFiles; i++)
     {
@@ -591,10 +592,47 @@ bool glx_AddTex(unsigned long handle, PlatTexture* platTex)
 
 /**
  * Offset/Address/Size: 0xF94 | 0x801B8250 | size: 0x194
- * TODO: 97.82% match - tree-search found flag still lives in r5 (target uses
- *       r0 with no loop-entry init), and grid-call argument registers are
- *       swapped at shift setup (target wants r4 from height, r3 from width)
+ * TODO: 99.90% match - grid-call still computes shifted args into r3/r4 in the
+ *       opposite order (target wants r4 from height, r3 from width), and the
+ *       missing-text debug literal still binds to a different pool label
  */
+
+struct TextureFindHelper
+{
+    char pad[0x8];
+    AVLTreeEntry<unsigned long, PlatTexture*>* m_Root;
+
+    inline bool FindGet(unsigned long key, PlatTexture*** foundValue) const
+    {
+        AVLTreeEntry<unsigned long, PlatTexture*>* node = m_Root;
+        while (node != NULL)
+        {
+            int cmpResult;
+            if (key == node->key)
+                cmpResult = 0;
+            else if (key < node->key)
+                cmpResult = -1;
+            else
+                cmpResult = 1;
+
+            if (cmpResult == 0)
+            {
+                if (foundValue != NULL)
+                    *foundValue = &node->value;
+                return true;
+            }
+            else
+            {
+                if (cmpResult < 0)
+                    node = (AVLTreeEntry<unsigned long, PlatTexture*>*)node->node.left;
+                else
+                    node = (AVLTreeEntry<unsigned long, PlatTexture*>*)node->node.right;
+            }
+        }
+        return false;
+    }
+};
+
 PlatTexture* glx_GetTex(unsigned long handle, bool bMissingFatal, bool bAllowGrids)
 {
     PlatTexture** tex;
@@ -619,44 +657,7 @@ PlatTexture* glx_GetTex(unsigned long handle, bool bMissingFatal, bool bAllowGri
 
     for (int index = currentMarkerLevel; index >= 0; index--)
     {
-        AVLTreeEntry<unsigned long, PlatTexture*>* node = textures[index]->m_Root;
-        bool found = false;
-
-        while (node != NULL)
-        {
-            int cmpResult;
-            if (handle == node->key)
-            {
-                cmpResult = 0;
-            }
-            else if (handle < node->key)
-            {
-                cmpResult = -1;
-            }
-            else
-            {
-                cmpResult = 1;
-            }
-
-            if (cmpResult == 0)
-            {
-                if (&tex != NULL)
-                {
-                    tex = &node->value;
-                }
-                found = true;
-                break;
-            }
-
-            if (cmpResult < 0)
-            {
-                node = (AVLTreeEntry<unsigned long, PlatTexture*>*)node->node.left;
-            }
-            else
-            {
-                node = (AVLTreeEntry<unsigned long, PlatTexture*>*)node->node.right;
-            }
-        }
+        bool found = ((TextureFindHelper*)textures[index])->FindGet(handle, &tex);
 
         if (found)
         {

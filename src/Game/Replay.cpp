@@ -48,27 +48,22 @@ extern "C" void __sinit_Replay_cpp()
     __register_global_object(pool, (void*)ReplayFrameSlotPoolDtor, &chain);
 }
 
-/**
- * Offset/Address/Size: 0x7C8 | 0x80214074 | size: 0x188
- */
-Replay::Replay(char* memory, int memorySize, int maxFrameSize)
+static inline Replay::Frame* ReplayAllocFrame(char* memory, int memorySize)
 {
-    Frame* frame = nullptr;
+    Replay::Frame* frame = nullptr;
+    SlotPool<Replay::Frame>* pool = &Replay::Frame::mSlotPool;
 
-    // Allocate a Frame from the slot pool if none available
-    if (Frame::mSlotPool.m_FreeList == nullptr)
+    if (pool->m_FreeList == nullptr)
     {
-        SlotPoolBase::BaseAddNewBlock(&Frame::mSlotPool, sizeof(Frame));
+        SlotPoolBase::BaseAddNewBlock(pool, sizeof(Replay::Frame));
     }
 
-    // Get a Frame from the free list
-    if (Frame::mSlotPool.m_FreeList != nullptr)
+    if (pool->m_FreeList != nullptr)
     {
-        frame = (Frame*)Frame::mSlotPool.m_FreeList;
-        Frame::mSlotPool.m_FreeList = (SlotPoolEntry*)frame->mNext;
+        frame = (Replay::Frame*)pool->m_FreeList;
+        pool->m_FreeList = ((SlotPoolEntry*)frame)->m_next;
     }
 
-    // Initialize the Frame if we got one
     if (frame != nullptr)
     {
         frame->mTime = 0.0f;
@@ -80,8 +75,15 @@ Replay::Replay(char* memory, int memorySize, int maxFrameSize)
         frame->mNext = nullptr;
     }
 
-    mFree = frame;
+    return frame;
+}
 
+/**
+ * Offset/Address/Size: 0x7C8 | 0x80214074 | size: 0x188
+ */
+Replay::Replay(char* memory, int memorySize, int maxFrameSize)
+    : mFree(ReplayAllocFrame(memory, memorySize))
+{
     mReelIdx = 0;
     mTick = 0;
     mMemorySize = memorySize;
@@ -89,10 +91,11 @@ Replay::Replay(char* memory, int memorySize, int maxFrameSize)
     mActualMaxFrameSize = 0;
 
     mFree->mNext = mFree;
-    mReels[0].mLast = mFree;
-    mReels[0].mBegin = mFree;
+    Frame* freeFrame = mFree;
+    mReels[0].mLast = freeFrame;
+    mReels[0].mBegin = freeFrame;
 
-    Config& config = Config::Global();
+    register Config& config = Config::Global();
     renderMemoryLayout = GetConfigBool(config, "draw_replay_bar", false);
 }
 

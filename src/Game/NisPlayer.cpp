@@ -6,11 +6,104 @@
 #include "Game/Game.h"
 #include "Game/Goalie.h"
 #include "Game/ReplayManager.h"
+#include "NL/nlFileGC.h"
 #include "NL/nlTask.h"
 #include "NL/nlString.h"
 #include "string.h"
 
 bool g_ForceDoubleBallTransition;
+
+struct TempStringData
+{
+    char* data;
+    int size;
+    int capacity;
+    int refCount;
+};
+
+extern void* nlMalloc(unsigned long, unsigned int, bool);
+extern void nlFree(void*);
+extern void nlReadAsync(nlFile*, void*, unsigned int, void (*)(nlFile*, void*, unsigned int, unsigned long), unsigned long);
+extern void nlAsyncLoadFileToVirtualMemory(nlFile*, int, void*, void (*)(nlFile*, void*, unsigned int, unsigned long), unsigned long);
+extern void* nlLoadEntireFileToVirtualMemory(const char*, int*, unsigned int, void*, int);
+extern void nlBreak();
+
+namespace Detail
+{
+class TempStringAllocator
+{
+};
+} // namespace Detail
+
+template <typename CharT, typename Allocator>
+class BasicString
+{
+public:
+    TempStringData* m_data;
+
+    BasicString(const CharT* str)
+    {
+        TempStringData* data = (TempStringData*)nlMalloc(sizeof(TempStringData), 8, true);
+        if (data != 0)
+        {
+            data->data = 0;
+            data->size = 0;
+            data->capacity = 0;
+
+            const CharT* s = str;
+            while ((signed char)*s++ != 0)
+            {
+                data->size++;
+            }
+
+            data->size++;
+            data->data = (char*)nlMalloc(data->size + 1, 8, true);
+            data->capacity = data->size;
+
+            for (int i = 0; i < data->size; i++)
+            {
+                data->data[i] = *str++;
+            }
+
+            data->refCount = 1;
+        }
+
+        m_data = data;
+    }
+
+    ~BasicString()
+    {
+        if (m_data)
+        {
+            TempStringData* data = m_data;
+            if (--data->refCount == 0)
+            {
+                if (data)
+                {
+                    if (data)
+                    {
+                        delete[] data->data;
+                    }
+                    if (data)
+                    {
+                        nlFree(data);
+                    }
+                }
+            }
+        }
+    }
+
+    const CharT* c_str() const
+    {
+        static CharT emptyString = '\0';
+        return m_data ? (CharT*)m_data->data : &emptyString;
+    }
+};
+
+extern void AppendInPlace__45BasicString_c_Q26Detail19TempStringAllocator_FPCc(BasicString<char, Detail::TempStringAllocator>*,
+    const char*);
+
+static unsigned char useAsyncLoading;
 
 // /**
 //  * Offset/Address/Size: 0x74 | 0x80118E84 | size: 0x2C
@@ -106,10 +199,72 @@ bool NisPlayer::WorldIsFrozen() const
 
 /**
  * Offset/Address/Size: 0x2F64 | 0x80117C40 | size: 0x318
+ * TODO: 94.67% match - register allocation and string literal scheduling diffs from -inline deferred vs -inline auto
  */
 void NisPlayer::HandleAsyncs()
 {
-    FORCE_DONT_INLINE;
+    for (int i = 0; i < 4; i++)
+    {
+        if (mLoadQueue[i] != 0)
+        {
+            if (!mAsyncStarted[i])
+            {
+                mAsyncStarted[i] = 1;
+
+                if (mLoadingFromBack)
+                {
+                    mUsedFromBack -= mLoadQueue[i]->size;
+                    mUsedFromBack -= 0x20;
+                }
+
+                int used;
+                if (mLoadingFromBack)
+                {
+                    used = mUsedFromBack;
+                }
+                else
+                {
+                    used = mUsedFromFront;
+                }
+
+                char* loadAt = mMemory + used;
+                loadAt = loadAt + (0x20 - ((unsigned int)loadAt & 0x1F));
+
+                if (!mLoadingFromBack)
+                {
+                    mUsedFromFront += mLoadQueue[i]->size;
+                    mUsedFromFront += 0x20;
+                }
+
+                if (mUsedFromFront >= mUsedFromBack)
+                {
+                    nlBreak();
+                }
+
+                BasicString<char, Detail::TempStringAllocator> fileName("art/nis/");
+                AppendInPlace__45BasicString_c_Q26Detail19TempStringAllocator_FPCc(&fileName, mLoadQueue[i]->name);
+
+                if (useAsyncLoading)
+                {
+                    nlFile* file = nlOpen(fileName.c_str());
+                    if ((OSGetConsoleType() & 0x20000000) != 0)
+                    {
+                        nlReadAsync(file, loadAt, mLoadQueue[i]->size, AsyncLoad, (unsigned long)mLoadQueue[i]);
+                    }
+                    else
+                    {
+                        nlAsyncLoadFileToVirtualMemory(file, mLoadQueue[i]->size, loadAt, AsyncLoad, (unsigned long)mLoadQueue[i]);
+                    }
+                }
+                else
+                {
+                    int size = 0;
+                    nlLoadEntireFileToVirtualMemory(fileName.c_str(), &size, 0x2000, loadAt, 0);
+                    AsyncLoad(0, loadAt, mLoadQueue[i]->size, (unsigned long)mLoadQueue[i]);
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -333,6 +488,7 @@ void NisPlayer::LoadTriggers(Nis&)
     FORCE_DONT_INLINE;
 }
 
+#pragma dont_inline on
 /**
  * Offset/Address/Size: 0x1A48 | 0x80116724 | size: 0x98
  * TODO: 99.21% match - remaining `i` diffs are the local-static `instance` / `init$` relocation immediates.
@@ -347,6 +503,7 @@ void NisPlayer::AsyncLoad(nlFile* file, void* buffer, unsigned int size, unsigne
     static NisPlayer instance;
     instance.Load((char*)buffer - size, size, *(NisHeader*)param);
 }
+#pragma dont_inline reset
 
 /**
  * Offset/Address/Size: 0xFAC | 0x80115C88 | size: 0xA9C

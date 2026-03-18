@@ -221,27 +221,25 @@ bool cFielder::CanLooseBallShoot()
         && (g_pBall->m_tShotTimer.m_uPackedTime == 0)
         && (g_pBall->m_unk_0xA6 == 0))
     {
-
-        // Get animation from one timer lead ground contact anims
         u32 nNumKeys = m_pAnimInventory->GetAnim(gOneTimerLeadGroundContactAnims[0].nAnimID)->m_nNumKeys;
-        float temp_f6 = ((float)nNumKeys / 30.0f) * (gOneTimerLeadGroundContactAnims[0].fAnimContactFrame / (float)nNumKeys);
+        const cBall* pBall = g_pBall;
+        float ratio = gOneTimerLeadGroundContactAnims[0].fAnimContactFrame / (float)nNumKeys;
+        float frames = (float)nNumKeys / 30.0f;
+        float contactTime = ratio * frames;
 
-        // Calculate predicted ball position at contact frame
         nlVector3 v3PredictedPos;
         nlVec3Set(v3PredictedPos,
-            (temp_f6 * g_pBall->m_v3Velocity.f.x) + g_pBall->m_v3Position.f.x,
-            (temp_f6 * g_pBall->m_v3Velocity.f.y) + g_pBall->m_v3Position.f.y,
-            (temp_f6 * g_pBall->m_v3Velocity.f.z) + g_pBall->m_v3Position.f.z);
+            (contactTime * pBall->m_v3Velocity.f.x) + pBall->m_v3Position.f.x,
+            (contactTime * pBall->m_v3Velocity.f.y) + pBall->m_v3Position.f.y,
+            (contactTime * pBall->m_v3Velocity.f.z) + pBall->m_v3Position.f.z);
 
-        // Get facing delta to predicted position
         s16 facingDelta = GetFacingDeltaToPosition(v3PredictedPos);
-        facingDelta = (facingDelta < 0) ? -facingDelta : facingDelta;
+        u16 uFacingDelta = (facingDelta < 0) ? -facingDelta : facingDelta;
 
-        float fInterpolatedValue = InterpolateRangeClamped(1.75f, 2.75f, 32768.0f, 16384.0f, facingDelta);
+        float fInterpolatedValue = InterpolateRangeClamped(1.75f, 2.75f, 32768.0f, 16384.0f, uFacingDelta);
 
         if (v3PredictedPos.f.z < 1.0f)
         {
-            // Check distance squared from fielder to predicted position
             float fDeltaX = v3PredictedPos.f.x - m_v3Position.f.x;
             float fDeltaY = v3PredictedPos.f.y - m_v3Position.f.y;
             float fDistanceSquared = fDeltaX * fDeltaX + fDeltaY * fDeltaY;
@@ -263,8 +261,8 @@ bool cFielder::CanLooseBallShoot()
 
 /**
  * Offset/Address/Size: 0xC468 | 0x800257A4 | size: 0x1E0
- * TODO: 99.79% match - remaining f8/f9 register allocation swap in the
- * contactTime computation block.
+ * TODO: 99.92% match - remaining contact-frame source register in the first
+ * ratio divide (`lfs f1` target vs `lfs f9` current).
  */
 bool cFielder::CanLooseBallPass()
 {
@@ -275,7 +273,8 @@ bool cFielder::CanLooseBallPass()
     {
         u32 nNumKeys = m_pAnimInventory->GetAnim(gOneTimerLeadGroundContactAnims[0].nAnimID)->m_nNumKeys;
         const cBall* pBall = g_pBall;
-        float ratio = gOneTimerLeadGroundContactAnims[0].fAnimContactFrame / (float)nNumKeys;
+        float ratio = gOneTimerLeadGroundContactAnims[0].fAnimContactFrame;
+        ratio /= (float)nNumKeys;
         float frames = (float)nNumKeys / 30.0f;
         float contactTime = ratio * frames;
 
@@ -1204,8 +1203,8 @@ void cFielder::ShootBallDueToContact(unsigned short aAngle)
 
 /**
  * Offset/Address/Size: 0x8F5C | 0x80022298 | size: 0x230
- * TODO: 98.54% match - angle-delta abs block still has r4/r7 register allocation mismatch
- *       and extsh/neg/clrlwi compare-order drift.
+ * TODO: 99.43% match - remaining gap is in DoClearBall angle-selection register allocation:
+ *       r6/r7 swap for m_pShotMeter vs pClearingBottomAngle.a, plus r3/r4 and cmplw operand order drift.
  */
 void cFielder::DoClearBall()
 {
@@ -1223,18 +1222,16 @@ void cFielder::DoClearBall()
     nlCartesianToPolar(pClearingBottomAngle, fGoalline - m_v3Position.f.x, fBottomY - m_v3Position.f.y);
 
     ShotMeter* pShotMeter = m_pShotMeter;
-    u16 aBottomAngle = pClearingBottomAngle.a;
-    u16 aTopAngle = pClearingTopAngle.a;
-    s16 nBottomDelta = m_aActualFacingDirection - aBottomAngle;
-    s16 nTopDelta = m_aActualFacingDirection - aTopAngle;
+    s16 nBottomDelta = (int)(s16)(m_aActualFacingDirection - pClearingBottomAngle.a);
+    s16 nTopDelta = (int)(s16)(m_aActualFacingDirection - pClearingTopAngle.a);
 
     if (pShotMeter->mfSShotAimValue > 0.5f)
     {
-        aClearingAngle = aTopAngle;
+        aClearingAngle = pClearingTopAngle.a;
     }
     else if (pShotMeter->mfSShotAimValue < -0.5f)
     {
-        aClearingAngle = aBottomAngle;
+        aClearingAngle = pClearingBottomAngle.a;
     }
     else
     {
@@ -1243,11 +1240,11 @@ void cFielder::DoClearBall()
 
         if (nAbsBottomDelta < nAbsTopDelta)
         {
-            aClearingAngle = aBottomAngle;
+            aClearingAngle = pClearingBottomAngle.a;
         }
         else
         {
-            aClearingAngle = aTopAngle;
+            aClearingAngle = pClearingTopAngle.a;
         }
     }
 
@@ -3103,9 +3100,159 @@ bool cFielder::ShouldILeadPass()
 
 /**
  * Offset/Address/Size: 0x4564 | 0x8001D8A0 | size: 0x330
+ * TODO: 99.09% match - MWCC batches struct member loads by ascending offset (x before y),
+ * but target loads y first. This causes f29/f30 register swap in second half (~34 diffs).
  */
-bool cFielder::CanISlideAttack(const nlVector3&, const nlVector3&, float*)
+bool cFielder::CanISlideAttack(const nlVector3& v3Position, const nlVector3& v3Velocity, float* fTime)
 {
+    float t;
+    int nNumSolutions;
+    float pSolutions[2];
+    float fMaxT;
+    nlPolar polarDesiredVelocity;
+
+    if (m_eActionState == ACTION_SLIDE_ATTACK)
+    {
+        return false;
+    }
+
+    if (v3Position.f.z > 1.0f)
+    {
+        return false;
+    }
+
+    float fYDiff = m_v3Position.f.y - v3Position.f.y;
+    float fXDiff = m_v3Position.f.x - v3Position.f.x;
+
+    t = 99999.0f;
+
+    GameTweaks* pGameTweaks = g_pGame->m_pGameTweaks;
+
+    if (nlSqrt(fXDiff * fXDiff + fYDiff * fYDiff, true) < pGameTweaks->fSlideAttackRadius)
+    {
+        FielderTweaks* pTweaks = (FielderTweaks*)m_pTweaks;
+        const nlVector3& myPos = m_v3Position;
+        float fSpeed = 1.0f;
+        float fSlideSpeed = pTweaks->fRunningWBTurboSpeedLevel2;
+
+        if (fSlideSpeed >= 0.0f)
+        {
+            switch (m_ePowerup)
+            {
+            case POWER_UP_MUSHROOM:
+                fSpeed *= g_pGame->m_pGameTweaks->fMushroomSpeed;
+                break;
+            case POWER_UP_STAR:
+                fSpeed *= g_pGame->m_pGameTweaks->fStarSpeed;
+                break;
+            }
+        }
+
+        fSpeed *= fSlideSpeed;
+
+        switch (m_ePowerup)
+        {
+        case POWER_UP_MUSHROOM:
+        case POWER_UP_STAR:
+            fSpeed *= 1.4f;
+            break;
+        }
+
+        CalcInterceptXY(myPos, fSpeed, pTweaks->fPhysCapsuleRadius, v3Position, v3Velocity, nNumSolutions, pSolutions);
+
+        if (nNumSolutions != 0)
+        {
+            if (nNumSolutions == 2)
+            {
+                t = pSolutions[0] < pSolutions[1] ? pSolutions[0] : pSolutions[1];
+            }
+            else
+            {
+                t = pSolutions[0];
+            }
+        }
+    }
+
+    float fZero = 0.0f;
+    fMaxT = g_pGame->m_pGameTweaks->unk2A4 + g_pGame->m_pGameTweaks->unk2A8;
+
+    if (t > fZero && t <= fMaxT)
+    {
+        if (fTime != nullptr)
+        {
+            float fInterceptY = v3Velocity.f.y * t + v3Position.f.y;
+            float fInterceptX = v3Velocity.f.x * t + v3Position.f.x;
+            float fToInterceptY = fInterceptY - m_v3Position.f.y;
+            float fToInterceptX = fInterceptX - m_v3Position.f.x;
+
+            float fLenSq = fToInterceptY * fToInterceptY + fToInterceptX * fToInterceptX;
+            float fInvLen = nlRecipSqrt(fZero + fLenSq, true);
+            float fDesiredVelX = fInvLen * fToInterceptX;
+            float fDesiredVelY = fInvLen * fToInterceptY;
+
+            FielderTweaks* pTweaks = (FielderTweaks*)m_pTweaks;
+            float fSlideSpeed = pTweaks->fRunningWBTurboSpeedLevel2;
+
+            float fSpeedX = 1.0f;
+            if (fSlideSpeed >= 0.0f)
+            {
+                switch (m_ePowerup)
+                {
+                case POWER_UP_MUSHROOM:
+                    fSpeedX *= g_pGame->m_pGameTweaks->fMushroomSpeed;
+                    break;
+                case POWER_UP_STAR:
+                    fSpeedX *= g_pGame->m_pGameTweaks->fStarSpeed;
+                    break;
+                }
+            }
+
+            fSpeedX *= fSlideSpeed;
+
+            switch (m_ePowerup)
+            {
+            case POWER_UP_MUSHROOM:
+            case POWER_UP_STAR:
+                fSpeedX *= 1.4f;
+                break;
+            }
+
+            fDesiredVelX *= fSpeedX;
+
+            float fSpeedY = 1.0f;
+            if (fSlideSpeed >= 0.0f)
+            {
+                switch (m_ePowerup)
+                {
+                case POWER_UP_MUSHROOM:
+                    fSpeedY *= g_pGame->m_pGameTweaks->fMushroomSpeed;
+                    break;
+                case POWER_UP_STAR:
+                    fSpeedY *= g_pGame->m_pGameTweaks->fStarSpeed;
+                    break;
+                }
+            }
+
+            fSpeedY *= fSlideSpeed;
+
+            switch (m_ePowerup)
+            {
+            case POWER_UP_MUSHROOM:
+            case POWER_UP_STAR:
+                fSpeedY *= 1.4f;
+                break;
+            }
+
+            fDesiredVelY *= fSpeedY;
+
+            nlCartesianToPolar(polarDesiredVelocity, fDesiredVelX, fDesiredVelY);
+
+            *fTime = t;
+        }
+
+        return true;
+    }
+
     return false;
 }
 

@@ -630,9 +630,9 @@ bool parse_spec(SimpleParser* parser, EffectsSpec& spec)
 
 /**
  * Offset/Address/Size: 0x80C | 0x801F3254 | size: 0x224
- * TODO: 86.9% match - MWCC strength reduction converts base+offset to pointer walk (stw vs target stwx),
- * cascading into: CSE of numTerrains*4 into r30, hashID r0->r4, found r0->r28 + extra node==nullptr check,
- * existingSpec r30->r28, stack offset shift. Root cause: -inline deferred (original) vs -inline auto (decomp.me).
+ * TODO: 91.9% match - still blocked by MWCC register/induction choices:
+ * parser stays in r31 with pointer walk (`stw` + pointer increment) instead of target's r28 parser + `stwx` with byte offset,
+ * plus AVL search keeps hash/cmp/found in r4/r0/r28 with an extra post-loop `node != nullptr` check.
  */
 EffectsTerrainSpec* parse_terrain_spec(SimpleParser* parser)
 {
@@ -640,7 +640,6 @@ EffectsTerrainSpec* parse_terrain_spec(SimpleParser* parser)
     unsigned long offset = 0;
     unsigned long numTerrains = 0;
     SimpleParser* p = parser;
-    unsigned long* terrainBase = terrainIDs;
 
     while (true)
     {
@@ -650,7 +649,7 @@ EffectsTerrainSpec* parse_terrain_spec(SimpleParser* parser)
             break;
         }
 
-        *(unsigned long*)((char*)terrainBase + offset) = nlStringLowerHash(token);
+        *(unsigned long*)((char*)terrainIDs + offset) = nlStringLowerHash(token);
         numTerrains++;
         offset += 4;
     }
@@ -664,7 +663,7 @@ EffectsTerrainSpec* parse_terrain_spec(SimpleParser* parser)
 
     pSpec->m_uNumTerrains = numTerrains;
     pSpec->m_pTerrainIDs = (unsigned long*)nlMalloc(numTerrains * 4, 8, false);
-    memcpy(pSpec->m_pTerrainIDs, terrainIDs, numTerrains * 4);
+    memcpy(pSpec->m_pTerrainIDs, terrainIDs, pSpec->m_uNumTerrains * 4);
 
     RunningChecksum checksum;
     checksum.ChecksumInt(pSpec->m_uNumTerrains);
@@ -718,32 +717,25 @@ EffectsTerrainSpec* parse_terrain_spec(SimpleParser* parser)
         found = false;
     }
 
-    EffectsTerrainSpec* existingSpec;
-    if (found)
-    {
-        existingSpec = *foundValue;
-    }
-    else
-    {
-        existingSpec = nullptr;
-    }
+    EffectsTerrainSpec* existingSpec = found ? *foundValue : nullptr;
 
     if (existingSpec == nullptr)
     {
+        unsigned long key;
         EffectsTerrainSpec* pNewSpec = pSpec;
         RunningChecksum checksum2;
+        AVLTreeNode* existingNode;
 
         checksum2.ChecksumInt(pSpec->m_uNumTerrains);
         checksum2.ChecksumData(pSpec->m_pTerrainIDs, pSpec->m_uNumTerrains * 4);
+        key = ~checksum2.m_unk_0x00;
 
-        unsigned long key = ~checksum2.m_unk_0x00;
-        AVLTreeNode* existingNode;
-
-        pTerrainSpecMap->AddAVLNode((AVLTreeNode**)&pTerrainSpecMap->m_Root, &key, &pNewSpec, &existingNode, pTerrainSpecMap->m_NumElements);
+        nlAVLTree<unsigned long, EffectsTerrainSpec*, DefaultKeyCompare<unsigned long> >* map = pTerrainSpecMap;
+        map->AddAVLNode((AVLTreeNode**)&map->m_Root, &key, &pNewSpec, &existingNode, map->m_NumElements);
 
         if (existingNode == nullptr)
         {
-            pTerrainSpecMap->m_NumElements++;
+            map->m_NumElements++;
         }
 
         return pSpec;

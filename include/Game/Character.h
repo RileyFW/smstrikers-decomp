@@ -147,7 +147,7 @@ public:
     void InitBlur(int);
     nlVector3& GetPrevJointPosition(int jointIndex);
     void GetCurrentAnimFuture(int, float, nlVector3&, nlVector3&, unsigned short&);
-    nlVector3& GetJointPositionFuture(nlVector3* v3Out, int nAnimIndex, int nJointIndex, float fTime, bool bAddRootTrans, bool bAddRootRot, bool bUsePrevPosition);
+    void GetJointPositionFuture(nlVector3* v3Out, int nAnimIndex, int nJointIndex, float fTime, bool bAddRootTrans, bool bAddRootRot, bool bUsePrevPosition);
     nlVector3& GetJointPosition(int) const;
     s16 GetFacingDeltaToPosition(const nlVector3&);
     s16 CalcAnimTurnAdjust(unsigned short, unsigned short, int);

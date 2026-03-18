@@ -4,7 +4,7 @@
 #include "Game/FE/feNSNMessenger.h"
 #include "Game/Sys/eventman.h"
 
-class GoalOverlay : BaseOverlayHandler
+class GoalOverlay : public BaseOverlayHandler
 {
 public:
     GoalOverlay();

@@ -175,13 +175,29 @@ void HealthWarningSceneV2::SceneCreated()
 
 /**
  * Offset/Address/Size: 0x0 | 0x8010D130 | size: 0x204
- * TODO: 94.6% match - stack frame 0x90 vs target 0x80 (0x10 too large).
- * MWCC doesn't reuse InlineHasher by-value temp stack slots between the two Find calls.
- * Target interleaves re-zeroed first-Find slots with new second-Find slots; our compiler allocates fresh.
- * All diffs are stack/immediate offsets only - instructions, registers, and control flow are identical.
  */
 void HealthWarningSceneV2::Update(float fDeltaT)
 {
+    typedef TLComponentInstance* (*FindCompByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLComponentInstance* (*FindCompByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+    typedef TLImageInstance* (*FindImageByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLImageInstance* (*FindImageByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindCompByValue byValue;
+        FindCompByRef byRef;
+    } findComp;
+
+    union
+    {
+        FindImageByValue byValue;
+        FindImageByRef byRef;
+    } findImage;
+
+    volatile InlineHasher hN, hM, hL, hK, hJ, hI, hH, hG;
+    volatile InlineHasher h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, hA, hB;
+
     bool proceed;
     TLComponentInstance* pComp;
     TLImageInstance* pImage;
@@ -201,26 +217,62 @@ void HealthWarningSceneV2::Update(float fDeltaT)
     {
         AudioLoader::LoadFEButtonSoundGroup();
 
-        pComp = FEFinder<TLComponentInstance, 4>::Find<TLSlide>(
+        findComp.byValue = FEFinder<TLComponentInstance, 4>::Find<TLSlide>;
+
+        h3.m_Hash = 0;
+        h2.m_Hash = 0;
+        h1.m_Hash = 0;
+        h0.m_Hash = 0;
+        hG.m_Hash = 0;
+        hH.m_Hash = 0;
+        hI.m_Hash = 0;
+        hJ.m_Hash = 0;
+
+        unsigned long hash = nlStringLowerHash("press");
+        hK.m_Hash = hash;
+        hL.m_Hash = hash;
+
+        hash = nlStringLowerHash("Layer");
+        hN.m_Hash = hash;
+        hM.m_Hash = hash;
+
+        pComp = findComp.byRef(
             m_pFEPresentation->m_currentSlide,
-            InlineHasher(nlStringLowerHash("press")),
-            InlineHasher(nlStringLowerHash("Layer")),
-            InlineHasher(0),
-            InlineHasher(0),
-            InlineHasher(0),
-            InlineHasher(0));
+            (InlineHasher&)hN,
+            (InlineHasher&)hL,
+            (InlineHasher&)hJ,
+            (InlineHasher&)hH,
+            (InlineHasher&)h0,
+            (InlineHasher&)h2);
 
         pComp->SetActiveSlide("Slide1");
         pComp->Update(0.0f);
 
-        pImage = FEFinder<TLImageInstance, 2>::Find<TLSlide>(
+        findImage.byValue = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
+
+        hB.m_Hash = 0;
+        h2.m_Hash = 0;
+        hA.m_Hash = 0;
+        h0.m_Hash = 0;
+        h9.m_Hash = 0;
+        hH.m_Hash = 0;
+        h8.m_Hash = 0;
+        hJ.m_Hash = 0;
+        h7.m_Hash = 0;
+        h6.m_Hash = 0;
+
+        hash = nlStringLowerHash("health_press");
+        h5.m_Hash = hash;
+        h4.m_Hash = hash;
+
+        pImage = findImage.byRef(
             pComp->GetActiveSlide(),
-            InlineHasher(nlStringLowerHash("health_press")),
-            InlineHasher(0),
-            InlineHasher(0),
-            InlineHasher(0),
-            InlineHasher(0),
-            InlineHasher(0));
+            (InlineHasher&)h4,
+            (InlineHasher&)h6,
+            (InlineHasher&)hJ,
+            (InlineHasher&)hH,
+            (InlineHasher&)h0,
+            (InlineHasher&)h2);
 
         pImage->m_bVisible = true;
         mIsPressButtonVisible = true;

@@ -673,9 +673,71 @@ void Bowser::ActionHide()
 
 /**
  * Offset/Address/Size: 0x177C | 0x8015A4F0 | size: 0x314
+ * TODO: 99.39% match - inlined SetTiltParameters(0.0f) temp stack slots are
+ * swapped between the first and second call sites.
  */
 void Bowser::ActionReset()
 {
+    mAttackType = BOWSER_ATTACK_ROLL;
+
+    if (mbAlive)
+    {
+        eBowserAttackType oldAttackType;
+        bool wasVisible;
+
+        EmissionManager::Destroy((unsigned long)this, fxGetGroup("bowser_fire"));
+        g_pEventManager->CreateValidEvent(0x65, 0x14);
+
+        wasVisible = mbIsVisible;
+        mbIsVisible = false;
+        meBowserState = BOWSER_STATE_HIDDEN;
+        mfDesiredSpeed = 0.0f;
+
+        if (mpFeatherBlender->GetChild(1) != NULL)
+        {
+            cPoseNode* pChild = mpFeatherBlender->GetChild(1);
+            delete pChild;
+            mpFeatherBlender->SetChild(1, NULL);
+        }
+
+        mpFeatherController = NULL;
+        SetPosition(gv3BowserHomePosition);
+
+        mv3Velocity = v3Zero;
+        maFacingDirection = 0;
+
+        mpPhysObj->DisableCollisions();
+
+        if (!(mAttackType == BOWSER_ATTACK_STOMP && mStompStage != 2))
+        {
+            oldAttackType = mAttackType;
+
+            SetTiltParameters(0.0f);
+            mAttackType = BOWSER_ATTACK_ROLL;
+
+            if (g_pGame->m_pGameTweaks->unk310 < 0.0f)
+            {
+                g_pGame->ResetBowser();
+            }
+
+            if (mbAlive)
+            {
+                mbAlive = false;
+
+                if (GameInfoManager::s_pInstance->IsBowserAttackEnabled() && oldAttackType != BOWSER_ATTACK_STOMP && wasVisible)
+                {
+                    g_pEventManager->CreateValidEvent(0x37, 0x14);
+                }
+            }
+        }
+        else
+        {
+            g_pGame->ResetBowserTimer(g_pGame->m_pGameTweaks->unk31C);
+        }
+    }
+
+    mbFirstTime = true;
+    SetTiltParameters(0.0f);
 }
 
 /**

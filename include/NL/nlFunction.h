@@ -66,6 +66,11 @@ public:
     struct FunctorImpl : public FunctorBase
     {
         BindType mBind;
+        FunctorImpl() { }
+        FunctorImpl(const BindType& b)
+            : mBind(b)
+        {
+        }
         virtual ~FunctorImpl() { }
         virtual void Invoke() { }
         virtual FunctorBase* Clone() const { return new (nlMalloc(sizeof(FunctorImpl), 8, false)) FunctorImpl(*this); }

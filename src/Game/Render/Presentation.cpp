@@ -10,6 +10,27 @@
 
 extern AudioStreamTrack::TrackManagerBase* g_pTrackManager;
 
+enum eGameState
+{
+    GS_NONE = -1,
+    GS_PRE_GAME = 0,
+    GS_KICKOFF = 1,
+    GS_POST_GOAL = 2,
+    GS_END_GAME = 3,
+    GS_GAMEPLAY = 4,
+    GS_OVERTIME = 5,
+};
+
+class cGame
+{
+public:
+    char _pad[0x24];
+    eGameState m_eGameState;
+    void ChangeGameState(eGameState);
+};
+
+extern cGame* g_pGame;
+
 class NisPlayer : public InterpreterCore
 {
 public:
@@ -59,6 +80,7 @@ public:
 
 extern unsigned long cupTrophyHash;
 static const char* idleFun = "Idle";
+static bool loopPresentation;
 
 // /**
 //  * Offset/Address/Size: 0x60 | 0x80127308 | size: 0x8
@@ -185,6 +207,115 @@ void Presentation::LoadTrophyModel()
  */
 void Presentation::Finish()
 {
+    if ((strcmp("PlayHighlight", mCurrentFunction) == 0 || loopPresentation) && mByPassWasSkipped == false)
+    {
+        FixedUpdateTask::mTimeScale = 1.0f;
+        ParticleUpdateTask::SetTimeScale(1.0f);
+
+        if (nlStrCmp<char>(idleFun, mCurrentFunction) != 0 && nlStrCmp<char>(idleFun, "PlayHighlight") != 0)
+        {
+            mQueuedFunction = "PlayHighlight";
+        }
+        else
+        {
+            nlStrNCpy<char>(mCurrentFunction, "PlayHighlight", 64);
+            mSkipPressed = false;
+            mInsideByPass = false;
+            mByPassing = false;
+            mInterruptWipe = 0;
+            mUseInterruptWipe = 0;
+            mTimeInFunction = 0.0f;
+
+            NisPlayer::Instance()->SetExtraNameFilter("");
+            CallFunction(nlStringHash("PlayHighlight"));
+        }
+    }
+    else
+    {
+        if (mCurrentFunction == strstr(mCurrentFunction, "frame"))
+        {
+            if (g_pGame->m_eGameState != GS_END_GAME)
+            {
+                g_pGame->ChangeGameState(GS_KICKOFF);
+            }
+        }
+
+        if (mQueuedFunction == 0)
+        {
+            bool duringEndOfGamePresentation = false;
+            if (nlStrCmp<char>("ImplGameEnd", mCurrentFunction) == 0 || nlStrCmp<char>("GameEndNoSuddenDeath", mCurrentFunction) == 0 || nlStrCmp<char>("GoalSuddenDeath", mCurrentFunction) == 0 || nlStrCmp<char>("PlayHighlight", mCurrentFunction) == 0 || nlStrCmp<char>("PlayCupThrophy", mCurrentFunction) == 0)
+            {
+                duringEndOfGamePresentation = true;
+            }
+
+            if (duringEndOfGamePresentation)
+            {
+                g_pEventManager->CreateValidEvent(3, 0x14);
+                nlTaskManager::SetNextState(1);
+            }
+            else
+            {
+                if (nlStrCmp<char>(mCurrentFunction, "GameBegin") == 0)
+                {
+                    g_pGame->ChangeGameState(GS_KICKOFF);
+                }
+                nlTaskManager::SetNextState(2);
+            }
+        }
+    }
+
+    FixedUpdateTask::mTimeScale = 1.0f;
+    const char* functionName = idleFun;
+    ParticleUpdateTask::SetTimeScale(1.0f);
+
+    if (nlStrCmp<char>(idleFun, mCurrentFunction) != 0 && nlStrCmp<char>(idleFun, functionName) != 0)
+    {
+        mQueuedFunction = functionName;
+    }
+    else
+    {
+        nlStrNCpy<char>(mCurrentFunction, functionName, 64);
+        mSkipPressed = false;
+        mInsideByPass = false;
+        mByPassing = false;
+        mInterruptWipe = 0;
+        mUseInterruptWipe = 0;
+        mTimeInFunction = 0.0f;
+
+        NisPlayer::Instance()->SetExtraNameFilter("");
+        CallFunction(nlStringHash(functionName));
+    }
+
+    functionName = mQueuedFunction;
+    if (functionName)
+    {
+        mQueuedFunction = 0;
+        FixedUpdateTask::mTimeScale = 1.0f;
+        ParticleUpdateTask::SetTimeScale(1.0f);
+
+        if (nlStrCmp<char>(idleFun, mCurrentFunction) != 0 && nlStrCmp<char>(idleFun, functionName) != 0)
+        {
+            mQueuedFunction = functionName;
+        }
+        else
+        {
+            nlStrNCpy<char>(mCurrentFunction, functionName, 64);
+            mSkipPressed = false;
+            mInsideByPass = false;
+            mByPassing = false;
+            mInterruptWipe = 0;
+            mUseInterruptWipe = 0;
+            mTimeInFunction = 0.0f;
+
+            NisPlayer::Instance()->SetExtraNameFilter("");
+            CallFunction(nlStringHash(functionName));
+        }
+    }
+
+    if (strcmp(mCurrentFunction, idleFun) == 0)
+    {
+        ReplayChoreo::Instance().Reset();
+    }
 }
 
 /**

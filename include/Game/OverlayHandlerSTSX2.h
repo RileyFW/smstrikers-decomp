@@ -4,7 +4,7 @@
 #include "Game/FE/feNSNMessenger.h"
 #include "Game/Sys/eventman.h"
 
-class STSX2Overlay : BaseOverlayHandler
+class STSX2Overlay : public BaseOverlayHandler
 {
 public:
     STSX2Overlay();

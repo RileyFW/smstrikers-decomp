@@ -39,6 +39,14 @@ extern cWorldSFX gStadGenSFX;
 extern cTeam* g_pCurrentlyUpdatingTeam;
 extern f32 gfRepositionThreshold;
 
+class Fuzzy
+{
+public:
+    static FuzzyVariant GetBestPassTarget(cPlayer*);
+};
+
+float OpenTo(cPlayer*, cPlayer*);
+
 static const nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
 
 /**
@@ -304,9 +312,109 @@ void Goalie::ExecutePounce(cPlayer* pPlayer, bool bCheckHitDistance)
 
 /**
  * Offset/Address/Size: 0x99F0 | 0x8004C4EC | size: 0x328
+ * TODO: 93.94% match - FuzzyVariant copy ctor stack layout: named local vs return temp at swapped offsets (sp+0x08 vs sp+0x38). Compiler-internal allocation order issue. fOpenTo threshold uses 0.65f (separate SDA entry from GetPressure's 0.5f).
  */
-void Goalie::InitActionPass(bool)
+void Goalie::InitActionPass(bool useTarget)
 {
+    int animID;
+
+    CleanGoalieAction();
+
+    mPrevGoalieActionState = mGoalieActionState;
+    mGoalieActionState = GOALIEACTION_PASS;
+    mnSubstate = 0;
+    mpPassTarget = NULL;
+
+    if (useTarget)
+    {
+        cPlayer* pPassTarget;
+
+        if (GetGlobalPad() != NULL)
+        {
+            pPassTarget = DoFindBestPassTarget(false, false);
+        }
+        else
+        {
+            FuzzyVariant passTarget = Fuzzy::GetBestPassTarget(this);
+            if (passTarget.Confidence >= 0.0f)
+            {
+                pPassTarget = passTarget.mData.pPlayer;
+            }
+            else
+            {
+                pPassTarget = DoFindBestPassTarget(false, false);
+            }
+        }
+
+        mpPassTarget = pPassTarget;
+
+        if (mpPassTarget != NULL)
+        {
+            bool isValidPassTarget;
+
+            if ((float)fabs(mpPassTarget->m_v3Position.f.x) > (float)fabs(m_v3Position.f.x)
+                && (float)fabs(mpPassTarget->m_v3Position.f.y) < cField::GetPenaltyBoxY())
+            {
+                isValidPassTarget = false;
+            }
+            else
+            {
+                isValidPassTarget = true;
+            }
+
+            if (isValidPassTarget)
+            {
+                GoalieTweaks* pTweaks = static_cast<GoalieTweaks*>(m_pTweaks);
+
+                float dy = m_v3Position.f.y - mpPassTarget->m_v3Position.f.y;
+                float dx = m_v3Position.f.x - mpPassTarget->m_v3Position.f.x;
+                float fDistanceSq = (dx * dx) + (dy * dy);
+                float fKickDistanceSq = pTweaks->fKickDistanceMin * pTweaks->fKickDistanceMin;
+                float fOverhandThrowDistanceSq = pTweaks->fOverhandThrowDistanceMin * pTweaks->fOverhandThrowDistanceMin;
+                float fOpenTo = OpenTo(this, mpPassTarget);
+
+                if (GetGlobalPad() != NULL)
+                {
+                    if (GetGlobalPad()->GetPressure(0x15, true) > 0.5f)
+                    {
+                        animID = 2;
+                    }
+                    else if ((fDistanceSq > fOverhandThrowDistanceSq) || (fOpenTo < 0.65f))
+                    {
+                        animID = 0;
+                    }
+                    else
+                    {
+                        animID = 1;
+                    }
+                }
+                else if (fDistanceSq > fKickDistanceSq)
+                {
+                    animID = 2;
+                }
+                else if ((fDistanceSq > fOverhandThrowDistanceSq) || (fOpenTo < 0.65f))
+                {
+                    animID = 0;
+                }
+                else
+                {
+                    animID = 1;
+                }
+            }
+            else
+            {
+                mpPassTarget = NULL;
+            }
+        }
+    }
+
+    if (mpPassTarget == NULL)
+    {
+        animID = 2;
+    }
+
+    SetAnimState(animID, true, 0.2f, false, false);
+    InitMovementFromAnimSeek(m_pTweaks->fRunningDirectionSeekSpeed, m_pTweaks->fRunningDirectionSeekFalloff);
 }
 
 /**
@@ -636,8 +744,6 @@ bool Goalie::InitiatePickup()
 
 /**
  * Offset/Address/Size: 0x73E4 | 0x80049EE0 | size: 0x1D0
- * TODO: 98.6% match - extra li r5,1 for bShouldSetAnim init before dead-code branch,
- * r3/r5 register swap for flag vs controller, f0/f2 swap in pickup-time writeback
  */
 void Goalie::InitiatePanicGrab(cPlayer* pPlayer)
 {
@@ -674,25 +780,30 @@ void Goalie::InitiatePanicGrab(cPlayer* pPlayer)
     s32 nAnimID = mpLooseBallInfo->mnAnimID;
     if (nAnimID != m_eAnimID)
     {
-        u8 bShouldSetAnim = true;
-        if (nAnimID == m_eAnimID)
+        do
         {
-            bShouldSetAnim = false;
-            if (m_pCurrentAnimController->m_ePlayMode == 1 && m_pCurrentAnimController->m_fTime == 1.0f)
+            if (nAnimID == m_eAnimID)
             {
-                bShouldSetAnim = true;
+                cPN_SAnimController* pController = m_pCurrentAnimController;
+                u8 bShouldSetAnim = false;
+                if (pController->m_ePlayMode == 1 && pController->m_fTime == 1.0f)
+                {
+                    bShouldSetAnim = true;
+                }
+
+                if (!bShouldSetAnim)
+                {
+                    break;
+                }
             }
-        }
 
-        if (bShouldSetAnim)
-        {
             SetAnimState(nAnimID, true, 0.2f, false, false);
-        }
+        } while (0);
 
-        f32 fPickupTime = mpLooseBallInfo->mfPickupTime * 0.5f;
         cPN_SAnimController* pController = m_pCurrentAnimController;
+        f32 fPickupTime = mpLooseBallInfo->mfPickupTime;
         pController->m_fPrevTime = pController->m_fTime;
-        pController->m_fTime = fPickupTime;
+        pController->m_fTime = 0.5f * fPickupTime;
         InitMovementFromAnim(0, v3Zero, 1.0f, false);
     }
 
@@ -1520,9 +1631,116 @@ void Goalie::InitActionSaveSetup(bool)
 
 /**
  * Offset/Address/Size: 0x2F9C | 0x80045A98 | size: 0x34C
+ * TODO: 99.95% match - fmadds frA/frC operand swap for 0.5f * m_fNetWidth (commutative, same result)
  */
 void Goalie::InitActionSave()
 {
+    float absX = (float)fabs(g_pBall->m_v3ShotTarget.f.x);
+    if (absX > (cField::GetGoalLineX(1U) - 0.2f))
+    {
+        cBall* pBall = g_pBall;
+        float saveIgnoreMargin = ((GoalieTweaks*)m_pTweaks)->fSaveIgnoreMargin;
+        double shotAbsX = __fabs(pBall->m_v3ShotTarget.f.x);
+
+        bool bInNet;
+        if ((float)shotAbsX > (cField::GetGoalLineX(1U) - 1.0f)
+            && (float)fabs(pBall->m_v3ShotTarget.f.y) < (cNet::m_fNetWidth / 2.0f + saveIgnoreMargin)
+            && pBall->m_v3ShotTarget.f.z < (saveIgnoreMargin + cNet::m_fNetHeight))
+        {
+            bInNet = true;
+        }
+        else
+        {
+            bInNet = false;
+        }
+
+        if (bInNet == false)
+        {
+            CleanGoalieAction();
+
+            mPrevGoalieActionState = mGoalieActionState;
+            mGoalieActionState = GOALIEACTION_MOVE;
+            mnSubstate = 0;
+
+            SetAnimState(8, true, 0.2f, false, false);
+            InitMovementFromAnim(0, v3Zero, 1.0f, false);
+
+            mnSubstate = 1;
+            mMoveDirection = GOALIEDIR_IDLE;
+
+            m_pPhysicsCharacter->m_CanCollideWithBall = true;
+            mbShouldMiss = false;
+            mbDoNavigate = false;
+            m_pPhysicsCharacter->m_CanCollidedWithGoalLine = true;
+            m_pPhysicsCharacter->m_CanCollideWithWall = true;
+
+            if (mbStunEffectActive)
+            {
+                KillDaze(this);
+                mbStunEffectActive = false;
+            }
+
+            mpShooter = NULL;
+            mUrgency = URGENCY_LOW;
+            mfSpeedScale = 1.0f;
+            mbPosGoalieNetCheck = false;
+            mbNegGoalieNetCheck = false;
+            mbDoHeadTrack = true;
+            mbBallImpacted = false;
+            mbNoUserControl = false;
+            mbPickedUp = false;
+
+            return;
+        }
+    }
+
+    CleanGoalieAction();
+
+    mPrevGoalieActionState = mGoalieActionState;
+    mGoalieActionState = GOALIEACTION_SAVE;
+    mnSubstate = 0;
+
+    mFatigue.RegisterShot(mpSaveData->mfFatigueValue);
+    mbBallImpacted = false;
+
+    if (mbShouldMiss)
+    {
+        if (mpSaveData->mpFailAnimData)
+        {
+            mpSaveData = mpSaveData->mpFailAnimData;
+
+            SetAnimState(mpSaveData->mnAnimID, true, 0.2f, false, false);
+            InitMovementFromAnim(0, v3Zero, 0.0f, false);
+        }
+        else
+        {
+            PlayBlendedAnims(0.0f, -1);
+        }
+    }
+    else
+    {
+        PlayBlendedAnims(mBlendInfo.mfStartTime, -1);
+    }
+
+    Event* pEvent = g_pEventManager->CreateValidEvent(0x13, 0x38);
+    GoalieSaveData* pSaveData = new ((u8*)pEvent + 0x10) GoalieSaveData();
+
+    pSaveData->pGoalie = this;
+    pSaveData->v3BallVelocity = v3Zero;
+    pSaveData->fWowFactor = 0.0f;
+    pSaveData->isSTS = 0;
+
+    pSaveData->saveType = g_pBall->m_uGoalType;
+    pSaveData->pShooter = g_pBall->m_pShooter;
+
+    if (mpSaveData)
+    {
+        pSaveData->padding = mpSaveData->muSaveType;
+    }
+    else
+    {
+        pSaveData->padding = 3;
+    }
 }
 
 /**

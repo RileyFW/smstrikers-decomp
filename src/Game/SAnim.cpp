@@ -42,6 +42,54 @@ void cSAnim::BlendRot(int nodeIndex, int remappedNodeIndex, float tNorm, float w
  */
 void cSAnim::BlendScale(int nodeIndex, int remappedNodeIndex, float tNorm, float weight, cPoseAccumulator* acc, bool additive) const
 {
+    PackedScale* pKeys = m_pScaleKeys[remappedNodeIndex];
+    if (pKeys != NULL && (unsigned int)remappedNodeIndex < m_nNumNodes)
+    {
+        if (m_pNodeProperties[remappedNodeIndex] & 0x8)
+        {
+            nlVector3 v;
+            v.f.x = 0.01f * pKeys[0].x;
+            v.f.y = 0.01f * pKeys[0].y;
+            v.f.z = 0.01f * pKeys[0].z;
+            acc->BlendScale(nodeIndex, &v, weight, additive);
+            return;
+        }
+
+        if (1.0f == tNorm)
+        {
+            PackedScale* pLastKey = &pKeys[m_nNumKeys - 1];
+            nlVector3 v;
+            v.f.x = 0.01f * pLastKey->x;
+            v.f.y = 0.01f * pLastKey->y;
+            v.f.z = 0.01f * pLastKey->z;
+            acc->BlendScale(nodeIndex, &v, weight, additive);
+            return;
+        }
+
+        float fRealIndex = tNorm * (m_nNumKeys - 1);
+        int nKeyIndex = (int)fRealIndex;
+        float fFrac = fRealIndex - nKeyIndex;
+        float fWeight2 = weight * fFrac;
+        float fWeight1 = weight - fWeight2;
+
+        PackedScale* pKey = &pKeys[nKeyIndex];
+        nlVector3 v1;
+        v1.f.x = 0.01f * pKey->x;
+        v1.f.y = 0.01f * pKey->y;
+        v1.f.z = 0.01f * pKey->z;
+        acc->BlendScale(nodeIndex, &v1, fWeight1, additive);
+
+        PackedScale* pNextKey = &m_pScaleKeys[remappedNodeIndex][nKeyIndex + 1];
+        nlVector3 v2;
+        v2.f.x = 0.01f * pNextKey->x;
+        v2.f.y = 0.01f * pNextKey->y;
+        v2.f.z = 0.01f * pNextKey->z;
+        acc->BlendScale(nodeIndex, &v2, fWeight2, additive);
+    }
+    else
+    {
+        acc->BlendScaleIdentity(nodeIndex, weight);
+    }
 }
 
 /**
@@ -179,6 +227,7 @@ void cSAnim::GetRootTrans(float t, nlVector3* out) const
 /**
  * Offset/Address/Size: 0x160 | 0x801E9374 | size: 0x80
  */
+#pragma inline_depth(0)
 void cSAnim::CreateCallback(float time, unsigned int param1, void (*funcCallback)(unsigned int))
 {
     cSAnimCallback* temp_r3;
@@ -193,6 +242,7 @@ void cSAnim::CreateCallback(float time, unsigned int param1, void (*funcCallback
 
     nlListAddStart<cSAnimCallback>(&m_pCallbackList, temp_r3, NULL);
 }
+#pragma inline_depth()
 
 /**
  * Offset/Address/Size: 0x0 | 0x801E9214 | size: 0x160

@@ -956,8 +956,36 @@ nlAVLTree<unsigned long, LightObject*, DefaultKeyCompare<unsigned long> >::~nlAV
 /**
  * Offset/Address/Size: 0x3DB4 | 0x80198A78 | size: 0x19C
  */
-World::World(const char*)
+World::World(const char* szWorldName)
+    : m_pWorldAnimManager(NULL)
+    , m_Locked(false)
+    , m_pModels(NULL)
+    , m_uNumModels((m_animControllerList.m_Head = NULL, 0))
 {
+    bool glTextureLoad(unsigned long);
+
+    m_WorldNameLength = nlStrLen<char>(szWorldName);
+    nlStrNCpy<char>(m_WorldNamePrefix, szWorldName, 0x40);
+
+    char slash = '/';
+    int len = m_WorldNameLength;
+    m_WorldNameLength = len + 1;
+    m_WorldNamePrefix[len] = slash;
+
+    m_pWorldAnimManager = new (nlMalloc(sizeof(WorldAnimManager), 8, false)) WorldAnimManager();
+
+    m_pIntensityPerm = NULL;
+
+    m_LightRampTexA = glGetTexture("global/lightramp");
+    m_LightRampTexB = m_LightRampTexA;
+
+    m_PlayerLightRampTex = glGetTexture("global/playerlightramp");
+    if (glTextureLoad(m_PlayerLightRampTex) == false)
+    {
+        m_PlayerLightRampTex = m_LightRampTexA;
+    }
+
+    m_GlobalLightRampSTSTex = m_LightRampTexA;
 }
 
 // /**

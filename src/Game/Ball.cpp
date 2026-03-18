@@ -450,12 +450,14 @@ void cBall::ShootRelease(const nlVector3& v3Velocity, eSpinType SpinType)
         v3Up = kZero;
         v3Up.f.z = fSpinRand;
 
+        float upX = v3Up.f.x;
+        float upY = v3Up.f.y;
         float velY = v3Velocity.f.y;
         float velX = v3Velocity.f.x;
 
-        v3AngVel.f.x = (v3Up.f.y * v3Velocity.f.z) - (v3Up.f.z * velY);
-        v3AngVel.f.y = (-v3Up.f.x * v3Velocity.f.z) + (v3Up.f.z * velX);
-        v3AngVel.f.z = (v3Up.f.x * velY) - (v3Up.f.y * velX);
+        v3AngVel.f.x = (upY * v3Velocity.f.z) - (v3Up.f.z * velY);
+        v3AngVel.f.y = (-upX * v3Velocity.f.z) + (v3Up.f.z * velX);
+        v3AngVel.f.z = (upX * velY) - (upY * velX);
     }
     else if (SpinType == SPINTYPE_ROLLING)
     {
@@ -501,10 +503,20 @@ void cBall::SetVisible(bool visible)
     drawable->m_uObjectFlags = (drawable->m_uObjectFlags & 0xFFFFFFFE);
 }
 
+static inline float CalcSpinRand(eSpinType spin)
+{
+    float fSpinRand = 0.5f + nlRandomf(2.0f, &nlDefaultSeed);
+    if (spin == SPINTYPE_BACK)
+    {
+        fSpinRand *= -1.0f;
+    }
+    return fSpinRand;
+}
+
 /**
  * Offset/Address/Size: 0x1104 | 0x8000AAD8 | size: 0x1D4
- * TODO: 99.27% match - FPR register coloring: fSpinRand allocated to f7 instead of f9 (DWARF),
- *       cascading through cross product temporaries. All instructions and scheduling correct.
+ * TODO: 99.40% match - FPR register coloring in spin branch: fSpinRand in f5 vs f9 target.
+ *       Inline helper improved allocation and reduced diff count, but final float register map differs.
  */
 void cBall::SetVelocity(const nlVector3& velocity, eSpinType spin, const nlVector3* pAngularVelocity)
 {
@@ -521,11 +533,7 @@ void cBall::SetVelocity(const nlVector3& velocity, eSpinType spin, const nlVecto
     }
     else if ((spin == SPINTYPE_FORWARD) || (spin == SPINTYPE_BACK))
     {
-        float fSpinRand = 0.5f + nlRandomf(2.0f, &nlDefaultSeed);
-        if (spin == SPINTYPE_BACK)
-        {
-            fSpinRand *= -1.0f;
-        }
+        float fSpinRand = CalcSpinRand(spin);
 
         nlVector3 v3Up = { 0.0f, 0.0f, 0.0f };
         v3Up.f.z = fSpinRand;

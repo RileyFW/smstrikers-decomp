@@ -284,7 +284,7 @@ Function0<void>::FunctorImpl<BindExp1_vfmfcp>::Clone() const
 
 /**
  * Offset/Address/Size: 0x1D70 | 0x800CB424 | size: 0x1E4
- * TODO: 95.46% match - remaining diff in FunctorImpl vtable-init scheduling and popup Create call shape.
+ * TODO: 99.88% match - only minor instruction/label diffs remain around PopupMap/Create relocation.
  */
 void CupTrophyScene::HandleUnlockedTriggers()
 {
@@ -322,13 +322,8 @@ void CupTrophyScene::HandleUnlockedTriggers()
                 Function<FnVoidVoid> callback;
                 callback.mTag = FUNCTOR;
 
-                FunctorImpl_vfmfcp* functor = (FunctorImpl_vfmfcp*)nlMalloc(sizeof(FunctorImpl_vfmfcp), 8, false);
-                if (functor != 0)
-                {
-                    functor = new (functor) FunctorImpl_vfmfcp();
-                    functor->mBind.mFuncPtr = bind.mFuncPtr;
-                    functor->mBind.mArg = bind.mArg;
-                }
+                FunctorImpl_vfmfcp* functor = new ((FunctorImpl_vfmfcp*)nlMalloc(sizeof(FunctorImpl_vfmfcp), 8, false))
+                    FunctorImpl_vfmfcp(bind);
 
                 callback.mFunctor = functor;
                 popup->Create(PopupMap[i], callback);

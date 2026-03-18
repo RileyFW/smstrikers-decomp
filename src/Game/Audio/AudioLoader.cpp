@@ -1307,6 +1307,18 @@ extern SoundPropAccessor* gpBOWSERMETALSoundPropAccessor;
 extern SoundPropAccessor* gpCRITTERRUBBERSoundPropAccessor;
 extern SoundPropAccessor* gpBOWSERRUBBERSoundPropAccessor;
 extern SoundPropAccessor* gpCRITTERROBOTSoundPropAccessor;
+extern SoundPropAccessor* gpSTADWOODSoundPropAccessor;
+extern SoundPropAccessor* gpSTADKONGASoundPropAccessor;
+extern SoundPropAccessor* gpSTADCONCRETESoundPropAccessor;
+extern SoundPropAccessor* gpSTADPIPESoundPropAccessor;
+extern SoundPropAccessor* gpSTADGRASSSoundPropAccessor;
+extern SoundPropAccessor* gpSTADPALACESoundPropAccessor;
+extern SoundPropAccessor* gpSTADMETALSoundPropAccessor;
+extern SoundPropAccessor* gpSTADUNDERSoundPropAccessor;
+extern SoundPropAccessor* gpSTADCRATERSoundPropAccessor;
+extern SoundPropAccessor* gpSTADRUBBERSoundPropAccessor;
+extern SoundPropAccessor* gpSTADBOWSERSoundPropAccessor;
+extern SoundPropAccessor* gpSTADBATTLESoundPropAccessor;
 extern eCharacterClass ConvertToCharacterClass(eTeamID);
 extern eCharacterClass ConvertToCharacterClass(eSidekickID);
 
@@ -1480,9 +1492,142 @@ void AudioLoader::SetupBowserStadiumSoundTable(Bowser* bowser)
 
 /**
  * Offset/Address/Size: 0x8E4 | 0x801446B0 | size: 0x350
+ * TODO: 99.72% match - r4/r5 register swap for bAlreadyLoaded in loaded-group checks
  */
-void AudioLoader::LoadStadiumSpecificSoundGroups(eStadiumID)
+unsigned char AudioLoader::LoadStadiumSpecificSoundGroups(eStadiumID stadiumID)
 {
+    switch (stadiumID)
+    {
+    case STAD_MARIO_STADIUM:
+        gLoadedSurfaceGroup = 18;
+        gLoadedStadiumGroup = 10;
+        Audio::gStadGenSFX.SetSFX(gpSTADWOODSoundPropAccessor);
+        Audio::gStadGenSFX.SetSFX(gpSTADKONGASoundPropAccessor);
+        break;
+    case STAD_PEACH_TOAD_STADIUM:
+        gLoadedSurfaceGroup = 16;
+        gLoadedStadiumGroup = 8;
+        Audio::gStadGenSFX.SetSFX(gpSTADCONCRETESoundPropAccessor);
+        Audio::gStadGenSFX.SetSFX(gpSTADPIPESoundPropAccessor);
+        break;
+    case STAD_DK_DAISY:
+        gLoadedSurfaceGroup = 14;
+        gLoadedStadiumGroup = 7;
+        Audio::gStadGenSFX.SetSFX(gpSTADGRASSSoundPropAccessor);
+        Audio::gStadGenSFX.SetSFX(gpSTADPALACESoundPropAccessor);
+        break;
+    case STAD_WARIO_STADIUM:
+        gLoadedSurfaceGroup = 15;
+        gLoadedStadiumGroup = 9;
+        Audio::gStadGenSFX.SetSFX(gpSTADMETALSoundPropAccessor);
+        Audio::gStadGenSFX.SetSFX(gpSTADUNDERSoundPropAccessor);
+        break;
+    case STAD_YOSHI_STADIUM:
+        gLoadedSurfaceGroup = 14;
+        gLoadedStadiumGroup = 11;
+        Audio::gStadGenSFX.SetSFX(gpSTADGRASSSoundPropAccessor);
+        Audio::gStadGenSFX.SetSFX(gpSTADCRATERSoundPropAccessor);
+        break;
+    case STAD_SUPER_STADIUM:
+        gLoadedSurfaceGroup = 17;
+        gLoadedStadiumGroup = 12;
+        Audio::gStadGenSFX.SetSFX(gpSTADRUBBERSoundPropAccessor);
+        Audio::gStadGenSFX.SetSFX(gpSTADBOWSERSoundPropAccessor);
+        break;
+    case STAD_FORBIDDEN_DOME:
+        gLoadedSurfaceGroup = 16;
+        gLoadedStadiumGroup = 9;
+        Audio::gStadGenSFX.SetSFX(gpSTADCONCRETESoundPropAccessor);
+        Audio::gStadGenSFX.SetSFX(gpSTADBATTLESoundPropAccessor);
+        break;
+    default:
+        tDebugPrintManager::Print(DC_SOUND, "A new stadium needs to be added to AudioLoader::LoadInGameAudioData()\n");
+        return false;
+    }
+
+    s32 loadedGroup = gLoadedSurfaceGroup;
+    bool bAlreadyLoaded;
+
+    if (loadedGroup < 0)
+    {
+        bAlreadyLoaded = false;
+    }
+    else
+    {
+        bAlreadyLoaded = false;
+        if (sebringAudioGroups[loadedGroup].uLoadOrder > -1 && sebringAudioGroups[loadedGroup].stackEnum > -1)
+        {
+            bAlreadyLoaded = true;
+        }
+    }
+
+    if (bAlreadyLoaded == false)
+    {
+        bool loaded;
+        if (gbDisableAudio)
+        {
+            loaded = true;
+        }
+        else
+        {
+            if (AudioLoader::IsInited() == false)
+            {
+                loaded = false;
+            }
+            else
+            {
+                loaded = PlatAudio::LoadSoundGroup(sebringAudioFileData, loadedGroup, 1, true);
+            }
+        }
+
+        if (loaded == false)
+        {
+            tDebugPrintManager::Print(DC_SOUND, "Could not load surface sound group %d onto secondary sound stack.\n", gLoadedSurfaceGroup);
+            return false;
+        }
+    }
+
+    loadedGroup = gLoadedStadiumGroup;
+    if (loadedGroup < 0)
+    {
+        bAlreadyLoaded = false;
+    }
+    else
+    {
+        bAlreadyLoaded = false;
+        if (sebringAudioGroups[loadedGroup].uLoadOrder > -1 && sebringAudioGroups[loadedGroup].stackEnum > -1)
+        {
+            bAlreadyLoaded = true;
+        }
+    }
+
+    if (bAlreadyLoaded == false)
+    {
+        bool loaded;
+        if (gbDisableAudio)
+        {
+            loaded = true;
+        }
+        else
+        {
+            if (AudioLoader::IsInited() == false)
+            {
+                loaded = false;
+            }
+            else
+            {
+                loaded = PlatAudio::LoadSoundGroup(sebringAudioFileData, loadedGroup, 1, true);
+            }
+        }
+
+        if (loaded == false)
+        {
+            tDebugPrintManager::Print(DC_SOUND, "Could not load stadium sound group %d onto secondary sound stack.\n", gLoadedStadiumGroup);
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**

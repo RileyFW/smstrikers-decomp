@@ -2,6 +2,7 @@
 #define _FESCROLLINGTICKER_H_
 
 #include "Game/BaseSceneHandler.h"
+#include "Game/FE/feIMessenger.h"
 #include "Game/FE/feTweener.h"
 #include "Game/FE/feTweenFuncs.h"
 #include "Game/FE/feScrollText.h"
@@ -10,15 +11,6 @@
 class TLTextInstance;
 class TLInstance;
 class feVector3;
-
-// void 0x800A0DCC..0x800A1304 | size: 0x538;
-// void 0x802A9880..0x802A9938 | size: 0xB8;
-
-class FEIMessenger
-{
-public:
-    virtual ~FEIMessenger();
-}; // total size: 0x4
 
 class ScrollingTickerScene : public FEIMessenger, public BaseSceneHandler
 {
@@ -29,7 +21,8 @@ public:
     void OpenMessengerNow();
     void OpenMessenger();
     void Update(float);
-    // void SetDisplayMessage(const BasicString<unsigned short, Detail::TempStringAllocator>&);
+    void SetDisplayMessage(const BasicString<unsigned short, Detail::TempStringAllocator>&);
+    void SetMessageFinishedCB(const Function<void*>& cb);
     void SceneCreated();
     ~ScrollingTickerScene();
     ScrollingTickerScene();

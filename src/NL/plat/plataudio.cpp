@@ -26,6 +26,7 @@ static u8 gAllowSyncReadsPastLoadedData;
 // ARAMTransferHelperLoadEntireFile static members
 // static u32 m_uFileSize__32ARAMTransferHelperLoadEntireFile;
 // static nlFile* s_pFile__32ARAMTransferHelperLoadEntireFile;
+const char* m_szFileName__32ARAMTransferHelperLoadEntireFile;
 ARAMTransferHelperLoadEntireFile* ARAMTransferHelperLoadEntireFile::m_pARAMHelper;
 
 // ARAMTransferHelper static members
@@ -153,9 +154,98 @@ SFXEmitter* GetSFXEmitter(unsigned long id)
 
 /**
  * Offset/Address/Size: 0x15C | 0x801C4958 | size: 0x35C
+ * TODO: 84.02% match - stmw/5-reg allocation (r27-r31) vs 3-reg (r29-r31),
+ * r4/r5 volatile register swap in reset stores, missing stfsx indexed store
+ * in second section (r28=gEmitters+0x58 base not hoisted by compiler)
  */
-void GetFreeEmitter(unsigned long&)
+SFXEmitter* GetFreeEmitter(unsigned long& index)
 {
+    int i;
+    SFXEmitter* emitter = gEmitters;
+
+    index = 0;
+    for (i = 0; i < 64; i++)
+    {
+        if (!sndCheckEmitter((SND_EMITTER*)emitter) && sndFXCheck(sndEmitterVoiceID((SND_EMITTER*)emitter)) == -1
+            && !emitter->bIsStopping && !emitter->bInUse)
+        {
+            sndRemoveEmitter((SND_EMITTER*)&gEmitters[i]);
+            gEmitters[i].bInUse = true;
+            index = i;
+            gEmitters[i].bKeepTrack = true;
+            gEmitters[i].soundType = (unsigned long)-1;
+            gEmitters[i].fTimeStamp = -1.0f;
+            gEmitters[i].bIsStopping = false;
+            gEmitters[i].bInUse = false;
+            gEmitters[i].bIsFilterOn = false;
+            gEmitters[i].m_unk_0x5F = false;
+            gEmitters[i].pPhysObj = NULL;
+            gEmitters[i].pOwner = NULL;
+            gEmitters[i].pos.pvPos = NULL;
+            gEmitters[i].dir.pvDir = NULL;
+            gEmitters[i].pos.vPos.f.x = 0.0f;
+            gEmitters[i].pos.vPos.f.y = 0.0f;
+            gEmitters[i].pos.vPos.f.z = 0.0f;
+            gEmitters[i].dir.vDir.f.x = 0.0f;
+            gEmitters[i].dir.vDir.f.y = 0.0f;
+            gEmitters[i].dir.vDir.f.z = 0.0f;
+            gEmitters[i].posUpdateMethod = NONE;
+            if (gEmitters[i].pMIDIControllerInfo != NULL)
+            {
+                if (gEmitters[i].pMIDIControllerInfo->paraArray != NULL)
+                    delete[] (char*)gEmitters[i].pMIDIControllerInfo->paraArray;
+                delete gEmitters[i].pMIDIControllerInfo;
+            }
+            gEmitters[i].pMIDIControllerInfo = NULL;
+            break;
+        }
+        emitter += 1;
+    }
+
+    if (i == 64)
+    {
+        float min = gEmitters[0].fTimeStamp;
+        int minIndex = 0;
+        for (i = 1; i < 64; i++)
+        {
+            if (gEmitters[i].fTimeStamp < min)
+            {
+                min = gEmitters[i].fTimeStamp;
+                minIndex = i;
+            }
+        }
+        sndRemoveEmitter((SND_EMITTER*)&gEmitters[minIndex]);
+        gEmitters[minIndex].bInUse = true;
+        index = minIndex;
+        gEmitters[minIndex].bKeepTrack = true;
+        gEmitters[minIndex].soundType = (unsigned long)-1;
+        gEmitters[minIndex].fTimeStamp = -1.0f;
+        gEmitters[minIndex].bIsStopping = false;
+        gEmitters[minIndex].bInUse = false;
+        gEmitters[minIndex].bIsFilterOn = false;
+        gEmitters[minIndex].m_unk_0x5F = false;
+        gEmitters[minIndex].pPhysObj = NULL;
+        gEmitters[minIndex].pOwner = NULL;
+        gEmitters[minIndex].pos.pvPos = NULL;
+        gEmitters[minIndex].dir.pvDir = NULL;
+        gEmitters[minIndex].pos.vPos.f.x = 0.0f;
+        gEmitters[minIndex].pos.vPos.f.y = 0.0f;
+        gEmitters[minIndex].pos.vPos.f.z = 0.0f;
+        gEmitters[minIndex].dir.vDir.f.x = 0.0f;
+        gEmitters[minIndex].dir.vDir.f.y = 0.0f;
+        gEmitters[minIndex].dir.vDir.f.z = 0.0f;
+        gEmitters[minIndex].posUpdateMethod = NONE;
+        if (gEmitters[minIndex].pMIDIControllerInfo != NULL)
+        {
+            if (gEmitters[minIndex].pMIDIControllerInfo->paraArray != NULL)
+                delete[] (char*)gEmitters[minIndex].pMIDIControllerInfo->paraArray;
+            delete gEmitters[minIndex].pMIDIControllerInfo;
+        }
+        gEmitters[minIndex].pMIDIControllerInfo = NULL;
+        tDebugPrintManager::Print(DC_SOUND, "GetFreeEmitter: No free SFX emitters available!\n");
+    }
+
+    return &gEmitters[index];
 }
 
 /**
@@ -610,11 +700,11 @@ bool StopSFX(unsigned long handle)
 
 /**
  * Offset/Address/Size: 0xD18 | 0x801C5514 | size: 0x244
- * TODO: 94.21% match - MWCC float register allocation difference: 0.0f constant
- * loads into f1 instead of target's f0, causing cascading f-register swaps and
- * 3 missing 0.0f reload instructions. Also r4/r5 swap in filter section,
- * r5/r0 for pitch bend comparison, and Print call lis/li argument ordering.
+ * TODO: 97.72% match - remaining differences are concentrated in the pitch/filter
+ * parameter block: r5/r0 pitch bend compare, Print call lis/li ordering, and
+ * r3/r0 plus r4/r5 register swaps during ctrl/freq writes.
  */
+#pragma opt_common_subs off
 unsigned long PlaySFX(const SFXStartInfo& info)
 {
     const SFXStartInfo* pInfo = &info;
@@ -635,7 +725,7 @@ unsigned long PlaySFX(const SFXStartInfo& info)
     {
         uVolume = 0x7F;
     }
-    else if (f2 < 0.0f)
+    else if (f2 < -0.0f)
     {
         uVolume = 0;
     }
@@ -643,7 +733,7 @@ unsigned long PlaySFX(const SFXStartInfo& info)
     {
         float f0;
         f2 = 127.0f * f2;
-        if (f2 < 0.0f)
+        if (f2 < -0.0f)
         {
             f0 = -0.5f;
         }
@@ -655,18 +745,15 @@ unsigned long PlaySFX(const SFXStartInfo& info)
         uVolume = (u8)(s32)f0;
     }
 
-    float f1 = pInfo->fPan;
-    if (0.0f == f1)
+    if (0.0f == pInfo->fPan)
     {
         uPan = 0xFF;
     }
     else
     {
         float f3 = 0.5f;
-        f1 = 1.0f + f1;
-        f1 = f3 * f1;
-        f1 = 127.0f * f1;
-        if (f1 < 0.0f)
+        float f1 = 127.0f * (f3 * (1.0f + pInfo->fPan));
+        if (f1 < -0.0f)
         {
             f3 = -0.5f;
         }
@@ -708,7 +795,7 @@ unsigned long PlaySFX(const SFXStartInfo& info)
         float f0;
         float f1v = 127.0f * f2;
         pParaArray[0].ctrl = 0x5B;
-        if (f1v < 0.0f)
+        if (f1v < -0.0f)
         {
             f0 = -0.5f;
         }
@@ -753,6 +840,7 @@ unsigned long PlaySFX(const SFXStartInfo& info)
 
     return sndFXStartParaInfo((u16)pInfo->uSFXID, uVolume, uPan, 0, &tempParaInfo);
 }
+#pragma opt_common_subs on
 
 /**
  * Offset/Address/Size: 0xF5C | 0x801C5758 | size: 0x120
@@ -929,9 +1017,144 @@ bool UnloadSoundGroup(AudioFileData& fileData, unsigned long groupEnum)
 
 /**
  * Offset/Address/Size: 0x1350 | 0x801C5B4C | size: 0x328
+ * 99.85% match - i diffs only (string pool index differences)
  */
-void LoadSoundGroup(AudioFileData&, unsigned long, unsigned long, bool)
+bool LoadSoundGroup(AudioFileData& fileData, unsigned long groupEnum, unsigned long stackEnum, bool bUseARAMStreamCallback)
 {
+    unsigned long uTickStart;
+    unsigned short groupID = fileData.soundGroups[groupEnum].groupID;
+    uTickStart = nlGetTicker();
+
+    if (!(unsigned char)sndStackSetCurrent(stack_list[stackEnum].id))
+    {
+        tDebugPrintManager::Print(DC_SOUND, "sndStackSetCurrent failed for stack %d\n", stack_list[stackEnum].id);
+        return false;
+    }
+
+    ARAMTransferHelper* pTransferHelperLoadFromDisc = NULL;
+    ARAMTransferHelperLoadEntireFile* pTransferHelperLoadEntireFile = NULL;
+
+    if (bUseARAMStreamCallback)
+    {
+        pTransferHelperLoadFromDisc = (ARAMTransferHelper*)nlMalloc(0x10, 0x20, true);
+        if (pTransferHelperLoadFromDisc != NULL)
+        {
+            const char* szFile = fileData.szSampleFile;
+            pTransferHelperLoadFromDisc->m_pARAMXferBlockBaseAddress = NULL;
+            pTransferHelperLoadFromDisc->m_uCachedDataOffset = -1;
+            pTransferHelperLoadFromDisc->m_pDiskCacheBaseAddress = NULL;
+            ARAMTransferHelper::m_szFileName = szFile;
+
+            pTransferHelperLoadFromDisc->m_pDiskCacheBaseAddress = (unsigned char*)nlMalloc(0x20000, 0x20, true);
+            pTransferHelperLoadFromDisc->m_pARAMXferBlockBaseAddress = (unsigned char*)nlMalloc(0x20000, 0x20, true);
+
+            ARAMTransferHelper::m_pFile = nlOpen(ARAMTransferHelper::m_szFileName);
+            {
+                unsigned int allocSize;
+                pTransferHelperLoadFromDisc->m_uFileSize = nlFileSize(ARAMTransferHelper::m_pFile, &allocSize);
+            }
+            nlClose(ARAMTransferHelper::m_pFile);
+            ARAMTransferHelper::m_pFile = NULL;
+
+            tDebugPrintManager::Print(DC_SOUND, "sound group file size %d\n", pTransferHelperLoadFromDisc->m_uFileSize);
+
+            ARAMTransferHelper::m_pARAMHelper = pTransferHelperLoadFromDisc;
+        }
+
+        ARQSetChunkSize(0x20000);
+        sndSetSampleDataUploadCallback(ARAMTransferHelper::sndPushGroupCallback, 0x20000);
+    }
+    else
+    {
+        pTransferHelperLoadEntireFile = (ARAMTransferHelperLoadEntireFile*)nlMalloc(4, 0x20, true);
+        if (pTransferHelperLoadEntireFile != NULL)
+        {
+            const char* szFile = fileData.szSampleFile;
+            pTransferHelperLoadEntireFile->m_pARAMXferBlockBaseAddress = NULL;
+            m_szFileName__32ARAMTransferHelperLoadEntireFile = szFile;
+            pTransferHelperLoadEntireFile->m_pARAMXferBlockBaseAddress = (unsigned char*)nlMalloc(0x20000, 0x20, true);
+            ARAMTransferHelperLoadEntireFile::m_pARAMHelper = pTransferHelperLoadEntireFile;
+        }
+
+        ARQSetChunkSize(0x20000);
+        sndSetSampleDataUploadCallback(ARAMTransferHelperLoadEntireFile::sndPushGroupCallback, 0x20000);
+    }
+
+    if (!(unsigned char)sndPushGroup(fileData.proj_buffer, groupID, 0, fileData.sdir_buffer, fileData.pool_buffer))
+    {
+        tDebugPrintManager::Print(DC_SOUND, "sndPushGroup failed for group %d\n", groupID);
+        return false;
+    }
+
+    fileData.soundGroups[groupEnum].stackEnum = stackEnum;
+
+    unsigned long uLoadOrder = stack_list[stackEnum].unkC;
+    stack_list[stackEnum].unkC = uLoadOrder + 1;
+    fileData.soundGroups[groupEnum].uLoadOrder = uLoadOrder;
+
+    int loadType = 1;
+    if (pTransferHelperLoadFromDisc != NULL)
+    {
+        loadType = 2;
+    }
+    fileData.soundGroups[groupEnum].loadType = (LoadType)loadType;
+
+    if (pTransferHelperLoadFromDisc != NULL)
+    {
+        if (pTransferHelperLoadFromDisc != NULL)
+        {
+            if (ARAMTransferHelper::m_bFileOpened)
+            {
+                nlClose(ARAMTransferHelper::m_pFile);
+                ARAMTransferHelper::m_pFile = NULL;
+                ARAMTransferHelper::m_bFileOpened = 0;
+            }
+
+            if (pTransferHelperLoadFromDisc->m_pARAMXferBlockBaseAddress != NULL)
+            {
+                delete[] pTransferHelperLoadFromDisc->m_pARAMXferBlockBaseAddress;
+                pTransferHelperLoadFromDisc->m_pARAMXferBlockBaseAddress = NULL;
+            }
+
+            if (pTransferHelperLoadFromDisc->m_pDiskCacheBaseAddress != NULL)
+            {
+                delete[] pTransferHelperLoadFromDisc->m_pDiskCacheBaseAddress;
+                pTransferHelperLoadFromDisc->m_pDiskCacheBaseAddress = NULL;
+            }
+
+            ARAMTransferHelper::m_pARAMHelper = NULL;
+            delete pTransferHelperLoadFromDisc;
+        }
+    }
+
+    if (pTransferHelperLoadEntireFile != NULL)
+    {
+        if (pTransferHelperLoadEntireFile != NULL)
+        {
+            if (pTransferHelperLoadEntireFile->m_pARAMXferBlockBaseAddress != NULL)
+            {
+                delete[] pTransferHelperLoadEntireFile->m_pARAMXferBlockBaseAddress;
+                pTransferHelperLoadEntireFile->m_pARAMXferBlockBaseAddress = NULL;
+            }
+
+            if (ARAMTransferHelperLoadEntireFile::s_pFile != NULL)
+            {
+                nlClose(ARAMTransferHelperLoadEntireFile::s_pFile);
+            }
+
+            ARAMTransferHelperLoadEntireFile::m_pARAMHelper = NULL;
+            delete pTransferHelperLoadEntireFile;
+        }
+    }
+
+    {
+        unsigned long uTickEnd = nlGetTicker();
+        float fTime = nlGetTickerDifference(uTickStart, uTickEnd) / 1000.0f;
+        nlPrintf("Loaded %s from stack %d in %f seconds\n", fileData.soundGroups[groupEnum].szGroupName, stack_list[stackEnum].id, fTime);
+    }
+
+    PrintSoundStackInfo();
+    return true;
 }
 
 /**

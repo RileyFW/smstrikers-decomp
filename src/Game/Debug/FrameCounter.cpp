@@ -234,9 +234,83 @@ void DrawCircle(nlVector3 p0, float fRadius, float fScaleX, nlColour colour)
 
 /**
  * Offset/Address/Size: 0x904 | 0x801FD4A0 | size: 0x358
+ * TODO: 99.51% match - temp FPR allocation differs in setup/loop body sections.
  */
-void DrawSmile(nlVector3, float, float, nlColour, float)
+void DrawSmile(nlVector3 p0, float fRadius, float fScaleX, nlColour colour, float fLineThickness)
 {
+    extern float sfSmileAngle;
+    extern float sfHappiness;
+
+    GLMeshWriter mesh;
+    float degrees = sfSmileAngle;
+
+    glSetDefaultState(true);
+    glSetCurrentMatrix(glGetIdentityMatrix());
+    glSetCurrentTexture(WhiteTexture, GLTT_Diffuse);
+    glSetCurrentProgram(UnlitProgram);
+
+    const eGLStream stream_decl[3] = { GLStream_Position, GLStream_Colour, GLStream_Diffuse };
+    float yScale = (2.0f * sfHappiness) + -1.0f;
+
+    if (mesh.Begin(20, GLP_TriStrip, 3, stream_decl, false))
+    {
+        nlVector3 v3point;
+        nlVector2 uv0;
+        nlVector2 uv1;
+
+        float fRadians = -((3.1415927f * (0.5f * degrees)) / 180.0f);
+        v3point.f.z = p0.f.z;
+        nlSinCos(&v3point.f.x, &v3point.f.y, (u16)(int)(10430.378f * fRadians));
+
+        float fXFromAngle = v3point.f.x * fRadius;
+        float fYFromAngle = (v3point.f.y * fRadius) + p0.f.y;
+        float fYTop = p0.f.y + fRadius;
+
+        v3point.f.y = fYFromAngle;
+        v3point.f.x = (fScaleX * fXFromAngle) + p0.f.x;
+
+        float middleY = 0.5f * (fYFromAngle + fYTop);
+
+        int i = 0;
+        while (i < 10)
+        {
+            nlSinCos(&v3point.f.x, &v3point.f.y, (u16)(int)(10430.378f * fRadians));
+
+            float fXCurrent = v3point.f.x * fRadius;
+            float fYCurrent = (v3point.f.y * fRadius) + p0.f.y;
+
+            v3point.f.y = fYCurrent;
+            v3point.f.x = (fScaleX * fXCurrent) + p0.f.x;
+
+            v3point.f.y = fYCurrent - middleY;
+            v3point.f.y = v3point.f.y * yScale;
+            v3point.f.y = v3point.f.y + middleY;
+
+            mesh.Colour(colour);
+            uv0.f.x = 0.0f;
+            uv0.f.y = 0.0f;
+            ((GLMeshWriterCore*)&mesh)->Texcoord(uv0);
+            mesh.Vertex(v3point);
+
+            v3point.f.y += fLineThickness;
+
+            mesh.Colour(colour);
+            uv1.f.x = 0.0f;
+            uv1.f.y = 0.0f;
+            ((GLMeshWriterCore*)&mesh)->Texcoord(uv1);
+            mesh.Vertex(v3point);
+
+            i++;
+            fRadians += ((3.1415927f * degrees) / 180.0f) / 9.0f;
+        }
+
+        if (mesh.End() == 0)
+        {
+            return;
+        }
+
+        glViewAttachModel(GLV_Debug, 2, mesh.GetModel());
+    }
 }
 
 /**

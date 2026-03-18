@@ -49,10 +49,10 @@ void glplatMatrixLookAt(nlMatrix4& arg0, const nlVector3& arg1, const nlVector3&
     float ay = arg1.f.y;
     float by = arg2.f.y;
     float ax = arg1.f.x;
-    float f26 = ay - by;
     float bx = arg2.f.x;
-    float az = arg1.f.z;
     float f27 = ax - bx;
+    float az = arg1.f.z;
+    float f26 = ay - by;
     float bz = arg2.f.z;
     float f0 = f26 * f26;
     float f28 = az - bz;
@@ -69,8 +69,8 @@ void glplatMatrixLookAt(nlMatrix4& arg0, const nlVector3& arg1, const nlVector3&
     float fA = upz * f31;
     float fB = upz * f30;
     float fC = upy * f31;
-    f27 = negUpx * f29 + fA;
     f26 = upy * f29 - fB;
+    f27 = negUpx * f29 + fA;
     f28 = upx * f30 - fC;
 
     f1 = nlRecipSqrt(f28 * f28 + (f26 * f26 + f27 * f27), true);
@@ -133,8 +133,8 @@ void glplatMatrixLookAt(nlMatrix4& arg0, const nlVector3& arg1, const nlVector3&
     arg0.m[2][3] = zero;
     arg0.m[3][3] = one;
 
-    // TODO: 93.0% match - remaining diffs are f26/f27 swap in initial forward normalization and
-    // downstream right/up register-allocation mismatches (instruction shapes match, registers differ).
+    // TODO: 93.26% match - remaining diffs are rotated f26/f27/f28 register assignment in the
+    // side-vector normalization path and downstream eye-basis register allocation mismatches.
 }
 
 /**

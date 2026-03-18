@@ -116,6 +116,7 @@ template <>
 void AVLTreeBase<unsigned long, unsigned long, NewAdapter<AVLTreeEntry<unsigned long, unsigned long> >, DefaultKeyCompare<unsigned long> >::Walk<UserDataBuilder>(
     UserDataBuilder* cbClass, void (UserDataBuilder::*cb)(const unsigned long&, unsigned long*))
 {
+    FORCE_DONT_INLINE;
     InorderWalk(m_Root, cbClass, cb);
 }
 
@@ -165,28 +166,23 @@ nlAVLTree<unsigned long, SkinMatrix, DefaultKeyCompare<unsigned long> >::~nlAVLT
  */
 ShaderSkinMesh::~ShaderSkinMesh()
 {
-    // Delete morph-related arrays
     delete[] morphNumDeltas;
     delete[] morphData;
     delete[] morphIDs;
 
-    // Delete bone maps ring if it exists
     if (boneMaps != nullptr)
     {
         nlDeleteRing<BoneMapList>(&boneMaps);
     }
 
-    // Delete temporary arrays
     delete[] tempNormals;
     delete[] tempMatrices;
 
-    // Delete skin pairs ring if it exists
     if (skinPairs != nullptr)
     {
         nlDeleteRing<SkinPairList>(&skinPairs);
     }
 
-    // Delete stitch array if it exists
     if (stitchArray != nullptr)
     {
         delete[] stitchArray;

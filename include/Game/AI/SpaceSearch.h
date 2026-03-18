@@ -70,11 +70,11 @@ public:
 class SSearchIdealShot : public SpaceSearch
 {
 public:
-    SSearchIdealShot(Goalie* pGoalie)
-        : SpaceSearch((cPlayer*)pGoalie)
-        , m_pGoalie(pGoalie)
-        , m_SSearchOpenLane((cPlayer*)pGoalie, NULL)
+    SSearchIdealShot(cPlayer* pBallOwner)
+        : SpaceSearch(pBallOwner)
+        , m_SSearchOpenLane(pBallOwner, NULL)
     {
+        m_pGoalie = pBallOwner->m_pTeam->GetOtherTeam()->GetGoalie();
     }
     virtual ~SSearchIdealShot();
     virtual float EvaluatePosition(const nlVector3&, const nlVector3&, eFieldDirection, unsigned short);
@@ -100,8 +100,10 @@ public:
     virtual ~SSearchBestPass();
     virtual float EvaluatePosition(const nlVector3&, const nlVector3&, eFieldDirection, unsigned short);
 
-    /* 0x0C */ SSearchIdealShot m_SSearchIdealShot;
-    /* 0x40 */ SSearchOpenLane m_SSearchOpenLane;
-}; // total size: 0x64
+    /* 0x10 */ SSearchIdealShot m_SSearchIdealShot;
+    /* 0x4C */ SSearchOpenLane m_SSearchOpenLane;
+    /* 0x74 */ bool m_bAllowLeadPass;
+    /* 0x75 */ bool m_bIsPerfectPass;
+}; // total size: 0x78
 
 #endif // _SPACESEARCH_H_

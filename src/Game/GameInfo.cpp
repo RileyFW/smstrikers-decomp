@@ -519,8 +519,9 @@ void GameInfoManager::SetupRoundRobinSchedule(eTeamID*, eSidekickID*)
 /**
  * Offset/Address/Size: 0x81CC | 0x8017D870 | size: 0x46C
  */
-void GameInfoManager::SetupBowserKnockout()
+unsigned char GameInfoManager::SetupBowserKnockout()
 {
+    FORCE_DONT_INLINE;
 }
 
 extern eStadiumID PickStadium__15GameInfoManagerCFb10eStadiumID(const GameInfoManager*, bool, eStadiumID);
@@ -654,8 +655,9 @@ void GameInfoManager::SetupTournamentKnockout(eTeamID* pTeamIDs, eSidekickID* pS
 /**
  * Offset/Address/Size: 0x78D8 | 0x8017CF7C | size: 0x618
  */
-void GameInfoManager::SetupKnockoutRound(short)
+unsigned char GameInfoManager::SetupKnockoutRound(short)
 {
+    FORCE_DONT_INLINE;
 }
 
 /**
@@ -670,7 +672,100 @@ void GameInfoManager::DetermineNextMatchups(int)
  */
 void GameInfoManager::IncreaseRoundNumber()
 {
-    FORCE_DONT_INLINE;
+    mCurrentCup->mRoundNumber = GetNextRoundNumber(mCurrentCup->mRoundNumber);
+    mDidRoundJustEnd = true;
+
+    s16 round = mCurrentCup->mRoundNumber;
+
+    do
+    {
+        if (round != -3)
+            if (round != -2)
+                if (round != -1)
+                    break;
+        if (!SetupKnockoutRound(round))
+        {
+            if (mCurrentCup->mRoundNumber == -3)
+            {
+                mUserLastResults[mCurrentMode] = RESULT_USER_ELIMINATED_QUARTER;
+                nlSingleton<StatsTracker>::s_pInstance->SimulateRemainingGames();
+                SetupKnockoutRound(-2);
+                mCurrentCup->mRoundNumber = -2;
+                nlSingleton<StatsTracker>::s_pInstance->SimulateRemainingGames();
+            }
+            else if (mCurrentCup->mRoundNumber == -2)
+            {
+                mUserLastResults[mCurrentMode] = RESULT_USER_ELIMINATED_SEMI;
+                nlSingleton<StatsTracker>::s_pInstance->SimulateRemainingGames();
+            }
+
+            mCurrentCup->mRoundNumber = -5;
+        }
+    } while (false);
+
+    if (mCurrentCup->mRoundNumber == -5)
+    {
+        mCurrentCup->mCupStarted = false;
+    }
+
+    if (mCurrentCup->mRoundNumber == -5 && !mDoingKnockout)
+    {
+        if (mCurrentMode == GM_BOWSER_CUP)
+        {
+            mPreviousCup = mCurrentCup;
+            mCurrentCup = &mBowserCupKnockout;
+            mCurrentCup->mUserSelectedTeam = mPreviousCup->mUserSelectedTeam;
+            mCurrentCup->mUserSelectedSidekick = mPreviousCup->mUserSelectedSidekick;
+            mCurrentCup->mHumanTeams = mPreviousCup->mHumanTeams;
+            mCurrentCup->mRoundNumber = -3;
+            mCurrentCup->mCupSettings = mPreviousCup->mCupSettings;
+
+            unsigned char bowserResult = SetupBowserKnockout();
+            mDoingKnockout = true;
+            if (bowserResult)
+            {
+                mUserLastResults[mCurrentMode] = RESULT_USER_PLAYOFF_QUALIFIES;
+            }
+            else
+            {
+                mUserLastResults[mCurrentMode] = RESULT_USER_DOES_NOT_PLAYOFF_QUALIFY;
+                nlSingleton<StatsTracker>::s_pInstance->SimulateRemainingGames();
+                mCurrentCup->mRoundNumber = -2;
+                SetupKnockoutRound(-2);
+                nlSingleton<StatsTracker>::s_pInstance->SimulateRemainingGames();
+                mCurrentCup->mRoundNumber = -5;
+            }
+        }
+
+        if (mCurrentMode == GM_SUPER_BOWSER_CUP)
+        {
+            mPreviousCup = mCurrentCup;
+            mCurrentCup = &mSuperBowserCupKnockout;
+            mCurrentCup->mUserSelectedTeam = mPreviousCup->mUserSelectedTeam;
+            mCurrentCup->mUserSelectedSidekick = mPreviousCup->mUserSelectedSidekick;
+            mCurrentCup->mHumanTeams = mPreviousCup->mHumanTeams;
+            mCurrentCup->mRoundNumber = -3;
+            mCurrentCup->mCupSettings = mPreviousCup->mCupSettings;
+
+            unsigned char superResult = SetupBowserKnockout();
+            mDoingKnockout = true;
+            if (superResult)
+            {
+                mUserLastResults[mCurrentMode] = RESULT_USER_PLAYOFF_QUALIFIES;
+            }
+            else
+            {
+                mUserLastResults[mCurrentMode] = RESULT_USER_DOES_NOT_PLAYOFF_QUALIFY;
+                nlSingleton<StatsTracker>::s_pInstance->SimulateRemainingGames();
+                mCurrentCup->mRoundNumber = -2;
+                SetupKnockoutRound(-2);
+                nlSingleton<StatsTracker>::s_pInstance->SimulateRemainingGames();
+                mCurrentCup->mRoundNumber = -5;
+            }
+        }
+    }
+
+    mCurrentCup->mGameNumber = 0;
 }
 
 /**

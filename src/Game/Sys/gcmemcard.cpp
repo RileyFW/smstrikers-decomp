@@ -149,16 +149,12 @@ void MemCard::MountDoneCB(long channel, long result)
 
 static inline EntryLookup<MemCard::MC_FILE>* FindCreateFileLookup(MemCard* self, MemCard::MC_FILE* pFile)
 {
-    long byteOff = 0;
-    long i = byteOff;
-    while ((unsigned long)i < self->m_OpenFiles.m_EntryCount)
+    for (long i = 0; (unsigned long)i < self->m_OpenFiles.m_EntryCount; i++)
     {
-        if (self->m_OpenFiles.m_pEntryLookup[byteOff >> 3].pEntry == pFile)
+        if (self->m_OpenFiles.m_pEntryLookup[i].pEntry == pFile)
         {
             return &self->m_OpenFiles.m_pEntryLookup[i];
         }
-        byteOff += 8;
-        i++;
     }
     return NULL;
 }
@@ -185,8 +181,8 @@ static inline void ShiftCreateFileLookup(MemCard* self, EntryLookup<MemCard::MC_
 
 /**
  * Offset/Address/Size: 0x540 | 0x801CB080 | size: 0x1A0
- * TODO: 99.23% match - lookup loop keeps i/byteOff in r5/r3 instead of
- * target r3/r5, and entry copy uses r3/r4/r0 register permutation.
+ * TODO: 99.66% match - entry copy loop in ShiftCreateFileLookup keeps
+ * r3/r4/r0 instead of target r4/r3/r5.
  */
 void MemCard::CreateFileDoneCB(long channel, long result)
 {
@@ -544,10 +540,142 @@ long MemCard::CreateFile(const char*, unsigned long, MemCard::ICON_CONFIG*, MemC
 
 /**
  * Offset/Address/Size: 0xBE8 | 0x801CA358 | size: 0x340
+ * TODO: 95.94% match - shift-down loop insert variable gets r4 instead of target r6
+ * (MWCC reuses freed middle register), nlBSearch/memset symbol name diffs.
  */
-long MemCard::OpenFile(const char*, MemCard::MC_FILE*&, unsigned long*)
+long MemCard::OpenFile(const char* FileName, MemCard::MC_FILE*& pFile, unsigned long* pFileLength)
 {
-    return 0;
+    EntryLookup<MC_FILE>* nlBSearch(const unsigned long&, EntryLookup<MC_FILE>*, int);
+    void* memset(void*, int, unsigned long);
+
+    long result;
+
+    if (m_State != IS_MOUNTED)
+    {
+        return -100;
+    }
+
+    unsigned long hash = nlStringHash(FileName);
+    MC_FILE* pNewFile = m_OpenFiles.GetNewEntry();
+
+    if (m_OpenFiles.m_EntryCount == m_OpenFiles.m_LookupAllocated)
+    {
+        m_OpenFiles.ExpandLookup();
+    }
+
+    long middle;
+    long low = -1;
+    long high;
+    unsigned long count = m_OpenFiles.m_EntryCount;
+    high = count;
+
+    while ((high - low) > 1)
+    {
+        middle = (high + low) >> 1;
+        if (m_OpenFiles.m_pEntryLookup[middle].Id > hash)
+        {
+            high = middle;
+        }
+        else
+        {
+            low = middle;
+        }
+    }
+
+    high = low + 1;
+    while (count != (unsigned long)high)
+    {
+        unsigned long prev = count - 1;
+        EntryLookup<MC_FILE>* lookup = m_OpenFiles.m_pEntryLookup;
+        EntryLookup<MC_FILE>* src = &lookup[prev];
+        EntryLookup<MC_FILE>* dst = &lookup[count];
+        count = prev;
+        unsigned long id = src->Id;
+        MC_FILE* entry = src->pEntry;
+        dst->pEntry = entry;
+        dst->Id = id;
+    }
+
+    m_OpenFiles.m_pEntryLookup[high].Id = hash;
+    m_OpenFiles.m_pEntryLookup[high].pEntry = pNewFile;
+    m_OpenFiles.m_EntryCount = m_OpenFiles.m_EntryCount + 1;
+
+    pFile = pNewFile;
+    pFile->FileInfo.fileNo = -1;
+    memset(&pFile->IconCfg.IconSpeeds[0], 0, 8);
+
+    result = CARDOpen(m_Slot, FileName, (CARDFileInfo*)pFile);
+    if (result != 0)
+    {
+        unsigned long searchKey = hash;
+        EntryLookup<MC_FILE>* pFound;
+
+        if (m_OpenFiles.m_EntryCount != 0)
+        {
+            pFound = nlBSearch(searchKey, m_OpenFiles.m_pEntryLookup, m_OpenFiles.m_EntryCount);
+        }
+        else
+        {
+            pFound = NULL;
+        }
+
+        if (pFound != NULL)
+        {
+            m_OpenFiles.FreeEntry(pFound->pEntry);
+
+            long idx = pFound - m_OpenFiles.m_pEntryLookup;
+            unsigned long total = m_OpenFiles.m_EntryCount;
+
+            while ((unsigned long)idx != total)
+            {
+                long next = idx + 1;
+                EntryLookup<MC_FILE>* lookup = m_OpenFiles.m_pEntryLookup;
+                EntryLookup<MC_FILE>* src = &lookup[next];
+                EntryLookup<MC_FILE>* dst = &lookup[idx];
+                idx = next;
+                unsigned long id = src->Id;
+                MC_FILE* entry = src->pEntry;
+                dst->pEntry = entry;
+                dst->Id = id;
+            }
+
+            m_OpenFiles.m_EntryCount = m_OpenFiles.m_EntryCount - 1;
+        }
+    }
+    else
+    {
+        CARDStat stat;
+        CARDGetStatus(m_Slot, pFile->FileInfo.fileNo, &stat);
+
+        pFile->IconCfg.BannerFormat = CARDGetBannerFormat(&stat);
+        pFile->IconCfg.IconFormat = CARDGetIconFormat(&stat, 0);
+        pFile->IconCfg.IconAnimType = CARDGetIconAnim(&stat);
+        pFile->IconCfg.IconCount = 0;
+
+        while (pFile->IconCfg.IconCount < 8)
+        {
+            unsigned long i = pFile->IconCfg.IconCount;
+            unsigned long speed = CARDGetIconSpeed(&stat, i);
+            pFile->IconCfg.IconSpeeds[i] = speed;
+            if (speed == 0)
+            {
+                break;
+            }
+            pFile->IconCfg.IconCount = pFile->IconCfg.IconCount + 1;
+        }
+
+        pFile->IconCfg.HeaderSize = pFile->IconCfg.BannerFormat * 0xC00 + ((pFile->IconCfg.BannerFormat == CARD_STAT_BANNER_C8) ? 0x200 : 0) + (pFile->IconCfg.IconCount * ((s8)pFile->IconCfg.IconFormat << 10)) + (((s8)pFile->IconCfg.IconFormat == CARD_STAT_ICON_C8) ? 0x200 : 0) + 0x40;
+
+        unsigned long sectorMask = m_CardInfo.SectorSize - 1;
+        pFile->TotalHeaderSize = (pFile->IconCfg.HeaderSize + sectorMask) & ~sectorMask;
+
+        if (pFileLength != NULL)
+        {
+            *pFileLength = stat.length - pFile->TotalHeaderSize;
+        }
+    }
+
+    return result;
 }
 
 /**
