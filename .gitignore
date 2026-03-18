@@ -41,3 +41,4 @@ compile_commands.json
 *.exe
 .DS_Store
 src/SDK/__TRK_MINNOW_DOLPHIN/
+/extern

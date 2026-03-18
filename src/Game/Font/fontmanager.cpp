@@ -82,9 +82,37 @@ FontManager::FontManager()
 
 /**
  * Offset/Address/Size: 0x374 | 0x80209A08 | size: 0x158
+ * TODO: 97.97% match - auto-generated m_fonts destructor path still lowers to
+ * nlWalkRing with @106/@165 callback constants instead of target nlWalkDLRing
+ * calls that reuse @198.
  */
 FontManager::~FontManager()
 {
+    DLListEntry<nlFont*>* head;
+    DLListEntry<nlFont*>* current = nlDLRingGetStart(m_fonts.m_Head);
+    head = m_fonts.m_Head;
+
+    while (current != NULL)
+    {
+        delete current->m_data;
+
+        if (nlDLRingIsEnd(head, current) || current == NULL)
+        {
+            current = NULL;
+        }
+        else
+        {
+            current = current->m_next;
+        }
+    }
+
+    typedef DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*> > > FontListBase;
+    typedef void (*WalkFn)(DLListEntry<nlFont*>*, FontListBase*, void (FontListBase::*)(DLListEntry<nlFont*>*));
+
+    void (FontListBase::*func)(DLListEntry<nlFont*>*) = &FontListBase::DeleteEntry;
+    WalkFn walk = &nlWalkDLRing<DLListEntry<nlFont*>, FontListBase>;
+    walk(m_fonts.m_Head, &m_fonts, func);
+    m_fonts.m_Head = NULL;
 }
 
 /**

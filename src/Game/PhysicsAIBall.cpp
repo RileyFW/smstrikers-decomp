@@ -1,6 +1,9 @@
 #include "Game/Physics/PhysicsAIBall.h"
 #include "Game/Ball.h"
 #include "Game/Field.h"
+#include "Game/FixedUpdateTask.h"
+#include "Game/Physics/PhysicsFakeBall.h"
+#include "Game/Physics/PhysicsNet.h"
 
 extern CollisionSpace* g_CollisionSpace;
 extern PhysicsWorld* g_PhysicsWorld;
@@ -82,11 +85,110 @@ bool PhysicsAIBall::DidBallJustEnterNet(const nlVector3& oldPos, nlVector3 newPo
 
 /**
  * Offset/Address/Size: 0x224 | 0x80133C58 | size: 0x310
+ * TODO: 96.37% match - sweep-contact bool live range still spills through r0,
+ * and FP register allocation differs slightly in the reflection math block.
  */
 bool PhysicsAIBall::CheckIfBallWentThroughGoalPost()
 {
-    FORCE_DONT_INLINE;
-    return false;
+    if (m_parentObject == NULL)
+    {
+        nlVector3 oldPosition;
+        nlVector3 newPosition;
+
+        GetPosition(&newPosition);
+        oldPosition = m_unk_0x44;
+
+        nlVector3 ballPosition = { 0.0f, 0.0f, 0.0f };
+        nlVector3 contactNormal = { 0.0f, 0.0f, 0.0f };
+        bool contact;
+        PhysicsObject* physicsObject = NULL;
+        nlVector3 v3ExitVel;
+        nlVector3 v3AngVel;
+
+        if (oldPosition.f.x > 0.0f)
+        {
+            PhysicsNet* pNet = PhysicsNet::spPhysNetPositiveX;
+            float radius = GetRadius();
+            contact = pNet->SweepTestForBallContact(oldPosition, newPosition, GetLinearVelocity(), radius, ballPosition, contactNormal, &physicsObject);
+        }
+        else
+        {
+            PhysicsNet* pNet = PhysicsNet::spPhysNetNegativeX;
+            float radius = GetRadius();
+            contact = pNet->SweepTestForBallContact(oldPosition, newPosition, GetLinearVelocity(), radius, ballPosition, contactNormal, &physicsObject);
+        }
+
+        if ((contact != 0) && (m_unk_0x59 == 0))
+        {
+            ballPosition.f.z = (0.005f * contactNormal.f.z) + ballPosition.f.z;
+            ballPosition.f.y = (0.005f * contactNormal.f.y) + ballPosition.f.y;
+            ballPosition.f.x = (0.005f * contactNormal.f.x) + ballPosition.f.x;
+
+            const nlVector3& v3BallVel = GetLinearVelocity();
+            float velY = v3BallVel.f.y;
+            float normalY = contactNormal.f.y;
+            float velX = v3BallVel.f.x;
+            float velYSq = velY * velY;
+            float velYNormalY = velY * normalY;
+            float normalX = contactNormal.f.x;
+            float normalYSq = normalY * normalY;
+            float velZ = v3BallVel.f.z;
+            float velXSq = velX * velX;
+            float dotXY = (velX * normalX) + velYNormalY;
+            float normalZ = contactNormal.f.z;
+            float normalLenXY = (normalX * normalX) + normalYSq;
+            float velZSq = velZ * velZ;
+            float velDotNormal = (velZ * normalZ) + dotXY;
+            float normalLengthSq = (normalZ * normalZ) + normalLenXY;
+            float reflectScale = velDotNormal / normalLengthSq;
+
+            v3ExitVel.f.x = (-2.0f * (reflectScale * normalX)) + velX;
+            v3ExitVel.f.y = (-2.0f * (reflectScale * normalY)) + velY;
+            v3ExitVel.f.z = (-2.0f * (reflectScale * normalZ)) + velZ;
+
+            float velocitySq = velZSq + (velXSq + velYSq);
+
+            v3ExitVel.f.x = 0.35f * v3ExitVel.f.x;
+            v3ExitVel.f.y = 0.35f * v3ExitVel.f.y;
+            v3ExitVel.f.z = 0.35f * v3ExitVel.f.z;
+
+            if (velocitySq < 1.0f)
+            {
+                if (ballPosition.f.x > 0.0f)
+                {
+                    v3ExitVel.f.x = v3ExitVel.f.x - 0.3f;
+                }
+                else
+                {
+                    v3ExitVel.f.x = v3ExitVel.f.x + 0.3f;
+                }
+
+                float physicsTick = FixedUpdateTask::GetPhysicsUpdateTick();
+                float dt = 0.3f * physicsTick;
+
+                ballPosition.f.z = (dt * v3ExitVel.f.z) + ballPosition.f.z;
+                ballPosition.f.y = (dt * v3ExitVel.f.y) + ballPosition.f.y;
+                ballPosition.f.x = (dt * v3ExitVel.f.x) + ballPosition.f.x;
+            }
+
+            GetAngularVelocity(&v3AngVel);
+
+            v3AngVel.f.z = 0.8f * v3AngVel.f.z;
+            v3AngVel.f.x = 0.8f * v3AngVel.f.x;
+            v3AngVel.f.y = 0.8f * v3AngVel.f.y;
+
+            SetPosition(ballPosition, PhysicsObject::WORLD_COORDINATES);
+            SetLinearVelocity(v3ExitVel);
+            SetAngularVelocity(v3AngVel);
+
+            m_bUseMagnusEffect = false;
+            FakeBallWorld::InvalidateBallCache();
+
+            m_pAIBall->m_bBallPathChangeCount += 1;
+            m_pAIBall->m_unk_0xA6 = false;
+            m_pAIBall->mpDamageTarget = NULL;
+        }
+    }
 }
 
 /**

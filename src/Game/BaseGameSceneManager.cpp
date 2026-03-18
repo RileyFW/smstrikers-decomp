@@ -202,37 +202,8 @@ bool BaseGameSceneManager::IsOnStack(SceneList scene)
  */
 BasicString<char, Detail::TempStringAllocator> BaseGameSceneManager::GetFileName(SceneList scene)
 {
-    BasicString<char, Detail::TempStringAllocator> result;
-    const char* src = SceneEntryTable[(u32)scene].sceneName;
-
-    BasicStringInternal* data = (BasicStringInternal*)nlMalloc(0x10, 8, true);
-    if (data != nullptr)
-    {
-        data->mData = nullptr;
-        data->mSize = 0;
-        data->mCapacity = 0;
-
-        const char* srcPtr = src;
-        while ((s8)*srcPtr++ != 0)
-        {
-            data->mSize++;
-        }
-
-        data->mSize++;
-        data->mData = (char*)nlMalloc(data->mSize + 1, 8, true);
-        data->mCapacity = data->mSize;
-
-        s32 i = 0;
-        while (i < data->mSize)
-        {
-            data->mData[i] = *src;
-            src++;
-            i++;
-        }
-        data->mRefCount = 1;
-    }
-
-    result.m_data = data;
+    BasicString<char, Detail::TempStringAllocator> result(
+        SceneEntryTable[(u32)scene].sceneName);
     return result;
 }
 
