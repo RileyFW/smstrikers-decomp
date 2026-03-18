@@ -762,21 +762,19 @@ s16 cCharacter::CalcAnimTurnAdjust(unsigned short param1, unsigned short param2,
 {
     cSAnim* anim = m_pAnimInventory->GetAnim(animID);
     cPN_SAnimController* controller = AllocateSAnimController();
-    if (controller == nullptr)
+    if (controller != nullptr)
     {
-        return 0;
+        const AnimRetarget* retarget = nullptr;
+        if (m_pAnimRetargetList != nullptr)
+        {
+            retarget = m_pAnimRetargetList->GetAnimRetargetWithSignature(anim);
+        }
+
+        bool mirrored = m_pAnimInventory->GetMirrored(animID);
+        ePlayMode playMode = m_pAnimInventory->GetPlayMode(animID);
+
+        controller = new (controller) cPN_SAnimController(anim, retarget, playMode, nullptr, 0, mirrored);
     }
-
-    const AnimRetarget* retarget = nullptr;
-    if (m_pAnimRetargetList != nullptr)
-    {
-        retarget = m_pAnimRetargetList->GetAnimRetargetWithSignature(anim);
-    }
-
-    const bool mirrored = m_pAnimInventory->GetMirrored(animID);
-    const ePlayMode playMode = m_pAnimInventory->GetPlayMode(animID);
-
-    controller = new (controller) cPN_SAnimController(anim, retarget, playMode, nullptr, 0, mirrored);
 
     controller->m_fPrevTime = controller->m_fTime; // 0.0f
     controller->m_fTime = 0.0f;
@@ -786,7 +784,7 @@ s16 cCharacter::CalcAnimTurnAdjust(unsigned short param1, unsigned short param2,
     unsigned short rootRot;
     controller->GetRootRot(&rootRot);
 
-    s16 combined = param1 + rootRot;
+    unsigned short combined = param1 + rootRot;
 
     delete controller;
 

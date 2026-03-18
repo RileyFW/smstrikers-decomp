@@ -89,8 +89,28 @@ static unsigned long CAPTAIN_DESCRIPTIONS[] = {
 /**
  * Offset/Address/Size: 0x237C | 0x800DF248 | size: 0x144
  */
-CupChooseCaptainSceneV2::CupChooseCaptainSceneV2(bool)
+CupChooseCaptainSceneV2::CupChooseCaptainSceneV2(bool isSuperCup)
+    : mSidekickMiniHead(NULL)
+    , mCurrentCaptain((eTeamID)3)
+    , mCurrentSK((eSidekickID)0)
+    , mState(CUP_STATE_CAPTAIN)
+    , mAnimationDelay(0.75f)
+    , mSoundDelay(0.0f)
+    , mRemainingSoundDelay(0.0f)
+    , mTicker(NULL)
+    , mIsSuperCup(isSuperCup)
+    , mCupStartString()
 {
+    const char* asyncPath = mIsSuperCup ? "art/fe/SuperCupLoadingScreensUI.res" : "art/fe/CupLoadingScreensUI.res";
+
+    AsyncImage* image = new (0x20, true) AsyncImage(asyncPath, NULL);
+    mCaptainImageMain = image;
+
+    image = new (0x20, true) AsyncImage(asyncPath, NULL);
+    mCaptainImageBG = image;
+
+    image = new (0x20, true) AsyncImage(asyncPath, NULL);
+    mCaptainImageFlash = image;
 }
 
 /**
