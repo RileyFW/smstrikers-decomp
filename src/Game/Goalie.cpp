@@ -1748,88 +1748,85 @@ void Goalie::InitActionSave()
  */
 void Goalie::InitActionSTSSetup()
 {
-    if (mGoalieActionState != GOALIEACTION_PURSUE_BALL_POUNCE)
+    if (mGoalieActionState == GOALIEACTION_PURSUE_BALL_POUNCE || mGoalieActionState == GOALIEACTION_DIVE_RECOVER)
     {
-        if (mGoalieActionState == GOALIEACTION_DIVE_RECOVER)
-        {
-            return;
-        }
-
-        mnOffplayPending = GOALIE_OFFPLAY_NONE;
-
-        if (mGoalieActionState != GOALIEACTION_STS_RECOVER)
-        {
-            CleanGoalieAction();
-            mPrevGoalieActionState = mGoalieActionState;
-            mGoalieActionState = GOALIEACTION_STS_SETUP;
-            mnSubstate = 0;
-        }
-        else
-        {
-            SaveData* pSavedSaveData = mpSaveData;
-            CleanGoalieAction();
-            mPrevGoalieActionState = mGoalieActionState;
-            mGoalieActionState = GOALIEACTION_STS_SETUP;
-            mnSubstate = 0;
-            mpSaveData = pSavedSaveData;
-        }
-
-        SetDesiredSaveFacing(g_pBall->m_v3Position);
-
-        nlVector4 plane;
-        const u16 desiredFacingDirection = m_aDesiredFacingDirection;
-        const nlVector3& pPosition = m_v3Position;
-
-        MakePerpendicularPlane(pPosition, desiredFacingDirection, plane, 0.2f);
-
-        nlVector3 localVelocity;
-        float time = FakeBallWorld::GetPredictedPlaneIntersectTime(plane, mv3TargetPosition, localVelocity);
-
-        if (IsPositionBeyondGoalLine())
-        {
-            time = -1.0f;
-        }
-        else if (time > 0.0f)
-        {
-            GetLocalPoint(mv3LocalContactPosition, mv3TargetPosition, pPosition, desiredFacingDirection);
-            GetLocalPoint(mv3LocalContactVelocity, localVelocity, v3Zero, desiredFacingDirection);
-        }
-
-        mfTimeTilSave = time;
-        if (mfTimeTilSave < 0.0f)
-        {
-            mfTimeTilSave = 0.0f;
-        }
-
-        if (g_pBall->mbCanDamage && mpLooseBallInfo != NULL)
-        {
-            mpShooter = static_cast<cFielder*>(g_pBall->m_pShooter);
-            mfWaitTime = mfTimeTilSave - (mpLooseBallInfo->mfPickupTime * mpLooseBallInfo->mfAnimDuration);
-        }
-        else
-        {
-            mpShooter = NULL;
-            cBall* pBall = g_pBall;
-            pBall->mbCanDamage = false;
-            pBall->mpDamageTarget = NULL;
-            mfWaitTime = mfTimeTilSave - mBlendInfo.mfMilestoneTime[2];
-
-            if (mbShouldMiss)
-            {
-                mfWaitTime += 0.11f;
-            }
-        }
-
-        if (mfWaitTime <= 0.01f)
-        {
-            InitActionSTS();
-            return;
-        }
-
-        SetAnimState(0xA, true, 0.2f, false, false);
-        GoalieTweaks* pGoalieTweaks = static_cast<GoalieTweaks*>(m_pTweaks);
-        InitMovementFromAnimSeek(pGoalieTweaks->fSaveDirectionSeekSpeed, pGoalieTweaks->fSaveDirectionSeekFalloff);
+        return;
     }
+
+    mnOffplayPending = GOALIE_OFFPLAY_NONE;
+
+    if (mGoalieActionState != GOALIEACTION_STS_RECOVER)
+    {
+        CleanGoalieAction();
+        mPrevGoalieActionState = mGoalieActionState;
+        mGoalieActionState = GOALIEACTION_STS_SETUP;
+        mnSubstate = 0;
+    }
+    else
+    {
+        SaveData* pSavedSaveData = mpSaveData;
+        CleanGoalieAction();
+        mPrevGoalieActionState = mGoalieActionState;
+        mGoalieActionState = GOALIEACTION_STS_SETUP;
+        mnSubstate = 0;
+        mpSaveData = pSavedSaveData;
+    }
+
+    SetDesiredSaveFacing(g_pBall->m_v3Position);
+
+    nlVector4 plane;
+    const u16 desiredFacingDirection = m_aDesiredFacingDirection;
+    const nlVector3& pPosition = m_v3Position;
+
+    MakePerpendicularPlane(pPosition, desiredFacingDirection, plane, 0.2f);
+
+    nlVector3 localVelocity;
+    float time = FakeBallWorld::GetPredictedPlaneIntersectTime(plane, mv3TargetPosition, localVelocity);
+
+    if ((float)fabs(mv3TargetPosition.f.x) > cField::GetGoalLineX(1U))
+    {
+        time = -1.0f;
+    }
+    else if (time > 0.0f)
+    {
+        GetLocalPoint(mv3LocalContactPosition, mv3TargetPosition, pPosition, desiredFacingDirection);
+        GetLocalPoint(mv3LocalContactVelocity, localVelocity, v3Zero, desiredFacingDirection);
+    }
+
+    mfTimeTilSave = time;
+    if (mfTimeTilSave < 0.0f)
+    {
+        mfTimeTilSave = 0.0f;
+    }
+
+    if (g_pBall->m_unk_0xA6 && mpLooseBallInfo != NULL)
+    {
+        mpShooter = static_cast<cFielder*>(g_pBall->m_pPrevOwner);
+        mfWaitTime = mfTimeTilSave - (mpLooseBallInfo->mfPickupTime * mpLooseBallInfo->mfAnimDuration);
+    }
+    else
+    {
+        mpShooter = NULL;
+        cBall* pBall = g_pBall;
+        pBall->m_unk_0xA6 = false;
+        pBall->mpDamageTarget = NULL;
+        mfWaitTime = mfTimeTilSave - mBlendInfo.mfMilestoneTime[2];
+
+        if (mbShouldMiss)
+        {
+            mfWaitTime += 0.11f;
+        }
+    }
+
+    if (mfWaitTime <= 0.01f)
+    {
+        InitActionSTS();
+        return;
+    }
+
+    SetAnimState(0xA, true, 0.2f, false, false);
+    GoalieTweaks* pGoalieTweaks = static_cast<GoalieTweaks*>(m_pTweaks);
+    InitMovementFromAnimSeek(pGoalieTweaks->fSaveDirectionSeekSpeed, pGoalieTweaks->fSaveDirectionSeekFalloff);
 }
 
 /**
