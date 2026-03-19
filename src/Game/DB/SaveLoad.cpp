@@ -100,9 +100,9 @@ bool SaveLoad::CardBusy()
 
 /**
  * Offset/Address/Size: 0x3720 | 0x8018D07C | size: 0x1BC
- * TODO: 97.4% match - regalloc differs: iconFmt/iconCount/bannerFmt load regs shifted (r4/r0/r11 vs r0/r11/r10),
- * headerSize accumulation uses r6 as accumulator instead of target r0/r3 sequence,
- * and SDA string addressing for "@2009"/"@2010" (1 instr vs target 2 instr)
+ * TODO: 99.3% match - header-size regalloc still differs (iconFmt/iconCount/bannerFmt map to r0/r11/r10 instead of
+ * r4/r0/r11, and accumulation keeps r6 live instead of target r0/r3 add sequence). Literal symbol IDs for "@2009"
+ * and "@2010" also remain different in scratch context.
  */
 void LoadMemoryCardIconData()
 {
@@ -139,13 +139,13 @@ void LoadMemoryCardIconData()
     char* pDescDst = (char*)gIconDataCache.mIconDataInfo.pHeaderData + 0x20;
     nlStrNCpy(pDescDst, GetMemCardDescription(), 0x20);
 
-    pFile1 = nlOpen("@2009");
+    pFile1 = nlOpen("@2009\0\0\0\0");
     nlFileSize(pFile1, &bannerSize);
     gIconDataCache.mBannerBuffer = nlMalloc(bannerSize, 0x20, true);
     nlRead(pFile1, gIconDataCache.mBannerBuffer, bannerSize);
     nlClose(pFile1);
 
-    nlFile* pFile2 = nlOpen("@2010");
+    nlFile* pFile2 = nlOpen("@2010\0\0\0\0");
     nlFileSize(pFile2, &iconSize);
     gIconDataCache.mIconBuffer = nlMalloc(iconSize, 0x20, true);
     nlRead(pFile2, gIconDataCache.mIconBuffer, iconSize);
@@ -290,8 +290,7 @@ unsigned long LoadCallbacks::ReadDoneCB(unsigned long Slot, long Result, void* p
     m_pLoadFile = pFile;
 
     cb = &LoadCallbacks::LoadIconDataDoneCB;
-    new (functor.m_FunctorMem) MemCardFunctor::MCMemberFunctor<LoadCallbacks>(this, cb);
-    ((MemCardFunctor::MCInternalFunctorBase*)functor.m_FunctorMem)->m_pData = pFile;
+    new (functor.m_FunctorMem) MemCardFunctor::MCMemberFunctor<LoadCallbacks>(this, cb, pFile);
 
     MemCard::MC_FILE* pLoadFile = m_pLoadFile;
     u8 bannerFmt = pLoadFile->IconCfg.BannerFormat;
@@ -522,14 +521,20 @@ unsigned long SaveCallbacks::FileWriteCB(unsigned long Slot, long Result, void* 
  * TODO: 71.37% match - stack/regalloc differences and ICON_CONFIG constant
  * folding remain in the duplicated -4 free-space remap paths.
  *
- * TODO: 74.56% match - remaining diffs from -inline deferred: stack offset +0x0C shift,
- * r27/r28 register swap, constant folding of ~(iconCount|-1), extra cmpwi+ble loop guard.
- * All unfixable in decomp.me scratch (deferred inlining artifacts).
+ * TODO: 82.15% match - remaining diffs from -inline deferred vs -inline auto:
+ * 1. ICON_CONFIG constant folding: compiler folds ~(iconCount|-1)=0, eliminating nor/srawi/and 0x200 (10+ insns)
+ * 2. Extra cmpwi+ble loop guards from (u32) cast creating temp register, breaking addic. CR chain
+ * 3. CSE of Slot*4 into callee-saved r30 vs target computing fresh per-block
+ * All inherent -inline deferred optimization differences, unfixable with -inline auto.
  */
 long SaveCallbacks::DoSave(unsigned long Slot)
 {
     extern unsigned int nlRandom(unsigned int, unsigned int*);
     extern unsigned int nlDefaultSeed;
+
+    typedef unsigned long (SaveCallbacks::*MemberCB)(unsigned long, long, void*);
+    MemberCB cb;
+    MemCardFunctor functor;
 
     MemCard::ICON_CONFIG localCfg;
     localCfg.BannerFormat = 0;
@@ -689,14 +694,12 @@ long SaveCallbacks::DoSave(unsigned long Slot)
     GameInfoManager* pGIM = nlSingleton<GameInfoManager>::s_pInstance;
     pGIM->mUserInfo.mSaveID = nlRandom(-1, &nlDefaultSeed);
     nlSingleton<GameInfoManager>::s_pInstance->GetMemoryCardData((void*)((u8*)m_pSaveGameBuffer + 12));
-    MCFILE_HEADER* header = (MCFILE_HEADER*)m_pSaveGameBuffer;
-    header->Size = nlSingleton<GameInfoManager>::s_pInstance->GetMemoryCardDataSize();
-    header->CRC = nlChecksum32((void*)((u8*)m_pSaveGameBuffer + 12), nlSingleton<GameInfoManager>::s_pInstance->GetMemoryCardDataSize());
-    header->IconCRC = gIconCRC;
-    typedef unsigned long (SaveCallbacks::*MemberCB)(unsigned long, long, void*);
-    MemberCB cb = &SaveCallbacks::FileWriteCB;
-    MemCardFunctor functor;
-    new (functor.m_FunctorMem) MemCardFunctor::MCMemberFunctor<SaveCallbacks>(this, cb);
+    unsigned long* header = (unsigned long*)m_pSaveGameBuffer;
+    header[0] = nlSingleton<GameInfoManager>::s_pInstance->GetMemoryCardDataSize();
+    header[1] = nlChecksum32((void*)((u8*)m_pSaveGameBuffer + 12), nlSingleton<GameInfoManager>::s_pInstance->GetMemoryCardDataSize());
+    header[2] = gIconCRC;
+    cb = &SaveCallbacks::FileWriteCB;
+    new (functor.m_FunctorMem) MemCardFunctor::MCMemberFunctor<SaveCallbacks>(this, cb, m_pSaveGameBuffer);
     long result = g_MemCards[Slot]->InternalWriteFile(m_pSaveFile, m_pSaveGameBuffer, dataSize, m_pSaveFile->TotalHeaderSize, functor, true);
     if (result != 0)
     {
@@ -2321,7 +2324,10 @@ u8 SaveLoad::HasEnoughFreeSpace(int Slot)
     if (alignedSize > mc->m_CardInfo.FreeBytes)
         return 0;
 
-    return mc->m_CardInfo.FreeFiles >= 1;
+    if (mc->m_CardInfo.FreeFiles >= 1)
+        return 1;
+
+    return 0;
 }
 
 /**

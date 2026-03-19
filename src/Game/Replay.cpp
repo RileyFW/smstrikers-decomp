@@ -9,27 +9,61 @@ namespace
 bool renderMemoryLayout = false;
 }
 
-/**
- * Offset/Address/Size: 0x7C8 | 0x80214074 | size: 0x188
- */
-Replay::Replay(char* memory, int memorySize, int maxFrameSize)
+struct ReplayDestructorChain
 {
-    Frame* frame = nullptr;
+    ReplayDestructorChain* next;
+    void* destructor;
+    void* object;
+};
 
-    // Allocate a Frame from the slot pool if none available
-    if (Frame::mSlotPool.m_FreeList == nullptr)
+extern "C"
+{
+    void __ct__12SlotPoolBaseFv(void*);
+    void* __register_global_object(void* object, void* destructor, void* registration);
+    void ReplayFrameSlotPoolDtor(void* obj, int)
     {
-        SlotPoolBase::BaseAddNewBlock(&Frame::mSlotPool, sizeof(Frame));
+        ((SlotPool<Replay::Frame>*)obj)->~SlotPool<Replay::Frame>();
+    }
+}
+
+/**
+ * Offset/Address/Size: 0x964 | 0x80214210 | size: 0x68
+ * TODO: 87.69% match - extra addic./beq null-check before SlotPoolBase ctor
+ * and unresolved dtor/registration symbols (@228 and
+ * __dt__25SlotPool<Q26Replay5Frame>Fv).
+ */
+extern "C" void __sinit_Replay_cpp()
+{
+    static ReplayDestructorChain chain;
+    SlotPool<Replay::Frame>* pool = &Replay::Frame::mSlotPool;
+
+    if (pool)
+    {
+        __ct__12SlotPoolBaseFv(pool);
     }
 
-    // Get a Frame from the free list
-    if (Frame::mSlotPool.m_FreeList != nullptr)
+    pool->m_Initial = 0x400;
+    SlotPoolBase::BaseAddNewBlock(pool, 0x1C);
+    pool->m_Delta = 0x80;
+    __register_global_object(pool, (void*)ReplayFrameSlotPoolDtor, &chain);
+}
+
+static inline Replay::Frame* ReplayAllocFrame(char* memory, int memorySize)
+{
+    Replay::Frame* frame = nullptr;
+    SlotPool<Replay::Frame>* pool = &Replay::Frame::mSlotPool;
+
+    if (pool->m_FreeList == nullptr)
     {
-        frame = (Frame*)Frame::mSlotPool.m_FreeList;
-        Frame::mSlotPool.m_FreeList = (SlotPoolEntry*)frame->mNext;
+        SlotPoolBase::BaseAddNewBlock(pool, sizeof(Replay::Frame));
     }
 
-    // Initialize the Frame if we got one
+    if (pool->m_FreeList != nullptr)
+    {
+        frame = (Replay::Frame*)pool->m_FreeList;
+        pool->m_FreeList = ((SlotPoolEntry*)frame)->m_next;
+    }
+
     if (frame != nullptr)
     {
         frame->mTime = 0.0f;
@@ -41,8 +75,15 @@ Replay::Replay(char* memory, int memorySize, int maxFrameSize)
         frame->mNext = nullptr;
     }
 
-    mFree = frame;
+    return frame;
+}
 
+/**
+ * Offset/Address/Size: 0x7C8 | 0x80214074 | size: 0x188
+ */
+Replay::Replay(char* memory, int memorySize, int maxFrameSize)
+    : mFree(ReplayAllocFrame(memory, memorySize))
+{
     mReelIdx = 0;
     mTick = 0;
     mMemorySize = memorySize;
@@ -50,10 +91,11 @@ Replay::Replay(char* memory, int memorySize, int maxFrameSize)
     mActualMaxFrameSize = 0;
 
     mFree->mNext = mFree;
-    mReels[0].mLast = mFree;
-    mReels[0].mBegin = mFree;
+    Frame* freeFrame = mFree;
+    mReels[0].mLast = freeFrame;
+    mReels[0].mBegin = freeFrame;
 
-    Config& config = Config::Global();
+    register Config& config = Config::Global();
     renderMemoryLayout = GetConfigBool(config, "draw_replay_bar", false);
 }
 
@@ -62,6 +104,17 @@ Replay::Replay(char* memory, int memorySize, int maxFrameSize)
  */
 Replay::~Replay()
 {
+    Frame* frame = mFree;
+
+    do
+    {
+        Frame* next = frame->mNext;
+        ((SlotPoolEntry*)frame)->m_next = Frame::mSlotPool.m_FreeList;
+        Frame::mSlotPool.m_FreeList = (SlotPoolEntry*)frame;
+        frame = next;
+    } while (frame != mFree);
+
+    SlotPoolBase::BaseFreeBlocks(&Frame::mSlotPool, sizeof(Frame));
 }
 
 /**

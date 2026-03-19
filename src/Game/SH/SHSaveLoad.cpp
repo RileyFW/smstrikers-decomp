@@ -299,9 +299,8 @@ void CheckResults()
 
 /**
  * Offset/Address/Size: 0x1408 | 0x800B1990 | size: 0x1DC
- * TODO: 92.6% match - Function<FnVoidVoid> default ctor zero-init (EMPTY tag)
- * before overwrite to FREE_FUNCTION generates extra stores; minor register
- * scheduling diffs. -inline deferred file.
+ * TODO: 94.1% match - callback setup still keeps gSceneTypeStack temp in r7 and
+ * call symbol remains Create(..., Function&, Function&) vs target by-value mangling.
  */
 bool PushNoCardMessage()
 {
@@ -345,19 +344,18 @@ bool PushNoCardMessage()
 
         FEPopupMenu* popup = (FEPopupMenu*)nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_POPUP_MENU, SCREEN_NOTHING, false);
 
-        eSaveLoad prevOp = gSceneTypeStack[gSceneTypeStackDepth - 1];
+        s32 prevOp = gSceneTypeStack[gSceneTypeStackDepth - 1];
 
         Function<FnVoidVoid> option1;
         Function<FnVoidVoid> option2;
         option1.mTag = FREE_FUNCTION;
         option1.mFreeFunction = RetryCB;
-        void (*cb)() = ContinueWithoutSavingCB;
+        option2.mTag = FREE_FUNCTION;
+        option2.mFreeFunction = ContinueWithoutSavingCB;
         if (prevOp == ST_LOAD)
         {
-            cb = ContinueWithoutLoadingCB;
+            option2.mFreeFunction = ContinueWithoutLoadingCB;
         }
-        option2.mFreeFunction = cb;
-        option2.mTag = FREE_FUNCTION;
 
         popup->Create(POPUP_NO_MEMCARD, option1, option2);
 
@@ -379,6 +377,18 @@ SaveLoadScene::SaveLoadScene(SaveLoadScene::eSaveLoadMode)
  */
 SaveLoadScene::~SaveLoadScene()
 {
+    extern bool mIsFirstTimeAboutIPL__13SaveLoadScene;
+
+    g_pFEInput->PopExclusiveInputLock(this);
+    mInstance = NULL;
+
+    if (mButtonComponent != NULL)
+    {
+        delete mButtonComponent;
+        mButtonComponent = NULL;
+    }
+
+    mIsFirstTimeAboutIPL__13SaveLoadScene = false;
 }
 
 /**

@@ -70,11 +70,92 @@ public:
  */
 template ElectricFenceData* nlListRemoveElement<ElectricFenceData>(ElectricFenceData**, ElectricFenceData*, ElectricFenceData**);
 
+extern "C" float GetCornerRadius__6cFieldFv();
+extern "C" float GetSidelineY__6cFieldFUi(unsigned int);
+extern "C" double floor(double);
+
 /**
  * Offset/Address/Size: 0x1370 | 0x8016C3A0 | size: 0x2B0
  */
-void GetWallPoint(const nlVector3&, float, float, nlVector3&)
+void GetWallPoint(const nlVector3& impactPosition, float xOffset, float zOffset, nlVector3& outPosition)
 {
+    /**
+     * TODO: 98.46% match - r29/r31 register allocation swap (impactPosition ptr vs yIsPositive) and fmuls operand order.
+     */
+    extern float sfGridTextureSize;
+    extern float sfNumGridSquares;
+    extern float sfAlignmentOffset2;
+
+    const nlVector3* const pPoint = &impactPosition;
+
+    float cornerRadius = GetCornerRadius__6cFieldFv();
+    float goalLineX = cField::GetGoalLineX(1U);
+    float sidelineY = GetSidelineY__6cFieldFUi(1U);
+    u8 xIsPositive = pPoint->f.x > 0.0f;
+    u8 yIsPositive = pPoint->f.y > 0.0f;
+
+    nlVector3 impactPositionPositive = { };
+    double absX = __fabs(pPoint->f.x);
+    double absY = __fabs(((volatile const nlVector3*)pPoint)->f.y);
+    impactPositionPositive.f.x = (float)absX;
+    impactPositionPositive.f.y = (float)absY;
+    impactPositionPositive.f.z = pPoint->f.z;
+
+    float straightLength = goalLineX - cornerRadius;
+    float cornerCircumference = cornerRadius * 1.5707964f;
+
+    float inCoordinate;
+    if (impactPositionPositive.f.x >= straightLength && impactPositionPositive.f.y >= sidelineY - cornerRadius)
+    {
+        inCoordinate = nlATan2f(impactPositionPositive.f.y - (sidelineY - cornerRadius), impactPositionPositive.f.x - straightLength);
+        inCoordinate = inCoordinate * cornerRadius;
+    }
+    else if (impactPositionPositive.f.x < straightLength)
+    {
+        inCoordinate = cornerCircumference + (straightLength - impactPositionPositive.f.x);
+    }
+    else
+    {
+        inCoordinate = -((sidelineY - cornerRadius) - impactPositionPositive.f.y);
+    }
+
+    float increment = sfGridTextureSize / sfNumGridSquares;
+    float alignedDistance = sfAlignmentOffset2 + (increment * (float)floor(inCoordinate / increment));
+    float outCoordinate = alignedDistance + xOffset;
+
+    if (outCoordinate <= 0.0f)
+    {
+        outPosition.f.x = goalLineX;
+        outPosition.f.y = outCoordinate + (sidelineY - cornerRadius);
+        outPosition.f.z = impactPositionPositive.f.z + zOffset;
+    }
+    else if (outCoordinate >= cornerCircumference)
+    {
+        float linearOffset = outCoordinate - cornerCircumference;
+        outPosition.f.x = straightLength - linearOffset;
+        outPosition.f.y = sidelineY;
+        outPosition.f.z = impactPositionPositive.f.z + zOffset;
+    }
+    else
+    {
+        u16 angle = (u16)(s32)(10430.378f * (outCoordinate / cornerRadius));
+        float sinAngle = nlSin(angle);
+        float cosAngle = nlSin((u16)(angle + 0x4000));
+
+        outPosition.f.x = straightLength + (cornerRadius * cosAngle);
+        outPosition.f.y = (sidelineY - cornerRadius) + (cornerRadius * sinAngle);
+        outPosition.f.z = impactPositionPositive.f.z + zOffset;
+    }
+
+    if (xIsPositive == 0)
+    {
+        outPosition.f.x = -outPosition.f.x;
+    }
+
+    if (yIsPositive == 0)
+    {
+        outPosition.f.y = -outPosition.f.y;
+    }
 }
 
 /**

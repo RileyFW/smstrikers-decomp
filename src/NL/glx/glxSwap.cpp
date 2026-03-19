@@ -8,6 +8,7 @@
 #include "dolphin/GX.h"
 #include "dolphin/VI.h"
 #include "dolphin/os/OSThread.h"
+#include "dolphin/PPCArch.h"
 #include "NL/glx/glxGX.h"
 #include "NL/gl/glPlat.h"
 #include "NL/gl/glConstant.h"
@@ -41,6 +42,9 @@ int nSelected = 0;
 static int LoadWaitSeconds = 0;
 
 extern u8 bInRetrace;
+extern s32 glx_nBlitXor;
+extern u16 _ImageData[0x400];
+extern u16 _SelectedImageData[0x400];
 
 /**
  * Offset/Address/Size: 0x0 | 0x801BED50 | size: 0x118
@@ -106,9 +110,88 @@ void DrawLoadingIndicator()
 /**
  * Offset/Address/Size: 0x118 | 0x801BEE68 | size: 0x2D0
  */
-void BlitImage(int, int, float, float, bool)
+void BlitImage(int arg0, int arg1, float arg2, float arg3, bool arg4)
 {
-    FORCE_DONT_INLINE;
+    float limit = 24.0f;
+    float xStep = limit / (float)(int)(limit * arg2);
+    float yStep = limit / (float)(int)(limit * arg3);
+    float ySample = 0.0f;
+    int x2 = arg0 << 1;
+    u8 useSelected = arg4;
+    const u16* selectedBase = _SelectedImageData;
+    const u16* imageBase = _ImageData;
+    int yOffset = 0;
+
+    while (ySample < limit)
+    {
+        int srcRow = (int)ySample;
+        int dstRow = (arg1 + yOffset) * 0x500;
+        const u16* selectedRow = (const u16*)((const u8*)selectedBase + (srcRow << 6));
+        const u16* imageRow = (const u16*)((const u8*)imageBase + (srcRow << 6));
+        float xSample = 0.0f;
+        int xOffset = 0;
+        int prev0;
+        int older0;
+        int prev1;
+        int older1;
+
+        while (xSample < limit)
+        {
+            int srcCol = (int)xSample;
+            u16 pixel;
+            if (useSelected)
+            {
+                pixel = selectedRow[srcCol];
+            }
+            else
+            {
+                pixel = imageRow[srcCol];
+            }
+
+            int alpha = (pixel & 0xF) | ((pixel & 0xF) << 4);
+            int yv = ((pixel >> 12) & 0xF) | (((pixel >> 12) & 0xF) << 4);
+            int uv0 = ((pixel >> 8) & 0xF) | (((pixel >> 8) & 0xF) << 4);
+            int uv1 = ((pixel >> 4) & 0xF) | (((pixel >> 4) & 0xF) << 4);
+
+            if (alpha > 0)
+            {
+                int dstX = arg0 + xOffset;
+                u8* dst = (u8*)glx_FrameBuffer[glx_nBuffer ^ glx_nBlitXor] + dstRow + (dstX << 1);
+                dst[0] = (u8)yv;
+
+                if ((dstX & 1) != 0)
+                {
+                    dst[-1] = (u8)(0.5f * (float)prev0 + 0.25f * (float)older0 + 0.25f * (float)uv0);
+                    dst[1] = (u8)(0.5f * (float)prev1 + 0.25f * (float)older1 + 0.25f * (float)uv1);
+                }
+            }
+
+            if (xOffset == 0)
+            {
+                prev0 = uv0;
+            }
+            older0 = prev0;
+            prev0 = uv0;
+
+            if (xOffset == 0)
+            {
+                prev1 = uv1;
+            }
+            older1 = prev1;
+            prev1 = uv1;
+
+            xSample += xStep;
+            xOffset++;
+        }
+
+        DCStoreRangeNoSync((u8*)glx_FrameBuffer[glx_nBuffer ^ glx_nBlitXor] + dstRow + x2,
+            (u32)(xOffset << 1));
+
+        ySample += yStep;
+        yOffset++;
+    }
+
+    PPCSync();
 }
 
 /**

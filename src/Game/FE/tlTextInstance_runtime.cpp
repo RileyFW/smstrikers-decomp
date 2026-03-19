@@ -49,7 +49,7 @@ static inline const nlFont* GetFontFromComponent(TLComponent* comp)
 
 /**
  * Offset/Address/Size: 0x38 | 0x80210210 | size: 0x250
- * TODO: 97.8% match - only 2 constant pool label diffs remain (unavoidable SDA ordering)
+ * TODO: 99.2% match - remaining diffs are sdata2 literal labels and late `drawAt.f.x` store scheduling around scissor setup
  */
 void TLTextInstance::Render(eGLView view, const nlColour& colour) const
 {
@@ -158,7 +158,6 @@ void TLTextInstance::Render(eGLView view, const nlColour& colour) const
         break;
     }
 
-    drawAt.f.x = x;
     drawAt.f.y = y;
 
     if (m_UseScissorRect)
@@ -166,6 +165,7 @@ void TLTextInstance::Render(eGLView view, const nlColour& colour) const
         SetScissorBox__6nlFontCFRCQ26nlFont10ScissorBox(m_DrawInfo.pFont, m_ScissorRect);
     }
 
+    drawAt.f.x = x;
     DrawString__9nlTextBoxFRCQ29nlTextBox14StringDrawInfoRC9nlVector2RC8nlColour7eGLView((const StringDrawInfo&)m_DrawInfo, drawAt, colour, view);
 
     if (m_UseScissorRect)

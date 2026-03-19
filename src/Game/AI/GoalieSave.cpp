@@ -5,6 +5,60 @@
 static nlAVLTree<int, SaveData*, DefaultKeyCompare<int> > gSaveMap;
 static nlListContainer<SaveData*> gSaveGrid[7][5];
 
+struct MyMiniData;
+
+extern "C"
+{
+    typedef void (*ConstructorDestructor)(void*);
+    void* __register_global_object(void* object, void* destructor, void* registration);
+    void __construct_array(void* ptr, ConstructorDestructor ctor, ConstructorDestructor dtor, unsigned long size, unsigned long n);
+
+    void __vt__18AVLTreeUntemplated(void);
+    void vtAVLTreeBaseSave(void);
+    void vtNlAVLTreeSave(void);
+    void SaveMapDtor(void*, int);
+    void SaveGridCtor(void*);
+    void SaveGridDtor(void*);
+    void SaveGridArrayDtor(void*, int);
+}
+
+#pragma alias vtAVLTreeBaseSave "__vt__91AVLTreeBase<i,P8SaveData,40NewAdapter<26AVLTreeEntry<i,P8SaveData>>,20DefaultKeyCompare<i>>"
+#pragma alias vtNlAVLTreeSave "__vt__46nlAVLTree<i,P8SaveData,20DefaultKeyCompare<i>>"
+#pragma alias SaveMapDtor "__dt__46nlAVLTree<i,P8SaveData,20DefaultKeyCompare<i>>Fv"
+#pragma alias SaveGridCtor "__ct__27nlListContainer<P8SaveData>Fv"
+#pragma alias SaveGridDtor "__dt__27nlListContainer<P8SaveData>Fv"
+#pragma alias SaveGridArrayDtor "__arraydtor$565"
+
+struct GoalieSaveDestructorChain
+{
+    GoalieSaveDestructorChain* next;
+    void* destructor;
+    void* object;
+};
+
+/**
+ * Offset/Address/Size: 0x0 | 0x80056D60 | size: 0xA4
+ * TODO: 96.10% match - relocation/symbol label diffs remain for @564/@566
+ * chain objects and templated vtable/ctor/dtor symbols.
+ */
+extern "C" void __sinit_GoalieSave_cpp()
+{
+    static GoalieSaveDestructorChain chain1;
+    static GoalieSaveDestructorChain chain2;
+
+    u32* map = (u32*)&gSaveMap;
+    map[0] = (u32)__vt__18AVLTreeUntemplated;
+    map[0] = (u32)vtAVLTreeBaseSave;
+    map[4] = 0;
+    map[2] = 0;
+    map[3] = 0;
+    map[0] = (u32)vtNlAVLTreeSave;
+    __register_global_object(map, (void*)SaveMapDtor, &chain1);
+
+    __construct_array(gSaveGrid, SaveGridCtor, SaveGridDtor, 0xC, 0x23);
+    __register_global_object(0, (void*)SaveGridArrayDtor, &chain2);
+}
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80056D60 | size: 0xA4
 //  */
@@ -61,12 +115,15 @@ static nlListContainer<SaveData*> gSaveGrid[7][5];
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x80056BC8 | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<MyMiniData*>, DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*>>>>(DLListEntry<MyMiniData*>*, DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*>>>*, void (DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*>>>::*)(DLListEntry<MyMiniData*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x80056BC8 | size: 0x3C
+ * TODO: 96.00% match - prologue scheduling mismatch remains.
+ * Target orders `lwz r7, 0(r5)` before `stw r0, 0x24(r1)`.
+ */
+template void nlWalkDLRing<DLListEntry<MyMiniData*>, DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*> > > >(
+    DLListEntry<MyMiniData*>* head,
+    DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*> > >* callback,
+    void (DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*> > >::*callbackFunc)(DLListEntry<MyMiniData*>*));
 
 // /**
 //  * Offset/Address/Size: 0x68 | 0x80056BA0 | size: 0x28
@@ -247,13 +304,151 @@ void GoalieSave::InitData(Goalie*)
 // {
 // }
 
+template <typename T>
+class nlSingleton
+{
+public:
+    static T* s_pInstance;
+};
+
+class GameInfoManager
+{
+public:
+    bool IsStunnedGoaliesOn() const;
+};
+
+struct MyMiniData
+{
+    int dist;
+    nlListContainer<SaveData*>* list;
+};
+
+struct MyMiniListShim
+{
+    NewAdapter<DLListEntry<MyMiniData*> > m_Allocator;
+    DLListEntry<MyMiniData*>* m_Head;
+};
+
+static void InsertSorted(nlDLListContainer<MyMiniData*>&, MyMiniData*);
+
 /**
  * Offset/Address/Size: 0x1FC0 | 0x800553E0 | size: 0x2BC
  */
-
+/**
+ * TODO: 98.97% match - r20-r24 cyclic register shift in nested loop
+ * (dist/gSaveGrid/griddata base pointers). MWCC -inline deferred register
+ * allocation quirk.
+ */
 SaveData* GoalieSave::FindBestSave(SaveBlendInfo& blendInfo, const nlVector3& v3LocalPos, float fTime, bool bDoNearSearch, unsigned int uSaveType, bool bFromTakeoff)
 {
-    return NULL;
+    typedef SaveData* (*FindBestInListFunc)(SaveBlendInfo&, nlListContainer<SaveData*>&, const nlVector3&, float, unsigned int, bool);
+
+    int i;
+    int j;
+    SaveData* pSaveData;
+    MyMiniListShim mylist;
+    MyMiniData griddata[7][5];
+    int dist;
+    int dz;
+    int across;
+    int up;
+
+    float y;
+    float z;
+    z = v3LocalPos.f.z;
+    y = v3LocalPos.f.y;
+
+    float netWidth = cField::GetNet(1.0f)->GetNetWidth();
+    float netHeight = cField::GetNet(1.0f)->GetNetHeight();
+
+    i = (int)(7.0f * (0.5f * netWidth + y) / netWidth);
+    if (i < 0)
+        i = 0;
+    else if (i >= 7)
+        i = 6;
+
+    j = (int)(5.0f * z / netHeight);
+    if (j < 0)
+        j = 0;
+    else if (j >= 5)
+        j = 4;
+
+    if (nlSingleton<GameInfoManager>::s_pInstance->IsStunnedGoaliesOn())
+        uSaveType &= ~3;
+
+    pSaveData = ((FindBestInListFunc)GoalieSave::FindBestInList)(
+        blendInfo,
+        gSaveGrid[i][j],
+        v3LocalPos,
+        fTime,
+        uSaveType,
+        bFromTakeoff);
+
+    if (bDoNearSearch && pSaveData == NULL)
+    {
+        mylist.m_Head = NULL;
+
+        for (across = 0; across < 7; across++)
+        {
+            dz = i - across;
+            dist = dz * dz;
+
+            for (up = 0; up < 5; up++)
+            {
+                int du = j - up;
+                int testDist = dist + du * du;
+
+                if (testDist <= 8)
+                {
+                    griddata[across][up].dist = testDist;
+                    griddata[across][up].list = &gSaveGrid[across][up];
+                    InsertSorted(*(nlDLListContainer<MyMiniData*>*)&mylist, &griddata[across][up]);
+                }
+            }
+        }
+
+        DLListEntry<MyMiniData*>* current = nlDLRingGetStart(mylist.m_Head);
+        DLListEntry<MyMiniData*>* head = mylist.m_Head;
+
+        if (nlDLRingIsEnd(head, current) || current == NULL)
+            current = NULL;
+        else
+            current = current->m_next;
+
+        while (current != NULL)
+        {
+            MyMiniData* data = current->m_data;
+            nlListContainer<SaveData*>* cellList = data->list;
+
+            if (cellList != NULL)
+            {
+                pSaveData = ((FindBestInListFunc)GoalieSave::FindBestInList)(
+                    blendInfo,
+                    *cellList,
+                    v3LocalPos,
+                    fTime,
+                    uSaveType,
+                    bFromTakeoff);
+
+                if (pSaveData != NULL)
+                    break;
+            }
+
+            if (nlDLRingIsEnd(head, current) || current == NULL)
+                current = NULL;
+            else
+                current = current->m_next;
+        }
+
+        typedef DLListContainerBase<MyMiniData*, NewAdapter<DLListEntry<MyMiniData*> > > MiniDataList;
+        nlWalkDLRing<DLListEntry<MyMiniData*>, MiniDataList>(
+            mylist.m_Head,
+            (MiniDataList*)&mylist,
+            &MiniDataList::DeleteEntry);
+        mylist.m_Head = NULL;
+    }
+
+    return pSaveData;
 }
 
 /**

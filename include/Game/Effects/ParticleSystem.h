@@ -52,7 +52,7 @@ public:
     void UpdateCoordSys();
     void UpdateCoordSys(nlMatrix4&);
     void CreateNewParticles(int);
-    void UpdateParticle(ParticleReturn*, Particle*, EffectsTemplate*, const nlVector3&, const nlVector3&, const nlMatrix4*);
+    static void UpdateParticle(ParticleReturn*, Particle*, EffectsTemplate*, const nlVector3&, const nlVector3&, const nlMatrix4*);
     void RenderAllParticles(eGLView);
     void Die();
     bool Update(float);

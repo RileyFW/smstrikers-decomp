@@ -34,11 +34,11 @@ public:
     void Update(float);
     void EndCup();
     void ReturnToMainMenu();
-    void UpdateDisplayedStat();
+    unsigned char UpdateDisplayedStat();
     void CreateLeague();
     void CreateBowserLeague();
     void CreateKnockout();
-    void UpdateLeague(float);
+    unsigned char UpdateLeague(float);
     void UpdateKnockout8(float);
     void UpdateKnockout4(float);
     void UpdateKnockout2(float);

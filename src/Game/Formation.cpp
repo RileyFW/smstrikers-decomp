@@ -16,9 +16,12 @@
 extern cTeam* g_pTeams[];
 
 static nlVector3 v3Zero = { 0.0f, 0.0f, 0.0f };
+static const float g_fFormationCaptainPosBonus[4] = { 0.55f, 0.5f, 0.0f, 0.0f };
 
 FormationSet* FormationManager::m_FormationSetArray = nullptr;
 int FormationManager::m_NumFormationSets = 0;
+
+static inline void ClearFormationEvals(FormationEval** pp);
 
 /**
  * Offset/Address/Size: 0x5C | 0x8003ADB4 | size: 0x5C
@@ -70,16 +73,7 @@ FormationManager::FormationManager(cTeam* pTeam)
  */
 FormationManager::~FormationManager()
 {
-    s32 i = 0;
-    FormationEval** pp = (FormationEval**)this;
-    FormationEval* null = (FormationEval*)i;
-    do
-    {
-        FormationEval* p = pp[1];
-        delete p;
-        i++;
-        *++pp = null;
-    } while (i < 3);
+    ClearFormationEvals((FormationEval**)this);
 }
 
 /**
@@ -438,8 +432,15 @@ FormationOffensive::FormationOffensive(FormationManager* pMgr, eFormationType ty
 FormationBallPosition::FormationBallPosition(FormationManager* pMgr, eFormationType type, const FormationSet* set)
     : FormationEval(pMgr, type, NULL)
 {
-    m_pFormationSet = set;
     m_pNextClosestFormation = NULL;
+    m_pFormationSet = set;
+}
+
+FormationBallPosition::FormationBallPosition(FormationManager* pMgr, eFormationType type, const FormationSpec* spec)
+    : FormationEval(pMgr, type, spec)
+{
+    m_pNextClosestFormation = NULL;
+    m_pFormationSet = NULL;
 }
 
 FormationEval* FormationEval::Create(FormationManager* pManager, eFormationType formType, eFormationSet formSetID, eFormation formID)
@@ -517,11 +518,133 @@ float FormationEval::GetWeight()
 
 /**
  * Offset/Address/Size: 0x1A14 | 0x80039C64 | size: 0x310
+ * TODO: 94.18% match - stack frame/register allocation and loop-counter hoist
+ * diffs around nested permutation loops (MWCC promotes i_pos array loads to
+ * callee-saved regs r29/r30/r31 instead of using volatile r0).
  */
-void FormationEval::AssignPositionsToFielders(unsigned int*, float (*)[4])
+#pragma opt_common_subs off
+void FormationEval::AssignPositionsToFielders(unsigned int* pFielderPosAssignments, float (*fFielderToPositionDistance)[4])
 {
-    FORCE_DONT_INLINE;
+    float fBestDistance = 100000000000.0f;
+    cPlayer* pKeyPlayer = GetKeyPlayer();
+    cTeam* pTeam = m_pFormationManager->m_pTeam;
+    int aiAssignedPos[4];
+
+    for (aiAssignedPos[0] = 0; aiAssignedPos[0] < 4; aiAssignedPos[0]++)
+    {
+        float fDistance = fFielderToPositionDistance[0][aiAssignedPos[0]];
+
+        for (aiAssignedPos[1] = 0; aiAssignedPos[1] < 4; aiAssignedPos[1]++)
+        {
+            if (aiAssignedPos[1] == aiAssignedPos[0])
+            {
+                continue;
+            }
+
+            float fDistancePos1 = fDistance;
+            fDistance += fFielderToPositionDistance[1][aiAssignedPos[1]];
+
+            for (aiAssignedPos[2] = 0; aiAssignedPos[2] < 4; aiAssignedPos[2]++)
+            {
+                if (aiAssignedPos[2] == aiAssignedPos[1])
+                {
+                    continue;
+                }
+
+                if (aiAssignedPos[2] == aiAssignedPos[0])
+                {
+                    continue;
+                }
+
+                float fDistancePos2 = fDistance;
+                fDistance += fFielderToPositionDistance[2][aiAssignedPos[2]];
+
+                for (aiAssignedPos[3] = 0; aiAssignedPos[3] < 4; aiAssignedPos[3]++)
+                {
+                    if (aiAssignedPos[3] == aiAssignedPos[2])
+                    {
+                        continue;
+                    }
+
+                    if (aiAssignedPos[3] == aiAssignedPos[1])
+                    {
+                        continue;
+                    }
+
+                    if (aiAssignedPos[3] == aiAssignedPos[0])
+                    {
+                        continue;
+                    }
+
+                    float fDistancePos3 = fDistance;
+                    fDistance += fFielderToPositionDistance[3][aiAssignedPos[3]];
+
+                    float fCaptainPosScore = 0.0f;
+                    float fCaptainPosCount = fCaptainPosScore;
+                    int* piAssignedPos = aiAssignedPos;
+
+                    for (int iFielder = 0; iFielder < 4; iFielder++)
+                    {
+                        if (iFielder == pKeyPlayer->m_ID)
+                        {
+                            if (*piAssignedPos == m_pFormationSpec->m_iKeyIndex)
+                            {
+                                fCaptainPosScore += 0.5f;
+                                fCaptainPosCount += 1.0f;
+                            }
+                        }
+
+                        cFielder* pFielder = pTeam->GetFielder(iFielder);
+                        if (pFielder->IsCaptain() && pFielder->GetGlobalPad() == NULL)
+                        {
+                            for (int iPos = 0; iPos < 4; iPos++)
+                            {
+                                if (iPos == *piAssignedPos)
+                                {
+                                    if (g_fFormationCaptainPosBonus[iPos] > 0.0f)
+                                    {
+                                        fCaptainPosCount += 1.0f;
+                                        fCaptainPosScore += 1.0f - g_fFormationCaptainPosBonus[iPos];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        piAssignedPos++;
+                    }
+
+                    float fCaptainPosMult = 0.0f;
+                    if (fCaptainPosCount > 0.0f)
+                    {
+                        fCaptainPosMult = fCaptainPosScore / fCaptainPosCount;
+                    }
+
+                    if (fCaptainPosMult > 0.0f)
+                    {
+                        fDistance *= fCaptainPosMult;
+                    }
+
+                    if (fDistance < fBestDistance)
+                    {
+                        fBestDistance = fDistance;
+                        pFielderPosAssignments[0] = aiAssignedPos[0];
+                        pFielderPosAssignments[1] = aiAssignedPos[1];
+                        pFielderPosAssignments[2] = aiAssignedPos[2];
+                        pFielderPosAssignments[3] = aiAssignedPos[3];
+                    }
+
+                    fDistance = fDistancePos3;
+                }
+
+                fDistance = fDistancePos2;
+            }
+
+            fDistance = fDistancePos1;
+        }
+    }
 }
+#pragma opt_common_subs on
 
 /**
  * Offset/Address/Size: 0x1798 | 0x800399E8 | size: 0x27C
@@ -886,12 +1009,84 @@ float FormationEval::IsFielderInPosition(cFielder* pFielder, nlVector3 v3Pos, bo
     return result;
 }
 
+struct FormationPositionThresholds
+{
+    float fInRadius;
+    float fOutUpField;
+    float fOutDownField;
+    float fOutLateral;
+};
+
+extern FormationPositionThresholds g_aDefensiveFormationThresholds[4];
+
 /**
  * Offset/Address/Size: 0xE70 | 0x800390C0 | size: 0x2E0
+ * TODO: 91.90% match - remaining diffs are MWCC floating-point register allocation around fInPosition in the near-zero branch.
  */
-float FormationDefensive::IsFielderInPosition(cFielder*, nlVector3, bool)
+float FormationDefensive::IsFielderInPosition(cFielder* pFielder, nlVector3 v3DesiredPosition, bool bInPosition)
 {
-    return 0.0f;
+    nlVector3 v3KeyPosition;
+    GetKeyPositions(pFielder, v3KeyPosition, NULL, false);
+
+    if (pFielder->m_pTeam->m_nSide != 0)
+    {
+        float negY = -v3KeyPosition.f.y;
+        float negX = -v3KeyPosition.f.x;
+        v3KeyPosition.f.z = 0.0f;
+        v3KeyPosition.f.x = negX;
+        v3KeyPosition.f.y = negY;
+    }
+
+    float dx = pFielder->m_v3Position.f.x - v3KeyPosition.f.x;
+    float dy = pFielder->m_v3Position.f.y - v3KeyPosition.f.y;
+    float fPercent = nlSqrt(dx * dx + dy * dy, true);
+
+    fPercent = NormalizeVal(fPercent, g_pGame->m_pGameTweaks->vGetInPositionKeyFielderDist);
+
+    nlVector3 v3FielderPos = pFielder->m_v3Position;
+    nlVector3 v3NetLocation = pFielder->GetAIOffNetLocation(NULL);
+    const FormationPositionThresholds* pPositionThresholds = &g_aDefensiveFormationThresholds[pFielder->m_eRole];
+
+    float distY = v3FielderPos.f.y - v3DesiredPosition.f.y;
+    float distX = v3FielderPos.f.x - v3DesiredPosition.f.x;
+
+    float fInPosition = 0.0f;
+
+    if (nlSqrt(distX * distX + distY * distY, true) <= pPositionThresholds->fInRadius)
+    {
+        fInPosition = 1.0f;
+    }
+    else if ((double)((float)fabs(fPercent - fInPosition) <= 0.00001f) != (double)fInPosition)
+    {
+        if (pFielder == GetKeyPlayer())
+        {
+            fInPosition = 1.0f;
+        }
+        else
+        {
+            fInPosition = 0.0f;
+        }
+    }
+    else if (bInPosition)
+    {
+        float fUpScore = ((v3DesiredPosition.f.x - v3FielderPos.f.x) * AIsgn(v3NetLocation.f.x))
+                       / (fPercent * pPositionThresholds->fOutUpField);
+
+        float fDownScore = ((v3FielderPos.f.x - v3DesiredPosition.f.x) * AIsgn(v3NetLocation.f.x))
+                         / (fPercent * pPositionThresholds->fOutDownField);
+
+        float fLateralScore = (float)fabs(v3FielderPos.f.y - v3DesiredPosition.f.y)
+                            / (fPercent * pPositionThresholds->fOutLateral);
+
+        float fScore = nlMaxEquals(fUpScore, 0.0f);
+        fScore += nlMaxEquals(fDownScore, 0.0f);
+        fScore += nlMaxEquals(fLateralScore, 0.0f);
+        fScore *= 0.33333334f;
+        fScore = nlMinEquals(nlMaxEquals(fScore, 0.0f), 1.0f);
+        fInPosition = 1.0f - fScore;
+    }
+
+    return fInPosition;
 }
 
 /**
@@ -905,9 +1100,67 @@ float FormationDefensive::GetWeight()
 /**
  * Offset/Address/Size: 0xB60 | 0x80038DB0 | size: 0x2E0
  */
-float FormationOffensive::IsFielderInPosition(cFielder*, nlVector3, bool)
+float FormationOffensive::IsFielderInPosition(cFielder* pFielder, nlVector3 v3DesiredPosition, bool bInPosition)
 {
-    return 0.0f;
+    nlVector3 v3KeyPosition;
+    GetKeyPositions(pFielder, v3KeyPosition, NULL, false);
+
+    if (pFielder->m_pTeam->m_nSide != 0)
+    {
+        float negY = -v3KeyPosition.f.y;
+        float negX = -v3KeyPosition.f.x;
+        v3KeyPosition.f.z = 0.0f;
+        v3KeyPosition.f.x = negX;
+        v3KeyPosition.f.y = negY;
+    }
+
+    float dx = pFielder->m_v3Position.f.x - v3KeyPosition.f.x;
+    float dy = pFielder->m_v3Position.f.y - v3KeyPosition.f.y;
+    float fPercent = nlSqrt(dx * dx + dy * dy, true);
+
+    fPercent = NormalizeVal(fPercent, g_pGame->m_pGameTweaks->vGetInPositionKeyFielderDist);
+
+    nlVector3 v3FielderPos = pFielder->m_v3Position;
+    nlVector3 v3NetLocation = pFielder->GetAIOffNetLocation(NULL);
+    const FormationPositionThresholds* pPositionThresholds = &g_aDefensiveFormationThresholds[pFielder->m_eRole];
+
+    float distY = v3FielderPos.f.y - v3DesiredPosition.f.y;
+    float distX = v3FielderPos.f.x - v3DesiredPosition.f.x;
+
+    float fInPosition = 0.0f;
+
+    if (nlSqrt(distX * distX + distY * distY, true) <= pPositionThresholds->fInRadius)
+    {
+        fInPosition = 1.0f;
+    }
+    else if ((double)((float)fabs(fPercent - fInPosition) <= 0.00001f) != (double)fInPosition)
+    {
+        if (pFielder == GetKeyPlayer())
+        {
+            fInPosition = 1.0f;
+        }
+        else
+        {
+            fInPosition = 0.0f;
+        }
+    }
+    else if (bInPosition)
+    {
+        float fUpScore = ((v3DesiredPosition.f.x - v3FielderPos.f.x) * AIsgn(v3NetLocation.f.x))
+                       / (fPercent * pPositionThresholds->fOutUpField);
+
+        float fDownScore = ((v3FielderPos.f.x - v3DesiredPosition.f.x) * AIsgn(v3NetLocation.f.x))
+                         / (fPercent * pPositionThresholds->fOutDownField);
+
+        float fLateralScore = (float)fabs(v3FielderPos.f.y - v3DesiredPosition.f.y)
+                            / (fPercent * pPositionThresholds->fOutLateral);
+
+        float fScore = (nlMaxEquals(fUpScore, 0.0f) + nlMaxEquals(fDownScore, 0.0f) + nlMaxEquals(fLateralScore, 0.0f)) * 0.33333334f;
+        fScore = nlMinEquals(nlMaxEquals(fScore, 0.0f), 1.0f);
+        fInPosition = 1.0f - fScore;
+    }
+
+    return fInPosition;
 }
 
 /**
@@ -923,6 +1176,11 @@ float FormationOffensive::GetWeight()
  */
 FormationBallPosition::~FormationBallPosition()
 {
+    if (m_pNextClosestFormation != NULL)
+    {
+        delete m_pNextClosestFormation;
+        m_pNextClosestFormation = NULL;
+    }
 }
 
 /**
@@ -980,22 +1238,344 @@ void FormationBallPosition::Update(float fDeltaT)
 /**
  * Offset/Address/Size: 0x618 | 0x80038868 | size: 0x318
  */
-void FormationBallPosition::SelectClosestBallFormations(const nlVector2&)
+/**
+ * Offset/Address/Size: 0x618 | 0x80038868 | size: 0x318
+ * TODO: 98.28% match - 4 register diffs (f1/f2 swap in loop body at offsets 80-8c),
+ *       likely -inline deferred vs -inline auto difference
+ */
+bool FormationBallPosition::SelectClosestBallFormations(const nlVector2& v2AIBallLoc)
 {
-    FORCE_DONT_INLINE;
+    FormationSpec* pClosest[2] = { NULL, NULL };
+    float fDist[2] = { 3.402823466e+38f, 3.402823466e+38f };
+    s32 i = 0;
+    float ballX, ballY;
+    ballY = v2AIBallLoc.f.y;
+    ballX = v2AIBallLoc.f.x;
+
+    for (; i < m_pFormationSet->m_NumFormationDefs; i++)
+    {
+        FormationSpec* pSpec = m_pFormationSet->GetFormationSpec(i);
+        nlVector2& keyLoc = pSpec->GetKeyLocation();
+        float dy = ballY - keyLoc.f.y;
+        float dx = ballX - keyLoc.f.x;
+        float dist = nlSqrt(dx * dx + dy * dy, true);
+
+        if (dist < fDist[0])
+        {
+            fDist[1] = fDist[0];
+            pClosest[1] = pClosest[0];
+            pClosest[0] = pSpec;
+            fDist[0] = dist;
+        }
+        else if (dist < fDist[1])
+        {
+            pClosest[1] = pSpec;
+            fDist[1] = dist;
+        }
+    }
+
+    bool bChanged = false;
+
+    FormationSpec* pClosestFormation = pClosest[0];
+    if (pClosestFormation != m_pFormationSpec)
+    {
+        float fInDist = pClosestFormation->m_InRadius;
+        if (m_pFormationSpec == NULL)
+        {
+            fInDist = pClosestFormation->m_OutRadius;
+        }
+
+        nlVector2& keyLoc = pClosestFormation->GetKeyLocation();
+        float dy = v2AIBallLoc.f.y - keyLoc.f.y;
+        float dx = v2AIBallLoc.f.x - keyLoc.f.x;
+        float dist = nlSqrt(dx * dx + dy * dy, true);
+
+        if (dist <= fInDist)
+        {
+            m_pFormationSpec = pClosestFormation;
+            bChanged = true;
+        }
+    }
+
+    if (m_pNextClosestFormation != NULL)
+    {
+        FormationSpec* pNextSpec = (FormationSpec*)m_pNextClosestFormation->m_pFormationSpec;
+        float fOutDist = pNextSpec->m_OutRadius;
+        nlVector2& keyLoc = pNextSpec->GetKeyLocation();
+        float dy = v2AIBallLoc.f.y - keyLoc.f.y;
+        float dx = v2AIBallLoc.f.x - keyLoc.f.x;
+        float dist = nlSqrt(dx * dx + dy * dy, true);
+
+        if (dist > fOutDist)
+        {
+            delete m_pNextClosestFormation;
+            m_pNextClosestFormation = NULL;
+            goto done;
+        }
+    }
+
+    if (pClosest[1] != NULL)
+    {
+        FormationSpec* pCurrentNextSpec;
+        if (m_pNextClosestFormation != NULL)
+        {
+            pCurrentNextSpec = (FormationSpec*)m_pNextClosestFormation->m_pFormationSpec;
+        }
+        else
+        {
+            pCurrentNextSpec = NULL;
+        }
+
+        if (pCurrentNextSpec != m_pFormationSpec)
+        {
+            float fInDist = pClosest[1]->m_InRadius;
+            if (pCurrentNextSpec == NULL)
+            {
+                fInDist = pClosest[1]->m_OutRadius;
+            }
+
+            nlVector2& keyLoc = pClosest[1]->GetKeyLocation();
+            float dy = v2AIBallLoc.f.y - keyLoc.f.y;
+            float dx = v2AIBallLoc.f.x - keyLoc.f.x;
+            float dist = nlSqrt(dx * dx + dy * dy, true);
+
+            if (dist > fInDist)
+            {
+                goto done;
+            }
+        }
+
+        if (m_pNextClosestFormation == NULL)
+        {
+            m_pNextClosestFormation = new (nlMalloc(sizeof(FormationBallPosition), 8, false)) FormationBallPosition(m_pFormationManager, FTYPE_BALLPOSITION, pClosest[1]);
+            bChanged = true;
+        }
+        else if (m_pNextClosestFormation->m_pFormationSpec != pClosest[1])
+        {
+            m_pNextClosestFormation->m_pFormationSpec = pClosest[1];
+            bChanged = true;
+        }
+    }
+
+done:
+    return bChanged;
 }
 
 /**
  * Offset/Address/Size: 0x2C0 | 0x80038510 | size: 0x358
+ * TODO: 99.34% match - remaining diffs are MWCC floating-point register allocation in clamp blocks:
+ * X clamp: f4/f6 swap for clampX/maxX + cror flag direction; Y clamp: f0/f3 swap + stack offset swap.
  */
-void FormationBallPosition::CalculateDesiredLocation(nlVector3&, cFielder*, bool)
+void FormationBallPosition::CalculateDesiredLocation(nlVector3& destPosition, cFielder* pFielder, bool bExtrapolate)
 {
+    nlVector3 v3NextPosition;
+
+    {
+        nlVector3 v3KeyFormationAIPosition;
+        nlVector3 v3KeyAIPosition;
+        nlVector2 v2FormationMax;
+        nlVector2 v2FormationMin;
+
+        if (m_pFormationSpec == NULL)
+        {
+            destPosition = pFielder->m_v3Position;
+            return;
+        }
+
+        GetKeyPositions(pFielder, v3KeyAIPosition, &v3KeyFormationAIPosition, bExtrapolate);
+
+        m_pFormationSpec->CalculateExtents(v2FormationMin, v2FormationMax, *(nlVector2*)&v3KeyFormationAIPosition);
+
+        u32 posIndex = m_iFielderFormationPos[pFielder->m_ID];
+        const FormationSpec* pSpec = m_pFormationSpec;
+
+        f32 maxX = v2FormationMax.f.x;
+        f32 minX = v2FormationMin.f.x;
+
+        const FormationPos* pPos = &pSpec->m_Positions[posIndex];
+
+        f32 locY = v3KeyFormationAIPosition.f.y;
+        f32 locX = v3KeyFormationAIPosition.f.x;
+
+        f32 posLocY = pPos->m_Location.f.y;
+        f32 posLocX = pPos->m_Location.f.x;
+
+        f32 dy = posLocY - locY;
+        f32 dx = posLocX - locX;
+
+        f32 clampX = v3KeyAIPosition.f.x;
+        clampX = (minX <= clampX) ? clampX : minX;
+        clampX = (maxX >= clampX) ? clampX : maxX;
+
+        destPosition.f.x = dx + clampX;
+
+        f32 maxY = v2FormationMax.f.y;
+        f32 clampY = v3KeyAIPosition.f.y;
+        f32 minY = v2FormationMin.f.y;
+
+        clampY = (clampY >= minY) ? clampY : minY;
+        clampY = (clampY <= maxY) ? clampY : maxY;
+
+        f32 zero = 0.0f;
+        destPosition.f.y = dy + clampY;
+        destPosition.f.z = zero;
+
+        if (pFielder->m_pTeam->m_nSide != 0)
+        {
+            nlVec3Set(destPosition, -destPosition.f.x, -destPosition.f.y, zero);
+        }
+    }
+
+    if (m_pNextClosestFormation != NULL && m_pNextClosestFormation->m_pFormationSpec != NULL)
+    {
+        m_pNextClosestFormation->CalculateDesiredLocation(v3NextPosition, pFielder, bExtrapolate);
+
+        f32 blend = 1.0f;
+
+        if (m_pNextClosestFormation != NULL)
+        {
+            const FormationSpec* pNextSpec = m_pNextClosestFormation->m_pFormationSpec;
+            if (pNextSpec != NULL)
+            {
+                const FormationSpec* pSpec = m_pFormationSpec;
+                nlVector3 v3AIBallLoc;
+
+                if (g_pBall->m_pOwner != NULL)
+                {
+                    v3AIBallLoc = g_pBall->m_pOwner->m_v3Position;
+                }
+                else if (g_pBall->m_pPassTarget != NULL)
+                {
+                    v3AIBallLoc = g_pBall->m_pPassTarget->m_v3Position;
+                }
+                else
+                {
+                    v3AIBallLoc = g_pBall->m_v3Position;
+                }
+
+                if (m_pFormationManager->m_pTeam->m_nSide != 0)
+                {
+                    f32 negY = -v3AIBallLoc.f.y;
+                    f32 negX = -v3AIBallLoc.f.x;
+                    v3AIBallLoc.f.z = 0.0f;
+                    v3AIBallLoc.f.x = negX;
+                    v3AIBallLoc.f.y = negY;
+                }
+
+                nlVector2 vAIBallLoc = *(const nlVector2*)&v3AIBallLoc;
+                nlVector2& keyLoc = pSpec->GetKeyLocation();
+                f32 dyA = vAIBallLoc.f.y - keyLoc.f.y;
+                f32 dxA = vAIBallLoc.f.x - keyLoc.f.x;
+                f32 dist = nlSqrt(dxA * dxA + dyA * dyA, true);
+
+                nlVector2& nextKeyLoc = pNextSpec->GetKeyLocation();
+                f32 dyB = vAIBallLoc.f.y - nextKeyLoc.f.y;
+                f32 dxB = vAIBallLoc.f.x - nextKeyLoc.f.x;
+                f32 nextDist = nlSqrt(dxB * dxB + dyB * dyB, true);
+
+                blend = nextDist / (dist + nextDist);
+            }
+        }
+
+        f32 invBlend = 1.0f - blend;
+        destPosition.f.x = invBlend * v3NextPosition.f.x + blend * destPosition.f.x;
+        destPosition.f.y = invBlend * v3NextPosition.f.y + blend * destPosition.f.y;
+        destPosition.f.z = invBlend * v3NextPosition.f.z + blend * destPosition.f.z;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x0 | 0x80038250 | size: 0x2C0
+ * TODO: 99.89% match - f29/f30 swap for fBlend register allocation in inner blend computation
  */
 float FormationBallPosition::GetWeight()
 {
-    return 0.0f;
+    nlVector3 v3AIBallLoc;
+
+    if (g_pBall->m_pOwner != NULL)
+    {
+        v3AIBallLoc = g_pBall->m_pOwner->m_v3Position;
+    }
+    else if (g_pBall->m_pPassTarget != NULL)
+    {
+        v3AIBallLoc = g_pBall->m_pPassTarget->m_v3Position;
+    }
+    else
+    {
+        v3AIBallLoc = g_pBall->m_v3Position;
+    }
+
+    if (m_pFormationManager->m_pTeam->m_nSide != 0)
+    {
+        float negY = -v3AIBallLoc.f.y;
+        float negX = -v3AIBallLoc.f.x;
+        v3AIBallLoc.f.z = 0.0f;
+        v3AIBallLoc.f.x = negX;
+        v3AIBallLoc.f.y = negY;
+    }
+
+    nlVector2 vAIBallLoc = *(const nlVector2*)&v3AIBallLoc;
+    nlVector2& keyLoc = m_pFormationSpec->GetKeyLocation();
+    float dy = vAIBallLoc.f.y - keyLoc.f.y;
+    float dx = vAIBallLoc.f.x - keyLoc.f.x;
+    float dist = nlSqrt(dx * dx + dy * dy, true);
+    float fWeight = NormalizeVal(dist, m_pFormationSpec->m_OutRadius, 0.0f);
+
+    if (m_pNextClosestFormation != NULL)
+    {
+        const FormationSpec* pNextSpec = m_pNextClosestFormation->m_pFormationSpec;
+        if (pNextSpec != NULL)
+        {
+            float fBlend = 1.0f;
+
+            if (m_pNextClosestFormation != NULL)
+            {
+                if (pNextSpec != NULL)
+                {
+                    const FormationSpec* pSpec = m_pFormationSpec;
+                    nlVector3 v3AIBallLoc2;
+
+                    if (g_pBall->m_pOwner != NULL)
+                    {
+                        v3AIBallLoc2 = g_pBall->m_pOwner->m_v3Position;
+                    }
+                    else if (g_pBall->m_pPassTarget != NULL)
+                    {
+                        v3AIBallLoc2 = g_pBall->m_pPassTarget->m_v3Position;
+                    }
+                    else
+                    {
+                        v3AIBallLoc2 = g_pBall->m_v3Position;
+                    }
+
+                    if (m_pFormationManager->m_pTeam->m_nSide != 0)
+                    {
+                        float negY = -v3AIBallLoc2.f.y;
+                        float negX = -v3AIBallLoc2.f.x;
+                        v3AIBallLoc2.f.z = 0.0f;
+                        v3AIBallLoc2.f.x = negX;
+                        v3AIBallLoc2.f.y = negY;
+                    }
+
+                    nlVector2 vAIBallLoc2 = *(const nlVector2*)&v3AIBallLoc2;
+                    nlVector2& keyLoc2 = pSpec->GetKeyLocation();
+                    float dy2 = vAIBallLoc2.f.y - keyLoc2.f.y;
+                    float dx2 = vAIBallLoc2.f.x - keyLoc2.f.x;
+                    fBlend = nlSqrt(dx2 * dx2 + dy2 * dy2, true);
+
+                    nlVector2& nextKeyLoc = pNextSpec->GetKeyLocation();
+                    float dy3 = vAIBallLoc2.f.y - nextKeyLoc.f.y;
+                    float dx3 = vAIBallLoc2.f.x - nextKeyLoc.f.x;
+                    float fDist2 = nlSqrt(dx3 * dx3 + dy3 * dy3, true);
+
+                    fBlend = fDist2 / (fBlend + fDist2);
+                }
+            }
+
+            float fNextWeight = m_pNextClosestFormation->GetWeight();
+            fWeight = fWeight * fBlend + fNextWeight * (1.0f - fBlend);
+        }
+    }
+
+    return fWeight;
 }

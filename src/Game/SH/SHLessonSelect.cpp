@@ -1,6 +1,9 @@
 #include "Game/SH/SHLessonSelect.h"
 #include "Game/OverlayManager.h"
 #include "Game/SH/SHLesson.h"
+#include "Game/FE/feNSNMessenger.h"
+
+#include "NL/nlPrint.h"
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8010CE0C | size: 0x38
@@ -128,6 +131,13 @@ void LessonTickerDoneCB()
  * Offset/Address/Size: 0x1774 | 0x8010C5C4 | size: 0xBC
  */
 LessonSelectScene::LessonSelectScene()
+    : BaseSceneHandler()
+    , mMenuItems()
+    , mDoSlideIn(true)
+    , mStartAnimAtEnd(false)
+    , mButtons()
+    , mUpArrow(NULL)
+    , mDownArrow(NULL)
 {
 }
 
@@ -173,8 +183,89 @@ void LessonSelectScene::StartLesson()
 
 /**
  * Offset/Address/Size: 0x0 | 0x8010AE50 | size: 0x2E4
+ * TODO: 99.59% scratch match - remaining i-diffs are SDA/string relocation offsets.
  */
-void SetTickerLesson(int)
+void SetTickerLesson(int lesson)
 {
-    FORCE_DONT_INLINE;
+    static unsigned char ResetHistory = 1;
+    static signed char PreviousHistory[5];
+    static signed char InsertPoint = 0;
+
+    NSNMessengerScene* ticker;
+    int randomlesson;
+    char lessonTickerName[64];
+
+    if (ResetHistory)
+    {
+        PreviousHistory[0] = -1;
+        PreviousHistory[1] = -1;
+        PreviousHistory[2] = -1;
+        PreviousHistory[3] = -1;
+        PreviousHistory[4] = -1;
+        ResetHistory = 0;
+    }
+
+    BaseSceneHandler* scene = OverlayManager::s_pInstance->GetScene(OVERLAY_LESSON_TICKER);
+    if (scene != 0)
+    {
+        scene = (BaseSceneHandler*)((char*)scene - 4);
+    }
+
+    ticker = (NSNMessengerScene*)(void*)scene;
+    if (ticker == 0)
+    {
+        return;
+    }
+
+    if (lesson < 0)
+    {
+        do
+        {
+            randomlesson = nlRandom(12, &nlDefaultSeed);
+
+            signed char* previous = PreviousHistory;
+            for (int i = 0; i < 5; i++, previous++)
+            {
+                if (*previous == randomlesson)
+                {
+                    randomlesson = -1;
+                    break;
+                }
+            }
+        } while (randomlesson == -1);
+
+        PreviousHistory[InsertPoint] = randomlesson;
+        lesson = randomlesson;
+        InsertPoint = (InsertPoint + 1) % 5;
+
+        Function<FnVoidVoid> doneCB;
+        doneCB.mTag = FREE_FUNCTION;
+        doneCB.mFreeFunction = LessonTickerDoneCB;
+
+        FEScrollText* scrollText = ticker->m_scrollText;
+        if (scrollText != 0)
+        {
+            // *(Function<FnVoidVoid>*)&scrollText->mTag = doneCB;
+            *(Function<FnVoidVoid>*)&scrollText->m_messageFinishedCB = doneCB;
+        }
+    }
+    else
+    {
+        FEScrollText* scrollText = ticker->m_scrollText;
+        if (scrollText != 0)
+        {
+            // Function<FnVoidVoid>* cb = (Function<FnVoidVoid>*)&scrollText->mTag;
+            Function<FnVoidVoid>* cb = (Function<FnVoidVoid>*)&scrollText->m_messageFinishedCB;
+            if (cb->mTag == FUNCTOR)
+            {
+                delete cb->mFunctor;
+            }
+            cb->mTag = EMPTY;
+        }
+    }
+
+    nlSNPrintf(lessonTickerName, 64, "LOC_TUTORIAL_LESSON_%d", lesson + 1);
+    ticker->EnableScrolling(true);
+    ticker->SetDisplayMessage(lessonTickerName);
+    ticker->OpenMessengerNow();
 }

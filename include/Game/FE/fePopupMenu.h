@@ -2,6 +2,7 @@
 #define _FEPOPUPMENU_H_
 
 #include "Game/FE/fePresentation.h"
+#include "Game/FE/feButtonComponent.h"
 #include "Game/FE/feInput.h"
 #include "Game/BaseSceneHandler.h"
 #include "NL/nlBasicString.h"
@@ -79,16 +80,20 @@ public:
     /* 0xA1C */ bool mMenuDisplayed;                  // size 0x1
     /* 0xA1D */ bool mMenuCreated;                    // size 0x1
     /* 0xA1E */ bool mRunCallBack;                    // size 0x1
+    /* 0xA1F */ bool mUnknownA1F;                     // size 0x1
     /* 0xA20 */ int mHighlightedOption;               // size 0x4
     /* 0xA24 */ float mAcceptDelayTime;               // size 0x4
     /* 0xA28 */ Popup mPopup;                         // size 0x18
     /* 0xA40 */ eFEINPUT_PAD mControlInput;           // size 0x4
     /* 0xA44 */ Function<FnVoidVoid> callBacks[4];    // size 0x20
-    /* 0xA64 */ nlColour mOptionColour;               // size 0x4
+    /* 0xA64 */ int mUnknownA64;                      // size 0x4
     /* 0xA68 */ u8 pad_A68[8];                        // size 0x8
     /* 0xA70 */ feVector3 mHighlightSize;             // size 0xC
     /* 0xA7C */ ePopupMenu mType;                     // size 0x4
-}; // total size: 0xA80
+    /* 0xA80 */ ButtonComponent mButtons;             // size 0x24
+    /* 0xAA4 */ bool mUnknownAA4;                     // size 0x1
+    /* 0xAA5 */ bool mUnknownAA5;                     // size 0x1
+}; // total size: 0xAA8
 
 // class FEFinder<TLTextInstance, 3>
 // {

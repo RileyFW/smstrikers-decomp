@@ -36,13 +36,10 @@ static bool g_bEnableDrawableTMModel = true;
 
 /**
  * Offset/Address/Size: 0xD4 | 0x80122B00 | size: 0x1E4
- * TODO: 96.38% match - prologue still differs (0x20 stack frame and this-pointer spill/load)
  */
 DrawableObject* DrawableTmModel::Clone() const
 {
-    const DrawableTmModel* volatile src = this;
-    const DrawableTmModel* src2 = src;
-    DrawableTmModel* pClone = new (nlMalloc(sizeof(DrawableTmModel), 8, false)) DrawableTmModel(*src2);
+    DrawableTmModel* pClone = new (nlMalloc(sizeof(DrawableTmModel), 8, false)) DrawableTmModel(*this);
 
     pClone->m_uObjectFlags |= 0x1;
     pClone->m_uObjectFlags |= 0x4;

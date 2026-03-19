@@ -178,7 +178,7 @@ bool Audio::TrackMgrFileNameParamLookup(const char* param, char* out, unsigned l
 void Audio::CreatePriorityStreams()
 {
     PriorityStream* stream = (PriorityStream*)nlMalloc(0x78, 8, false);
-    stream = new (stream) PriorityStream(g_pTrackManager->CreateTrack("Priority", ::MasterVolume::VG_Special));
+    stream = new (stream) PriorityStream(g_pTrackManager->CreateTrack("Priority", MasterVolume::VG_Special));
     g_pPriorityStream = stream;
 }
 

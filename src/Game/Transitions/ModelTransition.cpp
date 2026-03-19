@@ -187,10 +187,144 @@ void ShuffleIntoOutline(Vector<nlVector3, DefaultAllocator>& polygon)
 
 /**
  * Offset/Address/Size: 0x188C | 0x80203950 | size: 0x340
+ * TODO: 95.17% match - GPR allocation drift: nextLeaf(r31) and node(r30) assigned
+ * too-high registers, pushing ecs/pa/skeleton down. Likely -inline deferred context issue.
  */
-void UpdateEffectsFromLeafNodes(cPoseAccumulator&, EmissionController**, cSHierarchy&, int, int)
+int UpdateEffectsFromLeafNodes(cPoseAccumulator& pa, EmissionController** ecs, cSHierarchy& skeleton, int leaf, int node)
 {
-    FORCE_DONT_INLINE;
+    int i, j, k, l, m;
+    int child, grandChild, greatGrandChild, deeperChild;
+    int nextLeaf;
+
+    if (skeleton.GetNumChildren(node) == 0)
+    {
+        EmissionController* ec = ecs[leaf];
+        if (ec != NULL)
+        {
+            if (EmissionManager::IsStillAlive(ec))
+            {
+                ecs[leaf]->SetPosition(*(nlVector3*)&pa.GetNodeMatrix(node).f.m41);
+            }
+            else
+            {
+                ecs[leaf] = NULL;
+            }
+        }
+
+        leaf++;
+    }
+    else
+    {
+        for (i = 0; i < skeleton.GetNumChildren(node); i++)
+        {
+            child = skeleton.GetChild(node, i);
+            nextLeaf = leaf;
+
+            if (skeleton.GetNumChildren(child) == 0)
+            {
+                EmissionController* ec = ecs[leaf];
+                if (ec != NULL)
+                {
+                    if (EmissionManager::IsStillAlive(ec))
+                    {
+                        ecs[leaf]->SetPosition(*(nlVector3*)&pa.GetNodeMatrix(child).f.m41);
+                    }
+                    else
+                    {
+                        ecs[leaf] = NULL;
+                    }
+                }
+
+                nextLeaf++;
+            }
+            else
+            {
+                for (j = 0; j < skeleton.GetNumChildren(child); j++)
+                {
+                    grandChild = skeleton.GetChild(child, j);
+
+                    if (skeleton.GetNumChildren(grandChild) == 0)
+                    {
+                        EmissionController* ec = ecs[nextLeaf];
+                        if (ec != NULL)
+                        {
+                            if (EmissionManager::IsStillAlive(ec))
+                            {
+                                ecs[nextLeaf]->SetPosition(*(nlVector3*)&pa.GetNodeMatrix(grandChild).f.m41);
+                            }
+                            else
+                            {
+                                ecs[nextLeaf] = NULL;
+                            }
+                        }
+
+                        nextLeaf++;
+                    }
+                    else
+                    {
+                        for (k = 0; k < skeleton.GetNumChildren(grandChild); k++)
+                        {
+                            greatGrandChild = skeleton.GetChild(grandChild, k);
+
+                            if (skeleton.GetNumChildren(greatGrandChild) == 0)
+                            {
+                                EmissionController* ec = ecs[nextLeaf];
+                                if (ec != NULL)
+                                {
+                                    if (EmissionManager::IsStillAlive(ec))
+                                    {
+                                        ecs[nextLeaf]->SetPosition(*(nlVector3*)&pa.GetNodeMatrix(greatGrandChild).f.m41);
+                                    }
+                                    else
+                                    {
+                                        ecs[nextLeaf] = NULL;
+                                    }
+                                }
+
+                                nextLeaf++;
+                            }
+                            else
+                            {
+                                for (l = 0; l < skeleton.GetNumChildren(greatGrandChild); l++)
+                                {
+                                    deeperChild = skeleton.GetChild(greatGrandChild, l);
+
+                                    if (skeleton.GetNumChildren(deeperChild) == 0)
+                                    {
+                                        EmissionController* ec = ecs[nextLeaf];
+                                        if (ec != NULL)
+                                        {
+                                            if (EmissionManager::IsStillAlive(ec))
+                                            {
+                                                ecs[nextLeaf]->SetPosition(pa.GetNodeMatrix(deeperChild).GetTranslation());
+                                            }
+                                            else
+                                            {
+                                                ecs[nextLeaf] = NULL;
+                                            }
+                                        }
+
+                                        nextLeaf++;
+                                    }
+                                    else
+                                    {
+                                        for (m = 0; m < skeleton.GetNumChildren(deeperChild); m++)
+                                        {
+                                            nextLeaf = UpdateEffectsFromLeafNodes(pa, ecs, skeleton, nextLeaf, skeleton.GetChild(deeperChild, m));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            leaf = nextLeaf;
+        }
+    }
+
+    return leaf;
 }
 
 /**
@@ -314,9 +448,13 @@ void ModeledScreenTransition::Update(float dt)
 
 /**
  * Offset/Address/Size: 0x13EC | 0x802034B0 | size: 0x134
+ * TODO: 99.29% match - remaining r26/r29/r30 register cycle between modelOffset, pNodeMatrix, and matrixHandle.
  */
 void ModeledScreenTransition::Render(eGLView)
 {
+    const nlMatrix4* pNodeMatrix;
+    u32 matrixHandle;
+
     if (m_pLight != NULL && m_pPoseTree != NULL)
     {
         m_pLight->ApplyLight(m_pPoseTree->m_fTime);
@@ -329,11 +467,11 @@ void ModeledScreenTransition::Render(eGLView)
     {
         for (u32 packetIndex = 0; packetIndex < m_pModels[modelOffset / 0x10].numPackets; packetIndex++)
         {
-            const nlMatrix4& nodeMatrix = m_pPoseAccumulator->GetNodeMatrix(m_pModelMap[modelMapIndex]);
-            u32 matrixHandle = glAllocMatrix();
+            pNodeMatrix = &m_pPoseAccumulator->GetNodeMatrix(m_pModelMap[modelMapIndex]);
+            matrixHandle = glAllocMatrix();
             if (matrixHandle != 0xFFFFFFFF)
             {
-                glSetMatrix(matrixHandle, nodeMatrix);
+                glSetMatrix(matrixHandle, *pNodeMatrix);
             }
             m_pModels[modelOffset / 0x10].packets[packetIndex].state.matrix = matrixHandle;
         }

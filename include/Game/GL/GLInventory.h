@@ -96,12 +96,7 @@ template <typename ValueType>
 class clearing_GLInventory
 {
 public:
-    ~clearing_GLInventory()
-    {
-        FORCE_DONT_INLINE;
-        Release();
-        delete m_pItems;
-    }
+    ~clearing_GLInventory();
 
     void Release()
     {

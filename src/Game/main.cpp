@@ -16,10 +16,10 @@ extern u8 g_StackWatermarkFiller;
 
 static bool g_bProfiling = false;
 static bool g_bTweaking = false;
-static bool g_e3_Build = false;
-static bool g_Europe = false;
+bool g_e3_Build = false;
+bool g_Europe = false;
 static bool g_bFranticPausing = false;
-static int g_Language = 0;
+int g_Language = 0;
 static void* g_pTheLoadingManagerTask = nullptr;
 
 ClockUpdateTask clockUpdateTask;

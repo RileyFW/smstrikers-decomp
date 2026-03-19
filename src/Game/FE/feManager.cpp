@@ -2,12 +2,14 @@
 
 #include "Game/Camera/CameraMan.h"
 #include "Game/FE/feInput.h"
+#include "Game/FE/feNSNMessenger.h"
 #include "Game/FE/feSceneManager.h"
 #include "Game/Game.h"
 #include "Game/GameInfo.h"
 #include "Game/OverlayManager.h"
 #include "Game/Render/Presentation.h"
 #include "Game/RumbleActions.h"
+#include "Game/SH/SHLessonSelect.h"
 #include "Game/SH/SHPause.h"
 #include "Game/Sys/eventman.h"
 #include "NL/glx/glxSwap.h"
@@ -17,6 +19,7 @@
 static unsigned char AlreadyStartedStrikers101Menu;
 static unsigned char DontCheckForControllerRemovalHack;
 extern float g_AllActorsHidden;
+extern unsigned char g_e3_Build;
 extern unsigned char g_JaapAndJacksNastyHackBecauseWeDoNotKnowDifferenceBetweenPausePauseAndPostGamePause;
 
 /**
@@ -97,8 +100,122 @@ void FrontEnd::UpdateForGame(float)
 /**
  * Offset/Address/Size: 0x1E4 | 0x80094E68 | size: 0x33C
  */
-void FrontEnd::Update(float)
+void FrontEnd::Update(float fTimeDelta)
 {
+    m_pauseDelay -= fTimeDelta;
+    if (m_pauseDelay < 0.0f)
+    {
+        m_pauseDelay = 0.0f;
+    }
+
+    if (nlSingleton<GameInfoManager>::s_pInstance->IsInDemoMode())
+    {
+        m_fDemoTimeElapsed += fTimeDelta;
+        if (m_fDemoTimeElapsed < 30.0f)
+        {
+        }
+        else
+        {
+            nlSingleton<OverlayManager>::s_pInstance->ShowDemoSlide();
+            if (g_pFEInput->JustPressed(FE_ALL_PADS, 0x1F00, false, NULL))
+            {
+                glxSwapSetBlack(true);
+                if (nlTaskManager::m_pInstance->m_CurrState == 1)
+                {
+                    nlTaskManager::m_pInstance->m_Locked = false;
+                }
+                nlTaskManager::SetNextState(4);
+                m_fDemoTimeElapsed = 0.0f;
+            }
+            else if (!g_e3_Build)
+            {
+                static float maxBackendDemoTime;
+                static signed char init;
+
+                if (!init)
+                {
+                    maxBackendDemoTime = GetConfigFloat(Config::Global(), "max_backend_demo_time", 60.0f);
+                    init = 1;
+                }
+
+                if (m_fDemoTimeElapsed >= maxBackendDemoTime)
+                {
+                    glxSwapSetBlack(true);
+                    if (nlTaskManager::m_pInstance->m_CurrState == 1)
+                    {
+                        nlTaskManager::m_pInstance->m_Locked = false;
+                    }
+                    nlTaskManager::SetNextState(4);
+                    m_fDemoTimeElapsed = 0.0f;
+                }
+            }
+        }
+    }
+    else
+    {
+        UpdateForGame(fTimeDelta);
+    }
+
+    nlSingleton<OverlayManager>::s_pInstance->Update(fTimeDelta);
+    m_feStateCurrent = m_feStatePending;
+
+    switch (m_feStateCurrent)
+    {
+    case 6:
+    case 4:
+        break;
+
+    case 3:
+    {
+        BaseSceneHandler* scene;
+
+        g_pBall->SetVisible(true);
+        if (nlSingleton<GameInfoManager>::s_pInstance->mIsInStrikers101Mode && !AlreadyStartedStrikers101Menu)
+        {
+            if (m_pauseDelay <= 0.0f)
+            {
+                EnterMenuState(MET_PAUSE);
+                scene = nlSingleton<OverlayManager>::s_pInstance->GetScene(OVERLAY_LESSON_TICKER);
+                if (scene != NULL)
+                {
+                    scene = (BaseSceneHandler*)((char*)scene - 4);
+                }
+                ((NSNMessengerScene*)(void*)scene)->EnableScrolling(true);
+                SetTickerLesson(-1);
+                m_lastTaskState = 2;
+                m_feStatePrevious = 4;
+                AlreadyStartedStrikers101Menu = 1;
+            }
+        }
+        else
+        {
+            m_feStatePending = 4;
+        }
+
+        m_bGameOver = false;
+        break;
+    }
+
+    case 5:
+    {
+        nlTaskManager::SetNextState(1);
+        g_pBall->SetVisible(false);
+
+        m_pPauseMenuCamera = new (nlMalloc(0xAC, 8, false)) cAnimCamera();
+        ((cAnimCamera*)m_pPauseMenuCamera)->SelectCameraAnimation("pause");
+        cCameraManager::PushCamera((cBaseCamera*)m_pPauseMenuCamera);
+        ((cAnimCamera*)m_pPauseMenuCamera)->m_fAnimationSpeed = 0.5f;
+        m_feStatePending = 7;
+        break;
+    }
+
+    case 8:
+        if (nlTaskManager::m_pInstance->m_CurrState == 1)
+        {
+            nlTaskManager::m_pInstance->m_Locked = true;
+        }
+        break;
+    }
 }
 
 /**

@@ -147,7 +147,7 @@ public:
     void InitBlur(int);
     nlVector3& GetPrevJointPosition(int jointIndex);
     void GetCurrentAnimFuture(int, float, nlVector3&, nlVector3&, unsigned short&);
-    nlVector3& GetJointPositionFuture(nlVector3* v3Out, int nAnimIndex, int nJointIndex, float fTime, bool bAddRootTrans, bool bAddRootRot, bool bUsePrevPosition);
+    void GetJointPositionFuture(nlVector3* v3Out, int nAnimIndex, int nJointIndex, float fTime, bool bAddRootTrans, bool bAddRootRot, bool bUsePrevPosition);
     nlVector3& GetJointPosition(int) const;
     s16 GetFacingDeltaToPosition(const nlVector3&);
     s16 CalcAnimTurnAdjust(unsigned short, unsigned short, int);
@@ -311,11 +311,22 @@ struct ShotAtGoalData : public EventData
     /* 0x04 */ cPlayer* pShooter;
 }; // total size: 0x8
 
-class ReceiveBallData
+enum eReceiveBallResult
+{
+    RECEIVEBALL_LOOSE_PICKUP = 0,
+    RECEIVEBALL_PASS_COMPLETE = 1,
+    RECEIVEBALL_PASS_INTERCEPT = 2,
+};
+
+class ReceiveBallData : public EventData
 {
 public:
+    ReceiveBallData() { }
     virtual u32 GetID();
-};
+
+    /* 0x04 */ cPlayer* pReceiver;
+    /* 0x08 */ eReceiveBallResult eResult;
+}; // total size: 0xC
 
 class CollisionBobombData
 {

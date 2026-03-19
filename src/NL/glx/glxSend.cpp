@@ -7,12 +7,14 @@
 #include "dolphin/gx/GXTev.h"
 #include "dolphin/gx/GXTransform.h"
 #include "dolphin/mtx.h"
+#include "NL/gl/glConstant.h"
 #include "NL/gl/glLightUserData.h"
 #include "NL/gl/glMatrix.h"
 #include "NL/gl/glState.h"
 #include "NL/gl/glUserData.h"
 #include "NL/glx/glxGX.h"
 #include "NL/glx/glxMatrix.h"
+#include "NL/glx/glxTexture.h"
 #include "NL/nlColour.h"
 #include "NL/platvmath.h"
 #include "types.h"
@@ -31,6 +33,43 @@ static u32 gxLights[4] = {
     0x00000008
 };
 
+// static bool glx_allowSpecular;            // size: 0x1, address: 0x80397FC8
+// static bool glx_ReloadPointLights; // size: 0x1, address: 0x80397FC9
+// static u32 glx_prevLightMask;      // size: 0x4, address: 0x80397FCC
+// static u32 glx_prevSpecMask;              // size: 0x4, address: 0x80397FD0
+// static struct _GXColor rshadow_colour[2]; // size: 0x8, address: 0x80397FD4
+
+static GXTexObj glx_texobj[6];
+static GXTlutObj glx_tlutobj[6];
+static u32 glx_texture[6];
+static u32 glx_texdirty;
+static u32 gx_vtxfmt;
+static GXColor rshadow_colour[2];
+static nlColour world_ambient;
+static nlVector4 water_Scale;
+static nlVector4 water_Trans;
+static nlVector4 water_Follow;
+static f32 glx_IndDivisor;
+static _GXTevScale glx_tevscale;
+static nlColour nlBlack;
+static nlColour nlWhite;
+static u32 glx_prevSpecMask;
+static u32 glx_DirtyFlags;
+static bool glx_ReloadSpecLights;
+static bool glx_allowSpecular;
+static bool glx_envdiffuse;
+static bool glx_mobilediffuse;
+static bool glx_constantcolour;
+static bool glx_viewport;
+static bool glx_CoPlanar;
+static bool glx_translucent;
+static bool glx_norasterizedalpha;
+static s32 glx_RasterizedAlphaStage;
+static s32 glx_RasterizedAlphaArg;
+static s32 glx_GlossMapStage;
+static s32 glx_GlossMapCoord;
+static bool glx_NoFog;
+// static unsigned long glx_NumIndices;
 /**
  * Offset/Address/Size: 0x0 | 0x801B9B00 | size: 0x538
  */
@@ -146,9 +185,165 @@ void glud_Skin(void* pData, const glModelPacket* pPacket)
 
 /**
  * Offset/Address/Size: 0x1B8C | 0x801BB68C | size: 0x320
+ * TODO: 99.13% match - block 1 FPR allocation (y,x,z loads vs target z,y,x),
+ *       block 2 store order swap at 120/124, GXColor stack offset 0xC vs 0x08
  */
-void glud_Specular(void*)
+void glud_Specular(void* pData)
 {
+    static float SpecularFudge;
+    static signed char init;
+
+    unsigned long* p32 = (unsigned long*)pData;
+    unsigned long numLights = *p32;
+    unsigned long lightMask;
+    int index;
+    GLSpecularUserData* pLight;
+    GLSpecularUserData* pEndLight;
+
+    if (numLights != 0)
+    {
+        pLight = (GLSpecularUserData*)((unsigned char*)pData + 4);
+        index = 0;
+        lightMask = 0;
+        pEndLight = &pLight[numLights];
+
+        while (pLight < pEndLight)
+        {
+            if (index >= 4)
+            {
+                break;
+            }
+
+            GXLightID lightID = (GXLightID)gxLights[index];
+            lightMask |= lightID;
+
+            if (glx_ReloadSpecLights)
+            {
+                GXLightObj light;
+                nlVector3 viewDir;
+                nlVector3 worldDir;
+                GXColor colour;
+
+                if (!init)
+                {
+                    init = 1;
+                    SpecularFudge = 1.25f;
+                }
+
+                {
+                    float recipLength = nlRecipSqrt(
+                        pLight->worldDirection.f.x * pLight->worldDirection.f.x + pLight->worldDirection.f.y * pLight->worldDirection.f.y + pLight->worldDirection.f.z * pLight->worldDirection.f.z,
+                        false);
+                    float worldZ = pLight->worldDirection.f.z;
+                    float worldY = pLight->worldDirection.f.y;
+                    float worldX = pLight->worldDirection.f.x;
+
+                    worldDir.f.z = recipLength * worldZ;
+                    worldDir.f.x = recipLength * worldX;
+                    worldDir.f.y = recipLength * worldY;
+                }
+
+                nlMultDirVectorMatrix(viewDir, worldDir, mview);
+
+                {
+                    float recipLength = nlRecipSqrt(
+                        viewDir.f.x * viewDir.f.x + viewDir.f.y * viewDir.f.y + viewDir.f.z * viewDir.f.z,
+                        false);
+
+                    viewDir.f.z = recipLength * viewDir.f.z;
+                    viewDir.f.y = recipLength * viewDir.f.y;
+                    viewDir.f.x = recipLength * viewDir.f.x;
+                }
+
+                {
+                    int value = (int)(pLight->colour.c[0] * pLight->intensity * SpecularFudge * 255.5f);
+                    if (value < 0)
+                    {
+                        value = 0;
+                    }
+                    else if (value > 255)
+                    {
+                        value = 255;
+                    }
+                    else
+                    {
+                        value = (unsigned char)value;
+                    }
+                    colour.r = value;
+                }
+                {
+                    int value = (int)(pLight->colour.c[1] * pLight->intensity * SpecularFudge * 255.5f);
+                    if (value < 0)
+                    {
+                        value = 0;
+                    }
+                    else if (value > 255)
+                    {
+                        value = 255;
+                    }
+                    else
+                    {
+                        value = (unsigned char)value;
+                    }
+                    colour.g = value;
+                }
+                {
+                    int value = (int)(pLight->colour.c[2] * pLight->intensity * SpecularFudge * 255.5f);
+                    if (value < 0)
+                    {
+                        value = 0;
+                    }
+                    else if (value > 255)
+                    {
+                        value = 255;
+                    }
+                    else
+                    {
+                        value = (unsigned char)value;
+                    }
+                    colour.b = value;
+                }
+                {
+                    int value = (int)(pLight->colour.c[3] * pLight->intensity * SpecularFudge * 255.5f);
+                    if (value < 0)
+                    {
+                        value = 0;
+                    }
+                    else if (value > 255)
+                    {
+                        value = 255;
+                    }
+                    else
+                    {
+                        value = (unsigned char)value;
+                    }
+                    colour.a = value;
+                }
+
+                GXInitLightColor(&light, colour);
+                GXInitSpecularDir(&light, viewDir.f.x, viewDir.f.y, viewDir.f.z);
+
+                {
+                    float halfExponent = pLight->exponent;
+                    halfExponent *= 0.5f;
+                    GXInitLightAttn(&light, 0.0f, 0.0f, 1.0f, halfExponent, 0.0f, 1.0f - halfExponent);
+                }
+
+                GXLoadLightObjImm(&light, lightID);
+            }
+
+            pLight++;
+            index += 1;
+        }
+
+        glx_ReloadSpecLights = 0;
+        if (glx_allowSpecular)
+        {
+            glx_prevSpecMask = lightMask;
+            gxSetNumChans(2);
+            GXSetChanCtrl(GX_COLOR1, GX_TRUE, GX_SRC_REG, GX_SRC_REG, lightMask, GX_DF_NONE, GX_AF_SPEC);
+        }
+    }
 }
 
 struct LightData
@@ -200,10 +395,160 @@ void glud_Light(void* pUserData)
 
 /**
  * Offset/Address/Size: 0x1F6C | 0x801BBA6C | size: 0x334
+ * TODO: 96.22% match - directional branch register/order mismatch in worldDir normalization
+ *       and viewDir scaling by -1.0f; static local/sdata constant references also differ.
  */
 void glx_LoadLight(GLLightUserData* pLight, _GXLightID lightId)
 {
-    FORCE_DONT_INLINE;
+    static float refMult;
+    static signed char init;
+    static float refBright;
+    static signed char init_0;
+    static int refFunc;
+    static signed char init_1;
+    static GXDistAttnFn dist_func[3] = {
+        GX_DA_GENTLE,
+        GX_DA_MEDIUM,
+        GX_DA_STEEP,
+    };
+
+    GXLightObj light;
+    nlVector3 viewPos;
+    GXColor colour;
+    nlVector3 viewDir;
+    nlVector3 worldDir;
+
+    if (!init)
+    {
+        init = 1;
+        refMult = 1.0f;
+    }
+
+    if (!init_0)
+    {
+        init_0 = 1;
+        refBright = 0.5f;
+    }
+
+    if (!init_1)
+    {
+        refFunc = 2;
+        init_1 = 1;
+    }
+
+    {
+        int value = (int)(pLight->colour.c[0] * pLight->intensity * 255.5f);
+        if (value < 0)
+        {
+            value = 0;
+        }
+        else if (value > 255)
+        {
+            value = 255;
+        }
+        else
+        {
+            value = (unsigned char)value;
+        }
+        colour.r = value;
+    }
+
+    {
+        int value = (int)(pLight->colour.c[1] * pLight->intensity * 255.5f);
+        if (value < 0)
+        {
+            value = 0;
+        }
+        else if (value > 255)
+        {
+            value = 255;
+        }
+        else
+        {
+            value = (unsigned char)value;
+        }
+        colour.g = value;
+    }
+
+    {
+        int value = (int)(pLight->colour.c[2] * pLight->intensity * 255.5f);
+        if (value < 0)
+        {
+            value = 0;
+        }
+        else if (value > 255)
+        {
+            value = 255;
+        }
+        else
+        {
+            value = (unsigned char)value;
+        }
+        colour.b = value;
+    }
+
+    {
+        int value = (int)(pLight->colour.c[3] * pLight->intensity * 255.5f);
+        if (value < 0)
+        {
+            value = 0;
+        }
+        else if (value > 255)
+        {
+            value = 255;
+        }
+        else
+        {
+            value = (unsigned char)value;
+        }
+        colour.a = value;
+    }
+
+    GXInitLightColor(&light, colour);
+
+    if (0.0f == pLight->outerRadius)
+    {
+        nlVector3 origin = {
+            0.0f,
+            0.0f,
+            0.0f,
+        };
+
+        float worldY = pLight->worldPosition.f.y - origin.f.y;
+        float worldX = pLight->worldPosition.f.x - origin.f.x;
+        float worldZ = pLight->worldPosition.f.z - origin.f.z;
+
+        worldDir.f.x = worldX;
+        worldDir.f.y = worldY;
+        worldDir.f.z = worldZ;
+
+        {
+            float recipLength = nlRecipSqrt(worldDir.f.x * worldDir.f.x + worldDir.f.y * worldDir.f.y + worldDir.f.z * worldDir.f.z, true);
+
+            worldDir.f.z = recipLength * worldDir.f.z;
+            worldDir.f.y = recipLength * worldDir.f.y;
+            worldDir.f.x = recipLength * worldDir.f.x;
+        }
+
+        nlMultDirVectorMatrix(viewDir, worldDir, mview);
+
+        viewDir.f.z = -1.0f * viewDir.f.z;
+        viewDir.f.x = -1.0f * viewDir.f.x;
+        viewDir.f.y = -1.0f * viewDir.f.y;
+
+        GXInitLightPos(&light, viewDir.f.x, viewDir.f.y, viewDir.f.z);
+        GXInitLightAttnA(&light, 1.0f, 0.0f, 0.0f);
+        GXInitLightDistAttn(&light, -1.0f, 1.0f, GX_DA_OFF);
+    }
+    else
+    {
+        nlMultPosVectorMatrix(viewPos, pLight->worldPosition, mview);
+        GXInitLightPos(&light, viewPos.f.x, viewPos.f.y, viewPos.f.z);
+        GXInitLightAttnA(&light, 1.0f, 0.0f, 0.0f);
+        GXInitLightDistAttn(&light, refMult * pLight->outerRadius, refBright, dist_func[refFunc]);
+    }
+
+    GXLoadLightObjImm(&light, lightId);
 }
 
 static u32 gx_texattr[] = {
@@ -437,31 +782,6 @@ void glx_SendEnd()
     glx_SwitchUserData(nullptr);
 }
 
-static GXTexObj glx_texobj[6];
-static GXTlutObj glx_tlutobj[6];
-static u32 glx_texture[6];
-static u32 glx_texdirty;
-static u32 gx_vtxfmt;
-static nlColour world_ambient;
-static nlColour nlBlack;
-static nlColour nlWhite;
-static u32 glx_prevSpecMask;
-static u32 glx_DirtyFlags;
-static bool glx_ReloadSpecLights;
-static bool glx_allowSpecular;
-static bool glx_envdiffuse;
-static bool glx_mobilediffuse;
-static bool glx_constantcolour;
-static bool glx_viewport;
-static bool glx_CoPlanar;
-static bool glx_translucent;
-static bool glx_norasterizedalpha;
-static s32 glx_RasterizedAlphaStage;
-static s32 glx_RasterizedAlphaArg;
-static s32 glx_GlossMapStage;
-static s32 glx_GlossMapCoord;
-static bool glx_NoFog;
-
 /**
  * Offset/Address/Size: 0x4C94 | 0x801BE794 | size: 0x200
  * TODO: 99.8% match - 4 register diffs (first loop counter r28 vs r31), 1 label diff (@142 vs @419)
@@ -493,7 +813,7 @@ void glx_SendReset()
 
     {
         nlColour amb;
-        nlColour temp = {};
+        nlColour temp = { };
         nlColourSet(temp, world_ambient.c[0], world_ambient.c[1], world_ambient.c[2], world_ambient.c[3]);
         amb = temp;
         gxSetChanAmbColour(0, amb);
@@ -535,10 +855,61 @@ void glx_SendReset()
 
 /**
  * Offset/Address/Size: 0x4E94 | 0x801BE994 | size: 0x310
+ * TODO: 89.31% on decomp.me - stack frame 0x10 bytes too small (decomp.me MWCC eliminates
+ *       unused vMult). All remaining diffs are stack offset markers. Real MWCC should do RVO.
  */
 void GetConstants()
 {
-    FORCE_DONT_INLINE;
+    nlVector4 vMult;
+    nlVector4 vTexel;
+    Mtx crowdMatrix;
+    f32 crowdOffsetV;
+
+    vMult = glConstantGet("shadow/pass0_colour");
+    rshadow_colour[0].r = vMult.f.x * 255.0f;
+    rshadow_colour[0].g = vMult.f.y * 255.0f;
+    rshadow_colour[0].b = vMult.f.z * 255.0f;
+    rshadow_colour[0].a = vMult.f.w * 255.0f;
+
+    vMult = glConstantGet("shadow/pass1_colour");
+    rshadow_colour[1].r = vMult.f.x * 255.0f;
+    rshadow_colour[1].g = vMult.f.y * 255.0f;
+    rshadow_colour[1].b = vMult.f.z * 255.0f;
+    rshadow_colour[1].a = vMult.f.w * 255.0f;
+
+    vMult = glConstantGet("lighting/ambient_colour");
+    world_ambient.c[0] = vMult.f.x * 255.0f;
+    world_ambient.c[1] = vMult.f.y * 255.0f;
+    world_ambient.c[2] = vMult.f.z * 255.0f;
+    world_ambient.c[3] = vMult.f.w * 255.0f;
+
+    glConstantGet("water/scale", water_Scale);
+    glConstantGet("water/trans", water_Trans);
+    glConstantGet("water/follow", water_Follow);
+
+    nlVector4 warbleDivisor = glConstantGet("warble/divisor");
+    glx_IndDivisor = warbleDivisor.f.x;
+
+    vMult = glConstantGet("lighting/range");
+    if (vMult.f.x == 0.0f)
+    {
+        glx_tevscale = (_GXTevScale)0;
+    }
+    else
+    {
+        glx_tevscale = (_GXTevScale)1;
+    }
+
+    if (glConstantGet("texture/density", vTexel))
+    {
+        glx_SetGridMode(vTexel.f.x == 0.0f);
+    }
+
+    nlVector4 crowdFrame = glConstantGet("crowd/frame");
+    crowdOffsetV = crowdFrame.f.x;
+    PSMTXIdentity(crowdMatrix);
+    crowdMatrix[1][3] = crowdOffsetV;
+    GXLoadTexMtxImm(crowdMatrix, 0x36, (_GXTexMtxType)1);
 }
 
 /**

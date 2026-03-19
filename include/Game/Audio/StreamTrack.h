@@ -3,6 +3,8 @@
 
 #include "NL/nlFunction.h"
 
+namespace Audio
+{
 namespace MasterVolume
 {
 enum VOLUME_GROUP
@@ -13,6 +15,7 @@ enum VOLUME_GROUP
     VG_Voice = 3,
 };
 }
+} // namespace Audio
 
 namespace AudioStreamTrack
 {
@@ -24,11 +27,11 @@ class TrackManagerBase
 public:
     virtual ~TrackManagerBase();
     /* 0x0C */ virtual void Update(float);
-    /* 0x10 */ virtual StreamTrack& CreateTrack(const char*, MasterVolume::VOLUME_GROUP);
+    /* 0x10 */ virtual StreamTrack& CreateTrack(const char*, Audio::MasterVolume::VOLUME_GROUP);
     /* 0x14 */ virtual void DestroyAllTracks();
     /* 0x18 */ virtual StreamTrack* GetTrack(unsigned long);
     /* 0x1C */ virtual void StopAllTracks(unsigned long);
-    /* 0x20 */ virtual void OnMasterVolumeChange(MasterVolume::VOLUME_GROUP);
+    /* 0x20 */ virtual void OnMasterVolumeChange(Audio::MasterVolume::VOLUME_GROUP);
 
     class FadeManager
     {
@@ -50,8 +53,8 @@ class StreamTrack
 {
 public:
     void Update(float);
-    void PlayStream(unsigned long, float, bool, unsigned long, unsigned long, const char*, MasterVolume::VOLUME_GROUP);
-    void QueueStream(unsigned long, float, bool, unsigned long, const char*, MasterVolume::VOLUME_GROUP);
+    void PlayStream(unsigned long, float, bool, unsigned long, unsigned long, const char*, Audio::MasterVolume::VOLUME_GROUP);
+    void QueueStream(unsigned long, float, bool, unsigned long, const char*, Audio::MasterVolume::VOLUME_GROUP);
     // void ProcessNewHeadStream();
     // void StopHead(unsigned long);
     void Stop(unsigned long);
@@ -70,7 +73,7 @@ public:
     /* 0x60 */ unsigned char m_InFakePause : 1;
     /* 0x60 */ unsigned char m_TrackOwnsStreams : 1;
     /* 0x64 */ unsigned long m_State; // enum TRACK_STATE
-    /* 0x68 */ MasterVolume::VOLUME_GROUP m_VolumeGroup;
+    /* 0x68 */ Audio::MasterVolume::VOLUME_GROUP m_VolumeGroup;
     /* 0x6C */ Function<FnVoidVoid> m_IdleCallback;
 }; // total size: 0x74
 

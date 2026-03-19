@@ -1,23 +1,36 @@
 #include "Game/Render/AnimatedModelExplodable.h"
 
-struct AnimatedModelExplodableList
-{
-    SidelineExplodableNode* m_pStart;
-    SidelineExplodableNode* m_pEnd;
-};
-
-static AnimatedModelExplodableList sAnimatedModelExplodableList;
+nlList<SidelineExplodableNode> AnimatedModelExplodable::sAnimatedModelExplodableList;
 ExplodableCategoryData AnimatedModelExplodable::sCategoryData[NUM_ANIMATED_MODEL_EXPLODABLE_CATEGORIES];
 u8 AnimatedModelExplodable::bIsModelLoaded[2];
 
-void RemoveSidelineExplodable(SidelineExplodable*);
+/**
+ * Offset/Address/Size: 0x70 | 0x80158C4C | size: 0x128
+ */
+extern "C" void __sinit_AnimatedModelExplodable_cpp(void)
+{
+    ExplodableCategoryData data0;
+    ExplodableCategoryData data1;
 
-// /**
-//  * Offset/Address/Size: 0x70 | 0x80158C4C | size: 0x128
-//  */
-// void 0x8028D2FC..0x8028D300 | size: 0x4
-// {
-// }
+    AnimatedModelExplodable::sAnimatedModelExplodableList.m_pEnd = 0;
+    AnimatedModelExplodable::sAnimatedModelExplodableList.m_pStart = 0;
+
+    data0.mBaseModelName = "environment/Sideline_Objects/camera_base";
+    data0.mFragmentModelName = "environment/Sideline_Objects/camera_d";
+    data0.mUnexplodedModelName = 0;
+    data0.mNumFragmentModels = 0;
+    data0.mUnexplodedModel = 0;
+    data0.mNumStationaryFragments = 0;
+    AnimatedModelExplodable::sCategoryData[0] = data0;
+
+    data1.mBaseModelName = "environment/Sideline_Objects/standupcamera_base";
+    data1.mFragmentModelName = "environment/Sideline_Objects/standupcamera_d";
+    data1.mUnexplodedModelName = 0;
+    data1.mNumFragmentModels = 0;
+    data1.mUnexplodedModel = 0;
+    data1.mNumStationaryFragments = 0;
+    AnimatedModelExplodable::sCategoryData[1] = data1;
+}
 
 /**
  * Offset/Address/Size: 0x44 | 0x80158C20 | size: 0x2C
@@ -35,12 +48,11 @@ void RemoveSidelineExplodable(SidelineExplodable*);
 
 /**
  * Offset/Address/Size: 0x1C4 | 0x80158B30 | size: 0xAC
- * TODO: 98.95% match - r5 vs r12 for vtable pointer in virtual destructor dispatch
  */
 void AnimatedModelExplodable::CleanUp()
 {
     long zero = 0;
-    SlotPoolBase* pPool = &SidelineExplodableManager::sSidelineExplodableNodeSlotPool;
+    SlotPoolBase* pPool = &SidelineExplodableNode::sSidelineExplodableNodeSlotPool;
     SidelineExplodableNode** pTail = &sAnimatedModelExplodableList.m_pEnd;
     SidelineExplodableNode* node;
     while ((node = sAnimatedModelExplodableList.m_pStart) != NULL)
@@ -49,14 +61,8 @@ void AnimatedModelExplodable::CleanUp()
         SidelineExplodable* pExplodable = node->mpExplodable;
         if (pExplodable != NULL)
         {
-            RemoveSidelineExplodable(pExplodable);
-        }
-        pExplodable = node->mpExplodable;
-        if (pExplodable != NULL)
-        {
-            typedef void (*VDtor)(SidelineExplodable*, s32);
-            VDtor fn = (VDtor)((*(unsigned long**)pExplodable)[2]);
-            fn(pExplodable, 1);
+            SidelineExplodableManager::RemoveSidelineExplodable(pExplodable);
+            delete node->mpExplodable;
         }
         node->mpExplodable = (SidelineExplodable*)zero;
         ((SlotPoolEntry*)node)->m_next = pPool->m_FreeList;

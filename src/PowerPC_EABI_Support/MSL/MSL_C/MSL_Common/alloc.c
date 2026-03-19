@@ -668,7 +668,121 @@ static __mem_pool* get_malloc_pool(void)
  */
 void* allocate_from_fixed_pools(__mem_pool_obj* pool_obj, u32 size)
 {
-    FORCE_DONT_INLINE;
+    u32 i = 0;
+    FixStart* fs;
+
+    while (size > fix_pool_sizes[i])
+    {
+        ++i;
+    }
+
+    fs = &pool_obj->fix_start[i];
+
+    if (fs->head_ == NULL || fs->head_->start_ == NULL)
+    {
+        const u32* pool_sizes = fix_pool_sizes;
+        u32 n = 0xFEC / (pool_sizes[i] + 4);
+        u32 max_n;
+        void* block;
+        u32 max_free_size;
+        u32 msize;
+        u32 fix_size;
+        u32 sub_size;
+        u32 num_subblocks;
+        FixBlock* b;
+        FixBlock* head;
+        FixBlock* tail;
+        FixSubBlock* p;
+        u32 k;
+
+        if (n > 0x100)
+        {
+            n = 0x100;
+        }
+
+        max_n = n;
+
+        while (n >= 10)
+        {
+            block = soft_allocate_from_var_pools((Block**)pool_obj, n * (pool_sizes[i] + 4) + 0x14, &max_free_size);
+            if (block != NULL)
+            {
+                break;
+            }
+
+            if (max_free_size > 0x14)
+            {
+                n = (max_free_size - 0x14) / (pool_sizes[i] + 4);
+            }
+            else
+            {
+                n = 0;
+            }
+        }
+
+        if (block == NULL && n < max_n)
+        {
+            block = allocate_from_var_pools(pool_obj, max_n * (pool_sizes[i] + 4) + 0x14);
+            if (block == NULL)
+            {
+                return NULL;
+            }
+        }
+
+        msize = __msize_inline(block);
+
+        if (fs->head_ == NULL)
+        {
+            fs->head_ = (FixBlock*)block;
+            fs->tail_ = (FixBlock*)block;
+        }
+
+        fix_size = pool_sizes[i];
+        sub_size = fix_size + 4;
+        b = (FixBlock*)block;
+        head = fs->head_;
+        tail = fs->tail_;
+        num_subblocks = (msize - 0x14) / sub_size;
+        p = (FixSubBlock*)((char*)b + 0x14);
+
+        b->prev_ = tail;
+        b->next_ = head;
+        tail->next_ = b;
+        head->prev_ = b;
+        b->client_size_ = fix_size;
+
+        for (k = 0; k < num_subblocks - 1; ++k)
+        {
+            FixSubBlock* np;
+
+            p->block_ = b;
+            np = (FixSubBlock*)((char*)p + sub_size);
+            p->next_ = np;
+            p = np;
+        }
+
+        p->block_ = b;
+        p->next_ = NULL;
+        b->start_ = (FixSubBlock*)((char*)b + 0x14);
+        b->n_allocated_ = 0;
+        fs->head_ = b;
+    }
+
+    {
+        FixBlock* b = fs->head_;
+        FixSubBlock* p = b->start_;
+
+        b->start_ = p->next_;
+        ++b->n_allocated_;
+
+        if (b->start_ == NULL)
+        {
+            fs->head_ = b->next_;
+            fs->tail_ = fs->tail_->next_;
+        }
+
+        return (char*)p + 4;
+    }
 }
 
 /**

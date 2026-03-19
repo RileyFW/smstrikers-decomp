@@ -110,9 +110,10 @@ int nlStrICmp(const CharT* str1, const CharT* str2)
 template <typename CharT>
 CharT nlToLower(CharT c)
 {
-    if (((u8)c >= 0x41) && ((u8)c <= 0x5A))
+    u8 cLower = (u8)c;
+    if ((cLower >= 0x41) && (cLower <= 0x5A))
     {
-        c = (CharT)((u8)c | 0x20);
+        c = (CharT)((u8)(c | 0x20));
     }
     return c;
 }

@@ -7,6 +7,7 @@
 #include "NL/nlMemory.h"
 #include "NL/nlBasicString.h"
 
+#include "Game/AI/AiUtil.h"
 #include "Game/Audio/AudioLoader.h"
 #include "Game/GameInfo.h"
 
@@ -215,17 +216,82 @@ void AudioSettings::ForceApplySettings(bool bUpdateMode)
 /**
  * Offset/Address/Size: 0x7D0 | 0x8018FEDC | size: 0x350
  */
-void AudioSettings::ApplySettings(bool, bool)
+void AudioSettings::ApplySettings(bool bApplyMode, bool bUpdateMode)
 {
-    FORCE_DONT_INLINE;
     if (AudioLoader::gbDisableAudio == false)
     {
-        // TODO: decompile....
+        float musicVolume = (float)MusicVolume / 10.0f;
+        if (musicVolume != ((float)DefaultMusicVolume / 10.0f))
+        {
+            float adjustedMusicVolume = 0.0f;
+            if (musicVolume != adjustedMusicVolume)
+            {
+                adjustedMusicVolume = Interpolate(0.2f, 1.0f, musicVolume);
+            }
 
-        GameInfoManager::s_pInstance->mCurGameAudioSettings.MusicVolume = MusicVolume;
-        GameInfoManager::s_pInstance->mCurGameAudioSettings.SFXVolume = SFXVolume;
-        GameInfoManager::s_pInstance->mCurGameAudioSettings.VoiceVolume = VoiceVolume;
-        GameInfoManager::s_pInstance->mCurGameAudioSettings.Mode = Mode;
+            musicVolume = adjustedMusicVolume;
+            Audio::MasterVolume::SetVolume(Audio::MasterVolume::VG_Music, adjustedMusicVolume);
+            DefaultMusicVolume = MusicVolume;
+            g_pTrackManager->OnMasterVolumeChange(Audio::MasterVolume::VG_Music);
+        }
+
+        float sfxVolume = (float)SFXVolume / 10.0f;
+        if (sfxVolume != ((float)DefaultSFXVolume / 10.0f))
+        {
+            const float sfxScale = 0.8f;
+            sfxVolume *= sfxScale;
+            Audio::SetVolGroupVolume(30, sfxVolume, 0);
+            Audio::MasterVolume::SetVolume(Audio::MasterVolume::VG_SFX, sfxVolume);
+            DefaultSFXVolume = SFXVolume;
+            g_pTrackManager->OnMasterVolumeChange(Audio::MasterVolume::VG_SFX);
+        }
+
+        float voiceVolume = (float)VoiceVolume / 10.0f;
+        if (voiceVolume != ((float)DefaultVoiceVolume / 10.0f))
+        {
+            Audio::MasterVolume::SetVoiceVolume(voiceVolume, 0);
+            DefaultVoiceVolume = VoiceVolume;
+            g_pTrackManager->OnMasterVolumeChange(Audio::MasterVolume::VG_Voice);
+        }
+
+        if ((Mode != DefaultMode) && bApplyMode)
+        {
+            switch (Mode)
+            {
+            case MONO:
+                AudioLoader::ActivateDPL2(false, bUpdateMode);
+                Audio::SetOutputMode((MusyXOutputType)0);
+                break;
+            case STEREO:
+                AudioLoader::ActivateDPL2(false, bUpdateMode);
+                Audio::SetOutputMode((MusyXOutputType)1);
+                break;
+            case DOLBY:
+                AudioLoader::ActivateDPL2(true, bUpdateMode);
+                break;
+            default:
+                break;
+            }
+
+            DefaultMode = Mode;
+            OSSetSoundMode(Mode != MONO);
+
+            Audio::MasterVolume::SetVolume(Audio::MasterVolume::VG_Music, musicVolume);
+            g_pTrackManager->OnMasterVolumeChange(Audio::MasterVolume::VG_Music);
+
+            Audio::SetVolGroupVolume(30, sfxVolume, 0);
+            Audio::MasterVolume::SetVolume(Audio::MasterVolume::VG_SFX, sfxVolume);
+            g_pTrackManager->OnMasterVolumeChange(Audio::MasterVolume::VG_SFX);
+
+            Audio::MasterVolume::SetVoiceVolume(voiceVolume, 0);
+            g_pTrackManager->OnMasterVolumeChange(Audio::MasterVolume::VG_Voice);
+        }
+
+        GameInfoManager* pGameInfo = GameInfoManager::s_pInstance;
+        pGameInfo->mCurGameAudioSettings.MusicVolume = MusicVolume;
+        pGameInfo->mCurGameAudioSettings.SFXVolume = SFXVolume;
+        pGameInfo->mCurGameAudioSettings.VoiceVolume = VoiceVolume;
+        pGameInfo->mCurGameAudioSettings.Mode = Mode;
     }
 }
 

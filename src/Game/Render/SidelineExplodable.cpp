@@ -189,10 +189,143 @@ void SidelineExplodable::Allocate()
 
 /**
  * Offset/Address/Size: 0x19A0 | 0x80168D00 | size: 0x2FC
+ * TODO: 99.32% match - remaining diff is register allocation in the fragment
+ * cleanup path (m_uObjectFlags clear + mpPhysicsObject NULL store uses r4/r0
+ * instead of r0/r24 sequence).
  */
-void SidelineExplodable::Update(float)
+void SidelineExplodable::Update(float fDeltaT)
 {
-    FORCE_DONT_INLINE;
+    if (mNumActiveFragments != 0)
+    {
+        SlotPool<DrawableFragmentHandleNode>* pPool = &DrawableFragmentHandleNode::sDrawableFragmentHandleNodePool;
+        int fragmentOffset;
+        DrawableFragmentHandleNode** pTail = &SidelineExplodableManager::sUnusedDrawableFragments.m_pEnd;
+        ExplosionFragment* fragment;
+        int i;
+
+        i = 0;
+        fragmentOffset = 0;
+
+        while (i < mNumFragmentModels)
+        {
+            fragment = (ExplosionFragment*)((u8*)mExplosionFragments.mData + fragmentOffset);
+
+            if (fragment->mfRemainingLifespan <= 0.0f)
+            {
+                if (fragment->mbIsActive)
+                {
+                    if (fragment->mbIsActive)
+                    {
+                        if (fragment->mpPhysicsObject != NULL)
+                        {
+                            delete fragment->mpPhysicsObject;
+                        }
+
+                        DrawableObject* drawable = WorldManager::s_World->FindDrawableObject(fragment->mFragmentModelHash);
+                        drawable->m_uObjectFlags = (drawable->m_uObjectFlags & ~1);
+                        fragment->mpPhysicsObject = NULL;
+                        u16 handle = fragment->mDrawableFragmentID;
+                        DrawableFragmentHandleNode* node = NULL;
+
+                        if (pPool->m_FreeList == NULL)
+                        {
+                            SlotPoolBase::BaseAddNewBlock(&DrawableFragmentHandleNode::sDrawableFragmentHandleNodePool, 8);
+                        }
+
+                        SlotPoolEntry* entry = pPool->m_FreeList;
+                        if (entry != NULL)
+                        {
+                            node = (DrawableFragmentHandleNode*)entry;
+                            pPool->m_FreeList = (SlotPoolEntry*)entry->m_next;
+                        }
+
+                        if (node != NULL)
+                        {
+                            node->mID = 0;
+                            node->next = NULL;
+                        }
+
+                        node->mID = handle;
+                        nlListAddEnd<DrawableFragmentHandleNode>(&SidelineExplodableManager::sUnusedDrawableFragments.m_pStart, pTail, node);
+                        SidelineExplodableManager::sFragmentLookupTable[handle] = NULL;
+                        fragment->mDrawableFragmentID = 0xFFFF;
+                        fragment->mbIsActive = false;
+                    }
+
+                    fragment->mFragmentModelHash = 0;
+
+                    EmissionController* pSmokeControl = fragment->mpSmokeEmissionController;
+                    if (pSmokeControl != NULL)
+                    {
+                        Function1<void, EmissionController&> empty;
+                        empty.mTag = EMPTY;
+
+                        if (pSmokeControl->mUpdateCallback.mTag == FUNCTOR)
+                        {
+                            delete pSmokeControl->mUpdateCallback.mFunctor;
+                        }
+
+                        pSmokeControl->mUpdateCallback.mTag = EMPTY;
+                        pSmokeControl->mUpdateCallback.mTag = empty.mTag;
+
+                        if (pSmokeControl->mUpdateCallback.mTag == FREE_FUNCTION)
+                        {
+                            pSmokeControl->mUpdateCallback.mFreeFunction = empty.mFreeFunction;
+                        }
+                        else if (pSmokeControl->mUpdateCallback.mTag == FUNCTOR)
+                        {
+                            pSmokeControl->mUpdateCallback.mFunctor = empty.mFunctor->Clone();
+                        }
+
+                        if (empty.mTag == FUNCTOR)
+                        {
+                            delete empty.mFunctor;
+                        }
+
+                        *(volatile int*)&empty.mTag = EMPTY;
+                    }
+
+                    if (fragment->mStationaryTransform != NULL)
+                    {
+                        operator delete(fragment->mStationaryTransform);
+                        fragment->mStationaryTransform = NULL;
+                    }
+
+                    mNumActiveFragments--;
+                    ExplodableCategoryData& categoryData = GetCategoryData();
+                    if (mNumActiveFragments == categoryData.mNumStationaryFragments)
+                    {
+                        g_pEventManager->CreateValidEvent(0x67, 0x14);
+                    }
+                }
+            }
+            else if (!fragment->mbInfiniteLifespan)
+            {
+                fragment->mfRemainingLifespan -= fDeltaT;
+            }
+
+            fragmentOffset += 0x20;
+            i++;
+        }
+
+        if (mbIsMainModelVisible)
+        {
+            DestroyAllActiveFragments(true);
+        }
+    }
+    else
+    {
+        if (mfExplodeTime > 0.0f)
+        {
+            mfExplodeTime -= fDeltaT;
+        }
+
+        if (mfExplodeTime < 0.0f)
+        {
+            Explode();
+            mfExplodeTime = 0.0f;
+        }
+    }
 }
 
 /**
@@ -660,8 +793,6 @@ ExplosionFragment* SidelineExplodableManager::GetFragmentFromHandle(unsigned sho
 
 /**
  * Offset/Address/Size: 0x358 | 0x801676B8 | size: 0x1B0
- * TODO: 99.68% match - remaining diffs are floating-point register allocation
- * in relative velocity length-squared computation (f1/f3/f4 assignment around fsubs/fmuls).
  */
 struct SwizzledVelocityProxy
 {
@@ -710,10 +841,16 @@ ContactType SidelineExplosionPhysicsObject::Contact(PhysicsObject* other, dConta
         if (player != NULL)
         {
             nlVector3* linearVelocity = &GetLinearVelocity();
-            float deltaX = linearVelocity->f.x - player->m_v3Velocity.y_field;
-            float deltaY = linearVelocity->f.y - player->m_v3Velocity.x_field;
-            float deltaZ = linearVelocity->f.z - player->m_v3Velocity.z_field;
-            float deltaSq = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+            float deltaX;
+            float deltaY;
+            float deltaZ;
+
+            deltaY = linearVelocity->f.y - player->m_v3Velocity.x_field;
+            deltaX = linearVelocity->f.x - player->m_v3Velocity.y_field;
+            deltaZ = linearVelocity->f.z - player->m_v3Velocity.z_field;
+
+            float deltaYSq = deltaY * deltaY;
+            float deltaSq = deltaYSq + deltaX * deltaX + deltaZ * deltaZ;
 
             if (deltaSq > 36.0f)
             {
@@ -757,7 +894,7 @@ bool SidelineExplosionPhysicsObject::SetContactInfo(dContact* contact, PhysicsOb
 
 /**
  * Offset/Address/Size: 0x1D4 | 0x80167534 | size: 0x164
- * TODO: 99.55% match - floating-point register allocation mismatch (f3/f4/f5)
+ * TODO: 99.66% match - floating-point register allocation mismatch (f4/f5 swap)
  * in angular velocity normalization/scaling around nlVec3Scale.
  */
 void SidelineExplosionPhysicsObject::PostUpdate()
@@ -770,9 +907,12 @@ void SidelineExplosionPhysicsObject::PostUpdate()
     {
         float recip = nlRecipSqrt(lenSq, true);
 
-        angularVelocity.f.z = recip * angularVelocity.f.z;
-        angularVelocity.f.y = recip * angularVelocity.f.y;
-        angularVelocity.f.x = recip * angularVelocity.f.x;
+        float xNorm = recip * angularVelocity.f.x;
+        float zNorm = recip * angularVelocity.f.z;
+        float yNorm = recip * angularVelocity.f.y;
+        angularVelocity.f.x = xNorm;
+        angularVelocity.f.y = yNorm;
+        angularVelocity.f.z = zNorm;
 
         nlVec3Scale(angularVelocity, angularVelocity, 10.0f);
         SetAngularVelocity(angularVelocity);
@@ -856,17 +996,20 @@ void SidelineExplodableManager::AssociateEffectWithNearbyFloatingCamera(Emission
     }
 }
 
+static inline EmissionController* GetAssociatedEffect(SidelineExplodable* explodable)
+{
+    return explodable->mpAssociatedEffect;
+}
+
 /**
  * Offset/Address/Size: 0x70 | 0x801673D0 | size: 0x30
- * TODO: 97.9% match - r4/r5 register swap for mpExplodable/mpAssociatedEffect temps.
- * Likely -inline deferred context-dependent register allocation difference.
  */
 void SidelineExplodableManager::UnAssociateEffectWithNearbyFloatingCamera(EmissionController* pEmissionController)
 {
     SidelineExplodableNode* node = sSidelineExplodableList.m_pStart;
     while (node != NULL)
     {
-        if (node->mpExplodable->mpAssociatedEffect == pEmissionController)
+        if (GetAssociatedEffect(node->mpExplodable) == pEmissionController)
         {
             node->mpExplodable->mpAssociatedEffect = 0;
         }

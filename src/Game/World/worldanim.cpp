@@ -3,6 +3,12 @@
 #include "NL/nlSlotPool.h"
 #include "Game/SAnim.h"
 
+template <>
+nlAVLTree<unsigned long, AnimationSet*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
+{
+    FORCE_DONT_INLINE;
+}
+
 /**
  * Offset/Address/Size: 0x5C8 | 0x8019B394 | size: 0x94
  */

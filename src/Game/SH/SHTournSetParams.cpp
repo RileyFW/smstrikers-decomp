@@ -29,7 +29,16 @@
  * Offset/Address/Size: 0x21F0 | 0x800E1BC4 | size: 0xC8
  */
 TournSetParamsScene::TournSetParamsScene()
+    : BaseSceneHandler()
+    , mMenuItems()
+    , m_isLeagueMode(true)
+    , m_numTeams(3)
+    , m_numGames(1)
+    , mButtons()
 {
+    mSlideMenuLists[0] = NULL;
+    mSlideMenuLists[1] = NULL;
+    mSlideMenuLists[2] = NULL;
 }
 
 /**
@@ -37,6 +46,10 @@ TournSetParamsScene::TournSetParamsScene()
  */
 TournSetParamsScene::~TournSetParamsScene()
 {
+    for (int i = 0; i < 3; i++)
+    {
+        delete mSlideMenuLists[i];
+    }
 }
 
 /**

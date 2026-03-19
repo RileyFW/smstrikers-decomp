@@ -131,12 +131,157 @@ void Nis::UpdateTriggers(float oldTime, float newTime, float duration)
     }
 }
 
+struct BasicStringInternal
+{
+    char* mData;
+    int mSize;
+    int mCapacity;
+    int mRefCount;
+};
+
+namespace Detail
+{
+class TempStringAllocator
+{
+public:
+    static void* allocate(unsigned long size)
+    {
+        return nlMalloc(size, 8, true);
+    }
+
+    static void deallocate(void* ptr)
+    {
+        nlFree(ptr);
+    }
+};
+} // namespace Detail
+
+template <typename CharT, typename Allocator>
+class BasicString
+{
+public:
+    BasicStringInternal* m_data;
+
+    BasicString()
+        : m_data(0)
+    {
+    }
+
+    BasicString(const CharT* str)
+    {
+        BasicStringInternal* data = (BasicStringInternal*)Allocator::allocate(sizeof(BasicStringInternal));
+        if (data != 0)
+        {
+            data->mData = 0;
+            data->mSize = 0;
+            data->mCapacity = 0;
+
+            const CharT* s = str;
+            while ((signed char)*s++ != 0)
+            {
+                data->mSize++;
+            }
+            data->mSize++;
+
+            data->mData = (char*)Allocator::allocate(data->mSize + 1);
+            data->mCapacity = data->mSize;
+
+            for (int i = 0; i < data->mSize; i++)
+            {
+                data->mData[i] = *str++;
+            }
+
+            data->mRefCount = 1;
+        }
+        m_data = data;
+    }
+
+    BasicString(const BasicString& other)
+    {
+        BasicStringInternal* data;
+        if (other.m_data)
+        {
+            other.m_data->mRefCount++;
+            data = other.m_data;
+        }
+        else
+        {
+            data = 0;
+        }
+        m_data = data;
+    }
+
+    ~BasicString()
+    {
+        if (m_data)
+        {
+            BasicStringInternal* data = m_data;
+            if (--data->mRefCount == 0)
+            {
+                if (data)
+                {
+                    if (data)
+                    {
+                        delete[] data->mData;
+                    }
+                    if (data)
+                    {
+                        nlFree(data);
+                    }
+                }
+            }
+        }
+    }
+
+    const CharT* c_str() const
+    {
+        static CharT emptyString = '\0';
+        return m_data ? m_data->mData : &emptyString;
+    }
+};
+
+template <typename StringType, typename Arg0, typename Arg1>
+StringType Format(const StringType&, const Arg0&, const Arg1&);
+
 /**
  * Offset/Address/Size: 0xF80 | 0x8012C390 | size: 0x2F0
+ * TODO: 96.01% match - remaining diffs are MWCC register allocation and literal
+ * symbol selection (`this`/camera/temp register rotation and local constant labels).
  */
-void Nis::SelectCamera(cAnimCamera&, int)
+void Nis::SelectCamera(cAnimCamera& camera, int cameraIndex)
 {
-    FORCE_DONT_INLINE;
+    if (mNumCameras == 0)
+    {
+        return;
+    }
+
+    int index = cameraIndex % mNumCameras;
+    BasicString<char, Detail::TempStringAllocator> cameraName = Format(BasicString<char, Detail::TempStringAllocator>("{0}_{1}"), mHeader->name, index);
+
+    camera.SelectCameraAnimation(cameraName.c_str());
+
+    if (mMirrored)
+    {
+        camera.m_Mirror = (nlVector3) { -1.0f, 1.0f, 1.0f };
+    }
+    else
+    {
+        camera.m_Mirror = (nlVector3) { 1.0f, 1.0f, 1.0f };
+    }
+
+    camera.m_fAnimationTime = 0.0f;
+    camera.BuildAnimViewMatrix(camera.m_matView);
+
+    if (strstr(mHeader->name, "cup") != NULL)
+    {
+        camera.m_bCyclic = true;
+    }
+    else
+    {
+        camera.m_bCyclic = false;
+    }
+
+    mCamera = &camera;
 }
 
 /**
@@ -269,4 +414,126 @@ void Nis::Trigger::Fire(Nis&) const
  */
 void Nis::StopAllOutstandingNisAudio()
 {
+    struct NisAudioDataExt
+    {
+        NisAudioType audioType;
+        union
+        {
+            SFXEmitter* pEmitter;
+            unsigned long index;
+        } identifier;
+        unsigned long soundType;
+        char str[128];
+        unsigned char isEmitter;
+        unsigned char stopAtNisEnd;
+        unsigned char pad[2];
+        NisAudioDataExt* next;
+    };
+
+    NisAudioDataExt* pNisAudioData = (NisAudioDataExt*)mNisAudioDataList;
+    while (pNisAudioData != NULL)
+    {
+        switch (pNisAudioData->audioType)
+        {
+        case NIS_AUDIO_TYPE_SFX:
+        {
+            SFXEmitter* pSFXEmitter;
+            unsigned char bNisEndedNormally = 0;
+            cPN_SAnimController* pController;
+            int i;
+            for (i = 0; i < 10; i++)
+            {
+                pController = mCharacterControllers[i];
+                if (pController != NULL)
+                {
+                    float remainingTime = 1.0f - pController->m_fTime;
+                    if (remainingTime < 0.1f)
+                    {
+                        bNisEndedNormally = 1;
+                        break;
+                    }
+                }
+            }
+
+            if (pNisAudioData->isEmitter)
+            {
+                pSFXEmitter = pNisAudioData->identifier.pEmitter;
+                if (pNisAudioData->soundType == pSFXEmitter->soundType)
+                {
+                    if ((!bNisEndedNormally) || (bNisEndedNormally && pNisAudioData->stopAtNisEnd))
+                    {
+                        if (Audio::Remove3DSFXEmitter(pSFXEmitter))
+                        {
+                            if (!Audio::IsEmitterActive(pSFXEmitter))
+                            {
+                                pSFXEmitter->bKeepTrack = true;
+                                pSFXEmitter->soundType = (unsigned long)-1;
+                                pSFXEmitter->fTimeStamp = -1.0f;
+                                pSFXEmitter->bIsStopping = false;
+                                pSFXEmitter->bInUse = false;
+                                pSFXEmitter->bIsFilterOn = false;
+                                pSFXEmitter->m_unk_0x5F = false;
+                                pSFXEmitter->pPhysObj = NULL;
+                                pSFXEmitter->pOwner = NULL;
+                                pSFXEmitter->pos.pvPos = NULL;
+                                pSFXEmitter->dir.pvDir = NULL;
+                                pSFXEmitter->pos.vPos.f.x = 0.0f;
+                                pSFXEmitter->pos.vPos.f.y = 0.0f;
+                                pSFXEmitter->pos.vPos.f.z = 0.0f;
+                                pSFXEmitter->dir.vDir.f.x = 0.0f;
+                                pSFXEmitter->dir.vDir.f.y = 0.0f;
+                                pSFXEmitter->dir.vDir.f.z = 0.0f;
+                                pSFXEmitter->posUpdateMethod = NONE;
+
+                                if (pSFXEmitter->pMIDIControllerInfo != NULL)
+                                {
+                                    if (pSFXEmitter->pMIDIControllerInfo->paraArray != NULL)
+                                    {
+                                        delete[] pSFXEmitter->pMIDIControllerInfo->paraArray;
+                                    }
+                                    delete pSFXEmitter->pMIDIControllerInfo;
+                                }
+                                pSFXEmitter->pMIDIControllerInfo = NULL;
+                                pNisAudioData->identifier.pEmitter = NULL;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (Audio::IsSFXPlaying(pNisAudioData->identifier.index))
+                {
+                    if ((!bNisEndedNormally) || (bNisEndedNormally && pNisAudioData->stopAtNisEnd))
+                    {
+                        Audio::StopSFX(pNisAudioData->identifier.index);
+                        pNisAudioData->identifier.index = (unsigned long)-1;
+                    }
+                }
+            }
+
+            nlListRemoveElement(&mNisAudioDataList, (NisAudioData*)pNisAudioData, (NisAudioData**)NULL);
+            NisAudioDataExt* pNextNisAudioData = pNisAudioData->next;
+
+            pNisAudioData->audioType = NIS_AUDIO_TYPE_NONE;
+            pNisAudioData->identifier.index = (unsigned long)-1;
+            memset(pNisAudioData->str, 0, 0x80);
+            pNisAudioData->soundType = (unsigned long)-1;
+            pNisAudioData->stopAtNisEnd = 1;
+            pNisAudioData->isEmitter = 0;
+
+            delete pNisAudioData;
+            pNisAudioData = pNextNisAudioData;
+            break;
+        }
+        case NIS_AUDIO_TYPE_NONE:
+        case NIS_AUDIO_TYPE_STREAM:
+        default:
+            pNisAudioData = pNisAudioData->next;
+            break;
+        }
+    }
+
+    nlDeleteList(&mNisAudioDataList);
+    mNisAudioDataList = NULL;
 }

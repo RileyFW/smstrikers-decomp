@@ -1,5 +1,13 @@
 #include "Game/SH/SHChooseSides.h"
 
+#include "Game/FE/feHelpFuncs.h"
+#include "Game/FE/feManager.h"
+#include "Game/Game.h"
+#include "Game/GameInfo.h"
+#include "Game/GameRenderTask.h"
+#include "Game/GameSceneManager.h"
+#include "Game/Team.h"
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800C7D40 | size: 0xEC
 //  */
@@ -202,6 +210,142 @@ void SHChooseSides2::BindChooseSideInstances()
 /**
  * Offset/Address/Size: 0x0 | 0x800C4BC0 | size: 0x350
  */
-void SHChooseSides2::Update(float)
+void SHChooseSides2::Update(float fDeltaT)
 {
+    BaseSceneHandler::Update(fDeltaT);
+    mButtons.CentreButtons();
+
+    if (mProceedDelay > 0)
+    {
+        mProceedDelay--;
+
+        if (mProceedDelay == 0)
+        {
+            FEAudio::PlayAnimAudioEvent("choose_sides_proceed", false);
+
+            if (mContext == PAUSE)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    nlSingleton<GameInfoManager>::s_pInstance->GetPlayingSide((u16)i);
+                }
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                nlSingleton<GameInfoManager>::s_pInstance->SetPlayingSide((u16)i, (short)mChooseSide.mPlayingSides[i]);
+            }
+
+            if (mContext == PAUSE)
+            {
+                g_pTeams[0]->UpdateControllers();
+                g_pTeams[1]->UpdateControllers();
+                nlSingleton<GameInfoManager>::s_pInstance->ApplyDifficultySettings();
+                g_pGame->SetDifficulty(
+                    nlSingleton<GameInfoManager>::s_pInstance->mCurrentDifficulty[0],
+                    nlSingleton<GameInfoManager>::s_pInstance->mCurrentDifficulty[1],
+                    (eDifficultyID)3);
+            }
+
+            FrontEnd::SetControllerState();
+
+            if (mNextScene == SCENE_SUPER_LOADING)
+            {
+                nlSingleton<GameSceneManager>::s_pInstance->PushLoadingScene(true);
+            }
+            else
+            {
+                nlSingleton<GameSceneManager>::s_pInstance->Push(mNextScene, SCREEN_FORWARD, true);
+            }
+
+            mProceedDelay = -1;
+        }
+    }
+    else
+    {
+        if (mSoundDelay > 0.0f && mContext != PAUSE)
+        {
+            mSoundDelay -= fDeltaT;
+
+            if (mSoundDelay <= 0.0f)
+            {
+                mSoundDelay = 0.0f;
+
+                for (int i = 0; i < 2; i++)
+                {
+                    eTeamID teamid = nlSingleton<GameInfoManager>::s_pInstance->GetTeam((short)i);
+                    FECharacterSound::PlayCaptainSlideIn(teamid);
+                }
+            }
+        }
+
+        if (g_bRenderWorld && mContext == PAUSE)
+        {
+            g_bRenderWorld = false;
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
+            if (mAsyncImage[0][i] != NULL)
+            {
+                bool swapresult = mAsyncImage[0][i]->Update(true);
+
+                if (swapresult && mContext == PAUSE)
+                {
+                    mAsyncImage[0][i]->FreeLoadBuffer();
+                }
+            }
+
+            if (mAsyncImage[1][i] != NULL)
+            {
+                bool swapresult = mAsyncImage[1][i]->Update(true);
+
+                if (swapresult && mContext == PAUSE)
+                {
+                    mAsyncImage[1][i]->FreeLoadBuffer();
+                }
+            }
+        }
+
+        TLSlide* currentSlide = m_pFEPresentation->m_currentSlide;
+
+        if (currentSlide->m_time < (currentSlide->m_start + currentSlide->m_duration))
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                TLInstance* instance = mChooseSide.mInstanceTable[i];
+
+                if (g_pFEInput->IsConnected((eFEINPUT_PAD)i))
+                {
+                    instance->m_bVisible = true;
+                    mChooseSide.PositionController(i, false, true);
+                }
+                else
+                {
+                    instance->m_bVisible = false;
+                    mChooseSide.mPlayingSides[i] = -1;
+
+                    instance = mChooseSide.mInstanceTable[i + 8];
+                    if (instance != NULL)
+                    {
+                        instance->m_bVisible = true;
+                    }
+
+                    instance = mChooseSide.mInstanceTable[i + 12];
+                    if (instance != NULL)
+                    {
+                        instance->m_bVisible = false;
+                    }
+
+                    mChooseSide.PositionController(i, false, false);
+                    mChooseSide.SetReady(i, false);
+                }
+            }
+        }
+        else
+        {
+            m_pTicker->Update(fDeltaT);
+            UpdateChooseSideComponent(fDeltaT);
+        }
+    }
 }

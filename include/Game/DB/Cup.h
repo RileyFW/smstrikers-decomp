@@ -90,21 +90,20 @@ struct BaseCup
     virtual signed char* GetRoundResults(int round) = 0;
     virtual void* SerializeData(void* dst) const
     {
-        u8* p = (u8*)dst;
-        memcpy(p, &mUserSelectedTeam, 4);
-        p += 4;
-        memcpy(p, &mUserSelectedSidekick, 4);
-        p += 4;
-        memcpy(p, &mRoundNumber, 2);
-        p += 2;
-        memcpy(p, &mGameNumber, 2);
-        p += 2;
-        memcpy(p, &mHumanTeams, 2);
-        p += 2;
-        memcpy(p, &mCupStarted, 1);
-        p += 1;
-        memcpy(p, &mCupSettings, sizeof(mCupSettings));
-        return (p + 0x0C);
+        memcpy(dst, &mUserSelectedTeam, 4);
+        dst = (u8*)dst + 4;
+        memcpy(dst, &mUserSelectedSidekick, 4);
+        dst = (u8*)dst + 4;
+        memcpy(dst, &mRoundNumber, 2);
+        dst = (u8*)dst + 2;
+        memcpy(dst, &mGameNumber, 2);
+        dst = (u8*)dst + 2;
+        memcpy(dst, &mHumanTeams, 2);
+        dst = (u8*)dst + 2;
+        memcpy(dst, &mCupStarted, 1);
+        dst = (u8*)dst + 1;
+        memcpy(dst, &mCupSettings, sizeof(mCupSettings));
+        return (u8*)dst + sizeof(mCupSettings);
     };
     virtual void* DeserializeData(void* src)
     {

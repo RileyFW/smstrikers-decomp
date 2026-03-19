@@ -293,8 +293,9 @@ bool EmissionController::IsLingering() const
 /**
  * Offset/Address/Size: 0x32C | 0x801F7C1C | size: 0x5EC
  */
-void EmissionController::Update(float)
+bool EmissionController::Update(float)
 {
+    return true;
 }
 
 /**

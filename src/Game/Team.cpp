@@ -415,11 +415,121 @@ void cTeam::PreUpdate(float dt)
     }
 }
 
+static inline void UpdateBallInterceptTime(cTeam* pTeam)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        cFielder* pPlayer = pTeam->m_pPlayers[i];
+        float speed = pPlayer->m_fActualSpeed;
+        float runSpeed = pPlayer->m_pTweaks->fRunningSpeed;
+        speed = (speed >= runSpeed) ? speed : runSpeed;
+
+        nlVector3 v3LandingSpot;
+        float landingTime = g_pBall->PredictLandingSpotAndTime(v3LandingSpot);
+        float interceptTime;
+
+        if (landingTime > 0.0f)
+        {
+            float y = v3LandingSpot.f.y - pPlayer->m_v3Position.f.y;
+            float x = v3LandingSpot.f.x - pPlayer->m_v3Position.f.x;
+            float y2 = y * y;
+            float sum = (x * x) + y2;
+            interceptTime = nlSqrt(sum, true) / speed;
+        }
+        else
+        {
+            cBall* pBall = g_pBall;
+            int nFoundSolutions = 0;
+            float fSolutions[2];
+
+            interceptTime = 99999.0f;
+            nlVector3* pBallPosition = &pBall->m_v3Position;
+            nlVector3* pAIVelocity = pBall->GetAIVelocity();
+            CalcInterceptXY(pPlayer->m_v3Position, speed, 0.0f, *pBallPosition, *pAIVelocity, nFoundSolutions, fSolutions);
+
+            if (nFoundSolutions != 0)
+            {
+                if (nFoundSolutions == 2)
+                {
+                    float solution1 = fSolutions[1];
+                    interceptTime = fSolutions[0];
+                    if (interceptTime > solution1)
+                    {
+                        interceptTime = solution1;
+                    }
+                }
+                else
+                {
+                    interceptTime = fSolutions[0];
+                }
+            }
+        }
+
+        pTeam->mfBallInterceptTimes[i] = interceptTime;
+    }
+}
+
 /**
  * Offset/Address/Size: 0x132C | 0x800656D8 | size: 0x2CC
+ * TODO: 96.35% match - remaining diffs are -inline deferred artifacts:
+ *   r3/r4 swap, fcmpu order, stalling 1.0f CSE, loop counter r30/r28
  */
 void cTeam::Update(float dt)
 {
+    extern cTeam* g_pCurrentlyUpdatingTeam;
+    extern void UpdateTeamAI__5cTeamFf(cTeam*, float);
+
+    g_pCurrentlyUpdatingTeam = this;
+
+    bool gameplayOrOvertime = false;
+    if (g_pGame->m_eGameState == GS_GAMEPLAY || g_pGame->m_eGameState == GS_OVERTIME)
+    {
+        gameplayOrOvertime = true;
+    }
+
+    if (gameplayOrOvertime)
+    {
+        mfPowerupTimer -= dt;
+        if (mfPowerupTimer < 0.0f)
+        {
+            mfPowerupTimer = 1.0f;
+            if (nlSingleton<GameInfoManager>::s_pInstance->IsInfinitePowerupsOn())
+            {
+                PowerupBase::AwardPowerup(this);
+            }
+        }
+
+        mtTeamStyleTimer.Countdown(dt, 0.0f);
+        mtMarkTimer.Countdown(dt, 0.0f);
+        mtRoleTimer.Countdown(dt, 0.0f);
+        mtBallInterceptTimer.Countdown(dt, 0.0f);
+
+        float offensive = Offensive(this);
+        if (offensive != 0.0f && InOffensiveZone(g_pBall->m_v3Position, (eTeamSide)m_nSide) < 1.0f)
+        {
+            float stalling = Stalling(this);
+            if (stalling < 1.0f)
+            {
+                mtDefensiveZoneTimer.Countup(dt, 1.0f);
+            }
+        }
+        else
+        {
+            mtDefensiveZoneTimer.Countdown(0.5f * dt, 0.0f);
+        }
+    }
+
+    UpdateBallInterceptTime(this);
+
+    qsort(m_pBallInterceptOrderedFielders, 4, 4, BestAbleToInterceptBall);
+    mtBallInterceptTimer.SetSeconds(0.0f);
+
+    UpdateTeamAI__5cTeamFf(this, dt);
+
+    for (int i = 0; i < 4; i++)
+    {
+        m_pAIOrderedFielders[i]->UpdatePlay(dt);
+    }
 }
 
 /**

@@ -62,29 +62,29 @@ CommonDesireData& GetCommonDesireData(eFielderDesireState desireType)
 
 /**
  * Offset/Address/Size: 0x6484 | 0x80037208 | size: 0x174
- * TODO: 80.59% match - remaining diffs are register allocation and load scheduling around opt1/opt2 preload locals.
+ * TODO: 81.83% match - remaining diffs are register allocation around preloaded opt1/opt2 locals.
  */
 void cFielder::QueueDesire(eFielderDesireState eDesireType, float fDuration, FuzzyVariant opt1, FuzzyVariant opt2)
 {
-    float opt1SelectionChance = opt1.SelectionChance;
     eVariantType opt2Type = opt2.mType;
-    u32 opt1Data2 = opt1.mData.vector.as_u32[2];
-    eVariantType opt2ExtraType = opt2.ExtraData.mType;
-    u32 opt1Extra2 = opt1.ExtraData.mData.vector.as_u32[2];
+    u32 opt1Data0 = opt1.mData.vector.as_u32[0];
+    u32 opt1Data1 = opt1.mData.vector.as_u32[1];
+    eVariantType opt1Type = opt1.mType;
     float opt2Confidence = opt2.Confidence;
     float opt2SelectionChance = opt2.SelectionChance;
     eVariantType opt1ExtraType = opt1.ExtraData.mType;
-    u32 opt2Extra2 = opt2.ExtraData.mData.vector.as_u32[2];
-    u32 opt2Data1 = opt2.mData.vector.as_u32[1];
+    u32 opt1Data2 = opt1.mData.vector.as_u32[2];
     u32 opt1Extra1 = opt1.ExtraData.mData.vector.as_u32[1];
-    u32 opt1Data0 = opt1.mData.vector.as_u32[0];
+    u32 opt2Extra2 = opt2.ExtraData.mData.vector.as_u32[2];
+    eVariantType opt2ExtraType = opt2.ExtraData.mType;
     u32 opt1Extra0 = opt1.ExtraData.mData.vector.as_u32[0];
-    eVariantType opt1Type = opt1.mType;
+    u32 opt2Data1 = opt2.mData.vector.as_u32[1];
     u32 opt2Extra0 = opt2.ExtraData.mData.vector.as_u32[0];
-    u32 opt1Data1 = opt1.mData.vector.as_u32[1];
+    u32 opt1Extra2 = opt1.ExtraData.mData.vector.as_u32[2];
+    u32 opt2Data2 = opt2.mData.vector.as_u32[2];
     float opt1Confidence = opt1.Confidence;
     u32 opt2Extra1 = opt2.ExtraData.mData.vector.as_u32[1];
-    u32 opt2Data2 = opt2.mData.vector.as_u32[2];
+    float opt1SelectionChance = opt1.SelectionChance;
     u32 opt2Data0 = opt2.mData.vector.as_u32[0];
 
     ClearQueuedDesire();
@@ -295,8 +295,118 @@ bool cFielder::InitDesireGetOpen()
 /**
  * Offset/Address/Size: 0x30B4 | 0x80033E38 | size: 0x2EC
  */
-void cFielder::InitDesireOneTimerFromRun(unsigned short, const nlVector3&, const nlVector3&, bool, bool)
+bool cFielder::InitDesireOneTimerFromRun(unsigned short aFutureFacingDirection, const nlVector3& v3FuturePosition, const nlVector3& v3PassIntercept, bool bVolleyPassReceive, bool bIsChipShot)
 {
+    extern float g_fSimulationTick;
+
+    float fBallContactTime;
+
+    const LooseBallContactAnimInfo* pBestBallContactAnimInfo = GetOneTimerBallContactAnimInfo(
+        aFutureFacingDirection, v3FuturePosition, m_pTeam->GetOtherNet()->m_baseLocation, true, bVolleyPassReceive);
+
+    m_DesireOneTimerVars.nOneTimerAnim = pBestBallContactAnimInfo->nAnimID;
+
+    const cSAnim* contactAnim = m_pAnimInventory->GetAnim(pBestBallContactAnimInfo->nAnimID);
+    m_DesireOneTimerVars.fOneTimerAnimTime = pBestBallContactAnimInfo->fAnimContactFrame / (float)contactAnim->m_nNumKeys;
+
+    bool bFoundContact;
+    if (bVolleyPassReceive)
+    {
+        bFoundContact = DoLooseBallContactFromRunVolley(
+            m_DesireOneTimerVars.v3DesiredPosition,
+            m_DesireOneTimerVars.fDesiredTime,
+            m_DesireOneTimerVars.v3BallPosition,
+            fBallContactTime,
+            pBestBallContactAnimInfo,
+            v3PassIntercept);
+    }
+    else
+    {
+        bFoundContact = DoLooseBallContactFromRun(
+            m_DesireOneTimerVars.v3DesiredPosition,
+            m_DesireOneTimerVars.fDesiredTime,
+            m_DesireOneTimerVars.v3BallPosition,
+            fBallContactTime,
+            pBestBallContactAnimInfo,
+            v3PassIntercept);
+    }
+
+    if (!bFoundContact)
+    {
+        return false;
+    }
+
+    m_DesireOneTimerVars.aDesiredFacingDirection = m_aActualFacingDirection;
+    m_DesireOneTimerVars.bIsChipShot = bIsChipShot;
+    m_DesireOneTimerVars.bVolleyPassReceive = bVolleyPassReceive;
+
+    if (m_DesireOneTimerVars.fDesiredTime > (2.0f * g_fSimulationTick))
+    {
+        m_DesireOneTimerVars.fDesiredTime -= g_fSimulationTick;
+
+        SetDesire(FIELDERDESIRE_ONETIMER, 0.5f);
+
+        m_eDesireSubState = 0;
+        InitActionRunning();
+
+        nlVector3 v3Me2DesiredPosition;
+        nlVec3Set(*(nlVector3*)&v3Me2DesiredPosition,
+            m_DesireOneTimerVars.v3DesiredPosition.f.x - m_v3Position.f.x,
+            m_DesireOneTimerVars.v3DesiredPosition.f.y - m_v3Position.f.y,
+            m_DesireOneTimerVars.v3DesiredPosition.f.z - m_v3Position.f.z);
+
+        unsigned short aDesiredAngle = (unsigned short)(int)(10430.378f * nlATan2f(v3Me2DesiredPosition.f.y, v3Me2DesiredPosition.f.x));
+
+        s16 angleDiff = aDesiredAngle - m_aActualFacingDirection;
+        int absDiff = angleDiff;
+        if (angleDiff < 0)
+            absDiff = -angleDiff;
+
+        if ((u16)absDiff < 0x4000)
+        {
+            float fSpeed = nlSqrt(v3Me2DesiredPosition.f.x * v3Me2DesiredPosition.f.x + v3Me2DesiredPosition.f.y * v3Me2DesiredPosition.f.y, true) / m_DesireOneTimerVars.fDesiredTime;
+            m_fDesiredSpeed = fSpeed;
+            m_fActualSpeed = fSpeed;
+            m_aDesiredFacingDirection = aDesiredAngle;
+            m_aActualFacingDirection = aDesiredAngle;
+            m_aDesiredMovementDirection = m_aDesiredFacingDirection;
+        }
+        else
+        {
+            m_fActualSpeed = 0.0f;
+        }
+    }
+    else
+    {
+        const cSAnim* pOneTimerAnim = m_pAnimInventory->GetAnim(m_DesireOneTimerVars.nOneTimerAnim);
+        float fAnimTimeInSecs = m_DesireOneTimerVars.fOneTimerAnimTime * ((float)pOneTimerAnim->m_nNumKeys / 30.0f);
+        float fPlaybackScale = fAnimTimeInSecs / (fAnimTimeInSecs + m_DesireOneTimerVars.fDesiredTime);
+
+        if (fPlaybackScale > 0.85f)
+        {
+            return false;
+        }
+
+        SetDesire(FIELDERDESIRE_ONETIMER, 0.5f);
+        m_eDesireSubState = 1;
+
+        SetFacingDirection(m_DesireOneTimerVars.aDesiredFacingDirection);
+
+        InitActionOneTimer(
+            m_DesireOneTimerVars.nOneTimerAnim,
+            m_DesireOneTimerVars.v3DesiredPosition,
+            m_DesireOneTimerVars.fOneTimerAnimTime,
+            m_DesireOneTimerVars.bIsChipShot);
+
+        m_pCurrentAnimController->m_fPlaybackSpeedScale = fPlaybackScale;
+    }
+
+    SetDesireDuration(3.0f, false);
+    SetNoPickUpTime(3.0f);
+    g_pBall->SetPassTargetTimer(fBallContactTime);
+    m_pAvoidance->SetThingsToAvoid(0);
+
+    return true;
 }
 
 /**

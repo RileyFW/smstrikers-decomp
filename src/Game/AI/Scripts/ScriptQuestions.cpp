@@ -528,10 +528,97 @@ float RepeatingLastDesire(cFielder* pFielder, eScriptFielderDesire desire)
 /**
  * Offset/Address/Size: 0x54B4 | 0x80083F3C | size: 0x2E8
  */
-float AbleToInterceptBall(cPlayer*)
+float AbleToInterceptBall(cPlayer* pPlayer)
 {
-    FORCE_DONT_INLINE;
-    return 0.0f;
+    if (pPlayer == NULL)
+    {
+        return 0.0f;
+    }
+
+    float fScore = 0.0f;
+
+    float var_f1;
+    if (pPlayer == NULL)
+    {
+        var_f1 = 0.0f;
+    }
+    else
+    {
+        var_f1 = 0.0f;
+        if (pPlayer->m_eClassType == GOALIE)
+        {
+            Goalie* pGoalie = (Goalie*)pPlayer;
+            bool canIntercept = true;
+            eGoalieActionState goalieState = pGoalie->mGoalieActionState;
+            int isRecover = (((int)GOALIEACTION_STS_RECOVER - goalieState) == 0);
+            if ((isRecover & 0xFF) == 0)
+            {
+                bool isBusy = (pGoalie->m_pBall != NULL) || (goalieState == GOALIEACTION_PASS) || (goalieState == GOALIEACTION_PASS_INTERCEPT) || (goalieState == GOALIEACTION_MOVE) || (goalieState == GOALIEACTION_MOVE_WB) || (goalieState == GOALIEACTION_PASS_INTERCEPT) || (goalieState == GOALIEACTION_PURSUE_BALL_CARRIER) || (goalieState == GOALIEACTION_PURSUE_BALL_POUNCE) || (goalieState == GOALIEACTION_LOOSEBALL_SETUP) || (goalieState == GOALIEACTION_LOOSEBALL_CATCH) || (goalieState == GOALIEACTION_LOOSEBALL_PICKUP) || (goalieState == GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING) || (goalieState == GOALIEACTION_LOOSEBALL_PURSUE_ROLLING);
+                if (isBusy)
+                {
+                    canIntercept = false;
+                }
+            }
+            var_f1 = canIntercept ? 1.0f : 0.0f;
+        }
+        else if (pPlayer->m_eClassType == FIELDER)
+        {
+            bool isDisabled = false;
+            if (((cFielder*)pPlayer)->IsFrozen() || ((cFielder*)pPlayer)->IsFallenDown(25.0f))
+            {
+                isDisabled = true;
+            }
+            var_f1 = isDisabled ? 1.0f : 0.0f;
+        }
+    }
+
+    float temp_cmp = 0.0f;
+    if (var_f1 == temp_cmp)
+    {
+        if (pPlayer->m_pBall != NULL)
+        {
+            fScore = 1.0f;
+        }
+        else
+        {
+            int classType = pPlayer->m_eClassType;
+            if (classType == FIELDER)
+            {
+                float temp_f31 = NormalizeVal(pPlayer->m_pTeam->mfBallInterceptTimes[pPlayer->m_ID], g_pGame->m_pFuzzyTweaks->vInterceptBallConfidenceTime);
+                float temp_f0 = pPlayer->m_v3Position.f.x;
+                float temp_f3 = g_pBall->m_v3Position.f.x - temp_f0;
+                temp_f0 = pPlayer->m_v3Position.f.y;
+                float temp_f1 = g_pBall->m_v3Position.f.y - temp_f0;
+                float distance = nlSqrt((temp_f3 * temp_f3) + (temp_f1 * temp_f1), true);
+                float normalizedDistance = NormalizeVal(distance, g_pGame->m_pFuzzyTweaks->vInterceptBallConfidenceDistance);
+                float weight = g_pGame->m_pFuzzyTweaks->fInterceptBallScoreWeight;
+                fScore = (temp_f31 * weight) + (normalizedDistance * (1.0f - weight));
+            }
+            else if (classType == GOALIE)
+            {
+                bool isBusy = (pPlayer->m_pBall != NULL) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_PASS) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_PASS_INTERCEPT) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_MOVE) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_MOVE_WB) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_PASS_INTERCEPT) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_PURSUE_BALL_CARRIER) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_PURSUE_BALL_POUNCE) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_LOOSEBALL_SETUP) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_LOOSEBALL_CATCH) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_LOOSEBALL_PICKUP) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING) || (((Goalie*)pPlayer)->mGoalieActionState == GOALIEACTION_LOOSEBALL_PURSUE_ROLLING);
+                if (isBusy)
+                {
+                    float result;
+                    if (pPlayer == NULL)
+                    {
+                        result = 0.0f;
+                    }
+                    else
+                    {
+                        float temp_f0 = pPlayer->m_v3Position.f.x;
+                        float temp_f3 = g_pScriptBall->m_v3Position.f.x - temp_f0;
+                        temp_f0 = pPlayer->m_v3Position.f.y;
+                        float temp_f1 = g_pScriptBall->m_v3Position.f.y - temp_f0;
+                        result = NormalizeVal(nlSqrt((temp_f3 * temp_f3) + (temp_f1 * temp_f1), true), g_pGame->m_pFuzzyTweaks->vCloseBallConfidenceDistance);
+                    }
+                    fScore = result;
+                }
+            }
+        }
+    }
+
+    return fScore;
 }
 
 static inline bool check_goalie2(const Goalie* pGoalie, const eGoalieActionState actionState)
@@ -1261,19 +1348,255 @@ float OpenToPosition(const nlVector3&, const nlVector3&, const cTeam*, const cPl
 
 /**
  * Offset/Address/Size: 0x3030 | 0x80081AB8 | size: 0x2AC
+ * TODO: 99.91% match - remaining 1 scored diff is SDA label ordering (offset 60 i diff)
  */
-float OpenPosition(const nlVector3&, cTeam*, cPlayer*, const nlVector2*)
+float OpenPosition(const nlVector3& v3Position, cTeam* pOpponentTeam, cPlayer* pCurrentPlayer, const nlVector2* pOpenRadius)
 {
-    FORCE_DONT_INLINE;
-    return 0.0f;
+    f32 fTotalScore;
+    f32 fWeight;
+    cTeam* pMyTeam;
+    int i;
+
+    fTotalScore = 0.0f;
+    fWeight = 1.0f;
+
+    if (pOpenRadius == NULL)
+    {
+        pOpenRadius = &g_pGame->m_pFuzzyTweaks->vOpenRadius;
+    }
+
+    pMyTeam = pOpponentTeam->GetOtherTeam();
+
+    for (i = 0; i < 5; i++)
+    {
+        cPlayer* pPlayers[2] = { NULL, NULL };
+        pPlayers[0] = pOpponentTeam->GetPlayer(i);
+
+        u8 bCheckMyTeam = 0;
+        if (pCurrentPlayer != NULL)
+        {
+            if (i != pCurrentPlayer->m_ID)
+            {
+                bCheckMyTeam = 1;
+            }
+        }
+
+        cPlayer* pMyTeamPlayer;
+        if (bCheckMyTeam)
+        {
+            pMyTeamPlayer = pMyTeam->GetPlayer(i);
+        }
+        else
+        {
+            pMyTeamPlayer = NULL;
+        }
+        pPlayers[1] = pMyTeamPlayer;
+
+        for (int i_player = 0; i_player < 2; i_player++)
+        {
+            u8 isIncap;
+            cPlayer* pPlayer = pPlayers[i_player];
+            if (pPlayer == NULL)
+            {
+                continue;
+            }
+
+            f32 fIncapacitated;
+            if (pPlayer == NULL)
+            {
+                fIncapacitated = 0.0f;
+            }
+            else
+            {
+                fIncapacitated = 0.0f;
+                if (pPlayer->m_eClassType == GOALIE)
+                {
+                    Goalie* pGoalie = (Goalie*)pPlayer;
+                    bool result = true;
+                    eGoalieActionState actionState = pGoalie->mGoalieActionState;
+                    int isRecover = (((int)GOALIEACTION_STS_RECOVER - (int)actionState) == 0);
+
+                    if ((isRecover & 0xFF) == 0)
+                    {
+                        bool isBusy = (pGoalie->m_pBall != NULL)
+                                   || (actionState == GOALIEACTION_PASS)
+                                   || (actionState == GOALIEACTION_PASS_INTERCEPT)
+                                   || (actionState == GOALIEACTION_MOVE)
+                                   || (actionState == GOALIEACTION_MOVE_WB)
+                                   || (actionState == GOALIEACTION_PASS_INTERCEPT)
+                                   || (actionState == GOALIEACTION_PURSUE_BALL_CARRIER)
+                                   || (actionState == GOALIEACTION_PURSUE_BALL_POUNCE)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_SETUP)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_CATCH)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_PICKUP)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_PURSUE_ROLLING);
+                        if (isBusy)
+                        {
+                            result = false;
+                        }
+                    }
+
+                    fIncapacitated = result ? 1.0f : 0.0f;
+                }
+                else if (pPlayer->m_eClassType == FIELDER)
+                {
+                    isIncap = 0;
+                    if (((cFielder*)pPlayer)->IsFrozen() || ((cFielder*)pPlayer)->IsFallenDown(25.0f))
+                    {
+                        isIncap = 1;
+                    }
+
+                    fIncapacitated = isIncap ? 1.0f : 0.0f;
+                }
+            }
+
+            if (!fIncapacitated)
+            {
+                f32 dx = v3Position.f.x - pPlayers[i_player]->m_v3Position.f.x;
+                f32 dy = v3Position.f.y - pPlayers[i_player]->m_v3Position.f.y;
+                f32 dist = nlSqrt(dx * dx + dy * dy, true);
+                f32 normalized = NormalizeVal(dist, *pOpenRadius);
+                if (normalized > 0.0f)
+                {
+                    fTotalScore += fWeight * normalized;
+                    fWeight *= 0.5f;
+                }
+            }
+        }
+    }
+
+    return min_float(max_float(1.0f - fTotalScore, 0.0f), 1.0f);
 }
 
 /**
  * Offset/Address/Size: 0x2D84 | 0x8008180C | size: 0x2AC
+ * TODO: 96.23% match - remaining diffs are register allocation/layout around
+ * pOpenRadius/i_player/pPlayer and final clamp/load order scheduling.
  */
-float WideOpenPosition(const nlVector3&, cTeam*, cPlayer*)
+/**
+ * Offset/Address/Size: 0x3DC | 0x800C3820 | size: 0x2AC
+ * TODO: 99.97% match - remaining 1 scored diff is SDA label ordering (offset 60 i diff), unfixable in scratch
+ */
+float WideOpenPosition(const nlVector3& v3Position, cTeam* pOpponentTeam, cPlayer* pCurrentPlayer)
 {
-    return 0.0f;
+    f32 fWeight;
+    f32 fTotalScore;
+    fTotalScore = 0.0f;
+    fWeight = 1.0f;
+    int i_player;
+    int i;
+    cTeam* pMyTeam;
+    const nlVector2* pOpenRadius = &g_pGame->m_pFuzzyTweaks->vWideOpenRadius;
+
+    if (pOpenRadius == NULL)
+    {
+        pOpenRadius = &g_pGame->m_pFuzzyTweaks->vOpenRadius;
+    }
+
+    pMyTeam = pOpponentTeam->GetOtherTeam();
+
+    for (i = 0; i < 5; i++)
+    {
+        cPlayer* pPlayers[2] = { NULL, NULL };
+        pPlayers[0] = pOpponentTeam->GetPlayer(i);
+
+        u8 bCheckMyTeam = 0;
+        if (pCurrentPlayer != NULL)
+        {
+            if (i != pCurrentPlayer->m_ID)
+            {
+                bCheckMyTeam = 1;
+            }
+        }
+
+        cPlayer* pMyTeamPlayer;
+        if (bCheckMyTeam)
+        {
+            pMyTeamPlayer = pMyTeam->GetPlayer(i);
+        }
+        else
+        {
+            pMyTeamPlayer = NULL;
+        }
+        pPlayers[1] = pMyTeamPlayer;
+
+        cPlayer** ppPlayer = pPlayers;
+        for (i_player = 0; i_player < 2; i_player++, ppPlayer++)
+        {
+            u8 isIncap;
+            cPlayer* pPlayer = *ppPlayer;
+            if (pPlayer == NULL)
+            {
+                continue;
+            }
+
+            f32 fIncapacitated;
+            if (pPlayer == NULL)
+            {
+                fIncapacitated = 0.0f;
+            }
+            else
+            {
+                fIncapacitated = 0.0f;
+                if (pPlayer->m_eClassType == GOALIE)
+                {
+                    Goalie* pGoalie = (Goalie*)pPlayer;
+                    bool result = true;
+                    eGoalieActionState actionState = pGoalie->mGoalieActionState;
+                    int isRecover = (((int)GOALIEACTION_STS_RECOVER - (int)actionState) == 0);
+
+                    if ((isRecover & 0xFF) == 0)
+                    {
+                        bool isBusy = (pGoalie->m_pBall != NULL)
+                                   || (actionState == GOALIEACTION_PASS)
+                                   || (actionState == GOALIEACTION_PASS_INTERCEPT)
+                                   || (actionState == GOALIEACTION_MOVE)
+                                   || (actionState == GOALIEACTION_MOVE_WB)
+                                   || (actionState == GOALIEACTION_PASS_INTERCEPT)
+                                   || (actionState == GOALIEACTION_PURSUE_BALL_CARRIER)
+                                   || (actionState == GOALIEACTION_PURSUE_BALL_POUNCE)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_SETUP)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_CATCH)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_PICKUP)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_PURSUE_ROLLING);
+                        if (isBusy)
+                        {
+                            result = false;
+                        }
+                    }
+
+                    fIncapacitated = result ? 1.0f : 0.0f;
+                }
+                else if (pPlayer->m_eClassType == FIELDER)
+                {
+                    isIncap = 0;
+                    if (((cFielder*)pPlayer)->IsFrozen() || ((cFielder*)pPlayer)->IsFallenDown(25.0f))
+                    {
+                        isIncap = 1;
+                    }
+
+                    fIncapacitated = isIncap ? 1.0f : 0.0f;
+                }
+            }
+
+            if (fIncapacitated == 0.0f)
+            {
+                f32 dx = v3Position.f.x - (*ppPlayer)->m_v3Position.f.x;
+                f32 dy = v3Position.f.y - (*ppPlayer)->m_v3Position.f.y;
+                f32 dist = nlSqrt(dx * dx + dy * dy, true);
+                f32 normalized = NormalizeVal(dist, *pOpenRadius);
+                if (normalized > 0.0f)
+                {
+                    fTotalScore += fWeight * normalized;
+                    fWeight *= 0.5f;
+                }
+            }
+        }
+    }
+
+    return min_float(max_float(1.0f - fTotalScore, 0.0f), 1.0f);
 }
 
 /**
@@ -1385,10 +1708,139 @@ float Open(cFielder* pFielder)
 
 /**
  * Offset/Address/Size: 0x2854 | 0x800812DC | size: 0x2BC
+ * TODO: 99.97% match - remaining 1 scored diff is SDA label ordering at stack init (@1538+0x4 load).
  */
-float WideOpen(cFielder*)
+float WideOpen(cFielder* pFielder)
 {
-    return 0.0f;
+    cTeam* pOtherTeam;
+    f32 fWeight;
+    f32 fTotal;
+    int i_player;
+    int i;
+    cTeam* pMyTeam;
+    const nlVector2* pOpenRadius;
+
+    if (pFielder == NULL)
+    {
+        return 0.0f;
+    }
+
+    pOtherTeam = pFielder->m_pTeam->GetOtherTeam();
+    fTotal = 0.0f;
+    fWeight = 1.0f;
+    pOpenRadius = &g_pGame->m_pFuzzyTweaks->vWideOpenRadius;
+
+    if (pOpenRadius == NULL)
+    {
+        pOpenRadius = &g_pGame->m_pFuzzyTweaks->vOpenRadius;
+    }
+
+    pMyTeam = pOtherTeam->GetOtherTeam();
+
+    for (i = 0; i < 5; i++)
+    {
+        cPlayer* pPlayers[2] = { NULL, NULL };
+        pPlayers[0] = pOtherTeam->GetPlayer(i);
+
+        u8 bCheckMyTeam = 0;
+        if (pFielder != NULL)
+        {
+            if (i != pFielder->m_ID)
+            {
+                bCheckMyTeam = 1;
+            }
+        }
+
+        cPlayer* pMyTeamPlayer;
+        if (bCheckMyTeam)
+        {
+            pMyTeamPlayer = pMyTeam->GetPlayer(i);
+        }
+        else
+        {
+            pMyTeamPlayer = NULL;
+        }
+        pPlayers[1] = pMyTeamPlayer;
+
+        cPlayer** ppPlayer = pPlayers;
+        for (i_player = 0; i_player < 2; i_player++, ppPlayer++)
+        {
+            u8 isIncap;
+            cPlayer* pPlayer = *ppPlayer;
+            if (pPlayer == NULL)
+            {
+                continue;
+            }
+
+            f32 fIncapacitated;
+            if (pPlayer == NULL)
+            {
+                fIncapacitated = 0.0f;
+            }
+            else
+            {
+                fIncapacitated = 0.0f;
+                if (pPlayer->m_eClassType == GOALIE)
+                {
+                    Goalie* pGoalie = (Goalie*)pPlayer;
+                    bool result = true;
+                    eGoalieActionState actionState = pGoalie->mGoalieActionState;
+                    int isRecover = (((int)GOALIEACTION_STS_RECOVER - (int)actionState) == 0);
+
+                    if ((isRecover & 0xFF) == 0)
+                    {
+                        bool isBusy = (pGoalie->m_pBall != NULL)
+                                   || (actionState == GOALIEACTION_PASS)
+                                   || (actionState == GOALIEACTION_PASS_INTERCEPT)
+                                   || (actionState == GOALIEACTION_MOVE)
+                                   || (actionState == GOALIEACTION_MOVE_WB)
+                                   || (actionState == GOALIEACTION_PASS_INTERCEPT)
+                                   || (actionState == GOALIEACTION_PURSUE_BALL_CARRIER)
+                                   || (actionState == GOALIEACTION_PURSUE_BALL_POUNCE)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_SETUP)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_CATCH)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_PICKUP)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_PURSUE_BOUNCING)
+                                   || (actionState == GOALIEACTION_LOOSEBALL_PURSUE_ROLLING);
+                        if (isBusy)
+                        {
+                            result = false;
+                        }
+                    }
+
+                    fIncapacitated = result ? 1.0f : 0.0f;
+                }
+                else if (pPlayer->m_eClassType == FIELDER)
+                {
+                    isIncap = 0;
+                    if (((cFielder*)pPlayer)->IsFrozen() || ((cFielder*)pPlayer)->IsFallenDown(25.0f))
+                    {
+                        isIncap = 1;
+                    }
+
+                    fIncapacitated = isIncap ? 1.0f : 0.0f;
+                }
+            }
+
+            if (!fIncapacitated)
+            {
+                f32 ySelf = pFielder->m_v3Position.f.x;
+                f32 yOther = (*ppPlayer)->m_v3Position.f.x;
+                f32 xSelf = pFielder->m_v3Position.f.y;
+                f32 dy = ySelf - yOther;
+                f32 dx = xSelf - (*ppPlayer)->m_v3Position.f.y;
+                f32 dist = nlSqrt(dy * dy + dx * dx, true);
+                f32 normalized = NormalizeVal(dist, *pOpenRadius);
+                if (normalized > 0.0f)
+                {
+                    fTotal += fWeight * normalized;
+                    fWeight *= 0.5f;
+                }
+            }
+        }
+    }
+
+    return min_float(max_float(1.0f - fTotal, 0.0f), 1.0f);
 }
 
 /**
@@ -1728,8 +2180,9 @@ float FarToTheirGoalie(cPlayer* pPlayer)
 
 /**
  * Offset/Address/Size: 0x1D08 | 0x80080790 | size: 0x170
- * TODO: 98.15% match - MWCC still rotates callee-saved mapping for
- *       score/zero (f30/f31) and base/invert/counters (r25/r26/r30/r31).
+ * TODO: 98.32% match - MWCC still rotates callee-saved mapping for
+ *       score/zero (f30/f31), base/invert/offset (r30/r31/r26),
+ *       and posU0/posU2 (r29/r27).
  */
 float CloseToSideline(const nlVector3& v3Position, const nlVector2* vDistanceConfidence, bool bInvert)
 {
@@ -1752,8 +2205,8 @@ float CloseToSideline(const nlVector3& v3Position, const nlVector2* vDistanceCon
     u32 posU1 = v3Position.as_u32[1];
     u32 posU2 = v3Position.as_u32[2];
     const u8* pBase = (const u8*)cField::mSidelines;
-    s32 i = 0;
-    s32 offset = i;
+    s32 offset = 0;
+    s32 i = offset;
     f32 fZero = 0.0f;
     f32 posX = v3Position.f.x;
     f32 posY = v3Position.f.y;
@@ -1882,8 +2335,8 @@ float NearToSideline(const nlVector3& v3Position)
 
 /**
  * Offset/Address/Size: 0x1AB8 | 0x80080540 | size: 0x11C
- * TODO: 89.75% match - pre-loop register allocation differs for confidence/offset
- *       locals, and dy/dx load ordering before nlSqrt is still swapped.
+ * TODO: 92.25% match - pre-loop callee-saved register allocation still differs
+ *       for sideline base/offset setup and g_pGame->m_pFuzzyTweaks load register.
  */
 float CloseToSideline(cFielder* pFielder)
 {
@@ -1892,12 +2345,14 @@ float CloseToSideline(cFielder* pFielder)
         return 0.0f;
     }
 
-    float fScore = 0.0f;
-    f32 fZero = fScore;
+    s32 offset = 0;
+    s32 i = 0;
     const nlVector2* pConfidence = &g_pGame->m_pFuzzyTweaks->vCloseToSidelineDistanceConfidence;
     const u8* pBase = (const u8*)cField::mSidelines;
+    float fScore = 0.0f;
+    f32 fZero = fScore;
 
-    for (int i = 0, offset = i; i < 4; i++, offset += 0xC)
+    for (; i < 4; i++, offset += 0xC)
     {
         const sSideLinePlane* sideline = (const sSideLinePlane*)(pBase + offset);
         nlVector3 v3SidelinePos;
@@ -1916,9 +2371,9 @@ float CloseToSideline(cFielder* pFielder)
             v3SidelinePos.f.x = sideline->fDistance * sideline->vNormal.f.x;
         }
 
-        f32 dy = v3SidelinePos.f.y - pFielder->m_v3Position.f.y;
         f32 dx = v3SidelinePos.f.x - pFielder->m_v3Position.f.x;
-        float fDistance = nlSqrt(dy * dy + dx * dx, true);
+        f32 dy = v3SidelinePos.f.y - pFielder->m_v3Position.f.y;
+        float fDistance = nlSqrt(dx * dx + dy * dy, true);
 
         float fNormalized = NormalizeVal(fDistance, *pConfidence);
 
@@ -3023,16 +3478,19 @@ float InOffensiveZone(cPlayer* pPlayer)
 /**
  * Offset/Address/Size: 0x6C | 0x8007EAF4 | size: 0x6C
  */
+template <typename T>
+nlVector3& PositionOf(T pObject);
+
 float InDefensiveZoneOfPlayer(cBall* pBall, cPlayer* pPlayer)
 {
     nlVector3 aiLoc;
-    if ((pBall == NULL) || (pPlayer == NULL))
+    if ((pBall == NULL) && (pPlayer != NULL))
     {
-        return 0.0f;
+        return 1.0f;
     }
 
     eTeamSide teamSide = (eTeamSide)(pPlayer->m_pTeam->m_nSide);
-    nlVector3& ballPos = PositionOf(pBall);
+    nlVector3& ballPos = PositionOf<cBall*>(pBall);
     FieldLocToAILoc(aiLoc, ballPos, teamSide);
 
     return NormalizeVal(aiLoc.f.x, g_pGame->m_pFuzzyTweaks->vDefensiveConfidenceDistances);
@@ -3044,9 +3502,9 @@ float InDefensiveZoneOfPlayer(cBall* pBall, cPlayer* pPlayer)
 float InOffensiveZoneOfPlayer(cBall* pBall, cPlayer* pPlayer)
 {
     nlVector3 aiLoc;
-    if ((pBall == NULL) || (pPlayer == NULL))
+    if ((pBall == NULL) && (pPlayer != NULL))
     {
-        return 0.0f;
+        return 1.0f;
     }
 
     eTeamSide teamSide = (eTeamSide)(pPlayer->m_pTeam->m_nSide);

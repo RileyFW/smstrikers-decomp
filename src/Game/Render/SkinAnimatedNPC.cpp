@@ -192,7 +192,8 @@ void SkinAnimatedNPC::SetAnimState(cSAnim& pAnim, float fBlendTime, ePlayMode pl
 
         if (blender != NULL)
         {
-            blender = new (blender) cPN_Blender(mpPoseTree, controller, fBlendTime);
+            cPN_Blender* tmpBlender = blender;
+            blender = new (tmpBlender) cPN_Blender(mpPoseTree, controller, fBlendTime);
         }
         mpPoseTree = blender;
     }

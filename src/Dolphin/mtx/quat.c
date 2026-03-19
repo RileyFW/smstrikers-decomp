@@ -1,6 +1,9 @@
 #include <dolphin.h>
 #include <dolphin/mtx.h>
-#include <math.h>
+// #include <math.h>
+
+extern f32 acosf(f32);
+extern f32 sinf(f32);
 
 void PSQUATScale(const register Quaternion* q, register Quaternion* r, register f32 scale)
 {
@@ -33,18 +36,7 @@ f32 PSQUATDotProduct(const register Quaternion* p, const register Quaternion* q)
     return dp;
 }
 
-// Keep trig wrappers out of line to preserve C_QUATSlerp call structure.
-#pragma dont_inline on
-static f32 my_acosf(f32 x)
-{
-    return acosf(x);
-}
-static f32 my_sinf(f32 x)
-{
-    return sinf(x);
-}
-#pragma dont_inline reset
-
+/* TODO: 94.73% - initial dot-product load/use ordering and f3/f6 allocation still differ. */
 void C_QUATSlerp(float t, const Quaternion* p, const Quaternion* q, Quaternion* r)
 {
     f32 tp;
@@ -72,11 +64,11 @@ void C_QUATSlerp(float t, const Quaternion* p, const Quaternion* q, Quaternion* 
 
     if (cos_th <= 0.99999f)
     {
-        theta = my_acosf(cos_th);
-        sin_th = my_sinf(theta);
-        mul0 = my_sinf((1.0f - t) * theta);
+        theta = acosf(cos_th);
+        sin_th = sinf(theta);
+        mul0 = sinf((1.0f - t) * theta);
         tp = mul0 / sin_th;
-        mul0 = my_sinf(t * theta) / sin_th;
+        mul0 = sinf(t * theta) / sin_th;
         tq = tq * mul0;
     }
     else

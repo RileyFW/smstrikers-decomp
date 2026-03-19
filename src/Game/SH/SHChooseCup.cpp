@@ -166,16 +166,31 @@ typedef Function0<void>::FunctorImpl<BindExp1_vfb> FunctorImpl_vfb;
 
 /**
  * Offset/Address/Size: 0x1F64 | 0x800DC1E8 | size: 0x154
- * TODO: 86.6% match - -inline deferred file, scratch uses -inline auto.
- * Bind hidden struct return pointer not generated; placement new duplicate beq;
- * Create by-value vs by-ref mangling difference. All caused by compiler flag mismatch.
+ * TODO: 91.74% match - Bind temp/no callback stack slot order differs (0x0C/0x1C),
+ * placement-new path still has duplicate NULL-check branch, and FEPopupMenu::Create
+ * call remains ref-vs-value ABI mismatch in available declarations.
  */
+template <>
+struct BindExp1<void, void (*)(bool), bool>
+{
+    void (*mFuncPtr)(bool);
+    union
+    {
+        bool mArg;
+        int mArgWord;
+    };
+
+    BindExp1() { }
+    ~BindExp1() { }
+};
+
 void startNewCup(bool isSuperCup)
 {
     FEPopupMenu* pPopup = (FEPopupMenu*)nlSingleton<GameSceneManager>::s_pInstance->Push(SCENE_POPUP_MENU, SCREEN_NOTHING, false);
 
     {
         BindExp1_vfb bindResult = Bind<void, void (*)(bool), bool>(confirmedNewCup, isSuperCup);
+        Function<FnVoidVoid> no;
 
         Function<FnVoidVoid> yes;
         yes.mTag = FUNCTOR;
@@ -188,7 +203,6 @@ void startNewCup(bool isSuperCup)
         }
         yes.mFunctor = functor;
 
-        Function<FnVoidVoid> no;
         no.mTag = FREE_FUNCTION;
         no.mFreeFunction = FEPopupMenu::Nothing;
 
@@ -224,8 +238,32 @@ void continueCup(bool isSuperCup)
 /**
  * Offset/Address/Size: 0x1DF8 | 0x800DC07C | size: 0x104
  */
-ChooseCupSceneV2::ChooseCupSceneV2(bool)
+ChooseCupSceneV2::ChooseCupSceneV2(bool isSuperCup)
+    : mIsSuperCup(isSuperCup)
+    , mUpdateSlide(false)
+    , mIsFirstSlide(true)
+    , mTicker(NULL)
 {
+    ((u8*)this)[0x480] = 0;
+
+    const char* TROPHY_FILE_NAME = "art/fe/TrophiesUI.res";
+
+    ((u8*)this)[0x481] = 0;
+
+    mCupImage = new ((AsyncImage*)nlMalloc(0x1C, 0x20, true)) AsyncImage(TROPHY_FILE_NAME, NULL);
+
+    if (mIsSuperCup)
+    {
+        mCupToDisplay = TROPHY_SUPER_MUSHROOM_CUP;
+        mMinCup = TROPHY_SUPER_MUSHROOM_CUP;
+        mMaxCup = TROPHY_SUPER_BOWSER_CUP;
+    }
+    else
+    {
+        mCupToDisplay = TROPHY_MUSHROOM_CUP;
+        mMinCup = TROPHY_MUSHROOM_CUP;
+        mMaxCup = TROPHY_BOWSER_CUP;
+    }
 }
 
 /**
@@ -233,6 +271,52 @@ ChooseCupSceneV2::ChooseCupSceneV2(bool)
  */
 ChooseCupSceneV2::~ChooseCupSceneV2()
 {
+    delete mCupImage;
+
+    FEScrollText* ticker = mTicker;
+
+    if (ticker != NULL)
+    {
+        if (ticker != NULL)
+        {
+            if ((char*)ticker + 0x21C)
+            {
+                volatile FEScrollText* vticker = ticker;
+                if ((char*)vticker + 0x21C)
+                {
+                    if (ticker->m_messageFinishedCB.mTag == FUNCTOR)
+                    {
+                        delete ticker->m_messageFinishedCB.mFunctor;
+                    }
+                    ticker->m_messageFinishedCB.mTag = EMPTY;
+                }
+            }
+
+            if ((char*)ticker + 4)
+            {
+                BasicStringInternal* data = ticker->m_message.m_data;
+                if (data != NULL)
+                {
+                    if (--data->mRefCount == 0)
+                    {
+                        if (data != NULL)
+                        {
+                            if (data != NULL)
+                            {
+                                delete[] data->mData;
+                            }
+                            if (data != NULL)
+                            {
+                                nlFree(data);
+                            }
+                        }
+                    }
+                }
+            }
+
+            ::operator delete(ticker);
+        }
+    }
 }
 
 /**

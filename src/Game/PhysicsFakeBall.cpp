@@ -35,8 +35,8 @@ void FakeBallWorld::FindBallIntercept(const nlVector3&, float, float, nlVector3&
 
 /**
  * Offset/Address/Size: 0x484 | 0x80137870 | size: 0x1E4
- * TODO: 99.6% match - remaining diffs are register allocation for iterator
- *       (r28/r29 swap) and x/y load-store ordering in velocity copy.
+ * TODO: 99.75% match - remaining diff is register allocation for iterator
+ *       (r28/r29 swap) in the early cache-hit branch.
  */
 void FakeBallWorld::GetNextBallPosition(nlVector3& v3BallPos)
 {
@@ -81,14 +81,9 @@ void FakeBallWorld::GetNextBallPosition(nlVector3& v3BallPos)
     newInfo->mfTime = mfLastCacheTime;
     newInfo->mv3Position = physObj->GetPosition();
 
-    nlVector3& vel = physObj->GetLinearVelocity();
-    s32 vx = (s32)vel.as_u32[0];
+    newInfo->mv3LinearVelocity = physObj->GetLinearVelocity();
     nlDLListSlotPool<BallCacheInfo*>* cacheList = &mBallCacheList;
-    s32 vy = (s32)vel.as_u32[1];
     DLListEntry<BallCacheInfo*>* newEntry = NULL;
-    newInfo->mv3LinearVelocity.as_u32[0] = (u32)vx;
-    newInfo->mv3LinearVelocity.as_u32[1] = (u32)vy;
-    newInfo->mv3LinearVelocity.as_u32[2] = vel.as_u32[2];
 
     if (cacheList->m_Allocator.m_FreeList == NULL)
     {
@@ -172,8 +167,9 @@ void FakeBallWorld::GetPredictedPosAtDistance(float, nlVector3&, nlVector3&)
 /**
  * Offset/Address/Size: 0xDB0 | 0x8013819C | size: 0x3FC
  */
-void FakeBallWorld::GetPredictedHeightLimitTime(float, float, nlVector3&, nlVector3&, bool)
+float FakeBallWorld::GetPredictedHeightLimitTime(float, float, nlVector3&, nlVector3&, bool)
 {
+    return 0.0f;
 }
 
 /**

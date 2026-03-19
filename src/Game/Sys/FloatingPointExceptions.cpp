@@ -28,7 +28,9 @@ enum
  */
 void FloatingPointErrorHandler(u16 /*error*/, OSContext* ctx, u32 /*dsisr*/, u32 /*dar*/)
 {
-    u32 fpscr = ctx->fpscr & (((ctx->fpscr << 0x16) & 0x3E000000) | 0x01F80000 | 0x700);
+    u32 fpscr = ctx->fpscr;
+    u32 mask = ((fpscr << 0x16) & 0x3E000000) | 0x01F80000 | 0x700;
+    fpscr &= mask;
 
     if (fpscr & BIT_2)
     {

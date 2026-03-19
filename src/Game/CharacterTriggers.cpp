@@ -143,9 +143,8 @@ void UpdateEmitterFromBall(EmissionController& emitter)
 /**
  * Offset/Address/Size: 0x4D18 | 0x801A3AC8 | size: 0x1B4
  */
-void EmitGeneric(cCharacter* pCharacter, const char* baseName, const char* characterName)
+EmissionController* EmitGeneric(cCharacter* pCharacter, const char* baseName, const char* characterName)
 {
-    // TODO: 99.08% match - remaining `i` diffs are literal/constant pool offsets in scratch context.
     EffectsGroup* pGroup;
 
     if (characterName != NULL)
@@ -183,6 +182,7 @@ void EmitGeneric(cCharacter* pCharacter, const char* baseName, const char* chara
         pControl->SetUpdateCallback(update);
     }
     pCharacter->AttachEffect(pControl);
+    return pControl;
 }
 
 /**

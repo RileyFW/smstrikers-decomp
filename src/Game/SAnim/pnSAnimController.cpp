@@ -4,6 +4,41 @@
 
 SlotPool<cPN_SAnimController> cPN_SAnimController::m_SAnimControllerSlotPool;
 
+extern "C"
+{
+    void __ct__12SlotPoolBaseFv(void*);
+    void* __register_global_object(void* object, void* destructor, void* registration);
+}
+
+struct SAnimControllerDestructorChain
+{
+    SAnimControllerDestructorChain* next;
+    void* destructor;
+    void* object;
+};
+
+void SAnimControllerSlotPoolDtor(void* obj, int)
+{
+    ((SlotPool<cPN_SAnimController>*)obj)->~SlotPool<cPN_SAnimController>();
+}
+
+/**
+ * Offset/Address/Size: 0x1064 | 0x801EB4B4 | size: 0x68
+ * TODO: 99.23% match - relocation symbols differ for slot-pool destructor and
+ * @185 registration chain.
+ */
+extern "C" void __sinit_pnSAnimController_cpp()
+{
+    static SAnimControllerDestructorChain chain;
+    SlotPoolBase* pool = (SlotPoolBase*)&cPN_SAnimController::m_SAnimControllerSlotPool;
+
+    __ct__12SlotPoolBaseFv(pool);
+    pool->m_Initial = 0x10;
+    SlotPoolBase::BaseAddNewBlock(pool, 0x54);
+    pool->m_Delta = 0x10;
+    __register_global_object(pool, (void*)SAnimControllerSlotPoolDtor, &chain);
+}
+
 /**
  * Offset/Address/Size: 0xDC0 | 0x801EB41C | size: 0x98
  */
@@ -175,9 +210,200 @@ cPoseNode* cPN_SAnimController::Update(float dt)
 /**
  * Offset/Address/Size: 0x7E8 | 0x801EAE44 | size: 0x308
  */
-void cPN_SAnimController::UpdateSynchronized(float)
+void cPN_SAnimController::UpdateSynchronized(float time)
 {
-    FORCE_DONT_INLINE;
+    /**
+     * TODO: 99.56% match - r30/r31 swap for this vs pCallback in first block, and pController in last block.
+     */
+    cSAnimCallback* pCallback;
+
+    m_fPrevTime = m_fTime;
+    m_fTime = time;
+
+    if (!m_bIgnoreTriggers)
+    {
+        pCallback = m_pSAnim->m_pCallbackList;
+
+        while (pCallback != nullptr)
+        {
+            float callbackTime = pCallback->m_fTime;
+            if (callbackTime == 0.0f)
+            {
+                extern float __float_min[];
+                callbackTime = __float_min[0];
+            }
+
+            float currTime = m_fTime;
+            float prevTime = m_fPrevTime;
+            bool shouldTrigger;
+
+            if (currTime < prevTime)
+            {
+                shouldTrigger = false;
+                if (callbackTime <= currTime || callbackTime > prevTime)
+                {
+                    shouldTrigger = true;
+                }
+            }
+            else
+            {
+                shouldTrigger = false;
+                if (callbackTime <= currTime && callbackTime > prevTime)
+                {
+                    shouldTrigger = true;
+                }
+            }
+
+            if (shouldTrigger)
+            {
+                pCallback->m_funcCallback(pCallback->m_nParam1);
+            }
+
+            pCallback = pCallback->next;
+        }
+    }
+
+    cPN_SAnimController* pController = m_pSynchronizedController;
+    if (pController == nullptr)
+    {
+        return;
+    }
+
+    pController->m_fPrevTime = pController->m_fTime;
+    pController->m_fTime = time;
+
+    if (!pController->m_bIgnoreTriggers)
+    {
+        pCallback = pController->m_pSAnim->m_pCallbackList;
+
+        while (pCallback != nullptr)
+        {
+            float callbackTime = pCallback->m_fTime;
+            if (callbackTime == 0.0f)
+            {
+                extern float __float_min[];
+                callbackTime = __float_min[0];
+            }
+
+            float currTime = pController->m_fTime;
+            float prevTime = pController->m_fPrevTime;
+            bool shouldTrigger;
+
+            if (currTime < prevTime)
+            {
+                shouldTrigger = false;
+                if (callbackTime <= currTime || callbackTime > prevTime)
+                {
+                    shouldTrigger = true;
+                }
+            }
+            else
+            {
+                shouldTrigger = false;
+                if (callbackTime <= currTime && callbackTime > prevTime)
+                {
+                    shouldTrigger = true;
+                }
+            }
+
+            if (shouldTrigger)
+            {
+                pCallback->m_funcCallback(pCallback->m_nParam1);
+            }
+
+            pCallback = pCallback->next;
+        }
+    }
+
+    pController = pController->m_pSynchronizedController;
+    if (pController == nullptr)
+    {
+        return;
+    }
+
+    pController->m_fPrevTime = pController->m_fTime;
+    pController->m_fTime = time;
+
+    if (!pController->m_bIgnoreTriggers)
+    {
+        pCallback = pController->m_pSAnim->m_pCallbackList;
+
+        while (pCallback != nullptr)
+        {
+            float callbackTime = pCallback->m_fTime;
+            if (callbackTime == 0.0f)
+            {
+                extern float __float_min[];
+                callbackTime = __float_min[0];
+            }
+
+            float currTime = pController->m_fTime;
+            float prevTime = pController->m_fPrevTime;
+            bool shouldTrigger;
+
+            if (currTime < prevTime)
+            {
+                shouldTrigger = false;
+                if (callbackTime <= currTime || callbackTime > prevTime)
+                {
+                    shouldTrigger = true;
+                }
+            }
+            else
+            {
+                shouldTrigger = false;
+                if (callbackTime <= currTime && callbackTime > prevTime)
+                {
+                    shouldTrigger = true;
+                }
+            }
+
+            if (shouldTrigger)
+            {
+                pCallback->m_funcCallback(pCallback->m_nParam1);
+            }
+
+            pCallback = pCallback->next;
+        }
+    }
+
+    pController = pController->m_pSynchronizedController;
+    if (pController == nullptr)
+    {
+        return;
+    }
+
+    pController->m_fPrevTime = pController->m_fTime;
+    pController->m_fTime = time;
+
+    if (!pController->m_bIgnoreTriggers)
+    {
+        pCallback = pController->m_pSAnim->GetCallbackList();
+
+        while (pCallback != nullptr)
+        {
+            if (pController->TestTrigger(pCallback->m_fTime))
+            {
+                pCallback->m_funcCallback(pCallback->m_nParam1);
+            }
+
+            pCallback = pCallback->next;
+        }
+    }
+
+    pController = pController->m_pSynchronizedController;
+    if (pController == nullptr)
+    {
+        return;
+    }
+
+    pController->SetTime(time);
+    pController->ProcessCallbacks();
+
+    if (pController->m_pSynchronizedController != nullptr)
+    {
+        pController->m_pSynchronizedController->UpdateSynchronized(time);
+    }
 }
 
 /**
@@ -256,19 +482,20 @@ static inline void GetRootTransDelta(cPN_SAnimController* pController, nlVector3
 
 /**
  * Offset/Address/Size: 0x3DC | 0x801EA9B8 | size: 0x280
- * TODO: 91.51% match - volatile workaround for -inline deferred stack frame (0x90 vs 0xa0).
- * decomp.me overlaps v3RootTransLocal/v3Extra; volatile prevents this but changes
- * register allocation in sin/cos+blend section (3 extra lfs reloads, r diffs).
+ * TODO: 94.96% match - pointer alias keeps 0xa0 frame/non-overlap without volatile,
+ * but sin/cos rotation scheduling still differs around accumulated-weight compare.
  */
 void cPN_SAnimController::BlendRootTrans(nlVector3* pRootTrans, float fNodeWeight, float* fAccumulatedWeight)
 {
     unsigned short aLastFrameFacing;
     nlVector3 v3RootTrans;
-    volatile nlVector3 v3RootTransLocal;
+    nlVector3 v3RootTransLocal;
+    nlVector3* pV3RootTransLocal;
     unsigned short aMirrorAdjust;
     nlVector3 v3Extra;
     float fBlendPercent;
 
+    pV3RootTransLocal = &v3RootTransLocal;
     aMirrorAdjust = 0;
 
     if (m_fTime < m_fPrevTime)
@@ -300,17 +527,17 @@ void cPN_SAnimController::BlendRootTrans(nlVector3* pRootTrans, float fNodeWeigh
 
         *fAccumulatedWeight += fNodeWeight;
 
+        v3RootTransLocal.f.z = v3RootTrans.f.z;
         v3RootTransLocal.f.x = v3RootTrans.f.x * fCos - v3RootTrans.f.y * fSin;
         v3RootTransLocal.f.y = v3RootTrans.f.y * fCos + v3RootTrans.f.x * fSin;
-        v3RootTransLocal.f.z = v3RootTrans.f.z;
     }
 
     if (*fAccumulatedWeight != 0.0f)
     {
         fBlendPercent = fNodeWeight / *fAccumulatedWeight;
-        pRootTrans->f.x = (1.0f - fBlendPercent) * pRootTrans->f.x + fBlendPercent * v3RootTransLocal.f.x;
-        pRootTrans->f.y = (1.0f - fBlendPercent) * pRootTrans->f.y + fBlendPercent * v3RootTransLocal.f.y;
-        pRootTrans->f.z = (1.0f - fBlendPercent) * pRootTrans->f.z + fBlendPercent * v3RootTransLocal.f.z;
+        pRootTrans->f.x = (1.0f - fBlendPercent) * pRootTrans->f.x + fBlendPercent * pV3RootTransLocal->f.x;
+        pRootTrans->f.y = (1.0f - fBlendPercent) * pRootTrans->f.y + fBlendPercent * pV3RootTransLocal->f.y;
+        pRootTrans->f.z = (1.0f - fBlendPercent) * pRootTrans->f.z + fBlendPercent * pV3RootTransLocal->f.z;
     }
 }
 

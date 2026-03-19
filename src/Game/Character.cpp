@@ -472,8 +472,128 @@ void cCharacter::PoseLocalSpace()
  */
 cPN_SAnimController* cCharacter::NewAnimController(int animID, bool bRestartCyclic, bool bForceMirrorSwap, void (*funcPlaybackSpeedCallback)(unsigned int, cPN_SAnimController*), unsigned int nPlaybackSpeedCallbackParam)
 {
-    FORCE_DONT_INLINE;
-    return nullptr;
+    /**
+     * TODO: 98.67% match - remaining mismatch is an extra null-check sequence
+     * around cPN_SAnimController placement construction register flow.
+     */
+    bool restartCyclic = bRestartCyclic;
+    bool forceMirrorSwap = bForceMirrorSwap;
+    void (*playbackSpeedCallback)(unsigned int, cPN_SAnimController*) = funcPlaybackSpeedCallback;
+    unsigned int playbackSpeedCallbackParam = (unsigned int)this;
+
+    if (m_pAnimInventory->GetMatchCharacterSpeed(animID))
+    {
+        playbackSpeedCallback = MatchAnimSpeedToCharacterSpeed;
+    }
+    else if (funcPlaybackSpeedCallback != NULL)
+    {
+        playbackSpeedCallbackParam = nPlaybackSpeedCallbackParam;
+    }
+
+    bool bMirrorSwap = false;
+    float startTime = 0.0f;
+
+    if (m_pCurrentAnimController != NULL)
+    {
+        if (m_eClassType == FIELDER)
+        {
+            if (restartCyclic || m_pAnimInventory->GetPlayMode(m_eAnimID) == PM_HOLD)
+            {
+                if (m_pAnimInventory->GetPlayMode(animID) == PM_CYCLIC)
+                {
+                    if (m_pAnimInventory->GetEndPhase(m_eAnimID) == 1)
+                    {
+                        bMirrorSwap = true;
+                    }
+                    else if (m_pAnimInventory->GetMirrored(m_eAnimID))
+                    {
+                        bMirrorSwap = true;
+                    }
+                }
+                else if (m_pAnimInventory->GetPlayMode(animID) == PM_HOLD)
+                {
+                    bMirrorSwap = forceMirrorSwap;
+                }
+            }
+            else if (m_pAnimInventory->GetPlayMode(m_eAnimID) == PM_CYCLIC)
+            {
+                if (m_pAnimInventory->GetPlayMode(animID) == PM_CYCLIC)
+                {
+                    startTime = m_pCurrentAnimController->m_fTime;
+                    if (m_pAnimInventory->GetMirrored(m_eAnimID) != m_pAnimInventory->GetMirrored(animID))
+                    {
+                        bMirrorSwap = true;
+                    }
+                }
+                else if (forceMirrorSwap)
+                {
+                    bMirrorSwap = true;
+                }
+            }
+        }
+        else
+        {
+            if (restartCyclic || m_pAnimInventory->GetPlayMode(m_eAnimID) == PM_HOLD)
+            {
+                if (m_pAnimInventory->GetPlayMode(animID) == PM_CYCLIC)
+                {
+                    if (m_pAnimInventory->GetEndPhase(m_eAnimID) == 2)
+                    {
+                        startTime = 0.5f;
+                    }
+                    else
+                    {
+                        startTime = 0.0f;
+                    }
+                }
+            }
+            else if (m_pAnimInventory->GetPlayMode(m_eAnimID) == PM_CYCLIC)
+            {
+                if (m_pAnimInventory->GetPlayMode(animID) == PM_CYCLIC)
+                {
+                    startTime = m_pCurrentAnimController->m_fTime;
+                    if (m_pAnimInventory->GetEndPhase(m_eAnimID) != m_pAnimInventory->GetEndPhase(animID))
+                    {
+                        startTime += 0.5f;
+                        if (startTime >= 1.0f)
+                        {
+                            startTime -= 1.0f;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    cSAnim* anim = m_pAnimInventory->GetAnim(animID);
+    cPN_SAnimController* controller = AllocateSAnimController();
+
+    if (controller != NULL)
+    {
+        bool mirrored;
+        if (bMirrorSwap)
+        {
+            mirrored = !m_pAnimInventory->GetMirrored(animID);
+        }
+        else
+        {
+            mirrored = m_pAnimInventory->GetMirrored(animID);
+        }
+
+        const AnimRetarget* retarget = NULL;
+        if (m_pAnimRetargetList != NULL)
+        {
+            retarget = m_pAnimRetargetList->GetAnimRetargetWithSignature(anim);
+        }
+
+        ePlayMode playMode = m_pAnimInventory->GetPlayMode(animID);
+        new (controller) cPN_SAnimController(anim, retarget, playMode, playbackSpeedCallback, playbackSpeedCallbackParam, mirrored);
+    }
+
+    controller->m_fPrevTime = controller->m_fTime;
+    controller->m_fTime = startTime;
+
+    return controller;
 }
 
 inline float ClampMin(float speedRatio, const float min)
@@ -665,10 +785,6 @@ nlVector3& cCharacter::GetPrevJointPosition(int jointIndex)
  */
 void cCharacter::GetCurrentAnimFuture(int nJointIndex, float fTime, nlVector3& v3Out, nlVector3& v3FutureRoot, unsigned short& outFacing)
 {
-    /**
-     * TODO: 96.79% match - remaining mismatch is register allocation/order and an
-     * extra placement-new null-check branch when constructing cPoseAccumulator.
-     */
     cPN_SAnimController* pAnim = m_pCurrentAnimController;
     float savedPrevTime = pAnim->m_fPrevTime;
     float savedTime = pAnim->m_fTime;
@@ -693,11 +809,7 @@ void cCharacter::GetCurrentAnimFuture(int nJointIndex, float fTime, nlVector3& v
     }
     else
     {
-        cPoseAccumulator* pAccumulator = (cPoseAccumulator*)nlMalloc(sizeof(cPoseAccumulator), 8, false);
-        if (pAccumulator != NULL)
-        {
-            new (pAccumulator) cPoseAccumulator(m_pPoseAccumulator->m_BaseSHierarchy, true);
-        }
+        cPoseAccumulator* pAccumulator = new (nlMalloc(sizeof(cPoseAccumulator), 8, false)) cPoseAccumulator(m_pPoseAccumulator->m_BaseSHierarchy, true);
 
         nlMatrix4 m;
         nlMakeRotationMatrixZ(m, 0.0000958738f * (float)outFacing);
@@ -724,10 +836,74 @@ void cCharacter::GetCurrentAnimFuture(int nJointIndex, float fTime, nlVector3& v
 /**
  * Offset/Address/Size: 0x1AA8 | 0x8000F9F4 | size: 0x324
  */
-nlVector3& cCharacter::GetJointPositionFuture(nlVector3* v3Out, int nAnimIndex, int nJointIndex, float fTime, bool bAddRootTrans, bool bAddRootRot, bool bUsePrevPosition)
+void cCharacter::GetJointPositionFuture(nlVector3* v3Out, int nAnimIndex, int nJointIndex, float fTime, bool bAddRootTrans, bool bAddRootRot, bool bUsePrevPosition)
 {
-    FORCE_DONT_INLINE;
-    return m_v3AnimMoveAdjust;
+    nlMatrix4 m4RootMat;
+    m4RootMat.SetIdentity();
+
+    cPoseAccumulator poseAccumulator(m_pPoseAccumulator->m_BaseSHierarchy, true);
+
+    cSAnim* pAnim = m_pAnimInventory->GetAnim(nAnimIndex);
+    AnimRetarget* pRetarget = NULL;
+    if (m_pAnimRetargetList != NULL)
+    {
+        pRetarget = m_pAnimRetargetList->GetAnimRetargetWithSignature(pAnim);
+    }
+
+    cPN_SAnimController animController(pAnim, pRetarget, PM_CYCLIC, NULL, 0, false);
+    animController.m_bMirror = m_pAnimInventory->GetMirrored(nAnimIndex);
+    animController.m_fPrevTime = animController.m_fTime;
+    animController.m_fTime = fTime;
+
+    if (bAddRootRot)
+    {
+        u16 aCurRotation = 0;
+        if (bUsePrevPosition)
+        {
+            aCurRotation = m_aActualFacingDirection;
+        }
+
+        u16 aRootRotation;
+        animController.GetRootRot(&aRootRotation);
+        aCurRotation += aRootRotation;
+
+        nlMakeRotationMatrixZ(m4RootMat, 0.0000958738f * (float)aCurRotation);
+    }
+
+    if (bAddRootTrans)
+    {
+        u16 aCurRotation = 0;
+        if (bUsePrevPosition)
+        {
+            aCurRotation = m_aActualFacingDirection;
+        }
+
+        nlVector3 v3RootVelocity;
+        animController.GetRootTrans(&v3RootVelocity, aCurRotation);
+        v3RootVelocity.f.z = 0.0f;
+
+        if (bUsePrevPosition)
+        {
+            v3RootVelocity.f.x += m_v3Position.f.x;
+            v3RootVelocity.f.y += m_v3Position.f.y;
+        }
+
+        if (nJointIndex < 0)
+        {
+            *v3Out = v3RootVelocity;
+            return;
+        }
+
+        m4RootMat.m[3][0] = v3RootVelocity.f.x;
+        m4RootMat.m[3][1] = v3RootVelocity.f.y;
+        m4RootMat.m[3][2] = v3RootVelocity.f.z;
+        m4RootMat.m[3][3] = 1.0f;
+    }
+
+    poseAccumulator.Pose(animController, m4RootMat);
+
+    const nlMatrix4& m4NodeMatrix = poseAccumulator.GetNodeMatrix(nJointIndex);
+    *v3Out = *(nlVector3*)&m4NodeMatrix.m[3][0];
 }
 
 /**
@@ -762,21 +938,19 @@ s16 cCharacter::CalcAnimTurnAdjust(unsigned short param1, unsigned short param2,
 {
     cSAnim* anim = m_pAnimInventory->GetAnim(animID);
     cPN_SAnimController* controller = AllocateSAnimController();
-    if (controller == nullptr)
+    if (controller != nullptr)
     {
-        return 0;
+        const AnimRetarget* retarget = nullptr;
+        if (m_pAnimRetargetList != nullptr)
+        {
+            retarget = m_pAnimRetargetList->GetAnimRetargetWithSignature(anim);
+        }
+
+        bool mirrored = m_pAnimInventory->GetMirrored(animID);
+        ePlayMode playMode = m_pAnimInventory->GetPlayMode(animID);
+
+        controller = new (controller) cPN_SAnimController(anim, retarget, playMode, nullptr, 0, mirrored);
     }
-
-    const AnimRetarget* retarget = nullptr;
-    if (m_pAnimRetargetList != nullptr)
-    {
-        retarget = m_pAnimRetargetList->GetAnimRetargetWithSignature(anim);
-    }
-
-    const bool mirrored = m_pAnimInventory->GetMirrored(animID);
-    const ePlayMode playMode = m_pAnimInventory->GetPlayMode(animID);
-
-    controller = new (controller) cPN_SAnimController(anim, retarget, playMode, nullptr, 0, mirrored);
 
     controller->m_fPrevTime = controller->m_fTime; // 0.0f
     controller->m_fTime = 0.0f;
@@ -786,7 +960,7 @@ s16 cCharacter::CalcAnimTurnAdjust(unsigned short param1, unsigned short param2,
     unsigned short rootRot;
     controller->GetRootRot(&rootRot);
 
-    s16 combined = param1 + rootRot;
+    unsigned short combined = param1 + rootRot;
 
     delete controller;
 
@@ -875,6 +1049,12 @@ cCharacter::cCharacter(eCharacterClass, const int*, cSHierarchy*, cAnimInventory
  */
 void AIEventHandler(Event*, void*)
 {
+}
+
+void cPN_SAnimController::operator delete(void* ptr)
+{
+    ((SlotPoolEntry*)ptr)->m_next = m_SAnimControllerSlotPool.m_FreeList;
+    m_SAnimControllerSlotPool.m_FreeList = (SlotPoolEntry*)ptr;
 }
 
 // /**

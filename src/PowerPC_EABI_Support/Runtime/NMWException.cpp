@@ -9,7 +9,7 @@ class __partial_array_destructor
 {
 private:
     void* p;
-    size_t size;
+    volatile size_t size;
     size_t n;
     ConstructorDestructor dtor;
 

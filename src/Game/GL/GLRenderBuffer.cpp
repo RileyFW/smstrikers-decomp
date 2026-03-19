@@ -36,14 +36,13 @@ u32 glRenderBuffer[4];
 
 /**
  * Offset/Address/Size: 0x0 | 0x801E80F8 | size: 0x3C
- * TODO: 96% match - compiler instruction scheduling: stw r0,0x24(r1) (LR save)
- * placed immediately after mflr instead of after first lwz from r5.
- * Cannot fix via source code - MWCC scheduler heuristic difference.
- * Implementation is template instantiation from nlDLRing.h:268-273
+ * TODO: 96% match - stw LR save scheduling differs by one slot
+ * (target emits first lwz from callbackFunc before stw r0,0x24(r1)).
  */
-// void nlWalkDLRing<DLListEntry<GLDrawableData*>, DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > > >(DLListEntry<GLDrawableData*>*, DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > >*, void (DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > >::*)(DLListEntry<GLDrawableData*>*))
-// {
-// }
+template void nlWalkDLRing<DLListEntry<GLDrawableData*>, DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > > >(
+    DLListEntry<GLDrawableData*>* head,
+    DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > >* callback,
+    void (DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > >::*callbackFunc)(DLListEntry<GLDrawableData*>*));
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x801E80D4 | size: 0x24
@@ -54,19 +53,22 @@ u32 glRenderBuffer[4];
 
 /**
  * Offset/Address/Size: 0x0 | 0x801E7FB0 | size: 0x124
+ * TODO: 95.21% match - post-loop cleanup still emits nlWalkRing calls
+ * instead of nlWalkDLRing with target argument setup.
  */
 GLRenderBuffer::~GLRenderBuffer()
 {
+    DLListEntry<GLDrawableData*>* head;
     DLListEntry<GLDrawableData*>* current = nlDLRingGetStart<DLListEntry<GLDrawableData*> >(m_drawableData.m_Head);
-    DLListEntry<GLDrawableData*>* head = m_drawableData.m_Head;
+    head = m_drawableData.m_Head;
 
-    while (current != nullptr)
+    while (current != 0)
     {
         nlFree(current->m_data);
 
-        if (nlDLRingIsEnd<DLListEntry<GLDrawableData*> >(head, current))
+        if (nlDLRingIsEnd<DLListEntry<GLDrawableData*> >(head, current) || current == 0)
         {
-            current = nullptr;
+            current = 0;
         }
         else
         {
@@ -74,12 +76,10 @@ GLRenderBuffer::~GLRenderBuffer()
         }
     }
 
-    m_drawableData.m_Head = nullptr;
-
     nlWalkDLRing<DLListEntry<GLDrawableData*>, DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > > >(
         m_drawableData.m_Head,
         &m_drawableData,
         &DLListContainerBase<GLDrawableData*, NewAdapter<DLListEntry<GLDrawableData*> > >::DeleteEntry);
 
-    m_drawableData.m_Head = nullptr;
+    m_drawableData.m_Head = 0;
 }

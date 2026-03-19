@@ -23,7 +23,7 @@ u32 g_uResourceMarker = 0;
 
 u32 p_frame[4];
 u32 n_frame[4];
-u32 FrameMemSizes[2] = { FrameMemSizeReal = 0xE00000, FrameMemSizeVirt = 0xA00000 }; // Add this line
+u32 FrameMemSizes[2];
 GLXMemoryInfo g_uResourceAlloc[16];
 
 GLInventory glInventory;
@@ -294,4 +294,21 @@ GLXMemoryInfo::GLXMemoryInfo()
         m_uBytes[i] = 0;
     }
     m_uTexBundle = 0;
+}
+
+typedef void (*ConstructorDestructor)(void*);
+extern "C" void __ct__13GLXMemoryInfoFv(void*);
+extern "C" void __construct_array(void* ptr, ConstructorDestructor ctor, ConstructorDestructor dtor, unsigned long size, unsigned long n);
+
+/**
+ * Offset/Address/Size: 0x930 | 0x801B7258 | size: 0x64
+ */
+extern "C" void __sinit_glxMemory_cpp()
+{
+    ResourceMemSize = 0xBFD000;
+    FrameMemSizeReal = 0xE0000;
+    FrameMemSizeVirt = 0xA0000;
+    FrameMemSizes[0] = 0xE0000;
+    FrameMemSizes[1] = 0xA0000;
+    __construct_array(g_uResourceAlloc, __ct__13GLXMemoryInfoFv, 0, 0x1C, 0x10);
 }

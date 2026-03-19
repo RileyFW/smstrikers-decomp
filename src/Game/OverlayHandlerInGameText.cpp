@@ -13,6 +13,30 @@
 
 extern FEInput* g_pFEInput;
 
+static char* TEAM_SLIDE_NAMES[8] = {
+    "DAISY",
+    "DK",
+    "LUIGI",
+    "MARIO",
+    "PEACH",
+    "WALUIGI",
+    "WARIO",
+    "YOSHI"
+}; // size: 0x20, address: 0x802BFE60
+
+static const char* OVERLAY_HANDLER_LAYER_NAME = "Layer"; // size: 0x4, address: 0x80395EAC
+
+static const struct InGameTextEntry IGTTable[8] = {
+    { SLIDE_NAME_TEXT_GOAL, "GOAL!", 0 },
+    { SLIDE_NAME_TEXT_KICKOFF, "KICKOFF!", 0 },
+    { SLIDE_NAME_TEXT_WINNER, "WINNER!", 1 },
+    { SLIDE_NAME_TEXT_PAUSE, "Pause", 1 },
+    { SLIDE_NAME_TEXT_TIE, "TIE!", 1 },
+    { SLIDE_NAME_TEXT_LOADING, "LOADING...", 1 },
+    { SLIDE_NAME_TEXT_SHOOT, "Shoot!", 2 },
+    { SLIDE_NAME_TEXT_REPLAY, "REPLAY", 16 }
+}; // size: 0x60, address: 0x802AD8E0
+
 /**
  * Offset/Address/Size: 0xBC | 0x800FC998 | size: 0x208
  */

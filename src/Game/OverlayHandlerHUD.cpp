@@ -1,9 +1,17 @@
 #include "Game/OverlayHandlerHUD.h"
 #include "Game/Team.h"
+#include "Game/Sys/eventman.h"
 #include "Game/FE/tlComponentInstance.h"
 #include "NL/nlLexicalCast.h"
 
 extern cTeam* g_pTeams[];
+
+struct PowerupAcquireEventData : public EventData
+{
+    virtual u32 GetID();
+
+    int mHomeAway;
+};
 
 /**
  * Offset/Address/Size: 0x124 | 0x800FA3BC | size: 0xCF0
@@ -23,8 +31,9 @@ extern cTeam* g_pTeams[];
 /**
  * Offset/Address/Size: 0x0 | 0x800FA290 | size: 0x8
  */
-// void PowerupAcquireEventData::GetID()
+// u32 PowerupAcquireEventData::GetID()
 // {
+//     return 0x1C3;
 // }
 
 /**
@@ -211,6 +220,121 @@ void HUDOverlay::LoadHUDTextures()
  */
 void HUDOverlay::DisplayPowerUps()
 {
+    FETextureResource* texture[2];
+
+    for (int homeAway = 0; homeAway < 2; homeAway++)
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            int numPowerups = g_pTeams[homeAway]->GetPowerUpByIndex(i).nnumOfPowerups;
+
+            switch (g_pTeams[homeAway]->GetPowerUpByIndex(i).eType)
+            {
+            case POWER_UP_NONE:
+                texture[i] = NULL;
+                break;
+            case POWER_UP_GREEN_SHELL:
+                texture[i] = m_pShellGreen;
+                break;
+            case POWER_UP_SPINY_SHELL:
+                texture[i] = m_pShellSpike;
+                break;
+            case POWER_UP_FREEZE_SHELL:
+                texture[i] = m_pShellBlue;
+                break;
+            case POWER_UP_RED_SHELL:
+                texture[i] = m_pShellRed;
+                break;
+            case POWER_UP_MUSHROOM:
+                texture[i] = m_pMushroom;
+                break;
+            case POWER_UP_BANANA:
+                texture[i] = m_pBanana;
+                break;
+            case POWER_UP_BOBOMB:
+                texture[i] = m_pBobomb;
+                break;
+            case POWER_UP_STAR:
+                texture[i] = m_pStar;
+                break;
+            case POWER_UP_CHAIN_CHOMP:
+                texture[i] = m_pChomp;
+                break;
+            }
+
+            if (texture[i] == NULL)
+            {
+                m_pImagePowerUps[0][homeAway][i]->m_bVisible = false;
+                m_pImagePowerUps[1][homeAway][i]->m_bVisible = false;
+                if (mNumFlareCycles[homeAway][i] >= 0)
+                {
+                    mNumFlareCycles[homeAway][i] = -1;
+                    m_pImageFlares[0][homeAway][i]->m_bVisible = false;
+                }
+                m_pPowerupTextComponents[0][homeAway][i]->SetActiveSlide("1");
+                m_pPowerupTextComponents[1][homeAway][i]->SetActiveSlide("1");
+            }
+            else
+            {
+                if (g_pTeams[homeAway]->GetPowerUpByIndex(i).bIsNew && mNumFlareCycles[homeAway][i] == -1)
+                {
+                    m_pImageFlares[0][homeAway][i]->m_bVisible = true;
+                    m_pComponentFlares[homeAway][i]->SetActiveSlide("Slide1");
+                    m_pComponentFlares[homeAway][i]->Update(0.0f);
+                    mNumFlareCycles[homeAway][i] = 20;
+                }
+                else if (mNumFlareCycles[homeAway][i] != -1)
+                {
+                    TLSlide* activeSlide = m_pComponentFlares[homeAway][i]->GetActiveSlide();
+                    if (activeSlide->m_time >= activeSlide->m_start + activeSlide->m_duration - 0.1f)
+                    {
+                        m_pImagePowerUps[0][homeAway][i]->m_bVisible = true;
+                        m_pImagePowerUps[1][homeAway][i]->m_bVisible = true;
+                        m_pImageFlares[0][homeAway][i]->m_bVisible = false;
+                        m_pImageFlares[1][homeAway][i]->m_bVisible = false;
+                        g_pTeams[homeAway]->SetIsPowerUpNew(i, false);
+                        mNumFlareCycles[homeAway][i] = -1;
+
+                        if (mIsHUDSlideIn)
+                        {
+                            PowerupAcquireEventData* data = new ((u8*)g_pEventManager->CreateValidEvent(0x69, 0x1C) + 0x10) PowerupAcquireEventData();
+                            data->mHomeAway = homeAway;
+                        }
+                    }
+                }
+            }
+
+            m_pImagePowerUps[0][homeAway][i]->m_component->pChildren = (TLSlide*)texture[i];
+            m_pImagePowerUps[1][homeAway][i]->m_component->pChildren = (TLSlide*)texture[i];
+
+            if (mNumFlareCycles[homeAway][i] == -1 && texture[i] != NULL)
+            {
+                m_pImagePowerUps[0][homeAway][i]->m_bVisible = true;
+                m_pImagePowerUps[1][homeAway][i]->m_bVisible = true;
+            }
+
+            if (mNumFlareCycles[homeAway][i] != -1 || numPowerups == 1 || numPowerups == 0)
+            {
+                m_pPowerupTextComponents[0][homeAway][i]->SetActiveSlide("1");
+                m_pPowerupTextComponents[1][homeAway][i]->SetActiveSlide("1");
+            }
+            else if (numPowerups == 3)
+            {
+                m_pPowerupTextComponents[0][homeAway][i]->SetActiveSlide("X3");
+                m_pPowerupTextComponents[1][homeAway][i]->SetActiveSlide("X3");
+            }
+            else if (numPowerups == 5)
+            {
+                m_pPowerupTextComponents[0][homeAway][i]->SetActiveSlide("X5");
+                m_pPowerupTextComponents[1][homeAway][i]->SetActiveSlide("X5");
+            }
+        }
+    }
+}
+
+u32 PowerupAcquireEventData::GetID()
+{
+    return 0x1C3;
 }
 
 /**

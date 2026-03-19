@@ -8,6 +8,29 @@
 
 extern FEInput* g_pFEInput;
 
+extern "C"
+{
+    void __ct__12SlotPoolBaseFv(void*);
+    void* __register_global_object(void* object, void* destructor, void* registration);
+}
+
+struct FeSceneManagerDestructorChain
+{
+    FeSceneManagerDestructorChain* next;
+    void* destructor;
+    void* object;
+};
+
+void PushPopMessageSlotPoolDtor(void* obj, int)
+{
+    ((SlotPool<PackagePushPopMessage>*)obj)->~SlotPool<PackagePushPopMessage>();
+}
+
+void PushPopMessageQueueDtor(void* obj, int)
+{
+    ((nlDLListSlotPool<PackagePushPopMessage*>*)obj)->~nlDLListSlotPool<PackagePushPopMessage*>();
+}
+
 static SlotPool<PackagePushPopMessage> m_PushPopMessageSlotPool__21PackagePushPopMessage;
 static nlDLListSlotPool<PackagePushPopMessage*> m_pushPopMessageQueue;
 
@@ -440,27 +463,19 @@ FESceneManager::~FESceneManager()
 {
     ForceImmediateStackProcessing();
     FERender::Cleanup();
-
-    nlWalkDLRing<DLListEntry<BaseSceneHandler*>, DLListContainerBase<BaseSceneHandler*, BasicSlotPool<DLListEntry<BaseSceneHandler*> > > >(
-        m_sceneHandlerStack.m_Head,
-        &m_sceneHandlerStack,
-        &DLListContainerBase<BaseSceneHandler*, BasicSlotPool<DLListEntry<BaseSceneHandler*> > >::DeleteEntry);
 }
 
 /**
  * Offset/Address/Size: 0x9C4 | 0x8020E010 | size: 0x70
+ * TODO: 73.21% match - m_sceneHandlerStack ctor ordering and register allocation differ
+ * (r31/r30 usage and m_Head/m_Delta store order around BaseAddNewBlock).
  */
 FESceneManager::FESceneManager()
-// : m_sceneHandlerStack()
+    : m_sceneHandlerStack(0x14, 0)
 {
-    // new (&m_sceneHandlerStack.m_Allocator) SlotPoolBase();
-    // m_sceneHandlerStack.m_Head = nullptr;
-    // m_sceneHandlerStack.m_Allocator.m_Initial = 0x14;
-    // SlotPoolBase::BaseAddNewBlock(&m_sceneHandlerStack.m_Allocator, sizeof(DLListEntry<BaseSceneHandler*>));
-    // m_sceneHandlerStack.m_Allocator.m_Delta = 0;
-    // m_uDefaultRenderView = -1;
-    // m_topMostScene = nullptr;
-    // FERender::Initialize();
+    m_uDefaultRenderView = -1;
+    m_topMostScene = nullptr;
+    FERender::Initialize();
 }
 
 // /**
@@ -469,6 +484,34 @@ FESceneManager::FESceneManager()
 // void DLListContainerBase<BaseSceneHandler*, BasicSlotPool<DLListEntry<BaseSceneHandler*>>>::DeleteEntry(DLListEntry<BaseSceneHandler*>*)
 // {
 // }
+
+/**
+ * Offset/Address/Size: 0xA34 | 0x8020E090 | size: 0xC0
+ * TODO: 98.75% match - r30/r31 assignment order differs for queue aliases and
+ * relocation symbols differ for destructor/registration chain labels.
+ */
+extern "C" void __sinit_feSceneManager_cpp()
+{
+    static FeSceneManagerDestructorChain chain1;
+    static FeSceneManagerDestructorChain chain2;
+    SlotPoolBase* messagePoolBase = (SlotPoolBase*)&m_PushPopMessageSlotPool__21PackagePushPopMessage;
+
+    __ct__12SlotPoolBaseFv(messagePoolBase);
+    messagePoolBase->m_Initial = 0x14;
+    SlotPoolBase::BaseAddNewBlock(messagePoolBase, sizeof(PackagePushPopMessage));
+    messagePoolBase->m_Delta = 0;
+    __register_global_object(messagePoolBase, (void*)PushPopMessageSlotPoolDtor, &chain1);
+
+    volatile SlotPoolBase* queueBaseCopy = (SlotPoolBase*)&m_pushPopMessageQueue;
+    SlotPoolBase* messageQueueBase = (SlotPoolBase*)queueBaseCopy;
+
+    __ct__12SlotPoolBaseFv((void*)queueBaseCopy);
+    ((nlDLListSlotPool<PackagePushPopMessage*>*)queueBaseCopy)->m_Head = 0;
+    messageQueueBase->m_Initial = 0x14;
+    SlotPoolBase::BaseAddNewBlock(messageQueueBase, sizeof(DLListEntry<PackagePushPopMessage*>));
+    ((SlotPoolBase*)queueBaseCopy)->m_Delta = 0;
+    __register_global_object((void*)queueBaseCopy, (void*)PushPopMessageQueueDtor, &chain2);
+}
 
 // /**
 //  * Offset/Address/Size: 0xD0 | 0x8020E150 | size: 0x10
@@ -492,15 +535,17 @@ FESceneManager::FESceneManager()
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x8020E26C | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<BaseSceneHandler*>, DLListContainerBase<BaseSceneHandler*,
-// BasicSlotPool<DLListEntry<BaseSceneHandler*>>>>(DLListEntry<BaseSceneHandler*>*, DLListContainerBase<BaseSceneHandler*,
-// BasicSlotPool<DLListEntry<BaseSceneHandler*>>>*, void (DLListContainerBase<BaseSceneHandler*,
-// BasicSlotPool<DLListEntry<BaseSceneHandler*>>>::*)(DLListEntry<BaseSceneHandler*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x8020E26C | size: 0x3C
+ * TODO: 96% match - stw LR save scheduling differs by one slot
+ * (target emits first lwz from callbackFunc before stw r0,0x24(r1)).
+ */
+template void nlWalkDLRing<DLListEntry<BaseSceneHandler*>,
+    DLListContainerBase<BaseSceneHandler*, BasicSlotPool<DLListEntry<BaseSceneHandler*> > > >(
+    DLListEntry<BaseSceneHandler*>* head,
+    DLListContainerBase<BaseSceneHandler*, BasicSlotPool<DLListEntry<BaseSceneHandler*> > >* callback,
+    void (DLListContainerBase<BaseSceneHandler*, BasicSlotPool<DLListEntry<BaseSceneHandler*> > >::*callbackFunc)(
+        DLListEntry<BaseSceneHandler*>*));
 
 // /**
 //  * Offset/Address/Size: 0x3C | 0x8020E2A8 | size: 0x38
@@ -572,15 +617,17 @@ FESceneManager::FESceneManager()
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x218 | 0x8020E484 | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<PackagePushPopMessage*>, DLListContainerBase<PackagePushPopMessage*,
-// BasicSlotPool<DLListEntry<PackagePushPopMessage*>>>>(DLListEntry<PackagePushPopMessage*>*, DLListContainerBase<PackagePushPopMessage*,
-// BasicSlotPool<DLListEntry<PackagePushPopMessage*>>>*, void (DLListContainerBase<PackagePushPopMessage*,
-// BasicSlotPool<DLListEntry<PackagePushPopMessage*>>>::*)(DLListEntry<PackagePushPopMessage*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x218 | 0x8020E484 | size: 0x3C
+ * TODO: 96% match - stw LR save scheduling differs by one slot
+ * (target emits first lwz from callbackFunc before stw r0,0x24(r1)).
+ */
+template void nlWalkDLRing<DLListEntry<PackagePushPopMessage*>,
+    DLListContainerBase<PackagePushPopMessage*, BasicSlotPool<DLListEntry<PackagePushPopMessage*> > > >(
+    DLListEntry<PackagePushPopMessage*>* head,
+    DLListContainerBase<PackagePushPopMessage*, BasicSlotPool<DLListEntry<PackagePushPopMessage*> > >* callback,
+    void (DLListContainerBase<PackagePushPopMessage*, BasicSlotPool<DLListEntry<PackagePushPopMessage*> > >::*callbackFunc)(
+        DLListEntry<PackagePushPopMessage*>*));
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x8020E4C0 | size: 0x60

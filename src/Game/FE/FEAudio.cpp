@@ -1,6 +1,8 @@
 #include "Game/FE/FEAudio.h"
 
 #include "Game/Audio/AudioLoader.h"
+#include "Game/BasicStadium.h"
+#include "Game/Game.h"
 #include "Game/Sys/eventman.h"
 #include "NL/nlString.h"
 
@@ -118,9 +120,133 @@ void FEAudio::ResetRandomVoiceToggleSFX()
 
 /**
  * Offset/Address/Size: 0x290 | 0x8009F03C | size: 0x360
+ * TODO: 66.2% match - r30/r31 register swap for pGIM/randomElementIndex
+ * and static variable label numbering differences
  */
 void FEAudio::PlayRandomVoiceToggleSFX()
 {
+    if (g_pGame != NULL)
+    {
+        Audio::eCharSFX charInGameDialogueTypes[] = {
+            Audio::CHARSFX_EFFORTS_ATTACK_01, Audio::CHARSFX_EFFORTS_ATTACK_02, Audio::CHARSFX_EFFORTS_ATTACK_03, Audio::CHARSFX_EFFORTS_HIT_01, Audio::CHARSFX_EFFORTS_HIT_02, Audio::CHARSFX_EFFORTS_HIT_03, Audio::CHARSFX_EFFORTS_GET_HIT_01, Audio::CHARSFX_EFFORTS_GET_HIT_02, Audio::CHARSFX_EFFORTS_GET_HIT_03, Audio::CHARSFX_EFFORTS_PAIN_01, Audio::CHARSFX_EFFORTS_PAIN_02, Audio::CHARSFX_EFFORTS_PAIN_03, Audio::CHARSFX_EFFORTS_PAIN_04, Audio::CHARSFX_EFFORTS_PAIN_05, Audio::CHARSFX_EFFORTS_ELECTROCUTE_01, Audio::CHARSFX_EFFORTS_ELECTROCUTE_02, Audio::CHARSFX_EFFORTS_ELECTROCUTE_03, Audio::CHARSFX_EFFORTS_EXERT_01, Audio::CHARSFX_EFFORTS_EXERT_02, Audio::CHARSFX_EFFORTS_EXERT_03, Audio::CHARSFX_EFFORTS_KICK_01, Audio::CHARSFX_EFFORTS_KICK_02, Audio::CHARSFX_EFFORTS_KICK_03, Audio::CHARSFX_BOWSER_ENTER, Audio::CHARSFX_BOWSER_ACTIVATE, Audio::CHARSFX_BOWSER_HOWL_01
+        };
+
+        static Audio::eCharSFX lastSoundPlayedType;
+        static signed char init;
+        if (!init)
+        {
+            lastSoundPlayedType = Audio::CHARSFX_NONE;
+            init = 1;
+        }
+
+        GameInfoManager* pGIM = nlSingleton<GameInfoManager>::s_pInstance;
+        pGIM->GetSidekick(0);
+        pGIM->GetSidekick(0);
+
+        unsigned int randomElementIndex = nlRandom(26, &nlDefaultSeed);
+
+        if (lastSoundPlayedType != Audio::CHARSFX_NONE)
+        {
+            if (lastSoundPlayedType == charInGameDialogueTypes[randomElementIndex])
+            {
+                randomElementIndex = (randomElementIndex + 1) % 26;
+            }
+
+            if (lastSoundPlayedType >= Audio::CHARSFX_BOWSER_ENTER && lastSoundPlayedType <= Audio::CHARSFX_BOWSER_HOWL_03)
+            {
+                BasicStadium::GetCurrentStadium()->mpNPCManager->mpBowser->m_pCharacterSFX->Stop(lastSoundPlayedType, cGameSFX::SFX_STOP_FIRST);
+            }
+            else
+            {
+                if (gpLastSoundFromPlayer != NULL)
+                {
+                    ((cCharacter*)gpLastSoundFromPlayer)->StopSFX(lastSoundPlayedType);
+                }
+            }
+
+            lastSoundPlayedType = Audio::CHARSFX_NONE;
+            gpLastSoundFromPlayer = NULL;
+        }
+
+        Audio::eCharSFX newSound = charInGameDialogueTypes[randomElementIndex];
+        lastSoundPlayedType = newSound;
+
+        if (newSound < Audio::CHARSFX_BOWSER_ENTER && newSound != Audio::CHARSFX_EFFORTS_KICK_03)
+        {
+            if ((newSound >= Audio::CHARSFX_EFFORTS_DAZED && newSound <= Audio::CHARSFX_EFFORTS_STS_FLOAT_01) || (newSound >= Audio::CHARSFX_EFFORTS_PAIN_04 && newSound <= Audio::CHARSFX_EFFORTS_ELECTROCUTE_01))
+            {
+                gpLastSoundFromPlayer = g_pTeams[0]->GetFielder(1);
+            }
+            else
+            {
+                gpLastSoundFromPlayer = g_pTeams[0]->GetGoalie();
+            }
+
+            Audio::SoundAttributes sndAtr;
+            sndAtr.Init();
+            sndAtr.SetSoundType(charInGameDialogueTypes[randomElementIndex], false);
+            ((cCharacter*)gpLastSoundFromPlayer)->m_pCharacterSFX->Play(sndAtr);
+        }
+        else
+        {
+            if (newSound >= Audio::CHARSFX_BOWSER_ENTER && newSound <= Audio::CHARSFX_BOWSER_HOWL_03)
+            {
+                BasicStadium::GetCurrentStadium()->mpNPCManager->mpBowser->PlaySFX(newSound, NONE, 0.0f, false);
+            }
+            else
+            {
+                gpLastSoundFromPlayer = g_pTeams[0]->GetGoalie();
+                Audio::SoundAttributes sndAtr;
+                sndAtr.Init();
+                sndAtr.SetSoundType(charInGameDialogueTypes[randomElementIndex], false);
+                ((cCharacter*)gpLastSoundFromPlayer)->m_pCharacterSFX->Play(sndAtr);
+            }
+        }
+    }
+    else
+    {
+        const char* szEvent = "fe_toggle_voice";
+
+        if (AudioLoader::IsInited())
+        {
+            unsigned long hash = nlStringLowerHash(szEvent);
+            if (AudioLoader::IsInited())
+            {
+                unsigned long stackHash = hash;
+                AnimAudioEventLookup* result = nlBSearch<AnimAudioEventLookup, unsigned long>(stackHash, gp_AnimAudioEventTable, gNumAnimAudioEvents);
+                AnimAudioEventLookup* event;
+                if (result)
+                    event = result;
+                else
+                    event = NULL;
+
+                if (nlStrCmp<char>(event->szSFXType, "") != 0)
+                {
+                    Audio::StopWorldSFXbyStr(event->szSFXType);
+                }
+            }
+        }
+
+        unsigned long hash = nlStringLowerHash(szEvent);
+        if (AudioLoader::IsInited())
+        {
+            if (mIsEnabled)
+            {
+                unsigned long stackHash = hash;
+                AnimAudioEventLookup* result = nlBSearch<AnimAudioEventLookup, unsigned long>(stackHash, gp_AnimAudioEventTable, gNumAnimAudioEvents);
+                AnimAudioEventLookup* event;
+                if (result)
+                    event = result;
+                else
+                    event = NULL;
+
+                if (nlStrICmp<char>(event->szSFXType, "") != 0)
+                {
+                    Audio::PlayWorldSFXbyStr(event->szSFXType, 1.0f, 0.0f, false, true, NULL, NULL, NULL);
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -227,8 +353,7 @@ long FEAudio::PlayAnimAudioEvent(const char* eventName, bool)
         return -1;
     }
 
-    Audio::PlayWorldSFXbyStr(event->szSFXType, 1.0f, 0.0f, false, true, NULL, NULL, NULL);
-    return 0;
+    return Audio::PlayWorldSFXbyStr(event->szSFXType, 1.0f, 0.0f, false, true, NULL, NULL, NULL);
 }
 
 /**

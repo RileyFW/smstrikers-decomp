@@ -5,6 +5,7 @@
 #include "Game/BaseSceneHandler.h"
 #include "Game/FE/feButtonComponent.h"
 #include "Game/FE/feRender.h"
+#include "Game/GameInfo.h"
 
 class MoviePlayerScene : public BaseSceneHandler
 {
@@ -33,6 +34,11 @@ public:
 class IntroMovieScene : public MoviePlayerScene
 {
 public:
+    IntroMovieScene()
+    {
+        SetMovieDetails("intromovie.thp", true, false);
+        mNextScene = SCENE_TITLE;
+    }
     virtual ~IntroMovieScene() { };
     virtual void PlayScreenBackSFX() { };
     virtual void PlayScreenForwardSFX() { };
@@ -42,6 +48,18 @@ public:
 class NLGLogoMovieScene : public MoviePlayerScene
 {
 public:
+    NLGLogoMovieScene()
+    {
+        if (nlSingleton<GameInfoManager>::s_pInstance->mUserInfo.mVisualOptions.mIsWidescreen)
+        {
+            SetMovieDetails("movies/nlgintrowide.thp", true, false);
+        }
+        else
+        {
+            SetMovieDetails("movies/nlgintrofull.thp", true, false);
+        }
+        mNextScene = SCENE_CREDITS;
+    }
     virtual ~NLGLogoMovieScene() { };
     virtual void PlayScreenBackSFX() { };
     virtual void PlayScreenForwardSFX() { };

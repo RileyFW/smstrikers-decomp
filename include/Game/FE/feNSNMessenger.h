@@ -59,19 +59,19 @@ public:
     NSNMessengerScene();
     ~NSNMessengerScene();
 
+    virtual void OpenMessenger();
     virtual void OpenMessengerNow();
-    virtual void SetDisplayMessage(const char*);
     virtual void SetDisplayMessage(const BasicString<unsigned short, Detail::TempStringAllocator>&);
     virtual void SetMessageFinishedCB(const Function<void*>& cb);
     virtual void CloseMessenger();
     virtual void CloseMessengerNow();
     virtual bool IsMessengerOpen() const;
 
-    virtual void OpenMessenger();
     virtual void SceneCreated();
     virtual void Update(float);
 
     void EnableScrolling(bool);
+    void SetDisplayMessage(const char*);
     void ForceMessengerVisibleNow();
 
     // void @4@SceneCreated();

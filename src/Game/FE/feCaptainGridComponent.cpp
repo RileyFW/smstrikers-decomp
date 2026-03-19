@@ -351,19 +351,21 @@ void ICaptainGridComponent::RebuildInstanceTable()
 
 /**
  * Offset/Address/Size: 0x6CC | 0x800C1DC0 | size: 0x1F0
- * TODO: 98.10% match - r22/r24 activeslide/pCell register swap in first loop,
- * r25/r28 i/cellIndex register swap in second loop
+ * TODO: 99.15% match - pCell setup emits addi+mr (r0->r22) instead of direct
+ * addi r22,CaptainCellItems@l
  */
 #pragma opt_strength_reduction off
 void ICaptainGridComponent::BuildMapMenu()
 {
-    TLSlide* activeslide = mParentComponent->GetActiveSlide();
-
-    mInstanceTable = (TLInstance**)nlMalloc(NUM_CAPTAIN_CELL_ITEMS * 4, 8, false);
-
-    unsigned long* pCell = CaptainCellItems;
+    unsigned long* pCell;
+    TLSlide* activeslide;
     int i;
-    for (i = 0; i < (int)NUM_CAPTAIN_CELL_ITEMS; i++, pCell += 2)
+
+    activeslide = mParentComponent->GetActiveSlide();
+    mInstanceTable = (TLInstance**)nlMalloc(NUM_CAPTAIN_CELL_ITEMS * 4, 8, false);
+    pCell = CaptainCellItems;
+
+    for (i = 0; i < (int)NUM_CAPTAIN_CELL_ITEMS; i++)
     {
         mInstanceTable[pCell[0]] = FEFinder<TLInstance, 2>::Find(activeslide,
             InlineHasher(nlStringLowerHash((const char*)pCell[1])),
@@ -372,32 +374,35 @@ void ICaptainGridComponent::BuildMapMenu()
             InlineHasher(0),
             InlineHasher(0),
             InlineHasher(0));
+        pCell += 2;
     }
 
     int numRows = g_e3_Build ? 2 : 3;
     int numCols = g_e3_Build ? 2 : 3;
-    int base = 0;
+    int base;
     int NUM_ELEMENTS = numRows * numCols;
+    int row = 0;
 
-    for (i = 0; i < numRows; i++)
+    base = 0;
+    for (; row < numRows; row++)
     {
-        int cellIndex = base;
+        i = base;
         for (int j = 0; j < numCols; j++)
         {
-            int col = cellIndex % numCols;
+            int col = i % numCols;
 
-            int left = cellIndex - 1;
+            int left = i - 1;
             if (col - 1 < 0)
-                left = cellIndex + numCols - 1;
+                left = i + numCols - 1;
 
-            int right = cellIndex + 1;
+            int right = i + 1;
             if (col + 1 >= numCols)
-                right = cellIndex - numCols + 1;
+                right = i - numCols + 1;
 
-            int up = (cellIndex - numCols + NUM_ELEMENTS) % NUM_ELEMENTS;
-            int down = (cellIndex + numCols) % NUM_ELEMENTS;
+            int up = (i - numCols + NUM_ELEMENTS) % NUM_ELEMENTS;
+            int down = (i + numCols) % NUM_ELEMENTS;
 
-            int itemID = (int)CaptainCellItems[cellIndex * 2];
+            int itemID = (int)CaptainCellItems[i * 2];
             mMapMenu->AddItem(
                 itemID,
                 mInstanceTable[itemID],
@@ -406,7 +411,7 @@ void ICaptainGridComponent::BuildMapMenu()
                 (int)CaptainCellItems[up * 2],
                 (int)CaptainCellItems[down * 2],
                 true);
-            cellIndex++;
+            i++;
         }
         base += numCols;
     }
@@ -420,6 +425,18 @@ void ICaptainGridComponent::BuildMapMenu()
  */
 ICaptainGridComponent::~ICaptainGridComponent()
 {
+    IGridComponent::~IGridComponent();
+
+    if (mInstanceTable != NULL)
+    {
+        delete[] mInstanceTable;
+        mInstanceTable = NULL;
+    }
+
+    delete mMapMenu;
+    mMapMenu = NULL;
+
+    // TODO: 85.95% match; remaining mismatch is IGridComponent<eTeamID> vtable/destructor shape.
 }
 
 /**

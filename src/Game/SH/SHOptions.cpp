@@ -3,6 +3,19 @@
 #include "Game/GameInfo.h"
 #include "Game/SH/SHCredits.h"
 
+extern bool DidContinueWithoutOperation();
+extern u8 mLastSaveLoadSuccess__13SaveLoadScene;
+extern unsigned long mUserInfoCRC__12OptionsScene;
+
+static const eMenuState MenuToMenuStateMap[] = {
+    MS_AUDIO,
+    MS_VISUAL,
+    MS_GAMEPLAY,
+    MS_CHEATS,
+    MS_SAVE_LOAD,
+    MS_NUMMENUSTATES,
+};
+
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800B5004 | size: 0x40
 //  */
@@ -127,7 +140,31 @@ void RevertChangesCB()
  * Offset/Address/Size: 0x1304 | 0x800B48C0 | size: 0x12C
  */
 OptionsScene::OptionsScene()
+    : BaseSceneHandler()
+    , m_subMenu(NULL)
+    , m_curMenuState(MENUSTATE_INVALID)
+    , mButtons()
+    , mMenuItems()
+    , mPopupResult(PR_DO_NOTHING)
 {
+    eMenuState menuState = MenuToMenuStateMap[mLastSelectedIndex];
+
+    if (menuState != MS_NUMMENUSTATES)
+    {
+        if (menuState == MS_SAVE_LOAD)
+        {
+            if ((mLastSaveLoadSuccess__13SaveLoadScene != 0) && (DidContinueWithoutOperation() == false))
+            {
+                mUserInfoCRC__12OptionsScene = nlChecksum32(&(nlSingleton<GameInfoManager>::s_pInstance->mUserInfo), 0x113C);
+            }
+        }
+        else if (mLastSelectedIndex == 0)
+        {
+            mUserInfoCRC__12OptionsScene = nlChecksum32(&(nlSingleton<GameInfoManager>::s_pInstance->mUserInfo), 0x113C);
+        }
+    }
+
+    mLastSaveLoadSuccess__13SaveLoadScene = 0;
 }
 
 /**
@@ -135,6 +172,10 @@ OptionsScene::OptionsScene()
  */
 OptionsScene::~OptionsScene()
 {
+    if (m_subMenu != NULL)
+    {
+        delete m_subMenu;
+    }
 }
 
 /**

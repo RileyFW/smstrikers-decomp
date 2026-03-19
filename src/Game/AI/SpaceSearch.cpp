@@ -146,18 +146,122 @@ float SSearchIdealShot::EvaluatePosition(const nlVector3& position, const nlVect
 /**
  * Offset/Address/Size: 0xCEC | 0x8006363C | size: 0x22C
  */
-SSearchBestPass::SSearchBestPass(cPlayer* pPlayer1, cPlayer* pPlayer2, bool, bool)
-    : SpaceSearch(pPlayer1)
-    , m_SSearchIdealShot(pPlayer2 ? pPlayer2->m_pTeam->GetOtherTeam()->GetGoalie() : NULL)
-    , m_SSearchOpenLane(pPlayer2, NULL)
+SSearchBestPass::SSearchBestPass(cPlayer* pBallOwner, cPlayer* pPassTarget, bool bAllowLeadPass, bool bIsPerfectPass)
+    : SpaceSearch(pBallOwner != NULL ? pBallOwner->m_pTeam->m_pNet->m_sideSign : pPassTarget->m_pTeam->m_pNet->m_sideSign)
+    , m_SSearchIdealShot(pPassTarget)
+    , m_SSearchOpenLane(pBallOwner, pPassTarget)
 {
+    m_bAllowLeadPass = bAllowLeadPass;
+    m_bIsPerfectPass = bIsPerfectPass;
 }
 
 /**
  * Offset/Address/Size: 0xA10 | 0x80063360 | size: 0x2DC
+ * TODO: 98.74% match - remaining f29/f30/f31 register allocation mismatch.
  */
-void CalcIdealShootingPositionScore(const nlVector3&, const nlVector3&, const nlVector2&, float)
+float CalcIdealShootingPositionScore(const nlVector3& v3TestPosition, const nlVector3& v3OtherPosition, const nlVector2& v2OffNetPosition, float fMaxDistance)
 {
+    float fMaxDistanceLocal;
+    float fIdealDistance;
+    float fScore;
+    float fDy;
+    float fDx;
+    float fCandidateX;
+    float fCandidateY;
+
+    fMaxDistanceLocal = fMaxDistance;
+    fDy = v2OffNetPosition.f.y - v3TestPosition.f.y;
+    fDx = v2OffNetPosition.f.x - v3TestPosition.f.x;
+    fScore = 0.0f;
+
+    fIdealDistance = g_pGame->m_pFuzzyTweaks->vIdealDistanceForShooting.f.x;
+
+    {
+        float fDistSq = fDy * fDy;
+        fDistSq += fDx * fDx;
+
+        if (fDistSq <= fIdealDistance * fIdealDistance)
+        {
+            float fInvDist = nlRecipSqrt(fDistSq, true);
+            float fNegIdealDistance = -fIdealDistance;
+            fCandidateX = v2OffNetPosition.f.x + fNegIdealDistance * (fInvDist * fDx);
+            fCandidateY = v2OffNetPosition.f.y + fNegIdealDistance * (fInvDist * fDy);
+        }
+        else
+        {
+            float fDist = nlSqrt(fDistSq, true);
+            float fScale = (fDist - fIdealDistance) / fDist;
+            fCandidateX = v3TestPosition.f.x + fScale * fDx;
+            fCandidateY = v3TestPosition.f.y + fScale * fDy;
+        }
+    }
+
+    {
+        float fDeltaY = fCandidateY - v3TestPosition.f.y;
+        float fDeltaX = fCandidateX - v3TestPosition.f.x;
+        float fIdealRange = g_pGame->m_pFuzzyTweaks->vIdealDistanceForShooting.f.y;
+
+        if ((fDeltaX * fDeltaX + fDeltaY * fDeltaY) < (fIdealRange * fIdealRange))
+        {
+            nlVector3 v3OffNetPos = { 0.0f, 0.0f, 0.0f };
+            v3OffNetPos.f.x = v2OffNetPosition.f.x;
+            v3OffNetPos.f.y = v2OffNetPosition.f.y;
+            fScore = PositionIsAtIdealDistanceForShooting(v3TestPosition, v3OffNetPos);
+        }
+        else
+        {
+            float fDx2 = v2OffNetPosition.f.x - v3OtherPosition.f.x;
+            float fDy2 = v2OffNetPosition.f.y - v3OtherPosition.f.y;
+            float fIdealDistance2 = g_pGame->m_pFuzzyTweaks->vIdealDistanceForShooting.f.x;
+            float fCandidateX2;
+            float fCandidateY2;
+            float fDistSq2 = fDy2 * fDy2;
+            fDistSq2 += fDx2 * fDx2;
+
+            if (fDistSq2 <= fIdealDistance2 * fIdealDistance2)
+            {
+                float fInvDist2 = nlRecipSqrt(fDistSq2, true);
+                float fNegIdealDistance2 = -fIdealDistance2;
+                fCandidateX2 = v2OffNetPosition.f.x + fNegIdealDistance2 * (fInvDist2 * fDx2);
+                fCandidateY2 = v2OffNetPosition.f.y + fNegIdealDistance2 * (fInvDist2 * fDy2);
+            }
+            else
+            {
+                float fDist2 = nlSqrt(fDistSq2, true);
+                float fScale2 = (fDist2 - fIdealDistance2) / fDist2;
+                fCandidateX2 = v3OtherPosition.f.x + fScale2 * fDx2;
+                fCandidateY2 = v3OtherPosition.f.y + fScale2 * fDy2;
+            }
+
+            {
+                float fCandidateLenSq = fCandidateX2 * fCandidateX2 + fCandidateY2 * fCandidateY2;
+                if (fCandidateLenSq > 0.0f)
+                {
+                    float fDy3 = v3TestPosition.f.y - v3OtherPosition.f.y;
+                    float fDx3 = v3TestPosition.f.x - v3OtherPosition.f.x;
+                    float fDeltaLenSq = fDx3 * fDx3 + fDy3 * fDy3;
+
+                    if (fDeltaLenSq > 0.0f)
+                    {
+                        float fInvDeltaLen;
+                        float fInvCandidateLen;
+                        float fDot;
+
+                        fScore = NormalizeVal(nlSqrt(fDeltaLenSq, true), 0.0f, fMaxDistanceLocal);
+
+                        fInvDeltaLen = nlRecipSqrt(fDeltaLenSq, true);
+                        fInvCandidateLen = nlRecipSqrt(fCandidateLenSq, true);
+
+                        fDot = (fInvDeltaLen * fDy3) * (fInvCandidateLen * fCandidateY2)
+                             + (fInvDeltaLen * fDx3) * (fInvCandidateLen * fCandidateX2);
+                        fScore = fScore * NormalizeVal(fDot, 0.0f, 1.0f);
+                    }
+                }
+            }
+        }
+    }
+
+    return fScore;
 }
 
 /**
@@ -184,11 +288,13 @@ SSearchIdealShot::~SSearchIdealShot()
 
 /**
  * Offset/Address/Size: 0x380 | 0x80062CD0 | size: 0x130
+ * TODO: 97.76% match - extra early m_SSearchIdealShot.m_pGoalie store and vtable store order mismatch.
  */
 SSearchRunToNet::SSearchRunToNet(cPlayer* pPlayer)
-    : SpaceSearch(pPlayer)
-    , m_SSearchIdealShot(pPlayer ? pPlayer->m_pTeam->GetOtherTeam()->GetGoalie() : NULL)
+    : SpaceSearch(pPlayer->m_pTeam->m_pNet->m_sideSign)
+    , m_SSearchIdealShot((Goalie*)pPlayer)
 {
+    m_SSearchIdealShot.m_pGoalie = pPlayer->m_pTeam->GetOtherTeam()->GetGoalie();
 }
 
 /**
@@ -251,7 +357,7 @@ float SSearchRunToNet::EvaluatePosition(const nlVector3& v3TestPosition, const n
  * Offset/Address/Size: 0x158 | 0x80062AA8 | size: 0x3C
  */
 SSearchCutAndBreak::SSearchCutAndBreak(cPlayer* pPlayer)
-    : SpaceSearch(pPlayer)
+    : SpaceSearch(pPlayer->m_pTeam->m_pNet->m_sideSign)
 {
     m_pPlayer = pPlayer;
 }

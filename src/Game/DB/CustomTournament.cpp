@@ -364,12 +364,13 @@
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x144 | 0x8018E74C | size: 0x8
-//  */
-// void Knockout<8>::GetNumRounds()
-// {
-// }
+/**
+ * Offset/Address/Size: 0x144 | 0x8018E74C | size: 0x8
+ */
+u16 Knockout<8>::GetNumRounds()
+{
+    return 3;
+}
 
 // /**
 //  * Offset/Address/Size: 0x13C | 0x8018E744 | size: 0x8
@@ -420,6 +421,10 @@ CustomTournament::CustomTournament()
  */
 CustomTournament::~CustomTournament()
 {
+    if (m_cup != NULL)
+    {
+        m_cup = NULL;
+    }
 }
 
 /**

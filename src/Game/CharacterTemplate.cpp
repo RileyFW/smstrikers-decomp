@@ -7,9 +7,25 @@
 #include "NL/nlMemory.h"
 #include "NL/gl/gl.h"
 
+extern SoundPropAccessor* gpBIRDOSoundPropAccessor;
+extern SoundPropAccessor* gpDAISYSoundPropAccessor;
+extern SoundPropAccessor* gpDKSoundPropAccessor;
+extern SoundPropAccessor* gpHAMBROSSoundPropAccessor;
+extern SoundPropAccessor* gpKOOPASoundPropAccessor;
+extern SoundPropAccessor* gpLUIGISoundPropAccessor;
+extern SoundPropAccessor* gpMARIOSoundPropAccessor;
+extern SoundPropAccessor* gpPEACHSoundPropAccessor;
+extern SoundPropAccessor* gpTOADSoundPropAccessor;
+extern SoundPropAccessor* gpWALUIGISoundPropAccessor;
+extern SoundPropAccessor* gpWARIOSoundPropAccessor;
+extern SoundPropAccessor* gpYOSHISoundPropAccessor;
+extern SoundPropAccessor* gpSUPERSoundPropAccessor;
+extern SoundPropAccessor* gpCRITTERSoundPropAccessor;
+
 cCharacter* g_pCharacters[10];
 static tCharacterTemplateInfo g_aCharacterTemplateInfo[13];
 static tCharacterTemplate* g_aCharacterTemplates[13];
+static tCharacterTemplateInfo g_GoalieTemplateInfo;
 
 s32 skiptexture = 0xFFFFFFFF;
 
@@ -356,12 +372,41 @@ char* GetCharacterName(eCharacterClass cc)
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x70 | 0x8001483C | size: 0x94
-//  */
-// void 0x800148D0..0x800149F0 | size: 0x120
-// {
-// }
+/**
+ * Offset/Address/Size: 0x70 | 0x8001483C | size: 0x94
+ */
+extern "C" void __sinit_CharacterTemplate_cpp()
+{
+    SoundPropAccessor* pBirdo = gpBIRDOSoundPropAccessor;
+    SoundPropAccessor* pDaisy = gpDAISYSoundPropAccessor;
+    SoundPropAccessor* pDK = gpDKSoundPropAccessor;
+    SoundPropAccessor* pHambros = gpHAMBROSSoundPropAccessor;
+    SoundPropAccessor* pKoopa = gpKOOPASoundPropAccessor;
+    SoundPropAccessor* pLuigi = gpLUIGISoundPropAccessor;
+    SoundPropAccessor* pMario = gpMARIOSoundPropAccessor;
+    SoundPropAccessor* pPeach = gpPEACHSoundPropAccessor;
+    SoundPropAccessor* pToad = gpTOADSoundPropAccessor;
+    SoundPropAccessor* pWaluigi = gpWALUIGISoundPropAccessor;
+    SoundPropAccessor* pWario = gpWARIOSoundPropAccessor;
+    SoundPropAccessor* pYoshi = gpYOSHISoundPropAccessor;
+    SoundPropAccessor* pSuper = gpSUPERSoundPropAccessor;
+    SoundPropAccessor* pCritter = gpCRITTERSoundPropAccessor;
+
+    g_aCharacterTemplateInfo[0].pSFXPropAccessor = pBirdo;
+    g_aCharacterTemplateInfo[1].pSFXPropAccessor = pDaisy;
+    g_aCharacterTemplateInfo[2].pSFXPropAccessor = pDK;
+    g_aCharacterTemplateInfo[3].pSFXPropAccessor = pHambros;
+    g_aCharacterTemplateInfo[4].pSFXPropAccessor = pKoopa;
+    g_aCharacterTemplateInfo[5].pSFXPropAccessor = pLuigi;
+    g_aCharacterTemplateInfo[6].pSFXPropAccessor = pMario;
+    g_aCharacterTemplateInfo[7].pSFXPropAccessor = pPeach;
+    g_aCharacterTemplateInfo[8].pSFXPropAccessor = pToad;
+    g_aCharacterTemplateInfo[9].pSFXPropAccessor = pWaluigi;
+    g_aCharacterTemplateInfo[10].pSFXPropAccessor = pWario;
+    g_aCharacterTemplateInfo[11].pSFXPropAccessor = pYoshi;
+    g_aCharacterTemplateInfo[12].pSFXPropAccessor = pSuper;
+    g_GoalieTemplateInfo.pSFXPropAccessor = pCritter;
+}
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x800148D0 | size: 0x68

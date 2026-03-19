@@ -163,6 +163,10 @@ static LooseBallContactAnimInfo LeadVolleyContactAnims[3] = {
  */
 cFielder::~cFielder()
 {
+    CleanUpAction();
+    delete m_pAvoidance;
+    delete m_pShotMeter;
+    delete m_pCurrentPlay;
 }
 
 /**
@@ -217,27 +221,25 @@ bool cFielder::CanLooseBallShoot()
         && (g_pBall->m_tShotTimer.m_uPackedTime == 0)
         && (g_pBall->m_unk_0xA6 == 0))
     {
-
-        // Get animation from one timer lead ground contact anims
         u32 nNumKeys = m_pAnimInventory->GetAnim(gOneTimerLeadGroundContactAnims[0].nAnimID)->m_nNumKeys;
-        float temp_f6 = ((float)nNumKeys / 30.0f) * (gOneTimerLeadGroundContactAnims[0].fAnimContactFrame / (float)nNumKeys);
+        const cBall* pBall = g_pBall;
+        float ratio = gOneTimerLeadGroundContactAnims[0].fAnimContactFrame / (float)nNumKeys;
+        float frames = (float)nNumKeys / 30.0f;
+        float contactTime = ratio * frames;
 
-        // Calculate predicted ball position at contact frame
         nlVector3 v3PredictedPos;
         nlVec3Set(v3PredictedPos,
-            (temp_f6 * g_pBall->m_v3Velocity.f.x) + g_pBall->m_v3Position.f.x,
-            (temp_f6 * g_pBall->m_v3Velocity.f.y) + g_pBall->m_v3Position.f.y,
-            (temp_f6 * g_pBall->m_v3Velocity.f.z) + g_pBall->m_v3Position.f.z);
+            (contactTime * pBall->m_v3Velocity.f.x) + pBall->m_v3Position.f.x,
+            (contactTime * pBall->m_v3Velocity.f.y) + pBall->m_v3Position.f.y,
+            (contactTime * pBall->m_v3Velocity.f.z) + pBall->m_v3Position.f.z);
 
-        // Get facing delta to predicted position
         s16 facingDelta = GetFacingDeltaToPosition(v3PredictedPos);
-        facingDelta = (facingDelta < 0) ? -facingDelta : facingDelta;
+        u16 uFacingDelta = (facingDelta < 0) ? -facingDelta : facingDelta;
 
-        float fInterpolatedValue = InterpolateRangeClamped(1.75f, 2.75f, 32768.0f, 16384.0f, facingDelta);
+        float fInterpolatedValue = InterpolateRangeClamped(1.75f, 2.75f, 32768.0f, 16384.0f, uFacingDelta);
 
         if (v3PredictedPos.f.z < 1.0f)
         {
-            // Check distance squared from fielder to predicted position
             float fDeltaX = v3PredictedPos.f.x - m_v3Position.f.x;
             float fDeltaY = v3PredictedPos.f.y - m_v3Position.f.y;
             float fDistanceSquared = fDeltaX * fDeltaX + fDeltaY * fDeltaY;
@@ -259,8 +261,8 @@ bool cFielder::CanLooseBallShoot()
 
 /**
  * Offset/Address/Size: 0xC468 | 0x800257A4 | size: 0x1E0
- * TODO: 99.79% match - remaining f8/f9 register allocation swap in the
- * contactTime computation block.
+ * TODO: 99.92% match - remaining contact-frame source register in the first
+ * ratio divide (`lfs f1` target vs `lfs f9` current).
  */
 bool cFielder::CanLooseBallPass()
 {
@@ -271,7 +273,8 @@ bool cFielder::CanLooseBallPass()
     {
         u32 nNumKeys = m_pAnimInventory->GetAnim(gOneTimerLeadGroundContactAnims[0].nAnimID)->m_nNumKeys;
         const cBall* pBall = g_pBall;
-        float ratio = gOneTimerLeadGroundContactAnims[0].fAnimContactFrame / (float)nNumKeys;
+        float ratio = gOneTimerLeadGroundContactAnims[0].fAnimContactFrame;
+        ratio /= (float)nNumKeys;
         float frames = (float)nNumKeys / 30.0f;
         float contactTime = ratio * frames;
 
@@ -1200,8 +1203,8 @@ void cFielder::ShootBallDueToContact(unsigned short aAngle)
 
 /**
  * Offset/Address/Size: 0x8F5C | 0x80022298 | size: 0x230
- * TODO: 98.54% match - angle-delta abs block still has r4/r7 register allocation mismatch
- *       and extsh/neg/clrlwi compare-order drift.
+ * TODO: 99.43% match - remaining gap is in DoClearBall angle-selection register allocation:
+ *       r6/r7 swap for m_pShotMeter vs pClearingBottomAngle.a, plus r3/r4 and cmplw operand order drift.
  */
 void cFielder::DoClearBall()
 {
@@ -1219,18 +1222,16 @@ void cFielder::DoClearBall()
     nlCartesianToPolar(pClearingBottomAngle, fGoalline - m_v3Position.f.x, fBottomY - m_v3Position.f.y);
 
     ShotMeter* pShotMeter = m_pShotMeter;
-    u16 aBottomAngle = pClearingBottomAngle.a;
-    u16 aTopAngle = pClearingTopAngle.a;
-    s16 nBottomDelta = m_aActualFacingDirection - aBottomAngle;
-    s16 nTopDelta = m_aActualFacingDirection - aTopAngle;
+    s16 nBottomDelta = (int)(s16)(m_aActualFacingDirection - pClearingBottomAngle.a);
+    s16 nTopDelta = (int)(s16)(m_aActualFacingDirection - pClearingTopAngle.a);
 
     if (pShotMeter->mfSShotAimValue > 0.5f)
     {
-        aClearingAngle = aTopAngle;
+        aClearingAngle = pClearingTopAngle.a;
     }
     else if (pShotMeter->mfSShotAimValue < -0.5f)
     {
-        aClearingAngle = aBottomAngle;
+        aClearingAngle = pClearingBottomAngle.a;
     }
     else
     {
@@ -1239,11 +1240,11 @@ void cFielder::DoClearBall()
 
         if (nAbsBottomDelta < nAbsTopDelta)
         {
-            aClearingAngle = aBottomAngle;
+            aClearingAngle = pClearingBottomAngle.a;
         }
         else
         {
-            aClearingAngle = aTopAngle;
+            aClearingAngle = pClearingTopAngle.a;
         }
     }
 
@@ -1281,10 +1282,125 @@ void cFielder::DoClearBall()
 
 /**
  * Offset/Address/Size: 0x8CA8 | 0x80021FE4 | size: 0x2B4
+ * TODO: 89.88% match - remaining gap due to -inline deferred (jump table for
+ * ACTION_SLIDE_FAIL_REACT switch, r4 vs r3 register allocation for ShotMeter*,
+ * bne+b vs beq for ACTION_DEKE check, missing state reload instructions)
  */
 void cFielder::DoHandleActiveShotMeter()
 {
-    FORCE_DONT_INLINE;
+    if (GetGlobalPad() == NULL)
+    {
+        return;
+    }
+
+    if ((u32)m_eActionState <= ACTION_SLIDE_FAIL_REACT)
+    {
+        if (m_eActionState == ACTION_SLIDE_FAIL_REACT)
+        {
+            m_pShotMeter->Abort(this);
+            return;
+        }
+    }
+
+    if (m_pBall == NULL)
+    {
+        m_pShotMeter->Abort(this);
+        return;
+    }
+
+    bool bReturn;
+    if (m_eActionState == ACTION_RUNNING_WB_TURBO && m_pCurrentAnimController->m_fTime > 0.2f && m_pCurrentAnimController->m_fTime < 1.0f)
+    {
+        bReturn = true;
+    }
+    else
+    {
+        bReturn = false;
+    }
+
+    if (bReturn)
+    {
+        return;
+    }
+
+    if (m_eActionState == ACTION_DEKE)
+    {
+        return;
+    }
+
+    ShotMeter* pShotMeter = m_pShotMeter;
+    bool bIsActive = false;
+    if (pShotMeter->m_eShotMeterState == SHOT_METER_ACTIVE || pShotMeter->m_eShotMeterState == SHOT_METER_STS_ACTIVE || pShotMeter->m_eShotMeterState == SHOT_METER_STS_TRANSISTION)
+    {
+        bIsActive = true;
+    }
+    if (bIsActive)
+    {
+        if (pShotMeter->m_eShotMeterState == SHOT_METER_STS_TRANSISTION)
+        {
+            KillWindup(this, "ball_shot_windup", false);
+            EmitWindupAtCharacter(this, "ball_sts_windup");
+        }
+    }
+
+    bool bIsChipShot = false;
+    if (GetGlobalPad() != NULL)
+    {
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        if (GetGlobalPad()->GetPressure(PAD_AIM, true) > pTweaks->unk2B0)
+        {
+            bIsChipShot = true;
+        }
+    }
+
+    pShotMeter = m_pShotMeter;
+    bIsActive = false;
+    if (pShotMeter->m_eShotMeterState == SHOT_METER_ACTIVE || pShotMeter->m_eShotMeterState == SHOT_METER_STS_ACTIVE || pShotMeter->m_eShotMeterState == SHOT_METER_STS_TRANSISTION)
+    {
+        bIsActive = true;
+    }
+    if (bIsActive)
+    {
+        bool bCanShootToScore = false;
+        if (pShotMeter->m_eShotMeterState == SHOT_METER_STS_TRANSISTION)
+        {
+            cNet* pOtherNet = m_pTeam->GetOtherNet();
+            if ((m_v3Position.f.x * pOtherNet->m_sideSign) <= 0.0f)
+            {
+                bCanShootToScore = true;
+            }
+        }
+
+        if (GetGlobalPad()->IsPressed(PAD_SHOOT, true))
+        {
+            if (!bCanShootToScore)
+            {
+                return;
+            }
+        }
+
+        mActionShotVars.bIsChipShot = bIsChipShot;
+        m_pShotMeter->ShotReleased(this);
+        InitActionShot(mActionShotVars.bIsChipShot);
+    }
+    else if (m_eActionState != ACTION_SHOT && pShotMeter->m_eShotMeterState == SHOT_METER_RELEASED)
+    {
+        mActionShotVars.bIsChipShot = bIsChipShot;
+        m_pShotMeter->ShotReleased(this);
+
+        if (GetGlobalPad() != NULL)
+        {
+            InitActionShot(mActionShotVars.bIsChipShot);
+        }
+        else
+        {
+            InitActionShot(false);
+        }
+    }
+    else if (m_eActionState != ACTION_SHOT && pShotMeter->m_eShotMeterState == SHOT_METER_STS_RELEASED)
+    {
+        InitActionShootToScore();
+    }
 }
 
 /**
@@ -1479,11 +1595,89 @@ bool cFielder::DoLooseBallContactFromRun(nlVector3& v3AnimStartPosition, float& 
 
 /**
  * Offset/Address/Size: 0x84AC | 0x800217E8 | size: 0x2FC
+ * TODO: 65.09% match - stack/register allocation and loop branch shape still differ in Z filtering and final timing math.
  */
-bool cFielder::DoLooseBallContactFromRunVolley(nlVector3&, float&, nlVector3&, float&, const LooseBallContactAnimInfo*, const nlVector3&)
+bool cFielder::DoLooseBallContactFromRunVolley(nlVector3& v3AnimStartPosition, float& fAnimStartTime, nlVector3& v3BallContactPosition, float& fBallContactTime,
+    const LooseBallContactAnimInfo* pBestBallContactAnimInfo, const nlVector3& v3PassIntercept)
 {
-    FORCE_DONT_INLINE;
-    return false;
+    const cSAnim* pGuessContactAnim = m_pAnimInventory->GetAnim(pBestBallContactAnimInfo->nAnimID);
+    float fAnimTimeToContact = pBestBallContactAnimInfo->fAnimContactFrame / (float)pGuessContactAnim->m_nNumKeys;
+
+    nlVector3 v3ContactOffsetLocal;
+    GetJointPositionFuture(&v3ContactOffsetLocal, pBestBallContactAnimInfo->nAnimID, m_nBallJointIndex, fAnimTimeToContact, true, true, false);
+
+    float fCos;
+    float fSin;
+    nlSinCos(&fSin, &fCos, m_aActualFacingDirection);
+
+    nlVector3 v3ContactOffsetWorld;
+    float ySin = v3ContactOffsetLocal.f.y * fSin;
+    float xSin = v3ContactOffsetLocal.f.x * fSin;
+    v3ContactOffsetWorld.f.x = (v3ContactOffsetLocal.f.x * fCos) - ySin;
+    v3ContactOffsetWorld.f.y = (v3ContactOffsetLocal.f.y * fCos) + xSin;
+    v3ContactOffsetWorld.f.z = v3ContactOffsetLocal.f.z;
+
+    FakeBallWorld::ResetBallIterator();
+
+    float fSimulatedTime = 0.0f;
+    float fPrevBallZ = 0.0f;
+    float fContactZ = v3ContactOffsetWorld.f.z;
+    float bestTime;
+    nlVector3 bestIntercept;
+
+    while (fSimulatedTime < 5.0f)
+    {
+        nlVector3 v3SimulatedBallPos;
+        FakeBallWorld::GetNextBallPosition(v3SimulatedBallPos);
+        fSimulatedTime += FixedUpdateTask::GetPhysicsUpdateTick();
+
+        float prevDistZ = (float)fabs(fPrevBallZ - fContactZ);
+        float currDistZ = (float)fabs(v3SimulatedBallPos.f.z - fContactZ);
+
+        if (fSimulatedTime > FixedUpdateTask::GetPhysicsUpdateTick())
+        {
+            bool bIsCrossingZ = ((v3SimulatedBallPos.f.z >= fContactZ) && (fPrevBallZ < fContactZ)) || ((v3SimulatedBallPos.f.z < fContactZ) && (fPrevBallZ >= fContactZ));
+
+            if (bIsCrossingZ || (currDistZ <= prevDistZ))
+            {
+                float deltaY = v3SimulatedBallPos.f.y - v3PassIntercept.f.y;
+                float deltaX = v3SimulatedBallPos.f.x - v3PassIntercept.f.x;
+                if ((deltaY * deltaY + deltaX * deltaX) < 1.0f)
+                {
+                    bestTime = fSimulatedTime;
+                    bestIntercept = v3SimulatedBallPos;
+                    break;
+                }
+            }
+        }
+
+        fPrevBallZ = v3SimulatedBallPos.f.z;
+    }
+
+    if (fSimulatedTime >= 5.0f)
+    {
+        return false;
+    }
+
+    float fDesiredSpeedToAnimStart = (float)pGuessContactAnim->m_nNumKeys / 30.0f;
+    float fBestSpeedToAnimStartDelta = fAnimTimeToContact * fDesiredSpeedToAnimStart;
+
+    v3AnimStartPosition.f.x = bestIntercept.f.x - v3ContactOffsetWorld.f.x;
+    v3AnimStartPosition.f.y = bestIntercept.f.y - v3ContactOffsetWorld.f.y;
+    v3AnimStartPosition.f.z = bestIntercept.f.z - v3ContactOffsetWorld.f.z;
+    v3AnimStartPosition.f.z = 0.0f;
+
+    fAnimStartTime = bestTime - fBestSpeedToAnimStartDelta;
+
+    v3BallContactPosition = bestIntercept;
+    fBallContactTime = bestTime;
+
+    if (!m_bHasBeenUpdated)
+    {
+        fAnimStartTime += g_fSimulationTick;
+    }
+
+    return true;
 }
 
 /**
@@ -1916,14 +2110,12 @@ LooseBallContactAnimInfo* cFielder::GetOneTimerBallContactAnimInfo(unsigned shor
 
 /**
  * Offset/Address/Size: 0x6AEC | 0x8001FE28 | size: 0x130
- * TODO: there are some regswaps in the section with min/max angle checks, need to fix them
+ * TODO: 99.47% match - immediate-only diffs remain for contact anim table symbols and the angle scale float label
  */
 const LooseBallContactAnimInfo* cFielder::GetReceivePassBallContactAnimInfo(cBall* pBall, const nlVector3& rv3Pos, unsigned short aAngle, bool bLeadPass, bool bVolleyPass)
 {
     const LooseBallContactAnimInfo* pBallContactAnimInfo;
     int nNumContactAnims;
-    const LooseBallContactAnimInfo* pResult;
-    int i;
 
     if (bLeadPass)
     {
@@ -1952,29 +2144,23 @@ const LooseBallContactAnimInfo* cFielder::GetReceivePassBallContactAnimInfo(cBal
         }
     }
 
-    s32 angle32 = (s32)(10430.378f * nlATan2f(pBall->m_v3Position.f.y - rv3Pos.f.y, pBall->m_v3Position.f.x - rv3Pos.f.x));
-    u16 normalizedAngle = (u16)angle32 - aAngle;
-
-    pResult = nullptr;
-
-    for (i = 0; i < nNumContactAnims; i++)
+    u16 aNetAngle = (u16)(s32)(10430.378f * nlATan2f(pBall->m_v3Position.f.y - rv3Pos.f.y, pBall->m_v3Position.f.x - rv3Pos.f.x)) - aAngle;
+    const LooseBallContactAnimInfo* pBestBallContactAnimInfo = NULL;
+    for (int i = 0; i < nNumContactAnims; i++)
     {
-        const u16 minAngle = pBallContactAnimInfo[i].aIncomingAngleMin;
-        const u16 maxAngle = pBallContactAnimInfo[i].aIncomingAngleMax;
-
-        if (minAngle < maxAngle)
+        if (pBallContactAnimInfo[i].aIncomingAngleMin < pBallContactAnimInfo[i].aIncomingAngleMax)
         {
-            if ((normalizedAngle >= minAngle) && (normalizedAngle <= maxAngle))
+            if ((aNetAngle >= pBallContactAnimInfo[i].aIncomingAngleMin) && (aNetAngle <= pBallContactAnimInfo[i].aIncomingAngleMax))
             {
-                pResult = &pBallContactAnimInfo[i];
+                pBestBallContactAnimInfo = &pBallContactAnimInfo[i];
             }
         }
-        else if ((normalizedAngle >= minAngle) || (normalizedAngle <= maxAngle))
+        else if ((aNetAngle >= pBallContactAnimInfo[i].aIncomingAngleMin) || (aNetAngle <= pBallContactAnimInfo[i].aIncomingAngleMax))
         {
-            pResult = &pBallContactAnimInfo[i];
+            pBestBallContactAnimInfo = &pBallContactAnimInfo[i];
         }
     }
-    return pResult;
+    return pBestBallContactAnimInfo;
 }
 /**
  * Offset/Address/Size: 0x68F0 | 0x8001FC2C | size: 0x110
@@ -2208,9 +2394,90 @@ void cFielder::CanBreakOutOfSlideTackle()
 /**
  * Offset/Address/Size: 0x5F54 | 0x8001F290 | size: 0x2DC
  */
-eStrafeDirection cFielder::CalculateStrafeDirection(unsigned short, unsigned short)
+eStrafeDirection cFielder::CalculateStrafeDirection(unsigned short aDesiredFacingDir, unsigned short aDesiredMovementDir)
 {
-    return STRAFE_IDLE;
+    s32 lastStrafeDirection = mActionRunningVars.eLastStrafeDirection;
+    s16 angleDelta = (s16)(aDesiredMovementDir - aDesiredFacingDir);
+    float strafeToRunDelta;
+    float backwardsToStrafeRunDelta;
+
+    switch (lastStrafeDirection)
+    {
+    case STRAFE_RIGHT:
+    case STRAFE_LEFT:
+        strafeToRunDelta = (float)g_pGame->m_pGameTweaks->nStrafeToRunOutDirectionDelta;
+        backwardsToStrafeRunDelta = (float)g_pGame->m_pGameTweaks->nBackwardsToStrafeRunOutDirectionDelta;
+        break;
+
+    default:
+        strafeToRunDelta = (float)g_pGame->m_pGameTweaks->nStrafeToRunInDirectionDelta;
+        backwardsToStrafeRunDelta = (float)g_pGame->m_pGameTweaks->nBackwardsToStrafeRunInDirectionDelta;
+        break;
+    }
+
+    float zero = 0.0f;
+    float desiredSpeed = m_fDesiredSpeed;
+
+    if (!(desiredSpeed > zero))
+    {
+        return STRAFE_IDLE;
+    }
+
+    float runningSpeed = zero + m_pTweaks->fRunningSpeed;
+    if (desiredSpeed > runningSpeed)
+    {
+        float swapFacingSeconds = m_tSwapFacingTimer.GetSeconds();
+        if (swapFacingSeconds == zero)
+        {
+            return STRAFE_FORWARD;
+        }
+
+        if ((float)(u16)((angleDelta < 0) ? -angleDelta : angleDelta) < strafeToRunDelta)
+        {
+            return STRAFE_FORWARD;
+        }
+
+        if ((float)angleDelta > -backwardsToStrafeRunDelta)
+        {
+            if ((float)angleDelta <= strafeToRunDelta)
+            {
+                return STRAFE_RIGHT;
+            }
+        }
+
+        if ((float)angleDelta < backwardsToStrafeRunDelta)
+        {
+            if ((float)angleDelta >= -strafeToRunDelta)
+            {
+                return STRAFE_LEFT;
+            }
+        }
+
+        return STRAFE_BACK;
+    }
+
+    if ((float)(u16)((angleDelta < 0) ? -angleDelta : angleDelta) < strafeToRunDelta)
+    {
+        return STRAFE_FORWARD;
+    }
+
+    if ((float)angleDelta > -backwardsToStrafeRunDelta)
+    {
+        if ((float)angleDelta <= strafeToRunDelta)
+        {
+            return STRAFE_RIGHT;
+        }
+    }
+
+    if ((float)angleDelta < backwardsToStrafeRunDelta)
+    {
+        if ((float)angleDelta >= -strafeToRunDelta)
+        {
+            return STRAFE_LEFT;
+        }
+    }
+
+    return STRAFE_BACK;
 }
 
 /**
@@ -2833,9 +3100,159 @@ bool cFielder::ShouldILeadPass()
 
 /**
  * Offset/Address/Size: 0x4564 | 0x8001D8A0 | size: 0x330
+ * TODO: 99.09% match - MWCC batches struct member loads by ascending offset (x before y),
+ * but target loads y first. This causes f29/f30 register swap in second half (~34 diffs).
  */
-bool cFielder::CanISlideAttack(const nlVector3&, const nlVector3&, float*)
+bool cFielder::CanISlideAttack(const nlVector3& v3Position, const nlVector3& v3Velocity, float* fTime)
 {
+    float t;
+    int nNumSolutions;
+    float pSolutions[2];
+    float fMaxT;
+    nlPolar polarDesiredVelocity;
+
+    if (m_eActionState == ACTION_SLIDE_ATTACK)
+    {
+        return false;
+    }
+
+    if (v3Position.f.z > 1.0f)
+    {
+        return false;
+    }
+
+    float fYDiff = m_v3Position.f.y - v3Position.f.y;
+    float fXDiff = m_v3Position.f.x - v3Position.f.x;
+
+    t = 99999.0f;
+
+    GameTweaks* pGameTweaks = g_pGame->m_pGameTweaks;
+
+    if (nlSqrt(fXDiff * fXDiff + fYDiff * fYDiff, true) < pGameTweaks->fSlideAttackRadius)
+    {
+        FielderTweaks* pTweaks = (FielderTweaks*)m_pTweaks;
+        const nlVector3& myPos = m_v3Position;
+        float fSpeed = 1.0f;
+        float fSlideSpeed = pTweaks->fRunningWBTurboSpeedLevel2;
+
+        if (fSlideSpeed >= 0.0f)
+        {
+            switch (m_ePowerup)
+            {
+            case POWER_UP_MUSHROOM:
+                fSpeed *= g_pGame->m_pGameTweaks->fMushroomSpeed;
+                break;
+            case POWER_UP_STAR:
+                fSpeed *= g_pGame->m_pGameTweaks->fStarSpeed;
+                break;
+            }
+        }
+
+        fSpeed *= fSlideSpeed;
+
+        switch (m_ePowerup)
+        {
+        case POWER_UP_MUSHROOM:
+        case POWER_UP_STAR:
+            fSpeed *= 1.4f;
+            break;
+        }
+
+        CalcInterceptXY(myPos, fSpeed, pTweaks->fPhysCapsuleRadius, v3Position, v3Velocity, nNumSolutions, pSolutions);
+
+        if (nNumSolutions != 0)
+        {
+            if (nNumSolutions == 2)
+            {
+                t = pSolutions[0] < pSolutions[1] ? pSolutions[0] : pSolutions[1];
+            }
+            else
+            {
+                t = pSolutions[0];
+            }
+        }
+    }
+
+    float fZero = 0.0f;
+    fMaxT = g_pGame->m_pGameTweaks->unk2A4 + g_pGame->m_pGameTweaks->unk2A8;
+
+    if (t > fZero && t <= fMaxT)
+    {
+        if (fTime != nullptr)
+        {
+            float fInterceptY = v3Velocity.f.y * t + v3Position.f.y;
+            float fInterceptX = v3Velocity.f.x * t + v3Position.f.x;
+            float fToInterceptY = fInterceptY - m_v3Position.f.y;
+            float fToInterceptX = fInterceptX - m_v3Position.f.x;
+
+            float fLenSq = fToInterceptY * fToInterceptY + fToInterceptX * fToInterceptX;
+            float fInvLen = nlRecipSqrt(fZero + fLenSq, true);
+            float fDesiredVelX = fInvLen * fToInterceptX;
+            float fDesiredVelY = fInvLen * fToInterceptY;
+
+            FielderTweaks* pTweaks = (FielderTweaks*)m_pTweaks;
+            float fSlideSpeed = pTweaks->fRunningWBTurboSpeedLevel2;
+
+            float fSpeedX = 1.0f;
+            if (fSlideSpeed >= 0.0f)
+            {
+                switch (m_ePowerup)
+                {
+                case POWER_UP_MUSHROOM:
+                    fSpeedX *= g_pGame->m_pGameTweaks->fMushroomSpeed;
+                    break;
+                case POWER_UP_STAR:
+                    fSpeedX *= g_pGame->m_pGameTweaks->fStarSpeed;
+                    break;
+                }
+            }
+
+            fSpeedX *= fSlideSpeed;
+
+            switch (m_ePowerup)
+            {
+            case POWER_UP_MUSHROOM:
+            case POWER_UP_STAR:
+                fSpeedX *= 1.4f;
+                break;
+            }
+
+            fDesiredVelX *= fSpeedX;
+
+            float fSpeedY = 1.0f;
+            if (fSlideSpeed >= 0.0f)
+            {
+                switch (m_ePowerup)
+                {
+                case POWER_UP_MUSHROOM:
+                    fSpeedY *= g_pGame->m_pGameTweaks->fMushroomSpeed;
+                    break;
+                case POWER_UP_STAR:
+                    fSpeedY *= g_pGame->m_pGameTweaks->fStarSpeed;
+                    break;
+                }
+            }
+
+            fSpeedY *= fSlideSpeed;
+
+            switch (m_ePowerup)
+            {
+            case POWER_UP_MUSHROOM:
+            case POWER_UP_STAR:
+                fSpeedY *= 1.4f;
+                break;
+            }
+
+            fDesiredVelY *= fSpeedY;
+
+            nlCartesianToPolar(polarDesiredVelocity, fDesiredVelX, fDesiredVelY);
+
+            *fTime = t;
+        }
+
+        return true;
+    }
+
     return false;
 }
 
@@ -3710,9 +4127,129 @@ void cFielder::UpdateActionState(float dt)
 
 /**
  * Offset/Address/Size: 0x17CC | 0x8001AB08 | size: 0x2E8
+ * TODO: 98.39% match - branch shape mismatch in ACTION_ONETIMER anim-range gate
+ * around 0x8001AB58..0x8001AB70 (bge/b pattern vs blt path).
  */
 void cFielder::UpdateHeadTracking(float)
 {
+    switch (m_eActionState)
+    {
+    case ACTION_NEED_ACTION:
+    case ACTION_DEKE:
+    case ACTION_ELECTROCUTION:
+    case ACTION_HIT:
+    case ACTION_HIT_REACT:
+    case ACTION_IDLE_TURN:
+    case ACTION_LATE_ONETIMER_FROM_VOLLEY:
+    case ACTION_ONETOUCH_PASS_FROM_VOLLEY:
+    case ACTION_RUNNING_WB_TURBO:
+    case ACTION_RUNNING_WB_TURBO_TURN:
+    case ACTION_SHOT:
+    case ACTION_SHOOT_TO_SCORE:
+    case ACTION_SLIDE_ATTACK_REACT:
+    case ACTION_BOMB_REACT:
+    case ACTION_SHELL_REACT:
+    case ACTION_BANANA_REACT:
+    case ACTION_STS_HIT_REACT:
+    case ACTION_SQUISH_REACT:
+    case ACTION_SLIDE_FAIL_REACT:
+        m_pHeadTrack->m_bTrackOOI = false;
+        break;
+
+    case ACTION_ONETIMER:
+        if (m_eAnimID < 0x50)
+        {
+            if (!(m_eAnimID < 0x48))
+            {
+                m_pHeadTrack->m_bTrackOOI = false;
+                break;
+            }
+        }
+
+        if (m_pCurrentAnimController->m_fTime > mActionOneTimerVars.fOneTimerAnimTime)
+        {
+            m_pHeadTrack->m_bTrackOOI = false;
+        }
+        else
+        {
+            m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+            m_pHeadTrack->m_bTrackOOI = true;
+        }
+        break;
+
+    case ACTION_LOOSE_BALL_PASS:
+    case ACTION_LOOSE_BALL_SHOT:
+        if (m_pCurrentAnimController->m_fTime > mActionOneTimerVars.fOneTimerAnimTime)
+        {
+            m_pHeadTrack->m_bTrackOOI = false;
+        }
+        else
+        {
+            m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+            m_pHeadTrack->m_bTrackOOI = true;
+        }
+        break;
+
+    case ACTION_PASS:
+    case ACTION_RECEIVE_PASS:
+    case ACTION_SLIDE_ATTACK:
+        if (m_pBall == nullptr)
+        {
+            if (m_eAnimID != 0x35)
+            {
+                m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+                m_pHeadTrack->m_bTrackOOI = true;
+                break;
+            }
+        }
+
+        m_pHeadTrack->m_bTrackOOI = false;
+        break;
+
+    case ACTION_RUNNING_WB:
+        if (!BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp->IsHidden())
+        {
+            m_pHeadTrack->m_v3OOI = BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp->mv3Position;
+            m_pHeadTrack->m_bTrackOOI = true;
+        }
+        else
+        {
+            m_pHeadTrack->m_bTrackOOI = false;
+        }
+        break;
+
+    case ACTION_RUNNING:
+        if (!BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp->IsHidden())
+        {
+            m_pHeadTrack->m_v3OOI = BasicStadium::GetCurrentStadium()->mpNPCManager->mpChainChomp->mv3Position;
+        }
+        else
+        {
+            m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+        }
+        m_pHeadTrack->m_bTrackOOI = true;
+        break;
+
+    case ACTION_POST_WHISTLE:
+    {
+        cPlayer* pScorer = g_pGame->m_pScorer;
+        if (pScorer != nullptr)
+        {
+            m_pHeadTrack->m_v3OOI = pScorer->m_v3Position;
+        }
+        else
+        {
+            m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+        }
+        m_pHeadTrack->m_bTrackOOI = true;
+        break;
+    }
+
+    case ACTION_WAIT:
+        m_pHeadTrack->m_v3OOI = g_pBall->m_v3Position;
+        m_pHeadTrack->m_bTrackOOI = true;
+        break;
+    }
 }
 
 /**

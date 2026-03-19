@@ -111,8 +111,8 @@ void* nlVirtualAlloc(unsigned long size, bool bZero)
 
 /**
  * Offset/Address/Size: 0xA0 | 0x801D2140 | size: 0x1B8
- * TODO: 97.4% match - mr r6,r3 (running pointer init) scheduled before first
- * branch instead of inside >8 path; cleanup loop missing add r6,r3,r7 recompute
+ * TODO: 99.91% match - only symbol/label (`i`) diffs remain in scratch
+ * (VMInit/VMAlloc mangling and string-literal label numbering)
  */
 void nlInitMemory()
 {
@@ -139,13 +139,10 @@ void nlInitMemory()
         OSSetArenaLo(arenaLo);
 
         void* ptr = OSAllocFromHeap(__OSCurrHeap, heapSize - 0x40000);
-        s8* p = (s8*)ptr;
-
         u32 i;
         for (i = 0; i < heapSize - 0x40000; i++)
         {
-            *p = -0x33;
-            p++;
+            ((s8*)ptr)[i] = -0x33;
         }
 
         StandardAllocator.Initialize(ptr, heapSize - 0x40000);

@@ -27,10 +27,12 @@ public:
     /* 0x1C */ int mNumImages;
     /* 0x20 */ int mCurrentImage;
     /* 0x24 */ TLImageInstance** mImageInstances;
-    /* 0x28 */ float mTimer;
-    /* 0x2C */ float mAlpha;
-    /* 0x30 */ FadeState mFadeState;
-}; // total size: 0x34
+    /* 0x28 */ TLImageInstance* mCurrentImageInstance;
+    /* 0x2C */ float mTimer;
+    /* 0x30 */ float mAlpha;
+    /* 0x34 */ FadeState mFadeState;
+    /* 0x38 */ float mFadeToBlackTimer;
+}; // total size: 0x3C
 
 // class FEFinder<TLImageInstance, 2>
 // {

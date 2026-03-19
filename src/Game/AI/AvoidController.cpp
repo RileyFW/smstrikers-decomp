@@ -383,9 +383,130 @@ bool AvoidController::CalcDesiredVelocityToAvoidSideline(
 /**
  * Offset/Address/Size: 0x8C8 | 0x80007F1C | size: 0x368
  */
-bool AvoidController::CalcDesiredVelocityToAvoidCorner(nlVector2&, const sCornerSegment&, const nlVector2&, const nlVector2&)
+/**
+ * TODO: 97.80% match - extsh. r4,r0 vs r0,r0 register allocation in abs pattern,
+ *       ny/nx volatile float register swap (f5/f6)
+ */
+bool AvoidController::CalcDesiredVelocityToAvoidCorner(
+    nlVector2& vNewDesiredVelDir,
+    const sCornerSegment& corner,
+    const nlVector2& vCurrentDesiredVelDir,
+    const nlVector2& vCurrentVelDir)
 {
-    return false;
+    bool bHitCorner = false;
+    nlVector2 vCornerPos;
+    nlVector2 vCornerNormal;
+
+    nlVector2 vFielderPos = *(nlVector2*)&m_pFielder->m_v3Position;
+    nlVector2 vPos;
+
+    if (m_pFielder->m_pBall != NULL)
+    {
+        vPos = *(nlVector2*)&m_pFielder->m_pBall->m_v3Position;
+    }
+    else
+    {
+        vPos = vFielderPos;
+    }
+
+    float fDistX;
+    float fDistY;
+    fDistY = corner.vCenter.f.y - vPos.f.y;
+    fDistX = corner.vCenter.f.x - vPos.f.x;
+    if (nlSqrt(fDistX * fDistX + fDistY * fDistY, true) <= corner.fRadius)
+    {
+        float fDeltaX;
+        float fDeltaY;
+        fDeltaY = vPos.f.y - corner.vCenter.f.y;
+        fDeltaX = vPos.f.x - corner.vCenter.f.x;
+
+        f32 fAngle = 10430.378f * nlATan2f(fDeltaY, fDeltaX);
+        u16 aCornerToPos = (u16)(s32)fAngle;
+
+        s16 startDiff = (s16)(aCornerToPos - corner.thetaStart);
+        int absStartI = startDiff;
+        if (startDiff < 0)
+            absStartI = -startDiff;
+        u16 absStart = (u16)absStartI;
+
+        s16 endDiff = (s16)(aCornerToPos - corner.thetaEnd);
+        int absEndI = endDiff;
+        if (endDiff < 0)
+            absEndI = -endDiff;
+        u16 absEnd = (u16)absEndI;
+
+        if (absStart >= absEnd)
+            absEnd = absStart;
+        if ((s16)absEnd <= 0x4000)
+        {
+            float fFielderX;
+            float fFielderY;
+            fFielderY = vFielderPos.f.y - corner.vCenter.f.y;
+            fFielderX = vFielderPos.f.x - corner.vCenter.f.x;
+
+            f32 fAngle2 = 10430.378f * nlATan2f(fFielderY, fFielderX);
+            u16 aCornerToFielder = (u16)(s32)fAngle2;
+
+            s16 startDiff2 = (s16)(aCornerToFielder - corner.thetaStart);
+            int absStart2I = startDiff2;
+            if (startDiff2 < 0)
+                absStart2I = -startDiff2;
+            u16 absStart2 = (u16)absStart2I;
+
+            s16 endDiff2 = (s16)(aCornerToFielder - corner.thetaEnd);
+            int absEnd2I = endDiff2;
+            if (endDiff2 < 0)
+                absEnd2I = -endDiff2;
+            u16 absEnd2 = (u16)absEnd2I;
+
+            if (absStart2 >= absEnd2)
+                absEnd2 = absStart2;
+            if ((s16)absEnd2 <= 0x4000)
+            {
+                float fInvDistance = nlRecipSqrt(fFielderX * fFielderX + fFielderY * fFielderY, true);
+                float nx;
+                float ny;
+                ny = fInvDistance * fFielderY;
+                nx = fInvDistance * fFielderX;
+                vCornerNormal.f.y = v2Zero.f.y - ny;
+                vCornerNormal.f.x = v2Zero.f.x - nx;
+                vCornerPos.f.y = corner.fRadius * ny + corner.vCenter.f.y;
+                vCornerPos.f.x = corner.fRadius * nx + corner.vCenter.f.x;
+                bHitCorner = CalcDesiredVelocityToAvoidSideline(
+                    vNewDesiredVelDir, vCurrentDesiredVelDir, vCurrentVelDir, vCornerPos, vCornerNormal);
+            }
+            else if (m_pFielder->IsTurboing())
+            {
+                float fInvDistance = nlRecipSqrt(fDeltaX * fDeltaX + fDeltaY * fDeltaY, true);
+                float nx;
+                float ny;
+                ny = fInvDistance * fDeltaY;
+                nx = fInvDistance * fDeltaX;
+                vCornerPos.f.y = corner.fRadius * ny + corner.vCenter.f.y;
+                vCornerNormal.f.y = v2Zero.f.y - ny;
+                vCornerPos.f.x = corner.fRadius * nx + corner.vCenter.f.x;
+                float fCornerDistY = vPos.f.y - vCornerPos.f.y;
+                vCornerNormal.f.x = v2Zero.f.x - nx;
+                float fDotNormalVel = vCornerNormal.f.y * vCurrentDesiredVelDir.f.y;
+                float fCornerDistX = vPos.f.x - vCornerPos.f.x;
+                fDotNormalVel = vCornerNormal.f.x * vCurrentDesiredVelDir.f.x + fDotNormalVel;
+                float fDistanceToCorner = nlSqrt(fCornerDistX * fCornerDistX + fCornerDistY * fCornerDistY, true);
+                float fMaxDistance = 5.0f;
+                fDistanceToCorner -= m_pFTweaks->fPhysCapsuleRadius;
+                if (m_CurrentlyAvoiding & AVOID_SIDELINES)
+                    fMaxDistance = 8.0f;
+                if (fDistanceToCorner <= fMaxDistance)
+                {
+                    if (fDotNormalVel <= 0.0f)
+                    {
+                        vNewDesiredVelDir = v2Zero;
+                        bHitCorner = true;
+                    }
+                }
+            }
+        }
+    }
+    return bHitCorner;
 }
 
 /**

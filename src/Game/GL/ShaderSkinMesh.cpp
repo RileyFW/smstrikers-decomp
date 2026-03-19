@@ -108,54 +108,81 @@ extern nlVector3 sharedMorphBuffer[];
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x801E1434 | size: 0x44
-//  */
-// void AVLTreeBase<unsigned long, unsigned long, NewAdapter<AVLTreeEntry<unsigned long, unsigned long> >, DefaultKeyCompare<unsigned long> >::Walk<UserDataBuilder>(UserDataBuilder*, void (UserDataBuilder::*)(const unsigned long&, unsigned long*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x801E1434 | size: 0x44
+ * TODO: 96.47% match - prologue scheduling differs (`lwz r8, 0(r5)` placement).
+ */
+template <>
+void AVLTreeBase<unsigned long, unsigned long, NewAdapter<AVLTreeEntry<unsigned long, unsigned long> >, DefaultKeyCompare<unsigned long> >::Walk<UserDataBuilder>(
+    UserDataBuilder* cbClass, void (UserDataBuilder::*cb)(const unsigned long&, unsigned long*))
+{
+    FORCE_DONT_INLINE;
+    InorderWalk(m_Root, cbClass, cb);
+}
 
 /**
  * Offset/Address/Size: 0xD28 | 0x801E136C | size: 0xC8
+ * TODO: 78.70% match - prologue/register allocation differs (vtable pointer setup and r5/r8 zero register usage).
  */
 ShaderSkinMesh::ShaderSkinMesh()
 {
+    pModel = NULL;
+    numBaseVerts = 0;
+    numMorphs = 0;
+    morphNumDeltas = NULL;
+    morphData = NULL;
+    morphBuffer = NULL;
+    boneMaps = NULL;
+    morphIDs = NULL;
+
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+    morphWeights[0] = 0.0f;
+
+    numSoftwareVerts = 0;
+    softwareVertices = NULL;
+    tempNormals = NULL;
+    tempMatrices = NULL;
+    skinPairs = NULL;
+    stitchArray = NULL;
+    numPackets = 0;
 }
 
-// /**
-//  * Offset/Address/Size: 0xCC8 | 0x801E130C | size: 0x60
-//  */
-// void nlAVLTree<unsigned long, SkinMatrix, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
-// {
-// }
+/**
+ * Offset/Address/Size: 0xCC8 | 0x801E130C | size: 0x60
+ */
+template <>
+nlAVLTree<unsigned long, SkinMatrix, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
+{
+}
 
 /**
  * Offset/Address/Size: 0xBE4 | 0x801E1228 | size: 0xE4
  */
 ShaderSkinMesh::~ShaderSkinMesh()
 {
-    // Delete morph-related arrays
     delete[] morphNumDeltas;
     delete[] morphData;
     delete[] morphIDs;
 
-    // Delete bone maps ring if it exists
     if (boneMaps != nullptr)
     {
         nlDeleteRing<BoneMapList>(&boneMaps);
     }
 
-    // Delete temporary arrays
     delete[] tempNormals;
     delete[] tempMatrices;
 
-    // Delete skin pairs ring if it exists
     if (skinPairs != nullptr)
     {
         nlDeleteRing<SkinPairList>(&skinPairs);
     }
 
-    // Delete stitch array if it exists
     if (stitchArray != nullptr)
     {
         delete[] stitchArray;

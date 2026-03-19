@@ -214,10 +214,29 @@ static int s_initialEdgeCount = 1;
 
 /**
  * Offset/Address/Size: 0x12C8 | 0x80131420 | size: 0x78
+ * TODO: 99.00% match - two remaining call-target diffs on slot-pool deleting destructors.
  */
 NetMeshModelLoader::~NetMeshModelLoader()
 {
-    FORCE_DONT_INLINE;
+    struct NetMeshEdge
+    {
+        ~NetMeshEdge()
+        {
+            FORCE_DONT_INLINE;
+        }
+    };
+
+    struct NetMeshVertex
+    {
+        ~NetMeshVertex()
+        {
+            FORCE_DONT_INLINE;
+        }
+    };
+
+    delete (NetMeshEdge*)m_EdgeList;
+    delete (NetMeshVertex*)m_VertexList;
+    delete m_TriStripIndices;
 }
 
 /**
@@ -385,10 +404,10 @@ extern void AddTriangleFromGeometry__18NetMeshModelLoaderFRC13glModelPacketPUs(
 
 /**
  * Offset/Address/Size: 0xA80 | 0x80130BD8 | size: 0x110
- * TODO: 90.1% match - callee-saved register shift (this/packet/numVerts off by one
- * r26/r27/r28 vs target r27/r28/r26), inner-loop instruction scheduling differences,
- * and r6 vs r7 for vertexIndices pointer. All are MWCC register allocator/scheduler
- * behaviors not controllable from C. Call must remain externalized to avoid inlining.
+ * TODO: 90.44% match - callee-saved register shift remains (this/packet/numVerts
+ * in r26/r27/r28 vs target r27/r28/r26), plus inner-loop register allocation
+ * differences around index math/base pointer temps (r3/r5/r6/r7 assignment).
+ * Externalized AddTriangle call still required to avoid inlining.
  */
 void NetMeshModelLoader::ReadEdgesFromGeometryPacket(const glModelPacket& packet)
 {
@@ -409,20 +428,27 @@ void NetMeshModelLoader::ReadEdgesFromGeometryPacket(const glModelPacket& packet
         while (j < 3)
         {
             u16* ptr;
-            u16* indices = (u16*)&pList->indices;
-            if (indices[1] != 0)
+            if (((u16*)&pList->indices)[1] != 0)
             {
-                u16 ns = indices[0];
-                s32 vertOff = i + j - 2;
+                u16 ns = ((u16*)&pList->indices)[0];
+                s32 vertOff = i;
+                vertOff += j;
+                vertOff -= 2;
                 s32 stride = (ns - 1) * 2 + 1;
-                ptr = (u16*)((u8*)pList->list + stride * vertOff + 4);
+                s32 offset = stride * vertOff;
+                u8* base = (u8*)pList->list + offset;
+                ptr = (u16*)(base + 4);
             }
             else
             {
-                u16 ns = indices[0];
-                s32 vertOff = i + j - 2;
+                u16 ns = ((u16*)&pList->indices)[0];
+                s32 vertOff = i;
+                vertOff += j;
+                vertOff -= 2;
                 s32 stride = ns * 2;
-                ptr = (u16*)((u8*)pList->list + stride * vertOff + 3);
+                s32 offset = stride * vertOff;
+                u8* base = (u8*)pList->list + offset;
+                ptr = (u16*)(base + 3);
             }
 
             vertexIndices[j] = *ptr;
@@ -461,10 +487,112 @@ void NetMeshModelLoader::AddTriangleFromGeometry(const glModelPacket& packet, un
 
 /**
  * Offset/Address/Size: 0x780 | 0x801308D8 | size: 0x300
+ * TODO: 98.46% match - r29/r31 register swap between maxVertex/iter and maxVertex+1/readyIndicator
  */
-void NetMeshModelLoader::ProcessEdges(const glModelPacket&, int)
+void NetMeshModelLoader::ProcessEdges(const glModelPacket& packet, int maxVertex)
 {
-    FORCE_DONT_INLINE;
+    extern void* nlMalloc(unsigned long, unsigned int, bool);
+
+    struct EdgeIter
+    {
+        EdgeEntry** m_Stack;
+        unsigned int m_NumStackEntries;
+    };
+
+    unsigned char* readyIndicator;
+    unsigned char* allReady = (unsigned char*)nlMalloc(maxVertex + 1, 8, false);
+    {
+        int i = 0;
+        while (i < maxVertex)
+        {
+            allReady[i] = 0;
+            i++;
+        }
+    }
+
+    readyIndicator = (unsigned char*)nlMalloc(maxVertex + 1, 8, false);
+    {
+        int i = 0;
+        while (i < maxVertex)
+        {
+            readyIndicator[i] = 0;
+            i++;
+        }
+    }
+
+    EdgeTree* edgeTree = (EdgeTree*)m_EdgeList;
+    EdgeIter* iter = (EdgeIter*)nlMalloc(sizeof(EdgeIter), 8, false);
+
+    if (iter != NULL)
+    {
+        unsigned int numEntries = edgeTree->m_NumElements;
+        EdgeEntry* node = edgeTree->m_Root;
+
+        iter->m_Stack = (EdgeEntry**)nlMalloc((numEntries + 1) * 4, 8, false);
+        iter->m_NumStackEntries = 0;
+
+        if (node != NULL)
+        {
+            while (node->node.left != NULL)
+            {
+                iter->m_Stack[iter->m_NumStackEntries] = node;
+                iter->m_NumStackEntries++;
+                node = (EdgeEntry*)node->node.left;
+            }
+
+            iter->m_Stack[iter->m_NumStackEntries] = node;
+            iter->m_NumStackEntries++;
+        }
+    }
+
+    while (iter->m_NumStackEntries != 0)
+    {
+        EdgeEntry* edgeEntry = iter->m_Stack[iter->m_NumStackEntries - 1];
+
+        if (edgeEntry->key.mpPacket == &packet)
+        {
+            int edgeCount = edgeEntry->value;
+            unsigned short index1 = edgeEntry->key.mpVertex1->mIndex;
+            unsigned short index2 = edgeEntry->key.mpVertex2->mIndex;
+
+            if (edgeCount == 1)
+            {
+                allReady[index1] = 1;
+                allReady[index2] = 1;
+                edgeEntry->key.mpVertex1->mbIsConstrained = 1;
+                edgeEntry->key.mpVertex2->mbIsConstrained = 1;
+            }
+
+            readyIndicator[index1] = 1;
+            readyIndicator[index2] = 1;
+        }
+
+        iter->m_NumStackEntries--;
+        edgeEntry = iter->m_Stack[iter->m_NumStackEntries];
+
+        EdgeEntry* right = (EdgeEntry*)edgeEntry->node.right;
+        if (right != NULL)
+        {
+            while (right->node.left != NULL)
+            {
+                iter->m_Stack[iter->m_NumStackEntries] = right;
+                iter->m_NumStackEntries++;
+                right = (EdgeEntry*)right->node.left;
+            }
+
+            iter->m_Stack[iter->m_NumStackEntries] = right;
+            iter->m_NumStackEntries++;
+        }
+    }
+
+    if (iter != NULL)
+    {
+        delete[] iter->m_Stack;
+        delete iter;
+    }
+
+    delete readyIndicator;
+    delete allReady;
 }
 
 /**

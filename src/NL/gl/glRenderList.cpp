@@ -1,6 +1,8 @@
 #include "NL/gl/glRenderList.h"
 #include "NL/nlSlotPool.h"
 
+extern "C" void __ct__12SlotPoolBaseFv(void*);
+
 /**
  * Offset/Address/Size: 0x0 | 0x801D92C0 | size: 0x36C
  */
@@ -74,26 +76,187 @@ void PacketCallbackManager::TexCallback(const glModelPacket* const& key, unsigne
     DoCallback(key, *count);
 }
 
+struct PacketCallbackManagerLayout
+{
+    /* 0x00 */ eGLView m_View;
+    /* 0x04 */ glViewPacketCallback m_Cb;
+    /* 0x08 */ unsigned long m_LastProgram;
+    /* 0x0C */ unsigned long m_LastRaster;
+    /* 0x10 */ unsigned long long m_LastTextureState;
+    /* 0x18 */ unsigned long m_LastMatrix;
+    /* 0x1C */ unsigned long m_LastTexconfig;
+    /* 0x20 */ unsigned long m_LastUserdata;
+    /* 0x24 */ unsigned long m_LastNumStreams;
+    /* 0x28 */ glModelStream* m_LastStreams;
+    /* 0x2C */ unsigned long m_LastTexture[6];
+    /* 0x44 */ unsigned long m_LastUserStateKey;
+    /* 0x48 */ unsigned long m_LastMaterialSet;
+}; // total size: 0x50
+
+static unsigned long glv_UserDataChanged;
+static unsigned long glv_MaterialChanged;
+static unsigned long glv_UserStateKeyChanged;
+static unsigned long glv_RasterChanged;
+static unsigned long glv_TextureStateChanged;
+static unsigned long glv_MatrixChanged;
+static unsigned long glv_TexConfigChanged;
+static unsigned long glv_TextureChanged;
+static unsigned long glv_StreamsChanged;
+
 /**
  * Offset/Address/Size: 0x748 | 0x801D9A08 | size: 0x298
+ * TODO: 92.38% match - MWCC strength-reduction optimization for texture array
+ * (addi r5,r30,4 pointer iteration) not reproducible in decomp.me compiler.
  */
-void PacketCallbackManager::DoCallback(const glModelPacket*, unsigned int)
+void PacketCallbackManager::DoCallback(const glModelPacket* p, unsigned int count)
 {
-    FORCE_DONT_INLINE;
+    PacketCallbackManagerLayout* self = (PacketCallbackManagerLayout*)this;
+    unsigned long flags = 0;
+
+    if (p->state.program != self->m_LastProgram)
+    {
+        flags |= 0x86;
+        self->m_LastProgram = p->state.program;
+    }
+
+    if (p->userData == 0)
+    {
+        if (self->m_LastUserdata != 0)
+        {
+            unsigned long userDataChanged = glv_UserDataChanged;
+            self->m_LastUserdata = p->userData;
+            flags |= userDataChanged;
+        }
+    }
+    else
+    {
+        unsigned long userDataChanged = glv_UserDataChanged;
+        self->m_LastUserdata = p->userData;
+        flags |= userDataChanged;
+    }
+
+    if (p->materialset != self->m_LastMaterialSet)
+    {
+        unsigned long materialChanged = glv_MaterialChanged;
+        flags |= materialChanged;
+    }
+
+    if (p->state.userStateKey != self->m_LastUserStateKey)
+    {
+        unsigned long userStateKeyChanged = glv_UserStateKeyChanged;
+        self->m_LastUserStateKey = p->state.userStateKey;
+        flags |= userStateKeyChanged;
+    }
+
+    if (p->state.raster != self->m_LastRaster)
+    {
+        unsigned long rasterChanged = glv_RasterChanged;
+        self->m_LastRaster = p->state.raster;
+        flags |= rasterChanged;
+    }
+
+    unsigned long textureStateLow = ((const unsigned long*)&p->state.texturestate)[0];
+    unsigned long lastTextureStateLow = ((const unsigned long*)&self->m_LastTextureState)[0];
+    unsigned long textureStateHigh = ((const unsigned long*)&p->state.texturestate)[1];
+    unsigned long lastTextureStateHigh = ((const unsigned long*)&self->m_LastTextureState)[1];
+    unsigned long textureStateDiffLow = textureStateLow ^ lastTextureStateLow;
+    unsigned long textureStateDiffHigh = textureStateHigh ^ lastTextureStateHigh;
+    if ((textureStateDiffHigh | textureStateDiffLow) != 0)
+    {
+        ((unsigned long*)&self->m_LastTextureState)[1] = textureStateHigh;
+        unsigned long textureStateChanged = glv_TextureStateChanged;
+        ((unsigned long*)&self->m_LastTextureState)[0] = textureStateLow;
+        flags |= textureStateChanged;
+    }
+
+    if (p->state.matrix != self->m_LastMatrix)
+    {
+        unsigned long matrixChanged = glv_MatrixChanged;
+        self->m_LastMatrix = p->state.matrix;
+        flags |= matrixChanged;
+    }
+
+    unsigned long texConfig = p->state.texconfig;
+    unsigned long lastTexConfig = self->m_LastTexconfig;
+    if (texConfig != lastTexConfig)
+    {
+        unsigned long texConfigChanged = glv_TexConfigChanged;
+        unsigned long textureChanged = glv_TextureChanged;
+        flags |= texConfigChanged;
+        self->m_LastTexconfig = texConfig;
+        flags |= textureChanged;
+    }
+
+    {
+        unsigned long textureChanged = glv_TextureChanged;
+        int i;
+        for (i = 0; i < 6; i++)
+        {
+            if (p->state.texture[i] != self->m_LastTexture[i])
+            {
+                self->m_LastTexture[i] = p->state.texture[i];
+                flags |= textureChanged;
+            }
+        }
+    }
+
+    glModelStream* lastStreams = self->m_LastStreams;
+    unsigned int numStreams = p->numStreams;
+    unsigned int streamChanged;
+
+    if (self->m_LastNumStreams != numStreams)
+    {
+        streamChanged = 1;
+    }
+    else
+    {
+        glModelStream* streams = p->streams;
+
+        for (unsigned int i = numStreams; i > 0; i--)
+        {
+            if (streams->address != lastStreams->address)
+            {
+                streamChanged = 1;
+                goto stream_compare_done;
+            }
+            lastStreams = (glModelStream*)((u8*)lastStreams + 6);
+            streams = (glModelStream*)((u8*)streams + 6);
+        }
+
+        streamChanged = 0;
+    }
+
+stream_compare_done:
+    if ((streamChanged & 0xFF) != 0)
+    {
+        self->m_LastNumStreams = numStreams;
+        glModelStream* streams = p->streams;
+        unsigned long streamsChanged = glv_StreamsChanged;
+        self->m_LastStreams = streams;
+        flags |= streamsChanged;
+    }
+
+    unsigned int stage = flags | 0x800;
+
+    while (count != 0)
+    {
+        self->m_Cb(self->m_View, stage, p);
+        count--;
+    }
 }
 
 /**
  * Offset/Address/Size: 0x9E0 | 0x801D9CA0 | size: 0x108
- * TODO: 90.2% match - MWCC loop unrolling uses static offsets instead of
- * per-iteration addi r3,r3,4 pointer bumps seen in target
+ * TODO: 93.5% match - MWCC emits addi r3,r3,8 + lwz 8(r3) for the second
+ * texture check instead of addi r3,r3,4 + lwz 0xC(r3), shifting later offsets
  */
 bool GLRenderList::IsEmpty() const
 {
     if (m_unk_0x04 == GLVSort_Texture)
     {
-        for (unsigned int layer = 0; layer < 7u; layer++)
+        for (int layer = 1; layer <= 7; layer++)
         {
-            if (texPacketTree[layer]->m_Root != NULL)
+            if (texPacketTree[layer - 1]->m_Root != NULL)
             {
                 return false;
             }
@@ -153,6 +316,71 @@ void GLRenderList::Clear()
  */
 GLRenderList::GLRenderList()
 {
+    u32* self = (u32*)this;
+    u32* treeWrite = self;
+    int i = 0;
+
+    self[2] = 0;
+
+    for (i = 0; i < 7; i++)
+    {
+        u32* textureTree = (u32*)nlMalloc(0x28, 8, FALSE);
+        if (textureTree == NULL)
+        {
+        }
+        else
+        {
+            textureTree[0] = 0x802A4B5C;
+            textureTree[0] = 0x80301ED8;
+            __ct__12SlotPoolBaseFv((void*)(textureTree + 1));
+            textureTree[9] = 0;
+            textureTree[7] = 0;
+            textureTree[8] = 0;
+            textureTree[0] = 0x80301EEC;
+            textureTree[1] = 0x10;
+            SlotPoolBase::BaseAddNewBlock((SlotPoolBase*)(textureTree + 1), 0x14);
+            textureTree[2] = 0x10;
+            textureTree[0] = 0x80301F00;
+        }
+        treeWrite[3] = (u32)textureTree;
+        treeWrite++;
+    }
+
+    u32* depthTree30 = (u32*)nlMalloc(0x28, 8, FALSE);
+    if (depthTree30 == NULL)
+    {
+    }
+    else
+    {
+        u32* depthTree28 = depthTree30;
+        depthTree30[0] = 0x802A4B5C;
+        depthTree30[0] = 0x80301F14;
+        __ct__12SlotPoolBaseFv((void*)(depthTree30 + 1));
+        depthTree30[9] = 0;
+        depthTree30[7] = 0;
+        depthTree30[8] = 0;
+        depthTree28[0] = 0x80301F28;
+        depthTree28[1] = 0x10;
+        SlotPoolBase::BaseAddNewBlock((SlotPoolBase*)(depthTree28 + 1), 0x18);
+        depthTree28[2] = 0x10;
+        depthTree30[0] = 0x80301F3C;
+    }
+    self[10] = (u32)depthTree30;
+
+    u32* list30 = (u32*)nlMalloc(0x1C, 8, FALSE);
+    if (list30 == NULL)
+    {
+    }
+    else
+    {
+        u32* list28 = list30;
+        __ct__12SlotPoolBaseFv(list30);
+        list30[6] = 0;
+        list28[0] = 0x10;
+        SlotPoolBase::BaseAddNewBlock((SlotPoolBase*)list28, 0xC);
+        list28[1] = 0x10;
+    }
+    self[11] = (u32)list30;
 }
 
 // /**
@@ -316,12 +544,15 @@ GLRenderList::GLRenderList()
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x3C | 0x801DBAD0 | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<const glModelPacket*>, DLListContainerBase<const glModelPacket*, BasicSlotPool<DLListEntry<const glModelPacket*>>>>(DLListEntry<const glModelPacket*>*, DLListContainerBase<const glModelPacket*, BasicSlotPool<DLListEntry<const glModelPacket*>>>*, void (DLListContainerBase<const glModelPacket*, BasicSlotPool<DLListEntry<const glModelPacket*>>>::*)(DLListEntry<const glModelPacket*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x3C | 0x801DBAD0 | size: 0x3C
+ * TODO: 96% match - stw LR save scheduling differs by one slot
+ * (target emits first lwz from callbackFunc before stw r0,0x24(r1)).
+ */
+template void nlWalkDLRing<DLListEntry<const glModelPacket*>, GLPacketListBase>(
+    DLListEntry<const glModelPacket*>* head,
+    GLPacketListBase* callback,
+    void (GLPacketListBase::*callbackFunc)(DLListEntry<const glModelPacket*>*));
 
 // /**
 //  * Offset/Address/Size: 0x78 | 0x801DBB0C | size: 0x3C

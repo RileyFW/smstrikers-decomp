@@ -32,6 +32,9 @@ public:
     void OpenItem(TLComponentInstance*);
     void CloseItem(TLComponentInstance*);
 
+    static bool mSnapMenuIntoPosition;
+    static int mLastMenuItem;
+
     /* 0x01C */ FEScrollText* m_itemDescriptions;
     /* 0x020 */ nlColour mHighlightColour;
     /* 0x024 */ MenuList<TLComponentInstance> mMenuItems;

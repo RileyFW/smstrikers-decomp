@@ -77,7 +77,7 @@ public:
     void Move(float);
     void ActionIdle();
     void SetTiltParameters(float);
-    void CheckForAbort();
+    bool CheckForAbort();
     static void UpdateFireEmitter(EmissionController& controller);
     static void UpdateBowserLandEmitter(EmissionController& controller);
     void FindTarget();

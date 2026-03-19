@@ -129,6 +129,12 @@ T* nlDLRingRemoveStart(T** current)
 }
 
 template <typename T>
+void nlDLRingRemoveEnd(T** head)
+{
+    nlDLRingRemove<T>(head, *head);
+}
+
+template <typename T>
 bool nlDLRingValidateContainsElement(T* head, const T* node)
 {
     if (head == 0)
@@ -268,6 +274,7 @@ void nlRingAddEnd(T** list, T* item)
 template <typename T, typename CallbackType>
 void nlWalkDLRing(T* head, CallbackType* callback, void (CallbackType::*callbackFunc)(T*))
 {
+    FORCE_DONT_INLINE;
     void (CallbackType::*func)(T*) = callbackFunc;
     nlWalkRing(head, callback, func);
 }

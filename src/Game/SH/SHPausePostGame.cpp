@@ -8,6 +8,8 @@
 #include "Game/GameInfo.h"
 #include "Game/OverlayManager.h"
 
+static int gPadThatQuit;
+
 // /**
 //  * Offset/Address/Size: 0x118 | 0x801097BC | size: 0xCF0
 //  */
@@ -124,7 +126,11 @@
  * Offset/Address/Size: 0x1F28 | 0x8010902C | size: 0xAC
  */
 PausePostGameScene::PausePostGameScene()
+    : BaseSceneHandler()
+    , mMenuItems()
+    , mButtons()
 {
+    gPadThatQuit = 8;
 }
 
 /**
@@ -215,8 +221,6 @@ void PausePostGameScene::OnSelectQuit()
         FrontEnd::ReturnToFE();
     }
 }
-
-static int gPadThatQuit;
 
 /**
  * Offset/Address/Size: 0x88 | 0x8010718C | size: 0x70

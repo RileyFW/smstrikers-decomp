@@ -14,6 +14,8 @@
 #include "Game/AI/ShotMeter.h"
 #include "Game/AI/FuzzyVariant.h"
 #include "Game/AI/AiUtil.h"
+#include "Game/Physics/PhysicsFakeBall.h"
+#include "Game/Physics/PhysicsColumn.h"
 #include "Game/MathHelpers.h"
 #include "Game/DB/StatsTracker.h"
 #include "Game/Field.h"
@@ -23,6 +25,22 @@
 extern unsigned int nlDefaultSeed;
 extern FuzzyVariant fvNotSet;
 extern cBall* g_pBall;
+
+// class FakeBallWorld
+// {
+// public:
+//     static void ResetBallIterator();
+//     static void GetNextBallPosition(nlVector3&);
+// };
+
+// class PhysicsColumn
+// {
+// public:
+//     void GetRadius(float*);
+// };
+
+const LooseBallContactAnimInfo* GetOneTimerLeadGroundContactAnims();
+// float GetPostRadius__4cNetFv();
 
 struct HitReactInfo
 {
@@ -159,7 +177,6 @@ void cFielder::EndAction()
 
 /**
  * Offset/Address/Size: 0x7D0C | 0x8002E844 | size: 0x20C
- * TODO: 99.08% match - remaining r-only FPR allocation mismatch in fabs/frsp distance compare chain
  */
 nlVector3 GetClosestWallPoint(const nlVector3& pos)
 {
@@ -175,10 +192,10 @@ nlVector3 GetClosestWallPoint(const nlVector3& pos)
     nlVector3 bottomSideline = pos;
     bottomSideline.f.y = -topSideline.f.y;
 
-    f32 distTop = (f32)fabs(pos.f.y - topSideline.f.y);
-    f32 distBottom = (f32)fabs(pos.f.y - bottomSideline.f.y);
-    f32 distRight = (f32)fabs(pos.f.x - rightGoalLine.f.x);
-    f32 distLeft = (f32)fabs(pos.f.x - leftGoalLine.f.x);
+    f32 distTop = fabsf(pos.f.y - topSideline.f.y);
+    f32 distBottom = fabsf(pos.f.y - bottomSideline.f.y);
+    f32 distRight = fabsf(pos.f.x - rightGoalLine.f.x);
+    f32 distLeft = fabsf(pos.f.x - leftGoalLine.f.x);
 
     if (distTop < distBottom)
     {
@@ -928,9 +945,109 @@ void cFielder::ActionLateOneTimerFromVolley(float)
 /**
  * Offset/Address/Size: 0x5DF0 | 0x8002C928 | size: 0x36C
  */
-void cFielder::DoCommonInitActionLooseBall(const nlVector3&)
+/**
+ * TODO: 93.22% match on decomp.me (scratch 91bVQ) - remaining diffs are register
+ * allocation and instruction scheduling caused by -inline deferred vs -inline auto.
+ * File uses -inline deferred but decomp.me tests with -inline auto.
+ * Remaining diffs: f0/f1/f2 swap in int-to-float, sin/cos f5/f7 swap,
+ * playback speed register, moveAdjustment scheduling, goal section fMaxGoalX timing.
+ */
+void cFielder::DoCommonInitActionLooseBall(const nlVector3& rv3OneTimerTarget)
 {
-    FORCE_DONT_INLINE;
+    nlVector3 v3SimulatedBallPos;
+    nlVector3 v3ContactOffsetLocal;
+    nlVector3 v3ContactOffsetWorld;
+    nlVector3 v3MoveAdjustment;
+    float fPhysicsRadius;
+    float fCos;
+    float fSin;
+
+    cSAnim* pLeadGroundContactAnim = m_pAnimInventory->GetAnim(GetOneTimerLeadGroundContactAnims()->nAnimID);
+    float fMaxSimulatedTime = 0.6f * (GetOneTimerLeadGroundContactAnims()->fAnimContactFrame / (float)pLeadGroundContactAnim->m_nNumKeys);
+
+    float fSimulatedTime = 0.0f;
+
+    FakeBallWorld::ResetBallIterator();
+
+    while (fSimulatedTime < fMaxSimulatedTime)
+    {
+        FakeBallWorld::GetNextBallPosition(v3SimulatedBallPos);
+        fSimulatedTime += FixedUpdateTask::GetPhysicsUpdateTick();
+
+        if (ClipPositionToSidelines(v3SimulatedBallPos, 0.18f))
+        {
+            fSimulatedTime = fMaxSimulatedTime;
+            break;
+        }
+    }
+
+    LooseBallContactAnimInfo* pBestBallContactAnimInfo = GetOneTimerBallContactAnimInfo(m_aActualFacingDirection, m_v3Position, rv3OneTimerTarget, true, false);
+
+    u16 aDesiredFacingDirection = (u16)(s32)(10430.378f * nlATan2f(rv3OneTimerTarget.f.y - m_v3Position.f.y, rv3OneTimerTarget.f.x - m_v3Position.f.x));
+
+    switch (pBestBallContactAnimInfo->nAnimID)
+    {
+    case 0x45:
+        aDesiredFacingDirection += 0x4000;
+        break;
+    case 0x46:
+        aDesiredFacingDirection -= 0x4000;
+        break;
+    case 0x47:
+        aDesiredFacingDirection += 0x8000;
+        break;
+    }
+
+    SetFacingDirection(aDesiredFacingDirection);
+
+    cSAnim* pBestContactAnim = m_pAnimInventory->GetAnim(pBestBallContactAnimInfo->nAnimID);
+
+    GetJointPositionFuture(
+        &v3ContactOffsetLocal,
+        pBestBallContactAnimInfo->nAnimID,
+        m_nBallJointIndex,
+        pBestBallContactAnimInfo->fAnimContactFrame / (float)pBestContactAnim->m_nNumKeys,
+        true,
+        true,
+        false);
+
+    nlSinCos(&fSin, &fCos, m_aActualFacingDirection);
+
+    nlVector3* pContactOffsetWorld = &v3ContactOffsetWorld;
+    float ySin = v3ContactOffsetLocal.f.y * fSin;
+    float xSin = v3ContactOffsetLocal.f.x * fSin;
+    pContactOffsetWorld->f.z = v3ContactOffsetLocal.f.z;
+    pContactOffsetWorld->f.x = (v3ContactOffsetLocal.f.x * fCos) - ySin;
+    pContactOffsetWorld->f.y = (v3ContactOffsetLocal.f.y * fCos) + xSin;
+
+    mActionOneTimerVars.fOneTimerAnimTime = pBestBallContactAnimInfo->fAnimContactFrame / (float)pBestContactAnim->m_nNumKeys;
+
+    SetAnimState(pBestBallContactAnimInfo->nAnimID, true, 0.2f, false, false);
+
+    m_pCurrentAnimController->m_fPlaybackSpeedScale = (pBestBallContactAnimInfo->fAnimContactFrame / 30.0f)
+                                                    / (fSimulatedTime + FixedUpdateTask::GetPhysicsUpdateTick());
+
+    v3MoveAdjustment.f.y = (v3SimulatedBallPos.f.y - pContactOffsetWorld->f.y) - m_v3Position.f.y;
+    v3MoveAdjustment.f.z = (v3SimulatedBallPos.f.z - pContactOffsetWorld->f.z) - m_v3Position.f.z;
+    v3MoveAdjustment.f.x = (v3SimulatedBallPos.f.x - pContactOffsetWorld->f.x) - m_v3Position.f.x;
+
+    InitMovementFromAnim(0, v3MoveAdjustment, mActionOneTimerVars.fOneTimerAnimTime, false);
+
+    m_pPhysicsCharacter->m_pPlayerPlayerColumn->GetRadius(&fPhysicsRadius);
+
+    float fGoalLineX = cField::GetGoalLineX(1U);
+    float fNetWidth = cNet::m_fNetWidth;
+    float fMaxGoalX = fGoalLineX - 0.5f;
+    float fMaxGoalY = (0.5f * fNetWidth) + 1.5f;
+    float fMinGoalY = ((0.5f * fNetWidth) - cNet::GetPostRadius()) - fPhysicsRadius;
+
+    float fAbsX = (float)fabs(v3SimulatedBallPos.f.x);
+    if ((fAbsX < fMaxGoalX)
+        || ((float)fabs(v3SimulatedBallPos.f.y) > fMaxGoalY)
+        || ((float)fabs(v3SimulatedBallPos.f.y) < fMinGoalY))
+    {
+        m_pPhysicsCharacter->m_CanCollideWithWall = false;
+    }
 }
 
 /**

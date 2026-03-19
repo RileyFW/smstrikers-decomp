@@ -64,9 +64,8 @@ void AnimTagScriptInterpreter::AnimControllerCB(unsigned int)
 
 /**
  * Offset/Address/Size: 0x0 | 0x80214354 | size: 0x1DC
- * TODO: 99.16% match - single remaining diff is lfd constant symbol (@117 vs @280).
  */
-void AnimTagScriptInterpreter::SetupAnimationTriggers(const char* TriggerFileName, cInventory<cSAnim>* pAnimInventory)
+u8 AnimTagScriptInterpreter::SetupAnimationTriggers(const char* TriggerFileName, cInventory<cSAnim>* pAnimInventory)
 {
     BinaryTriggerFile file(TriggerFileName);
 
@@ -114,4 +113,5 @@ void AnimTagScriptInterpreter::SetupAnimationTriggers(const char* TriggerFileNam
     m_BytecodeCount++;
 
     nlFree(file.m_pFileData);
+    return 0;
 }

@@ -60,10 +60,147 @@ UpdateResult IChooseSide::UpdateForFE(float, eFEINPUT_PAD*)
 
 /**
  * Offset/Address/Size: 0xCDC | 0x800C4120 | size: 0x2F8
+ * TODO: 95.89% match - loop index/base pointer callee-save allocation (r29/r30/r31) and
+ * ready-indicator unrolled branch layout still differ in disconnected path.
  */
-UpdateResult IChooseSide::UpdateForPause(float, eFEINPUT_PAD*)
+UpdateResult IChooseSide::UpdateForPause(float, eFEINPUT_PAD* pad)
 {
-    FORCE_DONT_INLINE;
+    for (int i = 0; i < 4; i++)
+    {
+        TLInstance* inst = mInstanceTable[i];
+        if (g_pFEInput->IsConnected((eFEINPUT_PAD)i))
+        {
+            int side;
+            int destPosIndex;
+            feVector3 localPos;
+
+            inst->m_bVisible = true;
+            side = mPlayingSides[i];
+
+            if (side == 0)
+            {
+                destPosIndex = 0;
+            }
+            else
+            {
+                int temp = 2;
+                if (side == 1)
+                {
+                    temp = 1;
+                }
+                destPosIndex = temp;
+            }
+
+            localPos = inst->GetPosition();
+            mTweenManager.clearTweensOnObj(inst);
+            mInstanceTable[i]->SetAssetPosition(mControllerDestPos[destPosIndex], localPos.e[1], localPos.e[2]);
+
+            mInstanceTable[i + 12]->m_bVisible = (side == -1);
+            mInstanceTable[i + 8]->m_bVisible = (side != -1);
+        }
+        else
+        {
+            int side;
+            int destPosIndex;
+            feVector3 localPos;
+            TLInstance* readyIndicator;
+            int allReady = 0;
+
+            inst->m_bVisible = false;
+            mPlayingSides[i] = -1;
+
+            if (mInstanceTable[i + 8] != NULL)
+            {
+                mInstanceTable[i + 8]->m_bVisible = true;
+            }
+
+            if (mInstanceTable[i + 12] != NULL)
+            {
+                mInstanceTable[i + 12]->m_bVisible = false;
+            }
+
+            side = mPlayingSides[i];
+            if (side == 0)
+            {
+                destPosIndex = 0;
+            }
+            else
+            {
+                destPosIndex = 2;
+                if (side == 1)
+                {
+                    destPosIndex = 1;
+                }
+            }
+
+            inst = mInstanceTable[i];
+            localPos = inst->GetPosition();
+            mTweenManager.clearTweensOnObj(inst);
+            mInstanceTable[i]->SetAssetPosition(mControllerDestPos[destPosIndex], localPos.e[1], localPos.e[2]);
+
+            mPlayerReady[i] = (u8)allReady;
+            mInstanceTable[i + 4]->m_bVisible = (u8)allReady;
+
+            readyIndicator = mInstanceTable[16];
+            if (readyIndicator != NULL)
+            {
+                if (mPlayerReady[0])
+                {
+                    allReady = 1;
+                }
+                else if (mPlayingSides[0] != -1)
+                {
+                    allReady = 0;
+                }
+                else if (mPlayerReady[1])
+                {
+                    allReady = 1;
+                }
+                else if (mPlayingSides[1] != -1)
+                {
+                    allReady = 0;
+                }
+                else if (mPlayerReady[2])
+                {
+                    allReady = 1;
+                }
+                else if (mPlayingSides[2] != -1)
+                {
+                    allReady = 0;
+                }
+                else if (mPlayerReady[3])
+                {
+                    allReady = 1;
+                }
+                else if (mPlayingSides[3] != -1)
+                {
+                    allReady = 0;
+                }
+
+                if ((u8)allReady == 1)
+                    readyIndicator->m_bVisible = true;
+                else
+                    readyIndicator->m_bVisible = false;
+            }
+        }
+
+        if (g_pFEInput->JustPressed((eFEINPUT_PAD)i, 0x200, false, NULL))
+        {
+            FEAudio::PlayAnimAudioEvent("sfx_back", false);
+            if (pad != NULL)
+            {
+                *pad = (eFEINPUT_PAD)i;
+            }
+
+            for (int j = 0; j < 4; j++)
+            {
+                GameInfoManager::Instance()->SetPlayingSide((unsigned short)j, (short)mPlayingSides[j]);
+            }
+
+            return UPDATE_GO_BACK;
+        }
+    }
+
     return UPDATE_OK;
 }
 
@@ -77,10 +214,163 @@ void IChooseSide::CheckControllers(int)
 
 /**
  * Offset/Address/Size: 0x4C0 | 0x800C3904 | size: 0x360
+ * TODO: 96.98% match - extra loop base pointer register (`r31`) for instance-table
+ * accesses; dual induction variable for mPlayingSides/mInstanceTable that decomp.me MWCC
+ * doesn't merge into one (target uses single r30 for both).
  */
-void IChooseSide::ResetAndPositionControllers(bool)
+void IChooseSide::ResetAndPositionControllers(bool reset)
 {
-    FORCE_DONT_INLINE;
+    int* playingSide = mPlayingSides;
+
+    for (int i = 0; i < 4; i++, playingSide++)
+    {
+        int side;
+
+        mPlayerReady[i] = false;
+        mInstanceTable[i + 4]->m_bVisible = false;
+
+        TLInstance* readyIndicator = mInstanceTable[16];
+        if (readyIndicator != NULL)
+        {
+            int allReady = 0;
+            if (mPlayerReady[0])
+            {
+                allReady = 1;
+            }
+            else if (mPlayingSides[0] != -1)
+            {
+                allReady = 0;
+            }
+            else if (mPlayerReady[1])
+            {
+                allReady = 1;
+            }
+            else if (mPlayingSides[1] != -1)
+            {
+                allReady = 0;
+            }
+            else if (mPlayerReady[2])
+            {
+                allReady = 1;
+            }
+            else if (mPlayingSides[2] != -1)
+            {
+                allReady = 0;
+            }
+            else if (mPlayerReady[3])
+            {
+                allReady = 1;
+            }
+            else if (mPlayingSides[3] != -1)
+            {
+                allReady = 0;
+            }
+
+            if ((u8)allReady == 1)
+            {
+                readyIndicator->m_bVisible = true;
+            }
+            else
+            {
+                readyIndicator->m_bVisible = false;
+            }
+        }
+
+        if (!g_pFEInput->IsConnected((eFEINPUT_PAD)i))
+        {
+            int destPosIndex;
+
+            *playingSide = -1;
+            side = *playingSide;
+            if (side == 0)
+            {
+                destPosIndex = 0;
+            }
+            else
+            {
+                destPosIndex = 2;
+                if (side == 1)
+                {
+                    destPosIndex = 1;
+                }
+            }
+
+            TLInstance* inst = mInstanceTable[i];
+            feVector3 localPos = inst->GetPosition();
+
+            mTweenManager.clearTweensOnObj(inst);
+            mInstanceTable[i]->SetAssetPosition(mControllerDestPos[destPosIndex], localPos.e[1], localPos.e[2]);
+
+            mInstanceTable[i + 12]->m_bVisible = (side == -1);
+            mInstanceTable[i + 8]->m_bVisible = (side != -1);
+
+            if (mInstanceTable[i + 12] != NULL)
+            {
+                mInstanceTable[i + 12]->m_bVisible = false;
+            }
+
+            if (mInstanceTable[i] != NULL)
+            {
+                mInstanceTable[i]->m_bVisible = false;
+            }
+        }
+        else if (reset)
+        {
+            int destPosIndex;
+
+            *playingSide = -1;
+            side = *playingSide;
+            if (side == 0)
+            {
+                destPosIndex = 0;
+            }
+            else
+            {
+                destPosIndex = 2;
+                if (side == 1)
+                {
+                    destPosIndex = 1;
+                }
+            }
+
+            TLInstance* inst = mInstanceTable[i];
+            feVector3 localPos = inst->GetPosition();
+
+            mTweenManager.clearTweensOnObj(inst);
+            mInstanceTable[i]->SetAssetPosition(mControllerDestPos[destPosIndex], localPos.e[1], localPos.e[2]);
+
+            mInstanceTable[i + 12]->m_bVisible = (side == -1);
+            mInstanceTable[i + 8]->m_bVisible = (side != -1);
+        }
+        else
+        {
+            int destPosIndex;
+
+            *playingSide = (short)GameInfoManager::Instance()->GetPlayingSide((unsigned short)i);
+            side = *playingSide;
+            if (side == 0)
+            {
+                destPosIndex = 0;
+            }
+            else
+            {
+                destPosIndex = 2;
+                if (side == 1)
+                {
+                    destPosIndex = 1;
+                }
+            }
+
+            TLInstance* inst = mInstanceTable[i];
+            feVector3 localPos = inst->GetPosition();
+
+            mTweenManager.clearTweensOnObj(inst);
+            mInstanceTable[i]->SetAssetPosition(mControllerDestPos[destPosIndex], localPos.e[1], localPos.e[2]);
+
+            mInstanceTable[i + 12]->m_bVisible = (side == -1);
+            mInstanceTable[i + 8]->m_bVisible = (side != -1);
+        }
+    }
 }
 
 /**

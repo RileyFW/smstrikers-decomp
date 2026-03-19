@@ -45,12 +45,15 @@ PhysicsFinitePlane::PhysicsFinitePlane(CollisionSpace* collision_space, nlVector
     float temp_f6 = v2.f.y;
     float temp_f4_2 = v2.f.z;
 
+    volatile nlVector3& vv1 = (volatile nlVector3&)v1;
+    volatile nlVector3& vv2 = (volatile nlVector3&)v2;
+
     mat.m[0] = temp_f7;
-    mat.m[1] = v1.f.y;
-    mat.m[2] = v1.f.z;
-    mat.m[3] = v2.f.x;
-    mat.m[4] = v2.f.y;
-    mat.m[5] = v2.f.z;
+    mat.m[1] = vv1.f.y;
+    mat.m[2] = vv1.f.z;
+    mat.m[3] = vv2.f.x;
+    mat.m[4] = vv2.f.y;
+    mat.m[5] = vv2.f.z;
     mat.m[6] = (temp_f5 * temp_f4_2) - (temp_f3_2 * temp_f6);
     mat.m[7] = (-temp_f7 * temp_f4_2) + (temp_f3_2 * temp_f1_3);
     mat.m[8] = (temp_f7 * temp_f6) - (temp_f5 * temp_f1_3);

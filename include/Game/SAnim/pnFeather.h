@@ -30,6 +30,8 @@ public:
     void BeginBlendIn(float);
     void BeginBlendOut(float);
 
+    inline void operator delete(void* ptr);
+
     /* 0x14 */ float* m_pFeatherWeights;
     /* 0x18 */ float m_fBlendTime;
     /* 0x1C */ void (*m_fWeightTableCallback)(unsigned int, class cPN_Feather*);

@@ -300,9 +300,128 @@ void cDecisionEntity::FindDesireAction(int, FuzzyVariant, FuzzyVariant)
 
 /**
  * Offset/Address/Size: 0x0 | 0x80017F5C | size: 0x304
+ * TODO: 94.72% match - MWCC CSE reuses r0 from initial NULL check across switch
+ * dispatch instead of reloading from 0x94(r28); instruction order at case 3 entry
  */
-bool cDecisionEntity::SelectAction(eScriptActionSelection, float)
+bool cDecisionEntity::SelectAction(eScriptActionSelection actionSelection, float)
 {
-    FORCE_DONT_INLINE;
-    return false;
+    nlList<ScriptAction>* pQueuedActions = &m_lQueuedActions;
+    if (pQueuedActions->m_pStart == NULL)
+    {
+        return false;
+    }
+
+    ScriptAction* pSelectedAction = NULL;
+    float confidence;
+
+    switch (actionSelection)
+    {
+    case SAS_BEST_CONFIDENCE:
+        pSelectedAction = pQueuedActions->m_pStart;
+        break;
+
+    case SAS_BEST_CHANCE:
+    {
+        ScriptAction* pAction = pQueuedActions->m_pStart;
+        while (pAction != NULL)
+        {
+            if (pAction->RollChanceDice())
+            {
+                pSelectedAction = pAction;
+                break;
+            }
+            pAction = pAction->next;
+        }
+
+        if (pSelectedAction == NULL)
+        {
+            for (ScriptAction* pBest = m_lQueuedActions.m_pStart; pBest != NULL; pBest = pBest->next)
+            {
+                if ((pSelectedAction == NULL) || (pBest->m_fSelectionChance > pSelectedAction->m_fSelectionChance))
+                {
+                    pSelectedAction = pBest;
+                }
+            }
+        }
+        break;
+    }
+
+    case SAS_BEST_CONFIDENCE_TIMES_CHANCE:
+    {
+        float bestChance = 0.0f;
+        ScriptAction* pAction = pQueuedActions->m_pStart;
+
+        while (pAction != NULL)
+        {
+            confidence = pAction->m_fConfidence;
+            float chance = pAction->CalcSelectionChance();
+            chance *= confidence;
+            if (chance > bestChance)
+            {
+                bestChance = chance;
+                pSelectedAction = pAction;
+            }
+            pAction = pAction->next;
+        }
+        break;
+    }
+
+    case SAS_BEST_CONFIDENCE_MIN_CHANCE_THRESHOLD:
+    {
+        ScriptAction* pAction = pQueuedActions->m_pStart;
+        float minChance = 0.5f;
+
+        while (pAction != NULL)
+        {
+            if (pAction->CalcSelectionChance() >= minChance)
+            {
+                pSelectedAction = pAction;
+                break;
+            }
+            pAction = pAction->next;
+        }
+
+        if (pSelectedAction == NULL)
+        {
+            pAction = m_lQueuedActions.m_pStart;
+            pSelectedAction = pAction;
+            if (pAction->next != NULL)
+            {
+                confidence = pAction->m_fConfidence;
+                float bestValue = pAction->CalcSelectionChance();
+                bestValue *= confidence;
+                confidence = pAction->next->m_fConfidence;
+                if (pAction->next->CalcSelectionChance() * confidence > bestValue)
+                {
+                    pSelectedAction = pAction->next;
+                }
+            }
+        }
+        break;
+    }
+
+    case SAS_WORST_CONFIDENCE:
+        pSelectedAction = pQueuedActions->m_pEnd;
+        break;
+
+    default:
+        break;
+    }
+
+    bool bSelected = false;
+    if (pSelectedAction != NULL)
+    {
+        bSelected = true;
+        m_LastSelectedAction = *pSelectedAction;
+    }
+
+    while (pQueuedActions->m_pStart != NULL)
+    {
+        ScriptAction* pAction = nlListRemoveStart<ScriptAction>(&pQueuedActions->m_pStart, &pQueuedActions->m_pEnd);
+        pAction->next = (ScriptAction*)ScriptAction::m_ScriptActionSlotPool.m_FreeList;
+        ScriptAction::m_ScriptActionSlotPool.m_FreeList = (SlotPoolEntry*)pAction;
+    }
+
+    m_pLastQueuedAction = NULL;
+    return bSelected;
 }

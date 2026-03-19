@@ -187,16 +187,220 @@ void cBall::WarpTo(const nlVector3& toPos)
 
 /**
  * Offset/Address/Size: 0x42C | 0x80009E00 | size: 0x30C
+ * TODO: 98.93% match - stfs store order swap in AngVel normalization (cc/d0),
+ *       FPR register allocation (f8/f5/f7/f6 vs f5/f6/f8/f7) in both velocity cross-product blocks.
  */
-void cBall::UpdateOrientation(float)
+void cBall::UpdateOrientation(float fDeltaT)
 {
+    nlQuaternion qOrientationDelta;
+    nlVector3 v3AngVel;
+    float fInvAng;
+    nlQuaternion qNewOrientation;
+
+    if (m_pOwner == NULL)
+    {
+        u8 bUseAngularVel = 0;
+        if (m_pPhysicsBall->m_bUseAngularVel != 0 || m_pPhysicsBall->m_fSpinTimer > 0.0f)
+        {
+            bUseAngularVel = 1;
+        }
+
+        if (bUseAngularVel != 0)
+        {
+            m_pPhysicsBall->GetAngularVelocity(&v3AngVel);
+
+            float fAng = nlSqrt(v3AngVel.f.x * v3AngVel.f.x + v3AngVel.f.y * v3AngVel.f.y + v3AngVel.f.z * v3AngVel.f.z, true);
+            if (fAng > 0.01f)
+            {
+                fInvAng = 1.0f / fAng;
+                v3AngVel.f.z = fInvAng * v3AngVel.f.z;
+                v3AngVel.f.y = fInvAng * v3AngVel.f.y;
+                v3AngVel.f.x = fInvAng * v3AngVel.f.x;
+                nlMakeQuat(qOrientationDelta, v3AngVel, fAng * fDeltaT);
+            }
+            else
+            {
+                qOrientationDelta.f.z = 0.0f;
+                qOrientationDelta.f.y = 0.0f;
+                qOrientationDelta.f.x = 0.0f;
+                qOrientationDelta.f.w = 1.0f;
+            }
+        }
+        else
+        {
+            qOrientationDelta.f.z = 0.0f;
+            qOrientationDelta.f.y = 0.0f;
+            qOrientationDelta.f.x = 0.0f;
+            qOrientationDelta.f.w = 1.0f;
+
+            float fVel = nlSqrt(m_v3Velocity.f.x * m_v3Velocity.f.x + m_v3Velocity.f.y * m_v3Velocity.f.y + m_v3Velocity.f.z * m_v3Velocity.f.z, true);
+            if (fVel > 0.0001f)
+            {
+                nlVector3 v3Axis;
+                nlVector3 v3Direction = m_v3Velocity;
+                float fZero = 0.0f;
+                float fOne = 1.0f;
+
+                v3Direction.f.x = v3Direction.f.x / fVel;
+                v3Direction.f.y = v3Direction.f.y / fVel;
+                v3Direction.f.z = v3Direction.f.z / fVel;
+
+                v3Axis.f.x = fZero * v3Direction.f.z - fOne * v3Direction.f.y;
+                v3Axis.f.y = -fZero * v3Direction.f.z + fOne * v3Direction.f.x;
+                v3Axis.f.z = fZero * v3Direction.f.y - fZero * v3Direction.f.x;
+
+                nlMakeQuat(qOrientationDelta, v3Axis, fDeltaT * (fVel / 0.18f));
+            }
+        }
+    }
+    else
+    {
+        m_pPhysicsBall->SetUseAngularVelocity(false);
+
+        switch (m_pOwner->m_eBallRotationMode)
+        {
+        case BRM_ANIMATED:
+            m_pOwner->GetAnimatedBallOrientation(m_qOrientation);
+            return;
+        case BRM_MATCH_VELOCITY:
+        {
+            qOrientationDelta.f.z = 0.0f;
+            qOrientationDelta.f.y = 0.0f;
+            qOrientationDelta.f.x = 0.0f;
+            qOrientationDelta.f.w = 1.0f;
+
+            float fVel = nlSqrt(m_v3Velocity.f.x * m_v3Velocity.f.x + m_v3Velocity.f.y * m_v3Velocity.f.y + m_v3Velocity.f.z * m_v3Velocity.f.z, true);
+            if (fVel > 0.0001f)
+            {
+                nlVector3 v3Axis;
+                nlVector3 v3Direction = m_v3Velocity;
+                float fZero = 0.0f;
+                float fOne = 1.0f;
+
+                v3Direction.f.x = v3Direction.f.x / fVel;
+                v3Direction.f.y = v3Direction.f.y / fVel;
+                v3Direction.f.z = v3Direction.f.z / fVel;
+
+                v3Axis.f.x = fZero * v3Direction.f.z - fOne * v3Direction.f.y;
+                v3Axis.f.y = -fZero * v3Direction.f.z + fOne * v3Direction.f.x;
+                v3Axis.f.z = fZero * v3Direction.f.y - fZero * v3Direction.f.x;
+
+                nlMakeQuat(qOrientationDelta, v3Axis, fDeltaT * (fVel / 0.18f));
+            }
+            break;
+        }
+        }
+    }
+
+    nlMultQuat(qNewOrientation, qOrientationDelta, m_qOrientation);
+    nlQuatNormalize(m_qOrientation, qNewOrientation);
 }
 
 /**
  * Offset/Address/Size: 0x738 | 0x8000A10C | size: 0x308
  */
-void cBall::Update(float)
+void cBall::Update(float fDeltaT)
 {
+    bool bIsGameplay = false;
+
+    if (g_pGame->m_eGameState == GS_GAMEPLAY || g_pGame->m_eGameState == GS_OVERTIME)
+    {
+        bIsGameplay = true;
+    }
+
+    if (bIsGameplay)
+    {
+        m_tNoPickupTimer.Countdown(fDeltaT, 0.0f);
+
+        if (m_tShotTimer.m_uPackedTime != 0)
+        {
+            if (m_tShotTimer.Countdown(fDeltaT, 0.0f))
+            {
+                float fGameDuration = g_pGame->m_fGameDuration;
+                if (g_pGame->GetGameTime() >= fGameDuration
+                    && g_pGame->m_eGameState == GS_GAMEPLAY
+                    && m_tBuzzerBeaterTimer.m_uPackedTime == 0)
+                {
+                    m_tBuzzerBeaterTimer.SetSeconds(0.0f);
+                }
+
+                m_tShotTimer.m_uPackedTime = 0;
+                mbCanDamage = false;
+                m_unk_0xA4 = false;
+
+                if (mbHyperSTS)
+                {
+                    Audio::gWorldSFX.Stop(Audio::eWorldSFX(0x57), cGameSFX::SFX_STOP_FIRST);
+                }
+
+                Audio::FadeFilterFromCurrentToZero();
+
+                FixedUpdateTask::mTimeScale = 1.0f;
+                ParticleUpdateTask::SetTimeScale(1.0f);
+
+                if (m_pBlurHandler != 0)
+                {
+                    m_pBlurHandler->Die(0.0f);
+                    m_pBlurHandler = 0;
+                }
+
+                KillBallShot("ball_shot_perfect_glow", true);
+                KillBallShot("ball_pass_perfect_glow", true);
+                KillBallShot("shoot_to_score_shot", false);
+                KillBallShot("ball_shot_onetimer", false);
+
+                Audio::gStadGenSFX.Stop(Audio::eWorldSFX(0xB9), cGameSFX::SFX_STOP_FIRST);
+                Audio::gStadGenSFX.Stop(Audio::eWorldSFX(0xBA), cGameSFX::SFX_STOP_FIRST);
+                Audio::gStadGenSFX.Stop(Audio::eWorldSFX(0xBD), cGameSFX::SFX_STOP_FIRST);
+
+                if (mbHyperSTS)
+                {
+                    void* data = (u8*)g_pEventManager->CreateValidEvent(0x47, 0x24) + 0x10;
+                    PassBallData* eventdata = new (data) PassBallData();
+                    eventdata->pPasser = m_pPrevOwner;
+                    eventdata->pTarget = NULL;
+
+                    bool pad = eventdata->pPasser->GetGlobalPad();
+                    eventdata->mPasserControllerID = pad ? eventdata->pPasser->GetGlobalPad()->m_padIndex : -1;
+                }
+
+                mbHyperSTS = false;
+                mbIsPerfectShot = false;
+
+                gbCanFadeOutPerfectPassSFX = true;
+
+                if (AudioLoader::IsInited())
+                {
+                    gfPerfectPassSFXVol = Audio::gStadGenSFX.GetSFXVol(0xBA);
+                }
+            }
+        }
+
+        if (m_tPassTargetTimer.m_uPackedTime != 0)
+        {
+            if (m_tPassTargetTimer.Countdown(fDeltaT, 0.0f))
+            {
+                m_fTotalPassTime = 0.0f;
+            }
+        }
+
+        if (m_tBuzzerBeaterTimer.m_uPackedTime != 0)
+        {
+            m_tBuzzerBeaterTimer.Countdown(fDeltaT, 0.0f);
+        }
+    }
+
+    if (m_pPassTarget != NULL && mbHyperSTS)
+    {
+        GameTweaks* pTweaks = g_pGame->m_pGameTweaks;
+        if (m_tPassTargetTimer.GetSeconds() < pTweaks->unk23C)
+        {
+            if (gbCanFadeOutPerfectPassSFX)
+            {
+                gbCanFadeOutPerfectPassSFX = false;
+            }
+        }
+    }
 }
 
 /**
@@ -246,12 +450,14 @@ void cBall::ShootRelease(const nlVector3& v3Velocity, eSpinType SpinType)
         v3Up = kZero;
         v3Up.f.z = fSpinRand;
 
+        float upX = v3Up.f.x;
+        float upY = v3Up.f.y;
         float velY = v3Velocity.f.y;
         float velX = v3Velocity.f.x;
 
-        v3AngVel.f.x = (v3Up.f.y * v3Velocity.f.z) - (v3Up.f.z * velY);
-        v3AngVel.f.y = (-v3Up.f.x * v3Velocity.f.z) + (v3Up.f.z * velX);
-        v3AngVel.f.z = (v3Up.f.x * velY) - (v3Up.f.y * velX);
+        v3AngVel.f.x = (upY * v3Velocity.f.z) - (v3Up.f.z * velY);
+        v3AngVel.f.y = (-upX * v3Velocity.f.z) + (v3Up.f.z * velX);
+        v3AngVel.f.z = (upX * velY) - (upY * velX);
     }
     else if (SpinType == SPINTYPE_ROLLING)
     {
@@ -297,10 +503,20 @@ void cBall::SetVisible(bool visible)
     drawable->m_uObjectFlags = (drawable->m_uObjectFlags & 0xFFFFFFFE);
 }
 
+static inline float CalcSpinRand(eSpinType spin)
+{
+    float fSpinRand = 0.5f + nlRandomf(2.0f, &nlDefaultSeed);
+    if (spin == SPINTYPE_BACK)
+    {
+        fSpinRand *= -1.0f;
+    }
+    return fSpinRand;
+}
+
 /**
  * Offset/Address/Size: 0x1104 | 0x8000AAD8 | size: 0x1D4
- * TODO: 99.27% match - FPR register coloring: fSpinRand allocated to f7 instead of f9 (DWARF),
- *       cascading through cross product temporaries. All instructions and scheduling correct.
+ * TODO: 99.40% match - FPR register coloring in spin branch: fSpinRand in f5 vs f9 target.
+ *       Inline helper improved allocation and reduced diff count, but final float register map differs.
  */
 void cBall::SetVelocity(const nlVector3& velocity, eSpinType spin, const nlVector3* pAngularVelocity)
 {
@@ -317,11 +533,7 @@ void cBall::SetVelocity(const nlVector3& velocity, eSpinType spin, const nlVecto
     }
     else if ((spin == SPINTYPE_FORWARD) || (spin == SPINTYPE_BACK))
     {
-        float fSpinRand = 0.5f + nlRandomf(2.0f, &nlDefaultSeed);
-        if (spin == SPINTYPE_BACK)
-        {
-            fSpinRand *= -1.0f;
-        }
+        float fSpinRand = CalcSpinRand(spin);
 
         nlVector3 v3Up = { 0.0f, 0.0f, 0.0f };
         v3Up.f.z = fSpinRand;

@@ -40,12 +40,20 @@
 // {
 // }
 
-// /**
-//  * Offset/Address/Size: 0x0 | 0x80209BE0 | size: 0x3C
-//  */
-// void nlWalkDLRing<DLListEntry<nlFont*>, DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*>>>>(DLListEntry<nlFont*>*, DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*>>>*, void (DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*>>>::*)(DLListEntry<nlFont*>*))
-// {
-// }
+/**
+ * Offset/Address/Size: 0x0 | 0x80209BE0 | size: 0x3C
+ * TODO: 96.00% match - prologue scheduling mismatch remains.
+ * Target orders `lwz r7, 0(r5)` before saving LR; current MWCC output saves LR first.
+ */
+template <>
+void nlWalkDLRing<DLListEntry<nlFont*>, DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*> > > >(
+    DLListEntry<nlFont*>* head,
+    DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*> > >* callback,
+    void (DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*> > >::*callbackFunc)(DLListEntry<nlFont*>*))
+{
+    void (DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*> > >::*func)(DLListEntry<nlFont*>*) = callbackFunc;
+    nlWalkRing(head, callback, func);
+}
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x80209BD0 | size: 0x10
@@ -54,19 +62,57 @@
 // {
 // }
 
+template <>
+nlDLListSlotPool<nlFont*>::nlDLListSlotPool()
+{
+    this->m_Head = NULL;
+    this->m_Allocator.m_Initial = 8;
+    SlotPoolBase::BaseAddNewBlock((SlotPoolBase*)&this->m_Allocator, sizeof(DLListEntry<nlFont*>));
+    this->m_Allocator.m_Delta = 0;
+}
+
 /**
  * Offset/Address/Size: 0x4CC | 0x80209B60 | size: 0x70
+ * TODO: 96.25% match - remaining mismatch is r30/r31 nonvolatile register
+ * allocation in the inlined m_fonts slot-pool constructor path.
  */
 FontManager::FontManager()
 {
-    // SlotPoolBase::BaseAddNewBlock(&m_fonts.m_Allocator, 0xC);
 }
 
 /**
  * Offset/Address/Size: 0x374 | 0x80209A08 | size: 0x158
+ * TODO: 97.97% match - auto-generated m_fonts destructor path still lowers to
+ * nlWalkRing with @106/@165 callback constants instead of target nlWalkDLRing
+ * calls that reuse @198.
  */
 FontManager::~FontManager()
 {
+    DLListEntry<nlFont*>* head;
+    DLListEntry<nlFont*>* current = nlDLRingGetStart(m_fonts.m_Head);
+    head = m_fonts.m_Head;
+
+    while (current != NULL)
+    {
+        delete current->m_data;
+
+        if (nlDLRingIsEnd(head, current) || current == NULL)
+        {
+            current = NULL;
+        }
+        else
+        {
+            current = current->m_next;
+        }
+    }
+
+    typedef DLListContainerBase<nlFont*, BasicSlotPool<DLListEntry<nlFont*> > > FontListBase;
+    typedef void (*WalkFn)(DLListEntry<nlFont*>*, FontListBase*, void (FontListBase::*)(DLListEntry<nlFont*>*));
+
+    void (FontListBase::*func)(DLListEntry<nlFont*>*) = &FontListBase::DeleteEntry;
+    WalkFn walk = &nlWalkDLRing<DLListEntry<nlFont*>, FontListBase>;
+    walk(m_fonts.m_Head, &m_fonts, func);
+    m_fonts.m_Head = NULL;
 }
 
 /**

@@ -70,10 +70,16 @@ public:
 extern "C" void CalcAutoReplayScriptName__12ReplayChoreoCF10ReplayType(
     BasicString<char, Detail::TempStringAllocator>*, const ReplayChoreo*, ReplayType);
 
+template <typename StringType, typename Arg0, typename Arg1, typename Arg2, typename Arg3>
+void Format(StringType&, const StringType&, const Arg0&, const Arg1&, const Arg2&, const Arg3&);
+
 namespace
 {
+char* replayTypeNames[9];
+char* zoneDepthNames[3];
+char* zoneInWidthNames[3];
 char scriptName[128];
-}
+} // namespace
 
 // /**
 //  * Offset/Address/Size: 0xEC4 | 0x80129A38 | size: 0xD74
@@ -128,7 +134,85 @@ void ReplayChoreo::DoFunctionCall(unsigned int)
  */
 void ReplayChoreo::LoadScript()
 {
-    FORCE_DONT_INLINE;
+    if (mByteCode != 0)
+    {
+        nlFree(mByteCode);
+    }
+
+    unsigned long fileSize = 0;
+    mByteCode = nlLoadEntireFile("replay/replay_choreo.byte_code", &fileSize, 0x20, (eAllocType)0);
+    LoadByteCode(mByteCode);
+
+    for (int d = 0; d < 3; d++)
+    {
+        for (int w = 0; w < 3; w++)
+        {
+            for (int t = 0; t < 9; t++)
+            {
+                mNumScripts[d][w][t] = 0;
+
+                for (int j = 0; j < 8; j++)
+                {
+                    BasicString<char, Detail::TempStringAllocator> name;
+                    {
+                        BasicString<char, Detail::TempStringAllocator> format;
+                        BasicStringDataHack* data = (BasicStringDataHack*)nlMalloc(0x10, 8, true);
+                        if (data != 0)
+                        {
+                            const char* src = "{0}_{1}_{2}_{3}";
+                            data->mData = 0;
+                            data->mSize = 0;
+                            data->mCapacity = 0;
+
+                            const char* p = src;
+                            while ((signed char)*p++ != 0)
+                            {
+                                data->mSize++;
+                            }
+
+                            data->mSize++;
+                            data->mData = (char*)nlMalloc(data->mSize + 1, 8, true);
+                            data->mCapacity = data->mSize;
+
+                            for (int i = 0; i < data->mSize; i++)
+                            {
+                                data->mData[i] = *src++;
+                            }
+
+                            data->mRefCount = 1;
+                        }
+                        format.m_data = data;
+
+                        BasicString<char, Detail::TempStringAllocator> temp;
+                        void* nameData;
+                        Format(temp,
+                            format,
+                            zoneDepthNames[d],
+                            zoneInWidthNames[w],
+                            replayTypeNames[t],
+                            j);
+
+                        if (temp.m_data != 0)
+                        {
+                            temp.m_data->mRefCount = temp.m_data->mRefCount + 1;
+                            nameData = temp.m_data;
+                        }
+                        else
+                        {
+                            nameData = 0;
+                        }
+
+                        name.m_data = (BasicStringDataHack*)nameData;
+                    }
+
+                    if (FunctionExists(nlStringHash(name.c_str())))
+                    {
+                        mNumScripts[d][w][t] = mNumScripts[d][w][t] + 1;
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -357,11 +441,14 @@ bool ReplayChoreo::Done() const
 
 /**
  * Offset/Address/Size: 0x108 | 0x80127774 | size: 0x23C
- * TODO: 95.21% match - remaining diffs are instruction ordering in the age-selection checks and register assignment order in GoalScoredData copy stores.
+ * TODO: 99.86% match - remaining diffs are register swaps when storing GoalScoredData
+ * word pairs (+0x8/+0xC and +0x1C/+0x20) into the highlight copy.
  */
 void ReplayChoreo::SaveHighlight(ReplayChoreo::HighlightQuality quality)
 {
-    extern bool LockReel__6ReplayFfii(Replay*, float, int, int);
+#pragma cplusplus off
+    extern unsigned char LockReel__6ReplayFfii(void*, float, int, int);
+#pragma cplusplus reset
     extern u8 g_e3_Build;
 
     mReplayManager = ReplayManager::Instance();
@@ -419,7 +506,7 @@ void ReplayChoreo::SaveHighlight(ReplayChoreo::HighlightQuality quality)
             int age = 0;
             for (int i = 0; i < 3; i++)
             {
-                int dt = (int)(mReplayManager->mTime - *(float*)&mHighlights[i].mGoalScoredData);
+                int dt = (int)(mReplayManager->mTime - mHighlights[i].mTime);
                 if (mHighlights[i].mSideOfInterest == quality && dt > age)
                 {
                     idx = i;

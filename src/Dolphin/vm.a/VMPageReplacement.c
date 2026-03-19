@@ -32,91 +32,120 @@ u32 __VMGetPageToReplace(void)
 
 u32 __VMPageReplacementLRU(void)
 {
-    u32 selected = 0;
-    u32 startPage = g_vmNextPageToSwap;
-    s32 class0x1 = -1;
-    s32 class1x0 = -1;
-    s32 class1x1 = -1;
+    u32 startPage;
+    u32 selected;
+    s32 class0x1;
+    s32 class1x0;
+    s32 class1x1;
+    u32 virtualAddr;
+    BOOL referenced;
+    BOOL dirty;
 
-    if (g_vmFreePagesExist != 0)
+    selected = 0;
+    startPage = g_vmNextPageToSwap;
+    class0x1 = -1;
+    class1x0 = -1;
+    class1x1 = -1;
+
+    if ((s32)g_vmFreePagesExist != 0)
     {
-        selected = startPage;
+        goto free_page_exists;
+    }
+
+loop:
+    virtualAddr = VMBASEGetVirtualAddrFromPageInMRAM(g_vmNextPageToSwap);
+    if (virtualAddr == 0)
+    {
+        goto select_current_page;
+    }
+
+    if (VMBASEIsPageValid(virtualAddr) == FALSE)
+    {
+        goto select_current_page;
+    }
+
+    referenced = VMBASEIsPageReferenced(virtualAddr);
+    dirty = VMBASEIsPageDirty(virtualAddr);
+
+    if (referenced == FALSE && dirty == FALSE)
+    {
+        if (VMBASEIsPageLocked(g_vmNextPageToSwap) == FALSE)
+        {
+            selected = g_vmNextPageToSwap;
+            goto done_select;
+        }
+    }
+
+    if (referenced == FALSE && dirty != FALSE)
+    {
+        if (class0x1 < 0)
+        {
+            if (VMBASEIsPageLocked(g_vmNextPageToSwap) == FALSE)
+            {
+                class0x1 = (s32)g_vmNextPageToSwap;
+            }
+        }
+    }
+    else if (referenced != FALSE && dirty == FALSE)
+    {
+        if (class1x0 < 0)
+        {
+            if (VMBASEIsPageLocked(g_vmNextPageToSwap) == FALSE)
+            {
+                class1x0 = (s32)g_vmNextPageToSwap;
+            }
+        }
+    }
+    else if (class1x1 < 0)
+    {
+        if (VMBASEIsPageLocked(g_vmNextPageToSwap) == FALSE)
+        {
+            class1x1 = (s32)g_vmNextPageToSwap;
+        }
+    }
+
+    if (referenced != FALSE)
+    {
+        VMBASESetPageReferenced(virtualAddr, FALSE);
+    }
+
+    if (startPage == g_vmNextPageToSwap)
+    {
+        if (class0x1 >= 0)
+        {
+            selected = (u32)class0x1;
+            goto done_select;
+        }
+
+        if (class1x0 >= 0)
+        {
+            selected = (u32)class1x0;
+            goto done_select;
+        }
+
+        if (class1x1 >= 0)
+        {
+            selected = (u32)class1x1;
+        }
         goto done_select;
     }
 
-    while (TRUE)
+    g_vmNextPageToSwap = g_vmNextPageToSwap + 1;
+    if (g_vmNextPageToSwap >= __VMGetNumPagesInMRAM())
     {
-        u32 currentPage = g_vmNextPageToSwap;
-        u32 virtualAddr = VMBASEGetVirtualAddrFromPageInMRAM(currentPage);
-
-        if (virtualAddr == 0)
-        {
-            selected = currentPage;
-            break;
-        }
-
-        if (VMBASEIsPageValid(virtualAddr) != FALSE)
-        {
-            BOOL referenced = VMBASEIsPageReferenced(virtualAddr);
-            BOOL dirty = VMBASEIsPageDirty(virtualAddr);
-
-            if (!referenced && !dirty && !VMBASEIsPageLocked(currentPage))
-            {
-                selected = currentPage;
-                break;
-            }
-
-            if (!referenced && dirty)
-            {
-                if (class0x1 < 0 && !VMBASEIsPageLocked(currentPage))
-                {
-                    class0x1 = (s32)currentPage;
-                }
-            }
-            else if (referenced && !dirty)
-            {
-                if (class1x0 < 0 && !VMBASEIsPageLocked(currentPage))
-                {
-                    class1x0 = (s32)currentPage;
-                }
-            }
-            else if (class1x1 < 0 && !VMBASEIsPageLocked(currentPage))
-            {
-                class1x1 = (s32)currentPage;
-            }
-
-            if (referenced)
-            {
-                VMBASESetPageReferenced(virtualAddr, FALSE);
-            }
-        }
-
-        if (currentPage == startPage)
-        {
-            if (class0x1 >= 0)
-            {
-                selected = (u32)class0x1;
-            }
-            else if (class1x0 >= 0)
-            {
-                selected = (u32)class1x0;
-            }
-            else if (class1x1 >= 0)
-            {
-                selected = (u32)class1x1;
-            }
-            break;
-        }
-
-        g_vmNextPageToSwap = currentPage + 1;
-        if (g_vmNextPageToSwap >= __VMGetNumPagesInMRAM())
-        {
-            g_vmNextPageToSwap = 0;
-        }
+        g_vmNextPageToSwap = 0;
     }
+    goto loop;
+
+select_current_page:
+    selected = g_vmNextPageToSwap;
+    goto done_select;
+
+free_page_exists:
+    selected = startPage;
 
 done_select:
-    g_vmNextPageToSwap++;
+    g_vmNextPageToSwap = g_vmNextPageToSwap + 1;
     if (g_vmNextPageToSwap >= __VMGetNumPagesInMRAM())
     {
         g_vmFreePagesExist = 0;
@@ -128,14 +157,16 @@ done_select:
 
 u32 __VMPageReplacementRandom(void)
 {
+    u32 page;
+
     while (TRUE)
     {
-        u32 page;
-
-        if (g_vmFreePagesExist != 0)
+        if ((s32)g_vmFreePagesExist != 0)
         {
-            page = g_vmNextPageToSwap;
-            g_vmNextPageToSwap++;
+            u32 nextPage = g_vmNextPageToSwap;
+
+            g_vmNextPageToSwap = nextPage + 1;
+            page = nextPage;
             if (g_vmNextPageToSwap >= __VMGetNumPagesInMRAM())
             {
                 g_vmFreePagesExist = 0;
@@ -145,22 +176,24 @@ u32 __VMPageReplacementRandom(void)
         else
         {
             u32 numPages = __VMGetNumPagesInMRAM();
-            page = (numPages == 0) ? 0 : (OSGetTick() % numPages);
+
+            page = OSGetTick() % numPages;
         }
 
         if (!VMBASEIsPageLocked(page))
         {
-            return page;
+            break;
         }
     }
+
+    return page;
 }
 
 u32 __VMPageReplacementFIFO(void)
 {
     while (TRUE)
     {
-        u32 page = g_vmNextPageToSwap;
-        g_vmNextPageToSwap++;
+        u32 page = g_vmNextPageToSwap++;
 
         if (g_vmNextPageToSwap >= __VMGetNumPagesInMRAM())
         {

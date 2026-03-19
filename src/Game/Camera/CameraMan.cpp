@@ -61,11 +61,209 @@ void cCameraManager::Update(float)
 {
 }
 
+class World
+{
+public:
+    void HandleCameraSwitch();
+};
+
+extern eCameraType g_eCurrentCameraType;
+extern World* s_World__12WorldManager;
+
+class Config
+{
+public:
+    struct TagValuePair
+    {
+        const char* tag;
+        int type;
+        union
+        {
+            bool b;
+            int i;
+            float f;
+            const char* s;
+        } value;
+    };
+
+    static Config& Global();
+    TagValuePair& FindTvp(const char*);
+    void Set(const char*, bool);
+};
+
+template <typename T, typename U>
+T LexicalCast(const U&);
+
+void* nlMalloc(unsigned long, unsigned int, bool);
+inline void* operator new(unsigned long, void* p)
+{
+    return p;
+}
+
+class cDebugCamera
+{
+public:
+    cDebugCamera();
+};
+
+class ReplayCamera
+{
+public:
+    ReplayCamera();
+};
+
+class TopDownCamera
+{
+public:
+    TopDownCamera();
+};
+
+class cFollowCamera
+{
+public:
+    enum FollowTarget
+    {
+        FOLLOW_BALL = 0,
+        FOLLOW_CHARACTER = 1,
+        FOLLOW_SELECTABLE = 2,
+        FOLLOW_ANIM_VIEWER_CHARACTER = 3,
+    };
+
+    cFollowCamera(FollowTarget);
+};
+
+class cKickOffCamera
+{
+public:
+    cKickOffCamera();
+};
+
+class GameplayCamera
+{
+public:
+    GameplayCamera();
+};
+
+class GoalCamera
+{
+public:
+    GoalCamera();
+};
+
+class cShootToScoreCamera
+{
+public:
+    cShootToScoreCamera();
+};
+
+class cAnimViewerCamera
+{
+public:
+    cAnimViewerCamera();
+};
+
+class FaceCam
+{
+public:
+    FaceCam(float);
+};
+
 /**
  * Offset/Address/Size: 0xD78 | 0x801A7400 | size: 0x354
  */
 void cCameraManager::UpdateGameCameraType()
 {
+    cBaseCamera* pBaseCamera = nlDLRingGetEnd(cCameraManager::m_cameraStack);
+
+    if (g_eCurrentCameraType != pBaseCamera->GetType())
+    {
+        Config& cfg = Config::Global();
+        Config::TagValuePair& tvp = cfg.FindTvp("nocameratweakcrash");
+
+        bool noCameraTweakCrash;
+        if (tvp.tag == NULL)
+        {
+            cfg.Set("nocameratweakcrash", false);
+            noCameraTweakCrash = false;
+        }
+        else if (tvp.type == 0)
+        {
+            noCameraTweakCrash = LexicalCast<bool, bool>(tvp.value.b);
+        }
+        else if (tvp.type == 1)
+        {
+            noCameraTweakCrash = LexicalCast<bool, int>(tvp.value.i);
+        }
+        else if (tvp.type == 2)
+        {
+            noCameraTweakCrash = LexicalCast<bool, float>(tvp.value.f);
+        }
+        else if (tvp.type == 3)
+        {
+            noCameraTweakCrash = LexicalCast<bool, const char*>(tvp.value.s);
+        }
+        else
+        {
+            noCameraTweakCrash = false;
+        }
+
+        if (noCameraTweakCrash)
+        {
+            if (g_eCurrentCameraType > eCameraType_Gameplay)
+            {
+                g_eCurrentCameraType = eCameraType_Gameplay;
+            }
+        }
+
+        s_World__12WorldManager->HandleCameraSwitch();
+        pBaseCamera->m_pFilter = NULL;
+        nlDLRingRemoveEnd(&cCameraManager::m_cameraStack);
+        delete pBaseCamera;
+
+        switch (g_eCurrentCameraType)
+        {
+        case eCameraType_Debug:
+            pBaseCamera = (cBaseCamera*)new ((cDebugCamera*)nlMalloc(0x8C, 8, false)) cDebugCamera();
+            break;
+        case eCameraType_Replay:
+            pBaseCamera = (cBaseCamera*)new ((ReplayCamera*)nlMalloc(0x8C, 8, false)) ReplayCamera();
+            break;
+        case eCameraType_TopDown:
+            pBaseCamera = (cBaseCamera*)new ((TopDownCamera*)nlMalloc(0x78, 8, false)) TopDownCamera();
+            break;
+        case eCameraType_FollowCharacter:
+            pBaseCamera = (cBaseCamera*)new ((cFollowCamera*)nlMalloc(0xA0, 8, false)) cFollowCamera(cFollowCamera::FOLLOW_CHARACTER);
+            break;
+        case eCameraType_FollowBall:
+            pBaseCamera = (cBaseCamera*)new ((cFollowCamera*)nlMalloc(0xA0, 8, false)) cFollowCamera(cFollowCamera::FOLLOW_BALL);
+            break;
+        case eCameraType_Animated:
+            pBaseCamera = (cBaseCamera*)new ((cAnimCamera*)nlMalloc(0xAC, 8, false)) cAnimCamera();
+            break;
+        case eCameraType_KickOff:
+            pBaseCamera = (cBaseCamera*)new ((cKickOffCamera*)nlMalloc(0x74, 8, false)) cKickOffCamera();
+            break;
+        case eCameraType_Gameplay:
+            pBaseCamera = (cBaseCamera*)new ((GameplayCamera*)nlMalloc(0x14C, 8, false)) GameplayCamera();
+            break;
+        case eCameraType_Goal:
+            pBaseCamera = (cBaseCamera*)new ((GoalCamera*)nlMalloc(0x74, 8, false)) GoalCamera();
+            break;
+        case eCameraType_ShootToScore:
+            pBaseCamera = (cBaseCamera*)new ((cShootToScoreCamera*)nlMalloc(0x74, 8, false)) cShootToScoreCamera();
+            break;
+        case eCameraType_AnimViewer:
+            pBaseCamera = (cBaseCamera*)new ((cAnimViewerCamera*)nlMalloc(0xA4, 8, false)) cAnimViewerCamera();
+            break;
+        case eCameraType_FaceCloseup:
+            pBaseCamera = (cBaseCamera*)new ((FaceCam*)nlMalloc(0x80, 8, false)) FaceCam(0.0f);
+            break;
+        default:
+            break;
+        }
+
+        nlDLRingAddEnd(&cCameraManager::m_cameraStack, pBaseCamera);
+    }
 }
 
 /**
@@ -171,9 +369,53 @@ void cCameraManager::Remove(eCameraType type, bool bDeleteAfterRemoving)
 
 /**
  * Offset/Address/Size: 0x7F8 | 0x801A6E80 | size: 0x29C
+ * TODO: 99.55% match - nlPrintf literal label relocation (@1258 vs @267)
  */
-void cCameraManager::PushCameraWithTransition(cBaseCamera*, float, eCameraTransition, void (*)(eCameraMessage))
+/* static */ void cCameraManager::PushCameraWithTransition(cBaseCamera* pCamera, float fDuration, eCameraTransition transition, void (*pCallback)(eCameraMessage))
 {
+    extern float m_fTransitionSpeed__14cCameraManager;
+    extern float m_fTransitionTime__14cCameraManager;
+    extern float m_fPrevFOV__14cCameraManager;
+
+    if (cCameraManager::m_transition != eCT_NONE)
+    {
+        nlPrintf("Camera Transition In Progress\n");
+        if (cCameraManager::m_pCallback != NULL)
+        {
+            (*cCameraManager::m_pCallback)(eCM_ABORTED_BY_PUSH);
+        }
+    }
+
+    cCameraManager::m_matPrevView = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->GetViewMatrix();
+    m_fPrevFOV__14cCameraManager = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->GetFOV();
+
+    if (nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter != NULL)
+    {
+        nlMatrix4 matView;
+        nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter->Filter(cCameraManager::m_matPrevView, matView);
+        cCameraManager::m_matPrevView = matView;
+    }
+
+    cCameraManager::m_transition = transition;
+    cCameraManager::m_pCallback = pCallback;
+    m_fTransitionSpeed__14cCameraManager = 1.0f / fDuration;
+    m_fTransitionTime__14cCameraManager = 0.0f;
+
+    if ((nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack) != NULL)
+        && (nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter != 0))
+    {
+        cRumbleFilter* filter1 = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter;
+        cRumbleFilter* filter2 = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack)->m_pFilter;
+
+        nlVector2 diff_pos;
+        nlVec2Set(diff_pos, filter2->v2Pos0.f.x - filter1->v2Pos1.f.x, filter2->v2Pos0.f.y - filter1->v2Pos1.f.y);
+        if (nlSqrt((diff_pos.f.x * diff_pos.f.x) + (diff_pos.f.y * diff_pos.f.y), 1) > 0.0f)
+        {
+            g_pEventManager->CreateValidEvent(0x58, 0x14);
+        }
+    }
+
+    nlDLRingAddStart<cBaseCamera>(&cCameraManager::m_cameraStack, pCamera);
 }
 
 /**

@@ -29,8 +29,8 @@ const float StateTimeScale[4] = {
  */
 void Jumbotron::Initialize()
 {
-    unsigned long dataInc;    // r29
-    unsigned long dataOffset; // r30
+    unsigned long dataInc;
+    unsigned long dataOffset;
 
     m_State = JState_Nothing;
     m_AnimationClass = Jumbo_Nothing;
@@ -49,24 +49,26 @@ void Jumbotron::Initialize()
     {
         texSize = minSize;
     }
+
     m_BundleLoadBase = glResourceAlloc(texSize, GLM_TextureData);
     g_TrophyTextureLocationInMemory = m_BundleLoadBase;
 
+    unsigned long dataStep = dataInc + 0x20;
     dataOffset = 0x120;
 
-    const char* szFrameFormat = "kickoff/frame%03d";
     for (int frame = 0; frame < 16; frame++)
     {
-        nlSNPrintf(m_szTexture, 0x80, szFrameFormat, frame);
+        nlSNPrintf(m_szTexture, 0x80, "kickoff/frame%03d", frame);
         PlatTexture* platTex = glx_CreatePlatTexture();
         platTex->CreateWithMemory(0x80, 0x80, GXTex_CMPR, 5, (void*)((u8*)m_BundleLoadBase + dataOffset + 0x20));
-        nlZeroMemory(platTex->m_SwizzledData, GCTextureSize(platTex->m_Format, platTex->m_Width, platTex->m_Height, platTex->m_Levels, -1));
+        nlZeroMemory(platTex->m_SwizzledData,
+            GCTextureSize(platTex->m_Format, platTex->m_Width, platTex->m_Height, platTex->m_Levels, -1));
 
         platTex->Prepare();
 
         glx_AddTex(glGetTexture(m_szTexture), platTex);
 
-        dataOffset += dataInc;
+        dataOffset += dataStep;
     }
 
     m_nMaxNumFrames = 16;

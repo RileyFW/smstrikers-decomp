@@ -10,7 +10,6 @@ bool ScrollingTickerScene::IsMessengerOpen() const
 
 /**
  * Offset/Address/Size: 0x8 | 0x8009FC60 | size: 0x15C
- * TODO: 99.66% match - f29/f31 register swap for sx/sz ballClosedScale variables
  */
 void ScrollingTickerScene::CloseMessengerNow()
 {
@@ -34,9 +33,12 @@ void ScrollingTickerScene::CloseMessengerNow()
     x = val * x + m_grayClosedScale.f.x;
     m_backRectangle->SetAssetScale(x, m_grayOpenScale.f.y, 1.0f);
 
-    f32 sx = m_ballClosedScale.f.x * val;
-    f32 sy = m_ballClosedScale.f.y * val;
-    f32 sz = m_ballClosedScale.f.z * val;
+    f32 sz;
+    f32 sy;
+    f32 sx;
+    sx = m_ballClosedScale.f.x * val;
+    sy = m_ballClosedScale.f.y * val;
+    sz = m_ballClosedScale.f.z * val;
     m_leftBall->SetAssetScale(sx, sy, sz);
     m_rightBall->SetAssetScale(sx, sy, sz);
 
@@ -126,8 +128,8 @@ void ScrollingTickerScene::OpenMessengerNow()
 
 /**
  * Offset/Address/Size: 0x3C4 | 0x800A001C | size: 0x20C
- * TODO: 99.39% match - remaining f28/f31 swap in scale values (z component path)
- *       and SDA vs stack loads for interpolation factor after first SetAssetPosition.
+ * TODO: 99.47% match - remaining f28/f31 swap in scale values (z component path)
+ *       and SDA vs stack loads for interpolation factor in right/gray interpolation.
  */
 void ScrollingTickerScene::OpenMessenger()
 {
@@ -151,7 +153,7 @@ void ScrollingTickerScene::OpenMessenger()
     open = m_grayOpenScale.f.x;
     x = open - m_grayClosedScale.f.x;
     x = from * x + m_grayClosedScale.f.x;
-    m_backRectangle->SetAssetScale(x, m_grayOpenScale.f.y, to);
+    m_backRectangle->SetAssetScale(x, m_grayOpenScale.f.y, 1.0f);
 
     f32 val = from;
     f32 sy;
@@ -212,15 +214,31 @@ void ScrollingTickerScene::SceneCreated()
 
 /**
  * Offset/Address/Size: 0xC88 | 0x800A08E0 | size: 0x178
+ * TODO: 92.82% match - FEIMessenger vtable layout in this TU still produces
+ * `addi r0, r3, 0xC` + explicit FEIMessenger dtor call instead of target
+ * `addi r0, r3, 0x24`; also one `addic.` null-check shape differs around
+ * m_textScroller->m_messageFinishedCB teardown.
  */
 ScrollingTickerScene::~ScrollingTickerScene()
 {
+    if (m_textScroller != NULL)
+    {
+        if (&m_textScroller->m_messageFinishedCB != NULL)
+        {
+            delete m_textScroller;
+        }
+    }
 }
 
 /**
  * Offset/Address/Size: 0xE00 | 0x800A0A58 | size: 0x88
  */
 ScrollingTickerScene::ScrollingTickerScene()
+    : BaseSceneHandler()
+    , m_active(false)
+    , m_cbFunc()
+    , m_textScroller(NULL)
+    , m_pFETweenManager()
 {
 }
 

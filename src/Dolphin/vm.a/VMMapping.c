@@ -23,9 +23,9 @@ static inline u32 VMToARAMOffset(u32 virtualAddr)
 
 BOOL VMAlloc(u32 address, u32 size)
 {
+    u32 i;
     u32 startAramPage = VMGetARAMBase() >> 12;
     u32 endAramPage = startAramPage + (VMGetARAMSize() >> 12);
-    u32 i;
 
     if (g_nextARAMPageToCheck_233 < startAramPage)
     {
@@ -39,39 +39,32 @@ BOOL VMAlloc(u32 address, u32 size)
 
     /**
      * Offset/Address/Size: 0x0 | 0x8025F83C | size: 0x100
-     * TODO: 96.17% match - loop preheader differs: compiler emits an extra
-     * size==0 branch and compares page count register (r0) instead of size
-     * register (r28) before entering the bdnz loop.
+     * TODO: 99.45% match - remaining i-diffs are on g_nextARAMPageToCheck$233
+     * SDA relocation references only.
      */
-    if (size > 0)
+    for (i = 0; i < size; i += 0x1000)
     {
-        u32 offset = 0;
+        u32 virtualPage = address + i;
 
-        for (i = 0; i < ((size + 0xFFF) >> 12); ++i)
+        while (TRUE)
         {
-            u32 virtualPage = address + offset;
-
-            while (TRUE)
+            u32 next = g_nextARAMPageToCheck_233 + 1;
+            g_nextARAMPageToCheck_233 = next;
+            if (next >= endAramPage)
             {
-                u32 next = g_nextARAMPageToCheck_233 + 1;
-                g_nextARAMPageToCheck_233 = next;
-                if (next >= endAramPage)
-                {
-                    g_nextARAMPageToCheck_233 = startAramPage;
-                }
-
-                if (g_baseARAMtoVM[g_nextARAMPageToCheck_233] == 0)
-                {
-                    break;
-                }
+                g_nextARAMPageToCheck_233 = startAramPage;
             }
 
-            g_baseARAMtoVM[g_nextARAMPageToCheck_233] = virtualPage;
-            g_baseVMtoARAM[((virtualPage >> 10) & 0x7FFC) >> 2] = g_nextARAMPageToCheck_233 << 12;
-
-            g_totalAllocatedVM += 0x1000;
-            offset += 0x1000;
+            if (g_baseARAMtoVM[g_nextARAMPageToCheck_233] == 0)
+            {
+                break;
+            }
         }
+
+        g_baseARAMtoVM[g_nextARAMPageToCheck_233] = virtualPage;
+        g_baseVMtoARAM[((virtualPage >> 10) & 0x7FFC) >> 2] = g_nextARAMPageToCheck_233 << 12;
+
+        g_totalAllocatedVM += 0x1000;
     }
 
     return TRUE;
@@ -104,8 +97,7 @@ void __VMMappingErrorAlert(u32 virtualPage)
 
 void __VMSetARAMPageAsDirty(u32 virtualPage)
 {
-    u32 idx = VMToARAMOffset(virtualPage) >> 2;
-    g_baseVMtoARAM[idx] |= 0x80000000;
+    g_baseVMtoARAM[(virtualPage >> 12) & 0x1FFF] |= 0x80000000;
 }
 
 BOOL __VMIsARAMPageDirty(u32 virtualPage)

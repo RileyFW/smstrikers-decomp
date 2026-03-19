@@ -420,6 +420,11 @@ static inline ScaleAccum* GetScaleAccum(ScaleAccum* data, int idx)
     return data + idx;
 }
 
+static inline TransAccum* GetTransAccum(TransAccum* data, int idx)
+{
+    return data + idx;
+}
+
 /**
  * Offset/Address/Size: 0x3DC | 0x801EB97C | size: 0x8C
  */
@@ -457,19 +462,21 @@ void cPoseAccumulator::BlendTrans(int idx, const nlVector3* v, float w, bool fli
         nlVector3 vtemp;
         if (idx <= h->m_nPelvisNodeIndex || idx == h->m_nSpineNodeIndex)
         {
-            // store: (x, -y, z)
-            nlVec3Set(vtemp, v->f.x, -v->f.y, v->f.z);
+            vtemp.f.x = v->f.x;
+            vtemp.f.y = -v->f.y;
+            vtemp.f.z = v->f.z;
         }
         else
         {
-            // store: (x, y, -z)
-            nlVec3Set(vtemp, v->f.x, v->f.y, -v->f.z);
+            vtemp.f.x = v->f.x;
+            vtemp.f.y = v->f.y;
+            vtemp.f.z = -v->f.z;
         }
 
         v = &vtemp;
     }
 
-    TransAccum* e = m_trans.mData + idx;
+    TransAccum* e = GetTransAccum(m_trans.mData, idx);
     e->fAccumulatedWeight += w;
 
     float t = w / e->fAccumulatedWeight;
@@ -479,7 +486,7 @@ void cPoseAccumulator::BlendTrans(int idx, const nlVector3* v, float w, bool fli
     e->t.f.y = inv * e->t.f.y + t * v->f.y;
     e->t.f.z = inv * e->t.f.z + t * v->f.z;
 
-    e = m_trans.mData + idx;
+    e = GetTransAccum(m_trans.mData, idx);
     e->bIdentity = false;
 }
 

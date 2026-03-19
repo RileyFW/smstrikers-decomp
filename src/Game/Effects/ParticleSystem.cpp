@@ -410,9 +410,87 @@ void ParticleSystem::CreateNewParticles(int)
 
 /**
  * Offset/Address/Size: 0x15AC | 0x801F6704 | size: 0x354
+ * TODO: 98.59% match - register name diffs only: f4/f5 swap for posZ/posY at b4/b8/cc/d4,
+ * r9/r6 swap in modulo at 19c/1a0, snS2 in f3 vs f5 cascading through billboard section.
+ * All instructions and offsets correct, same code size.
  */
-void ParticleSystem::UpdateParticle(ParticleReturn*, Particle*, EffectsTemplate*, const nlVector3&, const nlVector3&, const nlMatrix4*)
+void ParticleSystem::UpdateParticle(ParticleReturn* pReturn, Particle* pPart, EffectsTemplate* pTemplate, const nlVector3& viewRight, const nlVector3& viewUp, const nlMatrix4* pCoordSys)
 {
+    int colourIndex = (int)(24.0f * (pPart->timeElapsed / pPart->lifeSpan));
+    nlColour* pColours = pTemplate->m_cColour;
+    pReturn->c = pColours[colourIndex];
+
+    float size = (pPart->dSize * pPart->timeElapsed) + pPart->size;
+    float d = pPart->timeElapsed * (((0.5f * pPart->acceleration) * pPart->timeElapsed) + pPart->velocity);
+    float s2 = 0.5f * size;
+
+    float posZ = (d * pPart->velDir.f.z) + pPart->position.f.z;
+    float posY = (d * pPart->velDir.f.y) + pPart->position.f.y;
+    float posX = (d * pPart->velDir.f.x) + pPart->position.f.x;
+    float rot = (pPart->dRot * pPart->timeElapsed) + pPart->rot;
+
+    nlVector3 position;
+    nlVec3Set(position, posX, posY, posZ);
+
+    if (pCoordSys != nullptr)
+    {
+        nlMultPosVectorMatrix(position, position, *pCoordSys);
+    }
+
+    position.f.z = (pPart->mass * ((0.5f * pPart->timeElapsed) * pPart->timeElapsed)) + position.f.z;
+
+    if (pTemplate->m_uModelID != 0xFFFFFFFF)
+    {
+        pReturn->position[0] = position;
+        pReturn->position[1].f.x = size;
+        pReturn->position[1].f.y = rot;
+        return;
+    }
+
+    int animFrame = (int)(pPart->FPS * pPart->timeElapsed + pPart->frame);
+    animFrame = animFrame % pTemplate->m_nFrames;
+
+    s16* pFrame = (s16*)((u8*)textureFrames[pTemplate->m_nFrames - 1] + (animFrame << 3));
+
+    pReturn->texcoord[0][0] = pFrame[1];
+    pReturn->texcoord[0][1] = pFrame[2];
+    pReturn->texcoord[1][0] = pFrame[0];
+    pReturn->texcoord[1][1] = pFrame[2];
+    pReturn->texcoord[2][0] = pFrame[0];
+    pReturn->texcoord[2][1] = pFrame[3];
+    pReturn->texcoord[3][0] = pFrame[1];
+    pReturn->texcoord[3][1] = pFrame[3];
+
+    float sn;
+    float cs;
+    nlSinCos(&sn, &cs, (unsigned short)(((int)(65536.0f * rot)) / 360));
+
+    sn = sn * s2;
+    cs = cs * s2;
+    float nsn = -sn;
+
+    float x0 = (cs * viewRight.f.x) + (sn * viewUp.f.x);
+    float x1 = (nsn * viewRight.f.x) + (cs * viewUp.f.x);
+    float y0 = (cs * viewRight.f.y) + (sn * viewUp.f.y);
+    float y1 = (nsn * viewRight.f.y) + (cs * viewUp.f.y);
+    float z0 = (cs * viewRight.f.z) + (sn * viewUp.f.z);
+    float z1 = (nsn * viewRight.f.z) + (cs * viewUp.f.z);
+
+    pReturn->position[0].f.x = (position.f.x + x0) + x1;
+    pReturn->position[0].f.y = (position.f.y + y0) + y1;
+    pReturn->position[0].f.z = (position.f.z + z0) + z1;
+
+    pReturn->position[1].f.x = (position.f.x - x0) + x1;
+    pReturn->position[1].f.y = (position.f.y - y0) + y1;
+    pReturn->position[1].f.z = (position.f.z - z0) + z1;
+
+    pReturn->position[2].f.x = (position.f.x - x0) - x1;
+    pReturn->position[2].f.y = (position.f.y - y0) - y1;
+    pReturn->position[2].f.z = (position.f.z - z0) - z1;
+
+    pReturn->position[3].f.x = (position.f.x + x0) - x1;
+    pReturn->position[3].f.y = (position.f.y + y0) - y1;
+    pReturn->position[3].f.z = (position.f.z + z0) - z1;
 }
 
 /**

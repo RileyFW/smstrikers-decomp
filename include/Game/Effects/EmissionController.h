@@ -56,7 +56,7 @@ public:
     void Die();
     float GetRemainingTime() const;
     bool IsLingering() const;
-    void Update(float);
+    bool Update(float);
     void Render();
     void SetUpdateCallback(const Function1<void, EmissionController&>&);
     void SetFinishedCallback(const Function1<void, EmissionController&>&);

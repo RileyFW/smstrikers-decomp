@@ -25,13 +25,17 @@ public:
     struct Highlight
     {
         Highlight()
+            : mSideOfInterest(0)
+            , mTime(0.0f)
+            , mReplayPad(-1)
         {
-            // TODO: struct is not clearly defined
         }
 
         int mSideOfInterest;            // offset 0x0, size 0x4
-        GoalScoredData mGoalScoredData; // offset 0x4, size 0x24
-        u8 pad[0xC];                    // padding to 0x34
+        float mTime;                    // offset 0x4, size 0x4
+        int mReplayPad;                 // offset 0x8, size 0x4
+        GoalScoredData mGoalScoredData; // offset 0xC, size 0x24
+        u8 pad[0x4];                    // padding to 0x34
     }; // total size: 0x34
 
     /**

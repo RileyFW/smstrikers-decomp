@@ -49,6 +49,9 @@ Bowser::~Bowser()
 {
 }
 
+extern "C" cPN_Blender* __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(cPN_Blender*, cPoseNode*, cPoseNode*, float);
+extern "C" cPN_SAnimController* __ct__19cPN_SAnimControllerFP6cSAnimPC12AnimRetarget9ePlayModePFUiP19cPN_SAnimController_vUib(cPN_SAnimController*, cSAnim*, const AnimRetarget*, ePlayMode, void (*)(unsigned int, cPN_SAnimController*), unsigned int, bool);
+
 /**
  * Offset/Address/Size: 0x325C | 0x8015BFD0 | size: 0x1294
  */
@@ -180,12 +183,139 @@ void Bowser::ActionInit()
  */
 void Bowser::ActionThrow()
 {
+    if (CheckForAbort())
+    {
+        return;
+    }
+
+    if (!GameInfoManager::s_pInstance->GetGameplayOptions().PowerUps)
+    {
+        ActionIdle();
+        return;
+    }
+
+    if (mAnimID != BOWSER_ANIM_WALK)
+    {
+        mAnimID = BOWSER_ANIM_WALK;
+
+        cPN_SAnimController* controller = NULL;
+
+        if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList == NULL)
+        {
+            SlotPoolBase::BaseAddNewBlock(&cPN_SAnimController::m_SAnimControllerSlotPool, sizeof(cPN_SAnimController));
+        }
+
+        if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList != NULL)
+        {
+            controller = (cPN_SAnimController*)cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList;
+            cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList = cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList->m_next;
+        }
+
+        controller = new (controller) cPN_SAnimController(
+            mpAnim[BOWSER_ANIM_WALK],
+            (const AnimRetarget*)0,
+            PM_CYCLIC,
+            (void (*)(unsigned int, cPN_SAnimController*))0,
+            (unsigned int)0,
+            (bool)0);
+
+        cPN_Blender* blender;
+
+        if (mpFeatherBlender->GetChild(0) != NULL)
+        {
+            blender = NULL;
+
+            if (cPN_Blender::m_BlenderSlotPool.m_FreeList == NULL)
+            {
+                SlotPoolBase::BaseAddNewBlock(&cPN_Blender::m_BlenderSlotPool, sizeof(cPN_Blender));
+            }
+
+            if (cPN_Blender::m_BlenderSlotPool.m_FreeList != NULL)
+            {
+                blender = (cPN_Blender*)cPN_Blender::m_BlenderSlotPool.m_FreeList;
+                cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
+            }
+
+            // fake match - using the constructor directly is currently not matching because of a mr missing..
+            if (blender != NULL)
+            {
+                blender = __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(blender, *mpFeatherBlender->GetChildPtr(0), controller, 0.15f);
+            }
+            // new (blender) cPN_Blender(*mpFeatherBlender->GetChildPtr(0), controller, 0.15f);
+            // if (blender != NULL)
+            // {
+            //     blender = new cPN_Blender(*mpFeatherBlender->GetChildPtr(0), controller, 0.15f);
+            // }
+        }
+        else
+        {
+            blender = (cPN_Blender*)controller;
+        }
+
+        mpFeatherBlender->SetChild(0, blender);
+        mpAnimController = controller;
+    }
+
+    meBowserState = BOWSER_STATE_THROW;
+
+    if (mpFeatherBlender->GetChild(1) != NULL)
+    {
+        delete mpFeatherBlender->GetChild(1);
+        mpFeatherBlender->SetChild(1, NULL);
+    }
+
+    cPN_SAnimController* controller;
+    mpFeatherController = (controller = NULL);
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList == NULL)
+    {
+        SlotPoolBase::BaseAddNewBlock(&cPN_SAnimController::m_SAnimControllerSlotPool, sizeof(cPN_SAnimController));
+    }
+
+    if (cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList != NULL)
+    {
+        controller = (cPN_SAnimController*)cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList;
+        cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList = cPN_SAnimController::m_SAnimControllerSlotPool.m_FreeList->m_next;
+    }
+
+    // fake match - using the constructor directly is currently not matching because of a mr missing..
+    if (controller != NULL)
+    {
+        controller = __ct__19cPN_SAnimControllerFP6cSAnimPC12AnimRetarget9ePlayModePFUiP19cPN_SAnimController_vUib(controller,
+            mpAnim[BOWSER_ANIM_THROW],
+            nullptr,
+            PM_HOLD,
+            nullptr,
+            0,
+            false);
+    }
+    // new (blender) cPN_Blender(*mpFeatherBlender->GetChildPtr(0), controller, 0.2f);
+    // if (controller != NULL)
+    // {
+    //     controller = new cPN_SAnimController(mpAnim[BOWSER_ANIM_THROW], nullptr, PM_HOLD, nullptr, 0, false);
+    // }
+
+    mpFeatherController = controller;
+
+    mpFeatherBlender->ClearNodeWeights();
+    mpFeatherBlender->SetNodeWeight(0xE, 1.0f, 0.2f);
+    mpFeatherBlender->SetChild(1, mpFeatherController);
+    mpFeatherBlender->BeginBlendIn(0.2f);
+
+    if (g_pBall->GetOwnerFielder() != NULL && !g_pBall->GetOwnerFielder()->IsInvincible())
+    {
+        mpTarget = g_pBall->GetOwnerFielder();
+    }
+    else
+    {
+        mpTarget = FindPowerupTarget((cFielder*)NULL, this);
+    }
 }
 
 /**
  * Offset/Address/Size: 0x26DC | 0x8015B450 | size: 0x1C8
- * TODO: 99.96% match - remaining diff is one call immediate at the
- * cPN_Blender constructor symbol.
+ * TODO: remaining diff is in cPN_Blender placement-new lowering
+ * (extra null-check/register move vs target direct ctor call shape).
  */
 void Bowser::ActionRoll()
 {
@@ -234,11 +364,12 @@ void Bowser::ActionRoll()
             cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
         }
 
+        // fake match - using the constructor directly is currently not matching because of a mr missing..
         if (blender != NULL)
         {
-            extern cPN_Blender* __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(cPN_Blender*, cPoseNode*, cPoseNode*, float);
-            blender = __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(blender, *mpFeatherBlender->GetChildPtr(0), controller, 0.5f);
+            blender = __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(blender, *mpFeatherBlender->GetChildPtr(0), controller, 0.2f);
         }
+        // new (blender) cPN_Blender(*mpFeatherBlender->GetChildPtr(0), controller, 0.2f);
     }
     else
     {
@@ -314,10 +445,6 @@ void Bowser::ActionStomp()
     mtActiveTimer.m_uPackedTime = 0;
 }
 
-extern "C" cPN_Blender* __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(cPN_Blender*, cPoseNode*, cPoseNode*, float);
-extern "C" bool CheckForAbort__6BowserFv(Bowser*);
-extern "C" cPN_SAnimController* __ct__19cPN_SAnimControllerFP6cSAnimPC12AnimRetarget9ePlayModePFUiP19cPN_SAnimController_vUib(cPN_SAnimController*, cSAnim*, const AnimRetarget*, ePlayMode, void (*)(unsigned int, cPN_SAnimController*), unsigned int, bool);
-
 /**
  * Offset/Address/Size: 0x2314 | 0x8015B088 | size: 0x1A0
  */
@@ -361,6 +488,7 @@ void Bowser::ActionDescend(float fBlendTime)
 
             if (blender != NULL)
             {
+                // this is a fake match - using the constructor directly is currently not matching because of a mr missing..
                 blender = __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(blender, *mpFeatherBlender->GetChildPtr(0), controller, fBlendTime);
             }
         }
@@ -545,9 +673,71 @@ void Bowser::ActionHide()
 
 /**
  * Offset/Address/Size: 0x177C | 0x8015A4F0 | size: 0x314
+ * TODO: 99.39% match - inlined SetTiltParameters(0.0f) temp stack slots are
+ * swapped between the first and second call sites.
  */
 void Bowser::ActionReset()
 {
+    mAttackType = BOWSER_ATTACK_ROLL;
+
+    if (mbAlive)
+    {
+        eBowserAttackType oldAttackType;
+        bool wasVisible;
+
+        EmissionManager::Destroy((unsigned long)this, fxGetGroup("bowser_fire"));
+        g_pEventManager->CreateValidEvent(0x65, 0x14);
+
+        wasVisible = mbIsVisible;
+        mbIsVisible = false;
+        meBowserState = BOWSER_STATE_HIDDEN;
+        mfDesiredSpeed = 0.0f;
+
+        if (mpFeatherBlender->GetChild(1) != NULL)
+        {
+            cPoseNode* pChild = mpFeatherBlender->GetChild(1);
+            delete pChild;
+            mpFeatherBlender->SetChild(1, NULL);
+        }
+
+        mpFeatherController = NULL;
+        SetPosition(gv3BowserHomePosition);
+
+        mv3Velocity = v3Zero;
+        maFacingDirection = 0;
+
+        mpPhysObj->DisableCollisions();
+
+        if (!(mAttackType == BOWSER_ATTACK_STOMP && mStompStage != 2))
+        {
+            oldAttackType = mAttackType;
+
+            SetTiltParameters(0.0f);
+            mAttackType = BOWSER_ATTACK_ROLL;
+
+            if (g_pGame->m_pGameTweaks->unk310 < 0.0f)
+            {
+                g_pGame->ResetBowser();
+            }
+
+            if (mbAlive)
+            {
+                mbAlive = false;
+
+                if (GameInfoManager::s_pInstance->IsBowserAttackEnabled() && oldAttackType != BOWSER_ATTACK_STOMP && wasVisible)
+                {
+                    g_pEventManager->CreateValidEvent(0x37, 0x14);
+                }
+            }
+        }
+        else
+        {
+            g_pGame->ResetBowserTimer(g_pGame->m_pGameTweaks->unk31C);
+        }
+    }
+
+    mbFirstTime = true;
+    SetTiltParameters(0.0f);
 }
 
 /**
@@ -598,10 +788,7 @@ void Bowser::ActionLeave()
             cPN_Blender::m_BlenderSlotPool.m_FreeList = cPN_Blender::m_BlenderSlotPool.m_FreeList->m_next;
         }
 
-        if (blender != NULL)
-        {
-            blender = __ct__11cPN_BlenderFP9cPoseNodeP9cPoseNodef(blender, *mpFeatherBlender->GetChildPtr(0), controller, 1.0f);
-        }
+        new (blender) cPN_Blender(*mpFeatherBlender->GetChildPtr(0), controller, 0.2f);
     }
     else
     {
@@ -694,7 +881,7 @@ void Bowser::Move(float fDeltaT)
  */
 void Bowser::ActionIdle()
 {
-    if (CheckForAbort__6BowserFv(this))
+    if (CheckForAbort())
     {
         return;
     }
@@ -806,8 +993,10 @@ void Bowser::SetTiltParameters(float fYAxisTilt)
 /**
  * Offset/Address/Size: 0x954 | 0x801596C8 | size: 0x6F0
  */
-void Bowser::CheckForAbort()
+bool Bowser::CheckForAbort()
 {
+    FORCE_DONT_INLINE;
+    return false;
 }
 
 /**

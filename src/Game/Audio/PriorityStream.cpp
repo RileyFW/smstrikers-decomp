@@ -70,7 +70,7 @@ void PriorityStream::FakeResume(bool checkActive)
                     (m_CapChant.m_Looping & 1),
                     m_CapChant.m_FadeIn,
                     m_CapChant.m_StreamParam[0] ? m_CapChant.m_StreamParam : (const char*)0,
-                    (MasterVolume::VOLUME_GROUP)m_CapChant.m_VolGroup);
+                    (Audio::MasterVolume::VOLUME_GROUP)m_CapChant.m_VolGroup);
             }
             else
             {
@@ -81,7 +81,7 @@ void PriorityStream::FakeResume(bool checkActive)
                     m_CapChant.m_FadeIn,
                     m_CapChant.m_ExistingFadeOut,
                     m_CapChant.m_StreamParam[0] ? m_CapChant.m_StreamParam : (const char*)0,
-                    (MasterVolume::VOLUME_GROUP)m_CapChant.m_VolGroup);
+                    (Audio::MasterVolume::VOLUME_GROUP)m_CapChant.m_VolGroup);
             }
         }
     }
@@ -126,7 +126,7 @@ void PriorityStream::FakeResume(bool checkActive)
                     (m_PStream.m_Looping & 1),
                     m_PStream.m_FadeIn,
                     m_PStream.m_StreamParam[0] ? m_PStream.m_StreamParam : (const char*)0,
-                    (MasterVolume::VOLUME_GROUP)m_PStream.m_VolGroup);
+                    (Audio::MasterVolume::VOLUME_GROUP)m_PStream.m_VolGroup);
             }
             else
             {
@@ -137,7 +137,7 @@ void PriorityStream::FakeResume(bool checkActive)
                     m_PStream.m_FadeIn,
                     m_PStream.m_ExistingFadeOut,
                     m_PStream.m_StreamParam[0] ? m_PStream.m_StreamParam : (const char*)0,
-                    (MasterVolume::VOLUME_GROUP)m_PStream.m_VolGroup);
+                    (Audio::MasterVolume::VOLUME_GROUP)m_PStream.m_VolGroup);
             }
         }
     }
@@ -169,7 +169,7 @@ void PriorityStream::TrackIdleCB()
         {
             if (m_HasCrowdStream && m_PStream.m_Active)
             {
-                u32 streamId = m_PStream.m_StreamId;
+                int streamId = m_PStream.m_StreamId;
                 switch (streamId)
                 {
                 case 0x436E3953:
@@ -198,12 +198,12 @@ void PriorityStream::TrackIdleCB()
                 {
                     m_PStream.m_Queue = 0;
                     m_PStream.m_Track.QueueStream(
-                        m_HasCrowdStream, m_PStream.m_Volume, (m_PStream.m_Looping & 1), m_PStream.m_FadeIn, m_PStream.m_StreamParam[0] ? m_PStream.m_StreamParam : (const char*)0, (MasterVolume::VOLUME_GROUP)m_PStream.m_VolGroup);
+                        m_HasCrowdStream, m_PStream.m_Volume, (m_PStream.m_Looping & 1), m_PStream.m_FadeIn, m_PStream.m_StreamParam[0] ? m_PStream.m_StreamParam : (const char*)0, (Audio::MasterVolume::VOLUME_GROUP)m_PStream.m_VolGroup);
                 }
                 else
                 {
                     m_PStream.m_Track.PlayStream(
-                        m_HasCrowdStream, m_PStream.m_Volume, (m_PStream.m_Looping & 1), m_PStream.m_FadeIn, m_PStream.m_ExistingFadeOut, m_PStream.m_StreamParam[0] ? m_PStream.m_StreamParam : (const char*)0, (MasterVolume::VOLUME_GROUP)m_PStream.m_VolGroup);
+                        m_HasCrowdStream, m_PStream.m_Volume, (m_PStream.m_Looping & 1), m_PStream.m_FadeIn, m_PStream.m_ExistingFadeOut, m_PStream.m_StreamParam[0] ? m_PStream.m_StreamParam : (const char*)0, (Audio::MasterVolume::VOLUME_GROUP)m_PStream.m_VolGroup);
                 }
             }
             return;

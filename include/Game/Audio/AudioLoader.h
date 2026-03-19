@@ -70,7 +70,7 @@ public:
     static void ResetForNewGame();
     static void ReadEntireSampleFileIntoMem(bool);
     static void LoadInGameAudioData();
-    static void LoadStadiumSpecificSoundGroups(eStadiumID);
+    static unsigned char LoadStadiumSpecificSoundGroups(eStadiumID);
     static void SetupBowserStadiumSoundTable(Bowser*);
     static void SetupCharStadiumSoundTable();
     static void SetupPostPhysicsCameraLoad();

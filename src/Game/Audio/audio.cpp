@@ -49,6 +49,45 @@ extern SoundPropAccessor* gpPWRUPSoundPropAccessor;
 extern SoundPropAccessor* gpSTADGENSoundPropAccessor;
 extern SoundPropAccessor* gpCROWDSoundPropAccessor;
 
+namespace AudioScriptEventMgr
+{
+void Update();
+}
+
+class cBaseCamera;
+class cCameraManager
+{
+public:
+    static cBaseCamera* m_cameraStack;
+    static void GetViewVector(nlVector3&);
+    static void GetUpVector(nlVector3&);
+};
+
+extern bool gbTestPrintout;
+extern float gfSilenceTimer;
+extern unsigned long uCurrentSFXVolume;
+extern unsigned long uSFXVolume;
+
+static const nlVector3 sListenerZero = { 0.0f, 0.0f, 0.0f };
+
+/**
+ * Offset/Address/Size: 0xF0 | 0x801413B0 | size: 0x28
+ */
+template <>
+void nlListAddStart<FadeAudioData>(FadeAudioData** head, FadeAudioData* entry, FadeAudioData** tail)
+{
+    if (tail != 0)
+    {
+        if (*head == 0)
+        {
+            *tail = entry;
+        }
+    }
+
+    entry->next = *head;
+    *head = entry;
+}
+
 namespace Audio
 {
 
@@ -443,7 +482,7 @@ void Add3DSFXEmitter(const EmitterStartInfo& emitterStartInfo)
 /**
  * Offset/Address/Size: 0xD84 | 0x8013D298 | size: 0x20
  */
-void GetFreeEmitter(unsigned long& id)
+SFXEmitter* GetFreeEmitter(unsigned long& id)
 {
     return PlatAudio::GetFreeEmitter(id);
 }
@@ -552,10 +591,128 @@ void SetOutputMode(MusyXOutputType outputType)
 
 /**
  * Offset/Address/Size: 0x1FD0 | 0x8013E4E4 | size: 0x354
+ * TODO: 99.46% match - extra mr r30,r0 for gDelayedSFX address load (MWCC register coalescing)
  */
-void Update(float)
+void Update(float fDeltaT)
 {
-    FORCE_DONT_INLINE;
+    int i;
+    register SoundAttributes* delayed;
+    cTeam* pTeam;
+    int j;
+    cPlayer* pPlayer;
+
+    if (::g_bAudioInitialized == false)
+    {
+        return;
+    }
+
+    g_fAudioTimer += fDeltaT;
+    if (uSFXVolume != uCurrentSFXVolume)
+    {
+        sndVolume((u8)uSFXVolume, 0x1F4, 0xFE);
+        uCurrentSFXVolume = uSFXVolume;
+    }
+
+    UpdateFades(fDeltaT);
+    g_pTrackManager->Update(fDeltaT);
+
+    if (g_pGame != NULL)
+    {
+        CrowdMood::Update(fDeltaT);
+        AudioScriptEventMgr::Update();
+    }
+
+    if (::g_bWorldSFXInitialized)
+    {
+        gWorldSFX.UpdateAllTrackedSFX(fDeltaT);
+        gPowerupSFX.UpdateAllTrackedSFX(fDeltaT);
+        gStadGenSFX.UpdateAllTrackedSFX(fDeltaT);
+        gCrowdSFX.UpdateAllTrackedSFX(fDeltaT);
+    }
+
+    if (g_pGame != NULL)
+    {
+        for (i = 0; i < 2; i++)
+        {
+            pTeam = g_pTeams[i];
+            for (j = 0; j < 5; j++)
+            {
+                pPlayer = pTeam->GetPlayer(j);
+                pPlayer->m_pCharacterSFX->UpdateAllTrackedSFX(fDeltaT);
+            }
+        }
+
+        BasicStadium::GetCurrentStadium()->mpNPCManager->mpBowser->m_pCharacterSFX->UpdateAllTrackedSFX(fDeltaT);
+    }
+
+    if (gfSilenceTimer > 0.0f && g_fAudioTimer > gfSilenceTimer)
+    {
+        PlatAudio::StopAllSound();
+        gfSilenceTimer = -1.0f;
+    }
+
+    if (gbGameIsPaused == false)
+    {
+        delayed = gDelayedSFX;
+        for (i = 0; i < 15; i++, delayed++)
+        {
+            if (delayed->mu_Type != (unsigned long)-1)
+            {
+                if (delayed->mf_DelayTime >= 0.0f && delayed->mf_DelayTime - fDeltaT <= 0.0f)
+                {
+                    if (delayed->me_ClassType == CHAR)
+                    {
+                        delayed->mf_DelayTime = -1.0f;
+                        delayed->mu_VoiceID = ((cCharacterSFX*)delayed->mp_OwnerSFX)->Play(*delayed);
+                    }
+                    else
+                    {
+                        delayed->mf_DelayTime = -1.0f;
+                        delayed->mu_VoiceID = delayed->mp_OwnerSFX->Play(*delayed);
+                    }
+
+                    PlatAudio::SetSFXReverbVol(delayed->mu_VoiceID, delayed->mf_VolReverb);
+                    delayed->Init();
+                }
+                else
+                {
+                    delayed->mf_DelayTime -= fDeltaT;
+                }
+            }
+        }
+
+        if (::gbListenerInit)
+        {
+            nlVector3 vDir;
+            nlVector3 vCameraPos;
+            nlVector3 vHeading;
+            nlVector3 vUp;
+
+            cBaseCamera* pCamera = nlDLRingGetStart<cBaseCamera>(cCameraManager::m_cameraStack);
+            vCameraPos = pCamera->GetCameraPosition();
+            vDir = sListenerZero;
+            cCameraManager::GetViewVector(vHeading);
+            cCameraManager::GetUpVector(vUp);
+
+            if (::gbTestPrintout)
+            {
+                nlPrintf("Listener Pos: %0.2f,%0.2f,%0.2f Heading: %0.2f,%0.2f,%0.2f Up: %0.2f,%0.2f,%0.2f\n",
+                    vCameraPos.f.x,
+                    vCameraPos.f.y,
+                    vCameraPos.f.z,
+                    vHeading.f.x,
+                    vHeading.f.y,
+                    vHeading.f.z,
+                    vUp.f.x,
+                    vUp.f.y,
+                    vUp.f.z);
+            }
+
+            PlatAudio::Update3DSFXListener(&gListener, vCameraPos, vDir, vHeading, vUp, 1.0f);
+        }
+
+        Update3DSFXEmitters();
+    }
 }
 
 /**
@@ -1251,13 +1408,6 @@ void SoundAttributes::Init()
 //  * Offset/Address/Size: 0x54 | 0x80141314 | size: 0x9C
 //  */
 // void nlListRemoveElement<FadeAudioData>(FadeAudioData**, FadeAudioData*, FadeAudioData**)
-// {
-// }
-
-// /**
-//  * Offset/Address/Size: 0xF0 | 0x801413B0 | size: 0x28
-//  */
-// void nlListAddStart<FadeAudioData>(FadeAudioData**, FadeAudioData*, FadeAudioData**)
 // {
 // }
 

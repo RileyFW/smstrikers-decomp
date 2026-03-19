@@ -101,9 +101,9 @@ public:
     u16 GetNumPlayers() const;
     void ResetPlayingSides();
     void SetupRoundRobinSchedule(eTeamID*, eSidekickID*);
-    void SetupBowserKnockout();
+    unsigned char SetupBowserKnockout();
     void SetupTournamentKnockout(eTeamID*, eSidekickID*);
-    void SetupKnockoutRound(short);
+    unsigned char SetupKnockoutRound(short);
     void DetermineNextMatchups(int);
     void IncreaseRoundNumber();
     void IncreaseGameNumber(bool);
@@ -154,7 +154,7 @@ public:
     bool IsCustomGiantUnlocked() const;
     bool IsCustomExplosiveUnlocked() const;
     bool IsCustomFreezingUnlocked() const;
-    void HasHumanGameBeenPlayed() const;
+    bool HasHumanGameBeenPlayed() const;
     void SetRoundResult(bool, int);
     bool IsStunnedGoaliesOn() const;
     bool IsInfinitePowerupsOn() const;

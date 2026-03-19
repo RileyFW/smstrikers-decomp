@@ -3,6 +3,7 @@
 #include "Game/FE/feFinder.h"
 #include "Game/FE/tlComponentInstance.h"
 
+#include "NL/nlFunktion.h"
 #include "NL/nlMemory.h"
 
 // /**
@@ -189,7 +190,17 @@
  * Offset/Address/Size: 0x27B0 | 0x800CBE64 | size: 0xD4
  */
 CupTrophyScene::CupTrophyScene()
+    : mTrophy((eTrophyType)-1)
+    , mCreated(false)
+    , mIsNew(false)
+    , mFirstSlideChange(true)
+    , mButtonState((ButtonComponent::ButtonState)(*(int*)&unk_gap[121] = 0, *(int*)&unk_gap[123] = 0,
+          *(bool*)&unk_gap[127] = true, 0))
 {
+    CupTrophyScene* self = this;
+    const char* asyncPath = "art/fe/TrophiesUI.res";
+    AsyncImage* image = new (nlMalloc(0x1C, 0x20, true)) AsyncImage(asyncPath, NULL);
+    *(AsyncImage**)&self->unk_gap[125] = image;
 }
 
 /**
@@ -197,6 +208,7 @@ CupTrophyScene::CupTrophyScene()
  */
 CupTrophyScene::~CupTrophyScene()
 {
+    delete *(AsyncImage**)&unk_gap[125];
 }
 
 /**
@@ -239,60 +251,6 @@ enum ePopupMenu
     NUM_POPUP_MENUS = 47,
 };
 
-enum Tag
-{
-    EMPTY = 0,
-    FREE_FUNCTION = 1,
-    FUNCTOR = 2,
-};
-
-typedef void FnVoidVoid();
-
-template <typename ReturnType>
-class Function0
-{
-public:
-    struct FunctorBase
-    {
-        virtual ~FunctorBase();
-        virtual FunctorBase* Invoke() = 0;
-        virtual FunctorBase* Clone() const = 0;
-    };
-
-    template <typename BindType>
-    struct FunctorImpl : public FunctorBase
-    {
-        BindType mBind;
-        virtual ~FunctorImpl();
-        virtual FunctorBase* Invoke();
-        virtual FunctorBase* Clone() const;
-    };
-
-    Tag mTag;
-    union
-    {
-        ReturnType (*mFreeFunction)();
-        FunctorBase* mFunctor;
-    };
-
-    ~Function0()
-    {
-        if (mTag == FUNCTOR)
-        {
-            delete mFunctor;
-        }
-        mTag = EMPTY;
-    }
-};
-
-template <typename T>
-class Function;
-
-template <>
-class Function<FnVoidVoid> : public Function0<void>
-{
-};
-
 namespace Detail
 {
 template <typename R, typename F>
@@ -302,18 +260,8 @@ struct MemFunImpl
 };
 } // namespace Detail
 
-template <typename R, typename F, typename A>
-struct BindExp1
-{
-    F mFuncPtr;
-    A mArg;
-};
-
 template <typename T, typename R>
 Detail::MemFunImpl<R, void (T::*)()> MemFun(void (T::*)());
-
-template <typename R, typename F, typename A>
-BindExp1<R, F, A> Bind(F fn, const A& arg);
 
 class FEPopupMenu
 {
@@ -336,7 +284,7 @@ Function0<void>::FunctorImpl<BindExp1_vfmfcp>::Clone() const
 
 /**
  * Offset/Address/Size: 0x1D70 | 0x800CB424 | size: 0x1E4
- * TODO: 95.46% match - remaining diff in FunctorImpl vtable-init scheduling and popup Create call shape.
+ * TODO: 99.88% match - only minor instruction/label diffs remain around PopupMap/Create relocation.
  */
 void CupTrophyScene::HandleUnlockedTriggers()
 {
@@ -374,13 +322,8 @@ void CupTrophyScene::HandleUnlockedTriggers()
                 Function<FnVoidVoid> callback;
                 callback.mTag = FUNCTOR;
 
-                FunctorImpl_vfmfcp* functor = (FunctorImpl_vfmfcp*)nlMalloc(sizeof(FunctorImpl_vfmfcp), 8, false);
-                if (functor != 0)
-                {
-                    functor = new (functor) FunctorImpl_vfmfcp();
-                    functor->mBind.mFuncPtr = bind.mFuncPtr;
-                    functor->mBind.mArg = bind.mArg;
-                }
+                FunctorImpl_vfmfcp* functor = new ((FunctorImpl_vfmfcp*)nlMalloc(sizeof(FunctorImpl_vfmfcp), 8, false))
+                    FunctorImpl_vfmfcp(bind);
 
                 callback.mFunctor = functor;
                 popup->Create(PopupMap[i], callback);

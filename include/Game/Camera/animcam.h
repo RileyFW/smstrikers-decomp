@@ -63,6 +63,7 @@ public:
     /* 0x1C */ bool m_bCyclic;
     /* 0x1D */ bool m_bUseSimulationTime;
     /* 0x1E */ bool m_LetManagerDoUpdate;
+    /* 0x1F */ bool m_bUnusedPad;
     /* 0x20 */ nlMatrix4 m_matView;
     /* 0x60 */ nlVector3 m_vecCamera;
     /* 0x6C */ nlVector3 m_vecTarget;

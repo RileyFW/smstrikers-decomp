@@ -23,7 +23,7 @@ public:
 
     static bool IsBallOutsideNet(const nlVector3&);
     static bool DidBallJustEnterNet(const nlVector3&, nlVector3);
-    static bool CheckIfBallWentThroughGoalPost();
+    void CheckIfBallWentThroughGoalPost();
     static bool CheckIfBallWentThroughGoalie();
 
     /* 0x40 */ cBall* m_pAIBall;
@@ -31,6 +31,7 @@ public:
     /* 0x50 */ u32 m_unk_0x50;
     /* 0x54 */ u32 m_unk_0x54;
     /* 0x58 */ bool m_unk_0x58;
+    /* 0x59 */ bool m_unk_0x59;
 
     // differs from DWARF debug infos..
 

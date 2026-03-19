@@ -3,6 +3,8 @@
 #include "Game/Effects/EmissionManager.h"
 #include "stdlib.h"
 #include "NL/nlAVLTree.h"
+#include "NL/nlDLListContainer.h"
+#include "NL/nlDLRing.h"
 #include "NL/nlMath.h"
 #include "NL/nlString.h"
 #include "Game/Sys/simpleparser.h"
@@ -16,41 +18,11 @@ struct ColourKey
     int value;
 };
 
-template <typename T>
-class DLListEntry
+struct ColourKeyListShim
 {
-public:
-    DLListEntry<T>* m_next;
-    DLListEntry<T>* m_prev;
-    T m_data;
+    NewAdapter<DLListEntry<ColourKey> > m_Allocator;
+    DLListEntry<ColourKey>* m_Head;
 };
-
-template <typename T>
-void nlDLRingAddEnd(T**, T*);
-
-template <typename T>
-T* nlDLRingGetStart(T*);
-
-template <typename T>
-bool nlDLRingIsEnd(T*, T*);
-
-template <typename T, typename Adapter>
-class DLListContainerBase
-{
-public:
-    void DeleteEntry(DLListEntry<T>*);
-
-    Adapter m_Allocator;
-    DLListEntry<T>* m_Head;
-};
-
-template <typename T>
-class nlDLListContainer : public DLListContainerBase<T, NewAdapter<DLListEntry<T> > >
-{
-};
-
-template <typename T, typename CallbackType>
-void nlWalkDLRing(T*, CallbackType*, void (CallbackType::*)(T*));
 
 // /**
 //  * Offset/Address/Size: 0x0 | 0x801F29E8 | size: 0x60
@@ -240,10 +212,11 @@ static void BlendSpan(nlColour* pColour, int cindex, const ColourKey& k0, const 
 
 void GetColourComponent(SimpleParser* parser, nlColour* pColour, int cindex)
 {
+    typedef DLListContainerBase<ColourKey, NewAdapter<DLListEntry<ColourKey> > > ColourKeyList;
     char ind[8];
     char val[8];
     ColourKey key;
-    nlDLListContainer<ColourKey> keys;
+    ColourKeyListShim keys;
     keys.m_Head = NULL;
     while (true)
     {
@@ -297,8 +270,8 @@ void GetColourComponent(SimpleParser* parser, nlColour* pColour, int cindex)
         start->m_data.index = current->m_data.index;
         start->m_data.value = current->m_data.value;
     }
-    nlWalkDLRing<DLListEntry<ColourKey>, DLListContainerBase<ColourKey, NewAdapter<DLListEntry<ColourKey> > > >(
-        keys.m_Head, &keys, &DLListContainerBase<ColourKey, NewAdapter<DLListEntry<ColourKey> > >::DeleteEntry);
+    nlWalkDLRing<DLListEntry<ColourKey>, ColourKeyList>(
+        keys.m_Head, (ColourKeyList*)&keys, &ColourKeyList::DeleteEntry);
     keys.m_Head = NULL;
 }
 
@@ -323,8 +296,6 @@ bool fxLoadTemplateBundle(const char* filename)
 
 /**
  * Offset/Address/Size: 0x13C | 0x801F0D00 | size: 0x140
- * TODO: 99.19% match - MWCC reorders begin-branch setup (`lwz r30,pTemplateMap`
- * before `mr r5,r3`) and uses `stw r3,0xc(r1)` instead of `stw r5,0xc(r1)`.
  */
 bool fxLoadTemplateBundle(void* data, unsigned long size)
 {
@@ -349,13 +320,15 @@ bool fxLoadTemplateBundle(void* data, unsigned long size)
         if (nlStrCmp<char>(token, "begin") == 0)
         {
             EffectsTemplate* template_ptr;
+            EffectsTemplate* template_value;
             nlAVLTree<unsigned long, EffectsTemplate*, DefaultKeyCompare<unsigned long> >* tree;
             AVLTreeNode* existingNode;
 
             template_ptr = parse_template(&parser, false);
+            template_value = template_ptr;
             tree = pTemplateMap;
 
-            tree->AddAVLNode((AVLTreeNode**)&tree->m_Root, &template_ptr->m_uHashID, &template_ptr, &existingNode, tree->m_NumElements);
+            tree->AddAVLNode((AVLTreeNode**)&tree->m_Root, &template_value->m_uHashID, &template_value, &existingNode, tree->m_NumElements);
             if (existingNode == nullptr)
             {
                 tree->m_NumElements++;
@@ -370,13 +343,6 @@ bool fxLoadTemplateBundle(void* data, unsigned long size)
     nlFree(data);
     return true;
 }
-
-/**
- * Offset/Address/Size: 0xDC | 0x801F0CA0 | size: 0x60
- */
-// void nlAVLTree<unsigned long, EffectsTemplate*, DefaultKeyCompare<unsigned long> >::~nlAVLTree()
-// {
-// }
 
 /**
  * Offset/Address/Size: 0x90 | 0x801F0C54 | size: 0x4C

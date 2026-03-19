@@ -89,8 +89,28 @@ static unsigned long CAPTAIN_DESCRIPTIONS[] = {
 /**
  * Offset/Address/Size: 0x237C | 0x800DF248 | size: 0x144
  */
-CupChooseCaptainSceneV2::CupChooseCaptainSceneV2(bool)
+CupChooseCaptainSceneV2::CupChooseCaptainSceneV2(bool isSuperCup)
+    : mSidekickMiniHead(NULL)
+    , mCurrentCaptain((eTeamID)3)
+    , mCurrentSK((eSidekickID)0)
+    , mState(CUP_STATE_CAPTAIN)
+    , mAnimationDelay(0.75f)
+    , mSoundDelay(0.0f)
+    , mRemainingSoundDelay(0.0f)
+    , mTicker(NULL)
+    , mIsSuperCup(isSuperCup)
+    , mCupStartString()
 {
+    const char* asyncPath = mIsSuperCup ? "art/fe/SuperCupLoadingScreensUI.res" : "art/fe/CupLoadingScreensUI.res";
+
+    AsyncImage* image = new (0x20, true) AsyncImage(asyncPath, NULL);
+    mCaptainImageMain = image;
+
+    image = new (0x20, true) AsyncImage(asyncPath, NULL);
+    mCaptainImageBG = image;
+
+    image = new (0x20, true) AsyncImage(asyncPath, NULL);
+    mCaptainImageFlash = image;
 }
 
 /**
@@ -98,6 +118,56 @@ CupChooseCaptainSceneV2::CupChooseCaptainSceneV2(bool)
  */
 CupChooseCaptainSceneV2::~CupChooseCaptainSceneV2()
 {
+    delete mCaptainImageMain;
+    delete mCaptainImageBG;
+    delete mCaptainImageFlash;
+    delete mCaptainGrid;
+    delete mSKGrid;
+
+    FEScrollText* ticker = mTicker;
+
+    if (ticker != NULL)
+    {
+        if (ticker != NULL)
+        {
+            if ((char*)ticker + 0x21C)
+            {
+                volatile FEScrollText* vticker = ticker;
+                if ((char*)vticker + 0x21C)
+                {
+                    if (ticker->m_messageFinishedCB.mTag == FUNCTOR)
+                    {
+                        delete ticker->m_messageFinishedCB.mFunctor;
+                    }
+                    ticker->m_messageFinishedCB.mTag = EMPTY;
+                }
+            }
+
+            if ((char*)ticker + 4)
+            {
+                BasicStringInternal* data = ticker->m_message.m_data;
+                if (data != NULL)
+                {
+                    if (--data->mRefCount == 0)
+                    {
+                        if (data != NULL)
+                        {
+                            if (data != NULL)
+                            {
+                                delete[] data->mData;
+                            }
+                            if (data != NULL)
+                            {
+                                nlFree(data);
+                            }
+                        }
+                    }
+                }
+            }
+
+            ::operator delete(ticker);
+        }
+    }
 }
 
 /**

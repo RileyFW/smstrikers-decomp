@@ -7,8 +7,53 @@ f32 CANT_COLLIDE = *(f32*)__float_max;
 
 SlotPool<cPN_Feather> cPN_Feather::m_FeatherSlotPool;
 
+extern "C"
+{
+    void __ct__12SlotPoolBaseFv(void*);
+    void* __register_global_object(void* object, void* destructor, void* registration);
+}
+
+struct FeatherDestructorChain
+{
+    FeatherDestructorChain* next;
+    void* destructor;
+    void* object;
+};
+
+void FeatherSlotPoolDtor(void* obj, int)
+{
+    ((SlotPool<cPN_Feather>*)obj)->~SlotPool<cPN_Feather>();
+}
+
+/**
+ * Offset/Address/Size: 0x8FC | 0x801EFEB0 | size: 0x74
+ * TODO: 89.83% match - register ordering around __float_max/m_FeatherSlotPool
+ * setup and destructor/registration relocation symbols differ.
+ */
+extern "C" void __sinit_pnFeather_cpp()
+{
+    static FeatherDestructorChain chain;
+    SlotPoolBase* pool = (SlotPoolBase*)&cPN_Feather::m_FeatherSlotPool;
+
+    CANT_COLLIDE = *(f32*)__float_max;
+
+    __ct__12SlotPoolBaseFv(pool);
+    pool->m_Initial = 0x10;
+    SlotPoolBase::BaseAddNewBlock(pool, 0x30);
+    pool->m_Delta = 0x10;
+    __register_global_object(pool, (void*)FeatherSlotPoolDtor, &chain);
+}
+
+void cPN_Feather::operator delete(void* ptr)
+{
+    ((SlotPoolEntry*)ptr)->m_next = m_FeatherSlotPool.m_FreeList;
+    m_FeatherSlotPool.m_FreeList = (SlotPoolEntry*)ptr;
+}
+
 /**
  * Offset/Address/Size: 0x890 | 0x801EFDC4 | size: 0xEC
+ * TODO: 95.00% match - pre-loop induction init still differs (li/mr order for
+ * loop counters before weight clear loop).
  */
 cPN_Feather::cPN_Feather(cSHierarchy* hierarchy, void (*callback)(unsigned int, cPN_Feather*), unsigned int callbackParam)
     : cPoseNode(2)
@@ -22,7 +67,7 @@ cPN_Feather::cPN_Feather(cSHierarchy* hierarchy, void (*callback)(unsigned int, 
 
     m_pFeatherWeights = (float*)nlMalloc(hierarchy->m_nodeCount * sizeof(float), 8, 0);
 
-    for (int i = 0; i < hierarchy->m_nodeCount; ++i)
+    for (int i = 0; i < m_pBaseHierarchy->m_nodeCount; ++i)
     {
         m_pFeatherWeights[i] = 0.0f;
     }

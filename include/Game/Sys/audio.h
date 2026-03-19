@@ -6,6 +6,7 @@
 #include "NL/plat/plataudio.h"
 
 #include "Game/Render/Nis.h"
+#include "Game/Audio/StreamTrack.h"
 
 // void ReadVolGroupSettings();
 // void nlDeleteList<FadeAudioData>(FadeAudioData**);
@@ -133,14 +134,6 @@ struct SoundAttributes
 namespace MasterVolume
 {
 
-enum VOLUME_GROUP
-{
-    VG_Special = 0,
-    VG_Music = 1,
-    VG_SFX = 2,
-    VG_Voice = 3,
-};
-
 float GetVoiceVolume();
 void SetVoiceVolume(float, int);
 void SetVolume(VOLUME_GROUP, float);
@@ -157,7 +150,7 @@ bool IsEmitterActive(SFXEmitter*);
 u32 GetEmitterVoiceID(SFXEmitter*);
 bool Remove3DSFXEmitter(SFXEmitter*);
 void Add3DSFXEmitter(const EmitterStartInfo&);
-void GetFreeEmitter(unsigned long&);
+SFXEmitter* GetFreeEmitter(unsigned long&);
 SFXEmitter* GetEmitter(unsigned long);
 extern SND_LISTENER gListener;
 void SetListenerActive(bool);
