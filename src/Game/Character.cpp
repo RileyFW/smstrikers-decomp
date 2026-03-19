@@ -785,10 +785,6 @@ nlVector3& cCharacter::GetPrevJointPosition(int jointIndex)
  */
 void cCharacter::GetCurrentAnimFuture(int nJointIndex, float fTime, nlVector3& v3Out, nlVector3& v3FutureRoot, unsigned short& outFacing)
 {
-    /**
-     * TODO: 96.79% match - remaining mismatch is register allocation/order and an
-     * extra placement-new null-check branch when constructing cPoseAccumulator.
-     */
     cPN_SAnimController* pAnim = m_pCurrentAnimController;
     float savedPrevTime = pAnim->m_fPrevTime;
     float savedTime = pAnim->m_fTime;
@@ -813,11 +809,7 @@ void cCharacter::GetCurrentAnimFuture(int nJointIndex, float fTime, nlVector3& v
     }
     else
     {
-        cPoseAccumulator* pAccumulator = (cPoseAccumulator*)nlMalloc(sizeof(cPoseAccumulator), 8, false);
-        if (pAccumulator != NULL)
-        {
-            new (pAccumulator) cPoseAccumulator(m_pPoseAccumulator->m_BaseSHierarchy, true);
-        }
+        cPoseAccumulator* pAccumulator = new (nlMalloc(sizeof(cPoseAccumulator), 8, false)) cPoseAccumulator(m_pPoseAccumulator->m_BaseSHierarchy, true);
 
         nlMatrix4 m;
         nlMakeRotationMatrixZ(m, 0.0000958738f * (float)outFacing);

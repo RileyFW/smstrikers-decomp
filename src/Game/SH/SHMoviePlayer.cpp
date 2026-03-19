@@ -1,8 +1,10 @@
 #include "Game/SH/SHMoviePlayer.h"
 #include "dolphin/dolphin.h"
+#include "Game/Audio/AudioLoader.h"
 #include "Game/BaseGameSceneManager.h"
 #include "Game/BaseSceneHandler.h"
 #include "Game/FE/FEAudio.h"
+#include "Game/FE/feAsyncImage.h"
 #include "Game/FE/feButtonComponent.h"
 #include "Game/FE/feFinder.h"
 #include "Game/FE/feInput.h"
@@ -11,11 +13,17 @@
 #include "Game/GameRenderTask.h"
 #include "Game/GameSceneManager.h"
 #include "Game/OverlayManager.h"
+#include "NL/nlConfig.h"
 #include "NL/gl/gl.h"
+#include "NL/nlPrint.h"
 #include "types.h"
 
 extern bool g_e3_Build;
 extern FEInput* g_pFEInput;
+extern bool MoviePlay();
+extern bool MovieStop();
+extern bool MovieStart(const char*, bool, bool);
+extern "C" void THPSimpleSetVolume(int, int);
 
 // /**
 //  * Offset/Address/Size: 0x2D4 | 0x800BD840 | size: 0x15C
@@ -125,28 +133,150 @@ void MoviePlayerScene::SetMovieDetails(const char* filename, bool withsound, boo
  */
 void MoviePlayerScene::Update(float fDeltaT)
 {
-    FORCE_DONT_INLINE; // Todo: Finish Implementing
-    u32 moviehandle;
+    typedef TLImageInstance* (*FindImageByValue)(TLSlide*, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher, InlineHasher);
+    typedef TLImageInstance* (*FindImageByRef)(TLSlide*, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&, InlineHasher&);
+
+    union
+    {
+        FindImageByValue byValue;
+        FindImageByRef byRef;
+    } findImage;
+
+    volatile InlineHasher hB, hA;
+    volatile InlineHasher h9, h8;
+    volatile InlineHasher h7, h6, h5, h4, h3, h2, h1, h0;
 
     BaseSceneHandler::Update(fDeltaT);
+
     if (g_e3_Build || (OSGetConsoleType() & 0x20000000))
     {
         if (mPushWithPop)
         {
-            MoviePlayerScene* temp_r3 = (MoviePlayerScene*)mGameSceneManager->Push(mNextScene, SCREEN_NOTHING, true);
+            MoviePlayerScene* scene = (MoviePlayerScene*)mGameSceneManager->Push(mNextScene, SCREEN_NOTHING, true);
             if (mNextScene == SCENE_TITLE)
             {
-                temp_r3->mNextScene = SCENE_MARIO_BACKGROUND;
+                ((u8*)&scene->mNextScene)[1] = 1;
             }
             PlayScreenForwardSFX();
         }
-        mGameSceneManager->Pop();
-        PlayScreenBackSFX();
+        else
+        {
+            mGameSceneManager->Pop();
+            PlayScreenBackSFX();
+        }
         return;
     }
-    if (!this->mMovieStarted)
+
+    if (mMovieStarted == false)
     {
-        // this->mMovieStarted = MovieStart()
+        mMovieStarted = MovieStart(mMovieFilename, mWithSound, mLoopMovie);
+
+        const char* streamName;
+        if (strstr(mMovieFilename, "nlg"))
+        {
+            streamName = "FE_Eggman_Movie";
+        }
+        else
+        {
+            streamName = "FE_Intro_Movie";
+        }
+
+        char var_68[64];
+        nlSNPrintf(var_68, 64, "%s/Volume", streamName);
+        float volume = (float)GetConfigInt(g_FEStreamConfig, var_68, 100) / 100.0f;
+
+        nlSNPrintf(var_68, 64, "%s/FadeIn", streamName);
+        s32 fadeIn = GetConfigInt(g_FEStreamConfig, var_68, 500);
+
+        volume *= Audio::MasterVolume::GetVolume(Audio::MasterVolume::VG_Music);
+        THPSimpleSetVolume(0, 0);
+        THPSimpleSetVolume((s32)(127.0f * volume), fadeIn);
+
+        if (nlSingleton<GameInfoManager>::s_pInstance->mIsInStrikers101Mode)
+        {
+            g_bRenderWorld = false;
+        }
+    }
+
+    if ((mMovieStarted == false) || CheckMoviePlayerAbort())
+    {
+        MovieStop();
+
+        if (mPushWithPop)
+        {
+            MoviePlayerScene* scene = (MoviePlayerScene*)mGameSceneManager->Push(mNextScene, SCREEN_NOTHING, true);
+            if (mNextScene == SCENE_TITLE)
+            {
+                ((u8*)&scene->mNextScene)[1] = 1;
+            }
+            PlayScreenForwardSFX();
+        }
+        else
+        {
+            mGameSceneManager->Pop();
+            PlayScreenBackSFX();
+        }
+
+        FEAudio::PlayAnimAudioEvent("sfx_accept", false);
+        mMovieStarted = false;
+        return;
+    }
+
+    if (mSwappedTexture == false)
+    {
+        findImage.byValue = FEFinder<TLImageInstance, 2>::Find<TLSlide>;
+
+        h0.m_Hash = 0;
+        h1.m_Hash = 0;
+        h2.m_Hash = 0;
+        h3.m_Hash = 0;
+        h4.m_Hash = 0;
+        h5.m_Hash = 0;
+        h6.m_Hash = 0;
+        h7.m_Hash = 0;
+
+        u32 hash = nlStringLowerHash("movie");
+        h8.m_Hash = hash;
+        h9.m_Hash = hash;
+
+        hash = nlStringLowerHash("Layer");
+        hB.m_Hash = hash;
+        hA.m_Hash = hash;
+
+        mMovieInstance = findImage.byRef(
+            m_pFEPresentation->m_currentSlide,
+            (InlineHasher&)hB,
+            (InlineHasher&)h9,
+            (InlineHasher&)h7,
+            (InlineHasher&)h5,
+            (InlineHasher&)h3,
+            (InlineHasher&)h1);
+
+        u32 movieHandle = glGetTexture("movie");
+        mMovieInstance->m_pTextureResource->m_glTextureHandle = movieHandle;
+        mSwappedTexture = true;
+    }
+
+    if (MoviePlay())
+    {
+        return;
+    }
+
+    MovieStop();
+
+    if (mPushWithPop)
+    {
+        MoviePlayerScene* scene = (MoviePlayerScene*)mGameSceneManager->Push(mNextScene, SCREEN_NOTHING, true);
+        if (mNextScene == SCENE_TITLE)
+        {
+            ((u8*)&scene->mNextScene)[1] = 1;
+        }
+        PlayScreenForwardSFX();
+    }
+    else
+    {
+        mGameSceneManager->Pop();
+        PlayScreenBackSFX();
     }
 }
 

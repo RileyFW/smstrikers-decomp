@@ -21,6 +21,11 @@ public:
         FORCE_DONT_INLINE;
         return m_fNetWidth;
     };
+    static float GetPostRadius()
+    {
+        FORCE_DONT_INLINE;
+        return m_fNetPostRadius;
+    }
 
     static float m_fNetHeight;
     static float m_fNetWidth;

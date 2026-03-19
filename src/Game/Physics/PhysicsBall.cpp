@@ -243,61 +243,33 @@ void PhysicsBall::AddResistanceForces()
 ContactType PhysicsBall::Contact(PhysicsObject* other, dContact* contact, int param)
 {
     nlVector3 pos;
-    // f32 sp14;
-    // f32 sp10;
-    // s32 spC;
-
-    // s32 sp8;
     nlVector3 _pos;
 
+    f32 temp_f0;
     f32 temp_f1;
     f32 temp_f1_2;
-    f32 temp_f29;
     f32 temp_f2;
+    f32 temp_f29;
     f32 temp_f30;
     f32 temp_f31;
     s32 objType;
-    s32 temp_r6;
-    s32 var_ctr;
-    void** temp_r3;
-    nlVector3* temp_r3_2;
-    void* var_r3;
+    s32 i;
+    dContact* c;
 
     objType = other->GetObjectType();
     GetPosition(&pos);
 
     if (objType == 0x11)
     {
-        // do {
-        // if (((this_00->geom).pos.field0_0x0[2] <= local_54) &&
-        //     (@632 < (this_00->geom).normal.field0_0x0[2])) {
-        //     this->field_0x39 = 1;
-        //     break;
-        // }
-        // this_00 = this_00 + 1;
-        // iVar5 = iVar5 + -1;
-        // } while (iVar5 != 0);
-
-        var_r3 = (void*)contact;
-        var_ctr = param;
-        if (param > 0)
+        c = contact;
+        for (i = 0; i < param; i++)
         {
-        loop_2:
-            //     M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
-            if ((((dContact*)var_r3)->geom.pos[2] == pos.f.z) && (((dContact*)var_r3)->geom.normal[2] > 0.9f))
+            if ((c->geom.pos[2] <= pos.f.z) && (c->geom.normal[2] > 0.9f))
             {
                 m_bIsSupportedByGround = 1;
+                break;
             }
-            else
-            {
-                // var_r3 += 0x68;
-                var_r3 = (void*)((char*)var_r3 + 0x68);
-                var_ctr -= 1;
-                if (var_ctr != 0)
-                {
-                    goto loop_2;
-                }
-            }
+            c++;
         }
     }
 
@@ -308,31 +280,31 @@ ContactType PhysicsBall::Contact(PhysicsObject* other, dContact* contact, int pa
             GetPosition(&pos);
             if ((contact->geom.normal[2] > 0.f) && ((contact->geom.pos[2] + GetRadius()) < pos.f.z))
             {
-                // u32* src = (u32*)GetPosition();
-                // u32* dst = (u32*)&_pos;
-                // dst[0] = src[0];
-                // dst[1] = src[1];
-                // dst[2] = src[2];
                 _pos = GetPosition();
 
-                temp_f2 = contact->geom.normal[2]; // unk44
-                temp_f1 = contact->geom.depth;     // unk4C
-                temp_f29 = temp_f2 * temp_f1;
-                _pos.f.z += temp_f29;
-                SetPosition(_pos, WORLD_COORDINATES); // , temp_r6, temp_f1, temp_f2
+                temp_f2 = contact->geom.normal[2];
+                temp_f1 = contact->geom.depth;
+                temp_f31 = temp_f2 * temp_f1;
+                _pos.f.z += temp_f31;
+                SetPosition(_pos, WORLD_COORDINATES);
 
-                if (contact->geom.depth > 0.95f)
+                if (contact->geom.normal[2] > 0.95f)
                 {
                     return NO_CONTACT;
                 }
 
-                temp_f30 = contact->geom.normal[1]; // arg2->unk40;
-                temp_f31 = contact->geom.normal[0]; // arg2->unk3C;
-                temp_f1_2 = nlRecipSqrt(0.f + (temp_f31 * temp_f31) + (temp_f30 * temp_f30), true);
-                contact->geom.normal[0] = (f32)(temp_f1_2 * temp_f31);       //  unk3C
-                contact->geom.normal[1] = (f32)(temp_f1_2 * temp_f30);       //  unk40
-                contact->geom.normal[2] = (f32)(temp_f1_2 * 0.f);            //  unk44
-                contact->geom.depth = (f32)(contact->geom.depth - temp_f29); //  unk4C
+                temp_f30 = contact->geom.normal[1];
+                temp_f29 = contact->geom.normal[0];
+                temp_f1 = 0.f;
+                temp_f0 = temp_f30 * temp_f30;
+                temp_f0 = (temp_f29 * temp_f29) + temp_f0;
+                temp_f1 = temp_f1 + temp_f0;
+                temp_f1_2 = nlRecipSqrt(temp_f1, true);
+                contact->geom.normal[0] = (f32)(temp_f1_2 * temp_f29);
+                contact->geom.normal[1] = (f32)(temp_f1_2 * temp_f30);
+                temp_f0 = 0.f;
+                contact->geom.normal[2] = (f32)(temp_f1_2 * temp_f0);
+                contact->geom.depth = (f32)(contact->geom.depth - temp_f31);
             }
         }
         return m_parentObject->Contact(other, contact, param);
@@ -340,12 +312,16 @@ ContactType PhysicsBall::Contact(PhysicsObject* other, dContact* contact, int pa
 
     if ((objType != 0x11) && (objType != 0xD) && (objType != 0xE) && (objType != 8))
     {
+        cBall* ball;
+
         m_bUseMagnusEffect = 0;
         FakeBallWorld::InvalidateBallCache();
         g_pBall->m_bBallPathChangeCount = g_pBall->m_bBallPathChangeCount + 1;
         g_pBall->m_bBallDeflectCount = g_pBall->m_bBallDeflectCount + 1;
-        // g_pBall->m_unk_0xA6 = 0;
-        // g_pBall->m_unk_0xA8 = 0;
+
+        ball = g_pBall;
+        ball->m_unk_0xA6 = 0;
+        ball->mpDamageTarget = NULL;
     }
 
     return TWO_WAY_CONTACT;

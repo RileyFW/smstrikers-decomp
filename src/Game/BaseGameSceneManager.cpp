@@ -165,7 +165,6 @@ BaseGameSceneManager::~BaseGameSceneManager()
 
 /**
  * Offset/Address/Size: 0x324 | 0x800958E0 | size: 0x108C
- * TODO: 99.4% match - 3 register diffs in SceneEntryTable address calc (slwi r4 vs r0, addi r0 vs r3, add r3,r0,r4 vs r3,r3,r0)
  */
 BaseSceneHandler* BaseGameSceneManager::Push(SceneList newscene, ScreenMovement movement, bool popfirst)
 {
@@ -179,30 +178,7 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList newscene, ScreenMovement 
         newscene = SCENE_MARIO_BACKGROUND;
     }
 
-    {
-        Config& cfg = Config::Global();
-        Config::TagValuePair& tvp = cfg.FindTvp("fev2");
-        if (tvp.tag == NULL)
-        {
-            cfg.Set("fev2", false);
-        }
-        else if (tvp.type == _BOOL)
-        {
-            LexicalCast<bool, bool>(tvp.value.b);
-        }
-        else if (tvp.type == _INT)
-        {
-            LexicalCast<bool, int>(tvp.value.i);
-        }
-        else if (tvp.type == _FLOAT)
-        {
-            LexicalCast<bool, float>(tvp.value.f);
-        }
-        else if (tvp.type == _STRING)
-        {
-            LexicalCast<bool, const char*>(tvp.value.s);
-        }
-    }
+    GetConfigBool(Config::Global(), "fev2", false);
 
     if (newscene == SCENE_MAIN_MENU)
     {
@@ -210,42 +186,20 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList newscene, ScreenMovement 
     }
 
     BaseSceneHandler* newHandler = NULL;
-    const char* filename = SceneEntryTable[newscene].sceneName;
+    const SceneEntry& entry = SceneEntryTable[newscene];
+    const char* filename = entry.sceneName;
 
-    {
-        Config& cfg = Config::Global();
-        Config::TagValuePair& tvp = cfg.FindTvp("fev2");
-        if (tvp.tag == NULL)
-        {
-            cfg.Set("fev2", false);
-        }
-        else if (tvp.type == _BOOL)
-        {
-            LexicalCast<bool, bool>(tvp.value.b);
-        }
-        else if (tvp.type == _INT)
-        {
-            LexicalCast<bool, int>(tvp.value.i);
-        }
-        else if (tvp.type == _FLOAT)
-        {
-            LexicalCast<bool, float>(tvp.value.f);
-        }
-        else if (tvp.type == _STRING)
-        {
-            LexicalCast<bool, const char*>(tvp.value.s);
-        }
-    }
+    GetConfigBool(Config::Global(), "fev2", false);
 
     if (newscene == SCENE_TITLE)
     {
         if (g_e3_Build || g_Europe)
         {
-            filename = "art/fe/start_screen_e3_v2.fen";
+            filename = "art/fe/start_screen_v2_german.fen";
         }
         else if (g_Language == 5)
         {
-            filename = "art/fe/start_screen_ja_v2.fen";
+            filename = "art/fe/start_screen_jpn.fen";
         }
     }
 
@@ -253,7 +207,7 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList newscene, ScreenMovement 
     {
         if (g_e3_Build)
         {
-            filename = "art/fe/choose_captains_e3_v3.fen";
+            filename = "art/fe/choose_captains_vLeeptsig.fen";
         }
     }
 
@@ -349,10 +303,7 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList newscene, ScreenMovement 
     case SCENE_SCROLLING_TICKER:
     {
         ScrollingTickerScene* ticker = new (nlMalloc(0xCC, 8, false)) ScrollingTickerScene();
-        if (ticker)
-        {
-            newHandler = ticker;
-        }
+        newHandler = ticker;
         break;
     }
     case SCENE_MAIN_BACKGROUND:
@@ -495,10 +446,7 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList newscene, ScreenMovement 
     case OVERLAY_LESSON_TICKER:
     {
         NSNMessengerScene* nsn = new (nlMalloc(0x240, 8, false)) NSNMessengerScene();
-        if (nsn)
-        {
-            newHandler = nsn;
-        }
+        newHandler = nsn;
         break;
     }
     case NUM_SCENES:
@@ -518,10 +466,10 @@ BaseSceneHandler* BaseGameSceneManager::Push(SceneList newscene, ScreenMovement 
     switch (movement)
     {
     case SCREEN_FORWARD:
-        FEAudio::PlayAnimAudioEvent("fe_screen_forward", false);
+        FEAudio::PlayAnimAudioEvent("sfx_screen_forward", false);
         break;
     case SCREEN_BACK:
-        FEAudio::PlayAnimAudioEvent("fe_screen_back", false);
+        FEAudio::PlayAnimAudioEvent("sfx_screen_back", false);
         break;
     }
 

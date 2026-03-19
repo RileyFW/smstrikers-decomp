@@ -23,15 +23,15 @@ struct BallCacheInfo
 class FakeBallWorld
 {
 public:
-    void FindBallIntercept(const nlVector3&, float, float, nlVector3&, nlVector3&, float&, float&, float);
+    static void FindBallIntercept(const nlVector3&, float, float, nlVector3&, nlVector3&, float&, float&, float);
     static void GetNextBallPosition(nlVector3&);
-    void ResetBallIterator();
-    void GetPredictedPosAtDistance(float, nlVector3&, nlVector3&);
+    static void ResetBallIterator();
+    static void GetPredictedPosAtDistance(float, nlVector3&, nlVector3&);
     static float GetPredictedHeightLimitTime(float, float, nlVector3&, nlVector3&, bool);
     static float GetPredictedPlaneIntersectTime(const nlVector4&, nlVector3&, nlVector3&);
     static bool GetPredictedBallPosition(float, nlVector3&, nlVector3&);
     static void InvalidateBallCache();
-    void Destroy();
+    static void Destroy();
     static void Init(cBall*);
 
     /* 0x00 */ cBall* mpBall;                    // offset 0x0, size 0x4

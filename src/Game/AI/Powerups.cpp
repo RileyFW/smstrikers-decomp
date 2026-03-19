@@ -682,8 +682,6 @@ RedShell::~RedShell()
 
 /**
  * Offset/Address/Size: 0x1628 | 0x8005BF14 | size: 0x24C
- * TODO: 99.8% match - f1/f2/f4 register allocation swap in the 19.0f
- * velocity-cap multiply sequence when normalizing XY speed.
  */
 extern "C" void SeekTarget__8RedShellFv(RedShell*);
 
@@ -742,8 +740,10 @@ void RedShell::Update(float dt)
             f32 recipLen = nlRecipSqrt(sqX + sqY, true);
             vel.f.x = recipLen * velX;
             vel.f.y = recipLen * velY;
-            vel.f.x = 19.0f * vel.f.x;
-            vel.f.y = 19.0f * vel.f.y;
+            f32 scaledY = 19.0f * vel.f.y;
+            f32 scaledX = 19.0f * vel.f.x;
+            vel.f.x = scaledX;
+            vel.f.y = scaledY;
             cappedVel.f.y = vel.f.y;
             cappedVel.f.x = vel.f.x;
             cappedVel.f.z = m_v3Velocity.f.z;
